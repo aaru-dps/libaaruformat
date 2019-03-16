@@ -1,34 +1,3 @@
-// /***************************************************************************
-// The Disc Image Chef
-// ----------------------------------------------------------------------------
-//
-// Filename       : enums.h
-// Author(s)      : Natalia Portillo <claunia@claunia.com>
-//
-// Component      : libdicformat.
-//
-// --[ Description ] ----------------------------------------------------------
-//
-//     Contains enumerations for DiscImageChef format disk images.
-//
-// --[ License ] --------------------------------------------------------------
-//
-//     This library is free software; you can redistribute it and/or modify
-//     it under the terms of the GNU Lesser General Public License as
-//     published by the Free Software Foundation; either version 2.1 of the
-//     License, or (at your option) any later version.
-//
-//     This library is distributed in the hope that it will be useful, but
-//     WITHOUT ANY WARRANTY; without even the implied warranty of
-//     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-//     Lesser General Public License for more details.
-//
-//     You should have received a copy of the GNU Lesser General Public
-//     License along with this library; if not, see <http://www.gnu.org/licenses/>.
-//
-// ----------------------------------------------------------------------------
-// Copyright © 2011-2019 Natalia Portillo
-// ****************************************************************************/
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
@@ -254,6 +223,18 @@ typedef enum
     Mode2Form2Ok    = 0x40000000,
     Mode2Form2NoCrc = 0x50000000
 } CdFixFlags;
+
+/** Track (as partitioning element) types. */
+typedef enum
+{
+    /** Audio track */
+            Audio           = 0, /** Data track (not any of the below defined ones) */
+            Data            = 1, /** Data track, compact disc mode 1 */
+            CdMode1         = 2, /** Data track, compact disc mode 2, formless */
+            CdMode2Formless = 3, /** Data track, compact disc mode 2, form 1 */
+            CdMode2Form1    = 4, /** Data track, compact disc mode 2, form 2 */
+            CdMode2Form2    = 5
+} TrackType;
 
 
 #endif //LIBDICFORMAT_ENUMS_H
