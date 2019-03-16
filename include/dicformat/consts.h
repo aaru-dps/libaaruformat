@@ -30,6 +30,8 @@
 // Copyright © 2011-2019 Natalia Portillo
 // ****************************************************************************/
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedMacroInspection"
 #ifndef LIBDICFORMAT_CONSTS_H
 #define LIBDICFORMAT_CONSTS_H
 
@@ -55,3 +57,5 @@
 #define CD_DFIX_MASK = 0x00FFFFFF;
 
 #endif //LIBDICFORMAT_CONSTS_H
+
+#pragma clang diagnostic pop

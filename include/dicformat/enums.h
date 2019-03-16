@@ -30,6 +30,8 @@
 // Copyright © 2011-2019 Natalia Portillo
 // ****************************************************************************/
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #ifndef LIBDICFORMAT_ENUMS_H
 #define LIBDICFORMAT_ENUMS_H
 
@@ -255,3 +257,5 @@ typedef enum
 
 
 #endif //LIBDICFORMAT_ENUMS_H
+
+#pragma clang diagnostic pop

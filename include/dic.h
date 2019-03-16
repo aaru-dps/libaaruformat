@@ -36,6 +36,8 @@
 // Copyright © 2011-2019 Natalia Portillo
 // ****************************************************************************/
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #ifndef LIBDICFORMAT_DIC_H
 #define LIBDICFORMAT_DIC_H
 
@@ -1048,3 +1050,5 @@ typedef enum
 } MediaType;
 
 #endif //LIBDICFORMAT_DIC_H
+
+#pragma clang diagnostic pop
