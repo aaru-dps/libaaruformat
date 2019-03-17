@@ -104,7 +104,7 @@ typedef struct IndexHeader
 typedef struct IndexEntry
 {
     /**Type of item pointed by this entry */
-    uint32_t uint32_t;
+    uint32_t blockType;
     /**Type of data contained by the block pointed by this entry */
     uint16_t dataType;
     /**Offset in file where item is stored */

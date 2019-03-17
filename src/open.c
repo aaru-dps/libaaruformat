@@ -34,12 +34,21 @@
 #include <dicformat.h>
 #include <malloc.h>
 #include <errno.h>
+#include <inttypes.h>
+#include <string.h>
 
+// TODO: Check CRC64 on structures
+// TODO: ImageInfo
 void *open(const char *filepath)
 {
     dicformatContext *ctx = malloc(sizeof(dicformatContext));
     int              errorNo;
     size_t           readBytes;
+    long             pos;
+    IndexHeader      idxHeader;
+    IndexEntry       *idxEntries;
+
+    memset(ctx, 0, sizeof(dicformatContext));
 
     if(ctx == NULL)
         return NULL;
@@ -82,14 +91,78 @@ void *open(const char *filepath)
         return NULL;
     }
 
+    fprintf(stderr,
+            "libdicformat: Opening image version %d.%d",
+            ctx->header.imageMajorVersion,
+            ctx->header.imageMinorVersion);
+
+    // Read the index header
+    pos = fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_CUR);
+    if(pos < 0)
+    {
+        free(ctx);
+        errno = DICF_ERROR_CANNOT_READ_INDEX;
+
+        return NULL;
+    }
+
+    pos = ftell(ctx->imageStream);
+    if(pos != ctx->header.indexOffset)
+    {
+        free(ctx);
+        errno = DICF_ERROR_CANNOT_READ_INDEX;
+
+        return NULL;
+    }
+
+    readBytes = fread(&idxHeader, sizeof(IndexHeader), 1, ctx->imageStream);
+
+    if(readBytes != sizeof(IndexHeader) || idxHeader.identifier != IndexBlock)
+    {
+        free(ctx);
+        errno = DICF_ERROR_CANNOT_READ_INDEX;
+
+        return NULL;
+    }
+
+    fprintf(stderr, "libdicformat: Index at %"PRIu64" contains %d entries", ctx->header.indexOffset, idxHeader.entries);
+
+    idxEntries = malloc(sizeof(IndexEntry) * idxHeader.entries);
+
+    if(idxEntries == NULL)
+    {
+        errorNo = errno;
+        free(ctx);
+        errno = errorNo;
+
+        return NULL;
+    }
+
+    memset(idxEntries, 0, sizeof(IndexEntry) * idxHeader.entries);
+    readBytes = fread(idxEntries, sizeof(IndexEntry), idxHeader.entries, ctx->imageStream);
+
+    if(readBytes != sizeof(IndexEntry) * idxHeader.entries)
+    {
+        free(idxEntries);
+        free(ctx);
+        errno = DICF_ERROR_CANNOT_READ_INDEX;
+
+        return NULL;
+    }
+
+    for(int i = 0; i < idxHeader.entries; i++)
+    {
+        fprintf(stderr,
+                "libdicformat: Block type %4s with data type %4s is indexed to be at %"PRIu64"",
+                (char *)&idxEntries[i].blockType,
+                (char *)&idxEntries[i].dataType,
+                idxEntries[i].offset);
+    }
+
     ctx->magic               = DIC_MAGIC;
     ctx->libraryMajorVersion = LIBDICFORMAT_MAJOR_VERSION;
     ctx->libraryMinorVersion = LIBDICFORMAT_MINOR_VERSION;
 
-    fprintf(stderr,
-            "libdicformat: Opened image version %d.%d",
-            ctx->header.imageMajorVersion,
-            ctx->header.imageMinorVersion);
-
+    free(idxEntries);
     return ctx;
 }

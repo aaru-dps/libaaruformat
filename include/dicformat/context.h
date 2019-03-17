@@ -10,11 +10,21 @@
 
 typedef struct dicformatContext
 {
-    uint64_t  magic;
-    uint8_t   libraryMajorVersion;
-    uint8_t   libraryMinorVersion;
-    FILE      *imageStream;
-    DicHeader header;
+    uint64_t              magic;
+    uint8_t               libraryMajorVersion;
+    uint8_t               libraryMinorVersion;
+    FILE                  *imageStream;
+    DicHeader             header;
+    struct dataLinkedList *mediaTagsHead;
+    struct dataLinkedList *mediaTagsTail;
 } dicformatContext;
+
+typedef struct dataLinkedList
+{
+    struct dataLinkedList *previous;
+    struct dataLinkedList *next;
+    unsigned char         *data;
+    int                   type;
+} dataLinkedList;
 
 #endif //LIBDICFORMAT_CONTEXT_H
