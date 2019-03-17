@@ -36,7 +36,6 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <string.h>
-#include <stdbool.h>
 #include <sys/mman.h>
 
 // TODO: Check CRC64 on structures
@@ -421,6 +420,41 @@ void *open(const char *filepath)
                             foundUserDataDdt = false;
                             break;
 
+                    }
+                }
+                else if(idxEntries[i].dataType == CdSectorPrefixCorrected ||
+                        idxEntries[i].dataType == CdSectorSuffixCorrected)
+                {
+                    switch(ddtHeader.compression)
+                    {
+                        case None:data = malloc(ddtHeader.entries * sizeof(uint32_t));
+
+                            if(mediaTag == NULL)
+                            {
+                                fprintf(stderr, "libdicformat: Cannot allocate memory for deduplication table.");
+                                break;
+                            }
+
+                            readBytes = fread(data, ddtHeader.entries * sizeof(uint32_t), 1, ctx->imageStream);
+
+                            if(readBytes != ddtHeader.entries * sizeof(uint32_t))
+                            {
+                                free(data);
+                                fprintf(stderr, "Could not read deduplication table, continuing...");
+                                break;
+                            }
+
+                            if(idxEntries[i].dataType == CdSectorPrefixCorrected)
+                                ctx->sectorPrefixCorrected = data;
+                            else if(idxEntries[i].dataType == CdSectorSuffixCorrected)
+                                ctx->sectorPrefixCorrected = data;
+
+                            break;
+                        default:
+                            fprintf(stderr,
+                                    "libdicformat: Found unknown compression type %d, continuing...",
+                                    blockHeader.compression);
+                            break;
                     }
                 }
                 break;

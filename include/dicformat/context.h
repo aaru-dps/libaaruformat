@@ -34,6 +34,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 typedef struct dicformatContext
 {
@@ -50,10 +51,13 @@ typedef struct dicformatContext
     unsigned char         *sectorSuffixCorrected;
     unsigned char         *sectorSubchannel;
     unsigned char         *mode2Subheaders;
-    byte                  shift;
+    unsigned char         shift;
     bool                  inMemoryDdt;
     uint64_t              *userDataDdt;
     size_t                mappedMemoryDdtSize;
+    uint32_t              *sectorPrefixDdt;
+    uint32_t              *sectorSuffixDdt;
+
 } dicformatContext;
 
 typedef struct dataLinkedList

@@ -87,6 +87,10 @@ int close(void *context)
     {
         munmap(ctx->userDataDdt, ctx->mappedMemoryDdtSize);
     }
+
+    free(ctx->sectorPrefixDdt);
+    free(ctx->sectorSuffixDdt);
+
     free(context);
 
     return 0;
