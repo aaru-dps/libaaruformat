@@ -46,18 +46,20 @@ typedef struct dicformatContext
     struct dataLinkedList *mediaTagsHead;
     struct dataLinkedList *mediaTagsTail;
     unsigned char         *sectorPrefix;
-    unsigned char         *sectorPrefixCorrected;
-    unsigned char         *sectorSuffix;
-    unsigned char         *sectorSuffixCorrected;
-    unsigned char         *sectorSubchannel;
-    unsigned char         *mode2Subheaders;
-    unsigned char         shift;
-    bool                  inMemoryDdt;
-    uint64_t              *userDataDdt;
-    size_t                mappedMemoryDdtSize;
-    uint32_t              *sectorPrefixDdt;
-    uint32_t              *sectorSuffixDdt;
-    GeometryBlockHeader   geometryBlock;
+    unsigned char       *sectorPrefixCorrected;
+    unsigned char       *sectorSuffix;
+    unsigned char       *sectorSuffixCorrected;
+    unsigned char       *sectorSubchannel;
+    unsigned char       *mode2Subheaders;
+    unsigned char       shift;
+    bool                inMemoryDdt;
+    uint64_t            *userDataDdt;
+    size_t              mappedMemoryDdtSize;
+    uint32_t            *sectorPrefixDdt;
+    uint32_t            *sectorSuffixDdt;
+    GeometryBlockHeader geometryBlock;
+    MetadataBlockHeader metadataBlockHeader;
+    unsigned char       *metadataBlock;
 } dicformatContext;
 
 typedef struct dataLinkedList

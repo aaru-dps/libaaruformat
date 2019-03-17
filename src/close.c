@@ -91,6 +91,8 @@ int close(void *context)
     free(ctx->sectorPrefixDdt);
     free(ctx->sectorSuffixDdt);
 
+    free(ctx->metadataBlock);
+
     free(context);
 
     return 0;

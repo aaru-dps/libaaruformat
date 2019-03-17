@@ -463,6 +463,7 @@ void *open(const char *filepath)
 
                 if(readBytes != sizeof(GeometryBlockHeader))
                 {
+                    memset(&ctx->geometryBlock, 0, sizeof(GeometryBlockHeader));
                     fprintf(stderr, "Could not read geometry block, continuing...");
                     break;
                 }
@@ -485,8 +486,48 @@ void *open(const char *filepath)
                     memset(&ctx->geometryBlock, 0, sizeof(GeometryBlockHeader));
 
                 break;
-            case MetadataBlock:
-                // TODO
+                // Metadata block
+            case MetadataBlock:readBytes =
+                                       fread(&ctx->metadataBlockHeader,
+                                             sizeof(MetadataBlockHeader),
+                                             1,
+                                             ctx->imageStream);
+
+                if(readBytes != sizeof(MetadataBlockHeader))
+                {
+                    memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
+                    fprintf(stderr, "Could not read metadata block header, continuing...");
+                    break;
+                }
+
+                if(ctx->metadataBlockHeader.identifier != idxEntries[i].blockType)
+                {
+                    memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
+                    fprintf(stderr,
+
+                            "libdicformat: Incorrect identifier for data block at position %"PRIu64"",
+                            idxEntries[i].offset);
+                    break;
+                }
+
+                ctx->metadataBlock = malloc(ctx->metadataBlockHeader.blockSize);
+
+                if(ctx->metadataBlock == NULL)
+                {
+                    memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
+                    fprintf(stderr, "libdicformat: Could not allocate memory for metadata block, continuing...");
+                    break;
+                }
+
+                readBytes = fread(ctx->metadataBlock, ctx->metadataBlockHeader.blockSize, 1, ctx->imageStream);
+
+                if(readBytes != ctx->metadataBlockHeader.blockSize)
+                {
+                    memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
+                    free(ctx->metadataBlock);
+                    fprintf(stderr, "Could not read metadata block, continuing...");
+                }
+
                 break;
             case TracksBlock:
                 // TODO
