@@ -2,14 +2,14 @@
 // The Disc Image Chef
 // ----------------------------------------------------------------------------
 //
-// Filename       : decsl.h
+// Filename       : close.c
 // Author(s)      : Natalia Portillo <claunia@claunia.com>
 //
 // Component      : libdicformat.
 //
 // --[ Description ] ----------------------------------------------------------
 //
-//     Declares exportable functions.
+//     Handles closing DiscImageChef format disk images.
 //
 // --[ License ] --------------------------------------------------------------
 //
@@ -30,16 +30,33 @@
 // Copyright © 2011-2019 Natalia Portillo
 // ****************************************************************************/
 
-#ifndef LIBDICFORMAT_DECLS_H
-#define LIBDICFORMAT_DECLS_H
-
-int identify(const char *filename);
-
-int identifyStream(FILE *imageStream);
-
-void *open(const char *filepath);
+#include <stdio.h>
+#include <dicformat.h>
+#include <malloc.h>
+#include <errno.h>
 
 int close(void *context)
+{
+    if(context == NULL)
+    {
+        errno = EINVAL;
+        return -1;
+    }
 
+    dicformatContext *ctx = context;
 
-#endif //LIBDICFORMAT_DECLS_H
+    // TODO: Cast this field without casting the whole structure, as this can buffer overlow
+    // Not a libdicformat context
+    if(ctx->magic != DIC_MAGIC)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    if(ctx->imageStream != NULL)
+        fclose(ctx->imageStream);
+
+    free(context);
+
+    return 0;
+}
