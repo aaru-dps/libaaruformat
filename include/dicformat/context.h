@@ -57,7 +57,7 @@ typedef struct dicformatContext
     size_t                mappedMemoryDdtSize;
     uint32_t              *sectorPrefixDdt;
     uint32_t              *sectorSuffixDdt;
-
+    GeometryBlockHeader   geometryBlock;
 } dicformatContext;
 
 typedef struct dataLinkedList

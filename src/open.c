@@ -458,8 +458,32 @@ void *open(const char *filepath)
                     }
                 }
                 break;
-            case GeometryBlock:
-                // TODO
+                // Logical geometry block. It doesn't have a CRC coz, well, it's not so important
+            case GeometryBlock:readBytes = fread(&ctx->geometryBlock, sizeof(GeometryBlockHeader), 1, ctx->imageStream);
+
+                if(readBytes != sizeof(GeometryBlockHeader))
+                {
+                    fprintf(stderr, "Could not read geometry block, continuing...");
+                    break;
+                }
+
+                if(ctx->geometryBlock.identifier == GeometryBlock)
+                {
+                    fprintf(stderr,
+                            "libdicformat: Geometry set to %d cylinders %d heads %d sectors per track",
+                            ctx->geometryBlock.cylinders,
+                            ctx->geometryBlock.heads,
+                            ctx->geometryBlock.sectorsPerTrack);
+                    // TODO: ImageInfo
+                    /*
+                        imageInfo.Cylinders       = geometryBlock.cylinders;
+                        imageInfo.Heads           = geometryBlock.heads;
+                        imageInfo.SectorsPerTrack = geometryBlock.sectorsPerTrack;
+                    */
+                }
+                else
+                    memset(&ctx->geometryBlock, 0, sizeof(GeometryBlockHeader));
+
                 break;
             case MetadataBlock:
                 // TODO
