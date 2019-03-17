@@ -2,14 +2,14 @@
 // The Disc Image Chef
 // ----------------------------------------------------------------------------
 //
-// Filename       : decsl.h
+// Filename       : identify.c
 // Author(s)      : Natalia Portillo <claunia@claunia.com>
 //
-// Component      : libdicformat.
+// Component      : Disk image plugins.
 //
 // --[ Description ] ----------------------------------------------------------
 //
-//     Declares exportable functions.
+//     Identifies DiscImageChef format disk images.
 //
 // --[ License ] --------------------------------------------------------------
 //
@@ -30,11 +30,53 @@
 // Copyright © 2011-2019 Natalia Portillo
 // ****************************************************************************/
 
-#ifndef LIBDICFORMAT_DECLS_H
-#define LIBDICFORMAT_DECLS_H
+#include <errno.h>
+#include <stdio.h>
+#include <dicformat.h>
 
-int identify(const char *filename);
+//! Identifies a file as dicformat, using path
+/*!
+ *
+ * @param filename path to the file to identify
+ * @return If positive, confidence value, with 100 being maximum confidentiality, and 0 not recognizing the file.
+ * If negative, error value
+ */
+int identify(const char *filename)
+{
+    FILE *stream;
 
-int identifyStream(FILE *imageStream);
+    stream = fopen(filename, "rb");
 
-#endif //LIBDICFORMAT_DECLS_H
+    if(stream == NULL)
+        return errno;
+
+    int ret = identifyStream(stream);
+
+    fclose(stream);
+
+    return ret;
+}
+
+//! Identifies a file as dicformat, using an already existing stream
+/*!
+ *
+ * @param imageStream stream of the file to identify
+ * @return If positive, confidence value, with 100 being maximum confidentiality, and 0 not recognizing the file.
+ * If negative, error value
+ */
+int identifyStream(FILE *imageStream)
+{
+    fseek(imageStream, 0, SEEK_SET);
+
+    DicHeader header;
+
+    size_t ret = fread(&header, sizeof(DicHeader), 1, imageStream);
+
+    if(ret < sizeof(DicHeader))
+        return 0;
+
+    if(header.identifier == DIC_MAGIC && header.imageMajorVersion <= DICF_VERSION)
+        return 100;
+
+    return 0;
+}

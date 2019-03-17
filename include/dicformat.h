@@ -35,5 +35,7 @@
 
 #include "dicformat/consts.h"
 #include "dicformat/enums.h"
+#include "dicformat/decls.h"
+#include "dicformat/structs.h"
 
 #endif //LIBDICFORMAT_DICFORMAT_H
