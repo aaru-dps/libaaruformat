@@ -50,6 +50,10 @@ typedef struct dicformatContext
     unsigned char         *sectorSuffixCorrected;
     unsigned char         *sectorSubchannel;
     unsigned char         *mode2Subheaders;
+    byte                  shift;
+    bool                  inMemoryDdt;
+    uint64_t              *userDataDdt;
+    size_t                mappedMemoryDdtSize;
 } dicformatContext;
 
 typedef struct dataLinkedList

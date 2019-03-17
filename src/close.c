@@ -34,6 +34,7 @@
 #include <dicformat.h>
 #include <malloc.h>
 #include <errno.h>
+#include <sys/mman.h>
 
 int close(void *context)
 {
@@ -82,6 +83,10 @@ int close(void *context)
         free(ctx->mediaTagsHead);
     }
 
+    if(!ctx->inMemoryDdt)
+    {
+        munmap(ctx->userDataDdt, ctx->mappedMemoryDdtSize);
+    }
     free(context);
 
     return 0;

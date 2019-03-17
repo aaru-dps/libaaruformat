@@ -37,6 +37,7 @@
 #include <inttypes.h>
 #include <string.h>
 #include <stdbool.h>
+#include <sys/mman.h>
 
 // TODO: Check CRC64 on structures
 // TODO: ImageInfo
@@ -178,14 +179,15 @@ void *open(const char *filepath)
             continue;
         }
 
+        BlockHeader blockHeader;
+        DdtHeader   ddtHeader;
+
         switch(idxEntries[i].blockType)
         {
             case DataBlock:
                 // NOP block, skip
                 if(idxEntries[i].dataType == NoData)
                     break;
-
-                BlockHeader blockHeader;
 
                 readBytes = fread(&blockHeader, sizeof(BlockHeader), 1, ctx->imageStream);
 
@@ -376,8 +378,51 @@ void *open(const char *filepath)
                 }
 
                 break;
-            case DeDuplicationTable:
-                // TODO
+            case DeDuplicationTable:readBytes = fread(&ddtHeader, sizeof(DdtHeader), 1, ctx->imageStream);
+
+                if(readBytes != sizeof(DdtHeader))
+                {
+                    fprintf(stderr, "libdicformat: Could not read block header at %"PRIu64"", idxEntries[i].offset);
+
+                    break;
+                }
+
+                foundUserDataDdt = true;
+
+                if(idxEntries[i].dataType == UserData)
+                {
+                    ctx->shift = ddtHeader.shift;
+
+                    // Check for DDT compression
+                    switch(ddtHeader.compression)
+                    {
+                        case None:ctx->mappedMemoryDdtSize = sizeof(uint64_t) * ddtHeader.entries;
+                            ctx->userDataDdt =
+                                    mmap(NULL,
+                                         ctx->mappedMemoryDdtSize,
+                                         PROT_READ,
+                                         MAP_SHARED,
+                                         fileno(ctx->imageStream),
+                                         idxEntries[i].offset + sizeof(ddtHeader));
+
+                            if(ctx->userDataDdt == MAP_FAILED)
+                            {
+                                foundUserDataDdt = false;
+                                fprintf(stderr, "libdicformat: Could not read map deduplication table.");
+                                break;
+                            }
+
+                            ctx->inMemoryDdt = false;
+                            break;
+                        default:
+                            fprintf(stderr,
+                                    "libdicformat: Found unknown compression type %d, continuing...",
+                                    blockHeader.compression);
+                            foundUserDataDdt = false;
+                            break;
+
+                    }
+                }
                 break;
             case GeometryBlock:
                 // TODO
