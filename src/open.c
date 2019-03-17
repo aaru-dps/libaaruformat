@@ -259,6 +259,8 @@ void *open(const char *filepath)
 
                 // TODO: Check CRC, if not correct, skip it
 
+                dataLinkedList *mediaTag = NULL;
+
                 // Check if it's not a media tag, but a sector tag, and fill the appropriate table then
                 switch(idxEntries[i].dataType)
                 {
@@ -320,7 +322,56 @@ void *open(const char *filepath)
                     case CompactDiscMode2Subheader:ctx->mode2Subheaders = data;
                         break;
                     default:
-                        // TODO: MediaTags
+                        if(ctx->mediaTagsHead != NULL)
+                        {
+                            mediaTag = ctx->mediaTagsHead;
+                            while(mediaTag != NULL)
+                            {
+                                if(mediaTag->type == blockHeader.type)
+                                {
+                                    fprintf(stderr,
+                                            "libdicformat: Media tag type %d duplicated, removing previous entry...",
+                                            blockHeader.type);
+                                    free(mediaTag->data);
+                                    mediaTag->data = data;
+                                    break;
+                                }
+
+                                mediaTag = mediaTag->next;
+                            }
+                        }
+
+                        // If we mediaTag is NULL means we have arrived the end of the list without finding a duplicate or the list was empty
+                        if(mediaTag != NULL)
+                            break;
+
+                        mediaTag = malloc(sizeof(dataLinkedList));
+
+                        if(mediaTag == NULL)
+                        {
+                            fprintf(stderr, "libdicformat: Cannot allocate memory for media tag list entry.");
+                            break;
+                        }
+                        memset(mediaTag, 0, sizeof(dataLinkedList));
+
+                        // TODO: MediaTagType
+                        // MediaTagType mediaTagType = GetMediaTagTypeForDataType(blockHeader.type);
+
+                        mediaTag->type = blockHeader.type;
+                        mediaTag->data = data;
+
+                        if(ctx->mediaTagsHead == NULL)
+                        {
+                            ctx->mediaTagsHead = mediaTag;
+                        }
+                        else
+                        {
+                            mediaTag->previous       = ctx->mediaTagsTail;
+                            ctx->mediaTagsTail->next = mediaTag;
+                        }
+
+                        ctx->mediaTagsTail = mediaTag;
+
                         break;
                 }
 

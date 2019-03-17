@@ -64,6 +64,24 @@ int close(void *context)
     free(ctx->sectorSubchannel);
     free(ctx->mode2Subheaders);
 
+    if(ctx->mediaTagsTail != NULL)
+    {
+        dataLinkedList *mediaTag = ctx->mediaTagsTail;
+
+        while(mediaTag->previous != NULL)
+        {
+            free(mediaTag->data);
+            mediaTag = mediaTag->previous;
+            free(mediaTag->next);
+        }
+    }
+
+    if(ctx->mediaTagsHead != NULL)
+    {
+        free(ctx->mediaTagsHead->data);
+        free(ctx->mediaTagsHead);
+    }
+
     free(context);
 
     return 0;
