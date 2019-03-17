@@ -49,6 +49,7 @@ void *open(const char *filepath)
     IndexHeader      idxHeader;
     IndexEntry       *idxEntries;
     uint64_t         ImageSize; // TODO: This should be in ImageInfo
+    unsigned char    *data;
 
     memset(ctx, 0, sizeof(dicformatContext));
 
@@ -162,6 +163,7 @@ void *open(const char *filepath)
     }
 
     bool             foundUserDataDdt = false;
+    ImageSize = 0;
     for(int i = 0; i < idxHeader.entries; i++)
     {
         pos = fseek(ctx->imageStream, idxEntries[i].offset, SEEK_SET);
@@ -179,7 +181,149 @@ void *open(const char *filepath)
         switch(idxEntries[i].blockType)
         {
             case DataBlock:
-                // TODO
+                // NOP block, skip
+                if(idxEntries[i].dataType == NoData)
+                    break;
+
+                BlockHeader blockHeader;
+
+                readBytes = fread(&blockHeader, sizeof(BlockHeader), 1, ctx->imageStream);
+
+                if(readBytes != sizeof(BlockHeader))
+                {
+                    fprintf(stderr, "libdicformat: Could not read block header at %"PRIu64"", idxEntries[i].offset);
+
+                    break;
+                }
+
+                ImageSize += blockHeader.cmpLength;
+
+                // Unused, skip
+                if(idxEntries[i].dataType == UserData)
+                {
+                    // TODO: ImageInfo
+                    //if(blockHeader.sectorSize > imageInfo.SectorSize)
+                    //    imageInfo.SectorSize = blockHeader.sectorSize;
+
+                    break;
+                }
+
+                if(blockHeader.identifier != idxEntries[i].blockType)
+                {
+                    fprintf(stderr,
+                            "libdicformat: Incorrect identifier for data block at position %"PRIu64"",
+                            idxEntries[i].offset);
+                    break;
+                }
+
+                if(blockHeader.type != idxEntries[i].dataType)
+                {
+                    fprintf(stderr,
+                            "libdicformat: Expected block with data type %4s at position %"PRIu64" but found data type %4s",
+                            (char *)&idxEntries[i].blockType,
+                            idxEntries[i].offset,
+                            (char *)&blockHeader.type);
+                    break;
+                }
+
+                fprintf(stderr,
+                        "libdicformat: Found data block with type %4s at position %"PRIu64"",
+                        (char *)&idxEntries[i].blockType,
+                        idxEntries[i].offset);
+
+                if(blockHeader.compression == None)
+                {
+                    data = malloc(blockHeader.length);
+                    if(data == NULL)
+                    {
+                        fprintf(stderr, "Cannot allocate memory for block, continuing...");
+                        break;
+                    }
+
+                    readBytes = fread(data, blockHeader.length, 1, ctx->imageStream);
+
+                    if(readBytes != blockHeader.length)
+                    {
+                        free(data);
+                        fprintf(stderr, "Could not read block, continuing...");
+                        break;
+                    }
+                }
+                else
+                {
+                    fprintf(stderr,
+                            "libdicformat: Found unknown compression type %d, continuing...",
+                            blockHeader.compression);
+                    break;
+                }
+
+                // TODO: Check CRC, if not correct, skip it
+
+                // Check if it's not a media tag, but a sector tag, and fill the appropriate table then
+                switch(idxEntries[i].dataType)
+                {
+                    case CdSectorPrefix:
+                    case CdSectorPrefixCorrected:
+                        if(idxEntries[i].dataType == CdSectorPrefixCorrected)
+                        {
+                            ctx->sectorPrefixCorrected = data;
+                        }
+                        else
+                            ctx->sectorPrefix = data;
+
+                        // TODO: ReadableSectorTags
+                        /*
+                                                if(!imageInfo.ReadableSectorTags.Contains(SectorTagType.CdSectorSync))
+                                                    imageInfo.ReadableSectorTags.Add(SectorTagType.CdSectorSync);
+                                                if(!imageInfo.ReadableSectorTags.Contains(SectorTagType.CdSectorHeader))
+                                                    imageInfo.ReadableSectorTags.Add(SectorTagType.CdSectorHeader);
+                        */
+
+                        break;
+                    case CdSectorSuffix:
+                    case CdSectorSuffixCorrected:
+                        if(idxEntries[i].dataType == CdSectorSuffixCorrected)
+                            ctx->sectorSuffixCorrected = data;
+                        else
+                            ctx->sectorSuffix = data;
+
+                        // TODO: ReadableSectorTags
+                        /*
+                            if(!imageInfo.ReadableSectorTags.Contains(SectorTagType.CdSectorSubHeader))
+                                imageInfo.ReadableSectorTags.Add(SectorTagType.CdSectorSubHeader);
+                            if(!imageInfo.ReadableSectorTags.Contains(SectorTagType.CdSectorEcc))
+                                imageInfo.ReadableSectorTags.Add(SectorTagType.CdSectorEcc);
+                            if(!imageInfo.ReadableSectorTags.Contains(SectorTagType.CdSectorEccP))
+                                imageInfo.ReadableSectorTags.Add(SectorTagType.CdSectorEccP);
+                            if(!imageInfo.ReadableSectorTags.Contains(SectorTagType.CdSectorEccQ))
+                                imageInfo.ReadableSectorTags.Add(SectorTagType.CdSectorEccQ);
+                            if(!imageInfo.ReadableSectorTags.Contains(SectorTagType.CdSectorEdc))
+                                imageInfo.ReadableSectorTags.Add(SectorTagType.CdSectorEdc);
+                        */
+                        break;
+                    case CdSectorSubchannel:ctx->sectorSubchannel = data;
+                        // TODO: ReadableSectorTags
+                        /*
+                            if(!imageInfo.ReadableSectorTags.Contains(SectorTagType.CdSectorSubchannel))
+                                imageInfo.ReadableSectorTags.Add(SectorTagType.CdSectorSubchannel);
+                        */
+                        break;
+                    case AppleProfileTag:
+                    case AppleSonyTag:
+                    case PriamDataTowerTag:ctx->sectorSubchannel = data;
+                        // TODO: ReadableSectorTags
+                        /*
+                            if(!imageInfo.ReadableSectorTags.Contains(SectorTagType.AppleSectorTag))
+                                imageInfo.ReadableSectorTags.Add(SectorTagType.AppleSectorTag);
+                        */
+                        break;
+                    case CompactDiscMode2Subheader:ctx->mode2Subheaders = data;
+                        break;
+                    default:
+                        // TODO: MediaTags
+                        break;
+                }
+
                 break;
             case DeDuplicationTable:
                 // TODO

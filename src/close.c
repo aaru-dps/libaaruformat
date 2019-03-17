@@ -53,8 +53,16 @@ int close(void *context)
         return -1;
     }
 
+    // This may do nothing if imageStream is NULL, but as the behaviour is undefined, better sure than sorry
     if(ctx->imageStream != NULL)
         fclose(ctx->imageStream);
+
+    free(ctx->sectorPrefix);
+    free(ctx->sectorPrefixCorrected);
+    free(ctx->sectorSuffix);
+    free(ctx->sectorSuffixCorrected);
+    free(ctx->sectorSubchannel);
+    free(ctx->mode2Subheaders);
 
     free(context);
 
