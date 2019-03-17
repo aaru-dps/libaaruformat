@@ -39,7 +39,7 @@ int identifyStream(FILE *imageStream);
 
 void *open(const char *filepath);
 
-int close(void *context)
+int close(void *context);
 
 
 #endif //LIBDICFORMAT_DECLS_H
