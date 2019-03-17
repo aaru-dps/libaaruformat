@@ -36,17 +36,19 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <string.h>
+#include <stdbool.h>
 
 // TODO: Check CRC64 on structures
 // TODO: ImageInfo
 void *open(const char *filepath)
 {
-    dicformatContext *ctx = malloc(sizeof(dicformatContext));
+    dicformatContext *ctx             = malloc(sizeof(dicformatContext));
     int              errorNo;
     size_t           readBytes;
     long             pos;
     IndexHeader      idxHeader;
     IndexEntry       *idxEntries;
+    uint64_t         ImageSize; // TODO: This should be in ImageInfo
 
     memset(ctx, 0, sizeof(dicformatContext));
 
@@ -157,6 +159,54 @@ void *open(const char *filepath)
                 (char *)&idxEntries[i].blockType,
                 (char *)&idxEntries[i].dataType,
                 idxEntries[i].offset);
+    }
+
+    bool             foundUserDataDdt = false;
+    for(int i = 0; i < idxHeader.entries; i++)
+    {
+        pos = fseek(ctx->imageStream, idxEntries[i].offset, SEEK_SET);
+
+        if(pos < 0 || ftell(ctx->imageStream) != idxEntries[i].offset)
+        {
+            fprintf(stderr,
+                    "libdicformat: Could not seek to %"PRIu64" as indicated by index entry %d, continuing...",
+                    idxEntries[i].offset,
+                    i);
+
+            continue;
+        }
+
+        switch(idxEntries[i].blockType)
+        {
+            case DataBlock:
+                // TODO
+                break;
+            case DeDuplicationTable:
+                // TODO
+                break;
+            case GeometryBlock:
+                // TODO
+                break;
+            case MetadataBlock:
+                // TODO
+                break;
+            case TracksBlock:
+                // TODO
+                break;
+            case CicmBlock:
+                // TODO
+                break;
+            case DumpHardwareBlock:
+                // TODO
+                break;
+            default:
+                fprintf(stderr,
+                        "libdicformat: Unhandled block type %4s with data type %4s is indexed to be at %"PRIu64"",
+                        (char *)&idxEntries[i].blockType,
+                        (char *)&idxEntries[i].dataType,
+                        idxEntries[i].offset);
+                break;
+        }
     }
 
     ctx->magic               = DIC_MAGIC;
