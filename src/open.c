@@ -440,7 +440,7 @@ void *open(const char *filepath)
                             if(readBytes != ddtHeader.entries * sizeof(uint32_t))
                             {
                                 free(data);
-                                fprintf(stderr, "Could not read deduplication table, continuing...");
+                                fprintf(stderr, "libdicformat: Could not read deduplication table, continuing...");
                                 break;
                             }
 
@@ -464,7 +464,7 @@ void *open(const char *filepath)
                 if(readBytes != sizeof(GeometryBlockHeader))
                 {
                     memset(&ctx->geometryBlock, 0, sizeof(GeometryBlockHeader));
-                    fprintf(stderr, "Could not read geometry block, continuing...");
+                    fprintf(stderr, "libdicformat: Could not read geometry block, continuing...");
                     break;
                 }
 
@@ -487,16 +487,16 @@ void *open(const char *filepath)
 
                 break;
                 // Metadata block
-            case MetadataBlock:readBytes =
-                                       fread(&ctx->metadataBlockHeader,
-                                             sizeof(MetadataBlockHeader),
-                                             1,
-                                             ctx->imageStream);
+            case MetadataBlock: readBytes =
+                                        fread(&ctx->metadataBlockHeader,
+                                              sizeof(MetadataBlockHeader),
+                                              1,
+                                              ctx->imageStream);
 
                 if(readBytes != sizeof(MetadataBlockHeader))
                 {
                     memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
-                    fprintf(stderr, "Could not read metadata block header, continuing...");
+                    fprintf(stderr, "libdicformat: Could not read metadata block header, continuing...");
                     break;
                 }
 
@@ -504,7 +504,6 @@ void *open(const char *filepath)
                 {
                     memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
                     fprintf(stderr,
-
                             "libdicformat: Incorrect identifier for data block at position %"PRIu64"",
                             idxEntries[i].offset);
                     break;
@@ -525,12 +524,53 @@ void *open(const char *filepath)
                 {
                     memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
                     free(ctx->metadataBlock);
-                    fprintf(stderr, "Could not read metadata block, continuing...");
+                    fprintf(stderr, "libdicformat: Could not read metadata block, continuing...");
                 }
 
                 break;
-            case TracksBlock:
-                // TODO
+            case TracksBlock: readBytes = fread(&ctx->tracksHeader, sizeof(TracksHeader), 1, ctx->imageStream);
+
+                if(readBytes != sizeof(TracksHeader))
+                {
+                    memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
+                    fprintf(stderr, "libdicformat: Could not read tracks header, continuing...");
+                    break;
+                }
+
+                if(ctx->tracksHeader.identifier != TracksBlock)
+                {
+                    memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
+                    fprintf(stderr,
+                            "libdicformat: Incorrect identifier for data block at position %"PRIu64"",
+                            idxEntries[i].offset);
+                }
+
+                ctx->trackEntries = malloc(sizeof(TrackEntry) * ctx->tracksHeader.entries);
+
+                if(ctx->trackEntries == NULL)
+                {
+                    memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
+                    fprintf(stderr, "libdicformat: Could not allocate memory for metadata block, continuing...");
+                    break;
+                }
+
+                readBytes = fread(ctx->trackEntries, sizeof(TrackEntry), ctx->tracksHeader.entries, ctx->imageStream);
+
+                if(readBytes != ctx->metadataBlockHeader.blockSize)
+                {
+                    memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
+                    free(ctx->trackEntries);
+                    fprintf(stderr, "libdicformat: Could not read metadata block, continuing...");
+                }
+
+                fprintf(stderr,
+                        "libdicformat: Found %d tracks at position %"PRIu64".",
+                        ctx->tracksHeader.entries,
+                        idxEntries[i].offset);
+
+                // TODO: Cache flags and ISRCs
+                // TODO: ImageInfo
+
                 break;
             case CicmBlock:
                 // TODO

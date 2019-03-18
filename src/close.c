@@ -92,6 +92,7 @@ int close(void *context)
     free(ctx->sectorSuffixDdt);
 
     free(ctx->metadataBlock);
+    free(ctx->trackEntries);
 
     free(context);
 

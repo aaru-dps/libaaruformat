@@ -60,6 +60,8 @@ typedef struct dicformatContext
     GeometryBlockHeader geometryBlock;
     MetadataBlockHeader metadataBlockHeader;
     unsigned char       *metadataBlock;
+    TracksHeader        tracksHeader;
+    TrackEntry          *trackEntries;
 } dicformatContext;
 
 typedef struct dataLinkedList
