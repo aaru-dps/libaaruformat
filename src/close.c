@@ -46,7 +46,7 @@ int close(void *context)
 
     dicformatContext *ctx = context;
 
-    // TODO: Cast this field without casting the whole structure, as this can buffer overlow
+    // TODO: Cast this field without casting the whole structure, as this can buffer overflow
     // Not a libdicformat context
     if(ctx->magic != DIC_MAGIC)
     {
@@ -93,6 +93,7 @@ int close(void *context)
 
     free(ctx->metadataBlock);
     free(ctx->trackEntries);
+    free(ctx->cicmBlock);
 
     free(context);
 

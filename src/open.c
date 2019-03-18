@@ -570,8 +570,44 @@ void *open(const char *filepath)
                 // TODO: ImageInfo
 
                 break;
-            case CicmBlock:
-                // TODO
+                // CICM XML metadata block
+            case CicmBlock:readBytes = fread(&ctx->cicmBlockHeader, sizeof(CicmMetadataBlock), 1, ctx->imageStream);
+
+                if(readBytes != sizeof(CicmMetadataBlock))
+                {
+                    memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
+                    fprintf(stderr, "libdicformat: Could not read CICM XML metadata header, continuing...");
+                    break;
+                }
+
+                if(ctx->cicmBlockHeader.identifier != CicmBlock)
+                {
+                    memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
+                    fprintf(stderr,
+                            "libdicformat: Incorrect identifier for data block at position %"PRIu64"",
+                            idxEntries[i].offset);
+                }
+
+                ctx->cicmBlock = malloc(ctx->cicmBlockHeader.length);
+
+                if(ctx->cicmBlock == NULL)
+                {
+                    memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
+                    fprintf(stderr,
+                            "libdicformat: Could not allocate memory for CICM XML metadata block, continuing...");
+                    break;
+                }
+
+                readBytes = fread(ctx->cicmBlock, ctx->cicmBlockHeader.length, 1, ctx->imageStream);
+
+                if(readBytes != ctx->metadataBlockHeader.blockSize)
+                {
+                    memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
+                    free(ctx->cicmBlock);
+                    fprintf(stderr, "libdicformat: Could not read CICM XML metadata block, continuing...");
+                }
+
+                fprintf(stderr, "libdicformat: Found CICM XML metadata block %"PRIu64".", idxEntries[i].offset);
                 break;
             case DumpHardwareBlock:
                 // TODO
