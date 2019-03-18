@@ -155,8 +155,7 @@ void *open(const char *filepath)
 
     for(int i = 0; i < idxHeader.entries; i++)
     {
-        fprintf(stderr,
-                "libdicformat: Block type %4s with data type %4s is indexed to be at %"PRIu64"",
+        fprintf(stderr, "libdicformat: Block type %4.4s with data type %4.4s is indexed to be at %"PRIu64"",
                 (char *)&idxEntries[i].blockType,
                 (char *)&idxEntries[i].dataType,
                 idxEntries[i].offset);
@@ -220,15 +219,14 @@ void *open(const char *filepath)
                 if(blockHeader.type != idxEntries[i].dataType)
                 {
                     fprintf(stderr,
-                            "libdicformat: Expected block with data type %4s at position %"PRIu64" but found data type %4s",
+                            "libdicformat: Expected block with data type %4.4s at position %"PRIu64" but found data type %4.4s",
                             (char *)&idxEntries[i].blockType,
                             idxEntries[i].offset,
                             (char *)&blockHeader.type);
                     break;
                 }
 
-                fprintf(stderr,
-                        "libdicformat: Found data block with type %4s at position %"PRIu64"",
+                fprintf(stderr, "libdicformat: Found data block with type %4.4s at position %"PRIu64"",
                         (char *)&idxEntries[i].blockType,
                         idxEntries[i].offset);
 
@@ -580,7 +578,7 @@ void *open(const char *filepath)
                 break;
             default:
                 fprintf(stderr,
-                        "libdicformat: Unhandled block type %4s with data type %4s is indexed to be at %"PRIu64"",
+                        "libdicformat: Unhandled block type %4.4s with data type %4.4s is indexed to be at %"PRIu64"",
                         (char *)&idxEntries[i].blockType,
                         (char *)&idxEntries[i].dataType,
                         idxEntries[i].offset);
