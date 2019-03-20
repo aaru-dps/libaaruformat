@@ -41,14 +41,16 @@
 // TODO: Check CRC64 on structures
 void *open(const char *filepath)
 {
-    dicformatContext *ctx             = malloc(sizeof(dicformatContext));
+    dicformatContext *ctx;
     int              errorNo;
     size_t           readBytes;
     long             pos;
     IndexHeader      idxHeader;
     IndexEntry       *idxEntries;
     uint8_t          *data;
+    uint32_t         *cdDdt;
 
+    ctx = (dicformatContext *)malloc(sizeof(dicformatContext));
     memset(ctx, 0, sizeof(dicformatContext));
 
     if(ctx == NULL)
@@ -98,7 +100,7 @@ void *open(const char *filepath)
             ctx->header.imageMinorVersion);
 
     ctx->imageInfo.Application        = ctx->header.application;
-    ctx->imageInfo.ApplicationVersion = malloc(32);
+    ctx->imageInfo.ApplicationVersion = (uint8_t *)malloc(32);
     if(ctx->imageInfo.ApplicationVersion != NULL)
     {
         memset(ctx->imageInfo.ApplicationVersion, 0, 32);
@@ -107,7 +109,7 @@ void *open(const char *filepath)
                 ctx->header.applicationMajorVersion,
                 ctx->header.applicationMinorVersion);
     }
-    ctx->imageInfo.Version = malloc(32);
+    ctx->imageInfo.Version = (uint8_t *)malloc(32);
     if(ctx->imageInfo.Version != NULL)
     {
         memset(ctx->imageInfo.Version, 0, 32);
@@ -146,7 +148,7 @@ void *open(const char *filepath)
 
     fprintf(stderr, "libdicformat: Index at %"PRIu64" contains %d entries", ctx->header.indexOffset, idxHeader.entries);
 
-    idxEntries = malloc(sizeof(IndexEntry) * idxHeader.entries);
+    idxEntries = (IndexEntry *)malloc(sizeof(IndexEntry) * idxHeader.entries);
 
     if(idxEntries == NULL)
     {
@@ -247,7 +249,7 @@ void *open(const char *filepath)
 
                 if(blockHeader.compression == None)
                 {
-                    data = malloc(blockHeader.length);
+                    data = (uint8_t *)malloc(blockHeader.length);
                     if(data == NULL)
                     {
                         fprintf(stderr, "Cannot allocate memory for block, continuing...");
@@ -360,7 +362,7 @@ void *open(const char *filepath)
                         if(mediaTag != NULL)
                             break;
 
-                        mediaTag = malloc(sizeof(dataLinkedList));
+                        mediaTag = (dataLinkedList *)malloc(sizeof(dataLinkedList));
 
                         if(mediaTag == NULL)
                         {
@@ -444,7 +446,7 @@ void *open(const char *filepath)
                 {
                     switch(ddtHeader.compression)
                     {
-                        case None:data = malloc(ddtHeader.entries * sizeof(uint32_t));
+                        case None:cdDdt = (uint32_t *)malloc(ddtHeader.entries * sizeof(uint32_t));
 
                             if(mediaTag == NULL)
                             {
@@ -462,9 +464,11 @@ void *open(const char *filepath)
                             }
 
                             if(idxEntries[i].dataType == CdSectorPrefixCorrected)
-                                ctx->sectorPrefixCorrected = data;
+                                ctx->sectorPrefixDdt = cdDdt;
                             else if(idxEntries[i].dataType == CdSectorSuffixCorrected)
-                                ctx->sectorPrefixCorrected = data;
+                                ctx->sectorSuffixDdt = cdDdt;
+                            else
+                                free(cdDdt);
 
                             break;
                         default:
@@ -526,7 +530,7 @@ void *open(const char *filepath)
 
                 ctx->imageInfo.ImageSize += ctx->metadataBlockHeader.blockSize;
 
-                ctx->metadataBlock = malloc(ctx->metadataBlockHeader.blockSize);
+                ctx->metadataBlock = (uint8_t *)malloc(ctx->metadataBlockHeader.blockSize);
 
                 if(ctx->metadataBlock == NULL)
                 {
@@ -558,7 +562,7 @@ void *open(const char *filepath)
                    ctx->metadataBlockHeader.creatorOffset + ctx->metadataBlockHeader.creatorLength <=
                    ctx->metadataBlock.blockSize)
                 {
-                    ctx->imageInfo.Creator = malloc(ctx->metadataBlockHeader.creatorLength);
+                    ctx->imageInfo.Creator = (uint8_t *)malloc(ctx->metadataBlockHeader.creatorLength);
                     if(ctx->imageInfo.Creator != NULL)
                     {
                         memcpy(ctx->imageInfo.Creator,
@@ -571,7 +575,7 @@ void *open(const char *filepath)
                    ctx->metadataBlockHeader.commentsOffset + ctx->metadataBlockHeader.commentsLength <=
                    ctx->metadataBlock.blockSize)
                 {
-                    ctx->imageInfo.Comments = malloc(ctx->metadataBlockHeader.commentsLength);
+                    ctx->imageInfo.Comments = (uint8_t *)malloc(ctx->metadataBlockHeader.commentsLength);
                     if(ctx->imageInfo.Comments != NULL)
                     {
                         memcpy(ctx->imageInfo.Comments,
@@ -584,7 +588,7 @@ void *open(const char *filepath)
                    ctx->metadataBlockHeader.mediaTitleOffset + ctx->metadataBlockHeader.mediaTitleLength <=
                    ctx->metadataBlock.blockSize)
                 {
-                    ctx->imageInfo.MediaTitle = malloc(ctx->metadataBlockHeader.mediaTitleLength);
+                    ctx->imageInfo.MediaTitle = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaTitleLength);
                     if(ctx->imageInfo.MediaTitle != NULL)
                     {
                         memcpy(ctx->imageInfo.MediaTitle,
@@ -597,7 +601,8 @@ void *open(const char *filepath)
                    ctx->metadataBlockHeader.mediaManufacturerOffset +
                    ctx->metadataBlockHeader.mediaManufacturerLength <= ctx->metadataBlock.blockSize)
                 {
-                    ctx->imageInfo.MediaManufacturer = malloc(ctx->metadataBlockHeader.mediaManufacturerLength);
+                    ctx->imageInfo.MediaManufacturer =
+                            (uint8_t *)malloc(ctx->metadataBlockHeader.mediaManufacturerLength);
                     if(ctx->imageInfo.MediaManufacturer != NULL)
                     {
                         memcpy(ctx->imageInfo.MediaManufacturer,
@@ -610,7 +615,7 @@ void *open(const char *filepath)
                    ctx->metadataBlockHeader.mediaModelOffset + ctx->metadataBlockHeader.mediaModelLength <=
                    ctx->metadataBlock.blockSize)
                 {
-                    ctx->imageInfo.MediaModel = malloc(ctx->metadataBlockHeader.mediaModelOffset);
+                    ctx->imageInfo.MediaModel = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaModelOffset);
                     if(ctx->imageInfo.MediaModel != NULL)
                     {
                         memcpy(ctx->imageInfo.MediaModel,
@@ -623,7 +628,8 @@ void *open(const char *filepath)
                    ctx->metadataBlockHeader.mediaSerialNumberOffset +
                    ctx->metadataBlockHeader.mediaSerialNumberLength <= ctx->metadataBlock.blockSize)
                 {
-                    ctx->imageInfo.MediaSerialNumber = malloc(ctx->metadataBlockHeader.mediaSerialNumberLength);
+                    ctx->imageInfo.MediaSerialNumber =
+                            (uint8_t *)malloc(ctx->metadataBlockHeader.mediaSerialNumberLength);
                     if(ctx->imageInfo.MediaSerialNumber != NULL)
                     {
                         memcpy(ctx->imageInfo.MediaSerialNumber,
@@ -636,7 +642,7 @@ void *open(const char *filepath)
                    ctx->metadataBlockHeader.mediaBarcodeOffset + ctx->metadataBlockHeader.mediaBarcodeLength <=
                    ctx->metadataBlock.blockSize)
                 {
-                    ctx->imageInfo.MediaBarcode = malloc(ctx->metadataBlockHeader.mediaBarcodeLength);
+                    ctx->imageInfo.MediaBarcode = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaBarcodeLength);
                     if(ctx->imageInfo.MediaBarcode != NULL)
                     {
                         memcpy(ctx->imageInfo.MediaBarcode,
@@ -649,7 +655,7 @@ void *open(const char *filepath)
                    ctx->metadataBlockHeader.mediaPartNumberOffset + ctx->metadataBlockHeader.mediaPartNumberLength <=
                    ctx->metadataBlock.blockSize)
                 {
-                    ctx->imageInfo.MediaPartNumber = malloc(ctx->metadataBlockHeader.mediaPartNumberLength);
+                    ctx->imageInfo.MediaPartNumber = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaPartNumberLength);
                     if(ctx->imageInfo.MediaPartNumber != NULL)
                     {
                         memcpy(ctx->imageInfo.MediaPartNumber,
@@ -662,7 +668,8 @@ void *open(const char *filepath)
                    ctx->metadataBlockHeader.driveManufacturerOffset +
                    ctx->metadataBlockHeader.driveManufacturerLength <= ctx->metadataBlock.blockSize)
                 {
-                    ctx->imageInfo.DriveManufacturer = malloc(ctx->metadataBlockHeader.driveManufacturerLength);
+                    ctx->imageInfo.DriveManufacturer =
+                            (uint8_t *)malloc(ctx->metadataBlockHeader.driveManufacturerLength);
                     if(ctx->imageInfo.DriveManufacturer != NULL)
                     {
                         memcpy(ctx->imageInfo.DriveManufacturer,
@@ -675,7 +682,7 @@ void *open(const char *filepath)
                    ctx->metadataBlockHeader.driveModelOffset + ctx->metadataBlockHeader.driveModelLength <=
                    ctx->metadataBlock.blockSize)
                 {
-                    ctx->imageInfo.DriveModel = malloc(ctx->metadataBlockHeader.driveModelLength);
+                    ctx->imageInfo.DriveModel = (uint8_t *)malloc(ctx->metadataBlockHeader.driveModelLength);
                     if(ctx->imageInfo.DriveModel != NULL)
                     {
                         memcpy(ctx->imageInfo.DriveModel,
@@ -688,7 +695,8 @@ void *open(const char *filepath)
                    ctx->metadataBlockHeader.driveSerialNumberOffset +
                    ctx->metadataBlockHeader.driveSerialNumberLength <= ctx->metadataBlock.blockSize)
                 {
-                    ctx->imageInfo.DriveSerialNumber = malloc(ctx->metadataBlockHeader.driveSerialNumberLength);
+                    ctx->imageInfo.DriveSerialNumber =
+                            (uint8_t *)malloc(ctx->metadataBlockHeader.driveSerialNumberLength);
                     if(ctx->imageInfo.DriveSerialNumber != NULL)
                     {
                         memcpy(ctx->imageInfo.DriveSerialNumber,
@@ -701,7 +709,8 @@ void *open(const char *filepath)
                    ctx->metadataBlockHeader.driveFirmwareRevisionOffset +
                    ctx->metadataBlockHeader.driveManufacturerLength <= ctx->metadataBlock.blockSize)
                 {
-                    ctx->imageInfo.DriveFirmwareRevision = malloc(ctx->metadataBlockHeader.driveFirmwareRevisionLength);
+                    ctx->imageInfo.DriveFirmwareRevision =
+                            (uint8_t *)malloc(ctx->metadataBlockHeader.driveFirmwareRevisionLength);
                     if(ctx->imageInfo.DriveFirmwareRevision != NULL)
                     {
                         memcpy(ctx->imageInfo.DriveFirmwareRevision,
@@ -730,7 +739,7 @@ void *open(const char *filepath)
 
                 ctx->imageInfo.ImageSize += sizeof(TrackEntry) * ctx->tracksHeader.entries;
 
-                ctx->trackEntries = malloc(sizeof(TrackEntry) * ctx->tracksHeader.entries);
+                ctx->trackEntries = (TrackEntry *)malloc(sizeof(TrackEntry) * ctx->tracksHeader.entries);
 
                 if(ctx->trackEntries == NULL)
                 {
@@ -779,7 +788,7 @@ void *open(const char *filepath)
 
                 ctx->imageInfo.ImageSize += ctx->cicmBlockHeader.length;
 
-                ctx->cicmBlock = malloc(ctx->cicmBlockHeader.length);
+                ctx->cicmBlock = (uint8_t *)malloc(ctx->cicmBlockHeader.length);
 
                 if(ctx->cicmBlock == NULL)
                 {
@@ -823,7 +832,8 @@ void *open(const char *filepath)
                 }
 
                 ctx->dumpHardwareEntriesWithData =
-                        malloc(sizeof(DumpHardwareEntriesWithData) * ctx->dumpHardwareHeader.entries);
+                        (DumpHardwareEntriesWithData *)malloc(sizeof(DumpHardwareEntriesWithData) *
+                                                              ctx->dumpHardwareHeader.entries);
 
                 if(ctx->dumpHardwareEntriesWithData == NULL)
                 {
@@ -854,7 +864,7 @@ void *open(const char *filepath)
                     if(ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength > 0)
                     {
                         ctx->dumpHardwareEntriesWithData[e].manufacturer =
-                                malloc(ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength);
+                                (uint8_t *)malloc(ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength);
 
                         if(ctx->dumpHardwareEntriesWithData[e].manufacturer != NULL)
                         {
@@ -877,7 +887,7 @@ void *open(const char *filepath)
                     if(ctx->dumpHardwareEntriesWithData[e].entry.modelLength > 0)
                     {
                         ctx->dumpHardwareEntriesWithData[e].model =
-                                malloc(ctx->dumpHardwareEntriesWithData[e].entry.modelLength);
+                                (uint8_t *)malloc(ctx->dumpHardwareEntriesWithData[e].entry.modelLength);
 
                         if(ctx->dumpHardwareEntriesWithData[e].model != NULL)
                         {
@@ -900,7 +910,7 @@ void *open(const char *filepath)
                     if(ctx->dumpHardwareEntriesWithData[e].entry.revisionLength > 0)
                     {
                         ctx->dumpHardwareEntriesWithData[e].revision =
-                                malloc(ctx->dumpHardwareEntriesWithData[e].entry.revisionLength);
+                                (uint8_t *)malloc(ctx->dumpHardwareEntriesWithData[e].entry.revisionLength);
 
                         if(ctx->dumpHardwareEntriesWithData[e].revision != NULL)
                         {
@@ -923,7 +933,7 @@ void *open(const char *filepath)
                     if(ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength > 0)
                     {
                         ctx->dumpHardwareEntriesWithData[e].firmware =
-                                malloc(ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength);
+                                (uint8_t *)malloc(ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength);
 
                         if(ctx->dumpHardwareEntriesWithData[e].firmware != NULL)
                         {
@@ -946,7 +956,7 @@ void *open(const char *filepath)
                     if(ctx->dumpHardwareEntriesWithData[e].entry.serialLength > 0)
                     {
                         ctx->dumpHardwareEntriesWithData[e].serial =
-                                malloc(ctx->dumpHardwareEntriesWithData[e].entry.serialLength);
+                                (uint8_t *)malloc(ctx->dumpHardwareEntriesWithData[e].entry.serialLength);
 
                         if(ctx->dumpHardwareEntriesWithData[e].serial != NULL)
                         {
@@ -969,7 +979,7 @@ void *open(const char *filepath)
                     if(ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength > 0)
                     {
                         ctx->dumpHardwareEntriesWithData[e].softwareName =
-                                malloc(ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength);
+                                (uint8_t *)malloc(ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength);
 
                         if(ctx->dumpHardwareEntriesWithData[e].softwareName != NULL)
                         {
@@ -992,7 +1002,7 @@ void *open(const char *filepath)
                     if(ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength > 0)
                     {
                         ctx->dumpHardwareEntriesWithData[e].softwareVersion =
-                                malloc(ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength);
+                                (uint8_t *)malloc(ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength);
 
                         if(ctx->dumpHardwareEntriesWithData[e].softwareVersion != NULL)
                         {
@@ -1015,7 +1025,8 @@ void *open(const char *filepath)
                     if(ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength > 0)
                     {
                         ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem =
-                                malloc(ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength);
+                                (uint8_t *)malloc(ctx->dumpHardwareEntriesWithData[e].entry
+                                                                                     .softwareOperatingSystemLength);
 
                         if(ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem != NULL)
                         {
@@ -1036,7 +1047,7 @@ void *open(const char *filepath)
                     }
 
                     ctx->dumpHardwareEntriesWithData[e].extents =
-                            malloc(sizeof(DumpExtent) * ctx->dumpHardwareEntriesWithData->entry.extents);
+                            (DumpExtent *)malloc(sizeof(DumpExtent) * ctx->dumpHardwareEntriesWithData->entry.extents);
 
                     if(ctx->dumpHardwareEntriesWithData[e].extents == NULL)
                     {
@@ -1071,6 +1082,8 @@ void *open(const char *filepath)
                 break;
         }
     }
+
+    free(idxEntries);
 
     if(!foundUserDataDdt)
     {
