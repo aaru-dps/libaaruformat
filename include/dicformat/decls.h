@@ -46,5 +46,16 @@ int close(void *context);
 
 uint8_t *read_media_tag(void *context, int tag);
 
+void *crc64_init(uint64_t polynomial, uint64_t seed);
+
+void *crc64_init_ecma(void);
+
+void crc64_update(void *context, const char *data, size_t len);
+
+uint64_t crc64_final(void *context);
+
+uint64_t crc64_data(const char *data, size_t len, uint64_t polynomial, uint64_t seed);
+
+uint64_t crc64_data_ecma(const char *data, size_t len);
 
 #endif //LIBDICFORMAT_DECLS_H

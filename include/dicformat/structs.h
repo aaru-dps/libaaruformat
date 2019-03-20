@@ -302,6 +302,12 @@ typedef struct ChecksumEntry
     uint32_t length;
 } ChecksumEntry;
 
+typedef struct Crc64Context
+{
+    uint64_t finalSeed;
+    uint64_t table[256];
+    uint64_t hashInt;
+} Crc64Context;
 
 #pragma pack(pop)
 

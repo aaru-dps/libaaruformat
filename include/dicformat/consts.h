@@ -56,6 +56,9 @@
 /** This mask is to check for position in CompactDisc suffix/prefix deduplicated block */
 #define CD_DFIX_MASK 0x00FFFFFF
 
+#define CRC64_ECMA_POLY 0xC96C5795D7870F42
+#define CRC64_ECMA_SEED 0xFFFFFFFFFFFFFFFF
+
 #endif //LIBDICFORMAT_CONSTS_H
 
 #pragma clang diagnostic pop
