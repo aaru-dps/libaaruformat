@@ -560,7 +560,7 @@ void *open(const char *filepath)
 
                 if(ctx->metadataBlockHeader.creatorLength > 0 &&
                    ctx->metadataBlockHeader.creatorOffset + ctx->metadataBlockHeader.creatorLength <=
-                   ctx->metadataBlock.blockSize)
+                   ctx->metadataBlockHeader.blockSize)
                 {
                     ctx->imageInfo.Creator = (uint8_t *)malloc(ctx->metadataBlockHeader.creatorLength);
                     if(ctx->imageInfo.Creator != NULL)
@@ -573,7 +573,7 @@ void *open(const char *filepath)
 
                 if(ctx->metadataBlockHeader.commentsLength > 0 &&
                    ctx->metadataBlockHeader.commentsOffset + ctx->metadataBlockHeader.commentsLength <=
-                   ctx->metadataBlock.blockSize)
+                   ctx->metadataBlockHeader.blockSize)
                 {
                     ctx->imageInfo.Comments = (uint8_t *)malloc(ctx->metadataBlockHeader.commentsLength);
                     if(ctx->imageInfo.Comments != NULL)
@@ -586,7 +586,7 @@ void *open(const char *filepath)
 
                 if(ctx->metadataBlockHeader.mediaTitleLength > 0 &&
                    ctx->metadataBlockHeader.mediaTitleOffset + ctx->metadataBlockHeader.mediaTitleLength <=
-                   ctx->metadataBlock.blockSize)
+                   ctx->metadataBlockHeader.blockSize)
                 {
                     ctx->imageInfo.MediaTitle = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaTitleLength);
                     if(ctx->imageInfo.MediaTitle != NULL)
@@ -599,7 +599,7 @@ void *open(const char *filepath)
 
                 if(ctx->metadataBlockHeader.mediaManufacturerLength > 0 &&
                    ctx->metadataBlockHeader.mediaManufacturerOffset +
-                   ctx->metadataBlockHeader.mediaManufacturerLength <= ctx->metadataBlock.blockSize)
+                   ctx->metadataBlockHeader.mediaManufacturerLength <= ctx->metadataBlockHeader.blockSize)
                 {
                     ctx->imageInfo.MediaManufacturer =
                             (uint8_t *)malloc(ctx->metadataBlockHeader.mediaManufacturerLength);
@@ -613,7 +613,7 @@ void *open(const char *filepath)
 
                 if(ctx->metadataBlockHeader.mediaModelLength > 0 &&
                    ctx->metadataBlockHeader.mediaModelOffset + ctx->metadataBlockHeader.mediaModelLength <=
-                   ctx->metadataBlock.blockSize)
+                   ctx->metadataBlockHeader.blockSize)
                 {
                     ctx->imageInfo.MediaModel = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaModelOffset);
                     if(ctx->imageInfo.MediaModel != NULL)
@@ -626,7 +626,7 @@ void *open(const char *filepath)
 
                 if(ctx->metadataBlockHeader.mediaSerialNumberLength > 0 &&
                    ctx->metadataBlockHeader.mediaSerialNumberOffset +
-                   ctx->metadataBlockHeader.mediaSerialNumberLength <= ctx->metadataBlock.blockSize)
+                   ctx->metadataBlockHeader.mediaSerialNumberLength <= ctx->metadataBlockHeader.blockSize)
                 {
                     ctx->imageInfo.MediaSerialNumber =
                             (uint8_t *)malloc(ctx->metadataBlockHeader.mediaSerialNumberLength);
@@ -640,7 +640,7 @@ void *open(const char *filepath)
 
                 if(ctx->metadataBlockHeader.mediaBarcodeLength > 0 &&
                    ctx->metadataBlockHeader.mediaBarcodeOffset + ctx->metadataBlockHeader.mediaBarcodeLength <=
-                   ctx->metadataBlock.blockSize)
+                   ctx->metadataBlockHeader.blockSize)
                 {
                     ctx->imageInfo.MediaBarcode = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaBarcodeLength);
                     if(ctx->imageInfo.MediaBarcode != NULL)
@@ -653,7 +653,7 @@ void *open(const char *filepath)
 
                 if(ctx->metadataBlockHeader.mediaPartNumberLength > 0 &&
                    ctx->metadataBlockHeader.mediaPartNumberOffset + ctx->metadataBlockHeader.mediaPartNumberLength <=
-                   ctx->metadataBlock.blockSize)
+                   ctx->metadataBlockHeader.blockSize)
                 {
                     ctx->imageInfo.MediaPartNumber = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaPartNumberLength);
                     if(ctx->imageInfo.MediaPartNumber != NULL)
@@ -666,7 +666,7 @@ void *open(const char *filepath)
 
                 if(ctx->metadataBlockHeader.driveManufacturerLength > 0 &&
                    ctx->metadataBlockHeader.driveManufacturerOffset +
-                   ctx->metadataBlockHeader.driveManufacturerLength <= ctx->metadataBlock.blockSize)
+                   ctx->metadataBlockHeader.driveManufacturerLength <= ctx->metadataBlockHeader.blockSize)
                 {
                     ctx->imageInfo.DriveManufacturer =
                             (uint8_t *)malloc(ctx->metadataBlockHeader.driveManufacturerLength);
@@ -680,7 +680,7 @@ void *open(const char *filepath)
 
                 if(ctx->metadataBlockHeader.driveModelLength > 0 &&
                    ctx->metadataBlockHeader.driveModelOffset + ctx->metadataBlockHeader.driveModelLength <=
-                   ctx->metadataBlock.blockSize)
+                   ctx->metadataBlockHeader.blockSize)
                 {
                     ctx->imageInfo.DriveModel = (uint8_t *)malloc(ctx->metadataBlockHeader.driveModelLength);
                     if(ctx->imageInfo.DriveModel != NULL)
@@ -693,7 +693,7 @@ void *open(const char *filepath)
 
                 if(ctx->metadataBlockHeader.driveSerialNumberLength > 0 &&
                    ctx->metadataBlockHeader.driveSerialNumberOffset +
-                   ctx->metadataBlockHeader.driveSerialNumberLength <= ctx->metadataBlock.blockSize)
+                   ctx->metadataBlockHeader.driveSerialNumberLength <= ctx->metadataBlockHeader.blockSize)
                 {
                     ctx->imageInfo.DriveSerialNumber =
                             (uint8_t *)malloc(ctx->metadataBlockHeader.driveSerialNumberLength);
@@ -707,7 +707,7 @@ void *open(const char *filepath)
 
                 if(ctx->metadataBlockHeader.driveManufacturerLength > 0 &&
                    ctx->metadataBlockHeader.driveFirmwareRevisionOffset +
-                   ctx->metadataBlockHeader.driveManufacturerLength <= ctx->metadataBlock.blockSize)
+                   ctx->metadataBlockHeader.driveManufacturerLength <= ctx->metadataBlockHeader.blockSize)
                 {
                     ctx->imageInfo.DriveFirmwareRevision =
                             (uint8_t *)malloc(ctx->metadataBlockHeader.driveFirmwareRevisionLength);
