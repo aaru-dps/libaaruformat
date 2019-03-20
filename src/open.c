@@ -609,8 +609,267 @@ void *open(const char *filepath)
 
                 fprintf(stderr, "libdicformat: Found CICM XML metadata block %"PRIu64".", idxEntries[i].offset);
                 break;
-            case DumpHardwareBlock:
-                // TODO
+                // Dump hardware block
+            case DumpHardwareBlock: readBytes =
+                                            fread(&ctx->dumpHardwareHeader,
+                                                  sizeof(DumpHardwareHeader),
+                                                  1,
+                                                  ctx->imageStream);
+
+                if(readBytes != sizeof(DumpHardwareHeader))
+                {
+                    memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
+                    fprintf(stderr, "libdicformat: Could not read dump hardware block header, continuing...");
+                    break;
+                }
+
+                if(ctx->dumpHardwareHeader.identifier != DumpHardwareBlock)
+                {
+                    memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
+                    fprintf(stderr,
+                            "libdicformat: Incorrect identifier for data block at position %"PRIu64"",
+                            idxEntries[i].offset);
+                }
+
+                ctx->dumpHardwareEntriesWithData =
+                        malloc(sizeof(DumpHardwareEntriesWithData) * ctx->dumpHardwareHeader.entries);
+
+                if(ctx->dumpHardwareEntriesWithData == NULL)
+                {
+                    memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
+                    fprintf(stderr, "libdicformat: Could not allocate memory for dump hardware block, continuing...");
+                    break;
+                }
+
+                memset(ctx->dumpHardwareEntriesWithData,
+                       0,
+                       sizeof(DumpHardwareEntriesWithData) * ctx->dumpHardwareHeader.entries);
+
+                for(uint16_t e = 0; e < ctx->dumpHardwareHeader.entries; e++)
+                {
+                    readBytes =
+                            fread(&ctx->dumpHardwareEntriesWithData[e].entry,
+                                  sizeof(DumpHardwareEntry),
+                                  1,
+                                  ctx->imageStream);
+
+                    if(readBytes != sizeof(DumpHardwareEntry))
+                    {
+                        ctx->dumpHardwareHeader.entries = e + (uint16_t)1;
+                        fprintf(stderr, "libdicformat: Could not read dump hardware block entry, continuing...");
+                        break;
+                    }
+
+                    if(ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength > 0)
+                    {
+                        ctx->dumpHardwareEntriesWithData[e].manufacturer =
+                                malloc(ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength);
+
+                        if(ctx->dumpHardwareEntriesWithData[e].manufacturer != NULL)
+                        {
+                            readBytes =
+                                    fread(&ctx->dumpHardwareEntriesWithData[e].manufacturer,
+                                          ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength,
+                                          1,
+                                          ctx->imageStream);
+
+                            if(readBytes != ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength)
+                            {
+                                free(ctx->dumpHardwareEntriesWithData[e].manufacturer);
+                                ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength = 0;
+                                fprintf(stderr,
+                                        "libdicformat: Could not read dump hardware block entry manufacturer, continuing...");
+                            }
+                        }
+                    }
+
+                    if(ctx->dumpHardwareEntriesWithData[e].entry.modelLength > 0)
+                    {
+                        ctx->dumpHardwareEntriesWithData[e].model =
+                                malloc(ctx->dumpHardwareEntriesWithData[e].entry.modelLength);
+
+                        if(ctx->dumpHardwareEntriesWithData[e].model != NULL)
+                        {
+                            readBytes =
+                                    fread(&ctx->dumpHardwareEntriesWithData[e].model,
+                                          ctx->dumpHardwareEntriesWithData[e].entry.modelLength,
+                                          1,
+                                          ctx->imageStream);
+
+                            if(readBytes != ctx->dumpHardwareEntriesWithData[e].entry.modelLength)
+                            {
+                                free(ctx->dumpHardwareEntriesWithData[e].model);
+                                ctx->dumpHardwareEntriesWithData[e].entry.modelLength = 0;
+                                fprintf(stderr,
+                                        "libdicformat: Could not read dump hardware block entry model, continuing...");
+                            }
+                        }
+                    }
+
+                    if(ctx->dumpHardwareEntriesWithData[e].entry.revisionLength > 0)
+                    {
+                        ctx->dumpHardwareEntriesWithData[e].revision =
+                                malloc(ctx->dumpHardwareEntriesWithData[e].entry.revisionLength);
+
+                        if(ctx->dumpHardwareEntriesWithData[e].revision != NULL)
+                        {
+                            readBytes =
+                                    fread(&ctx->dumpHardwareEntriesWithData[e].revision,
+                                          ctx->dumpHardwareEntriesWithData[e].entry.revisionLength,
+                                          1,
+                                          ctx->imageStream);
+
+                            if(readBytes != ctx->dumpHardwareEntriesWithData[e].entry.revisionLength)
+                            {
+                                free(ctx->dumpHardwareEntriesWithData[e].revision);
+                                ctx->dumpHardwareEntriesWithData[e].entry.revisionLength = 0;
+                                fprintf(stderr,
+                                        "libdicformat: Could not read dump hardware block entry revision, continuing...");
+                            }
+                        }
+                    }
+
+                    if(ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength > 0)
+                    {
+                        ctx->dumpHardwareEntriesWithData[e].firmware =
+                                malloc(ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength);
+
+                        if(ctx->dumpHardwareEntriesWithData[e].firmware != NULL)
+                        {
+                            readBytes =
+                                    fread(&ctx->dumpHardwareEntriesWithData[e].firmware,
+                                          ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength,
+                                          1,
+                                          ctx->imageStream);
+
+                            if(readBytes != ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength)
+                            {
+                                free(ctx->dumpHardwareEntriesWithData[e].firmware);
+                                ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength = 0;
+                                fprintf(stderr,
+                                        "libdicformat: Could not read dump hardware block entry firmware, continuing...");
+                            }
+                        }
+                    }
+
+                    if(ctx->dumpHardwareEntriesWithData[e].entry.serialLength > 0)
+                    {
+                        ctx->dumpHardwareEntriesWithData[e].serial =
+                                malloc(ctx->dumpHardwareEntriesWithData[e].entry.serialLength);
+
+                        if(ctx->dumpHardwareEntriesWithData[e].serial != NULL)
+                        {
+                            readBytes =
+                                    fread(&ctx->dumpHardwareEntriesWithData[e].serial,
+                                          ctx->dumpHardwareEntriesWithData[e].entry.serialLength,
+                                          1,
+                                          ctx->imageStream);
+
+                            if(readBytes != ctx->dumpHardwareEntriesWithData[e].entry.serialLength)
+                            {
+                                free(ctx->dumpHardwareEntriesWithData[e].serial);
+                                ctx->dumpHardwareEntriesWithData[e].entry.serialLength = 0;
+                                fprintf(stderr,
+                                        "libdicformat: Could not read dump hardware block entry serial, continuing...");
+                            }
+                        }
+                    }
+
+                    if(ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength > 0)
+                    {
+                        ctx->dumpHardwareEntriesWithData[e].softwareName =
+                                malloc(ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength);
+
+                        if(ctx->dumpHardwareEntriesWithData[e].softwareName != NULL)
+                        {
+                            readBytes =
+                                    fread(&ctx->dumpHardwareEntriesWithData[e].softwareName,
+                                          ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength,
+                                          1,
+                                          ctx->imageStream);
+
+                            if(readBytes != ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength)
+                            {
+                                free(ctx->dumpHardwareEntriesWithData[e].softwareName);
+                                ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength = 0;
+                                fprintf(stderr,
+                                        "libdicformat: Could not read dump hardware block entry software name, continuing...");
+                            }
+                        }
+                    }
+
+                    if(ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength > 0)
+                    {
+                        ctx->dumpHardwareEntriesWithData[e].softwareVersion =
+                                malloc(ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength);
+
+                        if(ctx->dumpHardwareEntriesWithData[e].softwareVersion != NULL)
+                        {
+                            readBytes =
+                                    fread(&ctx->dumpHardwareEntriesWithData[e].softwareVersion,
+                                          ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength,
+                                          1,
+                                          ctx->imageStream);
+
+                            if(readBytes != ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength)
+                            {
+                                free(ctx->dumpHardwareEntriesWithData[e].softwareVersion);
+                                ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength = 0;
+                                fprintf(stderr,
+                                        "libdicformat: Could not read dump hardware block entry software version, continuing...");
+                            }
+                        }
+                    }
+
+                    if(ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength > 0)
+                    {
+                        ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem =
+                                malloc(ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength);
+
+                        if(ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem != NULL)
+                        {
+                            readBytes =
+                                    fread(&ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem,
+                                          ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength,
+                                          1,
+                                          ctx->imageStream);
+
+                            if(readBytes != ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength)
+                            {
+                                free(ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem);
+                                ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength = 0;
+                                fprintf(stderr,
+                                        "libdicformat: Could not read dump hardware block entry manufacturer, continuing...");
+                            }
+                        }
+                    }
+
+                    ctx->dumpHardwareEntriesWithData[e].extents =
+                            malloc(sizeof(DumpExtent) * ctx->dumpHardwareEntriesWithData->entry.extents);
+
+                    if(ctx->dumpHardwareEntriesWithData[e].extents == NULL)
+                    {
+                        fprintf(stderr,
+                                "libdicformat: Could not allocate memory for dump hardware block extents, continuing...");
+                        continue;
+                    }
+
+                    readBytes =
+                            fread(ctx->dumpHardwareEntriesWithData[e].extents,
+                                  sizeof(DumpExtent),
+                                  ctx->dumpHardwareEntriesWithData[e].entry.extents,
+                                  ctx->imageStream);
+
+                    if(readBytes != sizeof(DumpExtent) * ctx->dumpHardwareEntriesWithData->entry.extents)
+                    {
+                        free(ctx->dumpHardwareEntriesWithData[e].extents);
+                        fprintf(stderr, "libdicformat: Could not read dump hardware block extents, continuing...");
+                        continue;
+                    }
+
+                    // TODO: qsort()
+                }
+
                 break;
             default:
                 fprintf(stderr,

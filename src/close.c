@@ -95,6 +95,22 @@ int close(void *context)
     free(ctx->trackEntries);
     free(ctx->cicmBlock);
 
+    if(ctx->dumpHardwareEntriesWithData != NULL)
+    {
+        for(int i = 0; i < ctx->dumpHardwareHeader.entries; i++)
+        {
+            free(ctx->dumpHardwareEntriesWithData[i].extents);
+            free(ctx->dumpHardwareEntriesWithData[i].manufacturer);
+            free(ctx->dumpHardwareEntriesWithData[i].model);
+            free(ctx->dumpHardwareEntriesWithData[i].revision);
+            free(ctx->dumpHardwareEntriesWithData[i].firmware);
+            free(ctx->dumpHardwareEntriesWithData[i].serial);
+            free(ctx->dumpHardwareEntriesWithData[i].softwareName);
+            free(ctx->dumpHardwareEntriesWithData[i].softwareVersion);
+            free(ctx->dumpHardwareEntriesWithData[i].softwareOperatingSystem);
+        }
+    }
+
     free(context);
 
     return 0;

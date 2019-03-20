@@ -38,32 +38,34 @@
 
 typedef struct dicformatContext
 {
-    uint64_t              magic;
-    uint8_t               libraryMajorVersion;
-    uint8_t               libraryMinorVersion;
-    FILE                  *imageStream;
-    DicHeader             header;
-    struct dataLinkedList *mediaTagsHead;
-    struct dataLinkedList *mediaTagsTail;
-    unsigned char         *sectorPrefix;
-    unsigned char         *sectorPrefixCorrected;
-    unsigned char         *sectorSuffix;
-    unsigned char         *sectorSuffixCorrected;
-    unsigned char         *sectorSubchannel;
-    unsigned char         *mode2Subheaders;
-    unsigned char         shift;
+    uint64_t                           magic;
+    uint8_t                            libraryMajorVersion;
+    uint8_t                            libraryMinorVersion;
+    FILE                               *imageStream;
+    DicHeader                          header;
+    struct dataLinkedList              *mediaTagsHead;
+    struct dataLinkedList              *mediaTagsTail;
+    unsigned char                      *sectorPrefix;
+    unsigned char                      *sectorPrefixCorrected;
+    unsigned char                      *sectorSuffix;
+    unsigned char                      *sectorSuffixCorrected;
+    unsigned char                      *sectorSubchannel;
+    unsigned char                      *mode2Subheaders;
+    unsigned char                      shift;
     bool inMemoryDdt;
-    uint64_t              *userDataDdt;
-    size_t                mappedMemoryDdtSize;
-    uint32_t              *sectorPrefixDdt;
-    uint32_t              *sectorSuffixDdt;
-    GeometryBlockHeader   geometryBlock;
-    MetadataBlockHeader   metadataBlockHeader;
-    unsigned char         *metadataBlock;
-    TracksHeader          tracksHeader;
-    TrackEntry            *trackEntries;
-    CicmMetadataBlock     cicmBlockHeader;
-    unsigned char         *cicmBlock;
+    uint64_t                           *userDataDdt;
+    size_t                             mappedMemoryDdtSize;
+    uint32_t                           *sectorPrefixDdt;
+    uint32_t                           *sectorSuffixDdt;
+    GeometryBlockHeader                geometryBlock;
+    MetadataBlockHeader                metadataBlockHeader;
+    unsigned char                      *metadataBlock;
+    TracksHeader                       tracksHeader;
+    TrackEntry                         *trackEntries;
+    CicmMetadataBlock                  cicmBlockHeader;
+    unsigned char                      *cicmBlock;
+    DumpHardwareHeader                 dumpHardwareHeader;
+    struct DumpHardwareEntriesWithData *dumpHardwareEntriesWithData;
 } dicformatContext;
 
 typedef struct dataLinkedList
@@ -73,5 +75,29 @@ typedef struct dataLinkedList
     unsigned char         *data;
     int                   type;
 } dataLinkedList;
+
+typedef struct DumpHardwareEntriesWithData
+{
+    DumpHardwareEntry entry;
+    struct DumpExtent *extents;
+    unsigned char     *manufacturer;
+    unsigned char     *model;
+    unsigned char     *revision;
+    unsigned char     *firmware;
+    unsigned char     *serial;
+    unsigned char     *softwareName;
+    unsigned char     *softwareVersion;
+    unsigned char     *softwareOperatingSystem;
+} DumpHardwareEntriesWithData;
+
+#pragma pack(push, 1)
+
+typedef struct DumpExtent
+{
+    uint64_t start;
+    uint64_t end;
+} DumpExtent;
+
+#pragma pack(pop)
 
 #endif //LIBDICFORMAT_CONTEXT_H
