@@ -881,6 +881,41 @@ void *open(const char *filepath)
         }
     }
 
+    if(!foundUserDataDdt)
+    {
+        fprintf(stderr, "libdicformat: Could not find user data deduplication table, aborting...");
+        close(ctx);
+        return NULL;
+    }
+
+    // TODO: ImageInfo
+    /*
+        imageInfo.CreationTime = DateTime.FromFileTimeUtc(header.creationTime);
+        DicConsole.DebugWriteLine("DiscImageChef format plugin", "Image created on {0}", imageInfo.CreationTime);
+        imageInfo.LastModificationTime = DateTime.FromFileTimeUtc(header.lastWrittenTime);
+        DicConsole.DebugWriteLine("DiscImageChef format plugin", "Image last written on {0}",
+                                  imageInfo.LastModificationTime);
+
+        if(geometryBlock.identifier != BlockType.GeometryBlock && imageInfo.XmlMediaType == XmlMediaType.BlockMedia)
+        {
+            imageInfo.Cylinders       = (uint)(imageInfo.Sectors / 16 / 63);
+            imageInfo.Heads           = 16;
+            imageInfo.SectorsPerTrack = 63;
+        }
+    */
+
+    // TODO: Caches
+    /*
+        // Initialize caches
+        blockCache       = new Dictionary<ulong, byte[]>();
+        blockHeaderCache = new Dictionary<ulong, BlockHeader>();
+        currentCacheSize = 0;
+        if(!inMemoryDdt) ddtEntryCache = new Dictionary<ulong, ulong>();
+    */
+
+    // TODO: Cache tracks and sessions?
+    // TODO: Initialize ECC for Compact Disc
+
     ctx->magic               = DIC_MAGIC;
     ctx->libraryMajorVersion = LIBDICFORMAT_MAJOR_VERSION;
     ctx->libraryMinorVersion = LIBDICFORMAT_MINOR_VERSION;
