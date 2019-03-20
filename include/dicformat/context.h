@@ -66,6 +66,7 @@ typedef struct dicformatContext
     unsigned char                      *cicmBlock;
     DumpHardwareHeader                 dumpHardwareHeader;
     struct DumpHardwareEntriesWithData *dumpHardwareEntriesWithData;
+    struct ImageInfo                   imageInfo;
 } dicformatContext;
 
 typedef struct dataLinkedList

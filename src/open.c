@@ -39,7 +39,6 @@
 #include <sys/mman.h>
 
 // TODO: Check CRC64 on structures
-// TODO: ImageInfo
 void *open(const char *filepath)
 {
     dicformatContext *ctx             = malloc(sizeof(dicformatContext));
@@ -48,7 +47,6 @@ void *open(const char *filepath)
     long             pos;
     IndexHeader      idxHeader;
     IndexEntry       *idxEntries;
-    uint64_t         ImageSize; // TODO: This should be in ImageInfo
     unsigned char    *data;
 
     memset(ctx, 0, sizeof(dicformatContext));
@@ -98,6 +96,24 @@ void *open(const char *filepath)
             "libdicformat: Opening image version %d.%d",
             ctx->header.imageMajorVersion,
             ctx->header.imageMinorVersion);
+
+    ctx->imageInfo.Application        = ctx->header.application;
+    ctx->imageInfo.ApplicationVersion = malloc(32);
+    if(ctx->imageInfo.ApplicationVersion != NULL)
+    {
+        memset(ctx->imageInfo.ApplicationVersion, 0, 32);
+        sprintf((char *)ctx->imageInfo.ApplicationVersion,
+                "%d.%d",
+                ctx->header.applicationMajorVersion,
+                ctx->header.applicationMinorVersion);
+    }
+    ctx->imageInfo.Version = malloc(32);
+    if(ctx->imageInfo.Version != NULL)
+    {
+        memset(ctx->imageInfo.Version, 0, 32);
+        sprintf((char *)ctx->imageInfo.Version, "%d.%d", ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
+    }
+    ctx->imageInfo.MediaType = ctx->header.mediaType;
 
     // Read the index header
     pos = fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_CUR);
@@ -162,7 +178,7 @@ void *open(const char *filepath)
     }
 
     bool             foundUserDataDdt = false;
-    ImageSize = 0;
+    ctx->imageInfo.ImageSize = 0;
     for(int i = 0; i < idxHeader.entries; i++)
     {
         pos = fseek(ctx->imageStream, idxEntries[i].offset, SEEK_SET);
@@ -196,14 +212,13 @@ void *open(const char *filepath)
                     break;
                 }
 
-                ImageSize += blockHeader.cmpLength;
+                ctx->imageInfo.ImageSize += blockHeader.cmpLength;
 
                 // Unused, skip
                 if(idxEntries[i].dataType == UserData)
                 {
-                    // TODO: ImageInfo
-                    //if(blockHeader.sectorSize > imageInfo.SectorSize)
-                    //    imageInfo.SectorSize = blockHeader.sectorSize;
+                    if(blockHeader.sectorSize > ctx->imageInfo.SectorSize)
+                        ctx->imageInfo.SectorSize = blockHeader.sectorSize;
 
                     break;
                 }
@@ -340,7 +355,8 @@ void *open(const char *filepath)
                             }
                         }
 
-                        // If we mediaTag is NULL means we have arrived the end of the list without finding a duplicate or the list was empty
+                        // If we mediaTag is NULL means we have arrived the end of the list without finding a duplicate
+                        // or the list was empty
                         if(mediaTag != NULL)
                             break;
 
@@ -386,9 +402,12 @@ void *open(const char *filepath)
 
                 foundUserDataDdt = true;
 
+                ctx->imageInfo.ImageSize += ddtHeader.cmpLength;
+
                 if(idxEntries[i].dataType == UserData)
                 {
-                    ctx->shift = ddtHeader.shift;
+                    ctx->imageInfo.Sectors = ddtHeader.entries;
+                    ctx->shift             = ddtHeader.shift;
 
                     // Check for DDT compression
                     switch(ddtHeader.compression)
@@ -473,12 +492,10 @@ void *open(const char *filepath)
                             ctx->geometryBlock.cylinders,
                             ctx->geometryBlock.heads,
                             ctx->geometryBlock.sectorsPerTrack);
-                    // TODO: ImageInfo
-                    /*
-                        imageInfo.Cylinders       = geometryBlock.cylinders;
-                        imageInfo.Heads           = geometryBlock.heads;
-                        imageInfo.SectorsPerTrack = geometryBlock.sectorsPerTrack;
-                    */
+
+                    ctx->imageInfo.Cylinders       = ctx->geometryBlock.cylinders;
+                    ctx->imageInfo.Heads           = ctx->geometryBlock.heads;
+                    ctx->imageInfo.SectorsPerTrack = ctx->geometryBlock.sectorsPerTrack;
                 }
                 else
                     memset(&ctx->geometryBlock, 0, sizeof(GeometryBlockHeader));
@@ -507,6 +524,8 @@ void *open(const char *filepath)
                     break;
                 }
 
+                ctx->imageInfo.ImageSize += ctx->metadataBlockHeader.blockSize;
+
                 ctx->metadataBlock = malloc(ctx->metadataBlockHeader.blockSize);
 
                 if(ctx->metadataBlock == NULL)
@@ -523,6 +542,172 @@ void *open(const char *filepath)
                     memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
                     free(ctx->metadataBlock);
                     fprintf(stderr, "libdicformat: Could not read metadata block, continuing...");
+                }
+
+                if(ctx->metadataBlockHeader.mediaSequence > 0 && ctx->metadataBlockHeader.lastMediaSequence > 0)
+                {
+                    ctx->imageInfo.MediaSequence     = ctx->metadataBlockHeader.mediaSequence;
+                    ctx->imageInfo.LastMediaSequence = ctx->metadataBlockHeader.lastMediaSequence;
+                    fprintf(stderr,
+                            "libdicformat: Setting media sequence as %d of %d",
+                            ctx->imageInfo.MediaSequence,
+                            ctx->imageInfo.LastMediaSequence);
+                }
+
+                if(ctx->metadataBlockHeader.creatorLength > 0 &&
+                   ctx->metadataBlockHeader.creatorOffset + ctx->metadataBlockHeader.creatorLength <=
+                   ctx->metadataBlock.blockSize)
+                {
+                    ctx->imageInfo.Creator = malloc(ctx->metadataBlockHeader.creatorLength);
+                    if(ctx->imageInfo.Creator != NULL)
+                    {
+                        memcpy(ctx->imageInfo.Creator,
+                               ctx->metadataBlock + ctx->metadataBlockHeader.creatorOffset,
+                               ctx->metadataBlockHeader.creatorLength);
+                    }
+                }
+
+                if(ctx->metadataBlockHeader.commentsLength > 0 &&
+                   ctx->metadataBlockHeader.commentsOffset + ctx->metadataBlockHeader.commentsLength <=
+                   ctx->metadataBlock.blockSize)
+                {
+                    ctx->imageInfo.Comments = malloc(ctx->metadataBlockHeader.commentsLength);
+                    if(ctx->imageInfo.Comments != NULL)
+                    {
+                        memcpy(ctx->imageInfo.Comments,
+                               ctx->metadataBlock + ctx->metadataBlockHeader.commentsOffset,
+                               ctx->metadataBlockHeader.commentsLength);
+                    }
+                }
+
+                if(ctx->metadataBlockHeader.mediaTitleLength > 0 &&
+                   ctx->metadataBlockHeader.mediaTitleOffset + ctx->metadataBlockHeader.mediaTitleLength <=
+                   ctx->metadataBlock.blockSize)
+                {
+                    ctx->imageInfo.MediaTitle = malloc(ctx->metadataBlockHeader.mediaTitleLength);
+                    if(ctx->imageInfo.MediaTitle != NULL)
+                    {
+                        memcpy(ctx->imageInfo.MediaTitle,
+                               ctx->metadataBlock + ctx->metadataBlockHeader.mediaTitleOffset,
+                               ctx->metadataBlockHeader.mediaTitleLength);
+                    }
+                }
+
+                if(ctx->metadataBlockHeader.mediaManufacturerLength > 0 &&
+                   ctx->metadataBlockHeader.mediaManufacturerOffset +
+                   ctx->metadataBlockHeader.mediaManufacturerLength <= ctx->metadataBlock.blockSize)
+                {
+                    ctx->imageInfo.MediaManufacturer = malloc(ctx->metadataBlockHeader.mediaManufacturerLength);
+                    if(ctx->imageInfo.MediaManufacturer != NULL)
+                    {
+                        memcpy(ctx->imageInfo.MediaManufacturer,
+                               ctx->metadataBlock + ctx->metadataBlockHeader.mediaManufacturerOffset,
+                               ctx->metadataBlockHeader.mediaManufacturerLength);
+                    }
+                }
+
+                if(ctx->metadataBlockHeader.mediaModelLength > 0 &&
+                   ctx->metadataBlockHeader.mediaModelOffset + ctx->metadataBlockHeader.mediaModelLength <=
+                   ctx->metadataBlock.blockSize)
+                {
+                    ctx->imageInfo.MediaModel = malloc(ctx->metadataBlockHeader.mediaModelOffset);
+                    if(ctx->imageInfo.MediaModel != NULL)
+                    {
+                        memcpy(ctx->imageInfo.MediaModel,
+                               ctx->metadataBlock + ctx->metadataBlockHeader.mediaModelOffset,
+                               ctx->metadataBlockHeader.mediaModelLength);
+                    }
+                }
+
+                if(ctx->metadataBlockHeader.mediaSerialNumberLength > 0 &&
+                   ctx->metadataBlockHeader.mediaSerialNumberOffset +
+                   ctx->metadataBlockHeader.mediaSerialNumberLength <= ctx->metadataBlock.blockSize)
+                {
+                    ctx->imageInfo.MediaSerialNumber = malloc(ctx->metadataBlockHeader.mediaSerialNumberLength);
+                    if(ctx->imageInfo.MediaSerialNumber != NULL)
+                    {
+                        memcpy(ctx->imageInfo.MediaSerialNumber,
+                               ctx->metadataBlock + ctx->metadataBlockHeader.mediaSerialNumberOffset,
+                               ctx->metadataBlockHeader.mediaManufacturerLength);
+                    }
+                }
+
+                if(ctx->metadataBlockHeader.mediaBarcodeLength > 0 &&
+                   ctx->metadataBlockHeader.mediaBarcodeOffset + ctx->metadataBlockHeader.mediaBarcodeLength <=
+                   ctx->metadataBlock.blockSize)
+                {
+                    ctx->imageInfo.MediaBarcode = malloc(ctx->metadataBlockHeader.mediaBarcodeLength);
+                    if(ctx->imageInfo.MediaBarcode != NULL)
+                    {
+                        memcpy(ctx->imageInfo.MediaBarcode,
+                               ctx->metadataBlock + ctx->metadataBlockHeader.mediaBarcodeOffset,
+                               ctx->metadataBlockHeader.mediaBarcodeLength);
+                    }
+                }
+
+                if(ctx->metadataBlockHeader.mediaPartNumberLength > 0 &&
+                   ctx->metadataBlockHeader.mediaPartNumberOffset + ctx->metadataBlockHeader.mediaPartNumberLength <=
+                   ctx->metadataBlock.blockSize)
+                {
+                    ctx->imageInfo.MediaPartNumber = malloc(ctx->metadataBlockHeader.mediaPartNumberLength);
+                    if(ctx->imageInfo.MediaPartNumber != NULL)
+                    {
+                        memcpy(ctx->imageInfo.MediaPartNumber,
+                               ctx->metadataBlock + ctx->metadataBlockHeader.mediaPartNumberOffset,
+                               ctx->metadataBlockHeader.mediaPartNumberLength);
+                    }
+                }
+
+                if(ctx->metadataBlockHeader.driveManufacturerLength > 0 &&
+                   ctx->metadataBlockHeader.driveManufacturerOffset +
+                   ctx->metadataBlockHeader.driveManufacturerLength <= ctx->metadataBlock.blockSize)
+                {
+                    ctx->imageInfo.DriveManufacturer = malloc(ctx->metadataBlockHeader.driveManufacturerLength);
+                    if(ctx->imageInfo.DriveManufacturer != NULL)
+                    {
+                        memcpy(ctx->imageInfo.DriveManufacturer,
+                               ctx->metadataBlock + ctx->metadataBlockHeader.driveManufacturerOffset,
+                               ctx->metadataBlockHeader.driveManufacturerLength);
+                    }
+                }
+
+                if(ctx->metadataBlockHeader.driveModelLength > 0 &&
+                   ctx->metadataBlockHeader.driveModelOffset + ctx->metadataBlockHeader.driveModelLength <=
+                   ctx->metadataBlock.blockSize)
+                {
+                    ctx->imageInfo.DriveModel = malloc(ctx->metadataBlockHeader.driveModelLength);
+                    if(ctx->imageInfo.DriveModel != NULL)
+                    {
+                        memcpy(ctx->imageInfo.DriveModel,
+                               ctx->metadataBlock + ctx->metadataBlockHeader.driveModelOffset,
+                               ctx->metadataBlockHeader.driveModelLength);
+                    }
+                }
+
+                if(ctx->metadataBlockHeader.driveSerialNumberLength > 0 &&
+                   ctx->metadataBlockHeader.driveSerialNumberOffset +
+                   ctx->metadataBlockHeader.driveSerialNumberLength <= ctx->metadataBlock.blockSize)
+                {
+                    ctx->imageInfo.DriveSerialNumber = malloc(ctx->metadataBlockHeader.driveSerialNumberLength);
+                    if(ctx->imageInfo.DriveSerialNumber != NULL)
+                    {
+                        memcpy(ctx->imageInfo.DriveSerialNumber,
+                               ctx->metadataBlock + ctx->metadataBlockHeader.driveSerialNumberOffset,
+                               ctx->metadataBlockHeader.driveSerialNumberLength);
+                    }
+                }
+
+                if(ctx->metadataBlockHeader.driveManufacturerLength > 0 &&
+                   ctx->metadataBlockHeader.driveFirmwareRevisionOffset +
+                   ctx->metadataBlockHeader.driveManufacturerLength <= ctx->metadataBlock.blockSize)
+                {
+                    ctx->imageInfo.DriveFirmwareRevision = malloc(ctx->metadataBlockHeader.driveFirmwareRevisionLength);
+                    if(ctx->imageInfo.DriveFirmwareRevision != NULL)
+                    {
+                        memcpy(ctx->imageInfo.DriveFirmwareRevision,
+                               ctx->metadataBlock + ctx->metadataBlockHeader.driveFirmwareRevisionLength,
+                               ctx->metadataBlockHeader.driveFirmwareRevisionLength);
+                    }
                 }
 
                 break;
@@ -543,6 +728,8 @@ void *open(const char *filepath)
                             idxEntries[i].offset);
                 }
 
+                ctx->imageInfo.ImageSize += sizeof(TrackEntry) * ctx->tracksHeader.entries;
+
                 ctx->trackEntries = malloc(sizeof(TrackEntry) * ctx->tracksHeader.entries);
 
                 if(ctx->trackEntries == NULL)
@@ -554,7 +741,7 @@ void *open(const char *filepath)
 
                 readBytes = fread(ctx->trackEntries, sizeof(TrackEntry), ctx->tracksHeader.entries, ctx->imageStream);
 
-                if(readBytes != ctx->metadataBlockHeader.blockSize)
+                if(readBytes != sizeof(TrackEntry) * ctx->tracksHeader.entries)
                 {
                     memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
                     free(ctx->trackEntries);
@@ -567,7 +754,9 @@ void *open(const char *filepath)
                         idxEntries[i].offset);
 
                 // TODO: Cache flags and ISRCs
-                // TODO: ImageInfo
+
+                ctx->imageInfo.HasPartitions = true;
+                ctx->imageInfo.HasSessions   = true;
 
                 break;
                 // CICM XML metadata block
@@ -587,6 +776,8 @@ void *open(const char *filepath)
                             "libdicformat: Incorrect identifier for data block at position %"PRIu64"",
                             idxEntries[i].offset);
                 }
+
+                ctx->imageInfo.ImageSize += ctx->cicmBlockHeader.length;
 
                 ctx->cicmBlock = malloc(ctx->cicmBlockHeader.length);
 
@@ -888,21 +1079,18 @@ void *open(const char *filepath)
         return NULL;
     }
 
-    // TODO: ImageInfo
-    /*
-        imageInfo.CreationTime = DateTime.FromFileTimeUtc(header.creationTime);
-        DicConsole.DebugWriteLine("DiscImageChef format plugin", "Image created on {0}", imageInfo.CreationTime);
-        imageInfo.LastModificationTime = DateTime.FromFileTimeUtc(header.lastWrittenTime);
-        DicConsole.DebugWriteLine("DiscImageChef format plugin", "Image last written on {0}",
-                                  imageInfo.LastModificationTime);
+    ctx->imageInfo.CreationTime         = ctx->header.creationTime;
+    ctx->imageInfo.LastModificationTime = ctx->header.lastWrittenTime;
 
-        if(geometryBlock.identifier != BlockType.GeometryBlock && imageInfo.XmlMediaType == XmlMediaType.BlockMedia)
-        {
-            imageInfo.Cylinders       = (uint)(imageInfo.Sectors / 16 / 63);
-            imageInfo.Heads           = 16;
-            imageInfo.SectorsPerTrack = 63;
-        }
-    */
+    // TODO: GetXmlMediaType
+    // imageInfo.XmlMediaType = GetXmlMediaType(header.mediaType);
+
+    if(ctx->geometryBlock.identifier != GeometryBlock/* && ctx->imageInfo.XmlMediaType == XmlMediaType.BlockMedia*/)
+    {
+        ctx->imageInfo.Cylinders       = (uint32_t)(ctx->imageInfo.Sectors / 16 / 63);
+        ctx->imageInfo.Heads           = 16;
+        ctx->imageInfo.SectorsPerTrack = 63;
+    }
 
     // TODO: Caches
     /*

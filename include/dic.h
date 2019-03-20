@@ -1,4 +1,4 @@
-// /***************************************************************************
+// /** *************************************************************************
 // The Disc Image Chef
 // ----------------------------------------------------------------------------
 //
@@ -111,8 +111,7 @@ typedef enum
     /** 120mm, Phase-Change, 1298496 sectors, 512 bytes/sector, PD650, ECMA-240, ISO 15485 */
             PD650      = 32,
     /** 120mm, Write-Once, 1281856 sectors, 512 bytes/sector, PD650, ECMA-240, ISO 15485 */
-            PD650_WORM = 33,
-    /**
+            PD650_WORM = 33, /**
      *     CD-i Ready, contains a track before the first TOC track, in mode 2, and all TOC tracks are Audio. Subchannel
      *     marks track as audio pause.
      */
@@ -330,13 +329,11 @@ typedef enum
     /** 3.5", DS, HD, 80 tracks, 21 spt, 512 bytes/sector, MFM */
             DMF             = 201,
     /** 3.5", DS, HD, 82 tracks, 21 spt, 512 bytes/sector, MFM */
-            DMF_82          = 202,
-    /**
+            DMF_82          = 202, /**
      *     5.25", DS, HD, 80 tracks, ? spt, ??? + ??? + ??? bytes/sector, MFM track 0 = ??15 sectors, 512
      *     bytes/sector, falsified to DOS as 19 spt, 512 bps
      */
-            XDF_525         = 203,
-    /**
+            XDF_525         = 203, /**
      *     3.5", DS, HD, 80 tracks, 4 spt, 8192 + 2048 + 1024 + 512 bytes/sector, MFM track 0 = 19 sectors, 512
      *     bytes/sector, falsified to DOS as 23 spt, 512 bps
      */
@@ -355,18 +352,15 @@ typedef enum
     /** 8", DS, SD, 74 tracks, 26 spt, 128 bytes/sector, FM, track 0 = 26 sectors, 128 bytes/sector */
             IBM43FD_128  = 214,
     /** 8", DS, SD, 74 tracks, 26 spt, 256 bytes/sector, FM, track 0 = 26 sectors, 128 bytes/sector */
-            IBM43FD_256  = 215,
-    /**
+            IBM43FD_256  = 215, /**
      *     8", DS, DD, 74 tracks, 26 spt, 256 bytes/sector, MFM, track 0 side 0 = 26 sectors, 128 bytes/sector, track 0
      *     side 1 = 26 sectors, 256 bytes/sector
      */
-            IBM53FD_256  = 216,
-    /**
+            IBM53FD_256  = 216, /**
      *     8", DS, DD, 74 tracks, 15 spt, 512 bytes/sector, MFM, track 0 side 0 = 26 sectors, 128 bytes/sector, track 0
      *     side 1 = 26 sectors, 256 bytes/sector
      */
-            IBM53FD_512  = 217,
-    /**
+            IBM53FD_512  = 217, /**
      *     8", DS, DD, 74 tracks, 8 spt, 1024 bytes/sector, MFM, track 0 side 0 = 26 sectors, 128 bytes/sector, track 0
      *     side 1 = 26 sectors, 256 bytes/sector
      */
@@ -461,17 +455,15 @@ typedef enum
     // NEC/SHARP standard floppy formats, types 260 to 269
 
     // ECMA floppy standards, types 270 to 289
-    /**
+    /** 
      *     5,25", DS, DD, 80 tracks, 8 spt, 1024 bytes/sector, MFM, track 0 side 0 = 26 sectors, 128 bytes/sector, track
      *     0 side 1 = 26 sectors, 256 bytes/sector
      */
-            ECMA_99_8  = 270,
-    /**
+            ECMA_99_8  = 270, /**
      *     5,25", DS, DD, 77 tracks, 15 spt, 512 bytes/sector, MFM, track 0 side 0 = 26 sectors, 128 bytes/sector, track
      *     0 side 1 = 26 sectors, 256 bytes/sector
      */
-            ECMA_99_15 = 271,
-    /**
+            ECMA_99_15 = 271, /**
      *     5,25", DS, DD, 77 tracks, 26 spt, 256 bytes/sector, MFM, track 0 side 0 = 26 sectors, 128 bytes/sector, track
      *     0 side 1 = 26 sectors, 256 bytes/sector
      */
@@ -487,28 +479,23 @@ typedef enum
     /** 8", DS, SD, 77 tracks, 26 spt, 128 bytes/sector, FM */
             ECMA_59    = 274,
     /** 5,25", SS, DD, 35 tracks, 9 spt, 256 bytes/sector, FM, track 0 side 0 = 16 sectors, 128 bytes/sector */
-            ECMA_66    = 275,
-    /**
+            ECMA_66    = 275, /**
      *     8", DS, DD, 77 tracks, 8 spt, 1024 bytes/sector, FM, track 0 side 0 = 26 sectors, 128 bytes/sector, track 0
      *     side 1 = 26 sectors, 256 bytes/sector
      */
-            ECMA_69_8  = 276,
-    /**
+            ECMA_69_8  = 276, /**
      *     8", DS, DD, 77 tracks, 15 spt, 512 bytes/sector, FM, track 0 side 0 = 26 sectors, 128 bytes/sector, track 0
      *     side 1 = 26 sectors, 256 bytes/sector
      */
-            ECMA_69_15 = 277,
-    /**
+            ECMA_69_15 = 277, /**
      *     8", DS, DD, 77 tracks, 26 spt, 256 bytes/sector, FM, track 0 side 0 = 26 sectors, 128 bytes/sector, track 0
      *     side 1 = 26 sectors, 256 bytes/sector
      */
-            ECMA_69_26 = 278,
-    /**
+            ECMA_69_26 = 278, /**
      *     5,25", DS, DD, 40 tracks, 16 spt, 256 bytes/sector, FM, track 0 side 0 = 16 sectors, 128 bytes/sector, track 0
      *     side 1 = 16 sectors, 256 bytes/sector
      */
-            ECMA_70    = 279,
-    /**
+            ECMA_70    = 279, /**
      *     5,25", DS, DD, 80 tracks, 16 spt, 256 bytes/sector, FM, track 0 side 0 = 16 sectors, 128 bytes/sector, track 0
      *     side 1 = 16 sectors, 256 bytes/sector
      */
@@ -896,137 +883,111 @@ typedef enum
     // Apple specific media, types 690 to 699
 
     // DEC hard disks, types 700 to 729
-    /**
+    /** 
      *     2382 cylinders, 4 tracks/cylinder, 42 sectors/track, 128 words/sector, 32 bits/word, 512 bytes/sector,
      *     204890112 bytes
      */
-            RA60    = 700,
-    /**
+            RA60    = 700, /**
      *     546 cylinders, 14 tracks/cylinder, 31 sectors/track, 128 words/sector, 32 bits/word, 512 bytes/sector,
      *     121325568 bytes
      */
-            RA80    = 701,
-    /**
+            RA80    = 701, /**
      *     1248 cylinders, 14 tracks/cylinder, 51 sectors/track, 128 words/sector, 32 bits/word, 512 bytes/sector,
      *     456228864 bytes
      */
-            RA81    = 702,
-    /**
+            RA81    = 702, /**
      *     302 cylinders, 4 tracks/cylinder, 42 sectors/track, 128 words/sector, 32 bits/word, 512 bytes/sector, 25976832
      *     bytes
      */
-            RC25    = 703,
-    /**
+            RC25    = 703, /**
      *     615 cylinders, 4 tracks/cylinder, 17 sectors/track, 128 words/sector, 32 bits/word, 512 bytes/sector, 21411840
      *     bytes
      */
-            RD31    = 704,
-    /**
+            RD31    = 704, /**
      *     820 cylinders, 6 tracks/cylinder, 17 sectors/track, 128 words/sector, 32 bits/word, 512 bytes/sector, 42823680
      *     bytes
      */
-            RD32    = 705,
-    /**
+            RD32    = 705, /**
      *     306 cylinders, 4 tracks/cylinder, 17 sectors/track, 128 words/sector, 32 bits/word, 512 bytes/sector, 10653696
      *     bytes
      */
-            RD51    = 706,
-    /**
+            RD51    = 706, /**
      *     480 cylinders, 7 tracks/cylinder, 18 sectors/track, 128 words/sector, 32 bits/word, 512 bytes/sector, 30965760
      *     bytes
      */
-            RD52    = 707,
-    /**
+            RD52    = 707, /**
      *     1024 cylinders, 7 tracks/cylinder, 18 sectors/track, 128 words/sector, 32 bits/word, 512 bytes/sector,
      *     75497472 bytes
      */
-            RD53    = 708,
-    /**
+            RD53    = 708, /**
      *     1225 cylinders, 8 tracks/cylinder, 18 sectors/track, 128 words/sector, 32 bits/word, 512 bytes/sector,
      *     159936000 bytes
      */
-            RD54    = 709,
-    /**
+            RD54    = 709, /**
      *     411 cylinders, 3 tracks/cylinder, 22 sectors/track, 256 words/sector, 16 bits/word, 512 bytes/sector, 13888512
      *     bytes
      */
-            RK06    = 710,
-    /**
+            RK06    = 710, /**
      *     411 cylinders, 3 tracks/cylinder, 20 sectors/track, 256 words/sector, 18 bits/word, 576 bytes/sector, 14204160
      *     bytes
      */
-            RK06_18 = 711,
-    /**
+            RK06_18 = 711, /**
      *     815 cylinders, 3 tracks/cylinder, 22 sectors/track, 256 words/sector, 16 bits/word, 512 bytes/sector, 27540480
      *     bytes
      */
-            RK07    = 712,
-    /**
+            RK07    = 712, /**
      *     815 cylinders, 3 tracks/cylinder, 20 sectors/track, 256 words/sector, 18 bits/word, 576 bytes/sector, 28166400
      *     bytes
      */
-            RK07_18 = 713,
-    /**
+            RK07_18 = 713, /**
      *     823 cylinders, 5 tracks/cylinder, 32 sectors/track, 128 words/sector, 32 bits/word, 512 bytes/sector, 67420160
      *     bytes
      */
-            RM02    = 714,
-    /**
+            RM02    = 714, /**
      *     823 cylinders, 5 tracks/cylinder, 32 sectors/track, 128 words/sector, 32 bits/word, 512 bytes/sector, 67420160
      *     bytes
      */
-            RM03    = 715,
-    /**
+            RM03    = 715, /**
      *     823 cylinders, 19 tracks/cylinder, 32 sectors/track, 128 words/sector, 32 bits/word, 512 bytes/sector,
      *     256196608 bytes
      */
-            RM05    = 716,
-    /**
+            RM05    = 716, /**
      *     203 cylinders, 10 tracks/cylinder, 22 sectors/track, 128 words/sector, 32 bits/word, 512 bytes/sector,
      *     22865920 bytes
      */
-            RP02    = 717,
-    /**
+            RP02    = 717, /**
      *     203 cylinders, 10 tracks/cylinder, 20 sectors/track, 128 words/sector, 36 bits/word, 576 bytes/sector,
      *     23385600 bytes
      */
-            RP02_18 = 718,
-    /**
+            RP02_18 = 718, /**
      *     400 cylinders, 10 tracks/cylinder, 22 sectors/track, 128 words/sector, 32 bits/word, 512 bytes/sector,
      *     45056000 bytes
      */
-            RP03    = 719,
-    /**
+            RP03    = 719, /**
      *     400 cylinders, 10 tracks/cylinder, 20 sectors/track, 128 words/sector, 36 bits/word, 576 bytes/sector,
      *     46080000 bytes
      */
-            RP03_18 = 720,
-    /**
+            RP03_18 = 720, /**
      *     411 cylinders, 19 tracks/cylinder, 22 sectors/track, 128 words/sector, 32 bits/word, 512 bytes/sector,
      *     87960576 bytes
      */
-            RP04    = 721,
-    /**
+            RP04    = 721, /**
      *     411 cylinders, 19 tracks/cylinder, 20 sectors/track, 128 words/sector, 36 bits/word, 576 bytes/sector,
      *     89959680 bytes
      */
-            RP04_18 = 722,
-    /**
+            RP04_18 = 722, /**
      *     411 cylinders, 19 tracks/cylinder, 22 sectors/track, 128 words/sector, 32 bits/word, 512 bytes/sector,
      *     87960576 bytes
      */
-            RP05    = 723,
-    /**
+            RP05    = 723, /**
      *     411 cylinders, 19 tracks/cylinder, 20 sectors/track, 128 words/sector, 36 bits/word, 576 bytes/sector,
      *     89959680 bytes
      */
-            RP05_18 = 724,
-    /**
+            RP05_18 = 724, /**
      *     815 cylinders, 19 tracks/cylinder, 22 sectors/track, 128 words/sector, 32 bits/word, 512 bytes/sector,
      *     174423040 bytes
      */
-            RP06    = 725,
-    /**
+            RP06    = 725, /**
      *     815 cylinders, 19 tracks/cylinder, 20 sectors/track, 128 words/sector, 36 bits/word, 576 bytes/sector,
      *     178387200 bytes
      */
@@ -1048,6 +1009,77 @@ typedef enum
             VideoNowXp    = 742
     //
 } MediaType;
+
+/** 
+ *      Contains information about a dump image and its contents
+ */
+typedef struct ImageInfo
+{
+    /** Image contains partitions (or tracks for optical media) */
+    uint8_t       HasPartitions;
+    /** Image contains sessions (optical media only) */
+    uint8_t       HasSessions;
+    /** Size of the image without headers */
+    uint64_t      ImageSize;
+    /** Sectors contained in the image */
+    uint64_t      Sectors;
+    /** Size of sectors contained in the image */
+    uint32_t      SectorSize;
+    /** Media tags contained by the image */
+    //List<MediaTagType> ReadableMediaTags;
+    /** Sector tags contained by the image */
+    //List<SectorTagType> ReadableSectorTags;
+    /** Image version */
+    unsigned char *Version;
+    /** Application that created the image */
+    unsigned char *Application;
+    /** Version of the application that created the image */
+    unsigned char *ApplicationVersion;
+    /** Who (person) created the image? */
+    unsigned char *Creator;
+    /** Image creation time */
+    int64_t       CreationTime;
+    /** Image last modification time */
+    int64_t       LastModificationTime;
+    /** Title of the media represented by the image */
+    unsigned char *MediaTitle;
+    /** Image comments */
+    unsigned char *Comments;
+    /** Manufacturer of the media represented by the image */
+    unsigned char *MediaManufacturer;
+    /** Model of the media represented by the image */
+    unsigned char *MediaModel;
+    /** Serial number of the media represented by the image */
+    unsigned char *MediaSerialNumber;
+    /** Barcode of the media represented by the image */
+    unsigned char *MediaBarcode;
+    /** Part number of the media represented by the image */
+    unsigned char *MediaPartNumber;
+    /** Media type represented by the image */
+    uint32_t      MediaType;
+    /** Number in sequence for the media represented by the image */
+    int32_t       MediaSequence;
+    /** Last media of the sequence the media represented by the image corresponds to */
+    int32_t       LastMediaSequence;
+    /** Manufacturer of the drive used to read the media represented by the image */
+    unsigned char *DriveManufacturer;
+    /** Model of the drive used to read the media represented by the image */
+    unsigned char *DriveModel;
+    /** Serial number of the drive used to read the media represented by the image */
+    unsigned char *DriveSerialNumber;
+    /** Firmware revision of the drive used to read the media represented by the image */
+    unsigned char *DriveFirmwareRevision;
+    /** Type of the media represented by the image to use in XML sidecars */
+    int32_t       XmlMediaType;
+    // CHS geometry...
+    /** Cylinders of the media represented by the image */
+    uint32_t      Cylinders;
+    /** Heads of the media represented by the image */
+    uint32_t      Heads;
+    /** Sectors per track of the media represented by the image (for variable image, the smallest) */
+    uint32_t      SectorsPerTrack;
+} ImageInfo;
+
 
 #endif //LIBDICFORMAT_DIC_H
 
