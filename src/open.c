@@ -49,6 +49,7 @@ void *open(const char *filepath)
     IndexEntry       *idxEntries;
     uint8_t          *data;
     uint32_t         *cdDdt;
+    uint64_t         crc64;
 
     ctx = (dicformatContext *)malloc(sizeof(dicformatContext));
     memset(ctx, 0, sizeof(dicformatContext));
@@ -273,7 +274,15 @@ void *open(const char *filepath)
                     break;
                 }
 
-                // TODO: Check CRC, if not correct, skip it
+                crc64 = crc64_data_ecma(data, blockHeader.length);
+                if(crc64 != blockHeader.crc64)
+                {
+                    fprintf(stderr,
+                            "libdicformat: Incorrect CRC found: 0x%"PRIx64" found, expected 0x%"PRIx64", continuing...",
+                            crc64,
+                            blockHeader.crc64);
+                    break;
+                }
 
                 dataLinkedList *mediaTag = NULL;
 
@@ -757,6 +766,18 @@ void *open(const char *filepath)
                     fprintf(stderr, "libdicformat: Could not read metadata block, continuing...");
                 }
 
+                crc64 =
+                        crc64_data_ecma((const uint8_t *)ctx->trackEntries,
+                                        ctx->tracksHeader.entries * sizeof(TrackEntry));
+                if(crc64 != ctx->tracksHeader.crc64)
+                {
+                    fprintf(stderr,
+                            "libdicformat: Incorrect CRC found: 0x%"PRIx64" found, expected 0x%"PRIx64", continuing...",
+                            crc64,
+                            ctx->tracksHeader.crc64);
+                    break;
+                }
+
                 fprintf(stderr,
                         "libdicformat: Found %d tracks at position %"PRIu64".",
                         ctx->tracksHeader.entries,
@@ -829,6 +850,29 @@ void *open(const char *filepath)
                     fprintf(stderr,
                             "libdicformat: Incorrect identifier for data block at position %"PRIu64"",
                             idxEntries[i].offset);
+                }
+
+                data = (uint8_t *)malloc(ctx->dumpHardwareHeader.length);
+                if(data != NULL)
+                {
+                    readBytes = fread(data, ctx->dumpHardwareHeader.length, 1, ctx->imageStream);
+
+                    if(readBytes == ctx->dumpHardwareHeader.length)
+                    {
+                        crc64 = crc64_data_ecma(data, ctx->dumpHardwareHeader.length);
+                        if(crc64 != ctx->dumpHardwareHeader.crc64)
+                        {
+                            free(data);
+                            fprintf(stderr,
+                                    "libdicformat: Incorrect CRC found: 0x%"PRIx64" found, expected 0x%"PRIx64", continuing...",
+                                    crc64,
+                                    ctx->dumpHardwareHeader.crc64);
+                            break;
+                        }
+                    }
+
+                    free(data);
+                    fseek(ctx->imageStream, -readBytes, SEEK_CUR);
                 }
 
                 ctx->dumpHardwareEntriesWithData =
