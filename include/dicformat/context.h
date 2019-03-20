@@ -45,13 +45,13 @@ typedef struct dicformatContext
     DicHeader                          header;
     struct dataLinkedList              *mediaTagsHead;
     struct dataLinkedList              *mediaTagsTail;
-    unsigned char                      *sectorPrefix;
-    unsigned char                      *sectorPrefixCorrected;
-    unsigned char                      *sectorSuffix;
-    unsigned char                      *sectorSuffixCorrected;
-    unsigned char                      *sectorSubchannel;
-    unsigned char                      *mode2Subheaders;
-    unsigned char                      shift;
+    uint8_t                            *sectorPrefix;
+    uint8_t                            *sectorPrefixCorrected;
+    uint8_t                            *sectorSuffix;
+    uint8_t                            *sectorSuffixCorrected;
+    uint8_t                            *sectorSubchannel;
+    uint8_t                            *mode2Subheaders;
+    uint8_t                            shift;
     bool inMemoryDdt;
     uint64_t                           *userDataDdt;
     size_t                             mappedMemoryDdtSize;
@@ -59,11 +59,11 @@ typedef struct dicformatContext
     uint32_t                           *sectorSuffixDdt;
     GeometryBlockHeader                geometryBlock;
     MetadataBlockHeader                metadataBlockHeader;
-    unsigned char                      *metadataBlock;
+    uint8_t                            *metadataBlock;
     TracksHeader                       tracksHeader;
     TrackEntry                         *trackEntries;
     CicmMetadataBlock                  cicmBlockHeader;
-    unsigned char                      *cicmBlock;
+    uint8_t                            *cicmBlock;
     DumpHardwareHeader                 dumpHardwareHeader;
     struct DumpHardwareEntriesWithData *dumpHardwareEntriesWithData;
     struct ImageInfo                   imageInfo;
@@ -73,7 +73,7 @@ typedef struct dataLinkedList
 {
     struct dataLinkedList *previous;
     struct dataLinkedList *next;
-    unsigned char         *data;
+    uint8_t               *data;
     int                   type;
 } dataLinkedList;
 
@@ -81,14 +81,14 @@ typedef struct DumpHardwareEntriesWithData
 {
     DumpHardwareEntry entry;
     struct DumpExtent *extents;
-    unsigned char     *manufacturer;
-    unsigned char     *model;
-    unsigned char     *revision;
-    unsigned char     *firmware;
-    unsigned char     *serial;
-    unsigned char     *softwareName;
-    unsigned char     *softwareVersion;
-    unsigned char     *softwareOperatingSystem;
+    uint8_t           *manufacturer;
+    uint8_t           *model;
+    uint8_t           *revision;
+    uint8_t           *firmware;
+    uint8_t           *serial;
+    uint8_t           *softwareName;
+    uint8_t           *softwareVersion;
+    uint8_t           *softwareOperatingSystem;
 } DumpHardwareEntriesWithData;
 
 #pragma pack(push, 1)

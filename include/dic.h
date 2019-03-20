@@ -1016,68 +1016,68 @@ typedef enum
 typedef struct ImageInfo
 {
     /** Image contains partitions (or tracks for optical media) */
-    uint8_t       HasPartitions;
+    uint8_t  HasPartitions;
     /** Image contains sessions (optical media only) */
-    uint8_t       HasSessions;
+    uint8_t  HasSessions;
     /** Size of the image without headers */
-    uint64_t      ImageSize;
+    uint64_t ImageSize;
     /** Sectors contained in the image */
-    uint64_t      Sectors;
+    uint64_t Sectors;
     /** Size of sectors contained in the image */
-    uint32_t      SectorSize;
+    uint32_t SectorSize;
     /** Media tags contained by the image */
     //List<MediaTagType> ReadableMediaTags;
     /** Sector tags contained by the image */
     //List<SectorTagType> ReadableSectorTags;
     /** Image version */
-    unsigned char *Version;
+    uint8_t  *Version;
     /** Application that created the image */
-    unsigned char *Application;
+    uint8_t  *Application;
     /** Version of the application that created the image */
-    unsigned char *ApplicationVersion;
+    uint8_t  *ApplicationVersion;
     /** Who (person) created the image? */
-    unsigned char *Creator;
+    uint8_t  *Creator;
     /** Image creation time */
-    int64_t       CreationTime;
+    int64_t  CreationTime;
     /** Image last modification time */
-    int64_t       LastModificationTime;
+    int64_t  LastModificationTime;
     /** Title of the media represented by the image */
-    unsigned char *MediaTitle;
+    uint8_t  *MediaTitle;
     /** Image comments */
-    unsigned char *Comments;
+    uint8_t  *Comments;
     /** Manufacturer of the media represented by the image */
-    unsigned char *MediaManufacturer;
+    uint8_t  *MediaManufacturer;
     /** Model of the media represented by the image */
-    unsigned char *MediaModel;
+    uint8_t  *MediaModel;
     /** Serial number of the media represented by the image */
-    unsigned char *MediaSerialNumber;
+    uint8_t  *MediaSerialNumber;
     /** Barcode of the media represented by the image */
-    unsigned char *MediaBarcode;
+    uint8_t  *MediaBarcode;
     /** Part number of the media represented by the image */
-    unsigned char *MediaPartNumber;
+    uint8_t  *MediaPartNumber;
     /** Media type represented by the image */
-    uint32_t      MediaType;
+    uint32_t MediaType;
     /** Number in sequence for the media represented by the image */
-    int32_t       MediaSequence;
+    int32_t  MediaSequence;
     /** Last media of the sequence the media represented by the image corresponds to */
-    int32_t       LastMediaSequence;
+    int32_t  LastMediaSequence;
     /** Manufacturer of the drive used to read the media represented by the image */
-    unsigned char *DriveManufacturer;
+    uint8_t  *DriveManufacturer;
     /** Model of the drive used to read the media represented by the image */
-    unsigned char *DriveModel;
+    uint8_t  *DriveModel;
     /** Serial number of the drive used to read the media represented by the image */
-    unsigned char *DriveSerialNumber;
+    uint8_t  *DriveSerialNumber;
     /** Firmware revision of the drive used to read the media represented by the image */
-    unsigned char *DriveFirmwareRevision;
+    uint8_t  *DriveFirmwareRevision;
     /** Type of the media represented by the image to use in XML sidecars */
-    int32_t       XmlMediaType;
+    int32_t  XmlMediaType;
     // CHS geometry...
     /** Cylinders of the media represented by the image */
-    uint32_t      Cylinders;
+    uint32_t Cylinders;
     /** Heads of the media represented by the image */
-    uint32_t      Heads;
+    uint32_t Heads;
     /** Sectors per track of the media represented by the image (for variable image, the smallest) */
-    uint32_t      SectorsPerTrack;
+    uint32_t SectorsPerTrack;
 } ImageInfo;
 
 

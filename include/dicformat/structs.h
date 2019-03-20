@@ -45,25 +45,25 @@
 typedef struct DicHeader
 {
     /**Header identifier, <see cref="DIC_MAGIC" /> */
-    uint64_t      identifier;
+    uint64_t identifier;
     /**UTF-16LE name of the application that created the image */
-    unsigned char application[64];
+    uint8_t  application[64];
     /**Image format major version. A new major version means a possibly incompatible change of format */
-    uint8_t       imageMajorVersion;
+    uint8_t  imageMajorVersion;
     /**Image format minor version. A new minor version indicates a compatible change of format */
-    uint8_t       imageMinorVersion;
+    uint8_t  imageMinorVersion;
     /**Major version of the application that created the image */
-    uint8_t       applicationMajorVersion;
+    uint8_t  applicationMajorVersion;
     /**Minor version of the application that created the image */
-    uint8_t       applicationMinorVersion;
+    uint8_t  applicationMinorVersion;
     /**Type of media contained on image */
-    uint32_t      mediaType;
+    uint32_t mediaType;
     /**Offset to index */
-    uint64_t      indexOffset;
+    uint64_t indexOffset;
     /**Windows filetime (100 nanoseconds since 1601/01/01 00:00:00 UTC) of image creation time */
-    int64_t       creationTime;
+    int64_t  creationTime;
     /**Windows filetime (100 nanoseconds since 1601/01/01 00:00:00 UTC) of image last written time */
-    int64_t       lastWrittenTime;
+    int64_t  lastWrittenTime;
 } DicHeader;
 
 /**Header for a deduplication table. Table follows it */
@@ -218,21 +218,21 @@ typedef struct TracksHeader
 typedef struct TrackEntry
 {
     /**Track sequence */
-    uint8_t       sequence;
+    uint8_t sequence;
     /**Track type */
-    uint8_t       type;
+    uint8_t type;
     /**Track starting LBA */
-    int64_t       start;
+    int64_t start;
     /**Track last LBA */
-    int64_t       end;
+    int64_t end;
     /**Track pregap in sectors */
-    int64_t       pregap;
+    int64_t pregap;
     /**Track session */
-    uint8_t       session;
+    uint8_t session;
     /**Track's ISRC in ASCII */
-    unsigned char isrc[13];
+    uint8_t isrc[13];
     /**Track flags */
-    uint8_t       flags;
+    uint8_t flags;
 } TrackEntry;
 
 /**Geometry block, contains physical geometry information */

@@ -33,7 +33,7 @@
 #include <dicformat.h>
 #include <errno.h>
 
-unsigned char *read_media_tag(void *context, int tag)
+uint8_t *read_media_tag(void *context, int tag)
 {
     if(context == NULL)
     {

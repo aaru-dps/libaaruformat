@@ -47,7 +47,7 @@ void *open(const char *filepath)
     long             pos;
     IndexHeader      idxHeader;
     IndexEntry       *idxEntries;
-    unsigned char    *data;
+    uint8_t          *data;
 
     memset(ctx, 0, sizeof(dicformatContext));
 

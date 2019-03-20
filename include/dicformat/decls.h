@@ -33,6 +33,8 @@
 #ifndef LIBDICFORMAT_DECLS_H
 #define LIBDICFORMAT_DECLS_H
 
+#include <stdint.h>
+
 int identify(const char *filename);
 
 int identifyStream(FILE *imageStream);
@@ -41,7 +43,7 @@ void *open(const char *filepath);
 
 int close(void *context);
 
-unsigned char *read_media_tag(void *context, int tag);
+uint8_t *read_media_tag(void *context, int tag);
 
 
 #endif //LIBDICFORMAT_DECLS_H
