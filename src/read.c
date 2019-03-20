@@ -2,14 +2,14 @@
 // The Disc Image Chef
 // ----------------------------------------------------------------------------
 //
-// Filename       : decsl.h
+// Filename       : open.c
 // Author(s)      : Natalia Portillo <claunia@claunia.com>
 //
 // Component      : libdicformat.
 //
 // --[ Description ] ----------------------------------------------------------
 //
-//     Declares exportable functions.
+//     Handles opening DiscImageChef format disk images.
 //
 // --[ License ] --------------------------------------------------------------
 //
@@ -30,18 +30,36 @@
 // Copyright © 2011-2019 Natalia Portillo
 // ****************************************************************************/
 
-#ifndef LIBDICFORMAT_DECLS_H
-#define LIBDICFORMAT_DECLS_H
+#include <dicformat.h>
+#include <errno.h>
 
-int identify(const char *filename);
+unsigned char *read_media_tag(void *context, int tag)
+{
+    if(context == NULL)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
 
-int identifyStream(FILE *imageStream);
+    dicformatContext *ctx = context;
 
-void *open(const char *filepath);
+    // TODO: Cast this field without casting the whole structure, as this can buffer overflow
+    // Not a libdicformat context
+    if(ctx->magic != DIC_MAGIC)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
 
-int close(void *context);
+    dataLinkedList *item = ctx->mediaTagsHead;
 
-unsigned char *read_media_tag(void *context, int tag);
+    while(item != NULL)
+    {
+        if(item->type == tag)
+            return item->data;
 
+        item = item->next;
+    }
 
-#endif //LIBDICFORMAT_DECLS_H
+    return NULL;
+}
