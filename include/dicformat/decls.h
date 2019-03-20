@@ -34,6 +34,7 @@
 #define LIBDICFORMAT_DECLS_H
 
 #include <stdint.h>
+#include <stdio.h>
 
 int identify(const char *filename);
 
