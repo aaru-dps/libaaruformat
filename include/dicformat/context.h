@@ -74,7 +74,8 @@ typedef struct dataLinkedList
     struct dataLinkedList *previous;
     struct dataLinkedList *next;
     uint8_t               *data;
-    int                   type;
+    int32_t               type;
+    uint32_t              length;
 } dataLinkedList;
 
 typedef struct DumpHardwareEntriesWithData

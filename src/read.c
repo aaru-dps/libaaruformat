@@ -33,8 +33,10 @@
 #include <dicformat.h>
 #include <errno.h>
 
-uint8_t *read_media_tag(void *context, int tag)
+uint8_t *read_media_tag(void *context, int32_t tag, uint32_t *length)
 {
+    *length = 0;
+
     if(context == NULL)
     {
         errno = EINVAL;
@@ -56,7 +58,10 @@ uint8_t *read_media_tag(void *context, int tag)
     while(item != NULL)
     {
         if(item->type == tag)
+        {
+            *length = item->length;
             return item->data;
+        }
 
         item = item->next;
     }

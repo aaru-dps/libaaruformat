@@ -44,7 +44,7 @@ void *open(const char *filepath);
 
 int close(void *context);
 
-uint8_t *read_media_tag(void *context, int tag);
+uint8_t *read_media_tag(void *context, int32_t tag, uint32_t *length);
 
 void *crc64_init(uint64_t polynomial, uint64_t seed);
 

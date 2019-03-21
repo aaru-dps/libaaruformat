@@ -383,8 +383,9 @@ void *open(const char *filepath)
                         // TODO: MediaTagType
                         // MediaTagType mediaTagType = GetMediaTagTypeForDataType(blockHeader.type);
 
-                        mediaTag->type = blockHeader.type;
-                        mediaTag->data = data;
+                        mediaTag->type   = blockHeader.type;
+                        mediaTag->data   = data;
+                        mediaTag->length = blockHeader.length;
 
                         if(ctx->mediaTagsHead == NULL)
                         {
