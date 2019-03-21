@@ -58,4 +58,6 @@ uint64_t crc64_data(const uint8_t *data, size_t len, uint64_t polynomial, uint64
 
 uint64_t crc64_data_ecma(const uint8_t *data, size_t len);
 
+uint8_t *read_sector(void *context, uint64_t sectorAddress, uint32_t *length);
+
 #endif //LIBDICFORMAT_DECLS_H
