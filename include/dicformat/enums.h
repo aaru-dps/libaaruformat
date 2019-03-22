@@ -236,6 +236,10 @@ typedef enum
             CdMode2Form2    = 5
 } TrackType;
 
+typedef enum
+{
+    DICF_STATUS_INVALID_CONTEXT = -1,
+} DicformatStatus;
 
 #endif //LIBDICFORMAT_ENUMS_H
 

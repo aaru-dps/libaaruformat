@@ -31,31 +31,23 @@
 // ****************************************************************************/
 
 #include <dicformat.h>
-#include <errno.h>
 #include <malloc.h>
 #include <string.h>
 
-uint8_t *read_media_tag(void *context, int32_t tag, uint32_t *length)
+int32_t read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t *length)
 {
     dicformatContext *ctx;
     dataLinkedList   *item;
-    *length = 0;
 
     if(context == NULL)
-    {
-        errno = EINVAL;
-        return NULL;
-    }
+        return DICF_ERROR_NOT_DICFORMAT;
 
     ctx = context;
 
     // TODO: Cast this field without casting the whole structure, as this can buffer overflow
     // Not a libdicformat context
     if(ctx->magic != DIC_MAGIC)
-    {
-        errno = EINVAL;
-        return NULL;
-    }
+        return DICF_ERROR_NOT_DICFORMAT;
 
     item = ctx->mediaTagsHead;
 
@@ -63,51 +55,46 @@ uint8_t *read_media_tag(void *context, int32_t tag, uint32_t *length)
     {
         if(item->type == tag)
         {
+            if(data == NULL || *length < item->length)
+            {
+                *length = item->length;
+                return DICF_ERROR_BUFFER_TOO_SMALL;
+            }
+
             *length = item->length;
-            return item->data;
+            memcpy(data, item->data, item->length);
         }
 
         item = item->next;
     }
 
-    return NULL;
+    *length = 0;
+    return DICF_ERROR_MEDIA_TAG_NOT_PRESENT;
 }
 
-uint8_t *read_sector(void *context, uint64_t sectorAddress, uint32_t *length)
+int32_t read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32_t *length)
 {
     dicformatContext *ctx;
     uint64_t         ddtEntry;
     uint32_t         offsetMask;
     uint64_t         offset;
     uint64_t         blockOffset;
-    uint8_t          *sector;
     BlockHeader      blockHeader;
     uint8_t          *block;
     size_t           readBytes;
 
-    *length = 0;
-
     if(context == NULL)
-    {
-        errno = EINVAL;
-        return NULL;
-    }
+        return DICF_ERROR_NOT_DICFORMAT;
 
     ctx = context;
 
     // TODO: Cast this field without casting the whole structure, as this can buffer overflow
     // Not a libdicformat context
     if(ctx->magic != DIC_MAGIC)
-    {
-        errno = EINVAL;
-        return NULL;
-    }
+        return DICF_ERROR_NOT_DICFORMAT;
 
     if(sectorAddress > ctx->imageInfo.Sectors - 1)
-    {
-        errno = DICF_ERROR_SECTOR_OUT_OF_BOUNDS;
-        return NULL;
-    }
+        return DICF_ERROR_SECTOR_OUT_OF_BOUNDS;
 
     ddtEntry    = ctx->userDataDdt[sectorAddress];
     offsetMask  = (uint32_t)((1 << ctx->shift) - 1);
@@ -117,17 +104,9 @@ uint8_t *read_sector(void *context, uint64_t sectorAddress, uint32_t *length)
     // Partially written image... as we can't know the real sector size just assume it's common :/
     if(ddtEntry == 0)
     {
-        sector = (uint8_t *)malloc(ctx->imageInfo.SectorSize);
-
-        if(sector == NULL)
-        {
-            errno = ENOMEM;
-            return NULL;
-        }
-
-        memset(sector, 0, ctx->imageInfo.SectorSize);
+        memset(data, 0, ctx->imageInfo.SectorSize);
         *length = ctx->imageInfo.SectorSize;
-        return sector;
+        return DICF_STATUS_SECTOR_NEVER_WRITTEN;
     }
 
     // Check if block is cached
@@ -138,9 +117,12 @@ uint8_t *read_sector(void *context, uint64_t sectorAddress, uint32_t *length)
     readBytes = fread(&blockHeader, sizeof(BlockHeader), 1, ctx->imageStream);
 
     if(readBytes != sizeof(BlockHeader))
+        return DICF_ERROR_CANNOT_READ_HEADER;
+
+    if(data == NULL || *length < blockHeader.sectorSize)
     {
-        errno = DICF_ERROR_CANNOT_READ_HEADER;
-        return NULL;
+        *length = blockHeader.sectorSize;
+        return DICF_ERROR_BUFFER_TOO_SMALL;
     }
 
     // Decompress block
@@ -148,23 +130,18 @@ uint8_t *read_sector(void *context, uint64_t sectorAddress, uint32_t *length)
     {
         case None:block = (uint8_t *)malloc(blockHeader.length);
             if(block == NULL)
-            {
-                errno = ENOMEM;
-                return NULL;
-            }
+                return DICF_ERROR_NOT_ENOUGH_MEMORY;
 
             readBytes = fread(block, blockHeader.length, 1, ctx->imageStream);
 
             if(readBytes != blockHeader.length)
             {
                 free(block);
-                errno = DICF_ERROR_CANNOT_READ_BLOCK;
-                return NULL;
+                return DICF_ERROR_CANNOT_READ_BLOCK;
             }
 
             break;
-        default:errno = DICF_ERROR_UNSUPPORTED_COMPRESSION;
-            return NULL;
+        default:return DICF_ERROR_UNSUPPORTED_COMPRESSION;
     }
 
     // Check if cache needs to be emptied
@@ -173,17 +150,8 @@ uint8_t *read_sector(void *context, uint64_t sectorAddress, uint32_t *length)
     // Add block to cache
     // TODO: Caches
 
-    sector = (uint8_t *)malloc(blockHeader.sectorSize);
-
-    if(sector == NULL)
-    {
-        free(block);
-        errno = ENOMEM;
-        return NULL;
-    }
-
-    memcpy(sector, block + offset, blockHeader.sectorSize);
+    memcpy(data, block + offset, blockHeader.sectorSize);
     *length = blockHeader.sectorSize;
     free(block);
-    return sector;
+    return DICF_STATUS_OK;
 }

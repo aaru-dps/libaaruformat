@@ -44,7 +44,7 @@ void *open(const char *filepath);
 
 int close(void *context);
 
-uint8_t *read_media_tag(void *context, int32_t tag, uint32_t *length);
+int32_t read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t *length);
 
 void *crc64_init(uint64_t polynomial, uint64_t seed);
 
@@ -58,6 +58,6 @@ uint64_t crc64_data(const uint8_t *data, size_t len, uint64_t polynomial, uint64
 
 uint64_t crc64_data_ecma(const uint8_t *data, size_t len);
 
-uint8_t *read_sector(void *context, uint64_t sectorAddress, uint32_t *length);
+int32_t read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32_t *length);
 
 #endif //LIBDICFORMAT_DECLS_H
