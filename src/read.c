@@ -155,3 +155,32 @@ int32_t read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32
     free(block);
     return DICF_STATUS_OK;
 }
+
+int32_t read_track_sector(void *context, uint8_t *data, uint64_t sectorAddress, uint32_t *length, uint8_t track)
+{
+    dicformatContext *ctx;
+    int              i;
+
+    if(context == NULL)
+        return DICF_ERROR_NOT_DICFORMAT;
+
+    ctx = context;
+
+    // TODO: Cast this field without casting the whole structure, as this can buffer overflow
+    // Not a libdicformat context
+    if(ctx->magic != DIC_MAGIC)
+        return DICF_ERROR_NOT_DICFORMAT;
+
+    if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+        return DICF_ERROR_INCORRECT_MEDIA_TYPE;
+
+    for(i = 0; i < ctx->numberOfDataTracks; i++)
+    {
+        if(ctx->dataTracks[i].sequence == track)
+        {
+            return read_sector(context, ctx->dataTracks[i].start + sectorAddress, data, length);
+        }
+    }
+
+    return DICF_ERROR_TRACK_NOT_FOUND;
+}

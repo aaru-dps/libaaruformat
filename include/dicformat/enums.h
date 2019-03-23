@@ -1,4 +1,3 @@
-
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #ifndef LIBDICFORMAT_ENUMS_H
@@ -183,21 +182,21 @@ typedef enum
 typedef enum
 {
     /** Block containing data */
-            DataBlock          = 0x4B4C4244,
+            DataBlock                    = 0x4B4C4244,
     /** Block containing a deduplication table */
-            DeDuplicationTable = 0X2A544444,
+            DeDuplicationTable           = 0X2A544444,
     /** Block containing the index */
-            IndexBlock         = 0X58444E49,
+            IndexBlock                   = 0X58444E49,
     /** Block containing logical geometry */
-            GeometryBlock      = 0x4D4F4547,
+            GeometryBlock                = 0x4D4F4547,
     /** Block containing metadata */
-            MetadataBlock      = 0x4154454D,
+            MetadataBlock                = 0x4154454D,
     /** Block containing optical disc tracks */
-            TracksBlock        = 0x534B5254,
+            TracksBlock                  = 0x534B5254,
     /** Block containing CICM XML metadata */
-            CicmBlock          = 0x4D434943,
+            CicmBlock                    = 0x4D434943,
     /** Block containing contents checksums */
-            ChecksumBlock      = 0x4D534B43,
+            ChecksumBlock                = 0x4D534B43,
     /** TODO: Block containing data position measurements */
             DataPositionMeasurementBlock = 0x2A4D5044,
     /** TODO: Block containing a snapshot index */
@@ -240,6 +239,27 @@ typedef enum
 {
     DICF_STATUS_INVALID_CONTEXT = -1,
 } DicformatStatus;
+
+/**
+ *     Enumeration of media types defined in CICM metadata
+ */
+typedef enum
+{
+    /**
+     *     Purely optical discs
+     */
+            OpticalDisc = 0, /**
+                    * Media that is physically block-based or abstracted like that
+
+ */
+            BlockMedia  = 1, /**
+                *     Media that can be accessed by-byte or by-bit, like chips
+ */
+            LinearMedia = 2, /**
+                 *     Media that can only store data when it is modulated to audio
+ */
+            AudioMedia  = 3
+} XmlMediaType;
 
 #endif //LIBDICFORMAT_ENUMS_H
 

@@ -2,7 +2,7 @@
 // The Disc Image Chef
 // ----------------------------------------------------------------------------
 //
-// Filename       : decsl.h
+// Filename       : decls.h
 // Author(s)      : Natalia Portillo <claunia@claunia.com>
 //
 // Component      : libdicformat.
@@ -110,5 +110,7 @@ void ecc_cd_reconstruct_prefix(uint8_t *sector, uint8_t type, int64_t lba);
 void ecc_cd_reconstruct(void *context, uint8_t *sector, uint8_t type);
 
 uint32_t edc_cd_compute(void *context, uint32_t edc, const uint8_t *src, int size, int pos);
+
+int32_t read_track_sector(void *context, uint8_t *data, uint64_t sectorAddress, uint32_t *length, uint8_t track);
 
 #endif //LIBDICFORMAT_DECLS_H
