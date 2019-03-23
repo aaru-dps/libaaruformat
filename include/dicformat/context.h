@@ -68,6 +68,8 @@ typedef struct dicformatContext
     struct DumpHardwareEntriesWithData *dumpHardwareEntriesWithData;
     struct ImageInfo                   imageInfo;
     CdEccContext                       *eccCdContext;
+    uint8_t                            numberOfDataTracks;
+    TrackEntry                         *dataTracks;
 } dicformatContext;
 
 typedef struct dataLinkedList

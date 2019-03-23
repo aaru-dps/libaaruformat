@@ -50,6 +50,7 @@ void *open(const char *filepath)
     uint8_t          *data;
     uint32_t         *cdDdt;
     uint64_t         crc64;
+    uint8_t          temp8u;
 
     ctx = (dicformatContext *)malloc(sizeof(dicformatContext));
     memset(ctx, 0, sizeof(dicformatContext));
@@ -784,10 +785,37 @@ void *open(const char *filepath)
                         ctx->tracksHeader.entries,
                         idxEntries[i].offset);
 
-                // TODO: Cache flags and ISRCs
-
                 ctx->imageInfo.HasPartitions = true;
                 ctx->imageInfo.HasSessions   = true;
+
+                ctx->numberOfDataTracks = 0;
+
+                // TODO: Handle track 0
+                for(i = 0, temp8u = 0; i < ctx->tracksHeader.entries; i++)
+                {
+                    if(ctx->trackEntries[i].sequence > temp8u && ctx->trackEntries[i].sequence <= 99)
+                        temp8u = ctx->trackEntries[i].sequence;
+                }
+
+                if(temp8u > 0)
+                {
+                    ctx->dataTracks = (TrackEntry *)malloc(sizeof(TrackEntry) * temp8u);
+
+                    if(ctx->dataTracks == NULL)
+                        break;
+
+                    ctx->numberOfDataTracks = temp8u;
+
+                    for(i = 0, temp8u = 0; i < ctx->tracksHeader.entries; i++)
+                    {
+                        if(ctx->trackEntries[i].sequence > 99)
+                            continue;
+
+                        memcpy(&ctx->dataTracks[ctx->trackEntries[i].sequence],
+                               &ctx->trackEntries[i],
+                               sizeof(TrackEntry));
+                    }
+                }
 
                 break;
                 // CICM XML metadata block
