@@ -38,6 +38,7 @@
 #pragma pack(push, 1)
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <dic.h>
 #include "enums.h"
 
@@ -308,6 +309,14 @@ typedef struct Crc64Context
     uint64_t table[256];
     uint64_t hashInt;
 } Crc64Context;
+
+typedef struct CdEccContext
+{
+    bool     initedEdc;
+    uint8_t  *eccBTable;
+    uint8_t  *eccFTable;
+    uint32_t *edcTable;
+} CdEccContext;
 
 #pragma pack(pop)
 

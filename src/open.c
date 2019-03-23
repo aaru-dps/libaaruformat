@@ -1160,7 +1160,9 @@ void *open(const char *filepath)
     */
 
     // TODO: Cache tracks and sessions?
-    // TODO: Initialize ECC for Compact Disc
+
+    // Initialize ECC for Compact Disc
+    ctx->eccCdContext = (CdEccContext *)ecc_cd_init();
 
     ctx->magic               = DIC_MAGIC;
     ctx->libraryMajorVersion = LIBDICFORMAT_MAJOR_VERSION;

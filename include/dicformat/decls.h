@@ -35,6 +35,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 int identify(const char *filename);
 
@@ -63,5 +64,51 @@ int32_t read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32
 int32_t cst_transform(const uint8_t *interleaved, uint8_t *sequential, size_t length);
 
 int32_t cst_untransform(const uint8_t *sequential, uint8_t *interleaved, size_t length);
+
+void *ecc_cd_init();
+
+bool ecc_cd_is_suffix_correct(void *context, const uint8_t *sector);
+
+bool ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector);
+
+bool ecc_cd_check(void *context,
+                  const uint8_t *address,
+                  const uint8_t *data,
+                  uint32_t majorCount,
+                  uint32_t minorCount,
+                  uint32_t majorMult,
+                  uint32_t minorInc,
+                  const uint8_t *ecc,
+                  int32_t addressOffset,
+                  int32_t dataOffset,
+                  int32_t eccOffset);
+
+void ecc_cd_write(void *context,
+                  const uint8_t *address,
+                  const uint8_t *data,
+                  uint32_t majorCount,
+                  uint32_t minorCount,
+                  uint32_t majorMult,
+                  uint32_t minorInc,
+                  uint8_t *ecc,
+                  int32_t addressOffset,
+                  int32_t dataOffset,
+                  int32_t eccOffset);
+
+void ecc_cd_write_sector(void *context,
+                         const uint8_t *address,
+                         const uint8_t *data,
+                         uint8_t *ecc,
+                         int32_t addressOffset,
+                         int32_t dataOffset,
+                         int32_t eccOffset);
+
+void cd_lba_to_msf(int64_t pos, uint8_t *minute, uint8_t *second, uint8_t *frame);
+
+void ecc_cd_reconstruct_prefix(uint8_t *sector, uint8_t type, int64_t lba);
+
+void ecc_cd_reconstruct(void *context, uint8_t *sector, uint8_t type);
+
+uint32_t edc_cd_compute(void *context, uint32_t edc, const uint8_t *src, int size, int pos);
 
 #endif //LIBDICFORMAT_DECLS_H

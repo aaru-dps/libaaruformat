@@ -67,6 +67,7 @@ typedef struct dicformatContext
     DumpHardwareHeader                 dumpHardwareHeader;
     struct DumpHardwareEntriesWithData *dumpHardwareEntriesWithData;
     struct ImageInfo                   imageInfo;
+    CdEccContext                       *eccCdContext;
 } dicformatContext;
 
 typedef struct dataLinkedList
