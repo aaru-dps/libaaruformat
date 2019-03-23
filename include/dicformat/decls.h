@@ -60,4 +60,8 @@ uint64_t crc64_data_ecma(const uint8_t *data, size_t len);
 
 int32_t read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32_t *length);
 
+int32_t cst_transform(const uint8_t *interleaved, uint8_t *sequential, size_t length);
+
+int32_t cst_untransform(const uint8_t *sequential, uint8_t *interleaved, size_t length);
+
 #endif //LIBDICFORMAT_DECLS_H
