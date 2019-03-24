@@ -106,7 +106,7 @@ int32_t read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32
     {
         memset(data, 0, ctx->imageInfo.SectorSize);
         *length = ctx->imageInfo.SectorSize;
-        return DICF_STATUS_SECTOR_NEVER_WRITTEN;
+        return DICF_STATUS_SECTOR_NOT_DUMPED;
     }
 
     // Check if block is cached
@@ -183,4 +183,234 @@ int32_t read_track_sector(void *context, uint8_t *data, uint64_t sectorAddress, 
     }
 
     return DICF_ERROR_TRACK_NOT_FOUND;
+}
+
+int32_t read_sector_long(void *context, uint8_t *data, uint64_t sectorAddress, uint32_t *length)
+{
+    dicformatContext *ctx;
+    uint32_t         bareLength;
+    uint32_t         tagLength;
+    uint8_t          *bareData;
+    int32_t          res;
+    TrackEntry       trk;
+    int              i;
+    bool             trkFound;
+
+    if(context == NULL)
+        return DICF_ERROR_NOT_DICFORMAT;
+
+    ctx = context;
+
+    // TODO: Cast this field without casting the whole structure, as this can buffer overflow
+    // Not a libdicformat context
+    if(ctx->magic != DIC_MAGIC)
+        return DICF_ERROR_NOT_DICFORMAT;
+
+    switch(ctx->imageInfo.XmlMediaType)
+    {
+        case OpticalDisc:
+            if(*length < 2352 || data == NULL)
+            {
+                *length = 2352;
+                return DICF_ERROR_BUFFER_TOO_SMALL;
+            }
+            if((ctx->sectorSuffix == NULL || ctx->sectorPrefix == NULL) &&
+               (ctx->sectorSuffixCorrected == NULL || ctx->sectorPrefixCorrected == NULL))
+                return read_sector(context, sectorAddress, data, length);
+
+            bareLength = 0;
+            read_sector(context, sectorAddress, NULL, &bareLength);
+
+            bareData = (uint8_t *)malloc(bareLength);
+
+            if(bareData == NULL)
+                return DICF_ERROR_NOT_ENOUGH_MEMORY;
+
+            res = read_sector(context, sectorAddress, bareData, &bareLength);
+
+            if(res < DICF_STATUS_OK)
+                return res;
+
+            trkFound = false;
+
+            for(i = 0; i < ctx->numberOfDataTracks; i++)
+            {
+                if(ctx->dataTracks[i].start >= sectorAddress && ctx->dataTracks[i].end <= sectorAddress)
+                {
+                    trkFound = true;
+                    trk      = ctx->dataTracks[i];
+                    break;
+                }
+            }
+
+            if(!trkFound)
+                return DICF_ERROR_TRACK_NOT_FOUND;
+
+            switch(trk.type)
+            {
+                case Audio:
+                case Data:memcpy(bareData, data, bareLength);
+                    return res;
+                case CdMode1:memcpy(bareData, data + 16, 2048);
+
+                    if(ctx->sectorPrefix != NULL)
+                        memcpy(data, ctx->sectorPrefix + (sectorAddress * 16), 16);
+                    else if(ctx->sectorPrefixDdt != NULL)
+                    {
+                        if((ctx->sectorPrefixDdt[sectorAddress] & CD_XFIX_MASK) == Correct)
+                        {
+                            ecc_cd_reconstruct_prefix(data, trk.type, sectorAddress);
+                            res = DICF_STATUS_OK;
+                        }
+                        else if((ctx->sectorPrefixDdt[sectorAddress] & CD_XFIX_MASK) == NotDumped)
+                        {
+                            res = DICF_STATUS_SECTOR_NOT_DUMPED;
+                        }
+                        else
+                        {
+                            memcpy(data,
+                                   ctx->sectorPrefixCorrected +
+                                   ((ctx->sectorPrefixDdt[sectorAddress] & CD_DFIX_MASK) - 1) * 16,
+                                   16);
+                        }
+                    }
+                    else
+                        return DICF_ERROR_REACHED_UNREACHABLE_CODE;
+
+                    if(ctx->sectorSuffix != NULL)
+                        memcpy(data + 2064, ctx->sectorSuffix + sectorAddress * 288, 288);
+                    else if(ctx->sectorSuffixDdt != NULL)
+                    {
+                        if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == Correct)
+                        {
+
+                            ecc_cd_reconstruct(ctx->eccCdContext, data, trk.type);
+                            res = DICF_STATUS_OK;
+                        }
+                        else if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == NotDumped)
+                        {
+                            res = DICF_STATUS_SECTOR_NOT_DUMPED;
+                        }
+                        else
+                        {
+                            memcpy(data + 2064,
+                                   ctx->sectorSuffixCorrected +
+                                   ((ctx->sectorSuffixDdt[sectorAddress] & CD_DFIX_MASK) - 1) * 288,
+                                   288);
+                        }
+                    }
+                    else
+                        return DICF_ERROR_REACHED_UNREACHABLE_CODE;
+
+                    return res;
+                case CdMode2Formless:
+                case CdMode2Form1:
+                case CdMode2Form2:
+                    if(ctx->sectorPrefix != NULL)
+                        memcpy(data, ctx->sectorPrefix + sectorAddress * 16, 16);
+                    else if(ctx->sectorPrefixDdt != NULL)
+                    {
+                        if((ctx->sectorPrefixDdt[sectorAddress] & CD_XFIX_MASK) == Correct)
+                        {
+                            ecc_cd_reconstruct_prefix(data, trk.type, sectorAddress);
+                            res = DICF_STATUS_OK;
+                        }
+                        else if((ctx->sectorPrefixDdt[sectorAddress] & CD_XFIX_MASK) == NotDumped)
+                        {
+                            res = DICF_STATUS_SECTOR_NOT_DUMPED;
+                        }
+                        else
+                        {
+                            memcpy(data,
+                                   ctx->sectorPrefixCorrected +
+                                   ((ctx->sectorPrefixDdt[sectorAddress] & CD_DFIX_MASK) - 1) * 16,
+                                   16);
+                        }
+                    }
+                    else
+                        return DICF_ERROR_REACHED_UNREACHABLE_CODE;
+
+                    if(ctx->mode2Subheaders != NULL && ctx->sectorSuffixDdt != NULL)
+                    {
+                        memcpy(data + 16, ctx->mode2Subheaders + sectorAddress * 8, 8);
+
+                        if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == Mode2Form1Ok)
+                        {
+                            memcpy(data + 24, bareData, 2048);
+                            ecc_cd_reconstruct(ctx->eccCdContext, data, CdMode2Form1);
+                        }
+                        else if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == Mode2Form2Ok ||
+                                (ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == Mode2Form2NoCrc)
+                        {
+                            memcpy(data + 24, bareData, 2324);
+                            if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == Mode2Form2Ok)
+                                ecc_cd_reconstruct(ctx->eccCdContext, data, CdMode2Form2);
+                        }
+                    }
+                    else if(ctx->mode2Subheaders != NULL)
+                    {
+                        memcpy(data + 16, ctx->mode2Subheaders + sectorAddress * 8, 8);
+                        memcpy(data + 24, bareData, 2328);
+                    }
+                    else
+                        memcpy(data + 16, bareData, 2336);
+
+                    return res;
+                default:return DICF_ERROR_INVALID_TRACK_FORMAT;
+            }
+        case BlockMedia:
+            switch(ctx->imageInfo.MediaType)
+            {
+                case AppleFileWare:
+                case AppleProfile:
+                case AppleSonySS:
+                case AppleSonyDS:
+                case AppleWidget:
+                case PriamDataTower:
+                    if(ctx->sectorSubchannel == NULL)
+                        return read_sector(context, sectorAddress, data, length);
+
+                    switch(ctx->imageInfo.MediaType)
+                    {
+                        case AppleFileWare:
+                        case AppleProfile:
+                        case AppleWidget:tagLength = 20;
+                            break;
+                        case AppleSonySS:
+                        case AppleSonyDS:tagLength = 12;
+                            break;
+                        case PriamDataTower:tagLength = 24;
+                            break;
+                        default:return DICF_ERROR_INCORRECT_MEDIA_TYPE;
+                    }
+
+                    bareLength = 512;
+
+                    if(*length < tagLength + bareLength || data == NULL)
+                    {
+                        *length = tagLength + bareLength;
+                        return DICF_ERROR_BUFFER_TOO_SMALL;
+                    }
+
+                    bareData = malloc(bareLength);
+
+                    if(bareData == NULL)
+                        return DICF_ERROR_NOT_ENOUGH_MEMORY;
+
+                    res = read_sector(context, sectorAddress, bareData, &bareLength);
+
+                    if(bareLength != 512)
+                        return res;
+
+                    memcpy(data, ctx->sectorSubchannel + sectorAddress * tagLength, tagLength);
+                    memcpy(data, bareData, 512);
+
+                    free(bareData);
+
+                    return res;
+                default:return DICF_ERROR_INCORRECT_MEDIA_TYPE;
+
+            }
+        default:return DICF_ERROR_INCORRECT_MEDIA_TYPE;
+    }
 }
