@@ -38,7 +38,6 @@
 #include <string.h>
 #include <sys/mman.h>
 
-// TODO: Check CRC64 on structures
 void *open(const char *filepath)
 {
     dicformatContext *ctx;
