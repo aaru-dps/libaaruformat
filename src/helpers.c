@@ -34,7 +34,7 @@
 #include <dicformat.h>
 
 // Converts between image data type and dic media tag type
-static int32_t GetMediaTagTypeForDataType(int32_t type)
+int32_t GetMediaTagTypeForDataType(int32_t type)
 {
     switch(type)
     {
@@ -108,5 +108,105 @@ static int32_t GetMediaTagTypeForDataType(int32_t type)
         case CompactDiscMediaCatalogueNumber: return CD_MCN;
         case CompactDiscLeadIn: return CD_LeadIn;
         default: return -1;
+    }
+}
+
+// Get the CICM XML media type from DIC media type
+int32_t GetXmlMediaType(int32_t type)
+{
+    switch(type)
+    {
+        case CD:
+        case CDDA:
+        case CDG:
+        case CDEG:
+        case CDI:
+        case CDIREADY:
+        case CDROM:
+        case CDROMXA:
+        case CDPLUS:
+        case CDMO:
+        case CDR:
+        case CDRW:
+        case CDMRW:
+        case VCD:
+        case SVCD:
+        case PCD:
+        case SACD:
+        case DDCD:
+        case DDCDR:
+        case DDCDRW:
+        case DTSCD:
+        case CDMIDI:
+        case CDV:
+        case DVDROM:
+        case DVDR:
+        case DVDRW:
+        case DVDPR:
+        case DVDPRW:
+        case DVDPRWDL:
+        case DVDRDL:
+        case DVDPRDL:
+        case DVDRAM:
+        case DVDRWDL:
+        case DVDDownload:
+        case HDDVDROM:
+        case HDDVDRAM:
+        case HDDVDR:
+        case HDDVDRW:
+        case HDDVDRDL:
+        case HDDVDRWDL:
+        case BDROM:
+        case BDR:
+        case BDRE:
+        case BDRXL:
+        case BDREXL:
+        case EVD:
+        case FVD:
+        case HVD:
+        case CBHD:
+        case HDVMD:
+        case VCDHD:
+        case SVOD:
+        case FDDVD:
+        case LD:
+        case LDROM:
+        case LDROM2:
+        case LVROM:
+        case MegaLD:
+        case PS1CD:
+        case PS2CD:
+        case PS2DVD:
+        case PS3DVD:
+        case PS3BD:
+        case PS4BD:
+        case UMD:
+        case XGD:
+        case XGD2:
+        case XGD3:
+        case XGD4:
+        case MEGACD:
+        case SATURNCD:
+        case GDROM:
+        case GDR:
+        case SuperCDROM2:
+        case JaguarCD:
+        case ThreeDO:
+        case PCFX:
+        case NeoGeoCD:
+        case GOD:
+        case WOD:
+        case WUOD:
+        case CDTV:
+        case CD32:
+        case Nuon:
+        case Playdia:
+        case Pippin:
+        case FMTOWNS:
+        case MilCD:
+        case VideoNow:
+        case VideoNowColor:
+        case VideoNowXp: return OpticalDisc;
+        default: return BlockMedia;
     }
 }

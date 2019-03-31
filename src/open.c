@@ -1154,9 +1154,7 @@ void *open(const char *filepath)
 
     ctx->imageInfo.CreationTime         = ctx->header.creationTime;
     ctx->imageInfo.LastModificationTime = ctx->header.lastWrittenTime;
-
-    // TODO: GetXmlMediaType
-    // imageInfo.XmlMediaType = GetXmlMediaType(header.mediaType);
+    ctx->imageInfo.XmlMediaType         = GetXmlMediaType(ctx->header.mediaType);
 
     if(ctx->geometryBlock.identifier != GeometryBlock/* && ctx->imageInfo.XmlMediaType == XmlMediaType.BlockMedia*/)
     {
