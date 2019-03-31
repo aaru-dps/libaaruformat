@@ -113,4 +113,6 @@ uint32_t edc_cd_compute(void *context, uint32_t edc, const uint8_t *src, int siz
 
 int32_t read_track_sector(void *context, uint8_t *data, uint64_t sectorAddress, uint32_t *length, uint8_t track);
 
+static int32_t GetMediaTagTypeForDataType(int32_t type);
+
 #endif //LIBDICFORMAT_DECLS_H

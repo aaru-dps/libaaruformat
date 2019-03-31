@@ -1081,8 +1081,8 @@ typedef struct ImageInfo
 } ImageInfo;
 
 /** 
-///     Metadata present for each sector (aka, "tag").
-///  */
+ *     Metadata present for each sector (aka, "tag").
+ */
 typedef enum
 {
     AppleSectorTag        = 0,/** Apple's GCR sector tags, 12 bytes */
@@ -1101,6 +1101,86 @@ typedef enum
     FloppyAddressMark     = 13,/** Floppy address mark (contents depend on underlying floppy format) */
     MaxSectorTag          = FloppyAddressMark
 } SectorTagType;
+
+/* 
+ *     Metadata present for each media.
+ */
+typedef enum
+{
+    /* CD table of contents */
+            CD_TOC                        = 0, /* CD session information */
+            CD_SessionInfo                = 1, /* CD full table of contents */
+            CD_FullTOC                    = 2, /* CD PMA */
+            CD_PMA                        = 3, /* CD Adress-Time-In-Pregroove */
+            CD_ATIP                       = 4, /* CD-Text */
+            CD_TEXT                       = 5, /* CD Media Catalogue Number */
+            CD_MCN                        = 6, /* DVD/HD DVD Physical Format Information */
+            DVD_PFI                       = 7, /* DVD Lead-in Copyright Management Information */
+            DVD_CMI                       = 8, /* DVD disc key */
+            DVD_DiscKey                   = 9, /* DVD/HD DVD Burst Cutting Area */
+            DVD_BCA                       = 10, /* DVD/HD DVD Lead-in Disc Manufacturer Information */
+            DVD_DMI                       = 11, /* Media identifier */
+            DVD_MediaIdentifier           = 12, /* Media key block */
+            DVD_MKB                       = 13, /* DVD-RAM/HD DVD-RAM DDS information */
+            DVDRAM_DDS                    = 14, /* DVD-RAM/HD DVD-RAM Medium status */
+            DVDRAM_MediumStatus           = 15, /* DVD-RAM/HD DVD-RAM Spare area information */
+            DVDRAM_SpareArea              = 16, /* DVD-R/-RW/HD DVD-R RMD in last border-out */
+            DVDR_RMD                      = 17, /* Pre-recorded information from DVD-R/-RW lead-in */
+            DVDR_PreRecordedInfo          = 18, /* DVD-R/-RW/HD DVD-R media identifier */
+            DVDR_MediaIdentifier          = 19, /* DVD-R/-RW/HD DVD-R physical format information */
+            DVDR_PFI                      = 20, /* ADIP information */
+            DVD_ADIP                      = 21, /* HD DVD Lead-in copyright protection information */
+            HDDVD_CPI                     = 22, /* HD DVD-R Medium Status */
+            HDDVD_MediumStatus            = 23, /* DVD+/-R DL Layer capacity */
+            DVDDL_LayerCapacity           = 24, /* DVD-R DL Middle Zone start address */
+            DVDDL_MiddleZoneAddress       = 25, /* DVD-R DL Jump Interval Size */
+            DVDDL_JumpIntervalSize        = 26, /* DVD-R DL Start LBA of the manual layer jump */
+            DVDDL_ManualLayerJumpLBA      = 27, /* Blu-ray Disc Information */
+            BD_DI                         = 28, /* Blu-ray Burst Cutting Area */
+            BD_BCA                        = 29, /* Blu-ray Disc Definition Structure */
+            BD_DDS                        = 30, /* Blu-ray Cartridge Status */
+            BD_CartridgeStatus            = 31, /* Blu-ray Status of Spare Area */
+            BD_SpareArea                  = 32, /* AACS volume identifier */
+            AACS_VolumeIdentifier         = 33, /* AACS pre-recorded media serial number */
+            AACS_SerialNumber             = 34, /* AACS media identifier */
+            AACS_MediaIdentifier          = 35, /* Lead-in AACS media key block */
+            AACS_MKB                      = 36, /* AACS data keys */
+            AACS_DataKeys                 = 37, /* LBA extents flagged for bus encryption by AACS */
+            AACS_LBAExtents               = 38, /* CPRM media key block in Lead-in */
+            AACS_CPRM_MKB                 = 39, /* Recognized layer formats in hybrid discs */
+            Hybrid_RecognizedLayers       = 40, /* Disc write protection status */
+            MMC_WriteProtection           = 41, /* Disc standard information */
+            MMC_DiscInformation           = 42, /* Disc track resources information */
+            MMC_TrackResourcesInformation = 43, /* BD-R Pseudo-overwrite information */
+            MMC_POWResourcesInformation   = 44, /* SCSI INQUIRY response */
+            SCSI_INQUIRY                  = 45, /* SCSI MODE PAGE 2Ah */
+            SCSI_MODEPAGE_2A              = 46, /* ATA IDENTIFY DEVICE response */
+            ATA_IDENTIFY                  = 47, /* ATA IDENTIFY PACKET DEVICE response */
+            ATAPI_IDENTIFY                = 48, /* PCMCIA/CardBus Card Information Structure */
+            PCMCIA_CIS                    = 49, /* SecureDigital CID */
+            SD_CID                        = 50, /* SecureDigital CSD */
+            SD_CSD                        = 51, /* SecureDigital SCR */
+            SD_SCR                        = 52, /* SecureDigital OCR */
+            SD_OCR                        = 53, /* MultiMediaCard CID */
+            MMC_CID                       = 54, /* MultiMediaCard CSD */
+            MMC_CSD                       = 55, /* MultiMediaCard OCR */
+            MMC_OCR                       = 56, /* MultiMediaCard Extended CSD */
+            MMC_ExtendedCSD               = 57, /* Xbox Security Sector */
+            Xbox_SecuritySector           = 58, /*
+     *     On floppy disks, data in last cylinder usually in a different format that contains duplication or
+     *     manufacturing information
+     */
+            Floppy_LeadOut                = 59, /* DVD Disc Control Blocks */
+            DCB                           = 60, /* Compact Disc First Track Pregap */
+            CD_FirstTrackPregap           = 61, /* Compact Disc Lead-out */
+            CD_LeadOut                    = 62, /* SCSI MODE SENSE (6) */
+            SCSI_MODESENSE_6              = 63, /* SCSI MODE SENSE (10) */
+            SCSI_MODESENSE_10             = 64, /* USB descriptors */
+            USB_Descriptors               = 65, /* XGD unlocked DMI */
+            Xbox_DMI                      = 66, /* XDG unlocked PFI */
+            Xbox_PFI                      = 67, /* Compact Disc Lead-in */
+            CD_LeadIn                     = 68
+} MediaTagType;
 
 
 #endif //LIBDICFORMAT_DIC_H

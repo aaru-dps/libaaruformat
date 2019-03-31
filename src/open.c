@@ -371,10 +371,7 @@ void *open(const char *filepath)
                         }
                         memset(mediaTag, 0, sizeof(dataLinkedList));
 
-                        // TODO: MediaTagType
-                        // MediaTagType mediaTagType = GetMediaTagTypeForDataType(blockHeader.type);
-
-                        mediaTag->type   = blockHeader.type;
+                        mediaTag->type   = GetMediaTagTypeForDataType(blockHeader.type);
                         mediaTag->data   = data;
                         mediaTag->length = blockHeader.length;
 
