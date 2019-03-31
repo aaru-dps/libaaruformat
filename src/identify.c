@@ -30,9 +30,9 @@
 // Copyright © 2011-2019 Natalia Portillo
 // ****************************************************************************/
 
+#include <dicformat.h>
 #include <errno.h>
 #include <stdio.h>
-#include <dicformat.h>
 
 //! Identifies a file as dicformat, using path
 /*!
@@ -47,8 +47,7 @@ int identify(const char *filename)
 
     stream = fopen(filename, "rb");
 
-    if(stream == NULL)
-        return errno;
+    if(stream == NULL) return errno;
 
     int ret = identifyStream(stream);
 
@@ -72,11 +71,9 @@ int identifyStream(FILE *imageStream)
 
     size_t ret = fread(&header, sizeof(DicHeader), 1, imageStream);
 
-    if(ret < sizeof(DicHeader))
-        return 0;
+    if(ret < sizeof(DicHeader)) return 0;
 
-    if(header.identifier == DIC_MAGIC && header.imageMajorVersion <= DICF_VERSION)
-        return 100;
+    if(header.identifier == DIC_MAGIC && header.imageMajorVersion <= DICF_VERSION) return 100;
 
     return 0;
 }

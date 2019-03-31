@@ -37,16 +37,14 @@
 int32_t read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t *length)
 {
     dicformatContext *ctx;
-    dataLinkedList   *item;
+    dataLinkedList *  item;
 
-    if(context == NULL)
-        return DICF_ERROR_NOT_DICFORMAT;
+    if(context == NULL) return DICF_ERROR_NOT_DICFORMAT;
 
     ctx = context;
 
     // Not a libdicformat context
-    if(ctx->magic != DIC_MAGIC)
-        return DICF_ERROR_NOT_DICFORMAT;
+    if(ctx->magic != DIC_MAGIC) return DICF_ERROR_NOT_DICFORMAT;
 
     item = ctx->mediaTagsHead;
 
@@ -74,25 +72,22 @@ int32_t read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t *leng
 int32_t read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32_t *length)
 {
     dicformatContext *ctx;
-    uint64_t         ddtEntry;
-    uint32_t         offsetMask;
-    uint64_t         offset;
-    uint64_t         blockOffset;
-    BlockHeader      blockHeader;
-    uint8_t          *block;
-    size_t           readBytes;
+    uint64_t          ddtEntry;
+    uint32_t          offsetMask;
+    uint64_t          offset;
+    uint64_t          blockOffset;
+    BlockHeader       blockHeader;
+    uint8_t *         block;
+    size_t            readBytes;
 
-    if(context == NULL)
-        return DICF_ERROR_NOT_DICFORMAT;
+    if(context == NULL) return DICF_ERROR_NOT_DICFORMAT;
 
     ctx = context;
 
     // Not a libdicformat context
-    if(ctx->magic != DIC_MAGIC)
-        return DICF_ERROR_NOT_DICFORMAT;
+    if(ctx->magic != DIC_MAGIC) return DICF_ERROR_NOT_DICFORMAT;
 
-    if(sectorAddress > ctx->imageInfo.Sectors - 1)
-        return DICF_ERROR_SECTOR_OUT_OF_BOUNDS;
+    if(sectorAddress > ctx->imageInfo.Sectors - 1) return DICF_ERROR_SECTOR_OUT_OF_BOUNDS;
 
     ddtEntry    = ctx->userDataDdt[sectorAddress];
     offsetMask  = (uint32_t)((1 << ctx->shift) - 1);
@@ -114,8 +109,7 @@ int32_t read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32
     fseek(ctx->imageStream, blockOffset, SEEK_SET);
     readBytes = fread(&blockHeader, sizeof(BlockHeader), 1, ctx->imageStream);
 
-    if(readBytes != sizeof(BlockHeader))
-        return DICF_ERROR_CANNOT_READ_HEADER;
+    if(readBytes != sizeof(BlockHeader)) return DICF_ERROR_CANNOT_READ_HEADER;
 
     if(data == NULL || *length < blockHeader.sectorSize)
     {
@@ -126,9 +120,9 @@ int32_t read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32
     // Decompress block
     switch(blockHeader.compression)
     {
-        case None:block = (uint8_t *)malloc(blockHeader.length);
-            if(block == NULL)
-                return DICF_ERROR_NOT_ENOUGH_MEMORY;
+        case None:
+            block = (uint8_t *)malloc(blockHeader.length);
+            if(block == NULL) return DICF_ERROR_NOT_ENOUGH_MEMORY;
 
             readBytes = fread(block, blockHeader.length, 1, ctx->imageStream);
 
@@ -139,7 +133,7 @@ int32_t read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32
             }
 
             break;
-        default:return DICF_ERROR_UNSUPPORTED_COMPRESSION;
+        default: return DICF_ERROR_UNSUPPORTED_COMPRESSION;
     }
 
     // Check if cache needs to be emptied
@@ -157,26 +151,21 @@ int32_t read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32
 int32_t read_track_sector(void *context, uint8_t *data, uint64_t sectorAddress, uint32_t *length, uint8_t track)
 {
     dicformatContext *ctx;
-    int              i;
+    int               i;
 
-    if(context == NULL)
-        return DICF_ERROR_NOT_DICFORMAT;
+    if(context == NULL) return DICF_ERROR_NOT_DICFORMAT;
 
     ctx = context;
 
     // Not a libdicformat context
-    if(ctx->magic != DIC_MAGIC)
-        return DICF_ERROR_NOT_DICFORMAT;
+    if(ctx->magic != DIC_MAGIC) return DICF_ERROR_NOT_DICFORMAT;
 
-    if(ctx->imageInfo.XmlMediaType != OpticalDisc)
-        return DICF_ERROR_INCORRECT_MEDIA_TYPE;
+    if(ctx->imageInfo.XmlMediaType != OpticalDisc) return DICF_ERROR_INCORRECT_MEDIA_TYPE;
 
     for(i = 0; i < ctx->numberOfDataTracks; i++)
     {
         if(ctx->dataTracks[i].sequence == track)
-        {
-            return read_sector(context, ctx->dataTracks[i].start + sectorAddress, data, length);
-        }
+        { return read_sector(context, ctx->dataTracks[i].start + sectorAddress, data, length); }
     }
 
     return DICF_ERROR_TRACK_NOT_FOUND;
@@ -185,22 +174,20 @@ int32_t read_track_sector(void *context, uint8_t *data, uint64_t sectorAddress, 
 int32_t read_sector_long(void *context, uint8_t *data, uint64_t sectorAddress, uint32_t *length)
 {
     dicformatContext *ctx;
-    uint32_t         bareLength;
-    uint32_t         tagLength;
-    uint8_t          *bareData;
-    int32_t          res;
-    TrackEntry       trk;
-    int              i;
-    bool             trkFound;
+    uint32_t          bareLength;
+    uint32_t          tagLength;
+    uint8_t *         bareData;
+    int32_t           res;
+    TrackEntry        trk;
+    int               i;
+    bool              trkFound;
 
-    if(context == NULL)
-        return DICF_ERROR_NOT_DICFORMAT;
+    if(context == NULL) return DICF_ERROR_NOT_DICFORMAT;
 
     ctx = context;
 
     // Not a libdicformat context
-    if(ctx->magic != DIC_MAGIC)
-        return DICF_ERROR_NOT_DICFORMAT;
+    if(ctx->magic != DIC_MAGIC) return DICF_ERROR_NOT_DICFORMAT;
 
     switch(ctx->imageInfo.XmlMediaType)
     {
@@ -219,13 +206,11 @@ int32_t read_sector_long(void *context, uint8_t *data, uint64_t sectorAddress, u
 
             bareData = (uint8_t *)malloc(bareLength);
 
-            if(bareData == NULL)
-                return DICF_ERROR_NOT_ENOUGH_MEMORY;
+            if(bareData == NULL) return DICF_ERROR_NOT_ENOUGH_MEMORY;
 
             res = read_sector(context, sectorAddress, bareData, &bareLength);
 
-            if(res < DICF_STATUS_OK)
-                return res;
+            if(res < DICF_STATUS_OK) return res;
 
             trkFound = false;
 
@@ -239,15 +224,14 @@ int32_t read_sector_long(void *context, uint8_t *data, uint64_t sectorAddress, u
                 }
             }
 
-            if(!trkFound)
-                return DICF_ERROR_TRACK_NOT_FOUND;
+            if(!trkFound) return DICF_ERROR_TRACK_NOT_FOUND;
 
             switch(trk.type)
             {
                 case Audio:
-                case Data:memcpy(bareData, data, bareLength);
-                    return res;
-                case CdMode1:memcpy(bareData, data + 16, 2048);
+                case Data: memcpy(bareData, data, bareLength); return res;
+                case CdMode1:
+                    memcpy(bareData, data + 16, 2048);
 
                     if(ctx->sectorPrefix != NULL)
                         memcpy(data, ctx->sectorPrefix + (sectorAddress * 16), 16);
@@ -266,7 +250,7 @@ int32_t read_sector_long(void *context, uint8_t *data, uint64_t sectorAddress, u
                         {
                             memcpy(data,
                                    ctx->sectorPrefixCorrected +
-                                   ((ctx->sectorPrefixDdt[sectorAddress] & CD_DFIX_MASK) - 1) * 16,
+                                       ((ctx->sectorPrefixDdt[sectorAddress] & CD_DFIX_MASK) - 1) * 16,
                                    16);
                         }
                     }
@@ -279,7 +263,6 @@ int32_t read_sector_long(void *context, uint8_t *data, uint64_t sectorAddress, u
                     {
                         if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == Correct)
                         {
-
                             ecc_cd_reconstruct(ctx->eccCdContext, data, trk.type);
                             res = DICF_STATUS_OK;
                         }
@@ -291,7 +274,7 @@ int32_t read_sector_long(void *context, uint8_t *data, uint64_t sectorAddress, u
                         {
                             memcpy(data + 2064,
                                    ctx->sectorSuffixCorrected +
-                                   ((ctx->sectorSuffixDdt[sectorAddress] & CD_DFIX_MASK) - 1) * 288,
+                                       ((ctx->sectorSuffixDdt[sectorAddress] & CD_DFIX_MASK) - 1) * 288,
                                    288);
                         }
                     }
@@ -319,7 +302,7 @@ int32_t read_sector_long(void *context, uint8_t *data, uint64_t sectorAddress, u
                         {
                             memcpy(data,
                                    ctx->sectorPrefixCorrected +
-                                   ((ctx->sectorPrefixDdt[sectorAddress] & CD_DFIX_MASK) - 1) * 16,
+                                       ((ctx->sectorPrefixDdt[sectorAddress] & CD_DFIX_MASK) - 1) * 16,
                                    16);
                         }
                     }
@@ -352,7 +335,7 @@ int32_t read_sector_long(void *context, uint8_t *data, uint64_t sectorAddress, u
                         memcpy(data + 16, bareData, 2336);
 
                     return res;
-                default:return DICF_ERROR_INVALID_TRACK_FORMAT;
+                default: return DICF_ERROR_INVALID_TRACK_FORMAT;
             }
         case BlockMedia:
             switch(ctx->imageInfo.MediaType)
@@ -363,21 +346,17 @@ int32_t read_sector_long(void *context, uint8_t *data, uint64_t sectorAddress, u
                 case AppleSonyDS:
                 case AppleWidget:
                 case PriamDataTower:
-                    if(ctx->sectorSubchannel == NULL)
-                        return read_sector(context, sectorAddress, data, length);
+                    if(ctx->sectorSubchannel == NULL) return read_sector(context, sectorAddress, data, length);
 
                     switch(ctx->imageInfo.MediaType)
                     {
                         case AppleFileWare:
                         case AppleProfile:
-                        case AppleWidget:tagLength = 20;
-                            break;
+                        case AppleWidget: tagLength = 20; break;
                         case AppleSonySS:
-                        case AppleSonyDS:tagLength = 12;
-                            break;
-                        case PriamDataTower:tagLength = 24;
-                            break;
-                        default:return DICF_ERROR_INCORRECT_MEDIA_TYPE;
+                        case AppleSonyDS: tagLength = 12; break;
+                        case PriamDataTower: tagLength = 24; break;
+                        default: return DICF_ERROR_INCORRECT_MEDIA_TYPE;
                     }
 
                     bareLength = 512;
@@ -390,13 +369,11 @@ int32_t read_sector_long(void *context, uint8_t *data, uint64_t sectorAddress, u
 
                     bareData = malloc(bareLength);
 
-                    if(bareData == NULL)
-                        return DICF_ERROR_NOT_ENOUGH_MEMORY;
+                    if(bareData == NULL) return DICF_ERROR_NOT_ENOUGH_MEMORY;
 
                     res = read_sector(context, sectorAddress, bareData, &bareLength);
 
-                    if(bareLength != 512)
-                        return res;
+                    if(bareLength != 512) return res;
 
                     memcpy(data, ctx->sectorSubchannel + sectorAddress * tagLength, tagLength);
                     memcpy(data, bareData, 512);
@@ -404,9 +381,8 @@ int32_t read_sector_long(void *context, uint8_t *data, uint64_t sectorAddress, u
                     free(bareData);
 
                     return res;
-                default:return DICF_ERROR_INCORRECT_MEDIA_TYPE;
-
+                default: return DICF_ERROR_INCORRECT_MEDIA_TYPE;
             }
-        default:return DICF_ERROR_INCORRECT_MEDIA_TYPE;
+        default: return DICF_ERROR_INCORRECT_MEDIA_TYPE;
     }
 }

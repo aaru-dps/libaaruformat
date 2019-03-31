@@ -36,11 +36,11 @@
 #define LIBDICFORMAT_MAJOR_VERSION 1
 #define LIBDICFORMAT_MINOR_VERSION 0
 
-#include "dicformat/errors.h"
 #include "dicformat/consts.h"
-#include "dicformat/enums.h"
-#include "dicformat/decls.h"
-#include "dicformat/structs.h"
 #include "dicformat/context.h"
+#include "dicformat/decls.h"
+#include "dicformat/enums.h"
+#include "dicformat/errors.h"
+#include "dicformat/structs.h"
 
-#endif //LIBDICFORMAT_DICFORMAT_H
+#endif // LIBDICFORMAT_DICFORMAT_H

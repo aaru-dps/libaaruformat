@@ -30,24 +30,23 @@
 // Copyright © 2011-2019 Natalia Portillo
 // ****************************************************************************/
 
-#include <stdint.h>
-#include <malloc.h>
 #include <dicformat.h>
+#include <malloc.h>
+#include <stdint.h>
 #include <string.h>
 
 int32_t cst_transform(const uint8_t *interleaved, uint8_t *sequential, size_t length)
 {
     uint8_t *p, *q, *r, *s, *t, *u, *v, *w;
-    size_t  qStart;
-    size_t  rStart;
-    size_t  sStart;
-    size_t  tStart;
-    size_t  uStart;
-    size_t  vStart;
-    size_t  wStart;
+    size_t   qStart;
+    size_t   rStart;
+    size_t   sStart;
+    size_t   tStart;
+    size_t   uStart;
+    size_t   vStart;
+    size_t   wStart;
 
-    if(interleaved == NULL || sequential == NULL)
-        return DICF_ERROR_BUFFER_TOO_SMALL;
+    if(interleaved == NULL || sequential == NULL) return DICF_ERROR_BUFFER_TOO_SMALL;
 
     p = malloc(length / 8);
     q = malloc(length / 8);
@@ -172,16 +171,15 @@ int32_t cst_transform(const uint8_t *interleaved, uint8_t *sequential, size_t le
 int32_t cst_untransform(const uint8_t *sequential, uint8_t *interleaved, size_t length)
 {
     uint8_t *p, *q, *r, *s, *t, *u, *v, *w;
-    size_t  qStart;
-    size_t  rStart;
-    size_t  sStart;
-    size_t  tStart;
-    size_t  uStart;
-    size_t  vStart;
-    size_t  wStart;
+    size_t   qStart;
+    size_t   rStart;
+    size_t   sStart;
+    size_t   tStart;
+    size_t   uStart;
+    size_t   vStart;
+    size_t   wStart;
 
-    if(interleaved == NULL || sequential == NULL)
-        return DICF_ERROR_BUFFER_TOO_SMALL;
+    if(interleaved == NULL || sequential == NULL) return DICF_ERROR_BUFFER_TOO_SMALL;
 
     p = malloc(length / 8);
     q = malloc(length / 8);

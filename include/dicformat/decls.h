@@ -33,9 +33,9 @@
 #ifndef LIBDICFORMAT_DECLS_H
 #define LIBDICFORMAT_DECLS_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdbool.h>
 
 int identify(const char *filename);
 
@@ -71,37 +71,37 @@ bool ecc_cd_is_suffix_correct(void *context, const uint8_t *sector);
 
 bool ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector);
 
-bool ecc_cd_check(void *context,
+bool ecc_cd_check(void *         context,
                   const uint8_t *address,
                   const uint8_t *data,
-                  uint32_t majorCount,
-                  uint32_t minorCount,
-                  uint32_t majorMult,
-                  uint32_t minorInc,
+                  uint32_t       majorCount,
+                  uint32_t       minorCount,
+                  uint32_t       majorMult,
+                  uint32_t       minorInc,
                   const uint8_t *ecc,
-                  int32_t addressOffset,
-                  int32_t dataOffset,
-                  int32_t eccOffset);
+                  int32_t        addressOffset,
+                  int32_t        dataOffset,
+                  int32_t        eccOffset);
 
-void ecc_cd_write(void *context,
+void ecc_cd_write(void *         context,
                   const uint8_t *address,
                   const uint8_t *data,
-                  uint32_t majorCount,
-                  uint32_t minorCount,
-                  uint32_t majorMult,
-                  uint32_t minorInc,
-                  uint8_t *ecc,
-                  int32_t addressOffset,
-                  int32_t dataOffset,
-                  int32_t eccOffset);
+                  uint32_t       majorCount,
+                  uint32_t       minorCount,
+                  uint32_t       majorMult,
+                  uint32_t       minorInc,
+                  uint8_t *      ecc,
+                  int32_t        addressOffset,
+                  int32_t        dataOffset,
+                  int32_t        eccOffset);
 
-void ecc_cd_write_sector(void *context,
+void ecc_cd_write_sector(void *         context,
                          const uint8_t *address,
                          const uint8_t *data,
-                         uint8_t *ecc,
-                         int32_t addressOffset,
-                         int32_t dataOffset,
-                         int32_t eccOffset);
+                         uint8_t *      ecc,
+                         int32_t        addressOffset,
+                         int32_t        dataOffset,
+                         int32_t        eccOffset);
 
 void cd_lba_to_msf(int64_t pos, uint8_t *minute, uint8_t *second, uint8_t *frame);
 
@@ -117,4 +117,4 @@ int32_t GetMediaTagTypeForDataType(int32_t type);
 
 int32_t GetXmlMediaType(int32_t type);
 
-#endif //LIBDICFORMAT_DECLS_H
+#endif // LIBDICFORMAT_DECLS_H

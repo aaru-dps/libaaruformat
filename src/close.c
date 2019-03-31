@@ -30,10 +30,10 @@
 // Copyright © 2011-2019 Natalia Portillo
 // ****************************************************************************/
 
-#include <stdio.h>
 #include <dicformat.h>
-#include <malloc.h>
 #include <errno.h>
+#include <malloc.h>
+#include <stdio.h>
 #include <sys/mman.h>
 
 int close(void *context)
@@ -54,8 +54,7 @@ int close(void *context)
     }
 
     // This may do nothing if imageStream is NULL, but as the behaviour is undefined, better sure than sorry
-    if(ctx->imageStream != NULL)
-        fclose(ctx->imageStream);
+    if(ctx->imageStream != NULL) fclose(ctx->imageStream);
 
     free(ctx->sectorPrefix);
     free(ctx->sectorPrefixCorrected);
@@ -82,10 +81,7 @@ int close(void *context)
         free(ctx->mediaTagsHead);
     }
 
-    if(!ctx->inMemoryDdt)
-    {
-        munmap(ctx->userDataDdt, ctx->mappedMemoryDdtSize);
-    }
+    if(!ctx->inMemoryDdt) { munmap(ctx->userDataDdt, ctx->mappedMemoryDdtSize); }
 
     free(ctx->sectorPrefixDdt);
     free(ctx->sectorSuffixDdt);

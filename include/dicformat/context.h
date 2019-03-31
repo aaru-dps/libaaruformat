@@ -32,68 +32,68 @@
 #ifndef LIBDICFORMAT_CONTEXT_H
 #define LIBDICFORMAT_CONTEXT_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdbool.h>
 
 typedef struct dicformatContext
 {
-    uint64_t                           magic;
-    uint8_t                            libraryMajorVersion;
-    uint8_t                            libraryMinorVersion;
-    FILE                               *imageStream;
-    DicHeader                          header;
-    struct dataLinkedList              *mediaTagsHead;
-    struct dataLinkedList              *mediaTagsTail;
-    uint8_t                            *sectorPrefix;
-    uint8_t                            *sectorPrefixCorrected;
-    uint8_t                            *sectorSuffix;
-    uint8_t                            *sectorSuffixCorrected;
-    uint8_t                            *sectorSubchannel;
-    uint8_t                            *mode2Subheaders;
-    uint8_t                            shift;
-    bool inMemoryDdt;
-    uint64_t                           *userDataDdt;
-    size_t                             mappedMemoryDdtSize;
-    uint32_t                           *sectorPrefixDdt;
-    uint32_t                           *sectorSuffixDdt;
-    GeometryBlockHeader                geometryBlock;
-    MetadataBlockHeader                metadataBlockHeader;
-    uint8_t                            *metadataBlock;
-    TracksHeader                       tracksHeader;
-    TrackEntry                         *trackEntries;
-    CicmMetadataBlock                  cicmBlockHeader;
-    uint8_t                            *cicmBlock;
-    DumpHardwareHeader                 dumpHardwareHeader;
+    uint64_t                            magic;
+    uint8_t                             libraryMajorVersion;
+    uint8_t                             libraryMinorVersion;
+    FILE *                              imageStream;
+    DicHeader                           header;
+    struct dataLinkedList *             mediaTagsHead;
+    struct dataLinkedList *             mediaTagsTail;
+    uint8_t *                           sectorPrefix;
+    uint8_t *                           sectorPrefixCorrected;
+    uint8_t *                           sectorSuffix;
+    uint8_t *                           sectorSuffixCorrected;
+    uint8_t *                           sectorSubchannel;
+    uint8_t *                           mode2Subheaders;
+    uint8_t                             shift;
+    bool                                inMemoryDdt;
+    uint64_t *                          userDataDdt;
+    size_t                              mappedMemoryDdtSize;
+    uint32_t *                          sectorPrefixDdt;
+    uint32_t *                          sectorSuffixDdt;
+    GeometryBlockHeader                 geometryBlock;
+    MetadataBlockHeader                 metadataBlockHeader;
+    uint8_t *                           metadataBlock;
+    TracksHeader                        tracksHeader;
+    TrackEntry *                        trackEntries;
+    CicmMetadataBlock                   cicmBlockHeader;
+    uint8_t *                           cicmBlock;
+    DumpHardwareHeader                  dumpHardwareHeader;
     struct DumpHardwareEntriesWithData *dumpHardwareEntriesWithData;
-    struct ImageInfo                   imageInfo;
-    CdEccContext                       *eccCdContext;
-    uint8_t                            numberOfDataTracks;
-    TrackEntry                         *dataTracks;
-    bool                               *readableSectorTags;
+    struct ImageInfo                    imageInfo;
+    CdEccContext *                      eccCdContext;
+    uint8_t                             numberOfDataTracks;
+    TrackEntry *                        dataTracks;
+    bool *                              readableSectorTags;
 } dicformatContext;
 
 typedef struct dataLinkedList
 {
     struct dataLinkedList *previous;
     struct dataLinkedList *next;
-    uint8_t               *data;
-    int32_t               type;
-    uint32_t              length;
+    uint8_t *              data;
+    int32_t                type;
+    uint32_t               length;
 } dataLinkedList;
 
 typedef struct DumpHardwareEntriesWithData
 {
-    DumpHardwareEntry entry;
+    DumpHardwareEntry  entry;
     struct DumpExtent *extents;
-    uint8_t           *manufacturer;
-    uint8_t           *model;
-    uint8_t           *revision;
-    uint8_t           *firmware;
-    uint8_t           *serial;
-    uint8_t           *softwareName;
-    uint8_t           *softwareVersion;
-    uint8_t           *softwareOperatingSystem;
+    uint8_t *          manufacturer;
+    uint8_t *          model;
+    uint8_t *          revision;
+    uint8_t *          firmware;
+    uint8_t *          serial;
+    uint8_t *          softwareName;
+    uint8_t *          softwareVersion;
+    uint8_t *          softwareOperatingSystem;
 } DumpHardwareEntriesWithData;
 
 #pragma pack(push, 1)
@@ -106,4 +106,4 @@ typedef struct DumpExtent
 
 #pragma pack(pop)
 
-#endif //LIBDICFORMAT_CONTEXT_H
+#endif // LIBDICFORMAT_CONTEXT_H
