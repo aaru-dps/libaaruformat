@@ -70,6 +70,7 @@ typedef struct dicformatContext
     CdEccContext                       *eccCdContext;
     uint8_t                            numberOfDataTracks;
     TrackEntry                         *dataTracks;
+    bool                               *readableSectorTags;
 } dicformatContext;
 
 typedef struct dataLinkedList

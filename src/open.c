@@ -100,6 +100,18 @@ void *open(const char *filepath)
             ctx->header.imageMajorVersion,
             ctx->header.imageMinorVersion);
 
+    ctx->readableSectorTags = (bool *)malloc(sizeof(bool) * MaxSectorTag);
+
+    if(ctx->readableSectorTags == NULL)
+    {
+        free(ctx);
+        errno = DICF_ERROR_NOT_ENOUGH_MEMORY;
+
+        return NULL;
+    }
+
+    memset(ctx->readableSectorTags, 0, sizeof(bool) * MaxSectorTag);
+
     ctx->imageInfo.Application        = ctx->header.application;
     ctx->imageInfo.ApplicationVersion = (uint8_t *)malloc(32);
     if(ctx->imageInfo.ApplicationVersion != NULL)
@@ -298,13 +310,8 @@ void *open(const char *filepath)
                         else
                             ctx->sectorPrefix = data;
 
-                        // TODO: ReadableSectorTags
-                        /*
-                                                if(!imageInfo.ReadableSectorTags.Contains(SectorTagType.CdSectorSync))
-                                                    imageInfo.ReadableSectorTags.Add(SectorTagType.CdSectorSync);
-                                                if(!imageInfo.ReadableSectorTags.Contains(SectorTagType.CdSectorHeader))
-                                                    imageInfo.ReadableSectorTags.Add(SectorTagType.CdSectorHeader);
-                        */
+                        ctx->readableSectorTags[CdSectorSync]   = true;
+                        ctx->readableSectorTags[CdSectorHeader] = true;
 
                         break;
                     case CdSectorSuffix:
@@ -314,35 +321,19 @@ void *open(const char *filepath)
                         else
                             ctx->sectorSuffix = data;
 
-                        // TODO: ReadableSectorTags
-                        /*
-                            if(!imageInfo.ReadableSectorTags.Contains(SectorTagType.CdSectorSubHeader))
-                                imageInfo.ReadableSectorTags.Add(SectorTagType.CdSectorSubHeader);
-                            if(!imageInfo.ReadableSectorTags.Contains(SectorTagType.CdSectorEcc))
-                                imageInfo.ReadableSectorTags.Add(SectorTagType.CdSectorEcc);
-                            if(!imageInfo.ReadableSectorTags.Contains(SectorTagType.CdSectorEccP))
-                                imageInfo.ReadableSectorTags.Add(SectorTagType.CdSectorEccP);
-                            if(!imageInfo.ReadableSectorTags.Contains(SectorTagType.CdSectorEccQ))
-                                imageInfo.ReadableSectorTags.Add(SectorTagType.CdSectorEccQ);
-                            if(!imageInfo.ReadableSectorTags.Contains(SectorTagType.CdSectorEdc))
-                                imageInfo.ReadableSectorTags.Add(SectorTagType.CdSectorEdc);
-                        */
+                        ctx->readableSectorTags[CdSectorSubHeader] = true;
+                        ctx->readableSectorTags[CdSectorEcc]       = true;
+                        ctx->readableSectorTags[CdSectorEccP]      = true;
+                        ctx->readableSectorTags[CdSectorEccQ]      = true;
+                        ctx->readableSectorTags[CdSectorEdc]       = true;
                         break;
                     case CdSectorSubchannel:ctx->sectorSubchannel = data;
-                        // TODO: ReadableSectorTags
-                        /*
-                            if(!imageInfo.ReadableSectorTags.Contains(SectorTagType.CdSectorSubchannel))
-                                imageInfo.ReadableSectorTags.Add(SectorTagType.CdSectorSubchannel);
-                        */
+                        ctx->readableSectorTags[CdSectorSubchannel] = true;
                         break;
                     case AppleProfileTag:
                     case AppleSonyTag:
                     case PriamDataTowerTag:ctx->sectorSubchannel = data;
-                        // TODO: ReadableSectorTags
-                        /*
-                            if(!imageInfo.ReadableSectorTags.Contains(SectorTagType.AppleSectorTag))
-                                imageInfo.ReadableSectorTags.Add(SectorTagType.AppleSectorTag);
-                        */
+                        ctx->readableSectorTags[AppleSectorTag] = true;
                         break;
                     case CompactDiscMode2Subheader:ctx->mode2Subheaders = data;
                         break;

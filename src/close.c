@@ -111,6 +111,8 @@ int close(void *context)
         }
     }
 
+    free(ctx->readableSectorTags);
+
     free(context);
 
     return 0;
