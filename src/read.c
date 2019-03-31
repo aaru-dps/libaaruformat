@@ -44,7 +44,6 @@ int32_t read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t *leng
 
     ctx = context;
 
-    // TODO: Cast this field without casting the whole structure, as this can buffer overflow
     // Not a libdicformat context
     if(ctx->magic != DIC_MAGIC)
         return DICF_ERROR_NOT_DICFORMAT;
@@ -88,7 +87,6 @@ int32_t read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32
 
     ctx = context;
 
-    // TODO: Cast this field without casting the whole structure, as this can buffer overflow
     // Not a libdicformat context
     if(ctx->magic != DIC_MAGIC)
         return DICF_ERROR_NOT_DICFORMAT;
@@ -166,7 +164,6 @@ int32_t read_track_sector(void *context, uint8_t *data, uint64_t sectorAddress, 
 
     ctx = context;
 
-    // TODO: Cast this field without casting the whole structure, as this can buffer overflow
     // Not a libdicformat context
     if(ctx->magic != DIC_MAGIC)
         return DICF_ERROR_NOT_DICFORMAT;
@@ -201,7 +198,6 @@ int32_t read_sector_long(void *context, uint8_t *data, uint64_t sectorAddress, u
 
     ctx = context;
 
-    // TODO: Cast this field without casting the whole structure, as this can buffer overflow
     // Not a libdicformat context
     if(ctx->magic != DIC_MAGIC)
         return DICF_ERROR_NOT_DICFORMAT;
