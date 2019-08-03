@@ -50,6 +50,8 @@ void* open(const char* filepath)
     uint32_t*         cdDdt;
     uint64_t          crc64;
     uint8_t           temp8u;
+    int               i;
+    uint16_t          e;
 
     ctx = (dicformatContext*)malloc(sizeof(dicformatContext));
     memset(ctx, 0, sizeof(dicformatContext));
@@ -184,7 +186,7 @@ void* open(const char* filepath)
         return NULL;
     }
 
-    for(int i = 0; i < idxHeader.entries; i++)
+    for(i = 0; i < idxHeader.entries; i++)
     {
         fprintf(stderr,
                 "libdicformat: Block type %4.4s with data type %4.4s is indexed to be at %" PRIu64 "",
@@ -195,7 +197,7 @@ void* open(const char* filepath)
 
     bool foundUserDataDdt    = false;
     ctx->imageInfo.ImageSize = 0;
-    for(int i = 0; i < idxHeader.entries; i++)
+    for(i = 0; i < idxHeader.entries; i++)
     {
         pos = fseek(ctx->imageStream, idxEntries[i].offset, SEEK_SET);
 
@@ -903,7 +905,7 @@ void* open(const char* filepath)
                        0,
                        sizeof(DumpHardwareEntriesWithData) * ctx->dumpHardwareHeader.entries);
 
-                for(uint16_t e = 0; e < ctx->dumpHardwareHeader.entries; e++)
+                for(e = 0; e < ctx->dumpHardwareHeader.entries; e++)
                 {
                     readBytes = fread(
                         &ctx->dumpHardwareEntriesWithData[e].entry, sizeof(DumpHardwareEntry), 1, ctx->imageStream);

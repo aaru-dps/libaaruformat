@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 project(libdicformat C)
 
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD 90)
 add_compile_definitions(__STDC_FORMAT_MACROS=1)
 
 add_library(dicformat SHARED include/dicformat/consts.h include/dicformat/enums.h include/dic.h include/dicformat.h

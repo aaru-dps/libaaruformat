@@ -38,6 +38,8 @@
 
 int close(void* context)
 {
+    int i;
+
     if(context == NULL)
     {
         errno = EINVAL;
@@ -92,7 +94,7 @@ int close(void* context)
 
     if(ctx->dumpHardwareEntriesWithData != NULL)
     {
-        for(int i = 0; i < ctx->dumpHardwareHeader.entries; i++)
+        for(i = 0; i < ctx->dumpHardwareHeader.entries; i++)
         {
             free(ctx->dumpHardwareEntriesWithData[i].extents);
             free(ctx->dumpHardwareEntriesWithData[i].manufacturer);

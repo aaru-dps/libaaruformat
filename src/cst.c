@@ -45,6 +45,7 @@ int32_t cst_transform(const uint8_t* interleaved, uint8_t* sequential, size_t le
     size_t   uStart;
     size_t   vStart;
     size_t   wStart;
+    size_t   i;
 
     if(interleaved == NULL || sequential == NULL) return DICF_ERROR_BUFFER_TOO_SMALL;
 
@@ -70,7 +71,7 @@ int32_t cst_transform(const uint8_t* interleaved, uint8_t* sequential, size_t le
         return DICF_ERROR_NOT_ENOUGH_MEMORY;
     }
 
-    for(size_t i = 0; i < length; i += 8)
+    for(i = 0; i < length; i += 8)
     {
         p[i / 8] = (uint8_t)(interleaved[i] & 0x80);
         p[i / 8] += (interleaved[i + 1] & 0x80) >> 1;
@@ -153,7 +154,7 @@ int32_t cst_transform(const uint8_t* interleaved, uint8_t* sequential, size_t le
     vStart = length * 6;
     wStart = length * 7;
 
-    for(size_t i = 0; i < length; i++)
+    for(i = 0; i < length; i++)
     {
         sequential[i]          = p[i];
         sequential[qStart + i] = q[i];
@@ -178,6 +179,7 @@ int32_t cst_untransform(const uint8_t* sequential, uint8_t* interleaved, size_t 
     size_t   uStart;
     size_t   vStart;
     size_t   wStart;
+    size_t   i;
 
     if(interleaved == NULL || sequential == NULL) return DICF_ERROR_BUFFER_TOO_SMALL;
 
@@ -211,7 +213,7 @@ int32_t cst_untransform(const uint8_t* sequential, uint8_t* interleaved, size_t 
     vStart = length * 6;
     wStart = length * 7;
 
-    for(size_t i = 0; i < length; i++)
+    for(i = 0; i < length; i++)
     {
         p[i] = sequential[i];
         q[i] = sequential[qStart + i];
@@ -225,7 +227,7 @@ int32_t cst_untransform(const uint8_t* sequential, uint8_t* interleaved, size_t 
 
     memset(interleaved, 0, length);
 
-    for(size_t i = 0; i < length; i += 8)
+    for(i = 0; i < length; i += 8)
     {
         interleaved[i] += ((p[i / 8] & 0x80) == 0x80 ? 0x80 : 0);
         interleaved[i + 1] += ((p[i / 8] & 0x40) == 0x40 ? 0x80 : 0);
