@@ -32,6 +32,8 @@
 #ifndef LIBDICFORMAT_CONTEXT_H
 #define LIBDICFORMAT_CONTEXT_H
 
+#include "structs.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>

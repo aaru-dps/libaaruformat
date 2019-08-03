@@ -41,6 +41,8 @@
 #ifndef LIBDICFORMAT_DIC_H
 #define LIBDICFORMAT_DIC_H
 
+#include <stdint.h>
+
 // TODO: Generate automatically from C#
 
 /**
