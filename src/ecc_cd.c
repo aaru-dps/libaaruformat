@@ -37,16 +37,16 @@
 #include <stdint.h>
 #include <string.h>
 
-void *ecc_cd_init()
+void* ecc_cd_init()
 {
-    CdEccContext *context;
+    CdEccContext* context;
     uint32_t      edc, i, j;
 
-    context = (CdEccContext *)malloc(sizeof(CdEccContext));
+    context = (CdEccContext*)malloc(sizeof(CdEccContext));
 
     if(context == NULL) return NULL;
 
-    context->eccFTable = (uint8_t *)malloc(sizeof(uint8_t) * 256);
+    context->eccFTable = (uint8_t*)malloc(sizeof(uint8_t) * 256);
 
     if(context->eccFTable == NULL)
     {
@@ -54,7 +54,7 @@ void *ecc_cd_init()
         return NULL;
     }
 
-    context->eccBTable = (uint8_t *)malloc(sizeof(uint8_t) * 256);
+    context->eccBTable = (uint8_t*)malloc(sizeof(uint8_t) * 256);
 
     if(context->eccBTable == NULL)
     {
@@ -62,7 +62,7 @@ void *ecc_cd_init()
         free(context);
         return NULL;
     }
-    context->edcTable = (uint32_t *)malloc(sizeof(uint32_t) * 256);
+    context->edcTable = (uint32_t*)malloc(sizeof(uint32_t) * 256);
 
     if(context->edcTable == NULL)
     {
@@ -87,15 +87,15 @@ void *ecc_cd_init()
     return context;
 }
 
-bool ecc_cd_is_suffix_correct(void *context, const uint8_t *sector)
+bool ecc_cd_is_suffix_correct(void* context, const uint8_t* sector)
 {
-    CdEccContext *ctx;
+    CdEccContext* ctx;
     uint32_t      storedEdc, edc, calculatedEdc;
     int           size, pos;
 
     if(context == NULL || sector == NULL) return false;
 
-    ctx = (CdEccContext *)context;
+    ctx = (CdEccContext*)context;
 
     if(!ctx->initedEdc) return false;
 
@@ -121,16 +121,16 @@ bool ecc_cd_is_suffix_correct(void *context, const uint8_t *sector)
     return calculatedEdc == storedEdc;
 }
 
-bool ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector)
+bool ecc_cd_is_suffix_correct_mode2(void* context, const uint8_t* sector)
 {
-    CdEccContext *ctx;
+    CdEccContext* ctx;
     uint32_t      storedEdc, edc, calculatedEdc;
     int           size, pos;
     uint8_t       zeroaddress[4];
 
     if(context == NULL || sector == NULL) return false;
 
-    ctx = (CdEccContext *)context;
+    ctx = (CdEccContext*)context;
 
     if(!ctx->initedEdc) return false;
 
@@ -152,25 +152,25 @@ bool ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector)
     return calculatedEdc == storedEdc;
 }
 
-bool ecc_cd_check(void *         context,
-                  const uint8_t *address,
-                  const uint8_t *data,
+bool ecc_cd_check(void*          context,
+                  const uint8_t* address,
+                  const uint8_t* data,
                   uint32_t       majorCount,
                   uint32_t       minorCount,
                   uint32_t       majorMult,
                   uint32_t       minorInc,
-                  const uint8_t *ecc,
+                  const uint8_t* ecc,
                   int32_t        addressOffset,
                   int32_t        dataOffset,
                   int32_t        eccOffset)
 {
-    CdEccContext *ctx;
+    CdEccContext* ctx;
     uint32_t      size, major, idx, minor;
     uint8_t       eccA, eccB, temp;
 
     if(context == NULL || address == NULL || data == NULL || ecc == NULL) return false;
 
-    ctx = (CdEccContext *)context;
+    ctx = (CdEccContext*)context;
 
     if(!ctx->initedEdc) return false;
 
@@ -197,25 +197,25 @@ bool ecc_cd_check(void *         context,
     return true;
 }
 
-void ecc_cd_write(void *         context,
-                  const uint8_t *address,
-                  const uint8_t *data,
+void ecc_cd_write(void*          context,
+                  const uint8_t* address,
+                  const uint8_t* data,
                   uint32_t       majorCount,
                   uint32_t       minorCount,
                   uint32_t       majorMult,
                   uint32_t       minorInc,
-                  uint8_t *      ecc,
+                  uint8_t*       ecc,
                   int32_t        addressOffset,
                   int32_t        dataOffset,
                   int32_t        eccOffset)
 {
-    CdEccContext *ctx;
+    CdEccContext* ctx;
     uint32_t      size, major, idx, minor;
     uint8_t       eccA, eccB, temp;
 
     if(context == NULL || address == NULL || data == NULL || ecc == NULL) return;
 
-    ctx = (CdEccContext *)context;
+    ctx = (CdEccContext*)context;
 
     if(!ctx->initedEdc) return;
 
@@ -242,10 +242,10 @@ void ecc_cd_write(void *         context,
     }
 }
 
-void ecc_cd_write_sector(void *         context,
-                         const uint8_t *address,
-                         const uint8_t *data,
-                         uint8_t *      ecc,
+void ecc_cd_write_sector(void*          context,
+                         const uint8_t* address,
+                         const uint8_t* data,
+                         uint8_t*       ecc,
                          int32_t        addressOffset,
                          int32_t        dataOffset,
                          int32_t        eccOffset)
@@ -254,14 +254,14 @@ void ecc_cd_write_sector(void *         context,
     ecc_cd_write(context, address, data, 52, 43, 86, 88, ecc, addressOffset, dataOffset, eccOffset + 0xAC); // Q
 }
 
-void cd_lba_to_msf(int64_t pos, uint8_t *minute, uint8_t *second, uint8_t *frame)
+void cd_lba_to_msf(int64_t pos, uint8_t* minute, uint8_t* second, uint8_t* frame)
 {
     *minute = (uint8_t)((pos + 150) / 75 / 60);
     *second = (uint8_t)((pos + 150) / 75 % 60);
     *frame  = (uint8_t)((pos + 150) % 75);
 }
 
-void ecc_cd_reconstruct_prefix(uint8_t *sector, // must point to a full 2352-byte sector
+void ecc_cd_reconstruct_prefix(uint8_t* sector, // must point to a full 2352-byte sector
                                uint8_t  type,
                                int64_t  lba)
 {
@@ -318,18 +318,18 @@ void ecc_cd_reconstruct_prefix(uint8_t *sector, // must point to a full 2352-byt
     }
 }
 
-void ecc_cd_reconstruct(void *   context,
-                        uint8_t *sector, // must point to a full 2352-byte sector
+void ecc_cd_reconstruct(void*    context,
+                        uint8_t* sector, // must point to a full 2352-byte sector
                         uint8_t  type)
 {
     uint32_t computedEdc;
     uint8_t  zeroaddress[4];
 
-    CdEccContext *ctx;
+    CdEccContext* ctx;
 
     if(context == NULL || sector == NULL) return;
 
-    ctx = (CdEccContext *)context;
+    ctx = (CdEccContext*)context;
 
     if(!ctx->initedEdc) return;
 
@@ -383,13 +383,13 @@ void ecc_cd_reconstruct(void *   context,
     //
 }
 
-uint32_t edc_cd_compute(void *context, uint32_t edc, const uint8_t *src, int size, int pos)
+uint32_t edc_cd_compute(void* context, uint32_t edc, const uint8_t* src, int size, int pos)
 {
-    CdEccContext *ctx;
+    CdEccContext* ctx;
 
     if(context == NULL || src == NULL) return 0;
 
-    ctx = (CdEccContext *)context;
+    ctx = (CdEccContext*)context;
 
     if(!ctx->initedEdc) return 0;
 

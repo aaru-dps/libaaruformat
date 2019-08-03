@@ -41,9 +41,9 @@
  * @return If positive, confidence value, with 100 being maximum confidentiality, and 0 not recognizing the file.
  * If negative, error value
  */
-int identify(const char *filename)
+int identify(const char* filename)
 {
-    FILE *stream;
+    FILE* stream;
 
     stream = fopen(filename, "rb");
 
@@ -63,7 +63,7 @@ int identify(const char *filename)
  * @return If positive, confidence value, with 100 being maximum confidentiality, and 0 not recognizing the file.
  * If negative, error value
  */
-int identifyStream(FILE *imageStream)
+int identifyStream(FILE* imageStream)
 {
     fseek(imageStream, 0, SEEK_SET);
 

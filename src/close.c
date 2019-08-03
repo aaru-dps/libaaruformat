@@ -36,7 +36,7 @@
 #include <stdio.h>
 #include <sys/mman.h>
 
-int close(void *context)
+int close(void* context)
 {
     if(context == NULL)
     {
@@ -44,7 +44,7 @@ int close(void *context)
         return -1;
     }
 
-    dicformatContext *ctx = context;
+    dicformatContext* ctx = context;
 
     // Not a libdicformat context
     if(ctx->magic != DIC_MAGIC)
@@ -65,7 +65,7 @@ int close(void *context)
 
     if(ctx->mediaTagsTail != NULL)
     {
-        dataLinkedList *mediaTag = ctx->mediaTagsTail;
+        dataLinkedList* mediaTag = ctx->mediaTagsTail;
 
         while(mediaTag->previous != NULL)
         {

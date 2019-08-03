@@ -1032,31 +1032,31 @@ typedef struct ImageInfo
     /** Sector tags contained by the image */
     // List<SectorTagType> ReadableSectorTags;
     /** Image version */
-    uint8_t *Version;
+    uint8_t* Version;
     /** Application that created the image */
-    uint8_t *Application;
+    uint8_t* Application;
     /** Version of the application that created the image */
-    uint8_t *ApplicationVersion;
+    uint8_t* ApplicationVersion;
     /** Who (person) created the image? */
-    uint8_t *Creator;
+    uint8_t* Creator;
     /** Image creation time */
     int64_t CreationTime;
     /** Image last modification time */
     int64_t LastModificationTime;
     /** Title of the media represented by the image */
-    uint8_t *MediaTitle;
+    uint8_t* MediaTitle;
     /** Image comments */
-    uint8_t *Comments;
+    uint8_t* Comments;
     /** Manufacturer of the media represented by the image */
-    uint8_t *MediaManufacturer;
+    uint8_t* MediaManufacturer;
     /** Model of the media represented by the image */
-    uint8_t *MediaModel;
+    uint8_t* MediaModel;
     /** Serial number of the media represented by the image */
-    uint8_t *MediaSerialNumber;
+    uint8_t* MediaSerialNumber;
     /** Barcode of the media represented by the image */
-    uint8_t *MediaBarcode;
+    uint8_t* MediaBarcode;
     /** Part number of the media represented by the image */
-    uint8_t *MediaPartNumber;
+    uint8_t* MediaPartNumber;
     /** Media type represented by the image */
     uint32_t MediaType;
     /** Number in sequence for the media represented by the image */
@@ -1064,13 +1064,13 @@ typedef struct ImageInfo
     /** Last media of the sequence the media represented by the image corresponds to */
     int32_t LastMediaSequence;
     /** Manufacturer of the drive used to read the media represented by the image */
-    uint8_t *DriveManufacturer;
+    uint8_t* DriveManufacturer;
     /** Model of the drive used to read the media represented by the image */
-    uint8_t *DriveModel;
+    uint8_t* DriveModel;
     /** Serial number of the drive used to read the media represented by the image */
-    uint8_t *DriveSerialNumber;
+    uint8_t* DriveSerialNumber;
     /** Firmware revision of the drive used to read the media represented by the image */
-    uint8_t *DriveFirmwareRevision;
+    uint8_t* DriveFirmwareRevision;
     /** Type of the media represented by the image to use in XML sidecars */
     uint8_t XmlMediaType;
     // CHS geometry...

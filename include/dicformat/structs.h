@@ -314,9 +314,9 @@ typedef struct Crc64Context
 typedef struct CdEccContext
 {
     bool      initedEdc;
-    uint8_t * eccBTable;
-    uint8_t * eccFTable;
-    uint32_t *edcTable;
+    uint8_t*  eccBTable;
+    uint8_t*  eccFTable;
+    uint32_t* edcTable;
 } CdEccContext;
 
 #pragma pack(pop)

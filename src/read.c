@@ -34,10 +34,10 @@
 #include <malloc.h>
 #include <string.h>
 
-int32_t read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t *length)
+int32_t read_media_tag(void* context, uint8_t* data, int32_t tag, uint32_t* length)
 {
-    dicformatContext *ctx;
-    dataLinkedList *  item;
+    dicformatContext* ctx;
+    dataLinkedList*   item;
 
     if(context == NULL) return DICF_ERROR_NOT_DICFORMAT;
 
@@ -69,15 +69,15 @@ int32_t read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t *leng
     return DICF_ERROR_MEDIA_TAG_NOT_PRESENT;
 }
 
-int32_t read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32_t *length)
+int32_t read_sector(void* context, uint64_t sectorAddress, uint8_t* data, uint32_t* length)
 {
-    dicformatContext *ctx;
+    dicformatContext* ctx;
     uint64_t          ddtEntry;
     uint32_t          offsetMask;
     uint64_t          offset;
     uint64_t          blockOffset;
     BlockHeader       blockHeader;
-    uint8_t *         block;
+    uint8_t*          block;
     size_t            readBytes;
 
     if(context == NULL) return DICF_ERROR_NOT_DICFORMAT;
@@ -121,7 +121,7 @@ int32_t read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32
     switch(blockHeader.compression)
     {
         case None:
-            block = (uint8_t *)malloc(blockHeader.length);
+            block = (uint8_t*)malloc(blockHeader.length);
             if(block == NULL) return DICF_ERROR_NOT_ENOUGH_MEMORY;
 
             readBytes = fread(block, blockHeader.length, 1, ctx->imageStream);
@@ -148,9 +148,9 @@ int32_t read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32
     return DICF_STATUS_OK;
 }
 
-int32_t read_track_sector(void *context, uint8_t *data, uint64_t sectorAddress, uint32_t *length, uint8_t track)
+int32_t read_track_sector(void* context, uint8_t* data, uint64_t sectorAddress, uint32_t* length, uint8_t track)
 {
-    dicformatContext *ctx;
+    dicformatContext* ctx;
     int               i;
 
     if(context == NULL) return DICF_ERROR_NOT_DICFORMAT;
@@ -171,12 +171,12 @@ int32_t read_track_sector(void *context, uint8_t *data, uint64_t sectorAddress, 
     return DICF_ERROR_TRACK_NOT_FOUND;
 }
 
-int32_t read_sector_long(void *context, uint8_t *data, uint64_t sectorAddress, uint32_t *length)
+int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, uint32_t* length)
 {
-    dicformatContext *ctx;
+    dicformatContext* ctx;
     uint32_t          bareLength;
     uint32_t          tagLength;
-    uint8_t *         bareData;
+    uint8_t*          bareData;
     int32_t           res;
     TrackEntry        trk;
     int               i;
@@ -204,7 +204,7 @@ int32_t read_sector_long(void *context, uint8_t *data, uint64_t sectorAddress, u
             bareLength = 0;
             read_sector(context, sectorAddress, NULL, &bareLength);
 
-            bareData = (uint8_t *)malloc(bareLength);
+            bareData = (uint8_t*)malloc(bareLength);
 
             if(bareData == NULL) return DICF_ERROR_NOT_ENOUGH_MEMORY;
 

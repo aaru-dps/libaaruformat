@@ -43,43 +43,43 @@ typedef struct dicformatContext
     uint64_t                            magic;
     uint8_t                             libraryMajorVersion;
     uint8_t                             libraryMinorVersion;
-    FILE *                              imageStream;
+    FILE*                               imageStream;
     DicHeader                           header;
-    struct dataLinkedList *             mediaTagsHead;
-    struct dataLinkedList *             mediaTagsTail;
-    uint8_t *                           sectorPrefix;
-    uint8_t *                           sectorPrefixCorrected;
-    uint8_t *                           sectorSuffix;
-    uint8_t *                           sectorSuffixCorrected;
-    uint8_t *                           sectorSubchannel;
-    uint8_t *                           mode2Subheaders;
+    struct dataLinkedList*              mediaTagsHead;
+    struct dataLinkedList*              mediaTagsTail;
+    uint8_t*                            sectorPrefix;
+    uint8_t*                            sectorPrefixCorrected;
+    uint8_t*                            sectorSuffix;
+    uint8_t*                            sectorSuffixCorrected;
+    uint8_t*                            sectorSubchannel;
+    uint8_t*                            mode2Subheaders;
     uint8_t                             shift;
     bool                                inMemoryDdt;
-    uint64_t *                          userDataDdt;
+    uint64_t*                           userDataDdt;
     size_t                              mappedMemoryDdtSize;
-    uint32_t *                          sectorPrefixDdt;
-    uint32_t *                          sectorSuffixDdt;
+    uint32_t*                           sectorPrefixDdt;
+    uint32_t*                           sectorSuffixDdt;
     GeometryBlockHeader                 geometryBlock;
     MetadataBlockHeader                 metadataBlockHeader;
-    uint8_t *                           metadataBlock;
+    uint8_t*                            metadataBlock;
     TracksHeader                        tracksHeader;
-    TrackEntry *                        trackEntries;
+    TrackEntry*                         trackEntries;
     CicmMetadataBlock                   cicmBlockHeader;
-    uint8_t *                           cicmBlock;
+    uint8_t*                            cicmBlock;
     DumpHardwareHeader                  dumpHardwareHeader;
-    struct DumpHardwareEntriesWithData *dumpHardwareEntriesWithData;
+    struct DumpHardwareEntriesWithData* dumpHardwareEntriesWithData;
     struct ImageInfo                    imageInfo;
-    CdEccContext *                      eccCdContext;
+    CdEccContext*                       eccCdContext;
     uint8_t                             numberOfDataTracks;
-    TrackEntry *                        dataTracks;
-    bool *                              readableSectorTags;
+    TrackEntry*                         dataTracks;
+    bool*                               readableSectorTags;
 } dicformatContext;
 
 typedef struct dataLinkedList
 {
-    struct dataLinkedList *previous;
-    struct dataLinkedList *next;
-    uint8_t *              data;
+    struct dataLinkedList* previous;
+    struct dataLinkedList* next;
+    uint8_t*               data;
     int32_t                type;
     uint32_t               length;
 } dataLinkedList;
@@ -87,15 +87,15 @@ typedef struct dataLinkedList
 typedef struct DumpHardwareEntriesWithData
 {
     DumpHardwareEntry  entry;
-    struct DumpExtent *extents;
-    uint8_t *          manufacturer;
-    uint8_t *          model;
-    uint8_t *          revision;
-    uint8_t *          firmware;
-    uint8_t *          serial;
-    uint8_t *          softwareName;
-    uint8_t *          softwareVersion;
-    uint8_t *          softwareOperatingSystem;
+    struct DumpExtent* extents;
+    uint8_t*           manufacturer;
+    uint8_t*           model;
+    uint8_t*           revision;
+    uint8_t*           firmware;
+    uint8_t*           serial;
+    uint8_t*           softwareName;
+    uint8_t*           softwareVersion;
+    uint8_t*           softwareOperatingSystem;
 } DumpHardwareEntriesWithData;
 
 #pragma pack(push, 1)
