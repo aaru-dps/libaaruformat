@@ -325,6 +325,13 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                             if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == Mode2Form2Ok)
                                 ecc_cd_reconstruct(ctx->eccCdContext, data, CdMode2Form2);
                         }
+                        else if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == NotDumped)
+                        {
+                            res = DICF_STATUS_SECTOR_NOT_DUMPED;
+                        }
+                        else
+                            // Mode 2 where ECC failed
+                            memcpy(data + 24, bareData, 2328);
                     }
                     else if(ctx->mode2Subheaders != NULL)
                     {
