@@ -1,5 +1,5 @@
-# libdicformat
-C implementation of [DiscImageChef](https://www.github.com/discimagechef/discimagechef) file format.
+# libaaruformat
+C implementation of [Aaru](https://www.github.com/aaru-dps/Aaru) file format.
 
 Work in progress, don't expect it to work yet.
 
@@ -12,7 +12,7 @@ Things still to be implemented that are already in the C# version:
 - Caching
 - Tape file blocks
 - Automatic media type generation from C# enumeration
-- Nuget package for linking with DiscImageChef
+- Nuget package for linking with Aaru
 - Writing
 - Hashing while writing (requires MD5, SHA1, SHA256 and SpamSum)
 - Deduplication (requires SHA256)
