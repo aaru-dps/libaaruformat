@@ -2,7 +2,7 @@
 // The Disc Image Chef
 // ----------------------------------------------------------------------------
 //
-// Filename       : dicformat.h
+// Filename       : aaruformat.h
 // Author(s)      : Natalia Portillo <claunia@claunia.com>
 //
 // Component      : libdicformat.

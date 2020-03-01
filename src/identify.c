@@ -34,7 +34,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-//! Identifies a file as dicformat, using path
+//! Identifies a file as aaruformat, using path
 /*!
  *
  * @param filename path to the file to identify
@@ -56,7 +56,7 @@ int identify(const char* filename)
     return ret;
 }
 
-//! Identifies a file as dicformat, using an already existing stream
+//! Identifies a file as aaruformat, using an already existing stream
 /*!
  *
  * @param imageStream stream of the file to identify
