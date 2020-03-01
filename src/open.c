@@ -80,7 +80,7 @@ void* open(const char* filepath)
         return NULL;
     }
 
-    if(ctx->header.identifier != DIC_MAGIC)
+    if(ctx->header.identifier != DIC_MAGIC && ctx->header.identifier != AARU_MAGIC)
     {
         free(ctx);
         errno = AARUF_ERROR_NOT_AARUFORMAT;
@@ -1172,7 +1172,7 @@ void* open(const char* filepath)
     // Initialize ECC for Compact Disc
     ctx->eccCdContext = (CdEccContext*)ecc_cd_init();
 
-    ctx->magic               = DIC_MAGIC;
+    ctx->magic               = AARU_MAGIC;
     ctx->libraryMajorVersion = LIBAARUFORMAT_MAJOR_VERSION;
     ctx->libraryMinorVersion = LIBAARUFORMAT_MINOR_VERSION;
 

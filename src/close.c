@@ -49,7 +49,7 @@ int close(void* context)
     aaruformatContext* ctx = context;
 
     // Not a libaaruformat context
-    if(ctx->magic != DIC_MAGIC)
+    if(ctx->magic != AARU_MAGIC)
     {
         errno = EINVAL;
         return -1;

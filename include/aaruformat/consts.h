@@ -35,8 +35,10 @@
 #ifndef LIBAARUFORMAT_CONSTS_H
 #define LIBAARUFORMAT_CONSTS_H
 
-/** Magic identidier = "DICMFMT". */
+/** Magic identidier = "DICMFRMT". */
 #define DIC_MAGIC 0x544D52464D434944
+/** Magic identidier = "AARUFRMT". */
+#define AARU_MAGIC 0x544D524655524141
 /** Image format version. A change in this number indicates an incompatible change to the format that prevents older
  * implementations from reading it correctly, if at all. */
 #define AARUF_VERSION 1

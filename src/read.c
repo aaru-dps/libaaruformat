@@ -44,7 +44,7 @@ int32_t read_media_tag(void* context, uint8_t* data, int32_t tag, uint32_t* leng
     ctx = context;
 
     // Not a libaaruformat context
-    if(ctx->magic != DIC_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
+    if(ctx->magic != AARU_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
 
     item = ctx->mediaTagsHead;
 
@@ -85,7 +85,7 @@ int32_t read_sector(void* context, uint64_t sectorAddress, uint8_t* data, uint32
     ctx = context;
 
     // Not a libaaruformat context
-    if(ctx->magic != DIC_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
+    if(ctx->magic != AARU_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
 
     if(sectorAddress > ctx->imageInfo.Sectors - 1) return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
 
@@ -158,7 +158,7 @@ int32_t read_track_sector(void* context, uint8_t* data, uint64_t sectorAddress, 
     ctx = context;
 
     // Not a libaaruformat context
-    if(ctx->magic != DIC_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
+    if(ctx->magic != AARU_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
 
     if(ctx->imageInfo.XmlMediaType != OpticalDisc) return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
 
@@ -187,7 +187,7 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
     ctx = context;
 
     // Not a libaaruformat context
-    if(ctx->magic != DIC_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
+    if(ctx->magic != AARU_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
 
     switch(ctx->imageInfo.XmlMediaType)
     {

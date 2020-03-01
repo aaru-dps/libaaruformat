@@ -73,7 +73,8 @@ int identifyStream(FILE* imageStream)
 
     if(ret < sizeof(AaruHeader)) return 0;
 
-    if(header.identifier == DIC_MAGIC && header.imageMajorVersion <= AARUF_VERSION) return 100;
+    if((header.identifier == DIC_MAGIC || header.identifier == AARU_MAGIC) && header.imageMajorVersion <= AARUF_VERSION)
+        return 100;
 
     return 0;
 }
