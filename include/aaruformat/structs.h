@@ -44,7 +44,7 @@
 #include <stdint.h>
 
 /**Header, at start of file */
-typedef struct DicHeader
+typedef struct AaruHeader
 {
     /**Header identifier, <see cref="AARU_MAGIC" /> */
     uint64_t identifier;
@@ -66,7 +66,7 @@ typedef struct DicHeader
     int64_t creationTime;
     /**Windows filetime (100 nanoseconds since 1601/01/01 00:00:00 UTC) of image last written time */
     int64_t lastWrittenTime;
-} DicHeader;
+} AaruHeader;
 
 /**Header for a deduplication table. Table follows it */
 typedef struct DdtHeader

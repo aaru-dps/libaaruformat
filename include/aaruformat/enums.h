@@ -242,7 +242,7 @@ typedef enum
 typedef enum
 {
     AARUF_STATUS_INVALID_CONTEXT = -1,
-} DicformatStatus;
+} AaruformatStatus;
 
 /**
  *     Enumeration of media types defined in CICM metadata

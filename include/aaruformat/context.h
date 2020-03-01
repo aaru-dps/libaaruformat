@@ -44,7 +44,7 @@ typedef struct aaruformatContext
     uint8_t                             libraryMajorVersion;
     uint8_t                             libraryMinorVersion;
     FILE*                               imageStream;
-    DicHeader                           header;
+    AaruHeader                          header;
     struct dataLinkedList*              mediaTagsHead;
     struct dataLinkedList*              mediaTagsTail;
     uint8_t*                            sectorPrefix;

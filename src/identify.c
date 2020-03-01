@@ -67,11 +67,11 @@ int identifyStream(FILE* imageStream)
 {
     fseek(imageStream, 0, SEEK_SET);
 
-    DicHeader header;
+    AaruHeader header;
 
-    size_t ret = fread(&header, sizeof(DicHeader), 1, imageStream);
+    size_t ret = fread(&header, sizeof(AaruHeader), 1, imageStream);
 
-    if(ret < sizeof(DicHeader)) return 0;
+    if(ret < sizeof(AaruHeader)) return 0;
 
     if(header.identifier == DIC_MAGIC && header.imageMajorVersion <= AARUF_VERSION) return 100;
 

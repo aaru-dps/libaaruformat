@@ -1087,21 +1087,21 @@ typedef struct ImageInfo
  */
 typedef enum
 {
-    AppleSectorTag        = 0,  /** Apple's GCR sector tags, 12 bytes */
-    CdSectorSync          = 1,  /** Sync frame from CD sector, 12 bytes */
-    CdSectorHeader        = 2,  /** CD sector header, 4 bytes */
-    CdSectorSubHeader     = 3,  /** CD mode 2 sector subheader */
-    CdSectorEdc           = 4,  /** CD sector EDC, 4 bytes */
-    CdSectorEccP          = 5,  /** CD sector ECC P, 172 bytes */
-    CdSectorEccQ          = 6,  /** CD sector ECC Q, 104 bytes */
-    CdSectorEcc           = 7,  /** CD sector ECC (P and Q), 276 bytes */
-    CdSectorSubchannelDic = 8,  /** CD sector subchannel, 96 bytes */
-    CdTrackIsrc           = 9,  /** CD track ISRC, string, 12 bytes */
-    CdTrackText           = 10, /** CD track text, string, 13 bytes */
-    CdTrackFlags          = 11, /** CD track flags, 1 byte */
-    DvdCmi                = 12, /** DVD sector copyright information */
-    FloppyAddressMark     = 13, /** Floppy address mark (contents depend on underlying floppy format) */
-    MaxSectorTag          = FloppyAddressMark
+    AppleSectorTag         = 0,  /** Apple's GCR sector tags, 12 bytes */
+    CdSectorSync           = 1,  /** Sync frame from CD sector, 12 bytes */
+    CdSectorHeader         = 2,  /** CD sector header, 4 bytes */
+    CdSectorSubHeader      = 3,  /** CD mode 2 sector subheader */
+    CdSectorEdc            = 4,  /** CD sector EDC, 4 bytes */
+    CdSectorEccP           = 5,  /** CD sector ECC P, 172 bytes */
+    CdSectorEccQ           = 6,  /** CD sector ECC Q, 104 bytes */
+    CdSectorEcc            = 7,  /** CD sector ECC (P and Q), 276 bytes */
+    CdSectorSubchannelAaru = 8,  /** CD sector subchannel, 96 bytes */
+    CdTrackIsrc            = 9,  /** CD track ISRC, string, 12 bytes */
+    CdTrackText            = 10, /** CD track text, string, 13 bytes */
+    CdTrackFlags           = 11, /** CD track flags, 1 byte */
+    DvdCmi                 = 12, /** DVD sector copyright information */
+    FloppyAddressMark      = 13, /** Floppy address mark (contents depend on underlying floppy format) */
+    MaxSectorTag           = FloppyAddressMark
 } SectorTagType;
 
 /*

@@ -70,9 +70,9 @@ void* open(const char* filepath)
     }
 
     fseek(ctx->imageStream, 0, SEEK_SET);
-    readBytes = fread(&ctx->header, sizeof(DicHeader), 1, ctx->imageStream);
+    readBytes = fread(&ctx->header, sizeof(AaruHeader), 1, ctx->imageStream);
 
-    if(readBytes != sizeof(DicHeader))
+    if(readBytes != sizeof(AaruHeader))
     {
         free(ctx);
         errno = AARUF_ERROR_FILE_TOO_SMALL;
