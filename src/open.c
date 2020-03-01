@@ -42,7 +42,7 @@ void* open(const char* filepath)
 {
     aaruformatContext* ctx;
     int                errorNo;
-    size_t            readBytes;
+    size_t             readBytes;
     long               pos;
     IndexHeader        idxHeader;
     IndexEntry*        idxEntries;

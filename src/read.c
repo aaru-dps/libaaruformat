@@ -73,12 +73,12 @@ int32_t read_sector(void* context, uint64_t sectorAddress, uint8_t* data, uint32
 {
     aaruformatContext* ctx;
     uint64_t           ddtEntry;
-    uint32_t          offsetMask;
-    uint64_t          offset;
-    uint64_t          blockOffset;
-    BlockHeader       blockHeader;
-    uint8_t*          block;
-    size_t            readBytes;
+    uint32_t           offsetMask;
+    uint64_t           offset;
+    uint64_t           blockOffset;
+    BlockHeader        blockHeader;
+    uint8_t*           block;
+    size_t             readBytes;
 
     if(context == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
 
@@ -175,12 +175,12 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
 {
     aaruformatContext* ctx;
     uint32_t           bareLength;
-    uint32_t          tagLength;
-    uint8_t*          bareData;
-    int32_t           res;
-    TrackEntry        trk;
-    int               i;
-    bool              trkFound;
+    uint32_t           tagLength;
+    uint8_t*           bareData;
+    int32_t            res;
+    TrackEntry         trk;
+    int                i;
+    bool               trkFound;
 
     if(context == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
 
