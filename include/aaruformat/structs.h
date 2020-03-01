@@ -39,7 +39,7 @@
 
 #include "enums.h"
 
-#include <dic.h>
+#include <aaru.h>
 #include <stdbool.h>
 #include <stdint.h>
 

@@ -30,8 +30,8 @@
 // Copyright © 2011-2020 Natalia Portillo
 // ****************************************************************************/
 
+#include <aaru.h>
 #include <aaruformat.h>
-#include <dic.h>
 
 // Converts between image data type and dic media tag type
 int32_t GetMediaTagTypeForDataType(int32_t type)
