@@ -5,7 +5,7 @@
 // Filename       : decls.h
 // Author(s)      : Natalia Portillo <claunia@claunia.com>
 //
-// Component      : libdicformat.
+// Component      : libaaruformat.
 //
 // --[ Description ] ----------------------------------------------------------
 //

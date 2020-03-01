@@ -30,7 +30,7 @@
 // Copyright © 2011-2020 Natalia Portillo
 // ****************************************************************************/
 
-#include <dicformat.h>
+#include <aaruformat.h>
 #include <errno.h>
 #include <stdio.h>
 

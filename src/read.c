@@ -5,7 +5,7 @@
 // Filename       : open.c
 // Author(s)      : Natalia Portillo <claunia@claunia.com>
 //
-// Component      : libdicformat.
+// Component      : libaaruformat.
 //
 // --[ Description ] ----------------------------------------------------------
 //
@@ -30,20 +30,20 @@
 // Copyright © 2011-2020 Natalia Portillo
 // ****************************************************************************/
 
-#include <dicformat.h>
+#include <aaruformat.h>
 #include <malloc.h>
 #include <string.h>
 
 int32_t read_media_tag(void* context, uint8_t* data, int32_t tag, uint32_t* length)
 {
-    dicformatContext* ctx;
-    dataLinkedList*   item;
+    aaruformatContext* ctx;
+    dataLinkedList*    item;
 
     if(context == NULL) return DICF_ERROR_NOT_DICFORMAT;
 
     ctx = context;
 
-    // Not a libdicformat context
+    // Not a libaaruformat context
     if(ctx->magic != DIC_MAGIC) return DICF_ERROR_NOT_DICFORMAT;
 
     item = ctx->mediaTagsHead;
@@ -71,8 +71,8 @@ int32_t read_media_tag(void* context, uint8_t* data, int32_t tag, uint32_t* leng
 
 int32_t read_sector(void* context, uint64_t sectorAddress, uint8_t* data, uint32_t* length)
 {
-    dicformatContext* ctx;
-    uint64_t          ddtEntry;
+    aaruformatContext* ctx;
+    uint64_t           ddtEntry;
     uint32_t          offsetMask;
     uint64_t          offset;
     uint64_t          blockOffset;
@@ -84,7 +84,7 @@ int32_t read_sector(void* context, uint64_t sectorAddress, uint8_t* data, uint32
 
     ctx = context;
 
-    // Not a libdicformat context
+    // Not a libaaruformat context
     if(ctx->magic != DIC_MAGIC) return DICF_ERROR_NOT_DICFORMAT;
 
     if(sectorAddress > ctx->imageInfo.Sectors - 1) return DICF_ERROR_SECTOR_OUT_OF_BOUNDS;
@@ -150,14 +150,14 @@ int32_t read_sector(void* context, uint64_t sectorAddress, uint8_t* data, uint32
 
 int32_t read_track_sector(void* context, uint8_t* data, uint64_t sectorAddress, uint32_t* length, uint8_t track)
 {
-    dicformatContext* ctx;
-    int               i;
+    aaruformatContext* ctx;
+    int                i;
 
     if(context == NULL) return DICF_ERROR_NOT_DICFORMAT;
 
     ctx = context;
 
-    // Not a libdicformat context
+    // Not a libaaruformat context
     if(ctx->magic != DIC_MAGIC) return DICF_ERROR_NOT_DICFORMAT;
 
     if(ctx->imageInfo.XmlMediaType != OpticalDisc) return DICF_ERROR_INCORRECT_MEDIA_TYPE;
@@ -173,8 +173,8 @@ int32_t read_track_sector(void* context, uint8_t* data, uint64_t sectorAddress, 
 
 int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, uint32_t* length)
 {
-    dicformatContext* ctx;
-    uint32_t          bareLength;
+    aaruformatContext* ctx;
+    uint32_t           bareLength;
     uint32_t          tagLength;
     uint8_t*          bareData;
     int32_t           res;
@@ -186,7 +186,7 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
 
     ctx = context;
 
-    // Not a libdicformat context
+    // Not a libaaruformat context
     if(ctx->magic != DIC_MAGIC) return DICF_ERROR_NOT_DICFORMAT;
 
     switch(ctx->imageInfo.XmlMediaType)

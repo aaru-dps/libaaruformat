@@ -31,7 +31,7 @@
 // ECC algorithm from ECM(c) 2002-2011 Neill Corlett
 // ****************************************************************************/
 
-#include <dicformat.h>
+#include <aaruformat.h>
 #include <malloc.h>
 #include <stdbool.h>
 #include <stdint.h>

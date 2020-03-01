@@ -5,7 +5,7 @@
 // Filename       : close.c
 // Author(s)      : Natalia Portillo <claunia@claunia.com>
 //
-// Component      : libdicformat.
+// Component      : libaaruformat.
 //
 // --[ Description ] ----------------------------------------------------------
 //
@@ -30,7 +30,7 @@
 // Copyright © 2011-2020 Natalia Portillo
 // ****************************************************************************/
 
-#include <dicformat.h>
+#include <aaruformat.h>
 #include <errno.h>
 #include <malloc.h>
 #include <stdio.h>
@@ -46,9 +46,9 @@ int close(void* context)
         return -1;
     }
 
-    dicformatContext* ctx = context;
+    aaruformatContext* ctx = context;
 
-    // Not a libdicformat context
+    // Not a libaaruformat context
     if(ctx->magic != DIC_MAGIC)
     {
         errno = EINVAL;

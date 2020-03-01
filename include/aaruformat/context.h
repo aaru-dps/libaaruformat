@@ -5,11 +5,11 @@
 // Filename       : context.h
 // Author(s)      : Natalia Portillo <claunia@claunia.com>
 //
-// Component      : libdicformat.
+// Component      : libaaruformat.
 //
 // --[ Description ] ----------------------------------------------------------
 //
-//     Describes context to be passed between libdicformat functions.
+//     Describes context to be passed between libaaruformat functions.
 //
 // --[ License ] --------------------------------------------------------------
 //
@@ -38,7 +38,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-typedef struct dicformatContext
+typedef struct aaruformatContext
 {
     uint64_t                            magic;
     uint8_t                             libraryMajorVersion;
@@ -73,7 +73,7 @@ typedef struct dicformatContext
     uint8_t                             numberOfDataTracks;
     TrackEntry*                         dataTracks;
     bool*                               readableSectorTags;
-} dicformatContext;
+} aaruformatContext;
 
 typedef struct dataLinkedList
 {

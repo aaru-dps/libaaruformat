@@ -5,7 +5,7 @@
 // Filename       : open.c
 // Author(s)      : Natalia Portillo <claunia@claunia.com>
 //
-// Component      : libdicformat.
+// Component      : libaaruformat.
 //
 // --[ Description ] ----------------------------------------------------------
 //
@@ -30,7 +30,7 @@
 // Copyright © 2011-2020 Natalia Portillo
 // ****************************************************************************/
 
-#include <dicformat.h>
+#include <aaruformat.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <malloc.h>
@@ -40,21 +40,21 @@
 
 void* open(const char* filepath)
 {
-    dicformatContext* ctx;
-    int               errorNo;
+    aaruformatContext* ctx;
+    int                errorNo;
     size_t            readBytes;
-    long              pos;
-    IndexHeader       idxHeader;
-    IndexEntry*       idxEntries;
-    uint8_t*          data;
-    uint32_t*         cdDdt;
-    uint64_t          crc64;
-    uint8_t           temp8u;
-    int               i;
-    uint16_t          e;
+    long               pos;
+    IndexHeader        idxHeader;
+    IndexEntry*        idxEntries;
+    uint8_t*           data;
+    uint32_t*          cdDdt;
+    uint64_t           crc64;
+    uint8_t            temp8u;
+    int                i;
+    uint16_t           e;
 
-    ctx = (dicformatContext*)malloc(sizeof(dicformatContext));
-    memset(ctx, 0, sizeof(dicformatContext));
+    ctx = (aaruformatContext*)malloc(sizeof(aaruformatContext));
+    memset(ctx, 0, sizeof(aaruformatContext));
 
     if(ctx == NULL) return NULL;
 
@@ -97,7 +97,7 @@ void* open(const char* filepath)
     }
 
     fprintf(stderr,
-            "libdicformat: Opening image version %d.%d",
+            "libaaruformat: Opening image version %d.%d",
             ctx->header.imageMajorVersion,
             ctx->header.imageMinorVersion);
 
@@ -161,7 +161,7 @@ void* open(const char* filepath)
     }
 
     fprintf(
-        stderr, "libdicformat: Index at %" PRIu64 " contains %d entries", ctx->header.indexOffset, idxHeader.entries);
+        stderr, "libaaruformat: Index at %" PRIu64 " contains %d entries", ctx->header.indexOffset, idxHeader.entries);
 
     idxEntries = (IndexEntry*)malloc(sizeof(IndexEntry) * idxHeader.entries);
 
@@ -189,7 +189,7 @@ void* open(const char* filepath)
     for(i = 0; i < idxHeader.entries; i++)
     {
         fprintf(stderr,
-                "libdicformat: Block type %4.4s with data type %4.4s is indexed to be at %" PRIu64 "",
+                "libaaruformat: Block type %4.4s with data type %4.4s is indexed to be at %" PRIu64 "",
                 (char*)&idxEntries[i].blockType,
                 (char*)&idxEntries[i].dataType,
                 idxEntries[i].offset);
@@ -204,7 +204,7 @@ void* open(const char* filepath)
         if(pos < 0 || ftell(ctx->imageStream) != idxEntries[i].offset)
         {
             fprintf(stderr,
-                    "libdicformat: Could not seek to %" PRIu64 " as indicated by index entry %d, continuing...",
+                    "libaaruformat: Could not seek to %" PRIu64 " as indicated by index entry %d, continuing...",
                     idxEntries[i].offset,
                     i);
 
@@ -224,7 +224,7 @@ void* open(const char* filepath)
 
                 if(readBytes != sizeof(BlockHeader))
                 {
-                    fprintf(stderr, "libdicformat: Could not read block header at %" PRIu64 "", idxEntries[i].offset);
+                    fprintf(stderr, "libaaruformat: Could not read block header at %" PRIu64 "", idxEntries[i].offset);
 
                     break;
                 }
@@ -243,7 +243,7 @@ void* open(const char* filepath)
                 if(blockHeader.identifier != idxEntries[i].blockType)
                 {
                     fprintf(stderr,
-                            "libdicformat: Incorrect identifier for data block at position %" PRIu64 "",
+                            "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "",
                             idxEntries[i].offset);
                     break;
                 }
@@ -251,7 +251,7 @@ void* open(const char* filepath)
                 if(blockHeader.type != idxEntries[i].dataType)
                 {
                     fprintf(stderr,
-                            "libdicformat: Expected block with data type %4.4s at position %" PRIu64
+                            "libaaruformat: Expected block with data type %4.4s at position %" PRIu64
                             " but found data type %4.4s",
                             (char*)&idxEntries[i].blockType,
                             idxEntries[i].offset,
@@ -260,7 +260,7 @@ void* open(const char* filepath)
                 }
 
                 fprintf(stderr,
-                        "libdicformat: Found data block with type %4.4s at position %" PRIu64 "",
+                        "libaaruformat: Found data block with type %4.4s at position %" PRIu64 "",
                         (char*)&idxEntries[i].blockType,
                         idxEntries[i].offset);
 
@@ -285,7 +285,7 @@ void* open(const char* filepath)
                 else
                 {
                     fprintf(stderr,
-                            "libdicformat: Found unknown compression type %d, continuing...",
+                            "libaaruformat: Found unknown compression type %d, continuing...",
                             blockHeader.compression);
                     break;
                 }
@@ -294,7 +294,7 @@ void* open(const char* filepath)
                 if(crc64 != blockHeader.crc64)
                 {
                     fprintf(stderr,
-                            "libdicformat: Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64
+                            "libaaruformat: Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64
                             ", continuing...",
                             crc64,
                             blockHeader.crc64);
@@ -349,7 +349,7 @@ void* open(const char* filepath)
                                 if(mediaTag->type == blockHeader.type)
                                 {
                                     fprintf(stderr,
-                                            "libdicformat: Media tag type %d duplicated, removing previous entry...",
+                                            "libaaruformat: Media tag type %d duplicated, removing previous entry...",
                                             blockHeader.type);
                                     free(mediaTag->data);
                                     mediaTag->data = data;
@@ -368,7 +368,7 @@ void* open(const char* filepath)
 
                         if(mediaTag == NULL)
                         {
-                            fprintf(stderr, "libdicformat: Cannot allocate memory for media tag list entry.");
+                            fprintf(stderr, "libaaruformat: Cannot allocate memory for media tag list entry.");
                             break;
                         }
                         memset(mediaTag, 0, sizeof(dataLinkedList));
@@ -395,7 +395,7 @@ void* open(const char* filepath)
 
                 if(readBytes != sizeof(DdtHeader))
                 {
-                    fprintf(stderr, "libdicformat: Could not read block header at %" PRIu64 "", idxEntries[i].offset);
+                    fprintf(stderr, "libaaruformat: Could not read block header at %" PRIu64 "", idxEntries[i].offset);
 
                     break;
                 }
@@ -424,7 +424,7 @@ void* open(const char* filepath)
                             if(ctx->userDataDdt == MAP_FAILED)
                             {
                                 foundUserDataDdt = false;
-                                fprintf(stderr, "libdicformat: Could not read map deduplication table.");
+                                fprintf(stderr, "libaaruformat: Could not read map deduplication table.");
                                 break;
                             }
 
@@ -432,7 +432,7 @@ void* open(const char* filepath)
                             break;
                         default:
                             fprintf(stderr,
-                                    "libdicformat: Found unknown compression type %d, continuing...",
+                                    "libaaruformat: Found unknown compression type %d, continuing...",
                                     blockHeader.compression);
                             foundUserDataDdt = false;
                             break;
@@ -448,7 +448,7 @@ void* open(const char* filepath)
 
                             if(mediaTag == NULL)
                             {
-                                fprintf(stderr, "libdicformat: Cannot allocate memory for deduplication table.");
+                                fprintf(stderr, "libaaruformat: Cannot allocate memory for deduplication table.");
                                 break;
                             }
 
@@ -457,7 +457,7 @@ void* open(const char* filepath)
                             if(readBytes != ddtHeader.entries * sizeof(uint32_t))
                             {
                                 free(data);
-                                fprintf(stderr, "libdicformat: Could not read deduplication table, continuing...");
+                                fprintf(stderr, "libaaruformat: Could not read deduplication table, continuing...");
                                 break;
                             }
 
@@ -471,7 +471,7 @@ void* open(const char* filepath)
                             break;
                         default:
                             fprintf(stderr,
-                                    "libdicformat: Found unknown compression type %d, continuing...",
+                                    "libaaruformat: Found unknown compression type %d, continuing...",
                                     blockHeader.compression);
                             break;
                     }
@@ -484,14 +484,14 @@ void* open(const char* filepath)
                 if(readBytes != sizeof(GeometryBlockHeader))
                 {
                     memset(&ctx->geometryBlock, 0, sizeof(GeometryBlockHeader));
-                    fprintf(stderr, "libdicformat: Could not read geometry block, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not read geometry block, continuing...");
                     break;
                 }
 
                 if(ctx->geometryBlock.identifier == GeometryBlock)
                 {
                     fprintf(stderr,
-                            "libdicformat: Geometry set to %d cylinders %d heads %d sectors per track",
+                            "libaaruformat: Geometry set to %d cylinders %d heads %d sectors per track",
                             ctx->geometryBlock.cylinders,
                             ctx->geometryBlock.heads,
                             ctx->geometryBlock.sectorsPerTrack);
@@ -511,7 +511,7 @@ void* open(const char* filepath)
                 if(readBytes != sizeof(MetadataBlockHeader))
                 {
                     memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
-                    fprintf(stderr, "libdicformat: Could not read metadata block header, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not read metadata block header, continuing...");
                     break;
                 }
 
@@ -519,7 +519,7 @@ void* open(const char* filepath)
                 {
                     memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
                     fprintf(stderr,
-                            "libdicformat: Incorrect identifier for data block at position %" PRIu64 "",
+                            "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "",
                             idxEntries[i].offset);
                     break;
                 }
@@ -531,7 +531,7 @@ void* open(const char* filepath)
                 if(ctx->metadataBlock == NULL)
                 {
                     memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
-                    fprintf(stderr, "libdicformat: Could not allocate memory for metadata block, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not allocate memory for metadata block, continuing...");
                     break;
                 }
 
@@ -541,7 +541,7 @@ void* open(const char* filepath)
                 {
                     memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
                     free(ctx->metadataBlock);
-                    fprintf(stderr, "libdicformat: Could not read metadata block, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not read metadata block, continuing...");
                 }
 
                 if(ctx->metadataBlockHeader.mediaSequence > 0 && ctx->metadataBlockHeader.lastMediaSequence > 0)
@@ -549,7 +549,7 @@ void* open(const char* filepath)
                     ctx->imageInfo.MediaSequence     = ctx->metadataBlockHeader.mediaSequence;
                     ctx->imageInfo.LastMediaSequence = ctx->metadataBlockHeader.lastMediaSequence;
                     fprintf(stderr,
-                            "libdicformat: Setting media sequence as %d of %d",
+                            "libaaruformat: Setting media sequence as %d of %d",
                             ctx->imageInfo.MediaSequence,
                             ctx->imageInfo.LastMediaSequence);
                 }
@@ -727,7 +727,7 @@ void* open(const char* filepath)
                 if(readBytes != sizeof(TracksHeader))
                 {
                     memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
-                    fprintf(stderr, "libdicformat: Could not read tracks header, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not read tracks header, continuing...");
                     break;
                 }
 
@@ -735,7 +735,7 @@ void* open(const char* filepath)
                 {
                     memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
                     fprintf(stderr,
-                            "libdicformat: Incorrect identifier for data block at position %" PRIu64 "",
+                            "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "",
                             idxEntries[i].offset);
                 }
 
@@ -746,7 +746,7 @@ void* open(const char* filepath)
                 if(ctx->trackEntries == NULL)
                 {
                     memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
-                    fprintf(stderr, "libdicformat: Could not allocate memory for metadata block, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not allocate memory for metadata block, continuing...");
                     break;
                 }
 
@@ -756,7 +756,7 @@ void* open(const char* filepath)
                 {
                     memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
                     free(ctx->trackEntries);
-                    fprintf(stderr, "libdicformat: Could not read metadata block, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not read metadata block, continuing...");
                 }
 
                 crc64 =
@@ -764,7 +764,7 @@ void* open(const char* filepath)
                 if(crc64 != ctx->tracksHeader.crc64)
                 {
                     fprintf(stderr,
-                            "libdicformat: Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64
+                            "libaaruformat: Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64
                             ", continuing...",
                             crc64,
                             ctx->tracksHeader.crc64);
@@ -772,7 +772,7 @@ void* open(const char* filepath)
                 }
 
                 fprintf(stderr,
-                        "libdicformat: Found %d tracks at position %" PRIu64 ".",
+                        "libaaruformat: Found %d tracks at position %" PRIu64 ".",
                         ctx->tracksHeader.entries,
                         idxEntries[i].offset);
 
@@ -813,7 +813,7 @@ void* open(const char* filepath)
                 if(readBytes != sizeof(CicmMetadataBlock))
                 {
                     memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
-                    fprintf(stderr, "libdicformat: Could not read CICM XML metadata header, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not read CICM XML metadata header, continuing...");
                     break;
                 }
 
@@ -821,7 +821,7 @@ void* open(const char* filepath)
                 {
                     memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
                     fprintf(stderr,
-                            "libdicformat: Incorrect identifier for data block at position %" PRIu64 "",
+                            "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "",
                             idxEntries[i].offset);
                 }
 
@@ -833,7 +833,7 @@ void* open(const char* filepath)
                 {
                     memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
                     fprintf(stderr,
-                            "libdicformat: Could not allocate memory for CICM XML metadata block, continuing...");
+                            "libaaruformat: Could not allocate memory for CICM XML metadata block, continuing...");
                     break;
                 }
 
@@ -843,10 +843,10 @@ void* open(const char* filepath)
                 {
                     memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
                     free(ctx->cicmBlock);
-                    fprintf(stderr, "libdicformat: Could not read CICM XML metadata block, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not read CICM XML metadata block, continuing...");
                 }
 
-                fprintf(stderr, "libdicformat: Found CICM XML metadata block %" PRIu64 ".", idxEntries[i].offset);
+                fprintf(stderr, "libaaruformat: Found CICM XML metadata block %" PRIu64 ".", idxEntries[i].offset);
                 break;
                 // Dump hardware block
             case DumpHardwareBlock:
@@ -855,7 +855,7 @@ void* open(const char* filepath)
                 if(readBytes != sizeof(DumpHardwareHeader))
                 {
                     memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
-                    fprintf(stderr, "libdicformat: Could not read dump hardware block header, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not read dump hardware block header, continuing...");
                     break;
                 }
 
@@ -863,7 +863,7 @@ void* open(const char* filepath)
                 {
                     memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
                     fprintf(stderr,
-                            "libdicformat: Incorrect identifier for data block at position %" PRIu64 "",
+                            "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "",
                             idxEntries[i].offset);
                 }
 
@@ -879,7 +879,7 @@ void* open(const char* filepath)
                         {
                             free(data);
                             fprintf(stderr,
-                                    "libdicformat: Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64
+                                    "libaaruformat: Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64
                                     ", continuing...",
                                     crc64,
                                     ctx->dumpHardwareHeader.crc64);
@@ -897,7 +897,7 @@ void* open(const char* filepath)
                 if(ctx->dumpHardwareEntriesWithData == NULL)
                 {
                     memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
-                    fprintf(stderr, "libdicformat: Could not allocate memory for dump hardware block, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not allocate memory for dump hardware block, continuing...");
                     break;
                 }
 
@@ -913,7 +913,7 @@ void* open(const char* filepath)
                     if(readBytes != sizeof(DumpHardwareEntry))
                     {
                         ctx->dumpHardwareHeader.entries = e + (uint16_t)1;
-                        fprintf(stderr, "libdicformat: Could not read dump hardware block entry, continuing...");
+                        fprintf(stderr, "libaaruformat: Could not read dump hardware block entry, continuing...");
                         break;
                     }
 
@@ -934,7 +934,7 @@ void* open(const char* filepath)
                                 free(ctx->dumpHardwareEntriesWithData[e].manufacturer);
                                 ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength = 0;
                                 fprintf(stderr,
-                                        "libdicformat: Could not read dump hardware block entry manufacturer, "
+                                        "libaaruformat: Could not read dump hardware block entry manufacturer, "
                                         "continuing...");
                             }
                         }
@@ -957,7 +957,7 @@ void* open(const char* filepath)
                                 free(ctx->dumpHardwareEntriesWithData[e].model);
                                 ctx->dumpHardwareEntriesWithData[e].entry.modelLength = 0;
                                 fprintf(stderr,
-                                        "libdicformat: Could not read dump hardware block entry model, continuing...");
+                                        "libaaruformat: Could not read dump hardware block entry model, continuing...");
                             }
                         }
                     }
@@ -980,7 +980,7 @@ void* open(const char* filepath)
                                 ctx->dumpHardwareEntriesWithData[e].entry.revisionLength = 0;
                                 fprintf(
                                     stderr,
-                                    "libdicformat: Could not read dump hardware block entry revision, continuing...");
+                                    "libaaruformat: Could not read dump hardware block entry revision, continuing...");
                             }
                         }
                     }
@@ -1003,7 +1003,7 @@ void* open(const char* filepath)
                                 ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength = 0;
                                 fprintf(
                                     stderr,
-                                    "libdicformat: Could not read dump hardware block entry firmware, continuing...");
+                                    "libaaruformat: Could not read dump hardware block entry firmware, continuing...");
                             }
                         }
                     }
@@ -1024,8 +1024,9 @@ void* open(const char* filepath)
                             {
                                 free(ctx->dumpHardwareEntriesWithData[e].serial);
                                 ctx->dumpHardwareEntriesWithData[e].entry.serialLength = 0;
-                                fprintf(stderr,
-                                        "libdicformat: Could not read dump hardware block entry serial, continuing...");
+                                fprintf(
+                                    stderr,
+                                    "libaaruformat: Could not read dump hardware block entry serial, continuing...");
                             }
                         }
                     }
@@ -1047,7 +1048,7 @@ void* open(const char* filepath)
                                 free(ctx->dumpHardwareEntriesWithData[e].softwareName);
                                 ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength = 0;
                                 fprintf(stderr,
-                                        "libdicformat: Could not read dump hardware block entry software name, "
+                                        "libaaruformat: Could not read dump hardware block entry software name, "
                                         "continuing...");
                             }
                         }
@@ -1070,7 +1071,7 @@ void* open(const char* filepath)
                                 free(ctx->dumpHardwareEntriesWithData[e].softwareVersion);
                                 ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength = 0;
                                 fprintf(stderr,
-                                        "libdicformat: Could not read dump hardware block entry software version, "
+                                        "libaaruformat: Could not read dump hardware block entry software version, "
                                         "continuing...");
                             }
                         }
@@ -1093,7 +1094,7 @@ void* open(const char* filepath)
                                 free(ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem);
                                 ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength = 0;
                                 fprintf(stderr,
-                                        "libdicformat: Could not read dump hardware block entry manufacturer, "
+                                        "libaaruformat: Could not read dump hardware block entry manufacturer, "
                                         "continuing...");
                             }
                         }
@@ -1106,7 +1107,7 @@ void* open(const char* filepath)
                     {
                         fprintf(
                             stderr,
-                            "libdicformat: Could not allocate memory for dump hardware block extents, continuing...");
+                            "libaaruformat: Could not allocate memory for dump hardware block extents, continuing...");
                         continue;
                     }
 
@@ -1118,7 +1119,7 @@ void* open(const char* filepath)
                     if(readBytes != sizeof(DumpExtent) * ctx->dumpHardwareEntriesWithData->entry.extents)
                     {
                         free(ctx->dumpHardwareEntriesWithData[e].extents);
-                        fprintf(stderr, "libdicformat: Could not read dump hardware block extents, continuing...");
+                        fprintf(stderr, "libaaruformat: Could not read dump hardware block extents, continuing...");
                         continue;
                     }
 
@@ -1128,7 +1129,8 @@ void* open(const char* filepath)
                 break;
             default:
                 fprintf(stderr,
-                        "libdicformat: Unhandled block type %4.4s with data type %4.4s is indexed to be at %" PRIu64 "",
+                        "libaaruformat: Unhandled block type %4.4s with data type %4.4s is indexed to be at %" PRIu64
+                        "",
                         (char*)&idxEntries[i].blockType,
                         (char*)&idxEntries[i].dataType,
                         idxEntries[i].offset);
@@ -1140,7 +1142,7 @@ void* open(const char* filepath)
 
     if(!foundUserDataDdt)
     {
-        fprintf(stderr, "libdicformat: Could not find user data deduplication table, aborting...");
+        fprintf(stderr, "libaaruformat: Could not find user data deduplication table, aborting...");
         close(ctx);
         return NULL;
     }

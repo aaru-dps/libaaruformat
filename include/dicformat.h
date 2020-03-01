@@ -5,7 +5,7 @@
 // Filename       : aaruformat.h
 // Author(s)      : Natalia Portillo <claunia@claunia.com>
 //
-// Component      : libdicformat.
+// Component      : libaaruformat.
 //
 // --[ Description ] ----------------------------------------------------------
 //
@@ -36,11 +36,11 @@
 #define LIBDICFORMAT_MAJOR_VERSION 1
 #define LIBDICFORMAT_MINOR_VERSION 0
 
-#include "dicformat/consts.h"
-#include "dicformat/context.h"
-#include "dicformat/decls.h"
-#include "dicformat/enums.h"
-#include "dicformat/errors.h"
-#include "dicformat/structs.h"
+#include "aaruformat/consts.h"
+#include "aaruformat/context.h"
+#include "aaruformat/decls.h"
+#include "aaruformat/enums.h"
+#include "aaruformat/errors.h"
+#include "aaruformat/structs.h"
 
 #endif // LIBDICFORMAT_DICFORMAT_H
