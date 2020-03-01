@@ -33,7 +33,7 @@
 #include <aaru.h>
 #include <aaruformat.h>
 
-// Converts between image data type and dic media tag type
+// Converts between image data type and aaru media tag type
 int32_t GetMediaTagTypeForDataType(int32_t type)
 {
     switch(type)

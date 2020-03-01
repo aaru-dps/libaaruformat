@@ -2,7 +2,7 @@
 // Aaru Data Preservation Suite
 // ----------------------------------------------------------------------------
 //
-// Filename       : dic.h
+// Filename       : aaru.h
 // Author(s)      : Natalia Portillo <claunia@claunia.com>
 //
 // Component      : libaaruformat.
