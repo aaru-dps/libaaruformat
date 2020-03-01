@@ -29,8 +29,8 @@
 // ----------------------------------------------------------------------------
 // Copyright © 2011-2020 Natalia Portillo
 // ****************************************************************************/
-#ifndef LIBDICFORMAT_CONTEXT_H
-#define LIBDICFORMAT_CONTEXT_H
+#ifndef LIBAARUFORMAT_CONTEXT_H
+#define LIBAARUFORMAT_CONTEXT_H
 
 #include "structs.h"
 
@@ -108,4 +108,4 @@ typedef struct DumpExtent
 
 #pragma pack(pop)
 
-#endif // LIBDICFORMAT_CONTEXT_H
+#endif // LIBAARUFORMAT_CONTEXT_H

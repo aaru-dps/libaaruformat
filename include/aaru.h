@@ -37,9 +37,9 @@
 // ****************************************************************************/
 
 #pragma clang diagnostic push
-#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
-#ifndef LIBDICFORMAT_DIC_H
-#define LIBDICFORMAT_DIC_H
+#pragma ide diagnostic   ignored "OCUnusedGlobalDeclarationInspection"
+#ifndef LIBAARUFORMAT_AARU_H
+#define LIBAARUFORMAT_AARU_H
 
 #include <stdint.h>
 
@@ -1184,6 +1184,6 @@ typedef enum
     CD_LeadIn           = 68
 } MediaTagType;
 
-#endif // LIBDICFORMAT_DIC_H
+#endif // LIBAARUFORMAT_AARU_H
 
 #pragma clang diagnostic pop

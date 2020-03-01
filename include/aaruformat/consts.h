@@ -31,15 +31,15 @@
 // ****************************************************************************/
 
 #pragma clang diagnostic push
-#pragma ide diagnostic ignored "OCUnusedMacroInspection"
-#ifndef LIBDICFORMAT_CONSTS_H
-#define LIBDICFORMAT_CONSTS_H
+#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
+#ifndef LIBAARUFORMAT_CONSTS_H
+#define LIBAARUFORMAT_CONSTS_H
 
 /** Magic identidier = "DICMFMT". */
 #define DIC_MAGIC 0x544D52464D434944
 /** Image format version. A change in this number indicates an incompatible change to the format that prevents older
  * implementations from reading it correctly, if at all. */
-#define DICF_VERSION 1
+#define AARUF_VERSION 1
 /** Maximum read cache size, 256MiB. */
 #define MAX_CACHE_SIZE 256 * 1024 * 1024
 /** Size in bytes of LZMA properties. */
@@ -60,6 +60,6 @@
 #define CRC64_ECMA_POLY 0xC96C5795D7870F42
 #define CRC64_ECMA_SEED 0xFFFFFFFFFFFFFFFF
 
-#endif // LIBDICFORMAT_CONSTS_H
+#endif // LIBAARUFORMAT_CONSTS_H
 
 #pragma clang diagnostic pop

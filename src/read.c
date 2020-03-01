@@ -39,12 +39,12 @@ int32_t read_media_tag(void* context, uint8_t* data, int32_t tag, uint32_t* leng
     aaruformatContext* ctx;
     dataLinkedList*    item;
 
-    if(context == NULL) return DICF_ERROR_NOT_DICFORMAT;
+    if(context == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
 
     ctx = context;
 
     // Not a libaaruformat context
-    if(ctx->magic != DIC_MAGIC) return DICF_ERROR_NOT_DICFORMAT;
+    if(ctx->magic != DIC_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
 
     item = ctx->mediaTagsHead;
 
@@ -55,7 +55,7 @@ int32_t read_media_tag(void* context, uint8_t* data, int32_t tag, uint32_t* leng
             if(data == NULL || *length < item->length)
             {
                 *length = item->length;
-                return DICF_ERROR_BUFFER_TOO_SMALL;
+                return AARUF_ERROR_BUFFER_TOO_SMALL;
             }
 
             *length = item->length;
@@ -66,7 +66,7 @@ int32_t read_media_tag(void* context, uint8_t* data, int32_t tag, uint32_t* leng
     }
 
     *length = 0;
-    return DICF_ERROR_MEDIA_TAG_NOT_PRESENT;
+    return AARUF_ERROR_MEDIA_TAG_NOT_PRESENT;
 }
 
 int32_t read_sector(void* context, uint64_t sectorAddress, uint8_t* data, uint32_t* length)
@@ -80,14 +80,14 @@ int32_t read_sector(void* context, uint64_t sectorAddress, uint8_t* data, uint32
     uint8_t*          block;
     size_t            readBytes;
 
-    if(context == NULL) return DICF_ERROR_NOT_DICFORMAT;
+    if(context == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
 
     ctx = context;
 
     // Not a libaaruformat context
-    if(ctx->magic != DIC_MAGIC) return DICF_ERROR_NOT_DICFORMAT;
+    if(ctx->magic != DIC_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
 
-    if(sectorAddress > ctx->imageInfo.Sectors - 1) return DICF_ERROR_SECTOR_OUT_OF_BOUNDS;
+    if(sectorAddress > ctx->imageInfo.Sectors - 1) return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
 
     ddtEntry    = ctx->userDataDdt[sectorAddress];
     offsetMask  = (uint32_t)((1 << ctx->shift) - 1);
@@ -99,7 +99,7 @@ int32_t read_sector(void* context, uint64_t sectorAddress, uint8_t* data, uint32
     {
         memset(data, 0, ctx->imageInfo.SectorSize);
         *length = ctx->imageInfo.SectorSize;
-        return DICF_STATUS_SECTOR_NOT_DUMPED;
+        return AARUF_STATUS_SECTOR_NOT_DUMPED;
     }
 
     // Check if block is cached
@@ -109,12 +109,12 @@ int32_t read_sector(void* context, uint64_t sectorAddress, uint8_t* data, uint32
     fseek(ctx->imageStream, blockOffset, SEEK_SET);
     readBytes = fread(&blockHeader, sizeof(BlockHeader), 1, ctx->imageStream);
 
-    if(readBytes != sizeof(BlockHeader)) return DICF_ERROR_CANNOT_READ_HEADER;
+    if(readBytes != sizeof(BlockHeader)) return AARUF_ERROR_CANNOT_READ_HEADER;
 
     if(data == NULL || *length < blockHeader.sectorSize)
     {
         *length = blockHeader.sectorSize;
-        return DICF_ERROR_BUFFER_TOO_SMALL;
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
     // Decompress block
@@ -122,18 +122,18 @@ int32_t read_sector(void* context, uint64_t sectorAddress, uint8_t* data, uint32
     {
         case None:
             block = (uint8_t*)malloc(blockHeader.length);
-            if(block == NULL) return DICF_ERROR_NOT_ENOUGH_MEMORY;
+            if(block == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
 
             readBytes = fread(block, blockHeader.length, 1, ctx->imageStream);
 
             if(readBytes != blockHeader.length)
             {
                 free(block);
-                return DICF_ERROR_CANNOT_READ_BLOCK;
+                return AARUF_ERROR_CANNOT_READ_BLOCK;
             }
 
             break;
-        default: return DICF_ERROR_UNSUPPORTED_COMPRESSION;
+        default: return AARUF_ERROR_UNSUPPORTED_COMPRESSION;
     }
 
     // Check if cache needs to be emptied
@@ -145,7 +145,7 @@ int32_t read_sector(void* context, uint64_t sectorAddress, uint8_t* data, uint32
     memcpy(data, block + offset, blockHeader.sectorSize);
     *length = blockHeader.sectorSize;
     free(block);
-    return DICF_STATUS_OK;
+    return AARUF_STATUS_OK;
 }
 
 int32_t read_track_sector(void* context, uint8_t* data, uint64_t sectorAddress, uint32_t* length, uint8_t track)
@@ -153,14 +153,14 @@ int32_t read_track_sector(void* context, uint8_t* data, uint64_t sectorAddress, 
     aaruformatContext* ctx;
     int                i;
 
-    if(context == NULL) return DICF_ERROR_NOT_DICFORMAT;
+    if(context == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
 
     ctx = context;
 
     // Not a libaaruformat context
-    if(ctx->magic != DIC_MAGIC) return DICF_ERROR_NOT_DICFORMAT;
+    if(ctx->magic != DIC_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
 
-    if(ctx->imageInfo.XmlMediaType != OpticalDisc) return DICF_ERROR_INCORRECT_MEDIA_TYPE;
+    if(ctx->imageInfo.XmlMediaType != OpticalDisc) return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
 
     for(i = 0; i < ctx->numberOfDataTracks; i++)
     {
@@ -168,7 +168,7 @@ int32_t read_track_sector(void* context, uint8_t* data, uint64_t sectorAddress, 
         { return read_sector(context, ctx->dataTracks[i].start + sectorAddress, data, length); }
     }
 
-    return DICF_ERROR_TRACK_NOT_FOUND;
+    return AARUF_ERROR_TRACK_NOT_FOUND;
 }
 
 int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, uint32_t* length)
@@ -182,12 +182,12 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
     int               i;
     bool              trkFound;
 
-    if(context == NULL) return DICF_ERROR_NOT_DICFORMAT;
+    if(context == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
 
     ctx = context;
 
     // Not a libaaruformat context
-    if(ctx->magic != DIC_MAGIC) return DICF_ERROR_NOT_DICFORMAT;
+    if(ctx->magic != DIC_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
 
     switch(ctx->imageInfo.XmlMediaType)
     {
@@ -195,7 +195,7 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
             if(*length < 2352 || data == NULL)
             {
                 *length = 2352;
-                return DICF_ERROR_BUFFER_TOO_SMALL;
+                return AARUF_ERROR_BUFFER_TOO_SMALL;
             }
             if((ctx->sectorSuffix == NULL || ctx->sectorPrefix == NULL) &&
                (ctx->sectorSuffixCorrected == NULL || ctx->sectorPrefixCorrected == NULL))
@@ -206,11 +206,11 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
 
             bareData = (uint8_t*)malloc(bareLength);
 
-            if(bareData == NULL) return DICF_ERROR_NOT_ENOUGH_MEMORY;
+            if(bareData == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
 
             res = read_sector(context, sectorAddress, bareData, &bareLength);
 
-            if(res < DICF_STATUS_OK) return res;
+            if(res < AARUF_STATUS_OK) return res;
 
             trkFound = false;
 
@@ -224,7 +224,7 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                 }
             }
 
-            if(!trkFound) return DICF_ERROR_TRACK_NOT_FOUND;
+            if(!trkFound) return AARUF_ERROR_TRACK_NOT_FOUND;
 
             switch(trk.type)
             {
@@ -240,11 +240,11 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                         if((ctx->sectorPrefixDdt[sectorAddress] & CD_XFIX_MASK) == Correct)
                         {
                             ecc_cd_reconstruct_prefix(data, trk.type, sectorAddress);
-                            res = DICF_STATUS_OK;
+                            res = AARUF_STATUS_OK;
                         }
                         else if((ctx->sectorPrefixDdt[sectorAddress] & CD_XFIX_MASK) == NotDumped)
                         {
-                            res = DICF_STATUS_SECTOR_NOT_DUMPED;
+                            res = AARUF_STATUS_SECTOR_NOT_DUMPED;
                         }
                         else
                         {
@@ -255,7 +255,7 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                         }
                     }
                     else
-                        return DICF_ERROR_REACHED_UNREACHABLE_CODE;
+                        return AARUF_ERROR_REACHED_UNREACHABLE_CODE;
 
                     if(ctx->sectorSuffix != NULL)
                         memcpy(data + 2064, ctx->sectorSuffix + sectorAddress * 288, 288);
@@ -264,11 +264,11 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                         if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == Correct)
                         {
                             ecc_cd_reconstruct(ctx->eccCdContext, data, trk.type);
-                            res = DICF_STATUS_OK;
+                            res = AARUF_STATUS_OK;
                         }
                         else if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == NotDumped)
                         {
-                            res = DICF_STATUS_SECTOR_NOT_DUMPED;
+                            res = AARUF_STATUS_SECTOR_NOT_DUMPED;
                         }
                         else
                         {
@@ -279,7 +279,7 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                         }
                     }
                     else
-                        return DICF_ERROR_REACHED_UNREACHABLE_CODE;
+                        return AARUF_ERROR_REACHED_UNREACHABLE_CODE;
 
                     return res;
                 case CdMode2Formless:
@@ -292,11 +292,11 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                         if((ctx->sectorPrefixDdt[sectorAddress] & CD_XFIX_MASK) == Correct)
                         {
                             ecc_cd_reconstruct_prefix(data, trk.type, sectorAddress);
-                            res = DICF_STATUS_OK;
+                            res = AARUF_STATUS_OK;
                         }
                         else if((ctx->sectorPrefixDdt[sectorAddress] & CD_XFIX_MASK) == NotDumped)
                         {
-                            res = DICF_STATUS_SECTOR_NOT_DUMPED;
+                            res = AARUF_STATUS_SECTOR_NOT_DUMPED;
                         }
                         else
                         {
@@ -307,7 +307,7 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                         }
                     }
                     else
-                        return DICF_ERROR_REACHED_UNREACHABLE_CODE;
+                        return AARUF_ERROR_REACHED_UNREACHABLE_CODE;
 
                     if(ctx->mode2Subheaders != NULL && ctx->sectorSuffixDdt != NULL)
                     {
@@ -327,7 +327,7 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                         }
                         else if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == NotDumped)
                         {
-                            res = DICF_STATUS_SECTOR_NOT_DUMPED;
+                            res = AARUF_STATUS_SECTOR_NOT_DUMPED;
                         }
                         else
                             // Mode 2 where ECC failed
@@ -342,7 +342,7 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                         memcpy(data + 16, bareData, 2336);
 
                     return res;
-                default: return DICF_ERROR_INVALID_TRACK_FORMAT;
+                default: return AARUF_ERROR_INVALID_TRACK_FORMAT;
             }
         case BlockMedia:
             switch(ctx->imageInfo.MediaType)
@@ -363,7 +363,7 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                         case AppleSonySS:
                         case AppleSonyDS: tagLength = 12; break;
                         case PriamDataTower: tagLength = 24; break;
-                        default: return DICF_ERROR_INCORRECT_MEDIA_TYPE;
+                        default: return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
                     }
 
                     bareLength = 512;
@@ -371,12 +371,12 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                     if(*length < tagLength + bareLength || data == NULL)
                     {
                         *length = tagLength + bareLength;
-                        return DICF_ERROR_BUFFER_TOO_SMALL;
+                        return AARUF_ERROR_BUFFER_TOO_SMALL;
                     }
 
                     bareData = malloc(bareLength);
 
-                    if(bareData == NULL) return DICF_ERROR_NOT_ENOUGH_MEMORY;
+                    if(bareData == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
 
                     res = read_sector(context, sectorAddress, bareData, &bareLength);
 
@@ -388,8 +388,8 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                     free(bareData);
 
                     return res;
-                default: return DICF_ERROR_INCORRECT_MEDIA_TYPE;
+                default: return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
             }
-        default: return DICF_ERROR_INCORRECT_MEDIA_TYPE;
+        default: return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
     }
 }

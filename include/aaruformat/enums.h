@@ -1,7 +1,7 @@
 #pragma clang diagnostic push
-#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
-#ifndef LIBDICFORMAT_ENUMS_H
-#define LIBDICFORMAT_ENUMS_H
+#pragma ide diagnostic   ignored "OCUnusedGlobalDeclarationInspection"
+#ifndef LIBAARUFORMAT_ENUMS_H
+#define LIBAARUFORMAT_ENUMS_H
 
 /** List of known compression types */
 typedef enum
@@ -241,7 +241,7 @@ typedef enum
 
 typedef enum
 {
-    DICF_STATUS_INVALID_CONTEXT = -1,
+    AARUF_STATUS_INVALID_CONTEXT = -1,
 } DicformatStatus;
 
 /**
@@ -265,6 +265,6 @@ typedef enum
     AudioMedia = 3
 } XmlMediaType;
 
-#endif // LIBDICFORMAT_ENUMS_H
+#endif // LIBAARUFORMAT_ENUMS_H
 
 #pragma clang diagnostic pop

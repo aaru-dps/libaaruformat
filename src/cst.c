@@ -47,7 +47,7 @@ int32_t cst_transform(const uint8_t* interleaved, uint8_t* sequential, size_t le
     size_t   wStart;
     size_t   i;
 
-    if(interleaved == NULL || sequential == NULL) return DICF_ERROR_BUFFER_TOO_SMALL;
+    if(interleaved == NULL || sequential == NULL) return AARUF_ERROR_BUFFER_TOO_SMALL;
 
     p = malloc(length / 8);
     q = malloc(length / 8);
@@ -68,7 +68,7 @@ int32_t cst_transform(const uint8_t* interleaved, uint8_t* sequential, size_t le
         free(u);
         free(v);
         free(w);
-        return DICF_ERROR_NOT_ENOUGH_MEMORY;
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
     }
 
     for(i = 0; i < length; i += 8)
@@ -166,7 +166,7 @@ int32_t cst_transform(const uint8_t* interleaved, uint8_t* sequential, size_t le
         sequential[wStart + i] = w[i];
     }
 
-    return DICF_STATUS_OK;
+    return AARUF_STATUS_OK;
 }
 
 int32_t cst_untransform(const uint8_t* sequential, uint8_t* interleaved, size_t length)
@@ -181,7 +181,7 @@ int32_t cst_untransform(const uint8_t* sequential, uint8_t* interleaved, size_t 
     size_t   wStart;
     size_t   i;
 
-    if(interleaved == NULL || sequential == NULL) return DICF_ERROR_BUFFER_TOO_SMALL;
+    if(interleaved == NULL || sequential == NULL) return AARUF_ERROR_BUFFER_TOO_SMALL;
 
     p = malloc(length / 8);
     q = malloc(length / 8);
@@ -202,7 +202,7 @@ int32_t cst_untransform(const uint8_t* sequential, uint8_t* interleaved, size_t 
         free(u);
         free(v);
         free(w);
-        return DICF_ERROR_NOT_ENOUGH_MEMORY;
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
     }
 
     qStart = length * 1;
@@ -302,5 +302,5 @@ int32_t cst_untransform(const uint8_t* sequential, uint8_t* interleaved, size_t 
         interleaved[i + 7] += ((w[i / 8] & 0x01) == 0x01 ? 0x01 : 0);
     }
 
-    return DICF_STATUS_OK;
+    return AARUF_STATUS_OK;
 }

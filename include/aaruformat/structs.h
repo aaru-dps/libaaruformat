@@ -31,9 +31,9 @@
 // ****************************************************************************/
 
 #pragma clang diagnostic push
-#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
-#ifndef LIBDICFORMAT_STRUCTS_H
-#define LIBDICFORMAT_STRUCTS_H
+#pragma ide diagnostic   ignored "OCUnusedGlobalDeclarationInspection"
+#ifndef LIBAARUFORMAT_STRUCTS_H
+#define LIBAARUFORMAT_STRUCTS_H
 
 #pragma pack(push, 1)
 
@@ -46,7 +46,7 @@
 /**Header, at start of file */
 typedef struct DicHeader
 {
-    /**Header identifier, <see cref="DIC_MAGIC" /> */
+    /**Header identifier, <see cref="AARU_MAGIC" /> */
     uint64_t identifier;
     /**UTF-16LE name of the application that created the image */
     uint8_t application[64];
@@ -321,6 +321,6 @@ typedef struct CdEccContext
 
 #pragma pack(pop)
 
-#endif // LIBDICFORMAT_STRUCTS_H
+#endif // LIBAARUFORMAT_STRUCTS_H
 
 #pragma clang diagnostic pop

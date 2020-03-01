@@ -30,11 +30,11 @@
 // Copyright © 2011-2020 Natalia Portillo
 // ****************************************************************************/
 
-#ifndef LIBDICFORMAT_DICFORMAT_H
-#define LIBDICFORMAT_DICFORMAT_H
+#ifndef LIBAARUFORMAT_AARUFORMAT_H
+#define LIBAARUFORMAT_AARUFORMAT_H
 
-#define LIBDICFORMAT_MAJOR_VERSION 1
-#define LIBDICFORMAT_MINOR_VERSION 0
+#define LIBAARUFORMAT_MAJOR_VERSION 1
+#define LIBAARUFORMAT_MINOR_VERSION 0
 
 #include "aaruformat/consts.h"
 #include "aaruformat/context.h"
@@ -43,4 +43,4 @@
 #include "aaruformat/errors.h"
 #include "aaruformat/structs.h"
 
-#endif // LIBDICFORMAT_DICFORMAT_H
+#endif // LIBAARUFORMAT_AARUFORMAT_H

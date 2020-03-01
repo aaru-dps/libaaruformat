@@ -75,7 +75,7 @@ void* open(const char* filepath)
     if(readBytes != sizeof(DicHeader))
     {
         free(ctx);
-        errno = DICF_ERROR_FILE_TOO_SMALL;
+        errno = AARUF_ERROR_FILE_TOO_SMALL;
 
         return NULL;
     }
@@ -83,15 +83,15 @@ void* open(const char* filepath)
     if(ctx->header.identifier != DIC_MAGIC)
     {
         free(ctx);
-        errno = DICF_ERROR_NOT_DICFORMAT;
+        errno = AARUF_ERROR_NOT_AARUFORMAT;
 
         return NULL;
     }
 
-    if(ctx->header.imageMajorVersion > DICF_VERSION)
+    if(ctx->header.imageMajorVersion > AARUF_VERSION)
     {
         free(ctx);
-        errno = DICF_ERROR_INCOMPATIBLE_VERSION;
+        errno = AARUF_ERROR_INCOMPATIBLE_VERSION;
 
         return NULL;
     }
@@ -106,7 +106,7 @@ void* open(const char* filepath)
     if(ctx->readableSectorTags == NULL)
     {
         free(ctx);
-        errno = DICF_ERROR_NOT_ENOUGH_MEMORY;
+        errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
 
         return NULL;
     }
@@ -136,7 +136,7 @@ void* open(const char* filepath)
     if(pos < 0)
     {
         free(ctx);
-        errno = DICF_ERROR_CANNOT_READ_INDEX;
+        errno = AARUF_ERROR_CANNOT_READ_INDEX;
 
         return NULL;
     }
@@ -145,7 +145,7 @@ void* open(const char* filepath)
     if(pos != ctx->header.indexOffset)
     {
         free(ctx);
-        errno = DICF_ERROR_CANNOT_READ_INDEX;
+        errno = AARUF_ERROR_CANNOT_READ_INDEX;
 
         return NULL;
     }
@@ -155,7 +155,7 @@ void* open(const char* filepath)
     if(readBytes != sizeof(IndexHeader) || idxHeader.identifier != IndexBlock)
     {
         free(ctx);
-        errno = DICF_ERROR_CANNOT_READ_INDEX;
+        errno = AARUF_ERROR_CANNOT_READ_INDEX;
 
         return NULL;
     }
@@ -181,7 +181,7 @@ void* open(const char* filepath)
     {
         free(idxEntries);
         free(ctx);
-        errno = DICF_ERROR_CANNOT_READ_INDEX;
+        errno = AARUF_ERROR_CANNOT_READ_INDEX;
 
         return NULL;
     }
@@ -1173,8 +1173,8 @@ void* open(const char* filepath)
     ctx->eccCdContext = (CdEccContext*)ecc_cd_init();
 
     ctx->magic               = DIC_MAGIC;
-    ctx->libraryMajorVersion = LIBDICFORMAT_MAJOR_VERSION;
-    ctx->libraryMinorVersion = LIBDICFORMAT_MINOR_VERSION;
+    ctx->libraryMajorVersion = LIBAARUFORMAT_MAJOR_VERSION;
+    ctx->libraryMinorVersion = LIBAARUFORMAT_MINOR_VERSION;
 
     free(idxEntries);
     return ctx;

@@ -111,7 +111,7 @@ int32_t GetMediaTagTypeForDataType(int32_t type)
     }
 }
 
-// Get the CICM XML media type from DIC media type
+// Get the CICM XML media type from AARU media type
 int32_t GetXmlMediaType(int32_t type)
 {
     switch(type)

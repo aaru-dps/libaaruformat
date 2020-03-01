@@ -30,8 +30,8 @@
 // Copyright © 2011-2020 Natalia Portillo
 // ****************************************************************************/
 
-#ifndef LIBDICFORMAT_DECLS_H
-#define LIBDICFORMAT_DECLS_H
+#ifndef LIBAARUFORMAT_DECLS_H
+#define LIBAARUFORMAT_DECLS_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -117,4 +117,4 @@ int32_t GetMediaTagTypeForDataType(int32_t type);
 
 int32_t GetXmlMediaType(int32_t type);
 
-#endif // LIBDICFORMAT_DECLS_H
+#endif // LIBAARUFORMAT_DECLS_H
