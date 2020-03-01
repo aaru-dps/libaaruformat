@@ -9,7 +9,7 @@
 //
 // --[ Description ] ----------------------------------------------------------
 //
-//     Includes all headers for DiscImageChef format disk images.
+//     Includes all headers for Aaru format disk images.
 //
 // --[ License ] --------------------------------------------------------------
 //

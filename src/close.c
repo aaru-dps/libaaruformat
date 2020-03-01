@@ -9,7 +9,7 @@
 //
 // --[ Description ] ----------------------------------------------------------
 //
-//     Handles closing DiscImageChef format disk images.
+//     Handles closing Aaru format disk images.
 //
 // --[ License ] --------------------------------------------------------------
 //
