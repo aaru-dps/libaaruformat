@@ -33,10 +33,6 @@
 #ifndef LIBAARUFORMAT_DECLS_H
 #define LIBAARUFORMAT_DECLS_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-
 #ifdef __cplusplus
 #define EXTERNC extern "C"
 #else
