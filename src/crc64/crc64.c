@@ -1,34 +1,20 @@
-// /***************************************************************************
-// Aaru Data Preservation Suite
-// ----------------------------------------------------------------------------
-//
-// Filename       : crc64.c
-// Author(s)      : Natalia Portillo <claunia@claunia.com>
-//
-// Component      : libaaruformat.
-//
-// --[ Description ] ----------------------------------------------------------
-//
-//     Calculates CRC64-ECMA checksums.
-//
-// --[ License ] --------------------------------------------------------------
-//
-//     This library is free software; you can redistribute it and/or modify
-//     it under the terms of the GNU Lesser General Public License as
-//     published by the Free Software Foundation; either version 2.1 of the
-//     License, or (at your option) any later version.
-//
-//     This library is distributed in the hope that it will be useful, but
-//     WITHOUT ANY WARRANTY; without even the implied warranty of
-//     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-//     Lesser General Public License for more details.
-//
-//     You should have received a copy of the GNU Lesser General Public
-//     License along with this library; if not, see <http://www.gnu.org/licenses/>.
-//
-// ----------------------------------------------------------------------------
-// Copyright © 2011-2022 Natalia Portillo
-// ****************************************************************************/
+/*
+ * This file is part of the Aaru Data Preservation Suite.
+ * Copyright (c) 2019-2022 Natalia Portillo.
+ *
+ * This library is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of the
+ * License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <stdlib.h>
 
@@ -125,10 +111,9 @@ AARU_EXPORT void AARU_CALL aaruf_crc64_free(crc64_ctx* ctx)
 AARU_EXPORT uint64_t AARU_CALL aaruf_crc64_data(const uint8_t* data, uint32_t len)
 {
     crc64_ctx* ctx = aaruf_crc64_init();
-    uint64_t crc = 0;
+    uint64_t   crc = 0;
 
-    if(!ctx)
-        return crc;
+    if(!ctx) return crc;
 
     aaruf_crc64_update(ctx, data, len);
     aaruf_crc64_final(ctx, &crc);
