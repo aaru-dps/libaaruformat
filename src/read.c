@@ -30,9 +30,10 @@
 // Copyright © 2011-2020 Natalia Portillo
 // ****************************************************************************/
 
-#include <aaruformat.h>
 #include <malloc.h>
 #include <string.h>
+
+#include <aaruformat.h>
 
 int32_t aaruf_read_media_tag(void* context, uint8_t* data, int32_t tag, uint32_t* length)
 {
@@ -165,7 +166,9 @@ int32_t aaruf_read_track_sector(void* context, uint8_t* data, uint64_t sectorAdd
     for(i = 0; i < ctx->numberOfDataTracks; i++)
     {
         if(ctx->dataTracks[i].sequence == track)
-        { return aaruf_read_sector(context, ctx->dataTracks[i].start + sectorAddress, data, length); }
+        {
+            return aaruf_read_sector(context, ctx->dataTracks[i].start + sectorAddress, data, length);
+        }
     }
 
     return AARUF_ERROR_TRACK_NOT_FOUND;
@@ -233,8 +236,7 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                 case CdMode1:
                     memcpy(bareData, data + 16, 2048);
 
-                    if(ctx->sectorPrefix != NULL)
-                        memcpy(data, ctx->sectorPrefix + (sectorAddress * 16), 16);
+                    if(ctx->sectorPrefix != NULL) memcpy(data, ctx->sectorPrefix + (sectorAddress * 16), 16);
                     else if(ctx->sectorPrefixDdt != NULL)
                     {
                         if((ctx->sectorPrefixDdt[sectorAddress] & CD_XFIX_MASK) == Correct)
@@ -257,8 +259,7 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                     else
                         return AARUF_ERROR_REACHED_UNREACHABLE_CODE;
 
-                    if(ctx->sectorSuffix != NULL)
-                        memcpy(data + 2064, ctx->sectorSuffix + sectorAddress * 288, 288);
+                    if(ctx->sectorSuffix != NULL) memcpy(data + 2064, ctx->sectorSuffix + sectorAddress * 288, 288);
                     else if(ctx->sectorSuffixDdt != NULL)
                     {
                         if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == Correct)
@@ -285,8 +286,7 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                 case CdMode2Formless:
                 case CdMode2Form1:
                 case CdMode2Form2:
-                    if(ctx->sectorPrefix != NULL)
-                        memcpy(data, ctx->sectorPrefix + sectorAddress * 16, 16);
+                    if(ctx->sectorPrefix != NULL) memcpy(data, ctx->sectorPrefix + sectorAddress * 16, 16);
                     else if(ctx->sectorPrefixDdt != NULL)
                     {
                         if((ctx->sectorPrefixDdt[sectorAddress] & CD_XFIX_MASK) == Correct)

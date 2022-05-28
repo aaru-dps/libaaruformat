@@ -31,6 +31,7 @@
 // ****************************************************************************/
 
 #include <aaru.h>
+
 #include <aaruformat.h>
 
 // Converts between image data type and aaru media tag type

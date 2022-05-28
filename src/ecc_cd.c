@@ -31,11 +31,12 @@
 // ECC algorithm from ECM(c) 2002-2011 Neill Corlett
 // ****************************************************************************/
 
-#include <aaruformat.h>
 #include <malloc.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+
+#include <aaruformat.h>
 
 void* aaruf_ecc_cd_init()
 {
@@ -153,16 +154,16 @@ bool aaruf_ecc_cd_is_suffix_correct_mode2(void* context, const uint8_t* sector)
 }
 
 bool aaruf_ecc_cd_check(void*          context,
-                  const uint8_t* address,
-                  const uint8_t* data,
-                  uint32_t       majorCount,
-                  uint32_t       minorCount,
-                  uint32_t       majorMult,
-                  uint32_t       minorInc,
-                  const uint8_t* ecc,
-                  int32_t        addressOffset,
-                  int32_t        dataOffset,
-                  int32_t        eccOffset)
+                        const uint8_t* address,
+                        const uint8_t* data,
+                        uint32_t       majorCount,
+                        uint32_t       minorCount,
+                        uint32_t       majorMult,
+                        uint32_t       minorInc,
+                        const uint8_t* ecc,
+                        int32_t        addressOffset,
+                        int32_t        dataOffset,
+                        int32_t        eccOffset)
 {
     CdEccContext* ctx;
     uint32_t      size, major, idx, minor;
@@ -198,16 +199,16 @@ bool aaruf_ecc_cd_check(void*          context,
 }
 
 void aaruf_ecc_cd_write(void*          context,
-                  const uint8_t* address,
-                  const uint8_t* data,
-                  uint32_t       majorCount,
-                  uint32_t       minorCount,
-                  uint32_t       majorMult,
-                  uint32_t       minorInc,
-                  uint8_t*       ecc,
-                  int32_t        addressOffset,
-                  int32_t        dataOffset,
-                  int32_t        eccOffset)
+                        const uint8_t* address,
+                        const uint8_t* data,
+                        uint32_t       majorCount,
+                        uint32_t       minorCount,
+                        uint32_t       majorMult,
+                        uint32_t       minorInc,
+                        uint8_t*       ecc,
+                        int32_t        addressOffset,
+                        int32_t        dataOffset,
+                        int32_t        eccOffset)
 {
     CdEccContext* ctx;
     uint32_t      size, major, idx, minor;
@@ -243,12 +244,12 @@ void aaruf_ecc_cd_write(void*          context,
 }
 
 void aaruf_ecc_cd_write_sector(void*          context,
-                         const uint8_t* address,
-                         const uint8_t* data,
-                         uint8_t*       ecc,
-                         int32_t        addressOffset,
-                         int32_t        dataOffset,
-                         int32_t        eccOffset)
+                               const uint8_t* address,
+                               const uint8_t* data,
+                               uint8_t*       ecc,
+                               int32_t        addressOffset,
+                               int32_t        dataOffset,
+                               int32_t        eccOffset)
 {
     aaruf_ecc_cd_write(context, address, data, 86, 24, 2, 86, ecc, addressOffset, dataOffset, eccOffset);         // P
     aaruf_ecc_cd_write(context, address, data, 52, 43, 86, 88, ecc, addressOffset, dataOffset, eccOffset + 0xAC); // Q
@@ -262,8 +263,8 @@ void aaruf_cd_lba_to_msf(int64_t pos, uint8_t* minute, uint8_t* second, uint8_t*
 }
 
 void aaruf_ecc_cd_reconstruct_prefix(uint8_t* sector, // must point to a full 2352-byte sector
-                               uint8_t  type,
-                               int64_t  lba)
+                                     uint8_t  type,
+                                     int64_t  lba)
 {
     uint8_t minute, second, frame;
 
@@ -319,8 +320,8 @@ void aaruf_ecc_cd_reconstruct_prefix(uint8_t* sector, // must point to a full 23
 }
 
 void aaruf_ecc_cd_reconstruct(void*    context,
-                        uint8_t* sector, // must point to a full 2352-byte sector
-                        uint8_t  type)
+                              uint8_t* sector, // must point to a full 2352-byte sector
+                              uint8_t  type)
 {
     uint32_t computedEdc;
     uint8_t  zeroaddress[4];

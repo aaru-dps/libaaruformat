@@ -30,10 +30,11 @@
 // Copyright © 2011-2020 Natalia Portillo
 // ****************************************************************************/
 
-#include <aaruformat.h>
 #include <malloc.h>
 #include <stdint.h>
 #include <string.h>
+
+#include <aaruformat.h>
 
 void* aaruf_crc64_init(uint64_t polynomial, uint64_t seed)
 {
@@ -53,8 +54,7 @@ void* aaruf_crc64_init(uint64_t polynomial, uint64_t seed)
     {
         uint64_t entry = (uint64_t)i;
         for(j = 0; j < 8; j++)
-            if((entry & 1) == 1)
-                entry = (entry >> 1) ^ polynomial;
+            if((entry & 1) == 1) entry = (entry >> 1) ^ polynomial;
             else
                 entry = entry >> 1;
 
@@ -92,8 +92,7 @@ uint64_t aaruf_crc64_data(const uint8_t* data, size_t len, uint64_t polynomial, 
     {
         uint64_t entry = (uint64_t)i;
         for(j = 0; j < 8; j++)
-            if((entry & 1) == 1)
-                entry = (entry >> 1) ^ polynomial;
+            if((entry & 1) == 1) entry = (entry >> 1) ^ polynomial;
             else
                 entry = entry >> 1;
 

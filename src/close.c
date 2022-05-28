@@ -30,11 +30,12 @@
 // Copyright © 2011-2020 Natalia Portillo
 // ****************************************************************************/
 
-#include <aaruformat.h>
 #include <errno.h>
 #include <malloc.h>
 #include <stdio.h>
 #include <sys/mman.h>
+
+#include <aaruformat.h>
 
 int aaruf_close(void* context)
 {

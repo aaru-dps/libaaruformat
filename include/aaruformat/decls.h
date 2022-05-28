@@ -107,36 +107,36 @@ AARU_EXPORT bool AARU_CALL aaruf_ecc_cd_is_suffix_correct(void* context, const u
 AARU_EXPORT bool AARU_CALL aaruf_ecc_cd_is_suffix_correct_mode2(void* context, const uint8_t* sector);
 
 AARU_EXPORT bool AARU_CALL aaruf_ecc_cd_check(void*          context,
-                                        const uint8_t* address,
-                                        const uint8_t* data,
-                                        uint32_t       majorCount,
-                                        uint32_t       minorCount,
-                                        uint32_t       majorMult,
-                                        uint32_t       minorInc,
-                                        const uint8_t* ecc,
-                                        int32_t        addressOffset,
-                                        int32_t        dataOffset,
-                                        int32_t        eccOffset);
+                                              const uint8_t* address,
+                                              const uint8_t* data,
+                                              uint32_t       majorCount,
+                                              uint32_t       minorCount,
+                                              uint32_t       majorMult,
+                                              uint32_t       minorInc,
+                                              const uint8_t* ecc,
+                                              int32_t        addressOffset,
+                                              int32_t        dataOffset,
+                                              int32_t        eccOffset);
 
 AARU_EXPORT void AARU_CALL aaruf_ecc_cd_write(void*          context,
-                                        const uint8_t* address,
-                                        const uint8_t* data,
-                                        uint32_t       majorCount,
-                                        uint32_t       minorCount,
-                                        uint32_t       majorMult,
-                                        uint32_t       minorInc,
-                                        uint8_t*       ecc,
-                                        int32_t        addressOffset,
-                                        int32_t        dataOffset,
-                                        int32_t        eccOffset);
+                                              const uint8_t* address,
+                                              const uint8_t* data,
+                                              uint32_t       majorCount,
+                                              uint32_t       minorCount,
+                                              uint32_t       majorMult,
+                                              uint32_t       minorInc,
+                                              uint8_t*       ecc,
+                                              int32_t        addressOffset,
+                                              int32_t        dataOffset,
+                                              int32_t        eccOffset);
 
 AARU_EXPORT void AARU_CALL aaruf_ecc_cd_write_sector(void*          context,
-                                               const uint8_t* address,
-                                               const uint8_t* data,
-                                               uint8_t*       ecc,
-                                               int32_t        addressOffset,
-                                               int32_t        dataOffset,
-                                               int32_t        eccOffset);
+                                                     const uint8_t* address,
+                                                     const uint8_t* data,
+                                                     uint8_t*       ecc,
+                                                     int32_t        addressOffset,
+                                                     int32_t        dataOffset,
+                                                     int32_t        eccOffset);
 
 AARU_LOCAL void AARU_CALL aaruf_cd_lba_to_msf(int64_t pos, uint8_t* minute, uint8_t* second, uint8_t* frame);
 

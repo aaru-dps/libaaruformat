@@ -30,9 +30,10 @@
 // Copyright © 2011-2020 Natalia Portillo
 // ****************************************************************************/
 
-#include <aaruformat.h>
 #include <errno.h>
 #include <stdio.h>
+
+#include <aaruformat.h>
 
 //! Identifies a file as aaruformat, using path
 /*!

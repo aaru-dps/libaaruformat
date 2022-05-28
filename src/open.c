@@ -30,13 +30,14 @@
 // Copyright © 2011-2020 Natalia Portillo
 // ****************************************************************************/
 
-#include <aaruformat.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <malloc.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/mman.h>
+
+#include <aaruformat.h>
 
 void* aaruf_open(const char* filepath)
 {
@@ -318,8 +319,7 @@ void* aaruf_open(const char* filepath)
                         break;
                     case CdSectorSuffix:
                     case CdSectorSuffixCorrected:
-                        if(idxEntries[i].dataType == CdSectorSuffixCorrected)
-                            ctx->sectorSuffixCorrected = data;
+                        if(idxEntries[i].dataType == CdSectorSuffixCorrected) ctx->sectorSuffixCorrected = data;
                         else
                             ctx->sectorSuffix = data;
 
@@ -461,8 +461,7 @@ void* aaruf_open(const char* filepath)
                                 break;
                             }
 
-                            if(idxEntries[i].dataType == CdSectorPrefixCorrected)
-                                ctx->sectorPrefixDdt = cdDdt;
+                            if(idxEntries[i].dataType == CdSectorPrefixCorrected) ctx->sectorPrefixDdt = cdDdt;
                             else if(idxEntries[i].dataType == CdSectorSuffixCorrected)
                                 ctx->sectorSuffixDdt = cdDdt;
                             else

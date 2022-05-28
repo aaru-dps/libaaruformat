@@ -37,11 +37,11 @@
 
 #pragma pack(push, 1)
 
-#include "enums.h"
-
 #include <aaru.h>
 #include <stdbool.h>
 #include <stdint.h>
+
+#include "enums.h"
 
 /**Header, at start of file */
 typedef struct AaruHeader

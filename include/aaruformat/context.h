@@ -32,11 +32,11 @@
 #ifndef LIBAARUFORMAT_CONTEXT_H
 #define LIBAARUFORMAT_CONTEXT_H
 
-#include "structs.h"
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+
+#include "structs.h"
 
 typedef struct aaruformatContext
 {

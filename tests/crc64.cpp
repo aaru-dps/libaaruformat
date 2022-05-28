@@ -2,12 +2,12 @@
 // Created by claunia on 5/10/21.
 //
 
-#include "../include/aaruformat.h"
-
-#include "gtest/gtest.h"
 #include <climits>
 #include <cstdint>
 #include <cstring>
+
+#include "../include/aaruformat.h"
+#include "gtest/gtest.h"
 
 #define EXPECTED_CRC64 0xbf09992cc5ede38e
 #define EXPECTED_CRC64_15BYTES 0x797F3766FD93975B

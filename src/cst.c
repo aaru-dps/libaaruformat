@@ -30,10 +30,11 @@
 // Copyright © 2011-2020 Natalia Portillo
 // ****************************************************************************/
 
-#include <aaruformat.h>
 #include <malloc.h>
 #include <stdint.h>
 #include <string.h>
+
+#include <aaruformat.h>
 
 int32_t aaruf_cst_transform(const uint8_t* interleaved, uint8_t* sequential, size_t length)
 {
