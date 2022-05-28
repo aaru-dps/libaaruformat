@@ -9,3 +9,5 @@ add_library(aaruformat SHARED include/aaruformat/consts.h include/aaruformat/enu
             src/close.c include/aaruformat/errors.h src/read.c src/crc64.c src/cst.c src/ecc_cd.c src/helpers.c)
 
 include_directories(include include/aaruformat)
+
+add_subdirectory(tests)
