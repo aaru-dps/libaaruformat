@@ -164,6 +164,27 @@ AARU_EXPORT size_t AARU_CALL aaruf_flac_encode_redbook_buffer(uint8_t*       dst
                                                               const char*    application_id,
                                                               uint32_t       application_id_len);
 
+AARU_EXPORT int32_t AARU_CALL aaruf_lzma_decode_buffer(uint8_t*       dst_buffer,
+                                                       size_t*        dst_size,
+                                                       const uint8_t* src_buffer,
+                                                       size_t*        src_size,
+                                                       const uint8_t* props,
+                                                       size_t         propsSize);
+
+AARU_EXPORT int32_t AARU_CALL aaruf_lzma_encode_buffer(uint8_t*       dst_buffer,
+                                                       size_t*        dst_size,
+                                                       const uint8_t* src_buffer,
+                                                       size_t         src_size,
+                                                       uint8_t*       outProps,
+                                                       size_t*        outPropsSize,
+                                                       int32_t        level,
+                                                       uint32_t       dictSize,
+                                                       int32_t        lc,
+                                                       int32_t        lp,
+                                                       int32_t        pb,
+                                                       int32_t        fb,
+                                                       int32_t        numThreads);
+
 #if defined(__x86_64__) || defined(__amd64) || defined(_M_AMD64) || defined(_M_X64) || defined(__I386__) ||            \
     defined(__i386__) || defined(__THW_INTEL) || defined(_M_IX86)
 
