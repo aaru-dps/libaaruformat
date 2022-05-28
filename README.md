@@ -14,7 +14,7 @@ Things still to be implemented that are already in the C# version:
 - Automatic media type generation from C# enumeration
 - Nuget package for linking with Aaru
 - Writing
-- Hashing while writing (requires MD5, SHA1, SHA256 and SpamSum)
+- Hashing while writing (requires MD5, SHA1 and SHA256)
 - Deduplication (requires SHA256)
 - Compression (requires FLAC and LZMA)
 

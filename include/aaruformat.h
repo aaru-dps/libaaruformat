@@ -29,6 +29,7 @@
 #include "aaruformat/enums.h"
 #include "aaruformat/errors.h"
 #include "aaruformat/simd.h"
+#include "aaruformat/spamsum.h"
 #include "aaruformat/structs.h"
 
 #endif // LIBAARUFORMAT_AARUFORMAT_H

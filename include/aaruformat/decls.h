@@ -20,6 +20,7 @@
 #define LIBAARUFORMAT_DECLS_H
 
 #include "simd.h"
+#include "spamsum.h"
 #ifdef __cplusplus
 #define EXTERNC extern "C"
 #else
@@ -130,6 +131,16 @@ AARU_EXPORT int32_t AARU_CALL
 AARU_LOCAL int32_t AARU_CALL aaruf_get_media_tag_type_for_datatype(int32_t type);
 
 AARU_LOCAL int32_t AARU_CALL aaruf_get_xml_mediatype(int32_t type);
+
+AARU_EXPORT spamsum_ctx* AARU_CALL aaruf_spamsum_init(void);
+AARU_EXPORT int AARU_CALL          aaruf_spamsum_update(spamsum_ctx* ctx, const uint8_t* data, uint32_t len);
+AARU_EXPORT int AARU_CALL          aaruf_spamsum_final(spamsum_ctx* ctx, uint8_t* result);
+AARU_EXPORT void AARU_CALL         aaruf_spamsum_free(spamsum_ctx* ctx);
+
+AARU_LOCAL void fuzzy_engine_step(spamsum_ctx* ctx, uint8_t c);
+AARU_LOCAL void roll_hash(spamsum_ctx* ctx, uint8_t c);
+AARU_LOCAL void fuzzy_try_reduce_blockhash(spamsum_ctx* ctx);
+AARU_LOCAL void fuzzy_try_fork_blockhash(spamsum_ctx* ctx);
 
 #if defined(__x86_64__) || defined(__amd64) || defined(_M_AMD64) || defined(_M_X64) || defined(__I386__) ||            \
     defined(__i386__) || defined(__THW_INTEL) || defined(_M_IX86)
