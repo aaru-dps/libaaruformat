@@ -38,6 +38,7 @@
 
 #include "aaruformat/consts.h"
 #include "aaruformat/context.h"
+#include "aaruformat/crc64.h"
 #include "aaruformat/decls.h"
 #include "aaruformat/enums.h"
 #include "aaruformat/errors.h"

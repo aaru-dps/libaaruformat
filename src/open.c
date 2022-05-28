@@ -291,7 +291,7 @@ void* aaruf_open(const char* filepath)
                     break;
                 }
 
-                crc64 = aaruf_crc64_data_ecma(data, blockHeader.length);
+                crc64 = aaruf_crc64_data(data, blockHeader.length);
                 if(crc64 != blockHeader.crc64)
                 {
                     fprintf(stderr,
@@ -758,7 +758,7 @@ void* aaruf_open(const char* filepath)
                     fprintf(stderr, "libaaruformat: Could not read metadata block, continuing...");
                 }
 
-                crc64 = aaruf_crc64_data_ecma((const uint8_t*)ctx->trackEntries,
+                crc64 = aaruf_crc64_data((const uint8_t*)ctx->trackEntries,
                                               ctx->tracksHeader.entries * sizeof(TrackEntry));
                 if(crc64 != ctx->tracksHeader.crc64)
                 {
@@ -873,7 +873,7 @@ void* aaruf_open(const char* filepath)
 
                     if(readBytes == ctx->dumpHardwareHeader.length)
                     {
-                        crc64 = aaruf_crc64_data_ecma(data, ctx->dumpHardwareHeader.length);
+                        crc64 = aaruf_crc64_data(data, ctx->dumpHardwareHeader.length);
                         if(crc64 != ctx->dumpHardwareHeader.crc64)
                         {
                             free(data);
