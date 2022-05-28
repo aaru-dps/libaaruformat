@@ -1,23 +1,23 @@
 /*
-* This file is part of the Aaru Data Preservation Suite.
-* Copyright (c) 2019-2021 Natalia Portillo.
-* Copyright (C) 2002 Andrew Tridgell <tridge@samba.org>
-* Copyright (C) 2006 ManTech International Corporation
-* Copyright (C) 2013 Helmut Grohne <helmut@subdivi.de>
-*
-* This library is free software; you can redistribute it and/or modify
-* it under the terms of the GNU Lesser General Public License as
-* published by the Free Software Foundation; either version 2.1 of the
-* License, or (at your option) any later version.
-*
-* This library is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-* Lesser General Public License for more details.
-*
-* You should have received a copy of the GNU Lesser General Public
-* License along with this library; if not, see <http://www.gnu.org/licenses/>.
-*/
+ * This file is part of the Aaru Data Preservation Suite.
+ * Copyright (c) 2019-2022 Natalia Portillo.
+ * Copyright (C) 2002 Andrew Tridgell <tridge@samba.org>
+ * Copyright (C) 2006 ManTech International Corporation
+ * Copyright (C) 2013 Helmut Grohne <helmut@subdivi.de>
+ *
+ * This library is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of the
+ * License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <errno.h>
 #include <stdint.h>
@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <aaruformat.h>
+
 #include "spamsum.h"
 
 static uint8_t b64[] = {0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50,

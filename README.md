@@ -16,7 +16,7 @@ Things still to be implemented that are already in the C# version:
 - Writing
 - Hashing while writing (requires MD5, SHA1 and SHA256)
 - Deduplication (requires SHA256)
-- Compression (requires FLAC and LZMA)
+- Compression (requires LZMA)
 
 Things to be implemented not in the C# version:
 - Compile for Dreamcast (KallistiOS preferibly)

@@ -96,9 +96,11 @@ endif()
 add_library(aaruformat SHARED include/aaruformat/consts.h include/aaruformat/enums.h include/aaru.h include/aaruformat.h
             include/aaruformat/decls.h include/aaruformat/structs.h src/identify.c src/open.c include/aaruformat/context.h
             src/close.c include/aaruformat/errors.h src/read.c include/aaruformat/crc64.h src/cst.c src/ecc_cd.c src/helpers.c
-            src/simd.c include/aaruformat/simd.h src/crc64/crc64.c src/crc64/crc64_clmul.c src/crc64/crc64_vmull.c src/crc64/arm_vmull.c src/crc64/arm_vmull.h src/spamsum.c include/aaruformat/spamsum.h)
+            src/simd.c include/aaruformat/simd.h src/crc64/crc64.c src/crc64/crc64_clmul.c src/crc64/crc64_vmull.c src/crc64/arm_vmull.c src/crc64/arm_vmull.h src/spamsum.c include/aaruformat/spamsum.h include/aaruformat/flac.h src/flac.c)
 
 include_directories(include include/aaruformat)
+
+include(3rdparty/flac.cmake)
 
 MACRO(TARGET_LINK_LIBRARIES_WHOLE_ARCHIVE target)
     if("${CMAKE_C_COMPILER_ID}" MATCHES "MSVC")

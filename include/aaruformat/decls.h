@@ -142,6 +142,28 @@ AARU_LOCAL void roll_hash(spamsum_ctx* ctx, uint8_t c);
 AARU_LOCAL void fuzzy_try_reduce_blockhash(spamsum_ctx* ctx);
 AARU_LOCAL void fuzzy_try_fork_blockhash(spamsum_ctx* ctx);
 
+AARU_EXPORT size_t AARU_CALL aaruf_flac_decode_redbook_buffer(uint8_t*       dst_buffer,
+                                                              size_t         dst_size,
+                                                              const uint8_t* src_buffer,
+                                                              size_t         src_size);
+
+AARU_EXPORT size_t AARU_CALL aaruf_flac_encode_redbook_buffer(uint8_t*       dst_buffer,
+                                                              size_t         dst_size,
+                                                              const uint8_t* src_buffer,
+                                                              size_t         src_size,
+                                                              uint32_t       blocksize,
+                                                              int32_t        do_mid_side_stereo,
+                                                              int32_t        loose_mid_side_stereo,
+                                                              const char*    apodization,
+                                                              uint32_t       max_lpc_order,
+                                                              uint32_t       qlp_coeff_precision,
+                                                              int32_t        do_qlp_coeff_prec_search,
+                                                              int32_t        do_exhaustive_model_search,
+                                                              uint32_t       min_residual_partition_order,
+                                                              uint32_t       max_residual_partition_order,
+                                                              const char*    application_id,
+                                                              uint32_t       application_id_len);
+
 #if defined(__x86_64__) || defined(__amd64) || defined(_M_AMD64) || defined(_M_X64) || defined(__I386__) ||            \
     defined(__i386__) || defined(__THW_INTEL) || defined(_M_IX86)
 
