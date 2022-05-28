@@ -35,7 +35,7 @@
 #include <stdint.h>
 #include <string.h>
 
-void* crc64_init(uint64_t polynomial, uint64_t seed)
+void* aaruf_crc64_init(uint64_t polynomial, uint64_t seed)
 {
     Crc64Context* ctx;
     int           i, j;
@@ -64,9 +64,9 @@ void* crc64_init(uint64_t polynomial, uint64_t seed)
     return ctx;
 }
 
-void* crc64_init_ecma(void) { return crc64_init(CRC64_ECMA_POLY, CRC64_ECMA_SEED); }
+void* aaruf_crc64_init_ecma(void) { return aaruf_crc64_init(CRC64_ECMA_POLY, CRC64_ECMA_SEED); }
 
-void crc64_update(void* context, const uint8_t* data, size_t len)
+void aaruf_crc64_update(void* context, const uint8_t* data, size_t len)
 {
     Crc64Context* ctx = context;
     size_t        i;
@@ -74,14 +74,14 @@ void crc64_update(void* context, const uint8_t* data, size_t len)
     for(i = 0; i < len; i++) ctx->hashInt = (ctx->hashInt >> 8) ^ ctx->table[data[i] ^ (ctx->hashInt & 0xFF)];
 }
 
-uint64_t crc64_final(void* context)
+uint64_t aaruf_crc64_final(void* context)
 {
     Crc64Context* ctx = context;
 
     return ctx->hashInt ^ ctx->finalSeed;
 }
 
-uint64_t crc64_data(const uint8_t* data, size_t len, uint64_t polynomial, uint64_t seed)
+uint64_t aaruf_crc64_data(const uint8_t* data, size_t len, uint64_t polynomial, uint64_t seed)
 {
     uint64_t table[256];
     uint64_t hashInt = seed;
@@ -105,7 +105,7 @@ uint64_t crc64_data(const uint8_t* data, size_t len, uint64_t polynomial, uint64
     return hashInt ^ seed;
 }
 
-uint64_t crc64_data_ecma(const uint8_t* data, size_t len)
+uint64_t aaruf_crc64_data_ecma(const uint8_t* data, size_t len)
 {
-    return crc64_data(data, len, CRC64_ECMA_POLY, CRC64_ECMA_SEED);
+    return aaruf_crc64_data(data, len, CRC64_ECMA_POLY, CRC64_ECMA_SEED);
 }

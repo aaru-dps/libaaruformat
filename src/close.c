@@ -36,7 +36,7 @@
 #include <stdio.h>
 #include <sys/mman.h>
 
-int close(void* context)
+int aaruf_close(void* context)
 {
     int i;
 

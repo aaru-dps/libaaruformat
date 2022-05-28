@@ -37,11 +37,11 @@
 //! Identifies a file as aaruformat, using path
 /*!
  *
- * @param filename path to the file to identify
+ * @param filename path to the file to aaruf_identify
  * @return If positive, confidence value, with 100 being maximum confidentiality, and 0 not recognizing the file.
  * If negative, error value
  */
-int identify(const char* filename)
+int aaruf_identify(const char* filename)
 {
     FILE* stream;
 
@@ -49,7 +49,7 @@ int identify(const char* filename)
 
     if(stream == NULL) return errno;
 
-    int ret = identifyStream(stream);
+    int ret = aaruf_identify_stream(stream);
 
     fclose(stream);
 
@@ -59,11 +59,11 @@ int identify(const char* filename)
 //! Identifies a file as aaruformat, using an already existing stream
 /*!
  *
- * @param imageStream stream of the file to identify
+ * @param imageStream stream of the file to aaruf_identify
  * @return If positive, confidence value, with 100 being maximum confidentiality, and 0 not recognizing the file.
  * If negative, error value
  */
-int identifyStream(FILE* imageStream)
+int aaruf_identify_stream(FILE* imageStream)
 {
     fseek(imageStream, 0, SEEK_SET);
 

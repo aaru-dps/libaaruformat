@@ -72,41 +72,41 @@
 #define FORCE_INLINE static inline __attribute__((always_inline))
 #endif
 
-AARU_EXPORT int AARU_CALL identify(const char* filename);
+AARU_EXPORT int AARU_CALL aaruf_identify(const char* filename);
 
-AARU_EXPORT int AARU_CALL identifyStream(FILE* imageStream);
+AARU_EXPORT int AARU_CALL aaruf_identify_stream(FILE* imageStream);
 
-AARU_EXPORT void* AARU_CALL open(const char* filepath);
+AARU_EXPORT void* AARU_CALL aaruf_open(const char* filepath);
 
-AARU_EXPORT int AARU_CALL close(void* context);
+AARU_EXPORT int AARU_CALL aaruf_close(void* context);
 
-AARU_EXPORT int32_t AARU_CALL read_media_tag(void* context, uint8_t* data, int32_t tag, uint32_t* length);
+AARU_EXPORT int32_t AARU_CALL aaruf_read_media_tag(void* context, uint8_t* data, int32_t tag, uint32_t* length);
 
-AARU_EXPORT void* AARU_CALL crc64_init(uint64_t polynomial, uint64_t seed);
+AARU_EXPORT void* AARU_CALL aaruf_crc64_init(uint64_t polynomial, uint64_t seed);
 
-AARU_EXPORT void* AARU_CALL crc64_init_ecma(void);
+AARU_EXPORT void* AARU_CALL aaruf_crc64_init_ecma(void);
 
-AARU_EXPORT void AARU_CALL crc64_update(void* context, const uint8_t* data, size_t len);
+AARU_EXPORT void AARU_CALL aaruf_crc64_update(void* context, const uint8_t* data, size_t len);
 
-AARU_EXPORT uint64_t AARU_CALL crc64_final(void* context);
+AARU_EXPORT uint64_t AARU_CALL aaruf_crc64_final(void* context);
 
-AARU_EXPORT uint64_t AARU_CALL crc64_data(const uint8_t* data, size_t len, uint64_t polynomial, uint64_t seed);
+AARU_EXPORT uint64_t AARU_CALL aaruf_crc64_data(const uint8_t* data, size_t len, uint64_t polynomial, uint64_t seed);
 
-AARU_EXPORT uint64_t AARU_CALL crc64_data_ecma(const uint8_t* data, size_t len);
+AARU_EXPORT uint64_t AARU_CALL aaruf_crc64_data_ecma(const uint8_t* data, size_t len);
 
-AARU_EXPORT int32_t AARU_CALL read_sector(void* context, uint64_t sectorAddress, uint8_t* data, uint32_t* length);
+AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void* context, uint64_t sectorAddress, uint8_t* data, uint32_t* length);
 
-AARU_EXPORT int32_t AARU_CALL cst_transform(const uint8_t* interleaved, uint8_t* sequential, size_t length);
+AARU_EXPORT int32_t AARU_CALL aaruf_cst_transform(const uint8_t* interleaved, uint8_t* sequential, size_t length);
 
-AARU_EXPORT int32_t AARU_CALL cst_untransform(const uint8_t* sequential, uint8_t* interleaved, size_t length);
+AARU_EXPORT int32_t AARU_CALL aaruf_cst_untransform(const uint8_t* sequential, uint8_t* interleaved, size_t length);
 
-AARU_LOCAL void* AARU_CALL ecc_cd_init();
+AARU_EXPORT void* AARU_CALL aaruf_ecc_cd_init();
 
-AARU_EXPORT bool AARU_CALL ecc_cd_is_suffix_correct(void* context, const uint8_t* sector);
+AARU_EXPORT bool AARU_CALL aaruf_ecc_cd_is_suffix_correct(void* context, const uint8_t* sector);
 
-AARU_EXPORT bool AARU_CALL ecc_cd_is_suffix_correct_mode2(void* context, const uint8_t* sector);
+AARU_EXPORT bool AARU_CALL aaruf_ecc_cd_is_suffix_correct_mode2(void* context, const uint8_t* sector);
 
-AARU_EXPORT bool AARU_CALL ecc_cd_check(void*          context,
+AARU_EXPORT bool AARU_CALL aaruf_ecc_cd_check(void*          context,
                                         const uint8_t* address,
                                         const uint8_t* data,
                                         uint32_t       majorCount,
@@ -118,7 +118,7 @@ AARU_EXPORT bool AARU_CALL ecc_cd_check(void*          context,
                                         int32_t        dataOffset,
                                         int32_t        eccOffset);
 
-AARU_EXPORT void AARU_CALL ecc_cd_write(void*          context,
+AARU_EXPORT void AARU_CALL aaruf_ecc_cd_write(void*          context,
                                         const uint8_t* address,
                                         const uint8_t* data,
                                         uint32_t       majorCount,
@@ -130,7 +130,7 @@ AARU_EXPORT void AARU_CALL ecc_cd_write(void*          context,
                                         int32_t        dataOffset,
                                         int32_t        eccOffset);
 
-AARU_EXPORT void AARU_CALL ecc_cd_write_sector(void*          context,
+AARU_EXPORT void AARU_CALL aaruf_ecc_cd_write_sector(void*          context,
                                                const uint8_t* address,
                                                const uint8_t* data,
                                                uint8_t*       ecc,
@@ -138,19 +138,19 @@ AARU_EXPORT void AARU_CALL ecc_cd_write_sector(void*          context,
                                                int32_t        dataOffset,
                                                int32_t        eccOffset);
 
-AARU_LOCAL void AARU_CALL cd_lba_to_msf(int64_t pos, uint8_t* minute, uint8_t* second, uint8_t* frame);
+AARU_LOCAL void AARU_CALL aaruf_cd_lba_to_msf(int64_t pos, uint8_t* minute, uint8_t* second, uint8_t* frame);
 
-AARU_EXPORT void AARU_CALL ecc_cd_reconstruct_prefix(uint8_t* sector, uint8_t type, int64_t lba);
+AARU_EXPORT void AARU_CALL aaruf_ecc_cd_reconstruct_prefix(uint8_t* sector, uint8_t type, int64_t lba);
 
-AARU_EXPORT void AARU_CALL ecc_cd_reconstruct(void* context, uint8_t* sector, uint8_t type);
+AARU_EXPORT void AARU_CALL aaruf_ecc_cd_reconstruct(void* context, uint8_t* sector, uint8_t type);
 
-AARU_EXPORT uint32_t AARU_CALL edc_cd_compute(void* context, uint32_t edc, const uint8_t* src, int size, int pos);
+AARU_EXPORT uint32_t AARU_CALL aaruf_edc_cd_compute(void* context, uint32_t edc, const uint8_t* src, int size, int pos);
 
 AARU_EXPORT int32_t AARU_CALL
-    read_track_sector(void* context, uint8_t* data, uint64_t sectorAddress, uint32_t* length, uint8_t track);
+    aaruf_read_track_sector(void* context, uint8_t* data, uint64_t sectorAddress, uint32_t* length, uint8_t track);
 
-AARU_LOCAL int32_t AARU_CALL GetMediaTagTypeForDataType(int32_t type);
+AARU_LOCAL int32_t AARU_CALL aaruf_get_media_tag_type_for_datatype(int32_t type);
 
-AARU_LOCAL int32_t AARU_CALL GetXmlMediaType(int32_t type);
+AARU_LOCAL int32_t AARU_CALL aaruf_get_xml_mediatype(int32_t type);
 
 #endif // LIBAARUFORMAT_DECLS_H

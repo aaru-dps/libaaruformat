@@ -38,7 +38,7 @@
 #include <string.h>
 #include <sys/mman.h>
 
-void* open(const char* filepath)
+void* aaruf_open(const char* filepath)
 {
     aaruformatContext* ctx;
     int                errorNo;
@@ -290,7 +290,7 @@ void* open(const char* filepath)
                     break;
                 }
 
-                crc64 = crc64_data_ecma(data, blockHeader.length);
+                crc64 = aaruf_crc64_data_ecma(data, blockHeader.length);
                 if(crc64 != blockHeader.crc64)
                 {
                     fprintf(stderr,
@@ -373,7 +373,7 @@ void* open(const char* filepath)
                         }
                         memset(mediaTag, 0, sizeof(dataLinkedList));
 
-                        mediaTag->type   = GetMediaTagTypeForDataType(blockHeader.type);
+                        mediaTag->type   = aaruf_get_media_tag_type_for_datatype(blockHeader.type);
                         mediaTag->data   = data;
                         mediaTag->length = blockHeader.length;
 
@@ -759,8 +759,8 @@ void* open(const char* filepath)
                     fprintf(stderr, "libaaruformat: Could not read metadata block, continuing...");
                 }
 
-                crc64 =
-                    crc64_data_ecma((const uint8_t*)ctx->trackEntries, ctx->tracksHeader.entries * sizeof(TrackEntry));
+                crc64 = aaruf_crc64_data_ecma((const uint8_t*)ctx->trackEntries,
+                                              ctx->tracksHeader.entries * sizeof(TrackEntry));
                 if(crc64 != ctx->tracksHeader.crc64)
                 {
                     fprintf(stderr,
@@ -874,7 +874,7 @@ void* open(const char* filepath)
 
                     if(readBytes == ctx->dumpHardwareHeader.length)
                     {
-                        crc64 = crc64_data_ecma(data, ctx->dumpHardwareHeader.length);
+                        crc64 = aaruf_crc64_data_ecma(data, ctx->dumpHardwareHeader.length);
                         if(crc64 != ctx->dumpHardwareHeader.crc64)
                         {
                             free(data);
@@ -1143,13 +1143,13 @@ void* open(const char* filepath)
     if(!foundUserDataDdt)
     {
         fprintf(stderr, "libaaruformat: Could not find user data deduplication table, aborting...");
-        close(ctx);
+        aaruf_close(ctx);
         return NULL;
     }
 
     ctx->imageInfo.CreationTime         = ctx->header.creationTime;
     ctx->imageInfo.LastModificationTime = ctx->header.lastWrittenTime;
-    ctx->imageInfo.XmlMediaType         = GetXmlMediaType(ctx->header.mediaType);
+    ctx->imageInfo.XmlMediaType         = aaruf_get_xml_mediatype(ctx->header.mediaType);
 
     if(ctx->geometryBlock.identifier != GeometryBlock && ctx->imageInfo.XmlMediaType == BlockMedia)
     {
@@ -1170,7 +1170,7 @@ void* open(const char* filepath)
     // TODO: Cache tracks and sessions?
 
     // Initialize ECC for Compact Disc
-    ctx->eccCdContext = (CdEccContext*)ecc_cd_init();
+    ctx->eccCdContext = (CdEccContext*)aaruf_ecc_cd_init();
 
     ctx->magic               = AARU_MAGIC;
     ctx->libraryMajorVersion = LIBAARUFORMAT_MAJOR_VERSION;

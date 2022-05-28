@@ -34,7 +34,7 @@
 #include <aaruformat.h>
 
 // Converts between image data type and aaru media tag type
-int32_t GetMediaTagTypeForDataType(int32_t type)
+int32_t aaruf_get_media_tag_type_for_datatype(int32_t type)
 {
     switch(type)
     {
@@ -112,7 +112,7 @@ int32_t GetMediaTagTypeForDataType(int32_t type)
 }
 
 // Get the CICM XML media type from AARU media type
-int32_t GetXmlMediaType(int32_t type)
+int32_t aaruf_get_xml_mediatype(int32_t type)
 {
     switch(type)
     {

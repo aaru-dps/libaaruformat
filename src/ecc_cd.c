@@ -37,7 +37,7 @@
 #include <stdint.h>
 #include <string.h>
 
-void* ecc_cd_init()
+void* aaruf_ecc_cd_init()
 {
     CdEccContext* context;
     uint32_t      edc, i, j;
@@ -87,7 +87,7 @@ void* ecc_cd_init()
     return context;
 }
 
-bool ecc_cd_is_suffix_correct(void* context, const uint8_t* sector)
+bool aaruf_ecc_cd_is_suffix_correct(void* context, const uint8_t* sector)
 {
     CdEccContext* ctx;
     uint32_t      storedEdc, edc, calculatedEdc;
@@ -105,10 +105,10 @@ bool ecc_cd_is_suffix_correct(void* context, const uint8_t* sector)
        sector[0x819] != 0x00 || sector[0x81A] != 0x00 || sector[0x81B] != 0x00)
         return false;
 
-    bool correctEccP = ecc_cd_check(context, sector, sector, 86, 24, 2, 86, sector, 0xC, 0x10, 0x81C);
+    bool correctEccP = aaruf_ecc_cd_check(context, sector, sector, 86, 24, 2, 86, sector, 0xC, 0x10, 0x81C);
     if(!correctEccP) return false;
 
-    bool correctEccQ = ecc_cd_check(context, sector, sector, 52, 43, 86, 88, sector, 0xC, 0x10, 0x81C + 0xAC);
+    bool correctEccQ = aaruf_ecc_cd_check(context, sector, sector, 52, 43, 86, 88, sector, 0xC, 0x10, 0x81C + 0xAC);
     if(!correctEccQ) return false;
 
     storedEdc = sector[0x810]; // TODO: Check casting
@@ -121,7 +121,7 @@ bool ecc_cd_is_suffix_correct(void* context, const uint8_t* sector)
     return calculatedEdc == storedEdc;
 }
 
-bool ecc_cd_is_suffix_correct_mode2(void* context, const uint8_t* sector)
+bool aaruf_ecc_cd_is_suffix_correct_mode2(void* context, const uint8_t* sector)
 {
     CdEccContext* ctx;
     uint32_t      storedEdc, edc, calculatedEdc;
@@ -136,10 +136,10 @@ bool ecc_cd_is_suffix_correct_mode2(void* context, const uint8_t* sector)
 
     memset(&zeroaddress, 4, sizeof(uint8_t));
 
-    bool correctEccP = ecc_cd_check(context, zeroaddress, sector, 86, 24, 2, 86, sector, 0, 0x10, 0x81C);
+    bool correctEccP = aaruf_ecc_cd_check(context, zeroaddress, sector, 86, 24, 2, 86, sector, 0, 0x10, 0x81C);
     if(!correctEccP) return false;
 
-    bool correctEccQ = ecc_cd_check(context, zeroaddress, sector, 52, 43, 86, 88, sector, 0, 0x10, 0x81C + 0xAC);
+    bool correctEccQ = aaruf_ecc_cd_check(context, zeroaddress, sector, 52, 43, 86, 88, sector, 0, 0x10, 0x81C + 0xAC);
     if(!correctEccQ) return false;
 
     storedEdc = sector[0x818]; // TODO: Check cast
@@ -152,7 +152,7 @@ bool ecc_cd_is_suffix_correct_mode2(void* context, const uint8_t* sector)
     return calculatedEdc == storedEdc;
 }
 
-bool ecc_cd_check(void*          context,
+bool aaruf_ecc_cd_check(void*          context,
                   const uint8_t* address,
                   const uint8_t* data,
                   uint32_t       majorCount,
@@ -197,7 +197,7 @@ bool ecc_cd_check(void*          context,
     return true;
 }
 
-void ecc_cd_write(void*          context,
+void aaruf_ecc_cd_write(void*          context,
                   const uint8_t* address,
                   const uint8_t* data,
                   uint32_t       majorCount,
@@ -242,7 +242,7 @@ void ecc_cd_write(void*          context,
     }
 }
 
-void ecc_cd_write_sector(void*          context,
+void aaruf_ecc_cd_write_sector(void*          context,
                          const uint8_t* address,
                          const uint8_t* data,
                          uint8_t*       ecc,
@@ -250,18 +250,18 @@ void ecc_cd_write_sector(void*          context,
                          int32_t        dataOffset,
                          int32_t        eccOffset)
 {
-    ecc_cd_write(context, address, data, 86, 24, 2, 86, ecc, addressOffset, dataOffset, eccOffset);         // P
-    ecc_cd_write(context, address, data, 52, 43, 86, 88, ecc, addressOffset, dataOffset, eccOffset + 0xAC); // Q
+    aaruf_ecc_cd_write(context, address, data, 86, 24, 2, 86, ecc, addressOffset, dataOffset, eccOffset);         // P
+    aaruf_ecc_cd_write(context, address, data, 52, 43, 86, 88, ecc, addressOffset, dataOffset, eccOffset + 0xAC); // Q
 }
 
-void cd_lba_to_msf(int64_t pos, uint8_t* minute, uint8_t* second, uint8_t* frame)
+void aaruf_cd_lba_to_msf(int64_t pos, uint8_t* minute, uint8_t* second, uint8_t* frame)
 {
     *minute = (uint8_t)((pos + 150) / 75 / 60);
     *second = (uint8_t)((pos + 150) / 75 % 60);
     *frame  = (uint8_t)((pos + 150) % 75);
 }
 
-void ecc_cd_reconstruct_prefix(uint8_t* sector, // must point to a full 2352-byte sector
+void aaruf_ecc_cd_reconstruct_prefix(uint8_t* sector, // must point to a full 2352-byte sector
                                uint8_t  type,
                                int64_t  lba)
 {
@@ -285,7 +285,7 @@ void ecc_cd_reconstruct_prefix(uint8_t* sector, // must point to a full 2352-byt
     sector[0x00A] = 0xFF;
     sector[0x00B] = 0x00;
 
-    cd_lba_to_msf(lba, &minute, &second, &frame);
+    aaruf_cd_lba_to_msf(lba, &minute, &second, &frame);
 
     sector[0x00C] = (uint8_t)(((minute / 10) << 4) + minute % 10);
     sector[0x00D] = (uint8_t)(((second / 10) << 4) + second % 10);
@@ -318,7 +318,7 @@ void ecc_cd_reconstruct_prefix(uint8_t* sector, // must point to a full 2352-byt
     }
 }
 
-void ecc_cd_reconstruct(void*    context,
+void aaruf_ecc_cd_reconstruct(void*    context,
                         uint8_t* sector, // must point to a full 2352-byte sector
                         uint8_t  type)
 {
@@ -339,15 +339,15 @@ void ecc_cd_reconstruct(void*    context,
         // Compute EDC
         //
         case CdMode1:
-            computedEdc = edc_cd_compute(context, 0, sector, 0x810, 0);
+            computedEdc = aaruf_edc_cd_compute(context, 0, sector, 0x810, 0);
             memcpy(sector + 0x810, &computedEdc, 4);
             break;
         case CdMode2Form1:
-            computedEdc = edc_cd_compute(context, 0, sector, 0x808, 0x10);
+            computedEdc = aaruf_edc_cd_compute(context, 0, sector, 0x808, 0x10);
             memcpy(sector + 0x818, &computedEdc, 4);
             break;
         case CdMode2Form2:
-            computedEdc = edc_cd_compute(context, 0, sector, 0x91C, 0x10);
+            computedEdc = aaruf_edc_cd_compute(context, 0, sector, 0x91C, 0x10);
             memcpy(sector + 0x92C, &computedEdc, 4);
             break;
         default: return;
@@ -372,9 +372,9 @@ void ecc_cd_reconstruct(void*    context,
             sector[0x819] = 0x00;
             sector[0x81A] = 0x00;
             sector[0x81B] = 0x00;
-            ecc_cd_write_sector(context, sector, sector, sector, 0xC, 0x10, 0x81C);
+            aaruf_ecc_cd_write_sector(context, sector, sector, sector, 0xC, 0x10, 0x81C);
             break;
-        case CdMode2Form1: ecc_cd_write_sector(context, zeroaddress, sector, sector, 0, 0x10, 0x81C); break;
+        case CdMode2Form1: aaruf_ecc_cd_write_sector(context, zeroaddress, sector, sector, 0, 0x10, 0x81C); break;
         default: return;
     }
 
@@ -383,7 +383,7 @@ void ecc_cd_reconstruct(void*    context,
     //
 }
 
-uint32_t edc_cd_compute(void* context, uint32_t edc, const uint8_t* src, int size, int pos)
+uint32_t aaruf_edc_cd_compute(void* context, uint32_t edc, const uint8_t* src, int size, int pos)
 {
     CdEccContext* ctx;
 

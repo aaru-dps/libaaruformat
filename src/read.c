@@ -34,7 +34,7 @@
 #include <malloc.h>
 #include <string.h>
 
-int32_t read_media_tag(void* context, uint8_t* data, int32_t tag, uint32_t* length)
+int32_t aaruf_read_media_tag(void* context, uint8_t* data, int32_t tag, uint32_t* length)
 {
     aaruformatContext* ctx;
     dataLinkedList*    item;
@@ -69,7 +69,7 @@ int32_t read_media_tag(void* context, uint8_t* data, int32_t tag, uint32_t* leng
     return AARUF_ERROR_MEDIA_TAG_NOT_PRESENT;
 }
 
-int32_t read_sector(void* context, uint64_t sectorAddress, uint8_t* data, uint32_t* length)
+int32_t aaruf_read_sector(void* context, uint64_t sectorAddress, uint8_t* data, uint32_t* length)
 {
     aaruformatContext* ctx;
     uint64_t           ddtEntry;
@@ -148,7 +148,7 @@ int32_t read_sector(void* context, uint64_t sectorAddress, uint8_t* data, uint32
     return AARUF_STATUS_OK;
 }
 
-int32_t read_track_sector(void* context, uint8_t* data, uint64_t sectorAddress, uint32_t* length, uint8_t track)
+int32_t aaruf_read_track_sector(void* context, uint8_t* data, uint64_t sectorAddress, uint32_t* length, uint8_t track)
 {
     aaruformatContext* ctx;
     int                i;
@@ -165,7 +165,7 @@ int32_t read_track_sector(void* context, uint8_t* data, uint64_t sectorAddress, 
     for(i = 0; i < ctx->numberOfDataTracks; i++)
     {
         if(ctx->dataTracks[i].sequence == track)
-        { return read_sector(context, ctx->dataTracks[i].start + sectorAddress, data, length); }
+        { return aaruf_read_sector(context, ctx->dataTracks[i].start + sectorAddress, data, length); }
     }
 
     return AARUF_ERROR_TRACK_NOT_FOUND;
@@ -199,16 +199,16 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
             }
             if((ctx->sectorSuffix == NULL || ctx->sectorPrefix == NULL) &&
                (ctx->sectorSuffixCorrected == NULL || ctx->sectorPrefixCorrected == NULL))
-                return read_sector(context, sectorAddress, data, length);
+                return aaruf_read_sector(context, sectorAddress, data, length);
 
             bareLength = 0;
-            read_sector(context, sectorAddress, NULL, &bareLength);
+            aaruf_read_sector(context, sectorAddress, NULL, &bareLength);
 
             bareData = (uint8_t*)malloc(bareLength);
 
             if(bareData == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
 
-            res = read_sector(context, sectorAddress, bareData, &bareLength);
+            res = aaruf_read_sector(context, sectorAddress, bareData, &bareLength);
 
             if(res < AARUF_STATUS_OK) return res;
 
@@ -239,7 +239,7 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                     {
                         if((ctx->sectorPrefixDdt[sectorAddress] & CD_XFIX_MASK) == Correct)
                         {
-                            ecc_cd_reconstruct_prefix(data, trk.type, sectorAddress);
+                            aaruf_ecc_cd_reconstruct_prefix(data, trk.type, sectorAddress);
                             res = AARUF_STATUS_OK;
                         }
                         else if((ctx->sectorPrefixDdt[sectorAddress] & CD_XFIX_MASK) == NotDumped)
@@ -263,7 +263,7 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                     {
                         if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == Correct)
                         {
-                            ecc_cd_reconstruct(ctx->eccCdContext, data, trk.type);
+                            aaruf_ecc_cd_reconstruct(ctx->eccCdContext, data, trk.type);
                             res = AARUF_STATUS_OK;
                         }
                         else if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == NotDumped)
@@ -291,7 +291,7 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                     {
                         if((ctx->sectorPrefixDdt[sectorAddress] & CD_XFIX_MASK) == Correct)
                         {
-                            ecc_cd_reconstruct_prefix(data, trk.type, sectorAddress);
+                            aaruf_ecc_cd_reconstruct_prefix(data, trk.type, sectorAddress);
                             res = AARUF_STATUS_OK;
                         }
                         else if((ctx->sectorPrefixDdt[sectorAddress] & CD_XFIX_MASK) == NotDumped)
@@ -316,14 +316,14 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                         if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == Mode2Form1Ok)
                         {
                             memcpy(data + 24, bareData, 2048);
-                            ecc_cd_reconstruct(ctx->eccCdContext, data, CdMode2Form1);
+                            aaruf_ecc_cd_reconstruct(ctx->eccCdContext, data, CdMode2Form1);
                         }
                         else if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == Mode2Form2Ok ||
                                 (ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == Mode2Form2NoCrc)
                         {
                             memcpy(data + 24, bareData, 2324);
                             if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == Mode2Form2Ok)
-                                ecc_cd_reconstruct(ctx->eccCdContext, data, CdMode2Form2);
+                                aaruf_ecc_cd_reconstruct(ctx->eccCdContext, data, CdMode2Form2);
                         }
                         else if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == NotDumped)
                         {
@@ -353,7 +353,7 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
                 case AppleSonyDS:
                 case AppleWidget:
                 case PriamDataTower:
-                    if(ctx->sectorSubchannel == NULL) return read_sector(context, sectorAddress, data, length);
+                    if(ctx->sectorSubchannel == NULL) return aaruf_read_sector(context, sectorAddress, data, length);
 
                     switch(ctx->imageInfo.MediaType)
                     {
@@ -378,7 +378,7 @@ int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, u
 
                     if(bareData == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
 
-                    res = read_sector(context, sectorAddress, bareData, &bareLength);
+                    res = aaruf_read_sector(context, sectorAddress, bareData, &bareLength);
 
                     if(bareLength != 512) return res;
 
