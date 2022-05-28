@@ -149,4 +149,18 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_media_tag_type_for_datatype(int32_t type)
 
 AARU_LOCAL int32_t AARU_CALL aaruf_get_xml_mediatype(int32_t type);
 
+#if defined(__x86_64__) || defined(__amd64) || defined(_M_AMD64) || defined(_M_X64) || defined(__I386__) ||            \
+    defined(__i386__) || defined(__THW_INTEL) || defined(_M_IX86)
+
+AARU_LOCAL int have_clmul();
+AARU_LOCAL int have_ssse3();
+AARU_LOCAL int have_avx2();
+#endif
+
+#if defined(__aarch64__) || defined(_M_ARM64) || defined(__arm__) || defined(_M_ARM)
+AARU_LOCAL int have_neon();
+AARU_LOCAL int have_arm_crc32();
+AARU_LOCAL int have_arm_crypto();
+#endif
+
 #endif // LIBAARUFORMAT_DECLS_H

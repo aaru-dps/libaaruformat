@@ -42,5 +42,6 @@
 #include "aaruformat/enums.h"
 #include "aaruformat/errors.h"
 #include "aaruformat/structs.h"
+#include "aaruformat/simd.h"
 
 #endif // LIBAARUFORMAT_AARUFORMAT_H
