@@ -83,6 +83,7 @@ TEST_F(spamsumFixture, spamsum_auto)
 
     aaruf_spamsum_update(ctx, buffer, 1048576);
     aaruf_spamsum_final(ctx, (uint8_t*)spamsum);
+    aaruf_spamsum_free(ctx);
 
     EXPECT_STREQ(spamsum, EXPECTED_SPAMSUM);
 
@@ -99,6 +100,7 @@ TEST_F(spamsumFixture, spamsum_auto_misaligned)
 
     aaruf_spamsum_update(ctx, buffer_misaligned + 1, 1048576);
     aaruf_spamsum_final(ctx, (uint8_t*)spamsum);
+    aaruf_spamsum_free(ctx);
 
     EXPECT_STREQ(spamsum, EXPECTED_SPAMSUM);
 
@@ -115,6 +117,7 @@ TEST_F(spamsumFixture, spamsum_auto_15bytes)
 
     aaruf_spamsum_update(ctx, buffer, 15);
     aaruf_spamsum_final(ctx, (uint8_t*)spamsum);
+    aaruf_spamsum_free(ctx);
 
     EXPECT_STREQ(spamsum, EXPECTED_SPAMSUM_15BYTES);
 
@@ -131,6 +134,7 @@ TEST_F(spamsumFixture, spamsum_auto_31bytes)
 
     aaruf_spamsum_update(ctx, buffer, 31);
     aaruf_spamsum_final(ctx, (uint8_t*)spamsum);
+    aaruf_spamsum_free(ctx);
 
     EXPECT_STREQ(spamsum, EXPECTED_SPAMSUM_31BYTES);
 
@@ -147,6 +151,7 @@ TEST_F(spamsumFixture, spamsum_auto_63bytes)
 
     aaruf_spamsum_update(ctx, buffer, 63);
     aaruf_spamsum_final(ctx, (uint8_t*)spamsum);
+    aaruf_spamsum_free(ctx);
 
     EXPECT_STREQ(spamsum, EXPECTED_SPAMSUM_63BYTES);
 
@@ -163,6 +168,7 @@ TEST_F(spamsumFixture, spamsum_auto_2352bytes)
 
     aaruf_spamsum_update(ctx, buffer, 2352);
     aaruf_spamsum_final(ctx, (uint8_t*)spamsum);
+    aaruf_spamsum_free(ctx);
 
     EXPECT_STREQ(spamsum, EXPECTED_SPAMSUM_2352BYTES);
 

@@ -82,6 +82,7 @@ TEST_F(crc64Fixture, crc64_auto)
 
     aaruf_crc64_update(ctx, buffer, 1048576);
     aaruf_crc64_final(ctx, &crc);
+    aaruf_crc64_free(ctx);
 
     EXPECT_EQ(crc, EXPECTED_CRC64);
 }
@@ -106,6 +107,7 @@ TEST_F(crc64Fixture, crc64_auto_misaligned)
 
     aaruf_crc64_update(ctx, buffer_misaligned + 1, 1048576);
     aaruf_crc64_final(ctx, &crc);
+    aaruf_crc64_free(ctx);
 
     EXPECT_EQ(crc, EXPECTED_CRC64);
 }
@@ -130,6 +132,7 @@ TEST_F(crc64Fixture, crc64_auto_15bytes)
 
     aaruf_crc64_update(ctx, buffer, 15);
     aaruf_crc64_final(ctx, &crc);
+    aaruf_crc64_free(ctx);
 
     EXPECT_EQ(crc, EXPECTED_CRC64_15BYTES);
 }
@@ -154,6 +157,7 @@ TEST_F(crc64Fixture, crc64_auto_31bytes)
 
     aaruf_crc64_update(ctx, buffer, 31);
     aaruf_crc64_final(ctx, &crc);
+    aaruf_crc64_free(ctx);
 
     EXPECT_EQ(crc, EXPECTED_CRC64_31BYTES);
 }
@@ -178,6 +182,7 @@ TEST_F(crc64Fixture, crc64_auto_63bytes)
 
     aaruf_crc64_update(ctx, buffer, 63);
     aaruf_crc64_final(ctx, &crc);
+    aaruf_crc64_free(ctx);
 
     EXPECT_EQ(crc, EXPECTED_CRC64_63BYTES);
 }
@@ -202,6 +207,7 @@ TEST_F(crc64Fixture, crc64_auto_2352bytes)
 
     aaruf_crc64_update(ctx, buffer, 2352);
     aaruf_crc64_final(ctx, &crc);
+    aaruf_crc64_free(ctx);
 
     EXPECT_EQ(crc, EXPECTED_CRC64_2352BYTES);
 }
