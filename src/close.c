@@ -19,7 +19,10 @@
 #include <errno.h>
 #include <malloc.h>
 #include <stdio.h>
+
+#ifdef __linux__
 #include <sys/mman.h>
+#endif
 
 #include <aaruformat.h>
 
@@ -70,7 +73,9 @@ int aaruf_close(void* context)
         free(ctx->mediaTagsHead);
     }
 
+#ifdef __linux__ // TODO: Implement
     if(!ctx->inMemoryDdt) { munmap(ctx->userDataDdt, ctx->mappedMemoryDdtSize); }
+#endif
 
     free(ctx->sectorPrefixDdt);
     free(ctx->sectorSuffixDdt);

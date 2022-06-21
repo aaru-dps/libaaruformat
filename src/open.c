@@ -21,7 +21,10 @@
 #include <malloc.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifdef __linux__
 #include <sys/mman.h>
+#endif
 
 #include <aaruformat.h>
 
@@ -399,6 +402,7 @@ void* aaruf_open(const char* filepath)
                     switch(ddtHeader.compression)
                     {
                         case None:
+#ifdef __linux__
                             ctx->mappedMemoryDdtSize = sizeof(uint64_t) * ddtHeader.entries;
                             ctx->userDataDdt         = mmap(NULL,
                                                     ctx->mappedMemoryDdtSize,
@@ -416,6 +420,12 @@ void* aaruf_open(const char* filepath)
 
                             ctx->inMemoryDdt = false;
                             break;
+#else // TODO: Implement
+                            fprintf(stderr,
+                                    "libaaruformat: Uncompressed DDT not yet implemented...");
+                            foundUserDataDdt = false;
+                            break;
+#endif
                         default:
                             fprintf(stderr,
                                     "libaaruformat: Found unknown compression type %d, continuing...",
