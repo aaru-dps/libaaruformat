@@ -16,8 +16,11 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _MSC_VER
 #pragma clang diagnostic push
 #pragma ide diagnostic   ignored "OCUnusedGlobalDeclarationInspection"
+#endif
+
 #ifndef LIBAARUFORMAT_STRUCTS_H
 #define LIBAARUFORMAT_STRUCTS_H
 
@@ -309,4 +312,6 @@ typedef struct CdEccContext
 
 #endif // LIBAARUFORMAT_STRUCTS_H
 
+#ifndef _MSC_VER
 #pragma clang diagnostic pop
+#endif

@@ -16,8 +16,11 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _MSC_VER
 #pragma clang diagnostic push
 #pragma ide diagnostic   ignored "OCUnusedMacroInspection"
+#endif
+
 #ifndef LIBAARUFORMAT_CONSTS_H
 #define LIBAARUFORMAT_CONSTS_H
 
@@ -50,4 +53,6 @@
 
 #endif // LIBAARUFORMAT_CONSTS_H
 
+#ifndef _MSC_VER
 #pragma clang diagnostic pop
+#endif
