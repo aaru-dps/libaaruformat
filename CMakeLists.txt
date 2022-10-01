@@ -128,4 +128,29 @@ else()
     set_property(TARGET aaruformat PROPERTY POSITION_INDEPENDENT_CODE FALSE)
 endif()
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake-modules")
+
+# include(FindLibreSSL.cmake)
+
+find_package(OpenSSL QUIET)
+find_package(LibreSSL QUIET)
+
+if(OpenSSL_FOUND)
+    message("-- OpenSSL VERSION: ${OPENSSL_VERSION}")
+endif()
+
+if(LIBRESSL_FOUND)
+    message("-- LibreSSL VERSION: ${LIBRESSL_VERSION}")
+endif()
+
+if(OpenSSL_FOUND OR LIBRESSL_FOUND)
+    add_compile_definitions(AARU_HAS_SHA256)
+endif()
+
+if(LIBRESSL_FOUND)
+    TARGET_LINK_LIBRARIES_WHOLE_ARCHIVE(aaruformat ${LIBRESSL_CRYPTO_LIBRARY})
+elseif(OpenSSL_FOUND)
+    TARGET_LINK_LIBRARIES_WHOLE_ARCHIVE(aaruformat ${OPENSSL_CRYPTO_LIBRARY})
+endif()
+
 add_subdirectory(tests)

@@ -22,5 +22,5 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/data.bin
 
 # 'Google_Tests_run' is the target name
 # 'test1.cpp tests2.cpp' are source files with tests
-add_executable(tests_run crc64.cpp spamsum.cpp crc32.c crc32.h flac.cpp lzma.cpp)
+add_executable(tests_run crc64.cpp spamsum.cpp crc32.c crc32.h flac.cpp lzma.cpp sha256.cpp)
 target_link_libraries(tests_run gtest gtest_main "aaruformat")
