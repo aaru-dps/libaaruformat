@@ -91,7 +91,7 @@ void* aaruf_open(const char* filepath)
     }
 
     fprintf(stderr,
-            "libaaruformat: Opening image version %d.%d",
+            "libaaruformat: Opening image version %d.%d\n",
             ctx->header.imageMajorVersion,
             ctx->header.imageMinorVersion);
 
@@ -126,7 +126,7 @@ void* aaruf_open(const char* filepath)
     ctx->imageInfo.MediaType = ctx->header.mediaType;
 
     // Read the index header
-    pos = fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_CUR);
+    pos = fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET);
     if(pos < 0)
     {
         free(ctx);
@@ -154,8 +154,10 @@ void* aaruf_open(const char* filepath)
         return NULL;
     }
 
-    fprintf(
-        stderr, "libaaruformat: Index at %" PRIu64 " contains %d entries", ctx->header.indexOffset, idxHeader.entries);
+    fprintf(stderr,
+            "libaaruformat: Index at %" PRIu64 " contains %d entries\n",
+            ctx->header.indexOffset,
+            idxHeader.entries);
 
     idxEntries = (IndexEntry*)malloc(sizeof(IndexEntry) * idxHeader.entries);
 
@@ -183,7 +185,7 @@ void* aaruf_open(const char* filepath)
     for(i = 0; i < idxHeader.entries; i++)
     {
         fprintf(stderr,
-                "libaaruformat: Block type %4.4s with data type %4.4s is indexed to be at %" PRIu64 "",
+                "libaaruformat: Block type %4.4s with data type %d is indexed to be at %" PRIu64 "\n",
                 (char*)&idxEntries[i].blockType,
                 (char*)&idxEntries[i].dataType,
                 idxEntries[i].offset);
@@ -198,7 +200,7 @@ void* aaruf_open(const char* filepath)
         if(pos < 0 || ftell(ctx->imageStream) != idxEntries[i].offset)
         {
             fprintf(stderr,
-                    "libaaruformat: Could not seek to %" PRIu64 " as indicated by index entry %d, continuing...",
+                    "libaaruformat: Could not seek to %" PRIu64 " as indicated by index entry %d, continuing...\n",
                     idxEntries[i].offset,
                     i);
 
@@ -218,7 +220,8 @@ void* aaruf_open(const char* filepath)
 
                 if(readBytes != sizeof(BlockHeader))
                 {
-                    fprintf(stderr, "libaaruformat: Could not read block header at %" PRIu64 "", idxEntries[i].offset);
+                    fprintf(
+                        stderr, "libaaruformat: Could not read block header at %" PRIu64 "\n", idxEntries[i].offset);
 
                     break;
                 }
@@ -237,7 +240,7 @@ void* aaruf_open(const char* filepath)
                 if(blockHeader.identifier != idxEntries[i].blockType)
                 {
                     fprintf(stderr,
-                            "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "",
+                            "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "\n",
                             idxEntries[i].offset);
                     break;
                 }
@@ -246,7 +249,7 @@ void* aaruf_open(const char* filepath)
                 {
                     fprintf(stderr,
                             "libaaruformat: Expected block with data type %4.4s at position %" PRIu64
-                            " but found data type %4.4s",
+                            " but found data type %4.4s\n",
                             (char*)&idxEntries[i].blockType,
                             idxEntries[i].offset,
                             (char*)&blockHeader.type);
@@ -254,7 +257,7 @@ void* aaruf_open(const char* filepath)
                 }
 
                 fprintf(stderr,
-                        "libaaruformat: Found data block with type %4.4s at position %" PRIu64 "",
+                        "libaaruformat: Found data block with type %4.4s at position %" PRIu64 "\n",
                         (char*)&idxEntries[i].blockType,
                         idxEntries[i].offset);
 
@@ -263,7 +266,7 @@ void* aaruf_open(const char* filepath)
                     data = (uint8_t*)malloc(blockHeader.length);
                     if(data == NULL)
                     {
-                        fprintf(stderr, "Cannot allocate memory for block, continuing...");
+                        fprintf(stderr, "Cannot allocate memory for block, continuing...\n");
                         break;
                     }
 
@@ -272,14 +275,14 @@ void* aaruf_open(const char* filepath)
                     if(readBytes != blockHeader.length)
                     {
                         free(data);
-                        fprintf(stderr, "Could not read block, continuing...");
+                        fprintf(stderr, "Could not read block, continuing...\n");
                         break;
                     }
                 }
                 else
                 {
                     fprintf(stderr,
-                            "libaaruformat: Found unknown compression type %d, continuing...",
+                            "libaaruformat: Found unknown compression type %d, continuing...\n",
                             blockHeader.compression);
                     break;
                 }
@@ -289,7 +292,7 @@ void* aaruf_open(const char* filepath)
                 {
                     fprintf(stderr,
                             "libaaruformat: Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64
-                            ", continuing...",
+                            ", continuing...\n",
                             crc64,
                             blockHeader.crc64);
                     break;
@@ -342,7 +345,7 @@ void* aaruf_open(const char* filepath)
                                 if(mediaTag->type == blockHeader.type)
                                 {
                                     fprintf(stderr,
-                                            "libaaruformat: Media tag type %d duplicated, removing previous entry...",
+                                            "libaaruformat: Media tag type %d duplicated, removing previous entry...\n",
                                             blockHeader.type);
                                     free(mediaTag->data);
                                     mediaTag->data = data;
@@ -361,7 +364,7 @@ void* aaruf_open(const char* filepath)
 
                         if(mediaTag == NULL)
                         {
-                            fprintf(stderr, "libaaruformat: Cannot allocate memory for media tag list entry.");
+                            fprintf(stderr, "libaaruformat: Cannot allocate memory for media tag list entry.\n");
                             break;
                         }
                         memset(mediaTag, 0, sizeof(dataLinkedList));
@@ -388,7 +391,8 @@ void* aaruf_open(const char* filepath)
 
                 if(readBytes != sizeof(DdtHeader))
                 {
-                    fprintf(stderr, "libaaruformat: Could not read block header at %" PRIu64 "", idxEntries[i].offset);
+                    fprintf(
+                        stderr, "libaaruformat: Could not read block header at %" PRIu64 "\n", idxEntries[i].offset);
 
                     break;
                 }
@@ -418,20 +422,20 @@ void* aaruf_open(const char* filepath)
                             if(ctx->userDataDdt == MAP_FAILED)
                             {
                                 foundUserDataDdt = false;
-                                fprintf(stderr, "libaaruformat: Could not read map deduplication table.");
+                                fprintf(stderr, "libaaruformat: Could not read map deduplication table.\n");
                                 break;
                             }
 
                             ctx->inMemoryDdt = false;
                             break;
 #else // TODO: Implement
-                            fprintf(stderr, "libaaruformat: Uncompressed DDT not yet implemented...");
+                            fprintf(stderr, "libaaruformat: Uncompressed DDT not yet implemented...\n");
                             foundUserDataDdt = false;
                             break;
 #endif
                         default:
                             fprintf(stderr,
-                                    "libaaruformat: Found unknown compression type %d, continuing...",
+                                    "libaaruformat: Found unknown compression type %d, continuing...\n",
                                     blockHeader.compression);
                             foundUserDataDdt = false;
                             break;
@@ -447,7 +451,7 @@ void* aaruf_open(const char* filepath)
 
                             if(mediaTag == NULL)
                             {
-                                fprintf(stderr, "libaaruformat: Cannot allocate memory for deduplication table.");
+                                fprintf(stderr, "libaaruformat: Cannot allocate memory for deduplication table.\n");
                                 break;
                             }
 
@@ -456,7 +460,7 @@ void* aaruf_open(const char* filepath)
                             if(readBytes != ddtHeader.entries * sizeof(uint32_t))
                             {
                                 free(data);
-                                fprintf(stderr, "libaaruformat: Could not read deduplication table, continuing...");
+                                fprintf(stderr, "libaaruformat: Could not read deduplication table, continuing...\n");
                                 break;
                             }
 
@@ -469,7 +473,7 @@ void* aaruf_open(const char* filepath)
                             break;
                         default:
                             fprintf(stderr,
-                                    "libaaruformat: Found unknown compression type %d, continuing...",
+                                    "libaaruformat: Found unknown compression type %d, continuing...\n",
                                     blockHeader.compression);
                             break;
                     }
@@ -482,14 +486,14 @@ void* aaruf_open(const char* filepath)
                 if(readBytes != sizeof(GeometryBlockHeader))
                 {
                     memset(&ctx->geometryBlock, 0, sizeof(GeometryBlockHeader));
-                    fprintf(stderr, "libaaruformat: Could not read geometry block, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not read geometry block, continuing...\n");
                     break;
                 }
 
                 if(ctx->geometryBlock.identifier == GeometryBlock)
                 {
                     fprintf(stderr,
-                            "libaaruformat: Geometry set to %d cylinders %d heads %d sectors per track",
+                            "libaaruformat: Geometry set to %d cylinders %d heads %d sectors per track\n",
                             ctx->geometryBlock.cylinders,
                             ctx->geometryBlock.heads,
                             ctx->geometryBlock.sectorsPerTrack);
@@ -504,12 +508,12 @@ void* aaruf_open(const char* filepath)
                 break;
                 // Metadata block
             case MetadataBlock:
-                readBytes = fread(&ctx->metadataBlockHeader, 1,sizeof(MetadataBlockHeader), ctx->imageStream);
+                readBytes = fread(&ctx->metadataBlockHeader, 1, sizeof(MetadataBlockHeader), ctx->imageStream);
 
                 if(readBytes != sizeof(MetadataBlockHeader))
                 {
                     memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
-                    fprintf(stderr, "libaaruformat: Could not read metadata block header, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not read metadata block header, continuing...\n");
                     break;
                 }
 
@@ -517,7 +521,7 @@ void* aaruf_open(const char* filepath)
                 {
                     memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
                     fprintf(stderr,
-                            "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "",
+                            "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "\n",
                             idxEntries[i].offset);
                     break;
                 }
@@ -529,7 +533,7 @@ void* aaruf_open(const char* filepath)
                 if(ctx->metadataBlock == NULL)
                 {
                     memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
-                    fprintf(stderr, "libaaruformat: Could not allocate memory for metadata block, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not allocate memory for metadata block, continuing...\n");
                     break;
                 }
 
@@ -539,7 +543,7 @@ void* aaruf_open(const char* filepath)
                 {
                     memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
                     free(ctx->metadataBlock);
-                    fprintf(stderr, "libaaruformat: Could not read metadata block, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not read metadata block, continuing...\n");
                 }
 
                 if(ctx->metadataBlockHeader.mediaSequence > 0 && ctx->metadataBlockHeader.lastMediaSequence > 0)
@@ -547,7 +551,7 @@ void* aaruf_open(const char* filepath)
                     ctx->imageInfo.MediaSequence     = ctx->metadataBlockHeader.mediaSequence;
                     ctx->imageInfo.LastMediaSequence = ctx->metadataBlockHeader.lastMediaSequence;
                     fprintf(stderr,
-                            "libaaruformat: Setting media sequence as %d of %d",
+                            "libaaruformat: Setting media sequence as %d of %d\n",
                             ctx->imageInfo.MediaSequence,
                             ctx->imageInfo.LastMediaSequence);
                 }
@@ -725,7 +729,7 @@ void* aaruf_open(const char* filepath)
                 if(readBytes != sizeof(TracksHeader))
                 {
                     memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
-                    fprintf(stderr, "libaaruformat: Could not read tracks header, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not read tracks header, continuing...\n");
                     break;
                 }
 
@@ -733,7 +737,7 @@ void* aaruf_open(const char* filepath)
                 {
                     memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
                     fprintf(stderr,
-                            "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "",
+                            "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "\n",
                             idxEntries[i].offset);
                 }
 
@@ -744,7 +748,7 @@ void* aaruf_open(const char* filepath)
                 if(ctx->trackEntries == NULL)
                 {
                     memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
-                    fprintf(stderr, "libaaruformat: Could not allocate memory for metadata block, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not allocate memory for metadata block, continuing...\n");
                     break;
                 }
 
@@ -754,7 +758,7 @@ void* aaruf_open(const char* filepath)
                 {
                     memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
                     free(ctx->trackEntries);
-                    fprintf(stderr, "libaaruformat: Could not read metadata block, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not read metadata block, continuing...\n");
                 }
 
                 crc64 =
@@ -763,14 +767,14 @@ void* aaruf_open(const char* filepath)
                 {
                     fprintf(stderr,
                             "libaaruformat: Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64
-                            ", continuing...",
+                            ", continuing...\n",
                             crc64,
                             ctx->tracksHeader.crc64);
                     break;
                 }
 
                 fprintf(stderr,
-                        "libaaruformat: Found %d tracks at position %" PRIu64 ".",
+                        "libaaruformat: Found %d tracks at position %" PRIu64 ".\n",
                         ctx->tracksHeader.entries,
                         idxEntries[i].offset);
 
@@ -811,7 +815,7 @@ void* aaruf_open(const char* filepath)
                 if(readBytes != sizeof(CicmMetadataBlock))
                 {
                     memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
-                    fprintf(stderr, "libaaruformat: Could not read CICM XML metadata header, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not read CICM XML metadata header, continuing...\n");
                     break;
                 }
 
@@ -819,7 +823,7 @@ void* aaruf_open(const char* filepath)
                 {
                     memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
                     fprintf(stderr,
-                            "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "",
+                            "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "\n",
                             idxEntries[i].offset);
                 }
 
@@ -831,7 +835,7 @@ void* aaruf_open(const char* filepath)
                 {
                     memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
                     fprintf(stderr,
-                            "libaaruformat: Could not allocate memory for CICM XML metadata block, continuing...");
+                            "libaaruformat: Could not allocate memory for CICM XML metadata block, continuing...\n");
                     break;
                 }
 
@@ -841,10 +845,10 @@ void* aaruf_open(const char* filepath)
                 {
                     memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
                     free(ctx->cicmBlock);
-                    fprintf(stderr, "libaaruformat: Could not read CICM XML metadata block, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not read CICM XML metadata block, continuing...\n");
                 }
 
-                fprintf(stderr, "libaaruformat: Found CICM XML metadata block %" PRIu64 ".", idxEntries[i].offset);
+                fprintf(stderr, "libaaruformat: Found CICM XML metadata block %" PRIu64 ".\n", idxEntries[i].offset);
                 break;
                 // Dump hardware block
             case DumpHardwareBlock:
@@ -853,7 +857,7 @@ void* aaruf_open(const char* filepath)
                 if(readBytes != sizeof(DumpHardwareHeader))
                 {
                     memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
-                    fprintf(stderr, "libaaruformat: Could not read dump hardware block header, continuing...");
+                    fprintf(stderr, "libaaruformat: Could not read dump hardware block header, continuing...\n");
                     break;
                 }
 
@@ -861,7 +865,7 @@ void* aaruf_open(const char* filepath)
                 {
                     memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
                     fprintf(stderr,
-                            "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "",
+                            "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "\n",
                             idxEntries[i].offset);
                 }
 
@@ -878,7 +882,7 @@ void* aaruf_open(const char* filepath)
                             free(data);
                             fprintf(stderr,
                                     "libaaruformat: Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64
-                                    ", continuing...",
+                                    ", continuing...\n",
                                     crc64,
                                     ctx->dumpHardwareHeader.crc64);
                             break;
@@ -895,7 +899,8 @@ void* aaruf_open(const char* filepath)
                 if(ctx->dumpHardwareEntriesWithData == NULL)
                 {
                     memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
-                    fprintf(stderr, "libaaruformat: Could not allocate memory for dump hardware block, continuing...");
+                    fprintf(stderr,
+                            "libaaruformat: Could not allocate memory for dump hardware block, continuing...\n");
                     break;
                 }
 
@@ -911,7 +916,7 @@ void* aaruf_open(const char* filepath)
                     if(readBytes != sizeof(DumpHardwareEntry))
                     {
                         ctx->dumpHardwareHeader.entries = e + (uint16_t)1;
-                        fprintf(stderr, "libaaruformat: Could not read dump hardware block entry, continuing...");
+                        fprintf(stderr, "libaaruformat: Could not read dump hardware block entry, continuing...\n");
                         break;
                     }
 
@@ -933,7 +938,7 @@ void* aaruf_open(const char* filepath)
                                 ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength = 0;
                                 fprintf(stderr,
                                         "libaaruformat: Could not read dump hardware block entry manufacturer, "
-                                        "continuing...");
+                                        "continuing...\n");
                             }
                         }
                     }
@@ -954,8 +959,9 @@ void* aaruf_open(const char* filepath)
                             {
                                 free(ctx->dumpHardwareEntriesWithData[e].model);
                                 ctx->dumpHardwareEntriesWithData[e].entry.modelLength = 0;
-                                fprintf(stderr,
-                                        "libaaruformat: Could not read dump hardware block entry model, continuing...");
+                                fprintf(
+                                    stderr,
+                                    "libaaruformat: Could not read dump hardware block entry model, continuing...\n");
                             }
                         }
                     }
@@ -976,9 +982,9 @@ void* aaruf_open(const char* filepath)
                             {
                                 free(ctx->dumpHardwareEntriesWithData[e].revision);
                                 ctx->dumpHardwareEntriesWithData[e].entry.revisionLength = 0;
-                                fprintf(
-                                    stderr,
-                                    "libaaruformat: Could not read dump hardware block entry revision, continuing...");
+                                fprintf(stderr,
+                                        "libaaruformat: Could not read dump hardware block entry revision, "
+                                        "continuing...\n");
                             }
                         }
                     }
@@ -999,9 +1005,9 @@ void* aaruf_open(const char* filepath)
                             {
                                 free(ctx->dumpHardwareEntriesWithData[e].firmware);
                                 ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength = 0;
-                                fprintf(
-                                    stderr,
-                                    "libaaruformat: Could not read dump hardware block entry firmware, continuing...");
+                                fprintf(stderr,
+                                        "libaaruformat: Could not read dump hardware block entry firmware, "
+                                        "continuing...\n");
                             }
                         }
                     }
@@ -1024,7 +1030,7 @@ void* aaruf_open(const char* filepath)
                                 ctx->dumpHardwareEntriesWithData[e].entry.serialLength = 0;
                                 fprintf(
                                     stderr,
-                                    "libaaruformat: Could not read dump hardware block entry serial, continuing...");
+                                    "libaaruformat: Could not read dump hardware block entry serial, continuing...\n");
                             }
                         }
                     }
@@ -1047,7 +1053,7 @@ void* aaruf_open(const char* filepath)
                                 ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength = 0;
                                 fprintf(stderr,
                                         "libaaruformat: Could not read dump hardware block entry software name, "
-                                        "continuing...");
+                                        "continuing...\n");
                             }
                         }
                     }
@@ -1070,7 +1076,7 @@ void* aaruf_open(const char* filepath)
                                 ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength = 0;
                                 fprintf(stderr,
                                         "libaaruformat: Could not read dump hardware block entry software version, "
-                                        "continuing...");
+                                        "continuing...\n");
                             }
                         }
                     }
@@ -1093,7 +1099,7 @@ void* aaruf_open(const char* filepath)
                                 ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength = 0;
                                 fprintf(stderr,
                                         "libaaruformat: Could not read dump hardware block entry manufacturer, "
-                                        "continuing...");
+                                        "continuing...\n");
                             }
                         }
                     }
@@ -1103,9 +1109,9 @@ void* aaruf_open(const char* filepath)
 
                     if(ctx->dumpHardwareEntriesWithData[e].extents == NULL)
                     {
-                        fprintf(
-                            stderr,
-                            "libaaruformat: Could not allocate memory for dump hardware block extents, continuing...");
+                        fprintf(stderr,
+                                "libaaruformat: Could not allocate memory for dump hardware block extents, "
+                                "continuing...\n");
                         continue;
                     }
 
@@ -1117,7 +1123,7 @@ void* aaruf_open(const char* filepath)
                     if(readBytes != ctx->dumpHardwareEntriesWithData->entry.extents)
                     {
                         free(ctx->dumpHardwareEntriesWithData[e].extents);
-                        fprintf(stderr, "libaaruformat: Could not read dump hardware block extents, continuing...");
+                        fprintf(stderr, "libaaruformat: Could not read dump hardware block extents, continuing...\n");
                         continue;
                     }
 
@@ -1128,7 +1134,7 @@ void* aaruf_open(const char* filepath)
             default:
                 fprintf(stderr,
                         "libaaruformat: Unhandled block type %4.4s with data type %4.4s is indexed to be at %" PRIu64
-                        "",
+                        "\n",
                         (char*)&idxEntries[i].blockType,
                         (char*)&idxEntries[i].dataType,
                         idxEntries[i].offset);
@@ -1140,7 +1146,7 @@ void* aaruf_open(const char* filepath)
 
     if(!foundUserDataDdt)
     {
-        fprintf(stderr, "libaaruformat: Could not find user data deduplication table, aborting...");
+        fprintf(stderr, "libaaruformat: Could not find user data deduplication table, aborting...\n");
         aaruf_close(ctx);
         return NULL;
     }
