@@ -157,4 +157,12 @@ endif()
 
 include_directories(include 3rdparty/uthash/src)
 
+include(CheckLibraryExists)
+
+check_library_exists(m log "" HAVE_LIB_M)
+if(HAVE_LIB_M)
+    TARGET_LINK_LIBRARIES_WHOLE_ARCHIVE(aaruformat m)
+endif()
+
 add_subdirectory(tests)
+add_subdirectory(tool)
