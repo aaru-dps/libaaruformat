@@ -1177,6 +1177,5 @@ void* aaruf_open(const char* filepath)
     ctx->libraryMajorVersion = LIBAARUFORMAT_MAJOR_VERSION;
     ctx->libraryMinorVersion = LIBAARUFORMAT_MINOR_VERSION;
 
-    free(idxEntries);
     return ctx;
 }
