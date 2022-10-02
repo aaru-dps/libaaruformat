@@ -99,7 +99,7 @@ int32_t aaruf_read_sector(void* context, uint64_t sectorAddress, uint8_t* data, 
         if(blockHeader == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
 
         fseek(ctx->imageStream, blockOffset, SEEK_SET);
-        readBytes = fread(blockHeader, sizeof(BlockHeader), 1, ctx->imageStream);
+        readBytes = fread(blockHeader, 1, sizeof(BlockHeader), ctx->imageStream);
 
         if(readBytes != sizeof(BlockHeader)) return AARUF_ERROR_CANNOT_READ_HEADER;
 
@@ -131,7 +131,7 @@ int32_t aaruf_read_sector(void* context, uint64_t sectorAddress, uint8_t* data, 
             block = (uint8_t*)malloc(blockHeader->length);
             if(block == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
 
-            readBytes = fread(block, blockHeader->length, 1, ctx->imageStream);
+            readBytes = fread(block, 1, blockHeader->length, ctx->imageStream);
 
             if(readBytes != blockHeader->length)
             {
