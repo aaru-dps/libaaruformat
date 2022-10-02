@@ -153,4 +153,6 @@ elseif(OpenSSL_FOUND)
     TARGET_LINK_LIBRARIES_WHOLE_ARCHIVE(aaruformat ${OPENSSL_CRYPTO_LIBRARY})
 endif()
 
+include_directories(include 3rdparty/uthash/src)
+
 add_subdirectory(tests)

@@ -4,3 +4,6 @@
 [submodule "3rdparty/flac"]
 	path = 3rdparty/flac
 	url = https://github.com/claunia/flac
+[submodule "3rdparty/uthash"]
+	path = 3rdparty/uthash
+	url = https://github.com/troydhanson/uthash
