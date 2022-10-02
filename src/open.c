@@ -421,8 +421,7 @@ void* aaruf_open(const char* filepath)
                             ctx->inMemoryDdt = false;
                             break;
 #else // TODO: Implement
-                            fprintf(stderr,
-                                    "libaaruformat: Uncompressed DDT not yet implemented...");
+                            fprintf(stderr, "libaaruformat: Uncompressed DDT not yet implemented...");
                             foundUserDataDdt = false;
                             break;
 #endif
@@ -754,8 +753,8 @@ void* aaruf_open(const char* filepath)
                     fprintf(stderr, "libaaruformat: Could not read metadata block, continuing...");
                 }
 
-                crc64 = aaruf_crc64_data((const uint8_t*)ctx->trackEntries,
-                                              ctx->tracksHeader.entries * sizeof(TrackEntry));
+                crc64 =
+                    aaruf_crc64_data((const uint8_t*)ctx->trackEntries, ctx->tracksHeader.entries * sizeof(TrackEntry));
                 if(crc64 != ctx->tracksHeader.crc64)
                 {
                     fprintf(stderr,
@@ -1153,14 +1152,11 @@ void* aaruf_open(const char* filepath)
         ctx->imageInfo.SectorsPerTrack = 63;
     }
 
-    // TODO: Caches
-    /*
-        // Initialize caches
-        blockCache       = new Dictionary<ulong, byte[]>();
-        blockHeaderCache = new Dictionary<ulong, BlockHeader>();
-        currentCacheSize = 0;
-        if(!inMemoryDdt) ddtEntryCache = new Dictionary<ulong, ulong>();
-    */
+    // Initialize caches
+    ctx->blockHeaderCache.cache     = NULL;
+    ctx->blockHeaderCache.max_items = MAX_CACHE_SIZE / (ctx->imageInfo.SectorSize * (1 << ctx->shift));
+    ctx->blockCache.cache           = NULL;
+    ctx->blockCache.max_items       = ctx->blockHeaderCache.max_items;
 
     // TODO: Cache tracks and sessions?
 

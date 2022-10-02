@@ -19,6 +19,7 @@
 #ifndef LIBAARUFORMAT_CONTEXT_H
 #define LIBAARUFORMAT_CONTEXT_H
 
+#include "lru.h"
 #include "structs.h"
 
 typedef struct aaruformatContext
@@ -56,6 +57,8 @@ typedef struct aaruformatContext
     uint8_t                             numberOfDataTracks;
     TrackEntry*                         dataTracks;
     bool*                               readableSectorTags;
+    struct CacheHeader                  blockHeaderCache;
+    struct CacheHeader                  blockCache;
 } aaruformatContext;
 
 typedef struct dataLinkedList

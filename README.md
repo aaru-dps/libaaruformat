@@ -9,7 +9,6 @@ This means any hash or compression algorithm must be statically linked inside th
 cmake is not a hard dependency, it's merely for the ease of using IDEs (specifically CLion).
 
 Things still to be implemented that are already in the C# version:
-- Caching
 - Tape file blocks
 - Automatic media type generation from C# enumeration
 - Nuget package for linking with Aaru

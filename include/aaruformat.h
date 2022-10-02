@@ -28,6 +28,7 @@
 #include "aaruformat/decls.h"
 #include "aaruformat/enums.h"
 #include "aaruformat/errors.h"
+#include "aaruformat/lru.h"
 #include "aaruformat/simd.h"
 #include "aaruformat/spamsum.h"
 #include "aaruformat/structs.h"

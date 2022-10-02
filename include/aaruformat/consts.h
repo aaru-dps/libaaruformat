@@ -31,8 +31,8 @@
 /** Image format version. A change in this number indicates an incompatible change to the format that prevents older
  * implementations from reading it correctly, if at all. */
 #define AARUF_VERSION 1
-/** Maximum read cache size, 256MiB. */
-#define MAX_CACHE_SIZE 256 * 1024 * 1024
+/** Maximum read cache size, 512MiB. */
+#define MAX_CACHE_SIZE 536870912
 /** Size in bytes of LZMA properties. */
 #define LZMA_PROPERTIES_LENGTH 5
 /** Maximum number of entries for the DDT cache. */

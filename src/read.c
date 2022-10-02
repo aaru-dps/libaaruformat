@@ -63,7 +63,7 @@ int32_t aaruf_read_sector(void* context, uint64_t sectorAddress, uint8_t* data, 
     uint32_t           offsetMask;
     uint64_t           offset;
     uint64_t           blockOffset;
-    BlockHeader        blockHeader;
+    BlockHeader*       blockHeader;
     uint8_t*           block;
     size_t             readBytes;
 
@@ -89,31 +89,51 @@ int32_t aaruf_read_sector(void* context, uint64_t sectorAddress, uint8_t* data, 
         return AARUF_STATUS_SECTOR_NOT_DUMPED;
     }
 
-    // Check if block is cached
-    // TODO: Caches
+    // Check if block header is cached
+    blockHeader = find_in_cache_uint64(&ctx->blockHeaderCache, blockOffset);
 
     // Read block header
-    fseek(ctx->imageStream, blockOffset, SEEK_SET);
-    readBytes = fread(&blockHeader, sizeof(BlockHeader), 1, ctx->imageStream);
-
-    if(readBytes != sizeof(BlockHeader)) return AARUF_ERROR_CANNOT_READ_HEADER;
-
-    if(data == NULL || *length < blockHeader.sectorSize)
+    if(blockHeader == NULL)
     {
-        *length = blockHeader.sectorSize;
+        blockHeader = malloc(sizeof(BlockHeader));
+        if(blockHeader == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+
+        fseek(ctx->imageStream, blockOffset, SEEK_SET);
+        readBytes = fread(blockHeader, sizeof(BlockHeader), 1, ctx->imageStream);
+
+        if(readBytes != sizeof(BlockHeader)) return AARUF_ERROR_CANNOT_READ_HEADER;
+
+        add_to_cache_uint64(&ctx->blockHeaderCache, blockOffset, blockHeader);
+    }
+    else
+        fseek(ctx->imageStream, sizeof(BlockHeader), SEEK_CUR); // Advance as if reading the header
+
+    if(data == NULL || *length < blockHeader->sectorSize)
+    {
+        *length = blockHeader->sectorSize;
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
+    // Check if block is cached
+    block = find_in_cache_uint64(&ctx->blockCache, blockOffset);
+
+    if(block != NULL)
+    {
+        memcpy(data, block + offset, blockHeader->sectorSize);
+        *length = blockHeader->sectorSize;
+        return AARUF_STATUS_OK;
+    }
+
     // Decompress block
-    switch(blockHeader.compression)
+    switch(blockHeader->compression)
     {
         case None:
-            block = (uint8_t*)malloc(blockHeader.length);
+            block = (uint8_t*)malloc(blockHeader->length);
             if(block == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
 
-            readBytes = fread(block, blockHeader.length, 1, ctx->imageStream);
+            readBytes = fread(block, blockHeader->length, 1, ctx->imageStream);
 
-            if(readBytes != blockHeader.length)
+            if(readBytes != blockHeader->length)
             {
                 free(block);
                 return AARUF_ERROR_CANNOT_READ_BLOCK;
@@ -123,15 +143,11 @@ int32_t aaruf_read_sector(void* context, uint64_t sectorAddress, uint8_t* data, 
         default: return AARUF_ERROR_UNSUPPORTED_COMPRESSION;
     }
 
-    // Check if cache needs to be emptied
-    // TODO: Caches
-
     // Add block to cache
-    // TODO: Caches
+    add_to_cache_uint64(&ctx->blockCache, blockOffset, block);
 
-    memcpy(data, block + offset, blockHeader.sectorSize);
-    *length = blockHeader.sectorSize;
-    free(block);
+    memcpy(data, block + offset, blockHeader->sectorSize);
+    *length = blockHeader->sectorSize;
     return AARUF_STATUS_OK;
 }
 
