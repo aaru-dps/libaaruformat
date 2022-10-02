@@ -58,7 +58,7 @@ int aaruf_identify_stream(FILE* imageStream)
 
     size_t ret = fread(&header, sizeof(AaruHeader), 1, imageStream);
 
-    if(ret < sizeof(AaruHeader)) return 0;
+    if(ret != 1) return 0;
 
     if((header.identifier == DIC_MAGIC || header.identifier == AARU_MAGIC) && header.imageMajorVersion <= AARUF_VERSION)
         return 100;
