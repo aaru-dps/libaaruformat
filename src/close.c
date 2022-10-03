@@ -138,6 +138,9 @@ int aaruf_close(void* context)
     free(ctx->readableSectorTags);
     ctx->readableSectorTags = NULL;
 
+    free(ctx->eccCdContext);
+    ctx->eccCdContext = NULL;
+
     // TODO: Free caches
 
     free(context);
