@@ -98,7 +98,7 @@ add_library(aaruformat SHARED include/aaruformat/consts.h include/aaruformat/enu
             src/close.c include/aaruformat/errors.h src/read.c include/aaruformat/crc64.h src/cst.c src/ecc_cd.c src/helpers.c
             src/simd.c include/aaruformat/simd.h src/crc64/crc64.c src/crc64/crc64_clmul.c src/crc64/crc64_vmull.c
             src/crc64/arm_vmull.c src/crc64/arm_vmull.h src/spamsum.c include/aaruformat/spamsum.h include/aaruformat/flac.h
-            src/flac.c src/lzma.c src/lru.c include/aaruformat/lru.h)
+            src/flac.c src/lzma.c src/lru.c include/aaruformat/lru.h include/aaruformat/endian.h)
 
 include_directories(include include/aaruformat)
 

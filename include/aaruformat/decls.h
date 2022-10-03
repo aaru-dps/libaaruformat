@@ -200,7 +200,7 @@ AARU_EXPORT int have_neon();
 AARU_EXPORT int have_arm_crc32();
 AARU_EXPORT int have_arm_crypto();
 
-AARU_EXPORT TARGET_WITH_SIMD uint64_t AARU_CALL crc64_vmull(uint64_t previous_crc, const uint8_t* data, long len);
+AARU_EXPORT TARGET_WITH_SIMD uint64_t AARU_CALL aaruf_crc64_vmull(uint64_t previous_crc, const uint8_t* data, long len);
 #endif
 
 #endif // LIBAARUFORMAT_DECLS_H

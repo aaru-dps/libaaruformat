@@ -17,8 +17,8 @@
  */
 
 #include <errno.h>
-#include <malloc.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifdef __linux__
 #include <sys/mman.h>
