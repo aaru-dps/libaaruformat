@@ -288,6 +288,10 @@ void* aaruf_open(const char* filepath)
                 }
 
                 crc64 = aaruf_crc64_data(data, blockHeader.length);
+
+                // Due to how C# wrote it, it is effectively reversed
+                if(ctx->header.imageMajorVersion <= AARUF_VERSION) crc64 = bswap_64(crc64);
+
                 if(crc64 != blockHeader.crc64)
                 {
                     fprintf(stderr,
@@ -763,6 +767,10 @@ void* aaruf_open(const char* filepath)
 
                 crc64 =
                     aaruf_crc64_data((const uint8_t*)ctx->trackEntries, ctx->tracksHeader.entries * sizeof(TrackEntry));
+
+                // Due to how C# wrote it, it is effectively reversed
+                if(ctx->header.imageMajorVersion <= AARUF_VERSION) crc64 = bswap_64(crc64);
+
                 if(crc64 != ctx->tracksHeader.crc64)
                 {
                     fprintf(stderr,
@@ -877,6 +885,10 @@ void* aaruf_open(const char* filepath)
                     if(readBytes == ctx->dumpHardwareHeader.length)
                     {
                         crc64 = aaruf_crc64_data(data, ctx->dumpHardwareHeader.length);
+
+                        // Due to how C# wrote it, it is effectively reversed
+                        if(ctx->header.imageMajorVersion <= AARUF_VERSION) crc64 = bswap_64(crc64);
+
                         if(crc64 != ctx->dumpHardwareHeader.crc64)
                         {
                             free(data);
@@ -1133,8 +1145,7 @@ void* aaruf_open(const char* filepath)
                 break;
             default:
                 fprintf(stderr,
-                        "libaaruformat: Unhandled block type %4.4s with data type %4.4s is indexed to be at %" PRIu64
-                        "\n",
+                        "libaaruformat: Unhandled block type %4.4s with data type %d is indexed to be at %" PRIu64 "\n",
                         (char*)&idxEntries[i].blockType,
                         (char*)&idxEntries[i].dataType,
                         idxEntries[i].offset);

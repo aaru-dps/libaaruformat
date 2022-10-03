@@ -26,6 +26,7 @@
 #include "aaruformat/context.h"
 #include "aaruformat/crc64.h"
 #include "aaruformat/decls.h"
+#include "aaruformat/endian.h"
 #include "aaruformat/enums.h"
 #include "aaruformat/errors.h"
 #include "aaruformat/lru.h"
