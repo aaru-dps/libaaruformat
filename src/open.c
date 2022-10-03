@@ -40,7 +40,7 @@ void* aaruf_open(const char* filepath)
     uint32_t*          cdDdt;
     uint64_t           crc64;
     uint8_t            temp8u;
-    int                i;
+    int                i, j;
     uint16_t           e;
 
     ctx = (aaruformatContext*)malloc(sizeof(aaruformatContext));
@@ -792,10 +792,10 @@ void* aaruf_open(const char* filepath)
                 ctx->numberOfDataTracks = 0;
 
                 // TODO: Handle track 0
-                for(i = 0, temp8u = 0; i < ctx->tracksHeader.entries; i++)
+                for(j = 0, temp8u = 0; j < ctx->tracksHeader.entries; j++)
                 {
-                    if(ctx->trackEntries[i].sequence > temp8u && ctx->trackEntries[i].sequence <= 99)
-                        temp8u = ctx->trackEntries[i].sequence;
+                    if(ctx->trackEntries[j].sequence > temp8u && ctx->trackEntries[j].sequence <= 99)
+                        temp8u = ctx->trackEntries[j].sequence;
                 }
 
                 if(temp8u > 0)
@@ -806,12 +806,12 @@ void* aaruf_open(const char* filepath)
 
                     ctx->numberOfDataTracks = temp8u;
 
-                    for(i = 0, temp8u = 0; i < ctx->tracksHeader.entries; i++)
+                    for(j = 0, temp8u = 0; j < ctx->tracksHeader.entries; j++)
                     {
-                        if(ctx->trackEntries[i].sequence > 99) continue;
+                        if(ctx->trackEntries[j].sequence > 99) continue;
 
                         memcpy(
-                            &ctx->dataTracks[ctx->trackEntries[i].sequence], &ctx->trackEntries[i], sizeof(TrackEntry));
+                            &ctx->dataTracks[ctx->trackEntries[j].sequence], &ctx->trackEntries[j], sizeof(TrackEntry));
                     }
                 }
 
