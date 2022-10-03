@@ -878,32 +878,38 @@ void* aaruf_open(const char* filepath)
                 }
 
                 data = (uint8_t*)malloc(ctx->dumpHardwareHeader.length);
-                if(data != NULL)
+
+                if(data == NULL)
                 {
-                    readBytes = fread(data, 1, ctx->dumpHardwareHeader.length, ctx->imageStream);
-
-                    if(readBytes == ctx->dumpHardwareHeader.length)
-                    {
-                        crc64 = aaruf_crc64_data(data, ctx->dumpHardwareHeader.length);
-
-                        // Due to how C# wrote it, it is effectively reversed
-                        if(ctx->header.imageMajorVersion <= AARUF_VERSION) crc64 = bswap_64(crc64);
-
-                        if(crc64 != ctx->dumpHardwareHeader.crc64)
-                        {
-                            free(data);
-                            fprintf(stderr,
-                                    "libaaruformat: Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64
-                                    ", continuing...\n",
-                                    crc64,
-                                    ctx->dumpHardwareHeader.crc64);
-                            break;
-                        }
-                    }
-
-                    free(data);
-                    fseek(ctx->imageStream, -readBytes, SEEK_CUR);
+                    memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
+                    fprintf(stderr,
+                            "libaaruformat: Could not allocate memory for dump hardware block, continuing...\n");
+                    break;
                 }
+
+                readBytes = fread(data, 1, ctx->dumpHardwareHeader.length, ctx->imageStream);
+
+                if(readBytes == ctx->dumpHardwareHeader.length)
+                {
+                    crc64 = aaruf_crc64_data(data, ctx->dumpHardwareHeader.length);
+
+                    // Due to how C# wrote it, it is effectively reversed
+                    if(ctx->header.imageMajorVersion <= AARUF_VERSION) crc64 = bswap_64(crc64);
+
+                    if(crc64 != ctx->dumpHardwareHeader.crc64)
+                    {
+                        free(data);
+                        fprintf(stderr,
+                                "libaaruformat: Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64
+                                ", continuing...\n",
+                                crc64,
+                                ctx->dumpHardwareHeader.crc64);
+                        break;
+                    }
+                }
+
+                free(data);
+                fseek(ctx->imageStream, -(long)readBytes, SEEK_CUR);
 
                 ctx->dumpHardwareEntriesWithData = (DumpHardwareEntriesWithData*)malloc(
                     sizeof(DumpHardwareEntriesWithData) * ctx->dumpHardwareHeader.entries);
@@ -927,7 +933,7 @@ void* aaruf_open(const char* filepath)
 
                     if(readBytes != sizeof(DumpHardwareEntry))
                     {
-                        ctx->dumpHardwareHeader.entries = e + (uint16_t)1;
+                        ctx->dumpHardwareHeader.entries = e;
                         fprintf(stderr, "libaaruformat: Could not read dump hardware block entry, continuing...\n");
                         break;
                     }
@@ -935,11 +941,13 @@ void* aaruf_open(const char* filepath)
                     if(ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength > 0)
                     {
                         ctx->dumpHardwareEntriesWithData[e].manufacturer =
-                            (uint8_t*)malloc(ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength);
+                            (uint8_t*)malloc(ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength + 1);
 
                         if(ctx->dumpHardwareEntriesWithData[e].manufacturer != NULL)
                         {
-                            readBytes = fread(&ctx->dumpHardwareEntriesWithData[e].manufacturer,
+                            ctx->dumpHardwareEntriesWithData[e]
+                                .manufacturer[ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength] = 0;
+                            readBytes = fread(ctx->dumpHardwareEntriesWithData[e].manufacturer,
                                               1,
                                               ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength,
                                               ctx->imageStream);
@@ -958,11 +966,13 @@ void* aaruf_open(const char* filepath)
                     if(ctx->dumpHardwareEntriesWithData[e].entry.modelLength > 0)
                     {
                         ctx->dumpHardwareEntriesWithData[e].model =
-                            (uint8_t*)malloc(ctx->dumpHardwareEntriesWithData[e].entry.modelLength);
+                            (uint8_t*)malloc(ctx->dumpHardwareEntriesWithData[e].entry.modelLength + 1);
 
                         if(ctx->dumpHardwareEntriesWithData[e].model != NULL)
                         {
-                            readBytes = fread(&ctx->dumpHardwareEntriesWithData[e].model,
+                            ctx->dumpHardwareEntriesWithData[e]
+                                .model[ctx->dumpHardwareEntriesWithData[e].entry.modelLength] = 0;
+                            readBytes = fread(ctx->dumpHardwareEntriesWithData[e].model,
                                               1,
                                               ctx->dumpHardwareEntriesWithData[e].entry.modelLength,
                                               ctx->imageStream);
@@ -981,11 +991,13 @@ void* aaruf_open(const char* filepath)
                     if(ctx->dumpHardwareEntriesWithData[e].entry.revisionLength > 0)
                     {
                         ctx->dumpHardwareEntriesWithData[e].revision =
-                            (uint8_t*)malloc(ctx->dumpHardwareEntriesWithData[e].entry.revisionLength);
+                            (uint8_t*)malloc(ctx->dumpHardwareEntriesWithData[e].entry.revisionLength + 1);
 
                         if(ctx->dumpHardwareEntriesWithData[e].revision != NULL)
                         {
-                            readBytes = fread(&ctx->dumpHardwareEntriesWithData[e].revision,
+                            ctx->dumpHardwareEntriesWithData[e]
+                                .revision[ctx->dumpHardwareEntriesWithData[e].entry.revisionLength] = 0;
+                            readBytes = fread(ctx->dumpHardwareEntriesWithData[e].revision,
                                               1,
                                               ctx->dumpHardwareEntriesWithData[e].entry.revisionLength,
                                               ctx->imageStream);
@@ -1004,11 +1016,13 @@ void* aaruf_open(const char* filepath)
                     if(ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength > 0)
                     {
                         ctx->dumpHardwareEntriesWithData[e].firmware =
-                            (uint8_t*)malloc(ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength);
+                            (uint8_t*)malloc(ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength + 1);
 
                         if(ctx->dumpHardwareEntriesWithData[e].firmware != NULL)
                         {
-                            readBytes = fread(&ctx->dumpHardwareEntriesWithData[e].firmware,
+                            ctx->dumpHardwareEntriesWithData[e]
+                                .firmware[ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength] = 0;
+                            readBytes = fread(ctx->dumpHardwareEntriesWithData[e].firmware,
                                               1,
                                               ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength,
                                               ctx->imageStream);
@@ -1027,11 +1041,13 @@ void* aaruf_open(const char* filepath)
                     if(ctx->dumpHardwareEntriesWithData[e].entry.serialLength > 0)
                     {
                         ctx->dumpHardwareEntriesWithData[e].serial =
-                            (uint8_t*)malloc(ctx->dumpHardwareEntriesWithData[e].entry.serialLength);
+                            (uint8_t*)malloc(ctx->dumpHardwareEntriesWithData[e].entry.serialLength + 1);
 
                         if(ctx->dumpHardwareEntriesWithData[e].serial != NULL)
                         {
-                            readBytes = fread(&ctx->dumpHardwareEntriesWithData[e].serial,
+                            ctx->dumpHardwareEntriesWithData[e]
+                                .serial[ctx->dumpHardwareEntriesWithData[e].entry.serialLength] = 0;
+                            readBytes = fread(ctx->dumpHardwareEntriesWithData[e].serial,
                                               1,
                                               ctx->dumpHardwareEntriesWithData[e].entry.serialLength,
                                               ctx->imageStream);
@@ -1050,11 +1066,13 @@ void* aaruf_open(const char* filepath)
                     if(ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength > 0)
                     {
                         ctx->dumpHardwareEntriesWithData[e].softwareName =
-                            (uint8_t*)malloc(ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength);
+                            (uint8_t*)malloc(ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength + 1);
 
                         if(ctx->dumpHardwareEntriesWithData[e].softwareName != NULL)
                         {
-                            readBytes = fread(&ctx->dumpHardwareEntriesWithData[e].softwareName,
+                            ctx->dumpHardwareEntriesWithData[e]
+                                .softwareName[ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength] = 0;
+                            readBytes = fread(ctx->dumpHardwareEntriesWithData[e].softwareName,
                                               1,
                                               ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength,
                                               ctx->imageStream);
@@ -1073,11 +1091,13 @@ void* aaruf_open(const char* filepath)
                     if(ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength > 0)
                     {
                         ctx->dumpHardwareEntriesWithData[e].softwareVersion =
-                            (uint8_t*)malloc(ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength);
+                            (uint8_t*)malloc(ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength + 1);
 
                         if(ctx->dumpHardwareEntriesWithData[e].softwareVersion != NULL)
                         {
-                            readBytes = fread(&ctx->dumpHardwareEntriesWithData[e].softwareVersion,
+                            ctx->dumpHardwareEntriesWithData[e]
+                                .softwareVersion[ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength] = 0;
+                            readBytes = fread(ctx->dumpHardwareEntriesWithData[e].softwareVersion,
                                               1,
                                               ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength,
                                               ctx->imageStream);
@@ -1095,12 +1115,14 @@ void* aaruf_open(const char* filepath)
 
                     if(ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength > 0)
                     {
-                        ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem =
-                            (uint8_t*)malloc(ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength);
+                        ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem = (uint8_t*)malloc(
+                            ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength + 1);
 
                         if(ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem != NULL)
                         {
-                            readBytes = fread(&ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem,
+                            ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem
+                                [ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength] = 0;
+                            readBytes = fread(ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem,
                                               1,
                                               ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength,
                                               ctx->imageStream);
