@@ -39,7 +39,6 @@ void* aaruf_open(const char* filepath)
     uint8_t*           data;
     uint32_t*          cdDdt;
     uint64_t           crc64;
-    uint8_t            temp8u;
     int                i, j;
     uint16_t           e;
 
@@ -791,28 +790,10 @@ void* aaruf_open(const char* filepath)
 
                 ctx->numberOfDataTracks = 0;
 
-                // TODO: Handle track 0
-                for(j = 0, temp8u = 0; j < ctx->tracksHeader.entries; j++)
+                for(j = 0; j < ctx->tracksHeader.entries; j++)
                 {
-                    if(ctx->trackEntries[j].sequence > temp8u && ctx->trackEntries[j].sequence <= 99)
-                        temp8u = ctx->trackEntries[j].sequence;
-                }
-
-                if(temp8u > 0)
-                {
-                    ctx->dataTracks = (TrackEntry*)malloc(sizeof(TrackEntry) * temp8u);
-
-                    if(ctx->dataTracks == NULL) break;
-
-                    ctx->numberOfDataTracks = temp8u;
-
-                    for(j = 0, temp8u = 0; j < ctx->tracksHeader.entries; j++)
-                    {
-                        if(ctx->trackEntries[j].sequence > 99) continue;
-
-                        memcpy(
-                            &ctx->dataTracks[ctx->trackEntries[j].sequence], &ctx->trackEntries[j], sizeof(TrackEntry));
-                    }
+                    if(ctx->trackEntries[j].sequence <= 99 && ctx->trackEntries[j].type != Audio)
+                        ctx->numberOfDataTracks++;
                 }
 
                 break;
