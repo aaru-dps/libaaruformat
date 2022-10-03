@@ -46,14 +46,24 @@ int aaruf_close(void* context)
     }
 
     // This may do nothing if imageStream is NULL, but as the behaviour is undefined, better sure than sorry
-    if(ctx->imageStream != NULL) fclose(ctx->imageStream);
+    if(ctx->imageStream != NULL)
+    {
+        fclose(ctx->imageStream);
+        ctx->imageStream = NULL;
+    }
 
     free(ctx->sectorPrefix);
+    ctx->sectorPrefix = NULL;
     free(ctx->sectorPrefixCorrected);
+    ctx->sectorPrefixCorrected = NULL;
     free(ctx->sectorSuffix);
+    ctx->sectorSuffix = NULL;
     free(ctx->sectorSuffixCorrected);
+    ctx->sectorSuffixCorrected = NULL;
     free(ctx->sectorSubchannel);
+    ctx->sectorSubchannel = NULL;
     free(ctx->mode2Subheaders);
+    ctx->mode2Subheaders = NULL;
 
     if(ctx->mediaTagsTail != NULL)
     {
@@ -62,45 +72,73 @@ int aaruf_close(void* context)
         while(mediaTag->previous != NULL)
         {
             free(mediaTag->data);
-            mediaTag = mediaTag->previous;
+            mediaTag->data = NULL;
+            mediaTag       = mediaTag->previous;
             free(mediaTag->next);
+            mediaTag->next = NULL;
         }
+
+        ctx->mediaTagsTail = NULL;
     }
 
     if(ctx->mediaTagsHead != NULL)
     {
         free(ctx->mediaTagsHead->data);
+        ctx->mediaTagsHead->data = NULL;
         free(ctx->mediaTagsHead);
+        ctx->mediaTagsHead = NULL;
     }
 
 #ifdef __linux__ // TODO: Implement
-    if(!ctx->inMemoryDdt) { munmap(ctx->userDataDdt, ctx->mappedMemoryDdtSize); }
+    if(!ctx->inMemoryDdt)
+    {
+        munmap(ctx->userDataDdt, ctx->mappedMemoryDdtSize);
+        ctx->userDataDdt = NULL;
+    }
 #endif
 
     free(ctx->sectorPrefixDdt);
+    ctx->sectorPrefixDdt = NULL;
     free(ctx->sectorSuffixDdt);
+    ctx->sectorSuffixDdt = NULL;
 
     free(ctx->metadataBlock);
+    ctx->metadataBlock = NULL;
     free(ctx->trackEntries);
+    ctx->trackEntries = NULL;
     free(ctx->cicmBlock);
+    ctx->cicmBlock = NULL;
 
     if(ctx->dumpHardwareEntriesWithData != NULL)
     {
         for(i = 0; i < ctx->dumpHardwareHeader.entries; i++)
         {
             free(ctx->dumpHardwareEntriesWithData[i].extents);
+            ctx->dumpHardwareEntriesWithData[i].extents = NULL;
             free(ctx->dumpHardwareEntriesWithData[i].manufacturer);
+            ctx->dumpHardwareEntriesWithData[i].manufacturer = NULL;
             free(ctx->dumpHardwareEntriesWithData[i].model);
+            ctx->dumpHardwareEntriesWithData[i].model = NULL;
             free(ctx->dumpHardwareEntriesWithData[i].revision);
+            ctx->dumpHardwareEntriesWithData[i].revision = NULL;
             free(ctx->dumpHardwareEntriesWithData[i].firmware);
+            ctx->dumpHardwareEntriesWithData[i].firmware = NULL;
             free(ctx->dumpHardwareEntriesWithData[i].serial);
+            ctx->dumpHardwareEntriesWithData[i].serial = NULL;
             free(ctx->dumpHardwareEntriesWithData[i].softwareName);
+            ctx->dumpHardwareEntriesWithData[i].softwareName = NULL;
             free(ctx->dumpHardwareEntriesWithData[i].softwareVersion);
+            ctx->dumpHardwareEntriesWithData[i].softwareVersion = NULL;
             free(ctx->dumpHardwareEntriesWithData[i].softwareOperatingSystem);
+            ctx->dumpHardwareEntriesWithData[i].softwareOperatingSystem = NULL;
         }
+        ctx->dumpHardwareEntriesWithData = NULL;
     }
 
     free(ctx->readableSectorTags);
+    ctx->readableSectorTags = NULL;
+
+    // TODO: Free caches
 
     free(context);
 
