@@ -187,7 +187,7 @@ void* aaruf_open(const char* filepath)
         fprintf(stderr,
                 "libaaruformat: Block type %4.4s with data type %d is indexed to be at %" PRIu64 "\n",
                 (char*)&idxEntries[i].blockType,
-                (char*)&idxEntries[i].dataType,
+                idxEntries[i].dataType,
                 idxEntries[i].offset);
     }
 
@@ -1147,7 +1147,7 @@ void* aaruf_open(const char* filepath)
                 fprintf(stderr,
                         "libaaruformat: Unhandled block type %4.4s with data type %d is indexed to be at %" PRIu64 "\n",
                         (char*)&idxEntries[i].blockType,
-                        (char*)&idxEntries[i].dataType,
+                        idxEntries[i].dataType,
                         idxEntries[i].offset);
                 break;
         }
