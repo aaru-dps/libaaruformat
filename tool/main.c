@@ -32,6 +32,7 @@ void usage()
     printf("\n");
     printf("Available verbs:\n");
     printf("\tidentify\tIdentifies if the indicated file is a supported AaruFormat image.\n");
+    printf("\tinfo\tPrints information about a given AaruFormat image.\n");
     printf("\n");
     printf("For help on the verb invoke the tool with the verb and no arguments.\n");
 }
@@ -45,6 +46,17 @@ void usage_identify()
     printf("\n");
     printf("Arguments:\n");
     printf("\t<filename>\tPath to file to identify if it is a supported AaruFormat image.\n");
+}
+
+void usage_info()
+{
+    printf("\n");
+    printf("Usage:\n");
+    printf("aaruformattool info <filename>\n");
+    printf("Prints information about a given AaruFormat image.\n");
+    printf("\n");
+    printf("Arguments:\n");
+    printf("\t<filename>\tPath to AaruFormat image to print information from.\n");
 }
 
 int main(int argc, char* argv[])
@@ -77,6 +89,26 @@ int main(int argc, char* argv[])
 
         return identify(argv[2]);
     }
+
+
+    if(strncmp(argv[1], "info", strlen("info")) == 0)
+    {
+        if(argc == 2)
+        {
+            usage_info();
+            return -1;
+        }
+
+        if(argc > 3)
+        {
+            fprintf(stderr, "Invalid number of arguments\n");
+            usage_info();
+            return -1;
+        }
+
+        return info(argv[2]);
+    }
+
 
     return 0;
 }

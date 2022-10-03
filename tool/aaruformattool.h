@@ -20,5 +20,6 @@
 #define LIBAARUFORMAT_TOOL_AARUFORMATTOOL_H_
 
 int identify(char* path);
+int info(char *path);
 
 #endif // LIBAARUFORMAT_TOOL_AARUFORMATTOOL_H_
