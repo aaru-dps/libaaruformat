@@ -37,10 +37,14 @@ void* aaruf_open(const char* filepath)
     IndexHeader        idxHeader;
     IndexEntry*        idxEntries;
     uint8_t*           data;
+    uint8_t*           cmpData;
+    uint8_t*           cstData;
     uint32_t*          cdDdt;
     uint64_t           crc64;
     int                i, j;
     uint16_t           e;
+    uint8_t            lzmaProperties[LZMA_PROPERTIES_LENGTH];
+    size_t             lzmaSize;
 
     ctx = (aaruformatContext*)malloc(sizeof(aaruformatContext));
     memset(ctx, 0, sizeof(aaruformatContext));
@@ -260,7 +264,103 @@ void* aaruf_open(const char* filepath)
                         (char*)&idxEntries[i].blockType,
                         idxEntries[i].offset);
 
-                if(blockHeader.compression == None)
+                if(blockHeader.compression == Lzma || blockHeader.compression == LzmaClauniaSubchannelTransform)
+                {
+                    if(blockHeader.compression == LzmaClauniaSubchannelTransform &&
+                       blockHeader.type != CdSectorSubchannel)
+                    {
+                        fprintf(stderr,
+                                "Invalid compression type %d for block with data type %d, continuing...\n",
+                                blockHeader.compression,
+                                blockHeader.type);
+                        break;
+                    }
+
+                    lzmaSize = blockHeader.cmpLength - LZMA_PROPERTIES_LENGTH;
+
+                    cmpData = (uint8_t*)malloc(lzmaSize);
+                    if(cmpData == NULL)
+                    {
+                        fprintf(stderr, "Cannot allocate memory for block, continuing...\n");
+                        break;
+                    }
+
+                    data = (uint8_t*)malloc(blockHeader.length);
+                    if(data == NULL)
+                    {
+                        fprintf(stderr, "Cannot allocate memory for block, continuing...\n");
+                        free(cmpData);
+                        break;
+                    }
+
+                    readBytes = fread(lzmaProperties, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
+                    if(readBytes != LZMA_PROPERTIES_LENGTH)
+                    {
+                        fprintf(stderr, "Could not read LZMA properties, continuing...\n");
+                        free(cmpData);
+                        free(data);
+                        break;
+                    }
+
+                    readBytes = fread(cmpData, 1, lzmaSize, ctx->imageStream);
+                    if(readBytes != lzmaSize)
+                    {
+                        fprintf(stderr, "Could not read compressed block, continuing...\n");
+                        free(cmpData);
+                        free(data);
+                        break;
+                    }
+
+                    readBytes = blockHeader.length;
+                    errorNo   = aaruf_lzma_decode_buffer(
+                        data, &readBytes, cmpData, &lzmaSize, lzmaProperties, LZMA_PROPERTIES_LENGTH);
+
+                    if(errorNo != 0)
+                    {
+                        fprintf(stderr, "Got error %d from LZMA, continuing...\n", errorNo);
+                        free(cmpData);
+                        free(data);
+                        errno = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+
+                        // TODO: Clean-up all memory!!!
+                        return NULL;
+                    }
+
+                    if(readBytes != blockHeader.length)
+                    {
+                        fprintf(stderr,
+                                "Error decompressing block, should be {0} bytes but got {1} bytes., continuing...\n");
+                        free(cmpData);
+                        free(data);
+                        errno = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+
+                        // TODO: Clean-up all memory!!!
+                        return NULL;
+                    }
+
+                    if(blockHeader.compression == LzmaClauniaSubchannelTransform)
+                    {
+                        // TODO: Needs to fix!
+                        /*
+                        cstData = malloc(blockHeader.length);
+                        if(cstData == NULL)
+                        {
+                            fprintf(stderr, "Cannot allocate memory for block, continuing...\n");
+                            free(cmpData);
+                            free(data);
+                            break;
+                        }
+
+                        aaruf_cst_untransform(data, cstData, blockHeader.length);
+                        free(data);
+                        data = cstData;
+                        cstData = NULL;
+                        */
+                    }
+
+                    free(cmpData);
+                }
+                else if(blockHeader.compression == None)
                 {
                     data = (uint8_t*)malloc(blockHeader.length);
                     if(data == NULL)
@@ -359,7 +459,7 @@ void* aaruf_open(const char* filepath)
                             }
                         }
 
-                        // If we mediaTag is NULL means we have arrived the end of the list without finding a duplicate
+                        // If the mediaTag is NULL means we have arrived the end of the list without finding a duplicate
                         // or the list was empty
                         if(mediaTag != NULL) break;
 
@@ -412,6 +512,84 @@ void* aaruf_open(const char* filepath)
                     // Check for DDT compression
                     switch(ddtHeader.compression)
                     {
+                            // TODO: Check CRC
+                        case Lzma:
+                            lzmaSize = ddtHeader.cmpLength - LZMA_PROPERTIES_LENGTH;
+
+                            cmpData = (uint8_t*)malloc(lzmaSize);
+                            if(cmpData == NULL)
+                            {
+                                fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
+                                break;
+                            }
+
+                            ctx->userDataDdt = (uint64_t*)malloc(ddtHeader.length);
+                            if(ctx->userDataDdt == NULL)
+                            {
+                                fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
+                                free(cmpData);
+                                break;
+                            }
+
+                            readBytes = fread(lzmaProperties, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
+                            if(readBytes != LZMA_PROPERTIES_LENGTH)
+                            {
+                                fprintf(stderr, "Could not read LZMA properties, continuing...\n");
+                                free(cmpData);
+                                free(ctx->userDataDdt);
+                                ctx->userDataDdt = NULL;
+                                break;
+                            }
+
+                            readBytes = fread(cmpData, 1, lzmaSize, ctx->imageStream);
+                            if(readBytes != lzmaSize)
+                            {
+                                fprintf(stderr, "Could not read compressed block, continuing...\n");
+                                free(cmpData);
+                                free(ctx->userDataDdt);
+                                ctx->userDataDdt = NULL;
+                                break;
+                            }
+
+                            readBytes = ddtHeader.length;
+                            errorNo   = aaruf_lzma_decode_buffer((uint8_t*)ctx->userDataDdt,
+                                                               &readBytes,
+                                                               cmpData,
+                                                               &lzmaSize,
+                                                               lzmaProperties,
+                                                               LZMA_PROPERTIES_LENGTH);
+
+                            if(errorNo != 0)
+                            {
+                                fprintf(stderr, "Got error %d from LZMA, stopping...\n", errorNo);
+                                free(cmpData);
+                                free(ctx->userDataDdt);
+                                ctx->userDataDdt = NULL;
+                                errno            = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+
+                                // TODO: Clean-up all memory!!!
+                                return NULL;
+                            }
+
+                            if(readBytes != ddtHeader.length)
+                            {
+                                fprintf(
+                                    stderr,
+                                    "Error decompressing block, should be {0} bytes but got {1} bytes., stopping...\n");
+                                free(cmpData);
+                                free(ctx->userDataDdt);
+                                ctx->userDataDdt = NULL;
+                                errno            = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+
+                                // TODO: Clean-up all memory!!!
+                                return NULL;
+                            }
+
+                            ctx->inMemoryDdt = true;
+                            foundUserDataDdt = true;
+
+                            break;
+                            // TODO: Check CRC
                         case None:
 #ifdef __linux__
                             ctx->mappedMemoryDdtSize = sizeof(uint64_t) * ddtHeader.entries;
@@ -449,6 +627,88 @@ void* aaruf_open(const char* filepath)
                 {
                     switch(ddtHeader.compression)
                     {
+                            // TODO: Check CRC
+                        case Lzma:
+                            lzmaSize = ddtHeader.cmpLength - LZMA_PROPERTIES_LENGTH;
+
+                            cmpData = (uint8_t*)malloc(lzmaSize);
+                            if(cmpData == NULL)
+                            {
+                                fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
+                                break;
+                            }
+
+                            cdDdt = (uint32_t*)malloc(ddtHeader.length);
+                            if(cdDdt == NULL)
+                            {
+                                fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
+                                free(cmpData);
+                                break;
+                            }
+
+                            readBytes = fread(lzmaProperties, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
+                            if(readBytes != LZMA_PROPERTIES_LENGTH)
+                            {
+                                fprintf(stderr, "Could not read LZMA properties, continuing...\n");
+                                free(cmpData);
+                                free(cdDdt);
+                                ctx->userDataDdt = NULL;
+                                break;
+                            }
+
+                            readBytes = fread(cmpData, 1, lzmaSize, ctx->imageStream);
+                            if(readBytes != lzmaSize)
+                            {
+                                fprintf(stderr, "Could not read compressed block, continuing...\n");
+                                free(cmpData);
+                                free(cdDdt);
+                                ctx->userDataDdt = NULL;
+                                break;
+                            }
+
+                            readBytes = ddtHeader.length;
+                            errorNo   = aaruf_lzma_decode_buffer((uint8_t*)cdDdt,
+                                                               &readBytes,
+                                                               cmpData,
+                                                               &lzmaSize,
+                                                               lzmaProperties,
+                                                               LZMA_PROPERTIES_LENGTH);
+
+                            if(errorNo != 0)
+                            {
+                                fprintf(stderr, "Got error %d from LZMA, stopping...\n", errorNo);
+                                free(cmpData);
+                                free(cdDdt);
+                                ctx->userDataDdt = NULL;
+                                errno            = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+
+                                // TODO: Clean-up all memory!!!
+                                return NULL;
+                            }
+
+                            if(readBytes != ddtHeader.length)
+                            {
+                                fprintf(
+                                    stderr,
+                                    "Error decompressing block, should be {0} bytes but got {1} bytes., stopping...\n");
+                                free(cmpData);
+                                free(cdDdt);
+                                ctx->userDataDdt = NULL;
+                                errno            = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+
+                                // TODO: Clean-up all memory!!!
+                                return NULL;
+                            }
+
+                            if(idxEntries[i].dataType == CdSectorPrefixCorrected) ctx->sectorPrefixDdt = cdDdt;
+                            else if(idxEntries[i].dataType == CdSectorSuffixCorrected)
+                                ctx->sectorSuffixDdt = cdDdt;
+                            else
+                                free(cdDdt);
+
+                            break;
+
+                            // TODO: Check CRC
                         case None:
                             cdDdt = (uint32_t*)malloc(ddtHeader.entries * sizeof(uint32_t));
 
@@ -458,11 +718,11 @@ void* aaruf_open(const char* filepath)
                                 break;
                             }
 
-                            readBytes = fread(data, 1, ddtHeader.entries * sizeof(uint32_t), ctx->imageStream);
+                            readBytes = fread(cdDdt, 1, ddtHeader.entries * sizeof(uint32_t), ctx->imageStream);
 
                             if(readBytes != ddtHeader.entries * sizeof(uint32_t))
                             {
-                                free(data);
+                                free(cdDdt);
                                 fprintf(stderr, "libaaruformat: Could not read deduplication table, continuing...\n");
                                 break;
                             }
