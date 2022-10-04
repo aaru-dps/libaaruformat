@@ -133,15 +133,15 @@ int32_t aaruf_cst_transform(const uint8_t* interleaved, uint8_t* sequential, siz
         w[i / 8] += interleaved[i + 7] & 0x01;
     }
 
-    qStart = length * 1;
-    rStart = length * 2;
-    sStart = length * 3;
-    tStart = length * 4;
-    uStart = length * 5;
-    vStart = length * 6;
-    wStart = length * 7;
+    qStart = (length / 8) * 1;
+    rStart = (length / 8) * 2;
+    sStart = (length / 8) * 3;
+    tStart = (length / 8) * 4;
+    uStart = (length / 8) * 5;
+    vStart = (length / 8) * 6;
+    wStart = (length / 8) * 7;
 
-    for(i = 0; i < length; i++)
+    for(i = 0; i < (length / 8); i++)
     {
         sequential[i]          = p[i];
         sequential[qStart + i] = q[i];
@@ -192,15 +192,15 @@ int32_t aaruf_cst_untransform(const uint8_t* sequential, uint8_t* interleaved, s
         return AARUF_ERROR_NOT_ENOUGH_MEMORY;
     }
 
-    qStart = length * 1;
-    rStart = length * 2;
-    sStart = length * 3;
-    tStart = length * 4;
-    uStart = length * 5;
-    vStart = length * 6;
-    wStart = length * 7;
+    qStart = (length / 8) * 1;
+    rStart = (length / 8) * 2;
+    sStart = (length / 8) * 3;
+    tStart = (length / 8) * 4;
+    uStart = (length / 8) * 5;
+    vStart = (length / 8) * 6;
+    wStart = (length / 8) * 7;
 
-    for(i = 0; i < length; i++)
+    for(i = 0; i < (length / 8); i++)
     {
         p[i] = sequential[i];
         q[i] = sequential[qStart + i];

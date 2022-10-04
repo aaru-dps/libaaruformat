@@ -342,8 +342,6 @@ void* aaruf_open(const char* filepath)
 
                     if(blockHeader.compression == LzmaClauniaSubchannelTransform)
                     {
-                        // TODO: Needs to fix!
-                        /*
                         cstData = malloc(blockHeader.length);
                         if(cstData == NULL)
                         {
@@ -355,9 +353,8 @@ void* aaruf_open(const char* filepath)
 
                         aaruf_cst_untransform(data, cstData, blockHeader.length);
                         free(data);
-                        data = cstData;
+                        data    = cstData;
                         cstData = NULL;
-                        */
                     }
 
                     free(cmpData);
