@@ -24,7 +24,7 @@
 int32_t aaruf_read_media_tag(void* context, uint8_t* data, int32_t tag, uint32_t* length)
 {
     aaruformatContext* ctx;
-    dataLinkedList*    item;
+    mediaTagEntry*     item;
 
     if(context == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
 
@@ -33,27 +33,24 @@ int32_t aaruf_read_media_tag(void* context, uint8_t* data, int32_t tag, uint32_t
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
 
-    item = ctx->mediaTagsHead;
+    HASH_FIND_INT(ctx->mediaTags, &tag, item);
 
-    while(item != NULL)
+    if(item == NULL)
     {
-        if(item->type == tag)
-        {
-            if(data == NULL || *length < item->length)
-            {
-                *length = item->length;
-                return AARUF_ERROR_BUFFER_TOO_SMALL;
-            }
-
-            *length = item->length;
-            memcpy(data, item->data, item->length);
-        }
-
-        item = item->next;
+        *length = 0;
+        return AARUF_ERROR_MEDIA_TAG_NOT_PRESENT;
     }
 
-    *length = 0;
-    return AARUF_ERROR_MEDIA_TAG_NOT_PRESENT;
+    if(data == NULL || *length < item->length)
+    {
+        *length = item->length;
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    *length = item->length;
+    memcpy(data, item->data, item->length);
+
+    return AARUF_STATUS_OK;
 }
 
 int32_t aaruf_read_sector(void* context, uint64_t sectorAddress, uint8_t* data, uint32_t* length)

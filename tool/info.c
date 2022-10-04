@@ -31,6 +31,8 @@ int info(char* path)
     char*              strBuffer;
     UErrorCode         u_error_code;
     uint               i, j;
+    mediaTagEntry*     mediaTag;
+    mediaTagEntry*     tmpMediaTag;
 
     ctx = aaruf_open(path);
 
@@ -531,6 +533,15 @@ int info(char* path)
     }
 
     if(ctx->checksums.hasSpamSum) printf("SpamSum: %s\n", ctx->checksums.spamsum);
+
+    if(ctx->mediaTags != NULL)
+    {
+        printf("Media tags:\n");
+        HASH_ITER(hh, ctx->mediaTags, mediaTag, tmpMediaTag)
+        {
+            printf("\tType %d is %d bytes long.\n", mediaTag->type, mediaTag->length);
+        }
+    }
 
     aaruf_close(ctx);
 

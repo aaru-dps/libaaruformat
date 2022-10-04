@@ -47,6 +47,8 @@ void* aaruf_open(const char* filepath)
     size_t             lzmaSize;
     ChecksumHeader     checksum_header;
     ChecksumEntry*     checksum_entry;
+    mediaTagEntry*     mediaTag;
+    mediaTagEntry*     oldMediaTag;
 
     ctx = (aaruformatContext*)malloc(sizeof(aaruformatContext));
     memset(ctx, 0, sizeof(aaruformatContext));
@@ -400,8 +402,6 @@ void* aaruf_open(const char* filepath)
                     break;
                 }
 
-                dataLinkedList* mediaTag = NULL;
-
                 // Check if it's not a media tag, but a sector tag, and fill the appropriate table then
                 switch(idxEntries[i].dataType)
                 {
@@ -439,50 +439,28 @@ void* aaruf_open(const char* filepath)
                         break;
                     case CompactDiscMode2Subheader: ctx->mode2Subheaders = data; break;
                     default:
-                        if(ctx->mediaTagsHead != NULL)
-                        {
-                            mediaTag = ctx->mediaTagsHead;
-                            while(mediaTag != NULL)
-                            {
-                                if(mediaTag->type == blockHeader.type)
-                                {
-                                    fprintf(stderr,
-                                            "libaaruformat: Media tag type %d duplicated, removing previous entry...\n",
-                                            blockHeader.type);
-                                    free(mediaTag->data);
-                                    mediaTag->data = data;
-                                    break;
-                                }
-
-                                mediaTag = mediaTag->next;
-                            }
-                        }
-
-                        // If the mediaTag is NULL means we have arrived the end of the list without finding a duplicate
-                        // or the list was empty
-                        if(mediaTag != NULL) break;
-
-                        mediaTag = (dataLinkedList*)malloc(sizeof(dataLinkedList));
+                        mediaTag = (mediaTagEntry*)malloc(sizeof(mediaTagEntry));
 
                         if(mediaTag == NULL)
                         {
-                            fprintf(stderr, "libaaruformat: Cannot allocate memory for media tag list entry.\n");
+                            fprintf(stderr, "libaaruformat: Cannot allocate memory for media tag entry.\n");
                             break;
                         }
-                        memset(mediaTag, 0, sizeof(dataLinkedList));
+                        memset(mediaTag, 0, sizeof(mediaTagEntry));
 
                         mediaTag->type   = aaruf_get_media_tag_type_for_datatype(blockHeader.type);
                         mediaTag->data   = data;
                         mediaTag->length = blockHeader.length;
 
-                        if(ctx->mediaTagsHead == NULL) { ctx->mediaTagsHead = mediaTag; }
-                        else
-                        {
-                            mediaTag->previous       = ctx->mediaTagsTail;
-                            ctx->mediaTagsTail->next = mediaTag;
-                        }
+                        HASH_REPLACE_INT(ctx->mediaTags, type, mediaTag, oldMediaTag);
 
-                        ctx->mediaTagsTail = mediaTag;
+                        if(oldMediaTag != NULL)
+                        {
+                            fprintf(stderr, "libaaruformat: Replaced media tag with type %d\n", oldMediaTag->type);
+                            free(oldMediaTag->data);
+                            free(oldMediaTag);
+                            oldMediaTag = NULL;
+                        }
 
                         break;
                 }

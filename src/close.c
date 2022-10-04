@@ -28,7 +28,9 @@
 
 int aaruf_close(void* context)
 {
-    int i;
+    int            i;
+    mediaTagEntry* mediaTag;
+    mediaTagEntry* tmpMediaTag;
 
     if(context == NULL)
     {
@@ -65,28 +67,14 @@ int aaruf_close(void* context)
     free(ctx->mode2Subheaders);
     ctx->mode2Subheaders = NULL;
 
-    if(ctx->mediaTagsTail != NULL)
+    if(ctx->mediaTags != NULL)
     {
-        dataLinkedList* mediaTag = ctx->mediaTagsTail;
-
-        while(mediaTag->previous != NULL)
+        HASH_ITER(hh, ctx->mediaTags, mediaTag, tmpMediaTag)
         {
+            HASH_DEL(ctx->mediaTags, mediaTag);
             free(mediaTag->data);
-            mediaTag->data = NULL;
-            mediaTag       = mediaTag->previous;
-            free(mediaTag->next);
-            mediaTag->next = NULL;
+            free(mediaTag);
         }
-
-        ctx->mediaTagsTail = NULL;
-    }
-
-    if(ctx->mediaTagsHead != NULL)
-    {
-        free(ctx->mediaTagsHead->data);
-        ctx->mediaTagsHead->data = NULL;
-        free(ctx->mediaTagsHead);
-        ctx->mediaTagsHead = NULL;
     }
 
 #ifdef __linux__ // TODO: Implement

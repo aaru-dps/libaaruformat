@@ -46,6 +46,14 @@ typedef struct Checksums
     uint8_t* spamsum;
 } Checksums;
 
+typedef struct mediaTagEntry
+{
+    uint8_t*       data;
+    int32_t        type;
+    uint32_t       length;
+    UT_hash_handle hh;
+} mediaTagEntry;
+
 typedef struct aaruformatContext
 {
     uint64_t                            magic;
@@ -53,8 +61,6 @@ typedef struct aaruformatContext
     uint8_t                             libraryMinorVersion;
     FILE*                               imageStream;
     AaruHeader                          header;
-    struct dataLinkedList*              mediaTagsHead;
-    struct dataLinkedList*              mediaTagsTail;
     uint8_t*                            sectorPrefix;
     uint8_t*                            sectorPrefixCorrected;
     uint8_t*                            sectorSuffix;
@@ -84,16 +90,8 @@ typedef struct aaruformatContext
     struct CacheHeader                  blockHeaderCache;
     struct CacheHeader                  blockCache;
     struct Checksums                    checksums;
+    struct mediaTagEntry*               mediaTags;
 } aaruformatContext;
-
-typedef struct dataLinkedList
-{
-    struct dataLinkedList* previous;
-    struct dataLinkedList* next;
-    uint8_t*               data;
-    int32_t                type;
-    uint32_t               length;
-} dataLinkedList;
 
 typedef struct DumpHardwareEntriesWithData
 {
