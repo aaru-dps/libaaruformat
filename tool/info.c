@@ -23,6 +23,8 @@
 
 #include <aaruformat.h>
 
+#include "aaruformattool.h"
+
 int info(char* path)
 {
     aaruformatContext* ctx;
@@ -287,11 +289,11 @@ int info(char* path)
             printf("\tTrack entry %d:\n", i);
             printf("\t\tSequence: %d\n", ctx->trackEntries[i].sequence);
             printf("\t\tType: %d\n", ctx->trackEntries[i].type);
-            printf("\t\tStart: %d\n", ctx->trackEntries[i].start);
-            printf("\t\tEnd: %d\n", ctx->trackEntries[i].end);
-            printf("\t\tPregap: %d\n", ctx->trackEntries[i].pregap);
+            printf("\t\tStart: %ld\n", ctx->trackEntries[i].start);
+            printf("\t\tEnd: %ld\n", ctx->trackEntries[i].end);
+            printf("\t\tPregap: %ld\n", ctx->trackEntries[i].pregap);
             printf("\t\tSession: %d\n", ctx->trackEntries[i].session);
-            printf("\t\tISRC: %0.13s\n", ctx->trackEntries[i].isrc);
+            printf("\t\tISRC: %.13s\n", ctx->trackEntries[i].isrc);
             printf("\t\tFlags: %d\n", ctx->trackEntries[i].flags);
         }
     }
@@ -506,6 +508,29 @@ int info(char* path)
                ctx->imageInfo.Cylinders,
                ctx->imageInfo.Heads,
                ctx->imageInfo.SectorsPerTrack);
+
+    if(ctx->checksums.hasMd5)
+    {
+        strBuffer = byte_array_to_hex_string(ctx->checksums.md5, MD5_DIGEST_LENGTH);
+        printf("MD5: %s\n", strBuffer);
+        free(strBuffer);
+    }
+
+    if(ctx->checksums.hasSha1)
+    {
+        strBuffer = byte_array_to_hex_string(ctx->checksums.sha1, SHA1_DIGEST_LENGTH);
+        printf("SHA1: %s\n", strBuffer);
+        free(strBuffer);
+    }
+
+    if(ctx->checksums.hasSha256)
+    {
+        strBuffer = byte_array_to_hex_string(ctx->checksums.sha256, SHA256_DIGEST_LENGTH);
+        printf("SHA256: %s\n", strBuffer);
+        free(strBuffer);
+    }
+
+    if(ctx->checksums.hasSpamSum) printf("SpamSum: %s\n", ctx->checksums.spamsum);
 
     aaruf_close(ctx);
 

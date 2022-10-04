@@ -141,6 +141,9 @@ int aaruf_close(void* context)
     free(ctx->eccCdContext);
     ctx->eccCdContext = NULL;
 
+    free(ctx->checksums.spamsum);
+    ctx->checksums.spamsum = NULL;
+
     // TODO: Free caches
 
     free(context);

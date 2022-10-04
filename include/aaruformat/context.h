@@ -22,6 +22,30 @@
 #include "lru.h"
 #include "structs.h"
 
+#ifndef MD5_DIGEST_LENGTH
+#define MD5_DIGEST_LENGTH 16
+#endif
+
+#ifndef SHA1_DIGEST_LENGTH
+#define SHA1_DIGEST_LENGTH 20
+#endif
+
+#ifndef SHA256_DIGEST_LENGTH
+#define SHA256_DIGEST_LENGTH 32
+#endif
+
+typedef struct Checksums
+{
+    bool     hasMd5;
+    bool     hasSha1;
+    bool     hasSha256;
+    bool     hasSpamSum;
+    uint8_t  md5[MD5_DIGEST_LENGTH];
+    uint8_t  sha1[SHA1_DIGEST_LENGTH];
+    uint8_t  sha256[SHA256_DIGEST_LENGTH];
+    uint8_t* spamsum;
+} Checksums;
+
 typedef struct aaruformatContext
 {
     uint64_t                            magic;
@@ -59,6 +83,7 @@ typedef struct aaruformatContext
     bool*                               readableSectorTags;
     struct CacheHeader                  blockHeaderCache;
     struct CacheHeader                  blockCache;
+    struct Checksums                    checksums;
 } aaruformatContext;
 
 typedef struct dataLinkedList

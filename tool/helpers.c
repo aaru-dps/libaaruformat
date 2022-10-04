@@ -16,11 +16,37 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef LIBAARUFORMAT_TOOL_AARUFORMATTOOL_H_
-#define LIBAARUFORMAT_TOOL_AARUFORMATTOOL_H_
 
-int   identify(char* path);
-int   info(char* path);
-char* byte_array_to_hex_string(const unsigned char* array, int array_size);
+#include <stdlib.h>
+#include <string.h>
 
-#endif // LIBAARUFORMAT_TOOL_AARUFORMATTOOL_H_
+#include "aaruformattool.h"
+
+char* byte_array_to_hex_string(const unsigned char* array, int array_size)
+{
+    char* hex_string = NULL;
+    int   j;
+    int   i;
+
+    hex_string = malloc(array_size * 2 + 1);
+
+    if(hex_string == NULL) return NULL;
+
+    j = 0;
+    for(i = 0; i < array_size; i++)
+    {
+        hex_string[j] = (array[i] >> 4) + '0';
+        if(hex_string[j] > '9') hex_string[j] += 0x7;
+
+        j++;
+
+        hex_string[j] = (array[i] & 0xF) + '0';
+        if(hex_string[j] > '9') hex_string[j] += 0x7;
+
+        j++;
+    }
+
+    hex_string[j] = 0;
+
+    return hex_string;
+}
