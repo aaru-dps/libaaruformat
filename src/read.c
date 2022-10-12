@@ -276,7 +276,7 @@ int32_t aaruf_read_track_sector(void* context, uint8_t* data, uint64_t sectorAdd
     return AARUF_ERROR_TRACK_NOT_FOUND;
 }
 
-int32_t read_sector_long(void* context, uint8_t* data, uint64_t sectorAddress, uint32_t* length)
+int32_t aaruf_read_sector_long(void* context, uint64_t sectorAddress, uint8_t* data, uint32_t* length)
 {
     aaruformatContext* ctx;
     uint32_t           bareLength;

@@ -74,6 +74,10 @@ AARU_EXPORT void AARU_CALL       aaruf_crc64_slicing(uint64_t* previous_crc, con
 AARU_EXPORT uint64_t AARU_CALL   aaruf_crc64_data(const uint8_t* data, uint32_t len);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void* context, uint64_t sectorAddress, uint8_t* data, uint32_t* length);
+AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void*     context,
+                                                     uint64_t  sectorAddress,
+                                                     uint8_t*  data,
+                                                     uint32_t* length);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_cst_transform(const uint8_t* interleaved, uint8_t* sequential, size_t length);
 
