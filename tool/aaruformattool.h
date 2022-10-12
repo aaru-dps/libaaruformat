@@ -19,8 +19,11 @@
 #ifndef LIBAARUFORMAT_TOOL_AARUFORMATTOOL_H_
 #define LIBAARUFORMAT_TOOL_AARUFORMATTOOL_H_
 
+#include <stdbool.h>
+
 int   identify(char* path);
 int   info(char* path);
 char* byte_array_to_hex_string(const unsigned char* array, int array_size);
+int   printhex(unsigned char* array, unsigned int length, int width, bool color);
 
 #endif // LIBAARUFORMAT_TOOL_AARUFORMATTOOL_H_
