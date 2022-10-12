@@ -315,7 +315,11 @@ int32_t aaruf_read_sector_long(void* context, uint64_t sectorAddress, uint8_t* d
 
             res = aaruf_read_sector(context, sectorAddress, bareData, &bareLength);
 
-            if(res < AARUF_STATUS_OK) return res;
+            if(res < AARUF_STATUS_OK)
+            {
+                free(bareData);
+                return res;
+            }
 
             trkFound = false;
 
