@@ -63,6 +63,10 @@ int32_t aaruf_read_sector(void* context, uint64_t sectorAddress, uint8_t* data, 
     BlockHeader*       blockHeader;
     uint8_t*           block;
     size_t             readBytes;
+    uint8_t            lzmaProperties[LZMA_PROPERTIES_LENGTH];
+    size_t             lzmaSize;
+    uint8_t*           cmpData;
+    int                errorNo;
 
     if(context == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
 
@@ -103,7 +107,7 @@ int32_t aaruf_read_sector(void* context, uint64_t sectorAddress, uint8_t* data, 
         add_to_cache_uint64(&ctx->blockHeaderCache, blockOffset, blockHeader);
     }
     else
-        fseek(ctx->imageStream, sizeof(BlockHeader), SEEK_CUR); // Advance as if reading the header
+        fseek(ctx->imageStream, blockOffset + sizeof(BlockHeader), SEEK_SET); // Advance as if reading the header
 
     if(data == NULL || *length < blockHeader->sectorSize)
     {
@@ -135,6 +139,66 @@ int32_t aaruf_read_sector(void* context, uint64_t sectorAddress, uint8_t* data, 
                 free(block);
                 return AARUF_ERROR_CANNOT_READ_BLOCK;
             }
+
+            break;
+        case Lzma:
+            lzmaSize = blockHeader->cmpLength - LZMA_PROPERTIES_LENGTH;
+            cmpData  = malloc(lzmaSize);
+
+            if(cmpData == NULL)
+            {
+                fprintf(stderr, "Cannot allocate memory for block, not continuing...\n");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            block = malloc(blockHeader->length);
+            if(block == NULL)
+            {
+                fprintf(stderr, "Cannot allocate memory for block, not continuing...\n");
+                free(cmpData);
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            readBytes = fread(lzmaProperties, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
+
+            if(readBytes != LZMA_PROPERTIES_LENGTH)
+            {
+                fprintf(stderr, "Could not read LZMA properties, not continuing...\n");
+                free(block);
+                free(cmpData);
+                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+            }
+
+            readBytes = fread(cmpData, 1, lzmaSize, ctx->imageStream);
+            if(readBytes != lzmaSize)
+            {
+                fprintf(stderr, "Could not read compressed block, continuing...\n");
+                free(cmpData);
+                free(block);
+                break;
+            }
+
+            readBytes = blockHeader->length;
+            errorNo =
+                aaruf_lzma_decode_buffer(block, &readBytes, cmpData, &lzmaSize, lzmaProperties, LZMA_PROPERTIES_LENGTH);
+
+            if(errorNo != 0)
+            {
+                fprintf(stderr, "Got error %d from LZMA, continuing...\n", errorNo);
+                free(cmpData);
+                free(block);
+                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+            }
+
+            if(readBytes != blockHeader->length)
+            {
+                fprintf(stderr, "Error decompressing block, should be {0} bytes but got {1} bytes., continuing...\n");
+                free(cmpData);
+                free(block);
+                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+            }
+
+            free(cmpData);
 
             break;
         default: return AARUF_ERROR_UNSUPPORTED_COMPRESSION;
