@@ -75,7 +75,7 @@ int verify_sectors(char* path)
 
     cd_ecc_context = aaruf_ecc_cd_init();
     errors         = 0;
-    unknown        = 0;
+    unknowns       = 0;
     any_error      = false;
 
     for(s = 0; s < ctx->imageInfo.Sectors; s++)
