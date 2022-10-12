@@ -36,6 +36,7 @@ void usage()
     printf("\tidentify\tIdentifies if the indicated file is a supported AaruFormat image.\n");
     printf("\tinfo\tPrints information about a given AaruFormat image.\n");
     printf("\tread\tReads a sector and prints it out on screen.\n");
+    printf("\tread_long\tReads a sector with all its prefixes and suffixes and prints it out on screen.\n");
     printf("\n");
     printf("For help on the verb invoke the tool with the verb and no arguments.\n");
 }
@@ -68,6 +69,18 @@ void usage_read()
     printf("Usage:\n");
     printf("aaruformattool read <sector_number> <filename>\n");
     printf("Reads a sector and prints it out on screen.\n");
+    printf("\n");
+    printf("Arguments:\n");
+    printf("\t<sector_number>\tSector number to read and print out.\n");
+    printf("\t<filename>\tPath to AaruFormat image to print information from.\n");
+}
+
+void usage_read_long()
+{
+    printf("\n");
+    printf("Usage:\n");
+    printf("aaruformattool read_long <sector_number> <filename>\n");
+    printf("Reads a sector with all its prefixes and suffixes and prints it out on screen.\n");
     printf("\n");
     printf("Arguments:\n");
     printf("\t<sector_number>\tSector number to read and print out.\n");
@@ -125,7 +138,35 @@ int main(int argc, char* argv[])
         return info(argv[2]);
     }
 
-    if(strncmp(argv[1], "read", strlen("read")) == 0)
+    if(strncmp(argv[1], "read_long", strlen("read_long")) == 0)
+    {
+        if(argc < 4)
+        {
+            usage_read_long();
+            return -1;
+        }
+
+        if(argc > 5)
+        {
+            fprintf(stderr, "Invalid number of arguments\n");
+            usage_read_long();
+            return -1;
+        }
+
+        errno = 0;
+
+        sector_no = strtoll(argv[2], NULL, 10);
+
+        if(errno != 0)
+        {
+            fprintf(stderr, "Invalid sector number\n");
+            usage_read_long();
+            return -1;
+        }
+
+        return read_long(sector_no, argv[3]);
+    }
+    else if(strncmp(argv[1], "read", strlen("read")) == 0)
     {
         if(argc < 4)
         {

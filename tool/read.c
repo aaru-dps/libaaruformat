@@ -73,3 +73,53 @@ int read(unsigned long long sector_no, char* path)
 
     aaruf_close(ctx);
 }
+
+int read_long(unsigned long long sector_no, char* path)
+{
+    aaruformatContext* ctx;
+    int32_t            res;
+    uint32_t           length;
+    uint8_t*           data;
+
+    ctx = aaruf_open(path);
+
+    if(ctx == NULL)
+    {
+        printf("Error %d when opening AaruFormat image.\n", errno);
+        return errno;
+    }
+
+    res = aaruf_read_sector_long(ctx, sector_no, NULL, &length);
+
+    if(res != AARUF_STATUS_OK && res != AARUF_ERROR_BUFFER_TOO_SMALL)
+    {
+        printf("Error %d when guessing sector size.\n", res);
+        aaruf_close(ctx);
+        return res;
+    }
+
+    printf("Sector is %d bytes.\n", length);
+
+    data = malloc(length);
+
+    if(data == NULL)
+    {
+        printf("Error allocating memory for sector.\n");
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    res = aaruf_read_sector_long(ctx, sector_no, data, &length);
+
+    if(res != AARUF_STATUS_OK)
+    {
+        printf("Error %d when reading sector.\n", res);
+        aaruf_close(ctx);
+        return res;
+    }
+
+    printhex(data, length, 16, true);
+
+    free(data);
+
+    aaruf_close(ctx);
+}

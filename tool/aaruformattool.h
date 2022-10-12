@@ -26,5 +26,6 @@ int   info(char* path);
 char* byte_array_to_hex_string(const unsigned char* array, int array_size);
 int   read(unsigned long long sector_no, char* path);
 int   printhex(unsigned char* array, unsigned int length, int width, bool color);
+int   read_long(unsigned long long sector_no, char* path);
 
 #endif // LIBAARUFORMAT_TOOL_AARUFORMATTOOL_H_
