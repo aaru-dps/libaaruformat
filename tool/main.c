@@ -17,7 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <aaruformat.h>
 
@@ -33,6 +35,7 @@ void usage()
     printf("Available verbs:\n");
     printf("\tidentify\tIdentifies if the indicated file is a supported AaruFormat image.\n");
     printf("\tinfo\tPrints information about a given AaruFormat image.\n");
+    printf("\tread\tReads a sector and prints it out on screen.\n");
     printf("\n");
     printf("For help on the verb invoke the tool with the verb and no arguments.\n");
 }
@@ -59,8 +62,22 @@ void usage_info()
     printf("\t<filename>\tPath to AaruFormat image to print information from.\n");
 }
 
+void usage_read()
+{
+    printf("\n");
+    printf("Usage:\n");
+    printf("aaruformattool read <sector_number> <filename>\n");
+    printf("Reads a sector and prints it out on screen.\n");
+    printf("\n");
+    printf("Arguments:\n");
+    printf("\t<sector_number>\tSector number to read and print out.\n");
+    printf("\t<filename>\tPath to AaruFormat image to print information from.\n");
+}
+
 int main(int argc, char* argv[])
 {
+    uint64_t sector_no = 0;
+
     printf("AaruFormat Tool version %d.%d\n", AARUFORMAT_TOOL_MAJOR_VERSION, AARUFORMAT_TOOL_MINOR_VERSION);
     printf("Copyright (C) 2019-2022 Natalia Portillo\n");
     printf("libaaruformat version %d.%d\n", LIBAARUFORMAT_MAJOR_VERSION, LIBAARUFORMAT_MINOR_VERSION);
@@ -90,7 +107,6 @@ int main(int argc, char* argv[])
         return identify(argv[2]);
     }
 
-
     if(strncmp(argv[1], "info", strlen("info")) == 0)
     {
         if(argc == 2)
@@ -109,6 +125,34 @@ int main(int argc, char* argv[])
         return info(argv[2]);
     }
 
+    if(strncmp(argv[1], "read", strlen("read")) == 0)
+    {
+        if(argc < 4)
+        {
+            usage_read();
+            return -1;
+        }
+
+        if(argc > 5)
+        {
+            fprintf(stderr, "Invalid number of arguments\n");
+            usage_read();
+            return -1;
+        }
+
+        errno = 0;
+
+        sector_no = strtoll(argv[2], NULL, 10);
+
+        if(errno != 0)
+        {
+            fprintf(stderr, "Invalid sector number\n");
+            usage_read();
+            return -1;
+        }
+
+        return read(sector_no, argv[3]);
+    }
 
     return 0;
 }
