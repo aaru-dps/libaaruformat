@@ -79,6 +79,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void*     context,
                                                      uint8_t*  data,
                                                      uint32_t* length);
 
+AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void* context);
+
 AARU_EXPORT int32_t AARU_CALL aaruf_cst_transform(const uint8_t* interleaved, uint8_t* sequential, size_t length);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_cst_untransform(const uint8_t* sequential, uint8_t* interleaved, size_t length);

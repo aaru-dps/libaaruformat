@@ -37,6 +37,7 @@ void usage()
     printf("\tinfo\tPrints information about a given AaruFormat image.\n");
     printf("\tread\tReads a sector and prints it out on screen.\n");
     printf("\tread_long\tReads a sector with all its prefixes and suffixes and prints it out on screen.\n");
+    printf("\tverify\tVerifies the integrity of all blocks in a AaruFormat image.\n");
     printf("\n");
     printf("For help on the verb invoke the tool with the verb and no arguments.\n");
 }
@@ -85,6 +86,17 @@ void usage_read_long()
     printf("Arguments:\n");
     printf("\t<sector_number>\tSector number to read and print out.\n");
     printf("\t<filename>\tPath to AaruFormat image to print information from.\n");
+}
+
+void usage_verify()
+{
+    printf("\n");
+    printf("Usage:\n");
+    printf("aaruformattool verify <filename>\n");
+    printf("Verifies the integrity of all blocks in a AaruFormat image.\n");
+    printf("\n");
+    printf("Arguments:\n");
+    printf("\t<filename>\tPath to AaruFormat image to verify.\n");
 }
 
 int main(int argc, char* argv[])
@@ -193,6 +205,24 @@ int main(int argc, char* argv[])
         }
 
         return read(sector_no, argv[3]);
+    }
+
+    if(strncmp(argv[1], "verify", strlen("verify")) == 0)
+    {
+        if(argc == 2)
+        {
+            usage_verify();
+            return -1;
+        }
+
+        if(argc > 3)
+        {
+            fprintf(stderr, "Invalid number of arguments\n");
+            usage_verify();
+            return -1;
+        }
+
+        return verify(argv[2]);
     }
 
     return 0;

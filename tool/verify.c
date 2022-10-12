@@ -16,17 +16,31 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef LIBAARUFORMAT_TOOL_AARUFORMATTOOL_H_
-#define LIBAARUFORMAT_TOOL_AARUFORMATTOOL_H_
 
-#include <stdbool.h>
+#include <errno.h>
 
-int   identify(char* path);
-int   info(char* path);
-char* byte_array_to_hex_string(const unsigned char* array, int array_size);
-int   read(unsigned long long sector_no, char* path);
-int   printhex(unsigned char* array, unsigned int length, int width, bool color);
-int   read_long(unsigned long long sector_no, char* path);
-int   verify(char* path);
+#include <aaruformat.h>
 
-#endif // LIBAARUFORMAT_TOOL_AARUFORMATTOOL_H_
+int verify(char* path)
+{
+    aaruformatContext* ctx;
+    uint32_t           res;
+
+    ctx = aaruf_open(path);
+
+    if(ctx == NULL)
+    {
+        printf("Error %d when opening AaruFormat image.\n", errno);
+        return errno;
+    }
+
+    res = aaruf_verify_image(ctx);
+
+    if(res == AARUF_STATUS_OK) printf("Image blocks contain no errors.\n");
+    else if(res == AARUF_ERROR_INVALID_BLOCK_CRC)
+        printf("A block contains an invalid CRC value.\n");
+    else
+        printf("Error %d verifying image.\n", res);
+
+    return res;
+}
