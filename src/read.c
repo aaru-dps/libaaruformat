@@ -338,9 +338,9 @@ int32_t aaruf_read_sector_long(void* context, uint64_t sectorAddress, uint8_t* d
             switch(trk.type)
             {
                 case Audio:
-                case Data: memcpy(bareData, data, bareLength); return res;
+                case Data: memcpy(data, bareData, bareLength); return res;
                 case CdMode1:
-                    memcpy(bareData, data + 16, 2048);
+                    memcpy(data + 16, bareData, 2048);
 
                     if(ctx->sectorPrefix != NULL) memcpy(data, ctx->sectorPrefix + (sectorAddress * 16), 16);
                     else if(ctx->sectorPrefixDdt != NULL)
