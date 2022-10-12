@@ -98,7 +98,7 @@ bool aaruf_ecc_cd_is_suffix_correct(void* context, const uint8_t* sector)
     bool correctEccQ = aaruf_ecc_cd_check(context, sector, sector, 52, 43, 86, 88, sector, 0xC, 0x10, 0x81C + 0xAC);
     if(!correctEccQ) return false;
 
-    storedEdc = sector[0x810]; // TODO: Check casting
+    storedEdc = (sector[0x813] << 24) + (sector[0x812] << 16) + (sector[0x811] << 8) + sector[0x810];
     edc       = 0;
     size      = 0x810;
     pos       = 0;
@@ -129,7 +129,7 @@ bool aaruf_ecc_cd_is_suffix_correct_mode2(void* context, const uint8_t* sector)
     bool correctEccQ = aaruf_ecc_cd_check(context, zeroaddress, sector, 52, 43, 86, 88, sector, 0, 0x10, 0x81C + 0xAC);
     if(!correctEccQ) return false;
 
-    storedEdc = sector[0x818]; // TODO: Check cast
+    storedEdc = (sector[0x81B] << 24) + (sector[0x81A] << 16) + (sector[0x819] << 8) + sector[0x818];
     edc       = 0;
     size      = 0x808;
     pos       = 0x10;
