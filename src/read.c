@@ -325,7 +325,7 @@ int32_t aaruf_read_sector_long(void* context, uint64_t sectorAddress, uint8_t* d
 
             for(i = 0; i < ctx->numberOfDataTracks; i++)
             {
-                if(ctx->dataTracks[i].start >= sectorAddress && ctx->dataTracks[i].end <= sectorAddress)
+                if(sectorAddress >= ctx->dataTracks[i].start && sectorAddress <= ctx->dataTracks[i].end)
                 {
                     trkFound = true;
                     trk      = ctx->dataTracks[i];
