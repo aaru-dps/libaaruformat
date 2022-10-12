@@ -365,6 +365,8 @@ int32_t aaruf_read_sector_long(void* context, uint64_t sectorAddress, uint8_t* d
                     else
                         return AARUF_ERROR_REACHED_UNREACHABLE_CODE;
 
+                    if(res != AARUF_STATUS_OK) return res;
+
                     if(ctx->sectorSuffix != NULL) memcpy(data + 2064, ctx->sectorSuffix + sectorAddress * 288, 288);
                     else if(ctx->sectorSuffixDdt != NULL)
                     {
@@ -414,6 +416,8 @@ int32_t aaruf_read_sector_long(void* context, uint64_t sectorAddress, uint8_t* d
                     }
                     else
                         return AARUF_ERROR_REACHED_UNREACHABLE_CODE;
+
+                    if(res != AARUF_STATUS_OK) return res;
 
                     if(ctx->mode2Subheaders != NULL && ctx->sectorSuffixDdt != NULL)
                     {
