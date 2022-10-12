@@ -387,19 +387,22 @@ void* aaruf_open(const char* filepath)
                     break;
                 }
 
-                crc64 = aaruf_crc64_data(data, blockHeader.length);
-
-                // Due to how C# wrote it, it is effectively reversed
-                if(ctx->header.imageMajorVersion <= AARUF_VERSION) crc64 = bswap_64(crc64);
-
-                if(crc64 != blockHeader.crc64)
+                if(blockHeader.length > 0)
                 {
-                    fprintf(stderr,
-                            "libaaruformat: Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64
-                            ", continuing...\n",
-                            crc64,
-                            blockHeader.crc64);
-                    break;
+                    crc64 = aaruf_crc64_data(data, blockHeader.length);
+
+                    // Due to how C# wrote it, it is effectively reversed
+                    if(ctx->header.imageMajorVersion <= AARUF_VERSION) crc64 = bswap_64(crc64);
+
+                    if(crc64 != blockHeader.crc64)
+                    {
+                        fprintf(stderr,
+                                "libaaruformat: Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64
+                                ", continuing...\n",
+                                crc64,
+                                blockHeader.crc64);
+                        break;
+                    }
                 }
 
                 // Check if it's not a media tag, but a sector tag, and fill the appropriate table then
