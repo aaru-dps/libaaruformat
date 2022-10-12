@@ -147,14 +147,14 @@ int32_t aaruf_read_sector(void* context, uint64_t sectorAddress, uint8_t* data, 
 
             if(cmpData == NULL)
             {
-                fprintf(stderr, "Cannot allocate memory for block, not continuing...\n");
+                fprintf(stderr, "Cannot allocate memory for block...\n");
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
 
             block = malloc(blockHeader->length);
             if(block == NULL)
             {
-                fprintf(stderr, "Cannot allocate memory for block, not continuing...\n");
+                fprintf(stderr, "Cannot allocate memory for block...\n");
                 free(cmpData);
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
@@ -163,7 +163,7 @@ int32_t aaruf_read_sector(void* context, uint64_t sectorAddress, uint8_t* data, 
 
             if(readBytes != LZMA_PROPERTIES_LENGTH)
             {
-                fprintf(stderr, "Could not read LZMA properties, not continuing...\n");
+                fprintf(stderr, "Could not read LZMA properties...\n");
                 free(block);
                 free(cmpData);
                 return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
@@ -172,7 +172,7 @@ int32_t aaruf_read_sector(void* context, uint64_t sectorAddress, uint8_t* data, 
             readBytes = fread(cmpData, 1, lzmaSize, ctx->imageStream);
             if(readBytes != lzmaSize)
             {
-                fprintf(stderr, "Could not read compressed block, continuing...\n");
+                fprintf(stderr, "Could not read compressed block...\n");
                 free(cmpData);
                 free(block);
                 break;
@@ -184,7 +184,7 @@ int32_t aaruf_read_sector(void* context, uint64_t sectorAddress, uint8_t* data, 
 
             if(errorNo != 0)
             {
-                fprintf(stderr, "Got error %d from LZMA, continuing...\n", errorNo);
+                fprintf(stderr, "Got error %d from LZMA...\n", errorNo);
                 free(cmpData);
                 free(block);
                 return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
@@ -192,7 +192,46 @@ int32_t aaruf_read_sector(void* context, uint64_t sectorAddress, uint8_t* data, 
 
             if(readBytes != blockHeader->length)
             {
-                fprintf(stderr, "Error decompressing block, should be {0} bytes but got {1} bytes., continuing...\n");
+                fprintf(stderr, "Error decompressing block, should be {0} bytes but got {1} bytes...\n");
+                free(cmpData);
+                free(block);
+                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+            }
+
+            free(cmpData);
+
+            break;
+        case Flac:
+            cmpData = malloc(blockHeader->cmpLength);
+
+            if(cmpData == NULL)
+            {
+                fprintf(stderr, "Cannot allocate memory for block...\n");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            block = malloc(blockHeader->length);
+            if(block == NULL)
+            {
+                fprintf(stderr, "Cannot allocate memory for block...\n");
+                free(cmpData);
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            readBytes = fread(cmpData, 1, blockHeader->cmpLength, ctx->imageStream);
+            if(readBytes != blockHeader->cmpLength)
+            {
+                fprintf(stderr, "Could not read compressed block...\n");
+                free(cmpData);
+                free(block);
+                break;
+            }
+
+            readBytes = aaruf_flac_decode_redbook_buffer(block, blockHeader->length, cmpData, blockHeader->cmpLength);
+
+            if(readBytes != blockHeader->length)
+            {
+                fprintf(stderr, "Error decompressing block, should be {0} bytes but got {1} bytes...\n");
                 free(cmpData);
                 free(block);
                 return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
