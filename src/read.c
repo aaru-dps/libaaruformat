@@ -143,7 +143,7 @@ int32_t aaruf_read_sector(void* context, uint64_t sectorAddress, uint8_t* data, 
     // Add block to cache
     add_to_cache_uint64(&ctx->blockCache, blockOffset, block);
 
-    memcpy(data, block + offset, blockHeader->sectorSize);
+    memcpy(data, block + (offset * blockHeader->sectorSize), blockHeader->sectorSize);
     *length = blockHeader->sectorSize;
     return AARUF_STATUS_OK;
 }
