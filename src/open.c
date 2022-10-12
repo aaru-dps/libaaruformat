@@ -41,7 +41,7 @@ void* aaruf_open(const char* filepath)
     uint8_t*           cstData;
     uint32_t*          cdDdt;
     uint64_t           crc64;
-    int                i, j;
+    int                i, j, k;
     uint16_t           e;
     uint8_t            lzmaProperties[LZMA_PROPERTIES_LENGTH];
     size_t             lzmaSize;
@@ -1029,8 +1029,17 @@ void* aaruf_open(const char* filepath)
 
                 for(j = 0; j < ctx->tracksHeader.entries; j++)
                 {
-                    if(ctx->trackEntries[j].sequence <= 99 && ctx->trackEntries[j].type != Audio)
+                    if(ctx->trackEntries[j].sequence > 0 && ctx->trackEntries[j].sequence <= 99)
                         ctx->numberOfDataTracks++;
+                }
+
+                ctx->dataTracks = malloc(sizeof(TrackEntry) * ctx->numberOfDataTracks);
+
+                k = 0;
+                for(j = 0; j < ctx->tracksHeader.entries; j++)
+                {
+                    if(ctx->trackEntries[j].sequence > 0 && ctx->trackEntries[j].sequence <= 99)
+                        memcpy(&ctx->dataTracks[k++], &ctx->trackEntries[j], sizeof(TrackEntry));
                 }
 
                 break;
