@@ -127,3 +127,7 @@ include::appendixes/media_types.adoc[]
 <<<
 
 include::appendixes/data_types.adoc[]
+
+<<<
+
+include::appendixes/compression.adoc[]

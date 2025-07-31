@@ -1,0 +1,18 @@
+[appendix]
+== Compression Types
+
+This apprendix lists all supported compression algorithms used within AaruFormat images.
+
+NOTE: Compression method definitions may evolve over time.
+For the latest and most accurate listing, refer to the `libaaruformat` source.
+
+[cols="1,5",options="header"]
+|===
+|Value
+|Algorithm
+
+|0 |None
+|1 |LZMA — stream prepended by 5 bytes of parameters
+|2 |FLAC
+|3 |LZMA after Claunia Subchannel Transform (see Appendix D) — stream prepended by 5 bytes of parameters
+|===
