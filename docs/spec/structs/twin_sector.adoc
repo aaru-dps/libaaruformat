@@ -1,0 +1,85 @@
+=== The twin sector table (`TWTB`)
+
+This table enumerates hardware sectors that share an identical sector number.
+Such sectors are referred to as “twin sectors,” although the grouping may consist of more than two instances.
+The associated pointer is resolved following the same logic applied in a last-level deduplication table.
+
+[source,c]
+/* Undefined */
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|identifier
+|The twin sector table identifier, always `TWTB`
+
+|uint8_t
+|1 byte
+|alignment
+|Shift of alignment of all blocks in the image. This must be the same in all deduplication tables and subtables.
+
+|uint8_t
+|1 byte
+|shift
+|The shift used to calculate the position of a sector in a data block pointed by this table, or how many sectors are pointed by the next level.
+
+|uint64_t
+|8 bytes
+|entries
+|How many pointers follow this header.
+
+|uint32_t
+|4 bytes
+|length
+|The size in bytes of the table block.
+
+|uint64_t
+|8 bytes
+|crc64
+|The CRC64-ECMA checksum of the decompressed table.
+|===
+
+==== Twin sector entries
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|8 bytes
+|pointer
+|Pointer to the sector.
+|===
+
+==== Pointer-Based Data Block Resolution
+
+To determine the corresponding data block:
+
+. Right-shift the pointer value using the specified `shift` parameter.
+. Multiply the result by the `alignment` value.
+. The remainder from this operation indicates the sector's offset within the target data block.
+
+Each data block contains a fixed number of bytes per sector, which remains constant across blocks.
+This invariant size allows for more efficient storage of pointer values.
+
+===== Example
+
+Given the following parameters:
+
+* Pointer Value: `0x8003`
+* Shift Value: `5`
+* Alignment: `9`
+
+The data block is located at byte offset `524288`.
+The sector referenced by the pointer is the **third entry** within this block.
