@@ -1,0 +1,75 @@
+=== Tape File Block ('TFLE')
+
+Lists all tape files.
+Tape files are separations written to media, usually digital tapes, and are marked by filemarks.
+
+==== Structure Definition
+
+[source,c]
+#define TAPE_FILE_MAGIC 0x454C4654
+/* TODO */
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|identifier
+|The tape file block identifier, always `TFLE`
+
+|uint16_t
+|2 bytes
+|entries
+|The number of entries following this header
+
+|uint32_t
+|4 bytes
+|length
+|The length in bytes of the data following this header.
+
+|uint64_t
+|8 bytes
+|crc64
+|The CRC64-ECMA checksum of the data following this header
+|===
+
+==== Tape file entries
+
+[source,c]
+/* TODO */
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32
+|4 bytes
+|file
+|File number.
+
+|uint8
+|1 byte
+|partition
+|Partition number this file belongs to.
+
+|uint64
+|8 bytes
+|firstBlock
+|First block number, inclusive, of the file.
+
+|uint64
+|8 bytes
+|lastBlock
+|Last block number, inclusive, of the file.
+|===
