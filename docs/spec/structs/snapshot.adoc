@@ -1,0 +1,54 @@
+=== Snapshot block (`SNAP`)
+
+The snapshot block holds a list of historical indexes, representing earlier versions of the media captured within the image.
+This feature enables users to manually preserve a specific media state, allowing reversion to previous versions or comparison between multiple data capture attempts.
+
+The active index used by the image must always be the one referenced by the image header.
+If any snapshot block references the current index, it must be ignored and treated as non-existent during image save operations.
+
+Generation 0 refers to the initial image state, where only a single index—pointed to by the header—is present.
+
+The latest image header should reference all available snapshots, unless individual blocks have been explicitly discarded by the user.
+Once discarded, such blocks become orphaned and are no longer reachable within the image structure.
+
+During conversion from AaruFormat, only one snapshot (or the latest index) should be included, based on user selection.
+
+==== Structure Definition
+
+[source,c]
+/* Undefined */
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|identifier
+|The snapshot block identifier, always 'SNAP'
+
+|uint32_t
+|4 bytes
+|length
+|The length in bytes of the data following this header.
+
+|uint16_t
+|2 bytes
+|generation
+|The generation, starting from 1, of this snapshot. Every snapshot gets a generation incremented in one from the lastest recorded one.
+
+|int64_t
+|8 bytes
+|creationTime
+|Creation time of this snapshot.
+
+|uint64_t
+|8 bytes
+|index
+|Offset in bytes where the index marked by this snapshot resides.
+|===

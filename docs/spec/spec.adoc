@@ -83,3 +83,7 @@ include::structs/checksum.adoc[]
 <<<
 
 include::structs/dpm.adoc[]
+
+<<<
+
+include::structs/snapshot.adoc[]
