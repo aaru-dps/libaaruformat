@@ -22,6 +22,7 @@
 #include <unicode/ucnv.h>
 
 #include <aaruformat.h>
+#include <sys/types.h>
 
 #include "aaruformattool.h"
 
