@@ -1,0 +1,24 @@
+=== CICM XML Metadata Block ('CICM')
+
+This block header signifies the inclusion of an embedded CICM XML metadata sidecar.
+The contents of the XML are preserved in their original form and are not parsed, interpreted, or validated by the format implementation.
+
+==== Structure Definition
+
+[source,c]
+#define CICM_MAGIC 0x4D434943
+/**Header for the CICM XML metadata block */
+typedef struct CicmMetadataBlock
+{
+    /**Identifier, <see cref="BlockType.CicmBlock" /> */
+    uint32_t identifier;
+    uint32_t length;
+} CicmMetadataBlock;
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type|Size|Name|Description
+|uint32|4 bytes|identifier|The CICM XML metadata table identifier, always `CICM`
+|uint32|4 bytes|length|The size in bytes of the embedded CICM XML metadata that follows this header.

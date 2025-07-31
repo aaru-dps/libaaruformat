@@ -71,3 +71,7 @@ include::structs/metadata.adoc[]
 <<<
 
 include::structs/tracks.adoc[]
+
+<<<
+
+include::structs/cicm.adoc[]
