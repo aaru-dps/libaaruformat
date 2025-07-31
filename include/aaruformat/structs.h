@@ -57,6 +57,43 @@ typedef struct AaruHeader
     int64_t  lastWrittenTime;
 } AaruHeader;
 
+#define HEADER_APP_NAME_LEN 64
+#define GUID_SIZE 16
+
+/**Header, at start of file */
+typedef struct AaruHeaderV2 {
+    /**Header identifier, see AARU_MAGIC */
+    uint64_t identifier;
+    /**UTF-16LE name of the application that created the image */
+    uint8_t application[HEADER_APP_NAME_LEN];
+    /**Image format major version. A new major version means a possibly incompatible change of format */
+    uint8_t imageMajorVersion;
+    /**Image format minor version. A new minor version indicates a compatible change of format */
+    uint8_t imageMinorVersion;
+    /**Major version of the application that created the image */
+    uint8_t applicationMajorVersion;
+    /**Minor version of the application that created the image */
+    uint8_t applicationMinorVersion;
+    /**Type of media contained on image */
+    uint32_t mediaType;
+    /**Offset to index */
+    uint64_t indexOffset;
+    /**Windows filetime (100 nanoseconds since 1601/01/01 00:00:00 UTC) of image creation time */
+    int64_t creationTime;
+    /**Windows filetime (100 nanoseconds since 1601/01/01 00:00:00 UTC) of image last written time */
+    int64_t lastWrittenTime;
+    /**Unique identifier that allows children images to recognize and find this image.*/
+    uint8_t guid[GUID_SIZE];
+    /**Block alignment shift. All blocks in the image are aligned at 2 << blockAlignmentShift bytes */
+    uint8_t blockAlignmentShift;
+    /**Features used in this image that if unsupported are still compatible for reading and writing implementations */
+    uint64_t featureCompatible;
+    /**Features used in this image that if unsupported are still compatible for reading implementations but not for writing */
+    uint64_t featureCompatibleRo;
+    /**Featured used in this image that if unsupported prevent reading or writing the image*/
+    uint64_t featureIncompatible;
+} AaruHeaderV2;
+
 /**Header for a deduplication table. Table follows it */
 typedef struct DdtHeader
 {
