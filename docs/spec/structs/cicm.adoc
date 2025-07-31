@@ -22,3 +22,4 @@ typedef struct CicmMetadataBlock
 |Type|Size|Name|Description
 |uint32|4 bytes|identifier|The CICM XML metadata table identifier, always `CICM`
 |uint32|4 bytes|length|The size in bytes of the embedded CICM XML metadata that follows this header.
+|===
