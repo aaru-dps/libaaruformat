@@ -1,0 +1,99 @@
+[appendix]
+== Data Types
+
+This appendix enumerates all known data types that may appear within a data block or be referenced by a deduplication table.
+These types represent user data, media metadata, or sector-level tags.
+
+NOTE: This table is not exhaustive.
+The most current and authoritative list is always maintained in the `libaaruformat` source.
+
+[cols="1,4",options="header"]
+|===
+|Value |Data Type
+
+|0  |No data
+|1  |User data
+|2  |CompactDisc partial Table of Contents
+|3  |CompactDisc session information
+|4  |CompactDisc Table of Contents
+|5  |CompactDisc Power Management Area
+|6  |CompactDisc Absolute Time in Pregroove
+|7  |CompactDisc Lead-in’s CD-Text
+|8  |DVD Physical Format Information
+|9  |DVD Lead-in’s Copyright Management Information
+|10 |DVD Disc Key
+|11 |DVD Burst Cutting Area
+|12 |DVD DMI
+|13 |DVD Media Identifier
+|14 |DVD Media Key Block
+|15 |DVD-RAM Disc Definition Structure
+|16 |DVD-RAM Medium Status
+|17 |DVD-RAM Spare Area Information
+|18 |DVD-R RMD
+|19 |DVD-R Pre-recorded Information
+|20 |DVD-R Media Identifier
+|21 |DVD-R Physical Format Information
+|22 |DVD ADress In Pregroove
+|23 |HD DVD Copy Protection Information
+|24 |HD DVD Medium Status
+|25 |DVD DL Layer Capacity
+|26 |DVD DL Middle Zone Address
+|27 |DVD DL Jump Interval Size
+|28 |DVD DL Manual Layer Jump LBA
+|29 |Blu-ray Disc Information
+|30 |Blu-ray Burst Cutting Area
+|31 |Blu-ray Disc Definition Structure
+|32 |Blu-ray Cartridge Status
+|33 |Blu-ray Spare Area Information
+|34 |AACS Volume Identifier
+|35 |AACS Serial Number
+|36 |AACS Media Identifier
+|37 |AACS Media Key Block
+|38 |AACS Data Keys
+|39 |AACS LBA Extents
+|40 |CPRM Media Key Block
+|41 |Hybrid disc recognized layers
+|42 |MMC Write Protection
+|43 |MMC Disc Information
+|44 |MMC Track Resources Information
+|45 |MMC Pseudo-OverWrite Resources Information
+|46 |SCSI INQUIRY response
+|47 |SCSI MODE PAGE 2Ah
+|48 |ATA IDENTIFY response
+|49 |ATAPI IDENTIFY response
+|50 |PCMCIA CIS
+|51 |SecureDigital CID
+|52 |SecureDigital CSD
+|53 |SecureDigital SCR
+|54 |SecureDigital OCR
+|55 |MultiMediaCard CID
+|56 |MultiMediaCard CSD
+|57 |MultiMediaCard OCR
+|58 |MultiMediaCard Extended CSD
+|59 |Xbox Security Sector
+|60 |Floppy Lead-out
+|61 |DVD Disc Control Block
+|62 |CompactDisc First track negative pregap
+|63 |CompactDisc Lead-out
+|64 |SCSI MODE SENSE(6) response
+|65 |SCSI MODE SENSE(10) response
+|66 |USB descriptors
+|67 |Xbox Disc Manufacturer Information
+|68 |Xbox Physical Format Information
+|69 |CompactDisc sector prefix (sync, header)
+|70 |CompactDisc sector suffix (EDC, ECC P, ECC Q)
+|71 |CompactDisc subchannel
+|72 |Apple Profile tag (20 bytes)
+|73 |Apple Sony tag (12 bytes)
+|74 |Priam Data Tower tag (24 bytes)
+|75 |CompactDisc Media Catalogue Number
+|76 |CompactDisc sector prefix (only incorrect ones stored)
+|77 |CompactDisc sector suffix (only incorrect ones stored)
+|78 |CompactDisc MODE 2 sector subheader
+|79 |CompactDisc Lead-in
+|80 |DVD Disc Key (decrypted)
+|81 |DVD CPI_MAI
+|82 |DVD Title Key (decrypted)
+|83 |Flux data
+|84 |Bitstream data
+|===
