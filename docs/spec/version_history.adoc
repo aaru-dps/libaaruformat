@@ -20,7 +20,9 @@
 | Draft
 | Natalia Portillo
 | Update version.
+
 Add stub for new deduplication table.
+
 Add stub for new media type.
 
 | 04 Sep 2022
@@ -34,7 +36,9 @@ Add stub for new media type.
 | Draft
 | Natalia Portillo
 | Fix some typos.
+
 Add index continuation block.
+
 Add track layout block.
 
 | 15 Sep 2022
@@ -42,6 +46,7 @@ Add track layout block.
 | Draft
 | Natalia Portillo
 | Define deduplication table version 2.
+
 Define twin sector table.
 
 | 16 Sep 2022
@@ -67,6 +72,7 @@ Define twin sector table.
 | Draft
 | Natalia Portillo
 | Define bitstream block.
+
 Add annex explaining the meaning and relationship between user, bitstream and flux data.
 
 | 31 July 2025
@@ -74,4 +80,6 @@ Add annex explaining the meaning and relationship between user, bitstream and fl
 | Draft
 | Natalia Portillo
 | Final draft.
+
+Move specification to Asciidoc.
 |===
