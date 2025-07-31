@@ -1,0 +1,45 @@
+=== The index block continuation (`IDXC`)
+
+The index block continuation follows the same structure and semantics as the index block version 2, with the exception that it includes a pointer to the preceding index block or index block continuation.
+
+At most, a single index block continuation may appear within any index block structure.
+
+The purpose of this block is to enable incremental indexing prior to finalizing the image file.
+This allows new blocks to be indexed as they are written, facilitating partial recovery in the event of application failure.
+
+The block is immediately followed by index entries formatted identically to those defined in index block version 2.
+
+==== Structure Definition
+
+[source,c]
+/* Undefined */
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32
+|4 bytes
+|identifier
+|The index block identifier, always `IDXC`
+
+|uint64
+|8 bytes
+|entries
+|The number of entries following this header
+
+|uint64
+|8 bytes
+|crc64
+|CRC64-ECMA checksum of the entries following this header
+
+|uint64
+|8 bytes
+|previous
+|Pointer in image file to previous index block
+|===

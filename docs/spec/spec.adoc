@@ -39,3 +39,7 @@ include::structs/blocks.adoc[]
 <<<
 
 include::structs/index2.adoc[]
+
+<<<
+
+include::structs/index_continuation.adoc[]
