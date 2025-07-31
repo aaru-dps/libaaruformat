@@ -80,7 +80,7 @@ typedef struct MetadataBlockHeader
 |uint32_t
 |4 bytes
 |identifier
-|The metadata table identifier, always 'META'
+|The metadata table identifier, always `META`
 
 |uint32_t
 |4 bytes

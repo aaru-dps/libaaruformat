@@ -1,4 +1,4 @@
-=== Compact Disc Indexes Block ('CDIX')
+=== Compact Disc Indexes Block (`CDIX`)
 
 On CompactDisc and related media, tracks can contain multiple indexes.
 These are used to mark separations in the data, such as distinct segments of a musical performance.

@@ -30,7 +30,7 @@ During conversion from AaruFormat, only one snapshot (or the latest index) shoul
 |uint32_t
 |4 bytes
 |identifier
-|The snapshot block identifier, always 'SNAP'
+|The snapshot block identifier, always `SNAP`
 
 |uint32_t
 |4 bytes
