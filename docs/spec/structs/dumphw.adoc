@@ -1,0 +1,165 @@
+=== Dump Hardware Block (`DMP*`)
+
+This block defines the set of hardware components involved in capturing the media content.
+It includes an array listing each device used during the dumping process, along with the specific extents each device recorded.
+
+This structure allows implementations to trace data provenance and associate dumped regions with their corresponding hardware sources, ensuring accountability and reproducibility in the dumping workflow.
+
+==== Structure Definition
+
+[source,c]
+/**Dump hardware block, contains a list of hardware used to dump the media on this image */
+typedef struct DumpHardwareHeader
+{
+    /**Identifier, <see cref="BlockType.DumpHardwareBlock" /> */
+    uint32_t identifier;
+    /**How many entries follow this header */
+    uint16_t entries;
+    /**Size of the whole block, not including this header, in uint8_ts */
+    uint32_t length;
+    /**CRC64-ECMA of the block */
+    uint64_t crc64;
+} DumpHardwareHeader;
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|identifier
+|The dump hardware block identifier, always `DMP*`
+
+|uint16_t
+|2 bytes
+|entries
+|The number of entries following this header
+
+|uint32_t
+|4 bytes
+|length
+|The length in bytes of the data following this header.
+
+|uint64_t
+|8 bytes
+|crc64
+|The CRC64-ECMA checksum of the data following this header
+|===
+
+==== Dump hardware entries
+
+[source,c]
+/**Dump hardware entry, contains length of strings that follow, in the same order as the length, this structure */
+typedef struct DumpHardwareEntry
+{
+    /**Length of UTF-8 manufacturer string */
+    uint32_t manufacturerLength;
+    /**Length of UTF-8 model string */
+    uint32_t modelLength;
+    /**Length of UTF-8 revision string */
+    uint32_t revisionLength;
+    /**Length of UTF-8 firmware version string */
+    uint32_t firmwareLength;
+    /**Length of UTF-8 serial string */
+    uint32_t serialLength;
+    /**Length of UTF-8 software name string */
+    uint32_t softwareNameLength;
+    /**Length of UTF-8 software version string */
+    uint32_t softwareVersionLength;
+    /**Length of UTF-8 software operating system string */
+    uint32_t softwareOperatingSystemLength;
+    /**How many extents are after the strings */
+    uint32_t extents;
+} DumpHardwareEntry;
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|manufacturerLength
+|Length of UTF-8 manufacturer string.
+
+|uint32_t
+|4 bytes
+|modelLength
+|Length of UTF-8 model string.
+
+|uint32_t
+|4 bytes
+|revisionLength
+|Length of UTF-8 revision string.
+
+|uint32_t
+|4 bytes
+|firmwareLength
+|Length of UTF-8 firmware version string.
+
+|uint32_t
+|4 bytes
+|serialLength
+|Length of UTF-8 serial number string.
+
+|uint32_t
+|4 bytes
+|softwareNameLength
+|Length of UTF-8 software name string.
+
+|uint32_t
+|4 bytes
+|softwareVersionLength
+|Length of UTF-8 software version string.
+
+|uint32_t
+|4 bytes
+|softwareOperatingSystemLength
+|Length of UTF-8 software operating system string.
+
+|uint32_t
+|4 bytes
+|extents
+|How many extents are after the strings.
+|===
+
+==== Extents
+
+[source,c]
+/**Dump hardware extent, contains the start and end of the extent in the media */
+typedef struct DumpHardwareExtent
+{
+    /**Start of the extent in the media */
+    uint64_t start;
+    /**End of the extent in the media */
+    uint64_t end;
+} DumpHardwareExtent;
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint64_t
+|8 bytes
+|start
+|Starting LBA of the extent (inclusive).
+
+|uint64_t
+|8 bytes
+|end
+|Ending LBA of the extent (inclusive).
+|===

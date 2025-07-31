@@ -91,3 +91,7 @@ include::structs/snapshot.adoc[]
 <<<
 
 include::structs/parent.adoc[]
+
+<<<
+
+include::structs/dumphw.adoc[]
