@@ -163,3 +163,16 @@ typedef struct DumpHardwareExtent
 |end
 |Ending LBA of the extent (inclusive).
 |===
+
+Each dump hardware entry is followed by a sequence of string fields in the following fixed order:
+
+. Manufacturer
+. Model
+. Revision
+. Firmware Version
+. Serial Number
+. Software Name
+. Software Version
+. Software Operating System
+
+Immediately after the final string (`Software Operating System`), the list of extents associated with that hardware entry begins.
