@@ -1,0 +1,81 @@
+=== The tracks block (`TRKS`)
+
+The tracks block holds a structured list of track entries, typically aligned with the layout specified in the table of contents or a similar indexing schema.
+This format is common in optical media such as CDs, DVDs, and related disc-based formats.
+
+==== Structure Definition
+
+[source,c]
+#define TRACKS_MAGIC 0x534B5254
+/**Contains list of optical disc tracks */
+typedef struct TracksHeader
+{
+    /**Identifier, <see cref="BlockType.TracksBlock" /> */
+    uint32_t identifier;
+    /**How many entries follow this header */
+    uint16_t entries;
+    /**CRC64-ECMA of the block */
+    uint64_t crc64;
+} TracksHeader;
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type|Size|Name|Description
+|uint32_t|4 bytes|identifier|The tracks block identifier, always `TRKS`
+|uint16_t|2 bytes|entries|The number of entries following this header
+|uint64_t|8 bytes|crc64|CRC64-ECMA checksum of the entries following this header
+|===
+
+==== Track entries
+
+[source,c]
+/**Optical disc track */
+typedef struct TrackEntry
+{
+    /**Track sequence */
+    uint8_t sequence;
+    /**Track type */
+    uint8_t type;
+    /**Track starting LBA */
+    int64_t start;
+    /**Track last LBA */
+    int64_t end;
+    /**Track pregap in sectors */
+    int64_t pregap;
+    /**Track session */
+    uint8_t session;
+    /**Track's ISRC in ASCII */
+    uint8_t isrc[13];
+    /**Track flags */
+    uint8_t flags;
+} TrackEntry;
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type|Size|Name|Description
+|uint8|1 byte|sequence|Track number.
+|uint8|1 byte|type|Track type (see table below).
+|int64|8 bytes|start|Track starting LBA (including pregap).
+|int64|8 bytes|end|Track ending LBA.
+|int64|8 bytes|pregap|Size of track’s pregap in sectors.
+|uint8|1 byte|session|Session the track belongs to.
+|StringA|13 bytes|isrc|Track’s ISRC in ASCIIZ.
+|uint8|1 byte|flags|Track flags as indicated in TOC if applicable.
+|===
+
+==== Track Types
+
+[cols="2,1,8",options="header"]
+|===
+|Type|Value|Description
+|Audio|0|All sectors in the track contain audio as defined by the Red Book.
+|Data|1|All sectors in the track contain user data that is not defined by any of the following types.
+|CdMode1|2|All sectors in the track contain user data according to MODE 1 as  defined by the Yellow Book.
+|CdMode2Formless|3|All sectors in the track contain user data according to MODE 2 as  defined by the Yellow and Green Books. Not all sectors belong to the same Form.
+|CdMode2Form1|4|All sectors in the track contain user data according to MODE 2 Form 1 as  defined by the Yellow and Green Books. All sectors belong to the same Form.
+|CdMode2Form2|5|All sectors in the track contain user data according to MODE 2 Form 2 as  defined by the Yellow and Green Books. All sectors belong to the same Form.
+|===

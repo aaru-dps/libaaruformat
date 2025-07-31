@@ -67,3 +67,7 @@ include::structs/geom.adoc[]
 <<<
 
 include::structs/metadata.adoc[]
+
+<<<
+
+include::structs/tracks.adoc[]
