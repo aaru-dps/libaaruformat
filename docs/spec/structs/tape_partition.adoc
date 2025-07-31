@@ -1,0 +1,72 @@
+=== Tape Partition Block (`TPBT`)
+
+This block lists all tape partitions.
+Tape partitions are separations written to media.
+They are used to distinguish two sets of related data that are distant enough to warrant separation but still belong on the same tape.
+A well-known example is the LTFS filesystem.
+
+==== Structure Definition
+
+[source,c]
+#define TAPE_PARTITION_MAGIC 0x54504254
+/* TODO */
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|identifier
+|The tape partition block identifier, always `TPBT`
+
+|uint16_t
+|2 bytes
+|entries
+|The number of entries following this header
+
+|uint32_t
+|4 bytes
+|length
+|The length in bytes of the data following this header.
+
+|uint64_t
+|8 bytes
+|crc64
+|The CRC64-ECMA checksum of the data following this header
+|===
+
+==== Tape partition entries
+
+[source,c]
+/* TODO */
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint8_t
+|1 byte
+|number
+|Partition number.
+
+|uint64_t
+|8 bytes
+|firstBlock
+|First block number, inclusive, of the partition.
+
+|uint64_t
+|8 bytes
+|lastBlock
+|Last block number, inclusive, of the partition.
+|===

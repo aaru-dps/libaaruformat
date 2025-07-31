@@ -99,3 +99,7 @@ include::structs/dumphw.adoc[]
 <<<
 
 include::structs/tape_file.adoc[]
+
+<<<
+
+include::structs/tape_partition.adoc[]
