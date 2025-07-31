@@ -1,0 +1,75 @@
+== Master Header Structure
+
+The AaruHeaderV2 is the fundamental header present at the beginning of every AaruFormat file.
+It defines the image's versioning, metadata, layout offset, feature compatibility, and structural alignment.
+All subsequent parsing and interpretation of the file depends on the contents of this header.
+
+=== Structure Definition
+
+[source,c]
+#define HEADER_APP_NAME_LEN 64
+#define GUID_SIZE 16
+/**Header, at start of file */
+typedef struct AaruHeaderV2
+{
+    /**Header identifier, see AARU_MAGIC */
+    uint64_t  identifier;
+    /**UTF-16LE name of the application that created the image */
+    uint8_t   application[HEADER_APP_NAME_LEN];
+    /**Image format major version. A new major version means a possibly incompatible change of format */
+    uint8_t   imageMajorVersion;
+    /**Image format minor version. A new minor version indicates a compatible change of format */
+    uint8_t   imageMinorVersion;
+    /**Major version of the application that created the image */
+    uint8_t   applicationMajorVersion;
+    /**Minor version of the application that created the image */
+    uint8_t   applicationMinorVersion;
+    /**Type of media contained on image */
+    uint32_t  mediaType;
+    /**Offset to index */
+    uint64_t  indexOffset;
+    /**Windows filetime (100 nanoseconds since 1601/01/01 00:00:00 UTC) of image creation time */
+    int64_t   creationTime;
+    /**Windows filetime (100 nanoseconds since 1601/01/01 00:00:00 UTC) of image last written time */
+    int64_t   lastWrittenTime;
+    /**Unique identifier that allows children images to recognize and find this image */
+    uint8_t   guid[GUID_SIZE];
+    /**Block alignment shift. All blocks in the image are aligned at 2 << blockAlignmentShift bytes */
+    uint8_t   blockAlignmentShift;
+    /**Features used in this image that if unsupported are still compatible for reading and writing implementations */
+    uint64_t  featureCompatible;
+    /**Features used in this image that if unsupported are still compatible for reading implementations but not for writing */
+    uint64_t  featureCompatibleRo;
+    /**Features used in this image that if unsupported prevent reading or writing the image */
+    uint64_t  featureIncompatible;
+} AaruHeaderV2;
+
+=== Field Descriptions
+
+[cols="2,3,6",options="header"]
+|===
+| Name | Type | Description
+| identifier | uint64_t | Header identifier constant. Must match the predefined `AARU_MAGIC` value to validate the format.
+| application | uint8_t[HEADER_APP_NAME_LEN] | UTF-16LE encoded name of the application responsible for creating the image.
+
+Length is defined by `HEADER_APP_NAME_LEN`.
+| imageMajorVersion | uint8_t | Major version of the AaruFormat structure.
+
+A bump indicates potential breaking changes.
+| imageMinorVersion | uint8_t | Minor version of the format, for backward-compatible structural updates.
+| applicationMajorVersion | uint8_t | Major version of the creating application.
+| applicationMinorVersion | uint8_t | Minor version of the application.
+| mediaType | uint32_t | Media type identifier denoting the nature of the captured content (e.g., floppy, optical disc, tape).
+| indexOffset | uint64_t | Absolute file offset to the beginning of the index structure, used to locate blocks throughout the image.
+| creationTime | int64_t | Timestamp (Windows filetime) representing when the image was first created.
+| lastWrittenTime | int64_t | Timestamp (Windows filetime) of the last modification made to the image.
+| guid | uint8_t[GUID_SIZE] | Globally Unique Identifier (GUID) that allows linking of related image derivatives and child snapshots.
+
+Length is defined by `GUID_SIZE`.
+| blockAlignmentShift | uint8_t | Determines block alignment boundaries using the formula 2 << blockAlignmentShift.
+| featureCompatible | uint64_t | Bitmask of features that, even if not implemented, still allow reading and writing the image.
+
+| featureCompatibleRo | uint64_t | Bitmask of features that allow read-only processing of the image if unsupported.
+
+| featureIncompatible | uint64_t | Bitmask of features that must be supported to read or write the image at all.
+|===
