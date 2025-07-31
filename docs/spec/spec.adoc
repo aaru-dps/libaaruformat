@@ -51,3 +51,7 @@ include::structs/data.adoc[]
 <<<
 
 include::structs/ddt.adoc[]
+
+<<<
+
+include::structs/ddt2.adoc[]

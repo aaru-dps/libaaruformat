@@ -1,0 +1,224 @@
+=== The deduplication table (`DDT2`)
+
+The deduplication table is a multi-level table of pointers to LBAs contained in the image.
+It starts with the following header.
+
+[source,c]
+/* Undefined */
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|identifier
+|The deduplication table identifier, always `DDT2` or `DDTS`. The first level of a table is always `DDT2` and its presence is mandatory. Subtables will have `DDTS`
+
+|uint16_t
+|2 bytes
+|type
+|The data type pointed by this table. See Annex B.
+
+|uint16_t
+|2 bytes
+|compression
+|The compression algorithm used in the table. See Annex C.
+
+|uint8_t
+|1 byte
+|levels
+|How many levels of subtables are present. 1 means this is the only level.
+
+|uint8_t
+|1 byte
+|tableLevel
+|What level does this table correspond to
+
+|uint64_t
+|8 bytes
+|previousLevel
+|Pointer to absolute byte offset in the image file where the previous table level resides
+
+|uint16_t
+|2 bytes
+|negative
+|The negative displacement of LBA numbers. For media that can have negative LBAs, this establishes the number to substract to the table entry number
+
+|uint64_t
+|8 bytes
+|start
+|The first LBA contained in this table. It must be 0 for ‘DDT2’ blocks and can be other number for subtables ‘DDTS’
+
+|uint8_t
+|1 byte
+|alignment
+|Shift of alignment of all blocks in the image. This must be the same in all deduplication tables and subtables.
+
+|uint8_t
+|1 byte
+|shift
+|The shift used to calculate the position of a sector in a data block pointed by this table, or how many sectors are pointed by the next level.
+
+|uint8_t
+|1 byte
+|sizeType
+|Size type (see table below)
+
+|uint64_t
+|8 bytes
+|entries
+|How many pointers follow this header.
+
+|uint32_t
+|4 bytes
+|cmpLength
+|The size in bytes of the compressed table that follows this header.
+
+|uint32_t
+|4 bytes
+|length
+|The size in bytes of the table block when decompressed.
+
+|uint64_t
+|8 bytes
+|cmpCrc64
+|The CRC64-ECMA checksum of the compressed table that follows this header.
+
+|uint64_t
+|8 bytes
+|crc64
+|The CRC64-ECMA checksum of the decompressed table.
+|===
+
+The size type defines the following type of entries:
+
+[cols="1,1,6",options="header"]
+|===
+|Type
+|Value
+|Description
+
+|Mini
+|0
+|Each entry uses two bytes, with the leftmost byte (mask 0xFF00) used for flags, and the rightmost byte used as a pointer to the sector or next level.
+
+|Small
+|1
+|Each entry uses three bytes, with the leftmost byte used for flags and the next two bytes used as a pointer to the sector or next level.
+
+|Medium
+|2
+|Each entry uses four bytes, with the leftmost byte (mask 0xFF000000) used for flags and the next three bytes used as a pointer to the sector or next level.
+
+|Big
+|3
+|Each entry uses five bytes, with the leftmost byte used for flags and the next three bytes used as a pointer to the sector or next level.
+|===
+
+==== Sector Pointer Resolution and Table Levels
+
+When `levels` is equal to 1—indicating a single-level deduplication table—each entry in the table corresponds directly to a media sector.
+The pointer value is resolved using the following procedure:
+
+- Right-shift the raw pointer value by the `shift` value.
+- Multiply the result by the `alignment` to compute the absolute byte offset of the target data block.
+- The remainder of the original pointer value modulo `(1 << shift)` yields the item index within the block.
+
+Each data block stores a fixed number of bytes per sector, allowing compact and efficient sector addressing.
+
+_For example_:
+Given a pointer value of `0x8003`, a `shift` of 5, and an `alignment` of 9:
+- `0x8003 >> 5 = 0x400 = 1024`
+- `1024 * 9 = 9216`
+- The sector index within the block is `0x8003 & 0x1F = 3`
+
+Thus, the sector is located at byte offset `9216`, and it is the 3rd item in the block.
+
+===== Multi-Level Tables
+
+When `levels > 1`, the interpretation of pointer entries changes substantially.
+Although typical usage involves no more than two levels, implementations **MUST** be capable of handling an arbitrary number of levels to ensure forward compatibility.
+
+At each level—except the final—the table entry functions as an address to the next-level table.
+The range of LBAs covered by each entry is calculated as:
+
+[source]
+range = entry_index * (1 << shift)^(levels - 1)
+
+_For example_, with a `shift` value of 9 and two levels:
+- Entry `0` spans LBAs `0–511`
+- Entry `1` spans LBAs `512–1023`
+
+With three levels:
+- Entry `0` at level 0 spans LBAs `0–262143`
+- Entry `0` at level 1 within that region spans LBAs `0–511`, and so on recursively.
+
+===== Resolution Example
+
+To locate sector `1012` using a two-level table with `shift = 9` and `alignment = 9`:
+
+1. **Level 0**:
+- Sector `1012` falls within entry `1` (covers `512–1023`)
+- Entry `1` contains the value `0x12000`
+- Multiply by `alignment` → `0x12000 * 9 = 0x225000 = 37,748,736`
+- Read the next-level table at byte offset `37,748,736`, marked with the identifier `DDTS`
+
+2. **Level 1**:
+- The relevant entry is `500` (`1012 - 512 = 500`)
+- Entry `500` contains `0x35006`
+- Right-shift `0x35006 >> 9 = 0x6A = 106`
+- Multiply by `alignment`: `106 * 9 = 954`
+- Sector resides at byte offset `217,088` and is the 6th item in the block (`0x35006 & 0x1FF = 6`)
+
+===== Deduplication table flags
+
+[cols="2,1,6",options="header"]
+|===
+|Flag
+|Value
+|Description
+
+|NotDumped
+|`0x00`
+|The sector(s) have not been dumped
+
+|Dumped
+|`0x01`
+|The sector(s) have been dumped without errors
+
+|Errored
+|`0x02`
+|The sector(s) returned an error on dumping
+
+|Mode1Correct
+|`0x03`
+|The sector is MODE 1 and the suffix or prefix is correct and can be regenerated. Must only appear on deduplications tables with types  CdSectorPrefixCorrected or  CdSectorSuffixCorrected
+
+|Mode2Form1Ok
+|`0x04`
+|The suffix for MODE 2 sectors is correct, can be regenerated, and corresponds to a MODE 2 Form 1 sector. Must only appear on deduplications tables with type CdSectorSuffixCorrected
+
+|Mode2Form2Ok
+|`0x05`
+|The suffix for MODE 2 sectors is correct, can be regenerated, and corresponds to a MODE 2 Form 2 sector with a valid CRC. Must only appear on deduplications tables with type CdSectorSuffixCorrected
+
+|Mode2Form2NoCrc
+|`0x06`
+|The suffix for MODE 2 sectors is correct, can be regenerated, and corresponds to a MODE 2 Form 2 sector with an empty CRC. Must only appear on deduplications tables with type CdSectorSuffixCorrected
+
+|Twin
+|`0x07`
+|The pointer contains a “twin” sector table (see below)
+
+|Unrecorded
+|`0x08`
+|The sector was unrecorded and each re-read returns random data
+|===
+
+When flags are present in a table that has sublevels it applies to all the sectors that shall be present in the subtable, unless the flag specify something else.
