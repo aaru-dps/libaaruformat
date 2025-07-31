@@ -1,0 +1,6 @@
+=== Data Position Measurement Block (`DPM*`)
+
+This block captures measurements of each sector’s position, providing insights into the physical structure of the disc.
+It is designed to facilitate analysis of disc geometry and sector layout.
+
+The formal definition of this block’s format is reserved for a future revision of the specification.
