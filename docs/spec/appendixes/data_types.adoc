@@ -71,10 +71,10 @@ The most current and authoritative list is always maintained in the `libaaruform
 |57 |MultiMediaCard OCR
 |58 |MultiMediaCard Extended CSD
 |59 |Xbox Security Sector
-|60 |Floppy Lead-out
+|60 |[.line-through]#Floppy Lead-out# *DEPRECATED*
 |61 |DVD Disc Control Block
-|62 |CompactDisc First track negative pregap
-|63 |CompactDisc Lead-out
+|62 |[.line-through]#CompactDisc First track negative pregap# *DEPRECATED*
+|63 |[.line-through]#CompactDisc Lead-out# *DEPRECATED*
 |64 |SCSI MODE SENSE(6) response
 |65 |SCSI MODE SENSE(10) response
 |66 |USB descriptors
@@ -90,7 +90,7 @@ The most current and authoritative list is always maintained in the `libaaruform
 |76 |CompactDisc sector prefix (only incorrect ones stored)
 |77 |CompactDisc sector suffix (only incorrect ones stored)
 |78 |CompactDisc MODE 2 sector subheader
-|79 |CompactDisc Lead-in
+|79 |[.line-through]#CompactDisc Lead-in# *DEPRECATED*
 |80 |DVD Disc Key (decrypted)
 |81 |DVD CPI_MAI
 |82 |DVD Title Key (decrypted)
