@@ -86,6 +86,10 @@ typedef struct AaruHeaderV2 {
     uint8_t guid[GUID_SIZE];
     /**Block alignment shift. All blocks in the image are aligned at 2 << blockAlignmentShift bytes */
     uint8_t blockAlignmentShift;
+    /**Data shift. All data blocks in the image contain 2 << dataShift items at most */
+    uint8_t dataShift;
+    /**Table shift. All deduplication tables in the image use this shift to calculate the position of an item */
+    uint8_t tableShift;
     /**Features used in this image that if unsupported are still compatible for reading and writing implementations */
     uint64_t featureCompatible;
     /**Features used in this image that if unsupported are still compatible for reading implementations but not for writing */
