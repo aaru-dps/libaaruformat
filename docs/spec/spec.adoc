@@ -59,3 +59,7 @@ include::structs/ddt2.adoc[]
 <<<
 
 include::structs/twin_sector.adoc[]
+
+<<<
+
+include::structs/geom.adoc[]

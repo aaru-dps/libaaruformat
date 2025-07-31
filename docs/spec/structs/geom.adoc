@@ -1,0 +1,48 @@
+=== The geometry block (`GEOM`)
+
+The geometry block encapsulates metadata that defines the disk’s geometry, primarily to support transformations between CHS (Cylinder-Head-Sector) and LBA (Logical Block Addressing) addressing schemes.
+
+Note that the stored geometry may not reflect the media’s actual physical layout.
+Instead, it typically represents the translation parameters active at the time the drive image was acquired.
+
+[source,c]
+#define GEOM_MAGIC 0x4D4F4547
+/**Geometry block, contains physical geometry information */
+typedef struct GeometryBlockHeader
+{
+    /**Identifier, <see cref="BlockType.GeometryBlock" /> */
+    uint32_t identifier;
+    uint32_t cylinders;
+    uint32_t heads;
+    uint32_t sectorsPerTrack;
+} GeometryBlockHeader;
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|identifier
+|The geometry table identifier, always `GEOM`
+
+|uint32_t
+|4 bytes
+|cylinders
+|The number of cylinders.
+
+|uint32_t
+|4 bytes
+|heads
+|The number of heads.
+
+|uint32_t
+|4 bytes
+|sectorsPerTrack
+|The number of sectors per track.
+|===
