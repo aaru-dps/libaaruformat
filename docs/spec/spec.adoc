@@ -1,0 +1,29 @@
+:doctype: book
+:imagesdir: ./images
+:toc: macro
+:toclevels: 2
+:numbered:
+:sectnums:
+:pdf-page-size: A4
+
+include::cover.adoc[]
+
+<<<
+
+include::copyright.adoc[]
+
+<<<
+
+include::version_history.adoc[]
+
+<<<
+
+toc::[]
+
+<<<
+
+include::introduction.adoc[]
+
+<<<
+
+include::definitions.adoc[]

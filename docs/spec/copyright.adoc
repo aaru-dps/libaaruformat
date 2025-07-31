@@ -1,0 +1,18 @@
+[discrete]
+= AaruFormat Specification
+
+Copyright © 2022 Natalia Portillo
+
+The information in this document is subject to the following license.
+
+You may use, distribute, redistribute, modify, collaborate, copy, send, implement, translate, or discuss this specification provided that you comply with the following requirements:
+
+* You must retain the above copyright notice.
+* You cannot change or modify the license of this specification.
+* There is only one official version of this specification, also signed by Natalia Portillo's cryptographic key.
+* Any modification you make to this specification is, by nature, not official, and cannot be claimed to be.
+* You are invited to submit your modifications for consideration in a future official revision of this specification by sending them to the Aaru team.
+However, this is not mandatory.
+* Natalia Portillo or any member or collaborator of the Aaru team may incorporate your modifications into a future official revision of this specification without requiring your explicit authorization.
+* You must include a "Portions ©" notice on your modifications.
+This notice must also be retained.

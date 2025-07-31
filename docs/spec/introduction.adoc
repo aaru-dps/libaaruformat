@@ -1,0 +1,18 @@
+== Introduction
+
+This document is the detailed specification of AaruFormat.
+
+=== Audience
+
+This specification is directed to emulator developers, software preservators, archives, museums and collectors, that want to have a common file format where to store, archive and manage, dumps and copies of any type of computer storage.
+
+=== Scope
+
+The scope of this specification is to define an open, free and universal file format able to store and describe any kind of digital or analog storage media for computer systems, in a clear and extensible way that allows for new media to be easily added, along with any kind of metadata describing them, plus verification and recovery data.
+
+Currently the idea is for it to be able to store punch cards, disks (magnetic, optical, magnetoptical) and tapes (analog and digital tapes), decoded or as audio tones and as magnetic or optical fluxes, with any kind of copy protection or absence of it.
+
+Because of its design goals, the format here described may not be the best for reproduction or emulation, but it pretends to be the best for archival and preservation.
+
+There are other formats pretending to achieve some of these goals, and precisely that's why this format is designed.
+To be a single, universal, extensible, standard, eliminating the need to use a different format for each type of storage.

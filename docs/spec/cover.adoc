@@ -1,0 +1,21 @@
+:version: 2.0 FINAL DRAFT
+:date: 2025-07-31
+:author: Nat Portillo
+:email: claunia@claunia.com
+:imagesdir: ./images
+:logo: aaru.png
+
+[.unbreakable]
+--
+image::{logo}[align=center]
+
+[.text-center]
+[.title]
+*AaruFormat Specification*
+
+[.text-right]
+*Author:* {author} +
+*Contact:* {email} +
+*Version:* {version} +
+*Date:* {date}
+--
