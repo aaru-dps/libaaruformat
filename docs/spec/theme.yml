@@ -1,0 +1,69 @@
+extends: default
+
+page:
+  size: A4
+  layout: portrait
+  margins: [36, 48, 36, 48]
+
+pdf:
+  info:
+    title: "AaruFormat Specification"
+    author: "Nat Portillo"
+    subject: "File Format Specification"
+    keywords: [AaruFormat, preservation, media imaging]
+
+font:
+  catalog:
+    merge: true
+    FiraCode:
+      normal: FiraCode-Regular.ttf
+      bold: FiraCode-Bold.ttf
+    Noto Sans:
+      normal: NotoSans-Regular.ttf
+      bold: NotoSans-Bold.ttf
+      italic: NotoSans-Italic.ttf
+      bold_italic: NotoSans-BoldItalic.ttf
+
+base:
+  font_color: #212121
+  font_family: Noto Serif
+  font_size: 10
+
+heading:
+  font_family: Noto Sans
+  font_color: #005FAB
+  font_size: 14
+  line_height: 1.2
+  margin_bottom: 12
+
+title_page:
+  background_color: #FFFFFF
+  title:
+    font_size: 28
+    font_color: #003366
+    font_family: Noto Sans
+  subtitle:
+    font_size: 18
+    font_color: #666666
+
+code:
+  font_family: FiraCode
+  font_size: 9
+  background_color: #F9F9F9
+  border_color: #CCCCCC
+  padding: 6
+
+table:
+  head_background_color: #E6F0FF
+  head_font_color: #003366
+  border_color: #CCCCCC
+  cell_padding: [4, 6, 4, 6]
+
+admonition:
+  label_font_color: #005FAB
+  border_color: #C2D9FF
+  background_color: #F4F8FF
+
+syntax_highlight:
+  rouge:
+    theme: github
