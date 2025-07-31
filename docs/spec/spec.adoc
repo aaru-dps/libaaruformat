@@ -111,3 +111,7 @@ include::structs/cd_indexes.adoc[]
 <<<
 
 include::structs/flux.adoc[]
+
+<<<
+
+include::structs/bitstream.adoc[]

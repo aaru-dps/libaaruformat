@@ -1,0 +1,84 @@
+=== Bitstream Data Block (`BITS`)
+
+The `BITS` block contains a list of all known bitstream captures.
+
+A *bitstream* is derived by interpreting flux transitions using an encoding scheme timing table.
+While bitstreams sit below sector-level data in the hierarchy, they are still a higher abstraction than raw flux transitions.
+
+Storing bitstream data is valuable because multiple dumps from the same media often produce inconsistent and incomparable flux transitions.
+However, once decoded into bitstreams—regardless of whether sector-level user data can be extracted—the results remain consistent and comparable.
+
+Bitstream-level representations are also preferred in low-level emulation scenarios.
+Emulators, such as floppy drive emulators, can reconstruct original media more effectively using bitstream data than flux data.
+
+Bitstream data is stored in `DataBlocks` with the `bitstream` data type.
+Each image must contain exactly one deduplication table of this data type, and that table must have a single level.
+
+NOTE: Bitstream deduplication tables provide a reference for associating bitstream captures and their corresponding data blocks.
+
+==== Structure Definition
+
+[source,c]
+/* Undefined */
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|identifier
+|The flux data block identifier, always 'BITS'
+
+|uint16_t
+|2 bytes
+|entries
+|The number of entries following this header
+
+|uint64_t
+|8 bytes
+|crc64
+|The CRC64-ECMA checksum of the data following this header
+|===
+
+==== Bitstream entries
+
+[source,c]
+/* Undefined */
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|head
+|Head the data corresponds to.
+
+|uint16_t
+|2 bytes
+|track
+|Track the data corresponds to.
+
+|uint8_t
+|1 byte
+|subtrack
+|Substep of a track that the data corresponds to.
+
+|uint64_t
+|8 bytes
+|tableEntry
+|Entry number in the deduplication table where the data corresponding to this bitstream entry is stored
+|===
+
+To better understand the relationship between user data, bitstream data and flux data please refer to _Annex F_.
