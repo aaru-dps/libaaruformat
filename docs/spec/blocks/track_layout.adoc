@@ -32,7 +32,7 @@ If a `FLUX` block exists for a given (sub)track but no corresponding `TKLY` bloc
 |uint32_t
 |4 bytes
 |identifier
-|The flux data block identifier, always `TKLY`
+|The track layout block identifier, always `TKLY`
 
 |uint64_t
 |8 bytes

@@ -33,7 +33,7 @@ NOTE: Bitstream deduplication tables provide a reference for associating bitstre
 |uint32_t
 |4 bytes
 |identifier
-|The flux data block identifier, always `BITS`
+|The bitstream data block identifier, always `BITS`
 
 |uint16_t
 |2 bytes
