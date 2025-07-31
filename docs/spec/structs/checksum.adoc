@@ -1,0 +1,110 @@
+=== Checksum Block (`CKSM`)
+
+This block stores an array of checksums corresponding to the user data embedded in the image.
+For media formats such as CompactDisc, the checksum is calculated over the complete sector—comprising the prefix, user data, and suffix—totaling 2352 bytes.
+
+If the image is modified, the checksum block is considered outdated and should be either removed or excluded from the most recent index to ensure integrity.
+
+==== Structure Definition
+
+[source,c]
+#define CHECKSUM_MAGIC 0x4D534B43
+/**
+ *     Checksum block, contains a checksum of all user data sectors (except for optical discs that is 2352 uint8_ts raw
+ *     sector if available
+ *  */
+typedef struct ChecksumHeader
+{
+    /**Identifier, <see cref="BlockType.ChecksumBlock" /> */
+    uint32_t identifier;
+    /**Length in uint8_ts of the block */
+    uint32_t length;
+    /**How many checksums follow */
+    uint8_t  entries;
+} ChecksumHeader;
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|identifier
+|The tracks block identifier, always `CKSM`
+
+|uint32_t
+|4 bytes
+|length
+|The length in bytes of the data following this header.
+
+|uint8_t
+|1 byte
+|entries
+|The number of entries following this header
+|===
+
+==== Checksum entries
+
+[source,c]
+/**Checksum entry, followed by checksum data itself */
+typedef struct ChecksumEntry
+{
+    /**Checksum algorithm */
+    uint8_t  type;
+    /**Length in uint8_ts of checksum that follows this structure */
+    uint32_t length;
+} ChecksumEntry;
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint8_t
+|1 byte
+|type
+|Checksum algorithm.
+
+|uint32_t
+|4 bytes
+|length
+|Size in bytes of the checksum that immediately follows this entry.
+|===
+
+==== Checksum algorithms
+
+[cols="2,2,6",options="header"]
+|===
+|Type
+|Value
+|Description
+
+|Invalid
+|0
+|Invalid checksum entry, skip.
+
+|Md5
+|1
+|MD5
+
+|Sha1
+|2
+|SHA1
+
+|Sha256
+|3
+|SHA-256
+
+|SpamSum
+|4
+|SpamSum
+|===

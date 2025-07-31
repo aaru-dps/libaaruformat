@@ -75,3 +75,7 @@ include::structs/tracks.adoc[]
 <<<
 
 include::structs/cicm.adoc[]
+
+<<<
+
+include::structs/checksum.adoc[]
