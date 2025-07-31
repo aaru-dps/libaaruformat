@@ -87,3 +87,7 @@ include::structs/dpm.adoc[]
 <<<
 
 include::structs/snapshot.adoc[]
+
+<<<
+
+include::structs/parent.adoc[]

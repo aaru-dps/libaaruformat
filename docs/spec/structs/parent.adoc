@@ -1,0 +1,58 @@
+=== Parent File Block (`PRNT`)
+
+The parent file block provides metadata required to locate the image file from which the current image is derived.
+Its primary purpose is to enable hierarchical composition, where non-written sectors in the current image are transparently resolved by referencing their counterparts in the parent image.
+
+All sectors marked as unwritten must be read from the associated parent image, ensuring data completeness and consistency across derivative images.
+
+==== Structure Definition
+
+[source,c]
+/* Undefined */
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|identifier
+|The parent block identifier, always `PRNT`
+
+|uint32_t
+|4 bytes
+|length
+|The length in bytes of the data following this header.
+
+|GUID
+|16 bytes
+|parentId
+|The unique identifier of the parent.
+
+|uint16_t
+|2 bytes
+|parentClueLength
+|The size in bytes of the clue string following this field.
+
+|String
+|N bytes
+|parentClue
+|A clue, be it a path, filename, UNC, etc., to find the parent. If not valid or not found implementations shall try the directory where the image resides first and the current working directory if not found there.
+|===
+
+This block contains metadata essential for locating the corresponding parent image.
+
+All sectors flagged as undumped in the current image must be retrieved from the parent image to ensure completeness.
+The parent may also store supplementary blocks—such as media tags or metadata—that are not duplicated in the current image.
+However, any correctly defined data blocks or deduplication tables present in this image will override those found in the parent.
+
+A clue field assists implementations in locating the parent, while a unique parent ID confirms its validity.
+If the clue fails to resolve the location, the implementation must first scan the directory containing the current image for files with a matching AaruFormat header and expected ID.
+If unsuccessful, the fallback should be the current working directory.
+
+If this block is present but the parent image cannot be located, the implementation must terminate the open operation, as reconstructing the complete media content depends on the parent’s data.
