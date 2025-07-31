@@ -30,95 +30,95 @@ include::definitions.adoc[]
 
 <<<
 
-include::structs/header.adoc[]
+include::blocks/header.adoc[]
 
 <<<
 
-include::structs/blocks.adoc[]
+include::blocks/blocks.adoc[]
 
 <<<
 
-include::structs/index2.adoc[]
+include::blocks/index2.adoc[]
 
 <<<
 
-include::structs/index_continuation.adoc[]
+include::blocks/index_continuation.adoc[]
 
 <<<
 
-include::structs/data.adoc[]
+include::blocks/data.adoc[]
 
 <<<
 
-include::structs/ddt.adoc[]
+include::blocks/ddt.adoc[]
 
 <<<
 
-include::structs/ddt2.adoc[]
+include::blocks/ddt2.adoc[]
 
 <<<
 
-include::structs/twin_sector.adoc[]
+include::blocks/twin_sector.adoc[]
 
 <<<
 
-include::structs/geom.adoc[]
+include::blocks/geom.adoc[]
 
 <<<
 
-include::structs/metadata.adoc[]
+include::blocks/metadata.adoc[]
 
 <<<
 
-include::structs/tracks.adoc[]
+include::blocks/tracks.adoc[]
 
 <<<
 
-include::structs/cicm.adoc[]
+include::blocks/cicm.adoc[]
 
 <<<
 
-include::structs/checksum.adoc[]
+include::blocks/checksum.adoc[]
 
 <<<
 
-include::structs/dpm.adoc[]
+include::blocks/dpm.adoc[]
 
 <<<
 
-include::structs/snapshot.adoc[]
+include::blocks/snapshot.adoc[]
 
 <<<
 
-include::structs/parent.adoc[]
+include::blocks/parent.adoc[]
 
 <<<
 
-include::structs/dumphw.adoc[]
+include::blocks/dumphw.adoc[]
 
 <<<
 
-include::structs/tape_file.adoc[]
+include::blocks/tape_file.adoc[]
 
 <<<
 
-include::structs/tape_partition.adoc[]
+include::blocks/tape_partition.adoc[]
 
 <<<
 
-include::structs/cd_indexes.adoc[]
+include::blocks/cd_indexes.adoc[]
 
 <<<
 
-include::structs/flux.adoc[]
+include::blocks/flux.adoc[]
 
 <<<
 
-include::structs/bitstream.adoc[]
+include::blocks/bitstream.adoc[]
 
 <<<
 
-include::structs/track_layout.adoc[]
+include::blocks/track_layout.adoc[]
 
 <<<
 
