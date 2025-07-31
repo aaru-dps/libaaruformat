@@ -1,4 +1,4 @@
-=== The twin sector table (`TWTB`)
+=== Twin Sector Table (`TWTB`)
 
 This table enumerates hardware sectors that share an identical sector number.
 Such sectors are referred to as “twin sectors,” although the grouping may consist of more than two instances.

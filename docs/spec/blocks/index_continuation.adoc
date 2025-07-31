@@ -1,4 +1,4 @@
-=== The index block continuation (`IDXC`)
+=== Index Block Continuation (`IDXC`)
 
 The index block continuation follows the same structure and semantics as the index block version 2, with the exception that it includes a pointer to the preceding index block or index block continuation.
 

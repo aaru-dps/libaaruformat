@@ -1,4 +1,4 @@
-=== The metadata block (`META`)
+=== Metadata Block (`META`)
 
 The metadata block contains descriptive information related to the media source, which is not part of the original media data itself.
 Typical fields may include the manufacturer name, device model, acquisition sequence identifiers, and other contextual attributes.

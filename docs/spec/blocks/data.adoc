@@ -1,4 +1,4 @@
-=== The data block (`DBLK`)
+=== Data Block (`DBLK`)
 
 A data block encapsulates media-derived content and is composed of a header followed by either compressed or uncompressed data.
 

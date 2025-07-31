@@ -1,4 +1,4 @@
-=== The index block (`INDX`) *_DEPRECATED_*
+=== Index Block (`INDX`) *_DEPRECATED_*
 
 The index block stores references to all blocks present in the file.
 It is composed of a header, followed by a sequence of entries, the count of which is defined within the header.

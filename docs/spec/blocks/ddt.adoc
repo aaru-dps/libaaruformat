@@ -1,4 +1,4 @@
-=== The deduplication table (`DDT*`) *_DEPRECATED_*
+=== Deduplication Table (`DDT*`) *_DEPRECATED_*
 
 The deduplication table is a sequential array of pointers, with each entry corresponding to a sector on the storage media.
 These pointers map sector data to logical content blocks, enabling efficient elimination of duplicate data.
