@@ -103,3 +103,7 @@ include::structs/tape_file.adoc[]
 <<<
 
 include::structs/tape_partition.adoc[]
+
+<<<
+
+include::structs/cd_indexes.adoc[]

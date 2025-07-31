@@ -1,0 +1,74 @@
+=== Compact Disc Indexes Block ('CDIX')
+
+On CompactDisc and related media, tracks can contain multiple indexes.
+These are used to mark separations in the data, such as distinct segments of a musical performance.
+
+The table of contents always references index 1. All other indexes—including index 0 (the pregap)—are stored in the subchannel information.
+
+This block holds a list of all known indexes for quick lookup.
+
+==== Structure Definition
+
+[source,c]
+#define CD_INDEXES_MAGIC 0x58444943
+/* TODO */
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|identifier
+|The compact disc indexes block identifier, always `CDIX`
+
+|uint16_t
+|2 bytes
+|entries
+|The number of entries following this header
+
+|uint32_t
+|4 bytes
+|length
+|The length in bytes of the data following this header.
+
+|uint64_t
+|8 bytes
+|crc64
+|The CRC64-ECMA checksum of the data following this header
+|===
+
+==== Index entries
+
+[source,c]
+/* TODO */
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint16_t
+|2 bytes
+|track
+|Track this index belongs to.
+
+|uint16_t
+|2 bytes
+|index
+|Index number.
+
+|int32_t
+|4 bytes
+|lba
+|LBA where this index starts.
+|===
