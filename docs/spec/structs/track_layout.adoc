@@ -1,0 +1,96 @@
+=== Track Layout Block (`TKLY`)
+
+The `TKLY` block defines the mapping between physical tracks and logical sectors, as referenced by the deduplication table.
+
+Magnetic media such as floppies and hard disks may exhibit complex physical layouts that do not cleanly translate to logical block addresses.
+This block enables accurate sector location resolution by maintaining explicit layout information.
+
+Each `TKLY` block corresponds to a unique combination of (sub)track and head, and is followed by a series of sector mapping entries.
+If known, sectors should be listed in physical order to preserve potential interleaving.
+Sector numbers may be duplicated.
+
+NOTE: This block must not be used for optical or other logically addressable block-based media.
+
+If a referenced LBA is marked as undumped and a `FLUX` block is present, it indicates the corresponding sector could not be decoded (e.g., damaged or unreadable), and should be considered undumped unless flags state otherwise.
+
+If a `FLUX` block exists for a given (sub)track but no corresponding `TKLY` block is present, the entire (sub)track is considered not decoded.
+
+==== Structure Definition
+
+[source,c]
+/* Undefined */
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|identifier
+|The flux data block identifier, always `TKLY`
+
+|uint64_t
+|8 bytes
+|crc64
+|The CRC64-ECMA checksum of the data following this header
+
+|uint32_t
+|4 bytes
+|head
+|Head the block corresponds to
+
+|uint16_t
+|2 bytes
+|track
+|Track the block corresponds to
+
+|uint8_t
+|1 byte
+|subtrack
+|Substep of a track the data corresponds to
+
+|uint16_t
+|2 bytes
+|sectors
+|Number of sectors in this (sub)track, and therefore, number of entries following this header
+
+|uint64_t
+|8 bytes
+|flux
+|Pointer to the flux data block that contains the flux information for this (sub)track
+
+|uint64_t
+|8 bytes
+|bitstream
+|Pointer to the bitstream data block that contains the flux information for this (sub)track
+|===
+
+==== Sector Mapping Entries
+
+[source,c]
+/* Undefined */
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint16_t
+|2 bytes
+|sector
+|Sector number as present in the appropriate media sector header or equivalent
+
+|uint64_t
+|8 bytes
+|block
+|Position in the deduplication table this sector and its flags is stored
+|===
