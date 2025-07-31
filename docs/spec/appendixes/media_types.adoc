@@ -1,0 +1,9 @@
+[appendix]
+== Media Types
+
+This annex provides a reference list of known media types at the time this specification was written.
+
+NOTE: This list is not exhaustive.
+The most accurate and current list originates from the `libaaruformat` source.
+
+Content to be defined.
