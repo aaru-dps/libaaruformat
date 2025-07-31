@@ -1,0 +1,87 @@
+[appendix]
+== User Data, Bitstream, Fluxes and Tags
+
+This appendix explains the relationships between user data, bitstream data, flux data, and both sector and media tags in the context of digital imaging and data preservation.
+
+=== 🧑‍💻 User Data
+
+User data represents the information a user interacts with—such as a document or file.
+This data is typically split into discrete units called _sectors_.
+
+- A sector (also known as a block) is the smallest unit a medium can read or write.
+- Most media divide user data into independent sectors.
+
+=== 🏷️ Sector Tags
+
+A sector may include metadata not visible to the user, but accessible to the operating environment.
+
+Examples:
+
+- Apple Lisa filesystem tags
+- CompactDisc subchannel data
+
+These metadata elements are referred to as _sector tags_ and are stored alongside user data.
+
+=== 📀 Media Tags
+
+Media tags relate to the storage medium as a whole rather than individual sectors.
+
+Examples:
+
+- CompactDisc Absolute Time In Pregroove (ATIP)
+- DVD Disc Manufacturing Information (DMI)
+
+Media tags may or may not be accessible to end users but are often essential for authentication, playback, or archival purposes.
+
+=== 💾 Bitstream Encoding
+
+User data and associated sector tags must be encoded into a binary format before being stored physically.
+This encoded data is called the _bitstream_.
+
+Common encoding formats include:
+
+- FM (Frequency Modulation): used in early floppies
+- MFM (Modified FM): used in most floppy formats
+- GCR (Group Code Recording): used by Apple and Commodore
+- EFM (Eight-to-Fourteen Modulation): used in CompactDiscs
+
+The bitstream is composed of sequences of 0s and 1s derived from the digital content.
+
+=== ⏱️ Flux Data
+
+For physical media (e.g., magnetic or optical), the bitstream must be translated into _flux data_, which captures physical transitions over time.
+
+- A flux transition is a change in magnetic polarity or optical reflectivity.
+- Flux data represents the time elapsed since the last transition.
+- In FM encoding, for instance:
+* Every 4μs there's a guaranteed transition.
+* A transition at 2μs represents a `1`.
+* Absence of transition at 2μs represents a `0`.
+
+These transitions are what ultimately get recorded onto physical media.
+
+=== 🔁 Data Conversion Path
+
+[source]
+----
+User Data → Sector Tags → Bitstream → Flux Data → Physical Media
+----
+
+Reverse path (during reading or imaging):
+
+[source]
+----
+Physical Media → Flux Data → Bitstream → User Data + Sector Tags + Media Tags
+----
+
+=== 📦 Image Composition
+
+Digital images can contain different combinations of data types:
+
+- Flux data only
+- Bitstream data only
+- User data only
+- Any combination of the above
+
+Each format has specific use cases depending on the accuracy, fidelity, and target preservation needs.
+

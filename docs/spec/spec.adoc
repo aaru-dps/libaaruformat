@@ -139,3 +139,7 @@ include::appendixes/cst.adoc[]
 <<<
 
 include::appendixes/media_types_v1.adoc[]
+
+<<<
+
+include::appendixes/fluxes.adoc[]
