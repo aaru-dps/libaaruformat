@@ -1,0 +1,83 @@
+=== The data block (`DBLK`)
+
+A data block encapsulates media-derived content and is composed of a header followed by either compressed or uncompressed data.
+
+The contents of a data block may represent user data—such as media sectors—or auxiliary data elements, including media or sector-specific tags.
+
+When a data block includes multiple items (e.g., sectors or sector tags), the `sectorSize` field specifies the size, in bytes, of each individual item.
+Conversely, if the block contains a single item (e.g., media tags), `sectorSize` must be set to 0.
+
+==== Structure Definition
+
+[source,c]
+#define DATABLOCK_MAGIC 0x4B4C4244
+/**Block header, precedes block data */
+typedef struct BlockHeader
+{
+    /**Identifier, <see cref="BlockType.DataBlock" /> */
+    uint32_t identifier;
+    /**Type of data contained by this block */
+    uint32_t type;
+    /**Compression algorithm used to compress the block */
+    uint16_t compression;
+    /**Size in uint8_ts of each sector contained in this block */
+    uint32_t sectorSize;
+    /**Compressed length for the block */
+    uint32_t cmpLength;
+    /**Uncompressed length for the block */
+    uint32_t length;
+    /**CRC64-ECMA of the compressed block */
+    uint64_t cmpCrc64;
+    /**CRC64-ECMA of the uncompressed block */
+    uint64_t crc64;
+} BlockHeader;
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|identifier
+|The data block identifier, always `DBLK`
+
+|uint16_t
+|2 bytes
+|type
+|The data type contained in this block. See Annex B.
+
+|uint16_t
+|2 bytes
+|compression
+|The compression algorithm used in the data. See Annex C.
+
+|uint32_t
+|4 bytes
+|sectorSize
+|The size in bytes of the sectors contained in this data block if applicable.
+
+|uint32_t
+|4 bytes
+|cmpLength
+|The size in bytes of the compressed data that follows this header.
+
+|uint32_t
+|4 bytes
+|length
+|The size in bytes of the data block when decompressed.
+
+|uint64_t
+|8 bytes
+|cmpCrc64
+|The CRC64-ECMA checksum of the compressed data that follows this header.
+
+|uint64_t
+|8 bytes
+|crc64
+|The CRC64-ECMA checksum of the decompressed data.
+|===
