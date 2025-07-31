@@ -1,0 +1,19 @@
+[appendix]
+== Claunia Subchannel Transform
+
+The subchannel structure in CompactDisc media—and compatible formats—consists of eight interleaved components: `P`, `Q`, `R`, `S`, `T`, `U`, `V`, `W`.
+
+In their raw form, each byte read from the disc contains a single bit from each of these elements, resulting in a highly interleaved data stream.
+This structure, while efficient for playback, poses challenges for compression algorithms such as LZMA, which struggle with apparent randomness and achieve poor compression ratios (typically less than 2%).
+
+To address this, the **Claunia Subchannel Transform** is applied:
+
+- All bits are **de-interleaved** so that each subchannel (`P` through `W`) is formed into distinct byte streams.
+- All `P` bytes from all sectors are written sequentially, followed by all `Q` bytes, then `R`, and so on up to `W`.
+
+While this transform temporarily increases memory usage (approximately 32MiB additional), the benefits are substantial:
+
+- Compression speed improves up to **10× faster**
+- Compression gains reach approximately **96%**, particularly on media lacking `R`–`W` subchannel data—as is the case with ~99% of discs.
+
+NOTE: For implementation specifics or updates to this method, refer to the authoritative `libaaruformat` source.
