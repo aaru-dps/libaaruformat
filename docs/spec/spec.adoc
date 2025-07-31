@@ -63,3 +63,7 @@ include::structs/twin_sector.adoc[]
 <<<
 
 include::structs/geom.adoc[]
+
+<<<
+
+include::structs/metadata.adoc[]
