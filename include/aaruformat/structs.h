@@ -100,7 +100,7 @@ typedef struct DdtHeader
     /**Identifier, <see cref="BlockType.DeDuplicationTable" /> */
     uint32_t identifier;
     /**Type of data pointed by this DDT */
-    uint16_t type;
+    uint32_t type;
     /**Compression algorithm used to compress the DDT */
     uint16_t compression;
     /**Each entry is ((uint8_t offset in file) &lt;&lt; shift) + (sector offset in block) */
@@ -134,7 +134,7 @@ typedef struct IndexEntry
     /**Type of item pointed by this entry */
     uint32_t blockType;
     /**Type of data contained by the block pointed by this entry */
-    uint16_t dataType;
+    uint32_t dataType;
     /**Offset in file where item is stored */
     uint64_t offset;
 } IndexEntry;
@@ -145,7 +145,7 @@ typedef struct BlockHeader
     /**Identifier, <see cref="BlockType.DataBlock" /> */
     uint32_t identifier;
     /**Type of data contained by this block */
-    uint16_t type;
+    uint32_t type;
     /**Compression algorithm used to compress the block */
     uint16_t compression;
     /**Size in uint8_ts of each sector contained in this block */
