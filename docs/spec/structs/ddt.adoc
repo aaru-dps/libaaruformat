@@ -1,0 +1,146 @@
+=== The deduplication table (`DDT*`) *_DEPRECATED_*
+
+The deduplication table is a sequential array of pointers, with each entry corresponding to a sector on the storage media.
+These pointers map sector data to logical content blocks, enabling efficient elimination of duplicate data.
+Every image must include at least one deduplication table of type `UserData`.
+
+*Deprecation Notice*: This block is deprecated and *MUST NOT* be used in new image files.
+
+==== Structure Definition
+
+[source,c]
+#define DDT_MAGIC 0X2A544444
+/**Header for a deduplication table. Table follows it */
+typedef struct DdtHeader
+{
+    /**Identifier, <see cref="BlockType.DeDuplicationTable" /> */
+    uint32_t identifier;
+    /**Type of data pointed by this DDT */
+    uint32_t type;
+    /**Compression algorithm used to compress the DDT */
+    uint16_t compression;
+    /**Each entry is ((uint8_t offset in file) &lt;&lt; shift) + (sector offset in block) */
+    uint8_t  shift;
+    /**How many entries are in the table */
+    uint64_t entries;
+    /**Compressed length for the DDT */
+    uint64_t cmpLength;
+    /**Uncompressed length for the DDT */
+    uint64_t length;
+    /**CRC64-ECMA of the compressed DDT */
+    uint64_t cmpCrc64;
+    /**CRC64-ECMA of the uncompressed DDT */
+    uint64_t crc64;
+} DdtHeader;
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|identifier
+|The deduplication table identifier, always 'DDT*'
+
+|uint16_t
+|2 bytes
+|type
+|The data type pointed by this table. See Annex B.
+
+|uint16_t
+|2 bytes
+|compression
+|The compression algorithm used in the table. See Annex C.
+
+|uint8_t
+|1 byte
+|shift
+|The shift used to calculate the position of a sector in a data block pointed by this table.
+
+|uint64_t
+|8 bytes
+|entries
+|How many pointers follow this header.
+
+|uint32_t
+|4 bytes
+|cmpLength
+|The size in bytes of the compressed table that follows this header.
+
+|uint32_t
+|4 bytes
+|length
+|The size in bytes of the table block when decompressed.
+
+|uint64_t
+|8 bytes
+|cmpCrc64
+|The CRC64-ECMA checksum of the compressed table that follows this header.
+
+|uint64_t
+|8 bytes
+|crc64
+|The CRC64-ECMA checksum of the decompressed table.
+|===
+
+==== Deduplication Table Entries
+
+Each entry in the deduplication table references a specific data block and a particular item within that block.
+
+===== Mapping Logic
+
+- Entry 0 corresponds to data associated with LBA 0 of the media; subsequent entries map sequentially.
+- The pointer value for an entry is computed using the formula:
++
+[source]
+pointer = (byte_offset_of_block << shift) + item_index_in_block
++
+For example, a raw pointer value of `0x8003` in a table with a `shift` of 5 resolves as follows:
+- Byte offset: `0x400` → `1024`
+- Item index: `0x3` → `3`
+- Therefore, the pointer targets item 3 within the data block located at byte offset `1024` in the file.
+
+==== Special Case – Corrected Sector Tables
+
+Deduplication tables of type `CdSectorPrefixCorrected` and `CdSectorSuffixCorrected` split the entry value using bitmasking:
+
+- Pointer component: `entry & 0x00FFFFFF`
+- Flags component: `entry & 0xFF000000`
+
+===== Flags
+
+[cols="2,1,6",options="header"]
+|===
+|Flag
+|Value
+|Description
+
+|None
+|`0x00000000`
+|The suffix or prefix cannot be regenerated as is stored in the pointed data block.
+
+|NotDumped
+|`0x10000000`
+|The sector has not been dumped. Ignore the pointer.
+
+|Correct
+|`0x20000000`
+|The suffix (only for MODE 1 sectors) or prefix is correct and can be regenerated. Ignore the pointer.
+
+|Mode2Form1Ok
+|`0x30000000`
+|The suffix for MODE 2 sectors is correct, can be regenerated, and corresponds to a MODE 2 Form 1 sector.
+
+|Mode2Form2Ok
+|`0x40000000`
+|The suffix for MODE 2 sectors is correct, can be regenerated, and corresponds to a MODE 2 Form 2 sector with a valid CRC.
+
+|Mode2Form2NoCrc
+|`0x50000000`
+|The suffix for MODE 2 sectors is correct, can be regenerated, and corresponds to a MODE 2 Form 2 sector with an empty CRC.
+|===
