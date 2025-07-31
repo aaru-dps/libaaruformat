@@ -1,0 +1,88 @@
+=== Flux Data Block (`FLUX`)
+
+This block lists all known flux captures.
+Certain hardware devices, such as Kryoflux, Pauline, and Applesauce, read magnetic media at the flux transition level.
+
+Flux transition reads are digital representations of the analog properties of the media, and cannot be reliably interpreted on a sector-by-sector basis without further processing.
+Instead, the data is accessed through capture blocks whose size varies based on the medium and imaging hardware.
+For example, floppy disk captures typically represent one full track revolution; Applesauce may capture 1¼ revolutions.
+For Quick Disks, the minimum capture is often an entire side of the media.
+
+Each capture block includes two flux data streams: one for user data and one for the indexing signal.
+
+Flux data is represented as an array of `uint8_t` bytes.
+Each byte stores the tick count since the last flux transition.
+If no transition is detected within a byte's range, the value `0xFF` is used, and counting resumes in the next byte with ticks accumulated.
+
+Flux data is stored in `DataBlocks` of the flux data type, referenced from a deduplication table of the same type.
+Only one flux-type deduplication table is allowed per image, and it must have exactly one level.
+
+==== Structure Definition
+
+[source,c]
+/* Undefined */
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|identifier
+|The flux data block identifier, always 'FLUX'
+
+|uint16_t
+|2 bytes
+|entries
+|The number of entries following this header
+
+|uint64_t
+|8 bytes
+|crc64
+|The CRC64-ECMA checksum of the data following this header
+|===
+
+==== Flux entries
+
+[source,c]
+/* Undefined */
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|head
+|Head the data corresponds to.
+
+|uint16_t
+|2 bytes
+|track
+|Track the data corresponds to.
+
+|uint8_t
+|1 byte
+|subtrack
+|Substep of a track that the data corresponds to.
+
+|uint64_t
+|8 bytes
+|resolution
+|Number of picoseconds at which the sampling was performed.
+
+|uint64_t
+|8 bytes
+|tableEntry
+|Entry number in the deduplication table where the data corresponding to this flux entry is stored
+|===

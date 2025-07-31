@@ -107,3 +107,7 @@ include::structs/tape_partition.adoc[]
 <<<
 
 include::structs/cd_indexes.adoc[]
+
+<<<
+
+include::structs/flux.adoc[]
