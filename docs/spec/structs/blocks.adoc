@@ -1,0 +1,5 @@
+== The Blocks
+
+The blocks in AaruFormat serve as the building components of the image, containing both the data and metadata extracted from the media it represents.
+
+include::index.adoc[]

@@ -1,0 +1,87 @@
+=== The index block (`INDX`) *_DEPRECATED_*
+
+The index block stores references to all blocks present in the file.
+It is composed of a header, followed by a sequence of entries, the count of which is defined within the header.
+
+Multiple index blocks may exist within a file to represent previous states or historical versions; however, only the final index block must be referenced by the main file header.
+
+*Deprecation Notice*: This block is deprecated and *MUST NOT* be used in new image files.
+
+==== Structure Definition
+
+[source,c]
+#define INDEX_MAGIC 0x58444E49
+/**Header for the index, followed by entries */
+typedef struct IndexHeader
+{
+    /**Identifier, <see cref="BlockType.Index" /> */
+    uint32_t identifier;
+    /**How many entries follow this header */
+    uint16_t entries;
+    /**CRC64-ECMA of the index */
+    uint64_t crc64;
+} IndexHeader;
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|identifier
+|The index block identifier, always `INDX`
+
+|uint16_t
+|2 bytes
+|entries
+|The number of entries following this header
+
+|uint64_t
+|8 bytes
+|crc64
+|CRC64-ECMA checksum of the entries following this header
+|===
+
+==== Index entries
+
+[source,c]
+/**Index entry */
+typedef struct IndexEntry
+{
+    /**Type of item pointed by this entry */
+    uint32_t blockType;
+    /**Type of data contained by the block pointed by this entry */
+    uint16_t dataType;
+    /**Offset in file where item is stored */
+    uint64_t offset;
+} IndexEntry;
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|blockType
+|The type of block this entry points to.
+
+|uint32_t
+|4 bytes
+|dataType
+|The type of data the block pointed by this entry contains.
+
+|uint64_t
+|8 bytes
+|offset
+|The offset in bytes from the start of the file where the block pointed by this entry starts.
+|===

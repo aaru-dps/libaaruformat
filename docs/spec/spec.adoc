@@ -30,5 +30,8 @@ include::definitions.adoc[]
 
 <<<
 
-include::header.adoc[]
 include::structs/header.adoc[]
+
+<<<
+
+include::structs/blocks.adoc[]
