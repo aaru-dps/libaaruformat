@@ -153,6 +153,15 @@ int32_t aaruf_cst_transform(const uint8_t *interleaved, uint8_t *sequential, siz
         sequential[wStart + i] = w[i];
     }
 
+    free(p);
+    free(q);
+    free(r);
+    free(s);
+    free(t);
+    free(u);
+    free(v);
+    free(w);
+
     return AARUF_STATUS_OK;
 }
 
@@ -288,6 +297,15 @@ int32_t aaruf_cst_untransform(const uint8_t *sequential, uint8_t *interleaved, s
         interleaved[i + 6] += ((w[i / 8] & 0x02) == 0x02 ? 0x01 : 0);
         interleaved[i + 7] += ((w[i / 8] & 0x01) == 0x01 ? 0x01 : 0);
     }
+
+    free(p);
+    free(q);
+    free(r);
+    free(s);
+    free(t);
+    free(u);
+    free(v);
+    free(w);
 
     return AARUF_STATUS_OK;
 }
