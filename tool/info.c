@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <locale.h>
 #include <unicode/ucnv.h>
+#include <unicode/ustring.h>
 
 #include <aaruformat.h>
 #include <sys/types.h>
@@ -30,10 +31,11 @@ int info(char *path)
 {
     aaruformatContext *ctx;
     char              *strBuffer;
-    UErrorCode         u_error_code;
+    UErrorCode u_error_code = U_ZERO_ERROR;
     uint               i, j;
     mediaTagEntry     *mediaTag;
     mediaTagEntry     *tmpMediaTag;
+    UChar ustr[128];
 
     ctx = aaruf_open(path);
 
@@ -101,6 +103,7 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.creatorLength > 0)
         {
+            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
             strBuffer = malloc(ctx->metadataBlockHeader.creatorLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.creatorLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.creatorLength,
@@ -112,6 +115,7 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.commentsLength > 0)
         {
+            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
             strBuffer = malloc(ctx->metadataBlockHeader.commentsLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.commentsLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.commentsLength,
@@ -123,6 +127,7 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.mediaTitleLength > 0)
         {
+            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
             strBuffer = malloc(ctx->metadataBlockHeader.mediaTitleLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.mediaTitleLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.mediaTitleLength,
@@ -134,6 +139,7 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.mediaManufacturerLength > 0)
         {
+            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
             strBuffer = malloc(ctx->metadataBlockHeader.mediaManufacturerLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.mediaManufacturerLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.mediaManufacturerLength,
@@ -145,6 +151,7 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.mediaModelLength > 0)
         {
+            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
             strBuffer = malloc(ctx->metadataBlockHeader.mediaModelLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.mediaModelLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.mediaModelLength,
@@ -156,6 +163,7 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.mediaSerialNumberLength > 0)
         {
+            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
             strBuffer = malloc(ctx->metadataBlockHeader.mediaSerialNumberLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.mediaSerialNumberLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.mediaSerialNumberLength,
@@ -167,6 +175,7 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.mediaBarcodeLength > 0)
         {
+            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
             strBuffer = malloc(ctx->metadataBlockHeader.mediaBarcodeLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.mediaBarcodeLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.mediaBarcodeLength,
@@ -178,6 +187,7 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.mediaPartNumberLength > 0)
         {
+            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
             strBuffer = malloc(ctx->metadataBlockHeader.mediaPartNumberLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.mediaPartNumberLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.mediaPartNumberLength,
@@ -189,6 +199,7 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.driveManufacturerLength > 0)
         {
+            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
             strBuffer = malloc(ctx->metadataBlockHeader.driveManufacturerLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.driveManufacturerLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.driveManufacturerLength,
@@ -200,6 +211,7 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.driveModelLength > 0)
         {
+            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
             strBuffer = malloc(ctx->metadataBlockHeader.driveModelLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.driveModelLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.driveModelLength,
@@ -211,6 +223,7 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.driveSerialNumberLength > 0)
         {
+            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
             strBuffer = malloc(ctx->metadataBlockHeader.driveSerialNumberLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.driveSerialNumberLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.driveSerialNumberLength,
@@ -222,6 +235,7 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.driveFirmwareRevisionLength > 0)
         {
+            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
             strBuffer = malloc(ctx->metadataBlockHeader.driveFirmwareRevisionLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.driveFirmwareRevisionLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.driveFirmwareRevisionLength,
