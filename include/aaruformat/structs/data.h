@@ -26,7 +26,7 @@ typedef struct BlockHeader {
     /**Identifier, <see cref="BlockType.DataBlock" /> */
     uint32_t identifier;
     /**Type of data contained by this block */
-    uint32_t type;
+    uint16_t type;
     /**Compression algorithm used to compress the block */
     uint16_t compression;
     /**Size in uint8_ts of each sector contained in this block */

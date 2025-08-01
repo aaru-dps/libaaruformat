@@ -26,7 +26,7 @@ typedef struct DdtHeader {
     /**Identifier, <see cref="BlockType.DeDuplicationTable" /> */
     uint32_t identifier;
     /**Type of data pointed by this DDT */
-    uint32_t type;
+    uint16_t type;
     /**Compression algorithm used to compress the DDT */
     uint16_t compression;
     /**Each entry is ((uint8_t offset in file) &lt;&lt; shift) + (sector offset in block) */

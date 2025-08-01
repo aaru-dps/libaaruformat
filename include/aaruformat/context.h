@@ -34,6 +34,19 @@
 #define SHA256_DIGEST_LENGTH 32
 #endif
 
+typedef struct Crc64Context {
+    uint64_t finalSeed;
+    uint64_t table[256];
+    uint64_t hashInt;
+} Crc64Context;
+
+typedef struct CdEccContext {
+    bool initedEdc;
+    uint8_t *eccBTable;
+    uint8_t *eccFTable;
+    uint32_t *edcTable;
+} CdEccContext;
+
 typedef struct Checksums
 {
     bool     hasMd5;
@@ -116,18 +129,5 @@ typedef struct DumpExtent
 } DumpExtent;
 
 #pragma pack(pop)
-
-typedef struct Crc64Context {
-    uint64_t finalSeed;
-    uint64_t table[256];
-    uint64_t hashInt;
-} Crc64Context;
-
-typedef struct CdEccContext {
-    bool initedEdc;
-    uint8_t *eccBTable;
-    uint8_t *eccFTable;
-    uint32_t *edcTable;
-} CdEccContext;
 
 #endif  // LIBAARUFORMAT_CONTEXT_H
