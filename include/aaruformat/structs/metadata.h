@@ -27,9 +27,9 @@ typedef struct MetadataBlockHeader {
     uint32_t identifier;
     /**Size in uint8_ts of this whole metadata block */
     uint32_t blockSize;
-    /**Sequence of media set this media beint64_ts to */
+    /**Sequence of media set this media belongs to */
     int32_t mediaSequence;
-    /**Total number of media on the media set this media beint64_ts to */
+    /**Total number of media on the media set this media belongs to */
     int32_t lastMediaSequence;
     /**Offset to start of creator string from start of this block */
     uint32_t creatorOffset;
