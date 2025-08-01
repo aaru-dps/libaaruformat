@@ -71,6 +71,8 @@ A bump indicates potential breaking changes.
 
 Length is defined by `GUID_SIZE`.
 | blockAlignmentShift | uint8_t | Determines block alignment boundaries using the formula 2 << blockAlignmentShift.
+| dataShift | uint8_t | Determines the maximum number of data items in a block using the formula 2 << dataShift.
+| tableShift | uint8_t | Shift used to calculate the number of sectors in a deduplication table entry, using the formula 2 << tableShift.
 | featureCompatible | uint64_t | Bitmask of features that, even if not implemented, still allow reading and writing the image.
 
 | featureCompatibleRo | uint64_t | Bitmask of features that allow read-only processing of the image if unsupported.

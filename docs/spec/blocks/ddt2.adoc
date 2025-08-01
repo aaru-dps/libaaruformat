@@ -57,13 +57,18 @@ It starts with the following header.
 
 |uint8_t
 |1 byte
-|alignment
-|Shift of alignment of all blocks in the image. This must be the same in all deduplication tables and subtables.
+|blockAlignmentShift
+|Determines block alignment boundaries using the formula 2 << blockAlignmentShift.
 
 |uint8_t
 |1 byte
-|shift
-|The shift used to calculate the position of a sector in a data block pointed by this table, or how many sectors are pointed by the next level.
+|dataShift
+|Determines the maximum number of data items in a block using the formula 2 << dataShift.
+
+|uint8_t
+|1 byte
+|tableShift
+|Shift used to calculate the number of sectors in a deduplication table entry, using the formula 2 << tableShift.
 
 |uint8_t
 |1 byte
