@@ -55,7 +55,7 @@ int info(char *path)
     if(u_error_code == U_ZERO_ERROR) printf("\tApplication: %s\n", strBuffer);
     free(strBuffer);
 
-    printf("\tApplication version: %d.%d\n", ctx->header.applicationMinorVersion, ctx->header.applicationMajorVersion);
+    printf("\tApplication version: %d.%d\n", ctx->header.applicationMajorVersion, ctx->header.applicationMinorVersion);
     printf("\tImage format version: %d.%d\n", ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
     printf("\tMedia type: %d\n", ctx->header.mediaType);
     printf("\tIndex offset: %llu\n", ctx->header.indexOffset);
