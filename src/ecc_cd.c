@@ -1,6 +1,6 @@
 /*
  * This file is part of the Aaru Data Preservation Suite.
- * Copyright (c) 2019-2022 Natalia Portillo.
+ * Copyright (c) 2019-2025 Natalia Portillo.
  * ECC algorithm from ECM(c) 2002-2011 Neill Corlett
  *
  * This library is free software; you can redistribute it and/or modify

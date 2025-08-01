@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 
 # This file is part of the Aaru Data Preservation Suite.
-# Copyright (c) 2019-2022 Natalia Portillo.
+# Copyright (c) 2019-2025 Natalia Portillo.
 #
 # This library is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as
@@ -16,13 +16,9 @@ cmake_minimum_required(VERSION 3.13)
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, see <http://www.gnu.org/licenses/>.
 
-IF (APPLE)
-  IF ("${CMAKE_OSX_ARCHITECTURES}" STREQUAL "")
-    SET(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "Build architectures for Mac OS X" FORCE)
-  ENDIF ()
-ENDIF (APPLE)
 IF(APPLE)
   IF("${CMAKE_OSX_ARCHITECTURES}" STREQUAL "")
+    SET(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "Build architectures for Mac OS X" FORCE)
   ENDIF()
 ENDIF(APPLE)
 
