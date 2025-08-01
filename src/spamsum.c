@@ -50,10 +50,9 @@ AARU_EXPORT spamsum_ctx *AARU_CALL aaruf_spamsum_init(void)
 
 AARU_EXPORT int AARU_CALL aaruf_spamsum_update(spamsum_ctx *ctx, const uint8_t *data, uint32_t len)
 {
-    int i;
     if(!ctx || !data) return -1;
 
-    for(i = 0; i < len; i++) fuzzy_engine_step(ctx, data[i]);
+    for (int i = 0; i < len; i++) fuzzy_engine_step(ctx, data[i]);
 
     ctx->total_size += len;
 
@@ -71,7 +70,7 @@ AARU_EXPORT void AARU_CALL aaruf_spamsum_free(spamsum_ctx *ctx)
 
 AARU_LOCAL inline void fuzzy_engine_step(spamsum_ctx *ctx, uint8_t c)
 {
-    uint32_t i;
+    uint32_t i = 0;
     /* At each character we update the rolling hash and the normal hashes.
      * When the rolling hash hits a reset value then we emit a normal hash
      * as a element of the signature and reset the normal hash. */

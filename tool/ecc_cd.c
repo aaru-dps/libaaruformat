@@ -25,9 +25,9 @@
 bool check_cd_sector_channel(CdEccContext *context, uint8_t *sector, bool *unknown, bool *has_edc, bool *edc_correct,
                              bool *has_ecc_p, bool *ecc_p_correct, bool *has_ecc_q, bool *ecc_q_correct)
 {
-    int      i;
-    uint32_t storedEdc, edc, calculatedEdc;
-    int      size, pos;
+    int i = 0;
+    uint32_t storedEdc = 0, edc = 0, calculatedEdc = 0;
+    int size = 0, pos = 0;
     uint8_t  zeroaddress[4];
 
     *has_edc       = false;

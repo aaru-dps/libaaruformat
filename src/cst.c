@@ -24,15 +24,22 @@
 
 int32_t aaruf_cst_transform(const uint8_t *interleaved, uint8_t *sequential, size_t length)
 {
-    uint8_t *p, *q, *r, *s, *t, *u, *v, *w;
-    size_t   qStart;
-    size_t   rStart;
-    size_t   sStart;
-    size_t   tStart;
-    size_t   uStart;
-    size_t   vStart;
-    size_t   wStart;
-    size_t   i;
+    uint8_t *p = NULL;
+    uint8_t *q = NULL;
+    uint8_t *r = NULL;
+    uint8_t *s = NULL;
+    uint8_t *t = NULL;
+    uint8_t *u = NULL;
+    uint8_t *v = NULL;
+    uint8_t *w = NULL;
+    size_t qStart = 0;
+    size_t rStart = 0;
+    size_t sStart = 0;
+    size_t tStart = 0;
+    size_t uStart = 0;
+    size_t vStart = 0;
+    size_t wStart = 0;
+    size_t i = 0;
 
     if(interleaved == NULL || sequential == NULL) return AARUF_ERROR_BUFFER_TOO_SMALL;
 

@@ -28,9 +28,9 @@
 
 int aaruf_close(void *context)
 {
-    int            i;
-    mediaTagEntry *mediaTag;
-    mediaTagEntry *tmpMediaTag;
+    int i = 0;
+    mediaTagEntry *mediaTag = NULL;
+    mediaTagEntry *tmpMediaTag = NULL;
 
     if(context == NULL)
     {

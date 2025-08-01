@@ -24,16 +24,16 @@
 
 int32_t aaruf_verify_image(void *context)
 {
-    aaruformatContext *ctx;
-    uint64_t           crc64;
-    int                i;
+    aaruformatContext *ctx = NULL;
+    uint64_t crc64 = 0;
+    int i = 0;
     IndexHeader        index_header;
-    IndexEntry        *index_entries;
-    size_t             read_bytes;
-    void              *buffer;
-    crc64_ctx         *crc64_context;
+    IndexEntry *index_entries = NULL;
+    size_t read_bytes = 0;
+    void *buffer = NULL;
+    crc64_ctx *crc64_context = NULL;
     BlockHeader        block_header;
-    uint64_t           verified_bytes;
+    uint64_t verified_bytes = 0;
     DdtHeader          ddt_header;
     TracksHeader       tracks_header;
 
@@ -88,7 +88,7 @@ int32_t aaruf_verify_image(void *context)
 
     if(crc64 != index_header.crc64)
     {
-        fprintf(stderr, "Expected index CRC 0x%16llX but got 0x%16lX.\n", index_header.crc64, crc64);
+        fprintf(stderr, "Expected index CRC 0x%16llX but got 0x%16llX.\n", index_header.crc64, crc64);
         free(index_entries);
         return AARUF_ERROR_INVALID_BLOCK_CRC;
     }
@@ -148,7 +148,7 @@ int32_t aaruf_verify_image(void *context)
 
                 if(crc64 != block_header.cmpCrc64)
                 {
-                    fprintf(stderr, "Expected block CRC 0x%16llX but got 0x%16lX.\n", block_header.cmpCrc64, crc64);
+                    fprintf(stderr, "Expected block CRC 0x%16llX but got 0x%16llX.\n", block_header.cmpCrc64, crc64);
                     free(index_entries);
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }

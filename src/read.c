@@ -55,18 +55,18 @@ int32_t aaruf_read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t
 
 int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32_t *length)
 {
-    aaruformatContext *ctx;
-    uint64_t           ddtEntry;
-    uint32_t           offsetMask;
-    uint64_t           offset;
-    uint64_t           blockOffset;
-    BlockHeader       *blockHeader;
-    uint8_t           *block;
-    size_t             readBytes;
+    aaruformatContext *ctx = NULL;
+    uint64_t ddtEntry = 0;
+    uint32_t offsetMask = 0;
+    uint64_t offset = 0;
+    uint64_t blockOffset = 0;
+    BlockHeader *blockHeader = NULL;
+    uint8_t *block = NULL;
+    size_t readBytes = 0;
     uint8_t            lzmaProperties[LZMA_PROPERTIES_LENGTH];
-    size_t             lzmaSize;
-    uint8_t           *cmpData;
-    int                errorNo;
+    size_t lzmaSize = 0;
+    uint8_t *cmpData = NULL;
+    int errorNo = 0;
 
     if(context == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
 
@@ -279,14 +279,14 @@ int32_t aaruf_read_track_sector(void *context, uint8_t *data, uint64_t sectorAdd
 
 int32_t aaruf_read_sector_long(void *context, uint64_t sectorAddress, uint8_t *data, uint32_t *length)
 {
-    aaruformatContext *ctx;
-    uint32_t           bareLength;
-    uint32_t           tagLength;
-    uint8_t           *bareData;
-    int32_t            res;
+    aaruformatContext *ctx = NULL;
+    uint32_t bareLength = 0;
+    uint32_t tagLength = 0;
+    uint8_t *bareData = NULL;
+    int32_t res = 0;
     TrackEntry         trk;
-    int                i;
-    bool               trkFound;
+    int i = 0;
+    bool trkFound = false;
 
     if(context == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
 

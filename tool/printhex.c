@@ -27,16 +27,16 @@ int printhex(unsigned char *array, unsigned int length, int width, bool color)
     char          length_hex[17];
     char          str[256];
     char          format[256];
-    int           rows;
-    int           last;
-    int           offset_length;
+    int rows = 0;
+    int last = 0;
+    int offset_length = 0;
     int           str_length = strlen("Offset");
-    int           i;
-    int           b;
-    int           last_bytes;
-    int           last_spaces;
-    int           j;
-    unsigned char v;
+    int i = 0;
+    int b = 0;
+    int last_bytes = 0;
+    int last_spaces = 0;
+    int j = 0;
+    unsigned char v = 0;
 
     if(array == NULL) return 0;
 

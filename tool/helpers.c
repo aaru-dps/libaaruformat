@@ -25,15 +25,14 @@
 char *byte_array_to_hex_string(const unsigned char *array, int array_size)
 {
     char *hex_string = NULL;
-    int   j;
-    int   i;
+    int j = 0;
 
     hex_string = malloc(array_size * 2 + 1);
 
     if(hex_string == NULL) return NULL;
 
     j = 0;
-    for(i = 0; i < array_size; i++)
+    for (int i = 0; i < array_size; i++)
     {
         hex_string[j] = (array[i] >> 4) + '0';
         if(hex_string[j] > '9') hex_string[j] += 0x7;

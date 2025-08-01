@@ -126,7 +126,7 @@ int have_avx2()
 #if(defined(__aarch64__) || defined(_M_ARM64) || defined(__arm__) || defined(_M_ARM)) && defined(__APPLE__)
 int have_neon_apple()
 {
-    int    value;
+    int value = 0;
     size_t len = sizeof(int);
     int    ret = sysctlbyname("hw.optional.neon", &value, &len, NULL, 0);
 
@@ -137,7 +137,7 @@ int have_neon_apple()
 
 int have_crc32_apple()
 {
-    int    value;
+    int value = 0;
     size_t len = sizeof(int);
     int    ret = sysctlbyname("hw.optional.crc32", &value, &len, NULL, 0);
 

@@ -29,12 +29,12 @@
 
 int info(char *path)
 {
-    aaruformatContext *ctx;
-    char              *strBuffer;
+    aaruformatContext *ctx = NULL;
+    char *strBuffer = NULL;
     UErrorCode u_error_code = U_ZERO_ERROR;
-    uint               i, j;
-    mediaTagEntry     *mediaTag;
-    mediaTagEntry     *tmpMediaTag;
+    uint i = 0, j = 0;
+    mediaTagEntry const *mediaTag = NULL;
+    mediaTagEntry const *tmpMediaTag = NULL;
     UChar ustr[128];
 
     ctx = aaruf_open(path);

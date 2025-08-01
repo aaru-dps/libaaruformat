@@ -37,10 +37,10 @@ static void error_callback(const FLAC__StreamDecoder *decoder, FLAC__StreamDecod
 AARU_EXPORT size_t AARU_CALL aaruf_flac_decode_redbook_buffer(uint8_t *dst_buffer, size_t dst_size,
                                                               const uint8_t *src_buffer, size_t src_size)
 {
-    FLAC__StreamDecoder          *decoder;
-    FLAC__StreamDecoderInitStatus init_status;
+    FLAC__StreamDecoder *decoder = NULL;
+    FLAC__StreamDecoderInitStatus init_status = FLAC__STREAM_DECODER_INIT_STATUS_OK;
     aaru_flac_ctx                *ctx = (aaru_flac_ctx *)malloc(sizeof(aaru_flac_ctx));
-    size_t                        ret_size;
+    size_t ret_size = 0;
 
     memset(ctx, 0, sizeof(aaru_flac_ctx));
 
@@ -148,12 +148,12 @@ AARU_EXPORT size_t AARU_CALL aaruf_flac_encode_redbook_buffer(
     uint32_t min_residual_partition_order, uint32_t max_residual_partition_order, const char *application_id,
     uint32_t application_id_len)
 {
-    FLAC__StreamEncoder          *encoder;
+    FLAC__StreamEncoder *encoder = NULL;
     aaru_flac_ctx                *ctx = (aaru_flac_ctx *)malloc(sizeof(aaru_flac_ctx));
-    FLAC__StreamEncoderInitStatus init_status;
-    size_t                        ret_size;
-    FLAC__int32                  *pcm;
-    int                           i;
+    FLAC__StreamEncoderInitStatus init_status = FLAC__STREAM_ENCODER_INIT_STATUS_OK;
+    size_t ret_size = 0;
+    FLAC__int32 *pcm = NULL;
+    int i = 0;
     int16_t                      *buffer16 = (int16_t *)src_buffer;
     FLAC__StreamMetadata         *metadata[1];
 

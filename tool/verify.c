@@ -25,8 +25,8 @@
 
 int verify(char *path)
 {
-    aaruformatContext *ctx;
-    uint32_t           res;
+    aaruformatContext *ctx = NULL;
+    uint32_t res = 0;
 
     ctx = aaruf_open(path);
 
@@ -50,17 +50,18 @@ int verify(char *path)
 
 int verify_sectors(char *path)
 {
-    aaruformatContext *ctx;
-    uint64_t           s;
-    uint8_t           *buffer;
+    aaruformatContext *ctx = NULL;
+    uint8_t *buffer = NULL;
     uint32_t           buffer_len = 2352;
-    int32_t            res;
-    CdEccContext      *cd_ecc_context;
+    int32_t res = 0;
+    CdEccContext *cd_ecc_context = NULL;
     ctx = aaruf_open(path);
-    bool     verify_result;
-    bool     unknown, has_edc, edc_correct, has_ecc_p, ecc_p_correct, has_ecc_q, ecc_q_correct;
-    uint64_t errors, unknowns;
-    bool     any_error;
+    bool verify_result = false;
+    bool has_edc = false, has_ecc_p = false, ecc_p_correct = false, has_ecc_q = false, ecc_q_correct = false;
+    bool edc_correct = false;
+    bool unknown = false;
+    uint64_t errors = 0, unknowns = 0;
+    bool any_error = false;
 
     if(ctx == NULL)
     {
@@ -79,7 +80,7 @@ int verify_sectors(char *path)
     unknowns       = 0;
     any_error      = false;
 
-    for(s = 0; s < ctx->imageInfo.Sectors; s++)
+    for (uint64_t s = 0; s < ctx->imageInfo.Sectors; s++)
     {
         printf("\rVerifying sector %llu...", s);
         res = aaruf_read_sector_long(ctx, s, buffer, &buffer_len);

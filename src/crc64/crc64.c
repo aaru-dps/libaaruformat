@@ -22,7 +22,6 @@
 
 AARU_EXPORT crc64_ctx *AARU_CALL aaruf_crc64_init(void)
 {
-    int        i, slice;
     crc64_ctx *ctx = (crc64_ctx *)malloc(sizeof(crc64_ctx));
 
     if(!ctx) return NULL;
@@ -68,7 +67,7 @@ AARU_EXPORT void AARU_CALL aaruf_crc64_slicing(uint64_t *previous_crc, const uin
 
     if(len > 4)
     {
-        const uint8_t *limit;
+        const uint8_t *limit = NULL;
 
         while((uintptr_t)(data) & 3)
         {

@@ -30,7 +30,7 @@
  */
 int aaruf_identify(const char *filename)
 {
-    FILE *stream;
+    FILE *stream = NULL;
 
     stream = fopen(filename, "rb");
 

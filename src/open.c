@@ -30,25 +30,25 @@
 
 void *aaruf_open(const char *filepath)
 {
-    aaruformatContext *ctx;
-    int                errorNo;
-    size_t             readBytes;
-    long               pos;
+    aaruformatContext *ctx = NULL;
+    int errorNo = 0;
+    size_t readBytes = 0;
+    long pos = 0;
     IndexHeader        idxHeader;
-    IndexEntry        *idxEntries;
-    uint8_t           *data;
-    uint8_t           *cmpData;
-    uint8_t           *cstData;
-    uint32_t          *cdDdt;
-    uint64_t           crc64;
-    int                i, j, k;
-    uint16_t           e;
+    IndexEntry *idxEntries = NULL;
+    uint8_t *data = NULL;
+    uint8_t *cmpData = NULL;
+    uint8_t *cstData = NULL;
+    uint32_t *cdDdt = NULL;
+    uint64_t crc64 = 0;
+    int i = 0, j = 0, k = 0;
+    uint16_t e = 0;
     uint8_t            lzmaProperties[LZMA_PROPERTIES_LENGTH];
-    size_t             lzmaSize;
+    size_t lzmaSize = 0;
     ChecksumHeader     checksum_header;
-    ChecksumEntry     *checksum_entry;
-    mediaTagEntry     *mediaTag;
-    mediaTagEntry     *oldMediaTag;
+    ChecksumEntry const *checksum_entry = NULL;
+    mediaTagEntry *mediaTag = NULL;
+    mediaTagEntry *oldMediaTag = NULL;
 
     ctx = (aaruformatContext *)malloc(sizeof(aaruformatContext));
     memset(ctx, 0, sizeof(aaruformatContext));

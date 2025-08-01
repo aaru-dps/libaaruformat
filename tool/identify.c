@@ -21,7 +21,7 @@
 
 int identify(char *path)
 {
-    int ret;
+    int ret = 0;
 
     ret = aaruf_identify(path);
 

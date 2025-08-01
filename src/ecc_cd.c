@@ -26,8 +26,8 @@
 
 void *aaruf_ecc_cd_init()
 {
-    CdEccContext *context;
-    uint32_t      edc, i, j;
+    CdEccContext *context = NULL;
+    uint32_t edc = 0, i = 0, j = 0;
 
     context = (CdEccContext *)malloc(sizeof(CdEccContext));
 
