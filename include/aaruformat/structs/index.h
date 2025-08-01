@@ -22,7 +22,8 @@
 #pragma pack(push, 1)
 
 /**Header for the index, followed by entries */
-typedef struct IndexHeader {
+typedef struct IndexHeader
+{
     /**Identifier, <see cref="BlockType.Index" /> */
     uint32_t identifier;
     /**How many entries follow this header */
@@ -31,8 +32,20 @@ typedef struct IndexHeader {
     uint64_t crc64;
 } IndexHeader;
 
+/**Header for the index, followed by entries */
+typedef struct IndexHeader2
+{
+    /**Identifier, <see cref="BlockType.Index" /> */
+    uint32_t identifier;
+    /**How many entries follow this header */
+    uint64_t entries;
+    /**CRC64-ECMA of the index */
+    uint64_t crc64;
+} IndexHeader2;
+
 /**Index entry */
-typedef struct IndexEntry {
+typedef struct IndexEntry
+{
     /**Type of item pointed by this entry */
     uint32_t blockType;
     /**Type of data contained by the block pointed by this entry */
@@ -43,4 +56,4 @@ typedef struct IndexEntry {
 
 #pragma pack(pop)
 
-#endif //LIBAARUFORMAT_INDEX_H
+#endif  // LIBAARUFORMAT_INDEX_H
