@@ -17,31 +17,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include "commands.h"
-#include "usage.h"
+#ifndef LIBAARUFORMAT_COMMANDS_H
+#define LIBAARUFORMAT_COMMANDS_H
 
-int main(int argc, char *argv[])
+typedef int (*command_func)(int argc, char *argv[]);
+
+typedef struct
 {
-    print_banner();
+    const char  *verb;
+    command_func handler;
+} Command;
 
-    if(argc < 2)
-    {
-        usage();
-        return -1;
-    }
+extern Command      commands[];
+extern const size_t num_commands;
 
-    const char *verb = argv[1];
-    argc--;
-    argv++;  // Shift to pass only args to verb handlers
+// Command wrappers
+int cmd_identify(int argc, char *argv[]);
+int cmd_info(int argc, char *argv[]);
+int cmd_read(int argc, char *argv[]);
+int cmd_read_long(int argc, char *argv[]);
+int cmd_verify(int argc, char *argv[]);
+int cmd_verify_sectors(int argc, char *argv[]);
 
-    for(size_t i = 0; i < num_commands; ++i)
-    {
-        if(strcmp(commands[i].verb, verb) == 0) { return commands[i].handler(argc, argv); }
-    }
-
-    fprintf(stderr, "Unknown verb: %s\n", verb);
-    usage();
-    return -1;
-}
+#endif  // LIBAARUFORMAT_COMMANDS_H

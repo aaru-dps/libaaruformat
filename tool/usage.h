@@ -17,31 +17,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include "commands.h"
-#include "usage.h"
+#ifndef LIBAARUFORMAT_USAGE_H
+#define LIBAARUFORMAT_USAGE_H
 
-int main(int argc, char *argv[])
-{
-    print_banner();
+void print_banner();
+void usage();
+void usage_identify();
+void usage_info();
+void usage_read();
+void usage_read_long();
+void usage_verify();
+void usage_verify_sectors();
 
-    if(argc < 2)
-    {
-        usage();
-        return -1;
-    }
-
-    const char *verb = argv[1];
-    argc--;
-    argv++;  // Shift to pass only args to verb handlers
-
-    for(size_t i = 0; i < num_commands; ++i)
-    {
-        if(strcmp(commands[i].verb, verb) == 0) { return commands[i].handler(argc, argv); }
-    }
-
-    fprintf(stderr, "Unknown verb: %s\n", verb);
-    usage();
-    return -1;
-}
+#endif  // LIBAARUFORMAT_USAGE_H
