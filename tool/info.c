@@ -58,9 +58,9 @@ int info(char *path)
     printf("\tApplication version: %d.%d\n", ctx->header.applicationMinorVersion, ctx->header.applicationMajorVersion);
     printf("\tImage format version: %d.%d\n", ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
     printf("\tMedia type: %d\n", ctx->header.mediaType);
-    printf("\tIndex offset: %lu\n", ctx->header.indexOffset);
-    printf("\tCreation time: %ld\n", ctx->header.creationTime);
-    printf("\tLast written time: %ld\n", ctx->header.lastWrittenTime);
+    printf("\tIndex offset: %llu\n", ctx->header.indexOffset);
+    printf("\tCreation time: %lld\n", ctx->header.creationTime);
+    printf("\tLast written time: %lld\n", ctx->header.lastWrittenTime);
 
     // TODO: Traverse media tags
 
@@ -241,9 +241,9 @@ int info(char *path)
             printf("\tTrack entry %d:\n", i);
             printf("\t\tSequence: %d\n", ctx->trackEntries[i].sequence);
             printf("\t\tType: %d\n", ctx->trackEntries[i].type);
-            printf("\t\tStart: %ld\n", ctx->trackEntries[i].start);
-            printf("\t\tEnd: %ld\n", ctx->trackEntries[i].end);
-            printf("\t\tPregap: %ld\n", ctx->trackEntries[i].pregap);
+            printf("\t\tStart: %lld\n", ctx->trackEntries[i].start);
+            printf("\t\tEnd: %lld\n", ctx->trackEntries[i].end);
+            printf("\t\tPregap: %lld\n", ctx->trackEntries[i].pregap);
             printf("\t\tSession: %d\n", ctx->trackEntries[i].session);
             printf("\t\tISRC: %.13s\n", ctx->trackEntries[i].isrc);
             printf("\t\tFlags: %d\n", ctx->trackEntries[i].flags);
@@ -361,8 +361,8 @@ int info(char *path)
             for(j = 0; j < ctx->dumpHardwareEntriesWithData[i].entry.extents; j++)
             {
                 printf("\t\tExtent %d:\n", j);
-                printf("\t\t\tStart: %lu\n", ctx->dumpHardwareEntriesWithData[i].extents[j].start);
-                printf("\t\t\tEnd: %lu\n", ctx->dumpHardwareEntriesWithData[i].extents[j].end);
+                printf("\t\t\tStart: %llu\n", ctx->dumpHardwareEntriesWithData[i].extents[j].start);
+                printf("\t\t\tEnd: %llu\n", ctx->dumpHardwareEntriesWithData[i].extents[j].end);
             }
         }
     }
@@ -376,20 +376,20 @@ int info(char *path)
     if(ctx->blockHeaderCache.max_items > 0)
     {
         if(ctx->blockHeaderCache.cache != NULL) printf("Block header cache has been initialized.\n");
-        printf("Block header cache can contain a maximum of %lu items.\n", ctx->blockHeaderCache.max_items);
+        printf("Block header cache can contain a maximum of %llu items.\n", ctx->blockHeaderCache.max_items);
     }
 
     if(ctx->blockCache.max_items > 0)
     {
         if(ctx->blockCache.cache != NULL) printf("Block cache has been initialized.\n");
-        printf("Block cache can contain a maximum of %lu items.\n", ctx->blockCache.max_items);
+        printf("Block cache can contain a maximum of %llu items.\n", ctx->blockCache.max_items);
     }
 
     printf("Aaru's ImageInfo:\n");
     printf("\tHas partitions?: %s\n", ctx->imageInfo.HasPartitions ? "yes" : "no");
     printf("\tHas sessions?: %s\n", ctx->imageInfo.HasSessions ? "yes" : "no");
-    printf("\tImage size without headers: %lu bytes\n", ctx->imageInfo.ImageSize);
-    printf("\tImage contains %lu sectors\n", ctx->imageInfo.Sectors);
+    printf("\tImage size without headers: %llu bytes\n", ctx->imageInfo.ImageSize);
+    printf("\tImage contains %llu sectors\n", ctx->imageInfo.Sectors);
     printf("\tBiggest sector is %d bytes\n", ctx->imageInfo.SectorSize);
     printf("\tImage version: %s\n", ctx->imageInfo.Version);
 
@@ -405,8 +405,8 @@ int info(char *path)
     if(ctx->imageInfo.ApplicationVersion != NULL)
         printf("\tApplication version: %s\n", ctx->imageInfo.ApplicationVersion);
     if(ctx->imageInfo.Creator != NULL) printf("\tCreator: %s\n", ctx->imageInfo.Creator);
-    printf("\tCreation time: %ld\n", ctx->imageInfo.CreationTime);
-    printf("\tLast written time: %ld\n", ctx->imageInfo.LastModificationTime);
+    printf("\tCreation time: %lld\n", ctx->imageInfo.CreationTime);
+    printf("\tLast written time: %lld\n", ctx->imageInfo.LastModificationTime);
     if(ctx->imageInfo.Comments != NULL) printf("\tComments: %s\n", ctx->imageInfo.Comments);
     if(ctx->imageInfo.MediaTitle != NULL) printf("\tMedia title: %s\n", ctx->imageInfo.MediaTitle);
     if(ctx->imageInfo.MediaManufacturer != NULL) printf("\tMedia manufacturer: %s\n", ctx->imageInfo.MediaManufacturer);

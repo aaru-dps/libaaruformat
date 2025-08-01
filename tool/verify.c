@@ -81,12 +81,12 @@ int verify_sectors(char *path)
 
     for(s = 0; s < ctx->imageInfo.Sectors; s++)
     {
-        printf("\rVerifying sector %lu...", s);
+        printf("\rVerifying sector %llu...", s);
         res = aaruf_read_sector_long(ctx, s, buffer, &buffer_len);
 
         if(res != AARUF_STATUS_OK)
         {
-            fprintf(stderr, "\rError %d reading sector %lu\n.", res, s);
+            fprintf(stderr, "\rError %d reading sector %llu\n.", res, s);
             continue;
         }
 
@@ -98,15 +98,15 @@ int verify_sectors(char *path)
         if(unknown)
         {
             unknowns++;
-            printf("\rSector %lu cannot be verified.\n", s);
+            printf("\rSector %llu cannot be verified.\n", s);
             continue;
         }
 
-        if(has_edc && !edc_correct) printf("\rSector %lu has an incorrect EDC value.\n", s);
+        if (has_edc && !edc_correct) printf("\rSector %llu has an incorrect EDC value.\n", s);
 
-        if(has_ecc_p && !ecc_p_correct) printf("\rSector %lu has an incorrect EDC value.\n", s);
+        if (has_ecc_p && !ecc_p_correct) printf("\rSector %llu has an incorrect EDC value.\n", s);
 
-        if(has_ecc_q && !ecc_q_correct) printf("\rSector %lu has an incorrect EDC value.\n", s);
+        if (has_ecc_q && !ecc_q_correct) printf("\rSector %llu has an incorrect EDC value.\n", s);
 
         errors++;
         any_error = true;
@@ -117,10 +117,10 @@ int verify_sectors(char *path)
     else
         printf("\rAll sector checksums are correct.\n");
 
-    printf("Total sectors........... %lu\n", ctx->imageInfo.Sectors);
-    printf("Total errors............ %lu\n", errors);
-    printf("Total unknowns.......... %lu\n", unknowns);
-    printf("Total errors+unknowns... %lu\n", errors + unknowns);
+    printf("Total sectors........... %llu\n", ctx->imageInfo.Sectors);
+    printf("Total errors............ %llu\n", errors);
+    printf("Total unknowns.......... %llu\n", unknowns);
+    printf("Total errors+unknowns... %llu\n", errors + unknowns);
 
     return AARUF_STATUS_OK;
 }

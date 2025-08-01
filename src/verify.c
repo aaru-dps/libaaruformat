@@ -45,7 +45,7 @@ int32_t aaruf_verify_image(void *context)
     if(ctx->magic != AARU_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
 
     // This will traverse all blocks and check their CRC64 without uncompressing them
-    fprintf(stderr, "Checking index integrity at %lu.\n", ctx->header.indexOffset);
+    fprintf(stderr, "Checking index integrity at %llu.\n", ctx->header.indexOffset);
     fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET);
 
     read_bytes = fread(&index_header, 1, sizeof(IndexHeader), ctx->imageStream);
@@ -62,7 +62,7 @@ int32_t aaruf_verify_image(void *context)
         return AARUF_ERROR_CANNOT_READ_INDEX;
     }
 
-    fprintf(stderr, "Index at %lu contains %d entries.\n", ctx->header.indexOffset, index_header.entries);
+    fprintf(stderr, "Index at %llu contains %d entries.\n", ctx->header.indexOffset, index_header.entries);
 
     index_entries = malloc(sizeof(IndexEntry) * index_header.entries);
 
@@ -88,7 +88,7 @@ int32_t aaruf_verify_image(void *context)
 
     if(crc64 != index_header.crc64)
     {
-        fprintf(stderr, "Expected index CRC 0x%16lX but got 0x%16lX.\n", index_header.crc64, crc64);
+        fprintf(stderr, "Expected index CRC 0x%16llX but got 0x%16lX.\n", index_header.crc64, crc64);
         free(index_entries);
         return AARUF_ERROR_INVALID_BLOCK_CRC;
     }
@@ -148,7 +148,7 @@ int32_t aaruf_verify_image(void *context)
 
                 if(crc64 != block_header.cmpCrc64)
                 {
-                    fprintf(stderr, "Expected block CRC 0x%16lX but got 0x%16lX.\n", block_header.cmpCrc64, crc64);
+                    fprintf(stderr, "Expected block CRC 0x%16llX but got 0x%16lX.\n", block_header.cmpCrc64, crc64);
                     free(index_entries);
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
@@ -191,7 +191,7 @@ int32_t aaruf_verify_image(void *context)
 
                 if(crc64 != ddt_header.cmpCrc64)
                 {
-                    fprintf(stderr, "Expected DDT CRC 0x%16lX but got 0x%16lX.\n", ddt_header.cmpCrc64, crc64);
+                    fprintf(stderr, "Expected DDT CRC 0x%16llX but got 0x%16llX.\n", ddt_header.cmpCrc64, crc64);
                     free(index_entries);
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
@@ -225,7 +225,7 @@ int32_t aaruf_verify_image(void *context)
 
                 if(crc64 != tracks_header.crc64)
                 {
-                    fprintf(stderr, "Expected DDT CRC 0x%16lX but got 0x%16lX.\n", tracks_header.crc64, crc64);
+                    fprintf(stderr, "Expected DDT CRC 0x%16llX but got 0x%16llX.\n", tracks_header.crc64, crc64);
                     free(index_entries);
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
