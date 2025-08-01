@@ -121,60 +121,77 @@ The size type defines the following type of entries:
 |Each entry uses five bytes, with the leftmost byte used for flags and the next three bytes used as a pointer to the sector or next level.
 |===
 
-==== Sector Pointer Resolution and Table Levels
+==== Interpretation of Deduplication Table Entries
 
-When `levels` is equal to 1—indicating a single-level deduplication table—each entry in the table corresponds directly to a media sector.
-The pointer value is resolved using the following procedure:
+Decoding deduplication tables may seem complex initially, but the logic is structured and manageable.
+Three parameters are critical for interpreting deduplication table entries:
 
-- Right-shift the raw pointer value by the `shift` value.
-- Multiply the result by the `alignment` to compute the absolute byte offset of the target data block.
-- The remainder of the original pointer value modulo `(1 << shift)` yields the item index within the block.
+- *block_alignment_shift*
+- *table_shift*
+- *data_shift*
 
-Each data block stores a fixed number of bytes per sector, allowing compact and efficient sector addressing.
+These parameters are stored in both the master header and each deduplication table header to support reliable decoding.
 
-_For example_:
-Given a pointer value of `0x8003`, a `shift` of 5, and an `alignment` of 9:
-- `0x8003 >> 5 = 0x400 = 1024`
-- `1024 * 9 = 9216`
-- The sector index within the block is `0x8003 & 0x1F = 3`
+===== Block Alignment
 
-Thus, the sector is located at byte offset `9216`, and it is the 3rd item in the block.
+Each block in the image is aligned to a boundary of `2 << block_alignment_shift`.
+This alignment is essential for technical consistency and performance.
 
-===== Multi-Level Tables
+===== Table Shift
 
-When `levels > 1`, the interpretation of pointer entries changes substantially.
-Although typical usage involves no more than two levels, implementations **MUST** be capable of handling an arbitrary number of levels to ensure forward compatibility.
+The `table_shift` parameter defines how many blocks (or sectors) are represented by each entry, based on the deduplication table level.
+In multi-level tables, this value governs an exponential reduction in scope per level.
 
-At each level—except the final—the table entry functions as an address to the next-level table.
-The range of LBAs covered by each entry is calculated as:
+For example:
 
+[cols="1,2",options="header"]
+|===
+| Level
+| Sectors per Entry
+
+| 1
+| (2 << table_shift)^2 = 262144
+
+| 2
+| 2 << table_shift = 512
+
+| 3
+| 1
+|===
+
+Tables with more than two levels are rare, but implementations should be resilient enough to handle unexpected depths gracefully.
+
+===== Entry Format Across Levels
+
+In non-terminal levels (i.e., all except the last), each entry contains:
+
+- Relevant metadata flags for its sector range
+- An offset pointing to the next deduplication level
+
+To obtain the byte offset in the image file, multiply this offset by `2 << block_alignment_shift`.
+
+In the last level, the `data_shift` is applied as follows to determine the specific item within a data block:
+
+.Example calculation
 [source]
-range = entry_index * (1 << shift)^(levels - 1)
+----
+Given:
+- Entry value = 0x35006
+- data_shift = 5
+- block_alignment_shift = 9
 
-_For example_, with a `shift` value of 9 and two levels:
-- Entry `0` spans LBAs `0–511`
-- Entry `1` spans LBAs `512–1023`
+Step 1: Mask and shift
+0x35006 >> 5 = 0x1A80
 
-With three levels:
-- Entry `0` at level 0 spans LBAs `0–262143`
-- Entry `0` at level 1 within that region spans LBAs `0–511`, and so on recursively.
+Step 2: Compute byte offset
+0x1A80 * (2 << 9) = 0x6A0000
 
-===== Resolution Example
+Step 3: Determine item index
+0x35006 & 0x1F = 6
 
-To locate sector `1012` using a two-level table with `shift = 9` and `alignment = 9`:
-
-1. **Level 0**:
-- Sector `1012` falls within entry `1` (covers `512–1023`)
-- Entry `1` contains the value `0x12000`
-- Multiply by `alignment` → `0x12000 * 9 = 0x225000 = 37,748,736`
-- Read the next-level table at byte offset `37,748,736`, marked with the identifier `DDTS`
-
-2. **Level 1**:
-- The relevant entry is `500` (`1012 - 512 = 500`)
-- Entry `500` contains `0x35006`
-- Right-shift `0x35006 >> 9 = 0x6A = 106`
-- Multiply by `alignment`: `106 * 9 = 954`
-- Sector resides at byte offset `217,088` and is the 6th item in the block (`0x35006 & 0x1FF = 6`)
+Result:
+Sector is stored at byte offset 0x6A0000 as item number 6 in the data block.
+----
 
 ===== Deduplication table flags
 
