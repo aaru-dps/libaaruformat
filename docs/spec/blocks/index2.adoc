@@ -54,7 +54,7 @@ typedef struct IndexEntry
     /**Type of item pointed by this entry */
     uint32_t blockType;
     /**Type of data contained by the block pointed by this entry */
-    uint32_t dataType;
+    uint16_t dataType;
     /**Offset in file where item is stored */
     uint64_t offset;
 } IndexEntry;
@@ -74,7 +74,7 @@ typedef struct IndexEntry
 |The type of block this entry points to.
 
 |uint32_t
-|4 bytes
+|2 bytes
 |dataType
 |The type of data the block pointed by this entry contains.
 
