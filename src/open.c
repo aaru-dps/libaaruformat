@@ -28,27 +28,30 @@
 
 #include <aaruformat.h>
 
+#include "internal.h"
+#include "utarray.h"
+
 void *aaruf_open(const char *filepath)
 {
-    aaruformatContext *ctx = NULL;
-    int errorNo = 0;
-    size_t readBytes = 0;
-    long pos = 0;
-    IndexHeader        idxHeader;
-    IndexEntry *idxEntries = NULL;
-    uint8_t *data = NULL;
-    uint8_t *cmpData = NULL;
-    uint8_t *cstData = NULL;
-    uint32_t *cdDdt = NULL;
-    uint64_t crc64 = 0;
-    int i = 0, j = 0, k = 0;
-    uint16_t e = 0;
-    uint8_t            lzmaProperties[LZMA_PROPERTIES_LENGTH];
-    size_t lzmaSize = 0;
-    ChecksumHeader     checksum_header;
+    aaruformatContext   *ctx       = NULL;
+    int                  errorNo   = 0;
+    size_t               readBytes = 0;
+    long                 pos       = 0;
+    uint8_t             *data      = NULL;
+    uint8_t             *cmpData   = NULL;
+    uint8_t             *cstData   = NULL;
+    uint32_t            *cdDdt     = NULL;
+    uint64_t             crc64     = 0;
+    int                  i = 0, j = 0, k = 0;
+    uint16_t             e = 0;
+    uint8_t              lzmaProperties[LZMA_PROPERTIES_LENGTH];
+    size_t               lzmaSize = 0;
+    ChecksumHeader       checksum_header;
     ChecksumEntry const *checksum_entry = NULL;
-    mediaTagEntry *mediaTag = NULL;
-    mediaTagEntry *oldMediaTag = NULL;
+    mediaTagEntry       *mediaTag       = NULL;
+    mediaTagEntry       *oldMediaTag    = NULL;
+    uint32_t             signature      = 0;
+    UT_array            *index_entries  = NULL;
 
     ctx = (aaruformatContext *)malloc(sizeof(aaruformatContext));
     memset(ctx, 0, sizeof(aaruformatContext));
@@ -147,10 +150,22 @@ void *aaruf_open(const char *filepath)
         return NULL;
     }
 
-    readBytes = fread(&idxHeader, 1, sizeof(IndexHeader), ctx->imageStream);
+    readBytes = fread(&signature, 1, sizeof(uint32_t), ctx->imageStream);
 
-    if(readBytes != sizeof(IndexHeader) || idxHeader.identifier != IndexBlock)
+    if(readBytes != sizeof(uint32_t) || signature != IndexBlock)
     {
+        free(ctx);
+        errno = AARUF_ERROR_CANNOT_READ_INDEX;
+
+        return NULL;
+    }
+
+    index_entries = process_index_v1(ctx);
+
+    if(index_entries == NULL)
+    {
+        fprintf(stderr, "Could not process index.\n");
+        utarray_free(index_entries);
         free(ctx);
         errno = AARUF_ERROR_CANNOT_READ_INDEX;
 
@@ -158,48 +173,27 @@ void *aaruf_open(const char *filepath)
     }
 
     fprintf(stderr, "libaaruformat: Index at %" PRIu64 " contains %d entries\n", ctx->header.indexOffset,
-            idxHeader.entries);
+            utarray_len(index_entries));
 
-    idxEntries = (IndexEntry *)malloc(sizeof(IndexEntry) * idxHeader.entries);
-
-    if(idxEntries == NULL)
+    for(i = 0; i < utarray_len(index_entries); i++)
     {
-        errorNo = errno;
-        free(ctx);
-        errno = errorNo;
-
-        return NULL;
-    }
-
-    memset(idxEntries, 0, sizeof(IndexEntry) * idxHeader.entries);
-    readBytes = fread(idxEntries, sizeof(IndexEntry), idxHeader.entries, ctx->imageStream);
-
-    if(readBytes != idxHeader.entries)
-    {
-        free(idxEntries);
-        free(ctx);
-        errno = AARUF_ERROR_CANNOT_READ_INDEX;
-
-        return NULL;
-    }
-
-    for(i = 0; i < idxHeader.entries; i++)
-    {
+        IndexEntry *entry = (IndexEntry *)utarray_eltptr(index_entries, i);
         fprintf(stderr, "libaaruformat: Block type %4.4s with data type %d is indexed to be at %" PRIu64 "\n",
-                (char *)&idxEntries[i].blockType, idxEntries[i].dataType, idxEntries[i].offset);
+                (char *)&entry->blockType, entry->dataType, entry->offset);
     }
 
     bool foundUserDataDdt    = false;
     ctx->imageInfo.ImageSize = 0;
-    for(i = 0; i < idxHeader.entries; i++)
+    for(i = 0; i < utarray_len(index_entries); i++)
     {
-        pos = fseek(ctx->imageStream, idxEntries[i].offset, SEEK_SET);
+        IndexEntry *entry = (IndexEntry *)utarray_eltptr(index_entries, i);
+        pos               = fseek(ctx->imageStream, entry->offset, SEEK_SET);
 
-        if(pos < 0 || ftell(ctx->imageStream) != idxEntries[i].offset)
+        if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
         {
             fprintf(stderr,
                     "libaaruformat: Could not seek to %" PRIu64 " as indicated by index entry %d, continuing...\n",
-                    idxEntries[i].offset, i);
+                    entry->offset, i);
 
             continue;
         }
@@ -207,18 +201,17 @@ void *aaruf_open(const char *filepath)
         BlockHeader blockHeader;
         DdtHeader   ddtHeader;
 
-        switch(idxEntries[i].blockType)
+        switch(entry->blockType)
         {
             case DataBlock:
                 // NOP block, skip
-                if(idxEntries[i].dataType == NoData) break;
+                if(entry->dataType == NoData) break;
 
                 readBytes = fread(&blockHeader, 1, sizeof(BlockHeader), ctx->imageStream);
 
                 if(readBytes != sizeof(BlockHeader))
                 {
-                    fprintf(stderr, "libaaruformat: Could not read block header at %" PRIu64 "\n",
-                            idxEntries[i].offset);
+                    fprintf(stderr, "libaaruformat: Could not read block header at %" PRIu64 "\n", entry->offset);
 
                     break;
                 }
@@ -226,7 +219,7 @@ void *aaruf_open(const char *filepath)
                 ctx->imageInfo.ImageSize += blockHeader.cmpLength;
 
                 // Unused, skip
-                if(idxEntries[i].dataType == UserData)
+                if(entry->dataType == UserData)
                 {
                     if(blockHeader.sectorSize > ctx->imageInfo.SectorSize)
                         ctx->imageInfo.SectorSize = blockHeader.sectorSize;
@@ -234,24 +227,24 @@ void *aaruf_open(const char *filepath)
                     break;
                 }
 
-                if(blockHeader.identifier != idxEntries[i].blockType)
+                if(blockHeader.identifier != entry->blockType)
                 {
                     fprintf(stderr, "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "\n",
-                            idxEntries[i].offset);
+                            entry->offset);
                     break;
                 }
 
-                if(blockHeader.type != idxEntries[i].dataType)
+                if(blockHeader.type != entry->dataType)
                 {
                     fprintf(stderr,
                             "libaaruformat: Expected block with data type %4.4s at position %" PRIu64
                             " but found data type %4.4s\n",
-                            (char *)&idxEntries[i].blockType, idxEntries[i].offset, (char *)&blockHeader.type);
+                            (char *)&entry->blockType, entry->offset, (char *)&blockHeader.type);
                     break;
                 }
 
                 fprintf(stderr, "libaaruformat: Found data block with type %4.4s at position %" PRIu64 "\n",
-                        (char *)&idxEntries[i].blockType, idxEntries[i].offset);
+                        (char *)&entry->blockType, entry->offset);
 
                 if(blockHeader.compression == Lzma || blockHeader.compression == LzmaClauniaSubchannelTransform)
                 {
@@ -387,11 +380,11 @@ void *aaruf_open(const char *filepath)
                 }
 
                 // Check if it's not a media tag, but a sector tag, and fill the appropriate table then
-                switch(idxEntries[i].dataType)
+                switch(entry->dataType)
                 {
                     case CdSectorPrefix:
                     case CdSectorPrefixCorrected:
-                        if(idxEntries[i].dataType == CdSectorPrefixCorrected) { ctx->sectorPrefixCorrected = data; }
+                        if(entry->dataType == CdSectorPrefixCorrected) { ctx->sectorPrefixCorrected = data; }
                         else
                             ctx->sectorPrefix = data;
 
@@ -401,7 +394,7 @@ void *aaruf_open(const char *filepath)
                         break;
                     case CdSectorSuffix:
                     case CdSectorSuffixCorrected:
-                        if(idxEntries[i].dataType == CdSectorSuffixCorrected)
+                        if(entry->dataType == CdSectorSuffixCorrected)
                             ctx->sectorSuffixCorrected = data;
                         else
                             ctx->sectorSuffix = data;
@@ -458,8 +451,7 @@ void *aaruf_open(const char *filepath)
 
                 if(readBytes != sizeof(DdtHeader))
                 {
-                    fprintf(stderr, "libaaruformat: Could not read block header at %" PRIu64 "\n",
-                            idxEntries[i].offset);
+                    fprintf(stderr, "libaaruformat: Could not read block header at %" PRIu64 "\n", entry->offset);
 
                     break;
                 }
@@ -468,7 +460,7 @@ void *aaruf_open(const char *filepath)
 
                 ctx->imageInfo.ImageSize += ddtHeader.cmpLength;
 
-                if(idxEntries[i].dataType == UserData)
+                if(entry->dataType == UserData)
                 {
                     ctx->imageInfo.Sectors = ddtHeader.entries;
                     ctx->shift             = ddtHeader.shift;
@@ -554,7 +546,7 @@ void *aaruf_open(const char *filepath)
 #ifdef __linux__
                             ctx->mappedMemoryDdtSize = sizeof(uint64_t) * ddtHeader.entries;
                             ctx->userDataDdt         = mmap(NULL, ctx->mappedMemoryDdtSize, PROT_READ, MAP_SHARED,
-                                                            fileno(ctx->imageStream), idxEntries[i].offset + sizeof(ddtHeader));
+                                                            fileno(ctx->imageStream), entry->offset + sizeof(ddtHeader));
 
                             if(ctx->userDataDdt == MAP_FAILED)
                             {
@@ -577,8 +569,7 @@ void *aaruf_open(const char *filepath)
                             break;
                     }
                 }
-                else if(idxEntries[i].dataType == CdSectorPrefixCorrected ||
-                        idxEntries[i].dataType == CdSectorSuffixCorrected)
+                else if(entry->dataType == CdSectorPrefixCorrected || entry->dataType == CdSectorSuffixCorrected)
                 {
                     switch(ddtHeader.compression)
                     {
@@ -651,9 +642,9 @@ void *aaruf_open(const char *filepath)
                                 return NULL;
                             }
 
-                            if(idxEntries[i].dataType == CdSectorPrefixCorrected)
+                            if(entry->dataType == CdSectorPrefixCorrected)
                                 ctx->sectorPrefixDdt = cdDdt;
-                            else if(idxEntries[i].dataType == CdSectorSuffixCorrected)
+                            else if(entry->dataType == CdSectorSuffixCorrected)
                                 ctx->sectorSuffixDdt = cdDdt;
                             else
                                 free(cdDdt);
@@ -679,9 +670,9 @@ void *aaruf_open(const char *filepath)
                                 break;
                             }
 
-                            if(idxEntries[i].dataType == CdSectorPrefixCorrected)
+                            if(entry->dataType == CdSectorPrefixCorrected)
                                 ctx->sectorPrefixDdt = cdDdt;
-                            else if(idxEntries[i].dataType == CdSectorSuffixCorrected)
+                            else if(entry->dataType == CdSectorSuffixCorrected)
                                 ctx->sectorSuffixDdt = cdDdt;
                             else
                                 free(cdDdt);
@@ -729,11 +720,11 @@ void *aaruf_open(const char *filepath)
                     break;
                 }
 
-                if(ctx->metadataBlockHeader.identifier != idxEntries[i].blockType)
+                if(ctx->metadataBlockHeader.identifier != entry->blockType)
                 {
                     memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
                     fprintf(stderr, "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "\n",
-                            idxEntries[i].offset);
+                            entry->offset);
                     break;
                 }
 
@@ -944,7 +935,7 @@ void *aaruf_open(const char *filepath)
                 {
                     memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
                     fprintf(stderr, "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "\n",
-                            idxEntries[i].offset);
+                            entry->offset);
                 }
 
                 ctx->imageInfo.ImageSize += sizeof(TrackEntry) * ctx->tracksHeader.entries;
@@ -983,7 +974,7 @@ void *aaruf_open(const char *filepath)
                 }
 
                 fprintf(stderr, "libaaruformat: Found %d tracks at position %" PRIu64 ".\n", ctx->tracksHeader.entries,
-                        idxEntries[i].offset);
+                        entry->offset);
 
                 ctx->imageInfo.HasPartitions = true;
                 ctx->imageInfo.HasSessions   = true;
@@ -1021,7 +1012,7 @@ void *aaruf_open(const char *filepath)
                 {
                     memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
                     fprintf(stderr, "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "\n",
-                            idxEntries[i].offset);
+                            entry->offset);
                 }
 
                 ctx->imageInfo.ImageSize += ctx->cicmBlockHeader.length;
@@ -1045,7 +1036,7 @@ void *aaruf_open(const char *filepath)
                     fprintf(stderr, "libaaruformat: Could not read CICM XML metadata block, continuing...\n");
                 }
 
-                fprintf(stderr, "libaaruformat: Found CICM XML metadata block %" PRIu64 ".\n", idxEntries[i].offset);
+                fprintf(stderr, "libaaruformat: Found CICM XML metadata block %" PRIu64 ".\n", entry->offset);
                 break;
                 // Dump hardware block
             case DumpHardwareBlock:
@@ -1062,7 +1053,7 @@ void *aaruf_open(const char *filepath)
                 {
                     memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
                     fprintf(stderr, "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "\n",
-                            idxEntries[i].offset);
+                            entry->offset);
                 }
 
                 data = (uint8_t *)malloc(ctx->dumpHardwareHeader.length);
@@ -1348,7 +1339,7 @@ void *aaruf_open(const char *filepath)
                 {
                     memset(&checksum_header, 0, sizeof(ChecksumHeader));
                     fprintf(stderr, "libaaruformat: Incorrect identifier for checksum block at position %" PRIu64 "\n",
-                            idxEntries[i].offset);
+                            entry->offset);
                 }
 
                 data = (uint8_t *)malloc(checksum_header.length);
@@ -1414,12 +1405,12 @@ void *aaruf_open(const char *filepath)
             default:
                 fprintf(stderr,
                         "libaaruformat: Unhandled block type %4.4s with data type %d is indexed to be at %" PRIu64 "\n",
-                        (char *)&idxEntries[i].blockType, idxEntries[i].dataType, idxEntries[i].offset);
+                        (char *)&entry->blockType, entry->dataType, entry->offset);
                 break;
         }
     }
 
-    free(idxEntries);
+    utarray_free(index_entries);
 
     if(!foundUserDataDdt)
     {

@@ -17,11 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "commands.h"
 #include <argtable3.h>
 #include <stdbool.h>
 #include <stdio.h>
+
 #include "aaruformattool.h"
+#include "commands.h"
 #include "usage.h"
 
 int cmd_identify(int argc, char *argv[])
