@@ -110,7 +110,8 @@ add_library(aaruformat SHARED include/aaruformat/consts.h include/aaruformat/enu
             src/index/index_v1.c
             include/internal.h
             src/index/index_v2.c
-            src/blocks/data.c)
+            src/blocks/data.c
+            src/ddt/ddt_v1.c)
 
 include_directories(include include/aaruformat)
 

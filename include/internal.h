@@ -26,5 +26,6 @@ int32_t   verify_index_v1(aaruformatContext *ctx);
 UT_array *process_index_v2(aaruformatContext *ctx);
 int32_t   verify_index_v2(aaruformatContext *ctx);
 int32_t   process_data_block(aaruformatContext *ctx, IndexEntry *entry);
+int32_t   process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUserDataDdt);
 
 #endif  // LIBAARUFORMAT_INTERNAL_H

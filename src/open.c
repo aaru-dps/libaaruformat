@@ -38,16 +38,11 @@ void *aaruf_open(const char *filepath)
     size_t               readBytes = 0;
     long                 pos       = 0;
     uint8_t             *data      = NULL;
-    uint8_t             *cmpData   = NULL;
-    uint32_t            *cdDdt     = NULL;
     uint64_t             crc64     = 0;
     int                  i = 0, j = 0, k = 0;
     uint16_t             e = 0;
-    uint8_t              lzmaProperties[LZMA_PROPERTIES_LENGTH];
-    size_t               lzmaSize = 0;
     ChecksumHeader       checksum_header;
     ChecksumEntry const *checksum_entry = NULL;
-    mediaTagEntry       *mediaTag       = NULL;
     uint32_t             signature      = 0;
     UT_array            *index_entries  = NULL;
 
@@ -199,9 +194,6 @@ void *aaruf_open(const char *filepath)
             continue;
         }
 
-        BlockHeader blockHeader;
-        DdtHeader   ddtHeader;
-
         switch(entry->blockType)
         {
             case DataBlock:
@@ -219,245 +211,18 @@ void *aaruf_open(const char *filepath)
                 break;
 
             case DeDuplicationTable:
-                readBytes = fread(&ddtHeader, 1, sizeof(DdtHeader), ctx->imageStream);
+                errorNo = process_ddt_v1(ctx, entry, &foundUserDataDdt);
 
-                if(readBytes != sizeof(DdtHeader))
+                if(errorNo != AARUF_STATUS_OK)
                 {
-                    fprintf(stderr, "libaaruformat: Could not read block header at %" PRIu64 "\n", entry->offset);
+                    utarray_free(index_entries);
+                    free(ctx);
+                    errno = errorNo;
 
-                    break;
+                    return NULL;
                 }
 
-                foundUserDataDdt = true;
-
-                ctx->imageInfo.ImageSize += ddtHeader.cmpLength;
-
-                if(entry->dataType == UserData)
-                {
-                    ctx->imageInfo.Sectors = ddtHeader.entries;
-                    ctx->shift             = ddtHeader.shift;
-
-                    // Check for DDT compression
-                    switch(ddtHeader.compression)
-                    {
-                            // TODO: Check CRC
-                        case Lzma:
-                            lzmaSize = ddtHeader.cmpLength - LZMA_PROPERTIES_LENGTH;
-
-                            cmpData = (uint8_t *)malloc(lzmaSize);
-                            if(cmpData == NULL)
-                            {
-                                fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
-                                break;
-                            }
-
-                            ctx->userDataDdt = (uint64_t *)malloc(ddtHeader.length);
-                            if(ctx->userDataDdt == NULL)
-                            {
-                                fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
-                                free(cmpData);
-                                break;
-                            }
-
-                            readBytes = fread(lzmaProperties, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
-                            if(readBytes != LZMA_PROPERTIES_LENGTH)
-                            {
-                                fprintf(stderr, "Could not read LZMA properties, continuing...\n");
-                                free(cmpData);
-                                free(ctx->userDataDdt);
-                                ctx->userDataDdt = NULL;
-                                break;
-                            }
-
-                            readBytes = fread(cmpData, 1, lzmaSize, ctx->imageStream);
-                            if(readBytes != lzmaSize)
-                            {
-                                fprintf(stderr, "Could not read compressed block, continuing...\n");
-                                free(cmpData);
-                                free(ctx->userDataDdt);
-                                ctx->userDataDdt = NULL;
-                                break;
-                            }
-
-                            readBytes = ddtHeader.length;
-                            errorNo   = aaruf_lzma_decode_buffer((uint8_t *)ctx->userDataDdt, &readBytes, cmpData,
-                                                                 &lzmaSize, lzmaProperties, LZMA_PROPERTIES_LENGTH);
-
-                            if(errorNo != 0)
-                            {
-                                fprintf(stderr, "Got error %d from LZMA, stopping...\n", errorNo);
-                                free(cmpData);
-                                free(ctx->userDataDdt);
-                                ctx->userDataDdt = NULL;
-                                errno            = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
-
-                                // TODO: Clean-up all memory!!!
-                                return NULL;
-                            }
-
-                            if(readBytes != ddtHeader.length)
-                            {
-                                fprintf(
-                                    stderr,
-                                    "Error decompressing block, should be {0} bytes but got {1} bytes., stopping...\n");
-                                free(cmpData);
-                                free(ctx->userDataDdt);
-                                ctx->userDataDdt = NULL;
-                                errno            = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
-
-                                // TODO: Clean-up all memory!!!
-                                return NULL;
-                            }
-
-                            ctx->inMemoryDdt = true;
-                            foundUserDataDdt = true;
-
-                            break;
-                            // TODO: Check CRC
-                        case None:
-#ifdef __linux__
-                            ctx->mappedMemoryDdtSize = sizeof(uint64_t) * ddtHeader.entries;
-                            ctx->userDataDdt         = mmap(NULL, ctx->mappedMemoryDdtSize, PROT_READ, MAP_SHARED,
-                                                            fileno(ctx->imageStream), entry->offset + sizeof(ddtHeader));
-
-                            if(ctx->userDataDdt == MAP_FAILED)
-                            {
-                                foundUserDataDdt = false;
-                                fprintf(stderr, "libaaruformat: Could not read map deduplication table.\n");
-                                break;
-                            }
-
-                            ctx->inMemoryDdt = false;
-                            break;
-#else  // TODO: Implement
-                            fprintf(stderr, "libaaruformat: Uncompressed DDT not yet implemented...\n");
-                            foundUserDataDdt = false;
-                            break;
-#endif
-                        default:
-                            fprintf(stderr, "libaaruformat: Found unknown compression type %d, continuing...\n",
-                                    blockHeader.compression);
-                            foundUserDataDdt = false;
-                            break;
-                    }
-                }
-                else if(entry->dataType == CdSectorPrefixCorrected || entry->dataType == CdSectorSuffixCorrected)
-                {
-                    switch(ddtHeader.compression)
-                    {
-                            // TODO: Check CRC
-                        case Lzma:
-                            lzmaSize = ddtHeader.cmpLength - LZMA_PROPERTIES_LENGTH;
-
-                            cmpData = (uint8_t *)malloc(lzmaSize);
-                            if(cmpData == NULL)
-                            {
-                                fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
-                                break;
-                            }
-
-                            cdDdt = (uint32_t *)malloc(ddtHeader.length);
-                            if(cdDdt == NULL)
-                            {
-                                fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
-                                free(cmpData);
-                                break;
-                            }
-
-                            readBytes = fread(lzmaProperties, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
-                            if(readBytes != LZMA_PROPERTIES_LENGTH)
-                            {
-                                fprintf(stderr, "Could not read LZMA properties, continuing...\n");
-                                free(cmpData);
-                                free(cdDdt);
-                                ctx->userDataDdt = NULL;
-                                break;
-                            }
-
-                            readBytes = fread(cmpData, 1, lzmaSize, ctx->imageStream);
-                            if(readBytes != lzmaSize)
-                            {
-                                fprintf(stderr, "Could not read compressed block, continuing...\n");
-                                free(cmpData);
-                                free(cdDdt);
-                                ctx->userDataDdt = NULL;
-                                break;
-                            }
-
-                            readBytes = ddtHeader.length;
-                            errorNo   = aaruf_lzma_decode_buffer((uint8_t *)cdDdt, &readBytes, cmpData, &lzmaSize,
-                                                                 lzmaProperties, LZMA_PROPERTIES_LENGTH);
-
-                            if(errorNo != 0)
-                            {
-                                fprintf(stderr, "Got error %d from LZMA, stopping...\n", errorNo);
-                                free(cmpData);
-                                free(cdDdt);
-                                ctx->userDataDdt = NULL;
-                                errno            = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
-
-                                // TODO: Clean-up all memory!!!
-                                return NULL;
-                            }
-
-                            if(readBytes != ddtHeader.length)
-                            {
-                                fprintf(
-                                    stderr,
-                                    "Error decompressing block, should be {0} bytes but got {1} bytes., stopping...\n");
-                                free(cmpData);
-                                free(cdDdt);
-                                ctx->userDataDdt = NULL;
-                                errno            = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
-
-                                // TODO: Clean-up all memory!!!
-                                return NULL;
-                            }
-
-                            if(entry->dataType == CdSectorPrefixCorrected)
-                                ctx->sectorPrefixDdt = cdDdt;
-                            else if(entry->dataType == CdSectorSuffixCorrected)
-                                ctx->sectorSuffixDdt = cdDdt;
-                            else
-                                free(cdDdt);
-
-                            break;
-
-                            // TODO: Check CRC
-                        case None:
-                            cdDdt = (uint32_t *)malloc(ddtHeader.entries * sizeof(uint32_t));
-
-                            if(mediaTag == NULL)
-                            {
-                                fprintf(stderr, "libaaruformat: Cannot allocate memory for deduplication table.\n");
-                                break;
-                            }
-
-                            readBytes = fread(cdDdt, 1, ddtHeader.entries * sizeof(uint32_t), ctx->imageStream);
-
-                            if(readBytes != ddtHeader.entries * sizeof(uint32_t))
-                            {
-                                free(cdDdt);
-                                fprintf(stderr, "libaaruformat: Could not read deduplication table, continuing...\n");
-                                break;
-                            }
-
-                            if(entry->dataType == CdSectorPrefixCorrected)
-                                ctx->sectorPrefixDdt = cdDdt;
-                            else if(entry->dataType == CdSectorSuffixCorrected)
-                                ctx->sectorSuffixDdt = cdDdt;
-                            else
-                                free(cdDdt);
-
-                            break;
-                        default:
-                            fprintf(stderr, "libaaruformat: Found unknown compression type %d, continuing...\n",
-                                    blockHeader.compression);
-                            break;
-                    }
-                }
-                break;
-                // Logical geometry block. It doesn't have a CRC coz, well, it's not so important
+                break;  // Logical geometry block. It doesn't have a CRC coz, well, it's not so important
             case GeometryBlock:
                 readBytes = fread(&ctx->geometryBlock, 1, sizeof(GeometryBlockHeader), ctx->imageStream);
 
