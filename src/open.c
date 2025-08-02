@@ -39,7 +39,7 @@ void *aaruf_open(const char *filepath)
     long                 pos       = 0;
     uint8_t             *data      = NULL;
     uint64_t             crc64     = 0;
-    int                  i = 0, j = 0, k = 0;
+    int                  i = 0, j = 0;
     uint16_t             e = 0;
     ChecksumHeader       checksum_header;
     ChecksumEntry const *checksum_entry = NULL;
@@ -233,79 +233,7 @@ void *aaruf_open(const char *filepath)
 
                 break;
             case TracksBlock:
-                readBytes = fread(&ctx->tracksHeader, 1, sizeof(TracksHeader), ctx->imageStream);
-
-                if(readBytes != sizeof(TracksHeader))
-                {
-                    memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
-                    fprintf(stderr, "libaaruformat: Could not read tracks header, continuing...\n");
-                    break;
-                }
-
-                if(ctx->tracksHeader.identifier != TracksBlock)
-                {
-                    memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
-                    fprintf(stderr, "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "\n",
-                            entry->offset);
-                }
-
-                ctx->imageInfo.ImageSize += sizeof(TrackEntry) * ctx->tracksHeader.entries;
-
-                ctx->trackEntries = (TrackEntry *)malloc(sizeof(TrackEntry) * ctx->tracksHeader.entries);
-
-                if(ctx->trackEntries == NULL)
-                {
-                    memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
-                    fprintf(stderr, "libaaruformat: Could not allocate memory for metadata block, continuing...\n");
-                    break;
-                }
-
-                readBytes = fread(ctx->trackEntries, sizeof(TrackEntry), ctx->tracksHeader.entries, ctx->imageStream);
-
-                if(readBytes != ctx->tracksHeader.entries)
-                {
-                    memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
-                    free(ctx->trackEntries);
-                    fprintf(stderr, "libaaruformat: Could not read metadata block, continuing...\n");
-                }
-
-                crc64 = aaruf_crc64_data((const uint8_t *)ctx->trackEntries,
-                                         ctx->tracksHeader.entries * sizeof(TrackEntry));
-
-                // Due to how C# wrote it, it is effectively reversed
-                if(ctx->header.imageMajorVersion <= AARUF_VERSION) crc64 = bswap_64(crc64);
-
-                if(crc64 != ctx->tracksHeader.crc64)
-                {
-                    fprintf(stderr,
-                            "libaaruformat: Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64
-                            ", continuing...\n",
-                            crc64, ctx->tracksHeader.crc64);
-                    break;
-                }
-
-                fprintf(stderr, "libaaruformat: Found %d tracks at position %" PRIu64 ".\n", ctx->tracksHeader.entries,
-                        entry->offset);
-
-                ctx->imageInfo.HasPartitions = true;
-                ctx->imageInfo.HasSessions   = true;
-
-                ctx->numberOfDataTracks = 0;
-
-                for(j = 0; j < ctx->tracksHeader.entries; j++)
-                {
-                    if(ctx->trackEntries[j].sequence > 0 && ctx->trackEntries[j].sequence <= 99)
-                        ctx->numberOfDataTracks++;
-                }
-
-                ctx->dataTracks = malloc(sizeof(TrackEntry) * ctx->numberOfDataTracks);
-
-                k = 0;
-                for(j = 0; j < ctx->tracksHeader.entries; j++)
-                {
-                    if(ctx->trackEntries[j].sequence > 0 && ctx->trackEntries[j].sequence <= 99)
-                        memcpy(&ctx->dataTracks[k++], &ctx->trackEntries[j], sizeof(TrackEntry));
-                }
+                process_tracks_block(ctx, entry);
 
                 break;
                 // CICM XML metadata block

@@ -29,5 +29,6 @@ int32_t   process_data_block(aaruformatContext *ctx, IndexEntry *entry);
 int32_t   process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUserDataDdt);
 void      process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry);
 void      process_geometry_block(aaruformatContext *ctx, const IndexEntry *entry);
+void      process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry);
 
 #endif  // LIBAARUFORMAT_INTERNAL_H
