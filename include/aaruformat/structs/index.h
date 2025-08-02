@@ -43,6 +43,19 @@ typedef struct IndexHeader2
     uint64_t crc64;
 } IndexHeader2;
 
+/**Header for the index, followed by entries */
+typedef struct IndexHeader3
+{
+    /**Identifier, <see cref="BlockType.Index" /> */
+    uint32_t identifier;
+    /**How many entries follow this header */
+    uint64_t entries;
+    /**CRC64-ECMA of the index */
+    uint64_t crc64;
+    /**Pointer to the previous index header */
+    uint64_t previous;
+} IndexHeader3;
+
 /**Index entry */
 typedef struct IndexEntry
 {

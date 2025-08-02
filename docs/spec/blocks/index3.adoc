@@ -1,0 +1,59 @@
+=== Index Block Version 3 (`IDX3`)
+
+Version 3 of the index structure introduces a new field: `previous`. This field enables any index block to reference another, allowing for non-linear and flexible index placement within the file.
+
+This enhancement permits index blocks to be written at arbitrary offsets. If the current index is not the initial one, the `previous` field stores a pointer to the preceding index block, forming a linked chain of indexes.
+
+In scenarios where the file cannot be finalized correctly—due to crashes, write interruptions, or failure to update the master header—the index chain allows reconstruction of the indexing structure. By scanning backward from the end of the file to locate the last written index and following each `previous` pointer, earlier indexes can be discovered and parsed.
+
+This mechanism significantly improves fault tolerance. Unlike earlier versions where a partially written file could render indexing unusable, version 3 allows for resilient recovery and continued access to indexed data.
+
+The index block in version 3 is immediately followed by index entries that maintain the same format as those defined in version 2, ensuring compatibility and easing transition between versions.
+
+Index entries can contain *at most* a single child index pointer.
+
+==== Structure Definition
+
+[source,c]
+/**Header for the index, followed by entries */
+typedef struct IndexHeader3
+{
+    /**Identifier, <see cref="BlockType.Index" /> */
+    uint32_t identifier;
+    /**How many entries follow this header */
+    uint64_t entries;
+    /**CRC64-ECMA of the index */
+    uint64_t crc64;
+    /**Pointer to the previous index header */
+    uint64_t previous;
+} IndexHeader3;
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32
+|4 bytes
+|identifier
+|The index block identifier, always `IDX3`
+
+|uint64
+|8 bytes
+|entries
+|The number of entries following this header
+
+|uint64
+|8 bytes
+|crc64
+|CRC64-ECMA checksum of the entries following this header
+
+|uint64
+|8 bytes
+|previous
+|Pointer in image file to previous index block. `0` if this is the first index block.
+|===

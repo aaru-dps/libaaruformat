@@ -42,7 +42,7 @@ include::blocks/index2.adoc[]
 
 <<<
 
-include::blocks/index_continuation.adoc[]
+include::blocks/index3.adoc[]
 
 <<<
 

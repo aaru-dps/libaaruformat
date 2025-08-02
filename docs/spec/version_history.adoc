@@ -84,4 +84,8 @@ Add annex explaining the meaning and relationship between user, bitstream and fl
 Move specification to Asciidoc.
 
 Deprecate Compact Disc lead-in, first track pregap, lead-out, and floppy disk lead-out data types. They are stored as user data now (with negative and overflow sectors as appropiate).
+
+Clarify and correct deduplication table specification.
+
+Rework index version 3 specification.
 |===

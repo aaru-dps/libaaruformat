@@ -210,6 +210,8 @@ typedef enum
     IndexBlock                   = 0x58444E49,
     /** Block containing the index v2 */
     IndexBlock2                  = 0x32584449,
+    /** Block containing the index v3 */
+    IndexBlock3                  = 0x33584449,
     /** Block containing logical geometry */
     GeometryBlock                = 0x4D4F4547,
     /** Block containing metadata */
