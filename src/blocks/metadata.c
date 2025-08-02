@@ -286,3 +286,65 @@ void process_geometry_block(aaruformatContext *ctx, const IndexEntry *entry)
     ctx->imageInfo.Heads           = ctx->geometryBlock.heads;
     ctx->imageInfo.SectorsPerTrack = ctx->geometryBlock.sectorsPerTrack;
 }
+
+// CICM XML metadata block
+void process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry)
+{
+    int    pos       = 0;
+    size_t readBytes = 0;
+
+    // Check if the context and image stream are valid
+    if(ctx == NULL || ctx->imageStream == NULL)
+    {
+        fprintf(stderr, "Invalid context or image stream.\n");
+        return;
+    }
+
+    // Seek to block
+    pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
+    if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
+    {
+        fprintf(stderr, "libaaruformat: Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+
+        return;
+    }
+
+    // Even if those two checks shall have been done before
+
+    readBytes = fread(&ctx->cicmBlockHeader, 1, sizeof(CicmMetadataBlock), ctx->imageStream);
+
+    if(readBytes != sizeof(CicmMetadataBlock))
+    {
+        memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
+        fprintf(stderr, "libaaruformat: Could not read CICM XML metadata header, continuing...\n");
+        return;
+    }
+
+    if(ctx->cicmBlockHeader.identifier != CicmBlock)
+    {
+        memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
+        fprintf(stderr, "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "\n", entry->offset);
+    }
+
+    ctx->imageInfo.ImageSize += ctx->cicmBlockHeader.length;
+
+    ctx->cicmBlock = (uint8_t *)malloc(ctx->cicmBlockHeader.length);
+
+    if(ctx->cicmBlock == NULL)
+    {
+        memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
+        fprintf(stderr, "libaaruformat: Could not allocate memory for CICM XML metadata block, continuing...\n");
+        return;
+    }
+
+    readBytes = fread(ctx->cicmBlock, 1, ctx->cicmBlockHeader.length, ctx->imageStream);
+
+    if(readBytes != ctx->metadataBlockHeader.blockSize)
+    {
+        memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
+        free(ctx->cicmBlock);
+        fprintf(stderr, "libaaruformat: Could not read CICM XML metadata block, continuing...\n");
+    }
+
+    fprintf(stderr, "libaaruformat: Found CICM XML metadata block %" PRIu64 ".\n", entry->offset);
+}
