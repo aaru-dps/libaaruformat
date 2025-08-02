@@ -20,12 +20,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <aaruformat.h>
+#include "aaruformat.h"
 
-#include "../3rdparty/flac/include/FLAC/metadata.h"
-#include "../3rdparty/flac/include/FLAC/stream_decoder.h"
-#include "../3rdparty/flac/include/FLAC/stream_encoder.h"
 #include "flac.h"
+#include "FLAC/metadata.h"
+#include "FLAC/stream_decoder.h"
+#include "FLAC/stream_encoder.h"
 
 static FLAC__StreamDecoderReadStatus  read_callback(const FLAC__StreamDecoder *decoder, FLAC__byte buffer[],
                                                     size_t *bytes, void *client_data);

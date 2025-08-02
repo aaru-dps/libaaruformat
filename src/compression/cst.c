@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <aaruformat.h>
+#include "aaruformat.h"
 
 int32_t aaruf_cst_transform(const uint8_t *interleaved, uint8_t *sequential, size_t length)
 {

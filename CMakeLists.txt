@@ -95,10 +95,10 @@ endif()
 
 add_library(aaruformat SHARED include/aaruformat/consts.h include/aaruformat/enums.h include/aaru.h include/aaruformat.h
             include/aaruformat/decls.h include/aaruformat/structs.h src/identify.c src/open.c include/aaruformat/context.h
-            src/close.c include/aaruformat/errors.h src/read.c include/aaruformat/crc64.h src/cst.c src/ecc_cd.c src/helpers.c
-            src/simd.c include/aaruformat/simd.h src/crc64/crc64.c src/crc64/crc64_clmul.c src/crc64/crc64_vmull.c
-            src/crc64/arm_vmull.c src/crc64/arm_vmull.h src/spamsum.c include/aaruformat/spamsum.h include/aaruformat/flac.h
-            src/flac.c src/lzma.c src/lru.c include/aaruformat/lru.h include/aaruformat/endian.h src/verify.c
+            src/close.c include/aaruformat/errors.h src/read.c include/aaruformat/crc64.h src/compression/cst.c src/checksum/ecc_cd.c src/helpers.c
+            src/checksum/simd.c include/aaruformat/simd.h src/crc64/crc64.c src/crc64/crc64_clmul.c src/crc64/crc64_vmull.c
+            src/crc64/arm_vmull.c src/crc64/arm_vmull.h src/checksum/spamsum.c include/aaruformat/spamsum.h include/aaruformat/flac.h
+            src/compression/flac.c src/compression/lzma.c src/lru.c include/aaruformat/lru.h include/aaruformat/endian.h src/verify.c
             include/aaruformat/structs/header.h
             include/aaruformat/structs/ddt.h
             include/aaruformat/structs/index.h

@@ -19,9 +19,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <aaruformat.h>
+#include "aaruformat.h"
 
-#include "../3rdparty/lzma-21.03beta/C/LzmaLib.h"
+#include "../../3rdparty/lzma-21.03beta/C/LzmaLib.h"
 
 AARU_EXPORT int32_t AARU_CALL aaruf_lzma_decode_buffer(uint8_t *dst_buffer, size_t *dst_size, const uint8_t *src_buffer,
                                                        size_t *srcLen, const uint8_t *props, size_t propsSize)

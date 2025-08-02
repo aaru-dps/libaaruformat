@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <aaruformat.h>
+#include "aaruformat.h"
 
 #include "spamsum.h"
 

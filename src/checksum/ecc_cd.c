@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <aaruformat.h>
+#include "aaruformat.h"
 
 void *aaruf_ecc_cd_init()
 {
