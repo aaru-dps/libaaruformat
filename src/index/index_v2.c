@@ -59,10 +59,10 @@ UT_array *process_index_v2(aaruformatContext *ctx)
 
 int32_t verify_index_v2(aaruformatContext *ctx)
 {
-    size_t      read_bytes = 0;
-    IndexHeader index_header;
-    uint64_t    crc64         = 0;
-    IndexEntry *index_entries = NULL;
+    size_t       read_bytes = 0;
+    IndexHeader2 index_header;
+    uint64_t     crc64         = 0;
+    IndexEntry  *index_entries = NULL;
 
     if(ctx == NULL || ctx->imageStream == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
 
@@ -79,7 +79,7 @@ int32_t verify_index_v2(aaruformatContext *ctx)
         return AARUF_ERROR_CANNOT_READ_HEADER;
     }
 
-    if(index_header.identifier != IndexBlock)
+    if(index_header.identifier != IndexBlock2)
     {
         fprintf(stderr, "Incorrect index identifier.\n");
         return AARUF_ERROR_CANNOT_READ_INDEX;
