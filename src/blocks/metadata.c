@@ -240,3 +240,49 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
         }
     }
 }
+
+// Logical geometry block. It doesn't have a CRC coz, well, it's not so important
+void process_geometry_block(aaruformatContext *ctx, const IndexEntry *entry)
+{
+    size_t readBytes = 0;
+
+    // Check if the context and image stream are valid
+    if(ctx == NULL || ctx->imageStream == NULL)
+    {
+        fprintf(stderr, "Invalid context or image stream.\n");
+        return;
+    }
+
+    // Seek to block
+    if(fseek(ctx->imageStream, entry->offset, SEEK_SET) != 0)
+    {
+        fprintf(stderr, "libaaruformat: Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+        return;
+    }
+
+    readBytes = fread(&ctx->geometryBlock, 1, sizeof(GeometryBlockHeader), ctx->imageStream);
+
+    if(readBytes != sizeof(GeometryBlockHeader))
+    {
+        memset(&ctx->geometryBlock, 0, sizeof(GeometryBlockHeader));
+        fprintf(stderr, "libaaruformat: Could not read geometry block header, continuing...\n");
+        return;
+    }
+
+    if(ctx->geometryBlock.identifier != GeometryBlock)
+    {
+        memset(&ctx->geometryBlock, 0, sizeof(GeometryBlockHeader));
+        fprintf(stderr, "libaaruformat: Incorrect identifier for geometry block at position %" PRIu64 "\n",
+                entry->offset);
+        return;
+    }
+
+    ctx->imageInfo.ImageSize += sizeof(GeometryBlockHeader);
+
+    fprintf(stderr, "libaaruformat: Geometry set to %d cylinders %d heads %d sectors per track\n",
+            ctx->geometryBlock.cylinders, ctx->geometryBlock.heads, ctx->geometryBlock.sectorsPerTrack);
+
+    ctx->imageInfo.Cylinders       = ctx->geometryBlock.cylinders;
+    ctx->imageInfo.Heads           = ctx->geometryBlock.heads;
+    ctx->imageInfo.SectorsPerTrack = ctx->geometryBlock.sectorsPerTrack;
+}

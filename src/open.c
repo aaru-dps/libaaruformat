@@ -222,28 +222,9 @@ void *aaruf_open(const char *filepath)
                     return NULL;
                 }
 
-                break;  // Logical geometry block. It doesn't have a CRC coz, well, it's not so important
+                break;
             case GeometryBlock:
-                readBytes = fread(&ctx->geometryBlock, 1, sizeof(GeometryBlockHeader), ctx->imageStream);
-
-                if(readBytes != sizeof(GeometryBlockHeader))
-                {
-                    memset(&ctx->geometryBlock, 0, sizeof(GeometryBlockHeader));
-                    fprintf(stderr, "libaaruformat: Could not read geometry block, continuing...\n");
-                    break;
-                }
-
-                if(ctx->geometryBlock.identifier == GeometryBlock)
-                {
-                    fprintf(stderr, "libaaruformat: Geometry set to %d cylinders %d heads %d sectors per track\n",
-                            ctx->geometryBlock.cylinders, ctx->geometryBlock.heads, ctx->geometryBlock.sectorsPerTrack);
-
-                    ctx->imageInfo.Cylinders       = ctx->geometryBlock.cylinders;
-                    ctx->imageInfo.Heads           = ctx->geometryBlock.heads;
-                    ctx->imageInfo.SectorsPerTrack = ctx->geometryBlock.sectorsPerTrack;
-                }
-                else
-                    memset(&ctx->geometryBlock, 0, sizeof(GeometryBlockHeader));
+                process_geometry_block(ctx, entry);
 
                 break;
                 // Metadata block
