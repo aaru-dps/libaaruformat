@@ -107,7 +107,7 @@ int32_t verify_index_v1(aaruformatContext *ctx)
     crc64 = aaruf_crc64_data((const uint8_t *)index_entries, sizeof(IndexEntry) * index_header.entries);
 
     // Due to how C# wrote it, it is effectively reversed
-    if(ctx->header.imageMajorVersion <= AARUF_VERSION) crc64 = bswap_64(crc64);
+    if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
 
     if(crc64 != index_header.crc64)
     {

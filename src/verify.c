@@ -137,7 +137,7 @@ int32_t aaruf_verify_image(void *context)
                 aaruf_crc64_final(crc64_context, &crc64);
 
                 // Due to how C# wrote it, it is effectively reversed
-                if(ctx->header.imageMajorVersion <= AARUF_VERSION) crc64 = bswap_64(crc64);
+                if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
 
                 if(crc64 != block_header.cmpCrc64)
                 {
@@ -180,7 +180,7 @@ int32_t aaruf_verify_image(void *context)
                 aaruf_crc64_final(crc64_context, &crc64);
 
                 // Due to how C# wrote it, it is effectively reversed
-                if(ctx->header.imageMajorVersion <= AARUF_VERSION) crc64 = bswap_64(crc64);
+                if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
 
                 if(crc64 != ddt_header.cmpCrc64)
                 {
@@ -214,7 +214,7 @@ int32_t aaruf_verify_image(void *context)
                 aaruf_crc64_final(crc64_context, &crc64);
 
                 // Due to how C# wrote it, it is effectively reversed
-                if(ctx->header.imageMajorVersion <= AARUF_VERSION) crc64 = bswap_64(crc64);
+                if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
 
                 if(crc64 != tracks_header.crc64)
                 {

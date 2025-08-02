@@ -29,13 +29,13 @@
 
 int info(char *path)
 {
-    aaruformatContext *ctx = NULL;
-    char *strBuffer = NULL;
-    UErrorCode u_error_code = U_ZERO_ERROR;
-    uint i = 0, j = 0;
-    mediaTagEntry const *mediaTag = NULL;
+    aaruformatContext   *ctx          = NULL;
+    char                *strBuffer    = NULL;
+    UErrorCode           u_error_code = U_ZERO_ERROR;
+    uint                 i = 0, j = 0;
+    mediaTagEntry const *mediaTag    = NULL;
     mediaTagEntry const *tmpMediaTag = NULL;
-    UChar ustr[128];
+    UChar                ustr[128];
 
     ctx = aaruf_open(path);
 
@@ -59,7 +59,7 @@ int info(char *path)
 
     printf("\tApplication version: %d.%d\n", ctx->header.applicationMajorVersion, ctx->header.applicationMinorVersion);
     printf("\tImage format version: %d.%d\n", ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
-    printf("\tMedia type: %d\n", ctx->header.mediaType);
+    printf("\tMedia type: %u\n", ctx->header.mediaType);
     printf("\tIndex offset: %llu\n", ctx->header.indexOffset);
     printf("\tCreation time: %lld\n", ctx->header.creationTime);
     printf("\tLast written time: %lld\n", ctx->header.lastWrittenTime);
@@ -103,8 +103,8 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.creatorLength > 0)
         {
-            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
-            strBuffer = malloc(ctx->metadataBlockHeader.creatorLength + 1);
+            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
+            strBuffer    = malloc(ctx->metadataBlockHeader.creatorLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.creatorLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.creatorLength,
                          (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.creatorOffset),
@@ -115,8 +115,8 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.commentsLength > 0)
         {
-            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
-            strBuffer = malloc(ctx->metadataBlockHeader.commentsLength + 1);
+            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
+            strBuffer    = malloc(ctx->metadataBlockHeader.commentsLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.commentsLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.commentsLength,
                          (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.commentsOffset),
@@ -127,8 +127,8 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.mediaTitleLength > 0)
         {
-            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
-            strBuffer = malloc(ctx->metadataBlockHeader.mediaTitleLength + 1);
+            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
+            strBuffer    = malloc(ctx->metadataBlockHeader.mediaTitleLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.mediaTitleLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.mediaTitleLength,
                          (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.mediaTitleOffset),
@@ -139,8 +139,8 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.mediaManufacturerLength > 0)
         {
-            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
-            strBuffer = malloc(ctx->metadataBlockHeader.mediaManufacturerLength + 1);
+            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
+            strBuffer    = malloc(ctx->metadataBlockHeader.mediaManufacturerLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.mediaManufacturerLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.mediaManufacturerLength,
                          (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.mediaManufacturerOffset),
@@ -151,8 +151,8 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.mediaModelLength > 0)
         {
-            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
-            strBuffer = malloc(ctx->metadataBlockHeader.mediaModelLength + 1);
+            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
+            strBuffer    = malloc(ctx->metadataBlockHeader.mediaModelLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.mediaModelLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.mediaModelLength,
                          (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.mediaModelOffset),
@@ -163,8 +163,8 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.mediaSerialNumberLength > 0)
         {
-            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
-            strBuffer = malloc(ctx->metadataBlockHeader.mediaSerialNumberLength + 1);
+            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
+            strBuffer    = malloc(ctx->metadataBlockHeader.mediaSerialNumberLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.mediaSerialNumberLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.mediaSerialNumberLength,
                          (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.mediaSerialNumberOffset),
@@ -175,8 +175,8 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.mediaBarcodeLength > 0)
         {
-            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
-            strBuffer = malloc(ctx->metadataBlockHeader.mediaBarcodeLength + 1);
+            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
+            strBuffer    = malloc(ctx->metadataBlockHeader.mediaBarcodeLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.mediaBarcodeLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.mediaBarcodeLength,
                          (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.mediaBarcodeOffset),
@@ -187,8 +187,8 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.mediaPartNumberLength > 0)
         {
-            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
-            strBuffer = malloc(ctx->metadataBlockHeader.mediaPartNumberLength + 1);
+            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
+            strBuffer    = malloc(ctx->metadataBlockHeader.mediaPartNumberLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.mediaPartNumberLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.mediaPartNumberLength,
                          (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.mediaPartNumberOffset),
@@ -199,8 +199,8 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.driveManufacturerLength > 0)
         {
-            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
-            strBuffer = malloc(ctx->metadataBlockHeader.driveManufacturerLength + 1);
+            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
+            strBuffer    = malloc(ctx->metadataBlockHeader.driveManufacturerLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.driveManufacturerLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.driveManufacturerLength,
                          (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.driveManufacturerOffset),
@@ -211,8 +211,8 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.driveModelLength > 0)
         {
-            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
-            strBuffer = malloc(ctx->metadataBlockHeader.driveModelLength + 1);
+            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
+            strBuffer    = malloc(ctx->metadataBlockHeader.driveModelLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.driveModelLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.driveModelLength,
                          (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.driveModelOffset),
@@ -223,8 +223,8 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.driveSerialNumberLength > 0)
         {
-            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
-            strBuffer = malloc(ctx->metadataBlockHeader.driveSerialNumberLength + 1);
+            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
+            strBuffer    = malloc(ctx->metadataBlockHeader.driveSerialNumberLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.driveSerialNumberLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.driveSerialNumberLength,
                          (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.driveSerialNumberOffset),
@@ -235,8 +235,8 @@ int info(char *path)
 
         if(ctx->metadataBlockHeader.driveFirmwareRevisionLength > 0)
         {
-            u_error_code = U_ZERO_ERROR; // Reset error code before conversion
-            strBuffer = malloc(ctx->metadataBlockHeader.driveFirmwareRevisionLength + 1);
+            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
+            strBuffer    = malloc(ctx->metadataBlockHeader.driveFirmwareRevisionLength + 1);
             memset(strBuffer, 0, ctx->metadataBlockHeader.driveFirmwareRevisionLength + 1);
             ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.driveFirmwareRevisionLength,
                          (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.driveFirmwareRevisionOffset),

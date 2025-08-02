@@ -79,7 +79,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
         crc64 = aaruf_crc64_data(data, ctx->dumpHardwareHeader.length);
 
         // Due to how C# wrote it, it is effectively reversed
-        if(ctx->header.imageMajorVersion <= AARUF_VERSION) crc64 = bswap_64(crc64);
+        if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
 
         if(crc64 != ctx->dumpHardwareHeader.crc64)
         {

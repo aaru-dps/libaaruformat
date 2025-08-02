@@ -30,7 +30,15 @@
 #define AARU_MAGIC             0x544D524655524141
 /** Image format version. A change in this number indicates an incompatible change to the format that prevents older
  * implementations from reading it correctly, if at all. */
-#define AARUF_VERSION          1
+#define AARUF_VERSION          2
+/** First version of AaruFormat, created in C#.
+ * CRC64 was byte-swapped
+ */
+#define AARUF_VERSION_V1       1
+/** Second version of AaruFormat, created in C.
+ * Introduced new header, many new features, and blocks.
+ */
+#define AARUF_VERSION_V2       2
 /** Maximum read cache size, 512MiB. */
 #define MAX_CACHE_SIZE         536870912
 /** Size in bytes of LZMA properties. */

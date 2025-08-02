@@ -76,6 +76,21 @@ void *aaruf_open(const char *filepath)
         return NULL;
     }
 
+    // Read new header version
+    if(ctx->header.imageMajorVersion >= AARUF_VERSION_V2)
+    {
+        fseek(ctx->imageStream, 0, SEEK_SET);
+        readBytes = fread(&ctx->header, 1, sizeof(AaruHeaderV2), ctx->imageStream);
+
+        if(readBytes != sizeof(AaruHeaderV2))
+        {
+            free(ctx);
+            errno = AARUF_ERROR_FILE_TOO_SMALL;
+
+            return NULL;
+        }
+    }
+
     if(ctx->header.imageMajorVersion > AARUF_VERSION)
     {
         free(ctx);

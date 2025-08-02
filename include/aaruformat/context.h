@@ -34,16 +34,18 @@
 #define SHA256_DIGEST_LENGTH 32
 #endif
 
-typedef struct Crc64Context {
+typedef struct Crc64Context
+{
     uint64_t finalSeed;
     uint64_t table[256];
     uint64_t hashInt;
 } Crc64Context;
 
-typedef struct CdEccContext {
-    bool initedEdc;
-    uint8_t *eccBTable;
-    uint8_t *eccFTable;
+typedef struct CdEccContext
+{
+    bool      initedEdc;
+    uint8_t  *eccBTable;
+    uint8_t  *eccFTable;
     uint32_t *edcTable;
 } CdEccContext;
 
@@ -73,7 +75,7 @@ typedef struct aaruformatContext
     uint8_t                             libraryMajorVersion;
     uint8_t                             libraryMinorVersion;
     FILE                               *imageStream;
-    AaruHeader                          header;
+    AaruHeaderV2                        header;
     uint8_t                            *sectorPrefix;
     uint8_t                            *sectorPrefixCorrected;
     uint8_t                            *sectorSuffix;
