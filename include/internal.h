@@ -32,5 +32,6 @@ void      process_geometry_block(aaruformatContext *ctx, const IndexEntry *entry
 void      process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry);
 void      process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry);
 void      process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry);
+void      process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry);
 
 #endif  // LIBAARUFORMAT_INTERNAL_H
