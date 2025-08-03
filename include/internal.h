@@ -25,6 +25,8 @@ UT_array *process_index_v1(aaruformatContext *ctx);
 int32_t   verify_index_v1(aaruformatContext *ctx);
 UT_array *process_index_v2(aaruformatContext *ctx);
 int32_t   verify_index_v2(aaruformatContext *ctx);
+UT_array *process_index_v3(aaruformatContext *ctx);
+int32_t   verify_index_v3(aaruformatContext *ctx);
 int32_t   process_data_block(aaruformatContext *ctx, IndexEntry *entry);
 int32_t   process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUserDataDdt);
 void      process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry);
@@ -33,5 +35,6 @@ void      process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry);
 void      process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry);
 void      process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry);
 void      process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry);
+void      add_subindex_entries(aaruformatContext *ctx, UT_array *index_entries, IndexEntry *subindex_entry);
 
 #endif  // LIBAARUFORMAT_INTERNAL_H

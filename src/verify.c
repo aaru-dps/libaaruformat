@@ -55,7 +55,7 @@ int32_t aaruf_verify_image(void *context)
         return AARUF_ERROR_CANNOT_READ_HEADER;
     }
 
-    if(signature != IndexBlock && signature != IndexBlock2)
+    if(signature != IndexBlock && signature != IndexBlock2 && signature != IndexBlock3)
     {
         fprintf(stderr, "Incorrect index signature.\n");
         return AARUF_ERROR_CANNOT_READ_INDEX;
@@ -66,6 +66,8 @@ int32_t aaruf_verify_image(void *context)
         err = verify_index_v1(ctx);
     else if(signature == IndexBlock2)
         err = verify_index_v2(ctx);
+    else if(signature == IndexBlock3)
+        err = verify_index_v3(ctx);
 
     if(err != AARUF_STATUS_OK)
     {
@@ -78,6 +80,8 @@ int32_t aaruf_verify_image(void *context)
         index_entries = process_index_v1(ctx);
     else if(signature == IndexBlock2)
         index_entries = process_index_v2(ctx);
+    else if(signature == IndexBlock3)
+        index_entries = process_index_v3(ctx);
 
     if(index_entries == NULL)
     {

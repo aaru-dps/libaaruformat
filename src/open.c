@@ -151,7 +151,8 @@ void *aaruf_open(const char *filepath)
 
     readBytes = fread(&signature, 1, sizeof(uint32_t), ctx->imageStream);
 
-    if(readBytes != sizeof(uint32_t) || (signature != IndexBlock && signature != IndexBlock2))
+    if(readBytes != sizeof(uint32_t) ||
+       (signature != IndexBlock && signature != IndexBlock2 && signature != IndexBlock3))
     {
         free(ctx);
         errno = AARUF_ERROR_CANNOT_READ_INDEX;
@@ -163,6 +164,8 @@ void *aaruf_open(const char *filepath)
         index_entries = process_index_v1(ctx);
     else if(signature == IndexBlock2)
         index_entries = process_index_v2(ctx);
+    else if(signature == IndexBlock3)
+        index_entries = process_index_v3(ctx);
 
     if(index_entries == NULL)
     {

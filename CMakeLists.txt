@@ -115,7 +115,8 @@ add_library(aaruformat SHARED include/aaruformat/consts.h include/aaruformat/enu
             src/blocks/metadata.c
             src/blocks/optical.c
             src/blocks/dump.c
-            src/blocks/checksum.c)
+            src/blocks/checksum.c
+            src/index/index_v3.c)
 
 include_directories(include include/aaruformat)
 
