@@ -52,6 +52,16 @@ It starts with the following header.
 
 |uint64_t
 |8 bytes
+|blocks
+|The number of blocks in the media. This includes all blocks in the media, including the ones represented by the negative displacement as well as overflow displacement.
+
+|uint16_t
+|2 bytes
+|overflow
+|The positive overflow displacement of LBA numbers. For media that can have blocks beyond the end of the user area, this is the number of how many such blocks there are in the image.
+
+|uint64_t
+|8 bytes
 |start
 |The first LBA contained in this table. It must be 0 for ‘DDT2’ blocks and can be other number for subtables ‘DDTS’
 
@@ -244,3 +254,15 @@ Sector is stored at byte offset 0x6A0000 as item number 6 in the data block.
 |===
 
 When flags are present in a table that has sublevels it applies to all the sectors that shall be present in the subtable, unless the flag specify something else.
+
+===== Negative and Overflow Sectors
+
+In most storage media, the accessible range of blocks or sectors—referred to as the *user area*—represents the logical region intended for data read and write operations.
+
+However, certain media types contain additional blocks situated outside this user area that are accessible through alternate means. These blocks often hold metadata or structural information with significant preservation value. To ensure such data is retained, these sectors must be representable within the deduplication table.
+
+Blocks located before the start of the user area are classified as *negative sectors*. Common examples include the first track pregap or Lead-In areas found on Compact Discs.
+
+Conversely, sectors found beyond the end of the user area are categorized as *overflow sectors*. Examples include replication metadata on floppy disks, typically recorded in track 81, and the Lead-Out area of Compact Discs.
+
+To calculate the precise number of user area sectors represented in the deduplication table, the total number of blocks on the medium is adjusted by subtracting both negative and overflow sectors. This ensures the deduplication map reflects only the standard user-accessible region while retaining awareness of displaced block data.

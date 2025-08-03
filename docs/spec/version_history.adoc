@@ -88,4 +88,6 @@ Deprecate Compact Disc lead-in, first track pregap, lead-out, and floppy disk le
 Clarify and correct deduplication table specification.
 
 Rework index version 3 specification.
+
+Clarify negative and overflow blocks in deduplication tables.
 |===
