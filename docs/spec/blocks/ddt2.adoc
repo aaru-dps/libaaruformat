@@ -111,7 +111,15 @@ It starts with the following header.
 |The CRC64-ECMA checksum of the decompressed table.
 |===
 
-The size type defines the following type of entries:
+===== Size Type
+
+The *size type* parameter defines the memory-efficient data type used to encode deduplication table entries. Its primary purpose is to minimize memory consumption by selecting the smallest viable representation for the medium in question.
+
+Implementations should select the minimal size type capable of accommodating the full extent of the image’s sector count. This decision must be based on the expected final size of the image file.
+
+It is important to account for *live* images—those still in the process of being dumped. These images may expand as additional sectors are captured, potentially exceeding initial bounds. Consequently, deduplication tables associated with such live captures must allow for dynamic growth beyond the originally anticipated media size.
+
+The following table enumerates the supported size types.
 
 [cols="1,1,6",options="header"]
 |===
@@ -121,19 +129,15 @@ The size type defines the following type of entries:
 
 |Mini
 |0
-|Each entry uses two bytes, with the leftmost byte (mask 0xFF00) used for flags, and the rightmost byte used as a pointer to the sector or next level.
+|Allocates 2 bytes per entry. The high nibble (mask `0xF000`) encodes status information, while the low byte serves as a pointer to either a target sector or a subordinate indexing level.
 
 |Small
 |1
-|Each entry uses three bytes, with the leftmost byte used for flags and the next two bytes used as a pointer to the sector or next level.
-
-|Medium
-|2
-|Each entry uses four bytes, with the leftmost byte (mask 0xFF000000) used for flags and the next three bytes used as a pointer to the sector or next level.
+|Allocates 3 bytes per entry. The highest nibble (mask `0xF00000`) stores status data; the remaining two bytes represent a pointer to the corresponding sector or next-level structure.
 
 |Big
-|3
-|Each entry uses five bytes, with the leftmost byte used for flags and the next three bytes used as a pointer to the sector or next level.
+|2
+|Allocates 4 bytes per entry. The upper nibble (mask `0xF0000000`) holds status bits, and the lower 3 bytes function as a pointer to the relevant sector or hierarchical level.
 |===
 
 ==== Interpretation of Deduplication Table Entries
@@ -208,52 +212,65 @@ Result:
 Sector is stored at byte offset 0x6A0000 as item number 6 in the data block.
 ----
 
-===== Deduplication table flags
+===== Deduplication Table Status
+
+Each deduplication table entry includes a status nibble that conveys the current condition or interpretation of the corresponding sector(s). The following flags are defined:
 
 [cols="2,1,6",options="header"]
 |===
-|Flag
+|Status
 |Value
 |Description
 
 |NotDumped
-|`0x00`
-|The sector(s) have not been dumped
+|`0x0`
+|Sector(s) have not yet been acquired during image dumping.
 
 |Dumped
-|`0x01`
-|The sector(s) have been dumped without errors
+|`0x1`
+|Sector(s) have been successfully dumped without error.
 
 |Errored
-|`0x02`
-|The sector(s) returned an error on dumping
+|`0x2`
+|Sector(s) encountered an error during dumping and may be incomplete or corrupt.
 
 |Mode1Correct
-|`0x03`
-|The sector is MODE 1 and the suffix or prefix is correct and can be regenerated. Must only appear on deduplications tables with types  CdSectorPrefixCorrected or  CdSectorSuffixCorrected
+|`0x3`
+|Sector contains valid MODE 1 data with regenerable suffix or prefix. This status is applicable only to deduplication tables of type `CdSectorPrefixCorrected` or `CdSectorSuffixCorrected`.
 
 |Mode2Form1Ok
-|`0x04`
-|The suffix for MODE 2 sectors is correct, can be regenerated, and corresponds to a MODE 2 Form 1 sector. Must only appear on deduplications tables with type CdSectorSuffixCorrected
+|`0x4`
+|Sector suffix is verified and regenerable, corresponding to MODE 2 Form 1. This status is valid only for tables of type `CdSectorSuffixCorrected`.
 
 |Mode2Form2Ok
-|`0x05`
-|The suffix for MODE 2 sectors is correct, can be regenerated, and corresponds to a MODE 2 Form 2 sector with a valid CRC. Must only appear on deduplications tables with type CdSectorSuffixCorrected
+|`0x5`
+|Sector suffix matches MODE 2 Form 2 format with a valid CRC. Valid only for `CdSectorSuffixCorrected`.
 
 |Mode2Form2NoCrc
-|`0x06`
-|The suffix for MODE 2 sectors is correct, can be regenerated, and corresponds to a MODE 2 Form 2 sector with an empty CRC. Must only appear on deduplications tables with type CdSectorSuffixCorrected
+|`0x6`
+|Sector suffix matches MODE 2 Form 2 format but contains an empty or missing CRC. Applicable only to `CdSectorSuffixCorrected`.
 
 |Twin
-|`0x07`
-|The pointer contains a “twin” sector table (see below)
+|`0x7`
+|Pointer references a twin sector table (see below).
 
 |Unrecorded
-|`0x08`
-|The sector was unrecorded and each re-read returns random data
+|`0x8`
+|Sector is physically unrecorded; repeated reads return non-deterministic or random data.
+
+|Encrypted
+|`0x9`
+|Sector content is encrypted and stored in its original encrypted form within the image.
+
+|Unencrypted
+|`0xA`
+|Sector content was originally encrypted on media but is stored decrypted in the image.
 |===
 
-When flags are present in a table that has sublevels it applies to all the sectors that shall be present in the subtable, unless the flag specify something else.
+[NOTE]
+====
+When status values are set in a deduplication table entry that references a subordinate level, the status applies collectively to all sectors represented by that sublevel—unless the specified status explicitly overrides or alters this behavior for individual sectors.
+====
 
 ===== Negative and Overflow Sectors
 

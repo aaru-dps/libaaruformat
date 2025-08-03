@@ -90,4 +90,10 @@ Clarify and correct deduplication table specification.
 Rework index version 3 specification.
 
 Clarify negative and overflow blocks in deduplication tables.
+
+Clarify deduplication table size type.
+
+Clarify deduplication table sector status.
+
+Add encrypted and decrypted sector status.
 |===
