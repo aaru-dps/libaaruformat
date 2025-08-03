@@ -22,7 +22,8 @@
 #pragma pack(push, 1)
 
 /**Header for a deduplication table. Table follows it */
-typedef struct DdtHeader {
+typedef struct DdtHeader
+{
     /**Identifier, <see cref="BlockType.DeDuplicationTable" /> */
     uint32_t identifier;
     /**Type of data pointed by this DDT */
@@ -30,7 +31,7 @@ typedef struct DdtHeader {
     /**Compression algorithm used to compress the DDT */
     uint16_t compression;
     /**Each entry is ((uint8_t offset in file) &lt;&lt; shift) + (sector offset in block) */
-    uint8_t shift;
+    uint8_t  shift;
     /**How many entries are in the table */
     uint64_t entries;
     /**Compressed length for the DDT */
@@ -43,6 +44,48 @@ typedef struct DdtHeader {
     uint64_t crc64;
 } DdtHeader;
 
+typedef struct DdtHeader2
+{
+    /**Identifier, <see cref="BlockType.DeDuplicationTable" /> */
+    uint32_t identifier;
+    /**Type of data pointed by this DDT */
+    uint16_t type;
+    /**Compression algorithm used to compress the DDT */
+    uint16_t compression;
+    /**How many levels of subtables are present */
+    uint8_t  levels;
+    /**Which level this table belongs to */
+    uint8_t  tableLevel;
+    /**Pointer to absolute byte offset in file where the previous level table is located */
+    uint64_t previousLevelOffset;
+    /**Negative displacement of LBAs */
+    uint16_t negative;
+    /**Number of blocks in media */
+    uint64_t blocks;
+    /**Positive overflow displacement of LBAs */
+    uint16_t overflow;
+    /**First LBA contained in this table */
+    uint64_t start;
+    /**Block alignment boundaries */
+    uint8_t  blockAlignmentShift;
+    /**Data shift */
+    uint8_t  dataShift;
+    /**Table shift */
+    uint8_t  tableShift;
+    /**Size type */
+    uint8_t  sizeType;
+    /**Entries in this table */
+    uint64_t entries;
+    /**Compressed length for the DDT */
+    uint64_t cmpLength;
+    /**Uncompressed length for the DDT */
+    uint64_t length;
+    /**CRC64-ECMA of the compressed DDT */
+    uint64_t cmpCrc64;
+    /**CRC64-ECMA of the uncompressed DDT */
+    uint64_t crc64;
+} DdtHeader2;
+
 #pragma pack(pop)
 
-#endif //LIBAARUFORMAT_DDT_H
+#endif  // LIBAARUFORMAT_DDT_H

@@ -206,6 +206,8 @@ typedef enum
     DataBlock                    = 0x4B4C4244,
     /** Block containing a deduplication table */
     DeDuplicationTable           = 0x2A544444,
+    /** Block containing a deduplication table v2 */
+    DeDuplicationTable2          = 0x32544444,
     /** Block containing the index */
     IndexBlock                   = 0x58444E49,
     /** Block containing the index v2 */
