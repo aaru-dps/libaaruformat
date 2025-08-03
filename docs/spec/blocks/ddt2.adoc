@@ -68,17 +68,17 @@ It starts with the following header.
 |uint8_t
 |1 byte
 |blockAlignmentShift
-|Determines block alignment boundaries using the formula 2 << blockAlignmentShift.
+|Determines block alignment boundaries using the formula 1 << blockAlignmentShift.
 
 |uint8_t
 |1 byte
 |dataShift
-|Determines the maximum number of data items in a block using the formula 2 << dataShift.
+|Determines the maximum number of data items in a block using the formula 1 << dataShift.
 
 |uint8_t
 |1 byte
 |tableShift
-|Shift used to calculate the number of sectors in a deduplication table entry, using the formula 2 << tableShift.
+|Shift used to calculate the number of sectors in a deduplication table entry, using the formula 1 << tableShift.
 
 |uint8_t
 |1 byte
@@ -113,11 +113,15 @@ It starts with the following header.
 
 ===== Size Type
 
-The *size type* parameter defines the memory-efficient data type used to encode deduplication table entries. Its primary purpose is to minimize memory consumption by selecting the smallest viable representation for the medium in question.
+The *size type* parameter defines the memory-efficient data type used to encode deduplication table entries.
+Its primary purpose is to minimize memory consumption by selecting the smallest viable representation for the medium in question.
 
-Implementations should select the minimal size type capable of accommodating the full extent of the image’s sector count. This decision must be based on the expected final size of the image file.
+Implementations should select the minimal size type capable of accommodating the full extent of the image’s sector count.
+This decision must be based on the expected final size of the image file.
 
-It is important to account for *live* images—those still in the process of being dumped. These images may expand as additional sectors are captured, potentially exceeding initial bounds. Consequently, deduplication tables associated with such live captures must allow for dynamic growth beyond the originally anticipated media size.
+It is important to account for *live* images—those still in the process of being dumped.
+These images may expand as additional sectors are captured, potentially exceeding initial bounds.
+Consequently, deduplication tables associated with such live captures must allow for dynamic growth beyond the originally anticipated media size.
 
 The following table enumerates the supported size types.
 
@@ -214,7 +218,8 @@ Sector is stored at byte offset 0x6A0000 as item number 6 in the data block.
 
 ===== Deduplication Table Status
 
-Each deduplication table entry includes a status nibble that conveys the current condition or interpretation of the corresponding sector(s). The following flags are defined:
+Each deduplication table entry includes a status nibble that conveys the current condition or interpretation of the corresponding sector(s).
+The following flags are defined:
 
 [cols="2,1,6",options="header"]
 |===
@@ -276,10 +281,15 @@ When status values are set in a deduplication table entry that references a subo
 
 In most storage media, the accessible range of blocks or sectors—referred to as the *user area*—represents the logical region intended for data read and write operations.
 
-However, certain media types contain additional blocks situated outside this user area that are accessible through alternate means. These blocks often hold metadata or structural information with significant preservation value. To ensure such data is retained, these sectors must be representable within the deduplication table.
+However, certain media types contain additional blocks situated outside this user area that are accessible through alternate means.
+These blocks often hold metadata or structural information with significant preservation value.
+To ensure such data is retained, these sectors must be representable within the deduplication table.
 
-Blocks located before the start of the user area are classified as *negative sectors*. Common examples include the first track pregap or Lead-In areas found on Compact Discs.
+Blocks located before the start of the user area are classified as *negative sectors*.
+Common examples include the first track pregap or Lead-In areas found on Compact Discs.
 
-Conversely, sectors found beyond the end of the user area are categorized as *overflow sectors*. Examples include replication metadata on floppy disks, typically recorded in track 81, and the Lead-Out area of Compact Discs.
+Conversely, sectors found beyond the end of the user area are categorized as *overflow sectors*.
+Examples include replication metadata on floppy disks, typically recorded in track 81, and the Lead-Out area of Compact Discs.
 
-To calculate the precise number of user area sectors represented in the deduplication table, the total number of blocks on the medium is adjusted by subtracting both negative and overflow sectors. This ensures the deduplication map reflects only the standard user-accessible region while retaining awareness of displaced block data.
+To calculate the precise number of user area sectors represented in the deduplication table, the total number of blocks on the medium is adjusted by subtracting both negative and overflow sectors.
+This ensures the deduplication map reflects only the standard user-accessible region while retaining awareness of displaced block data.
