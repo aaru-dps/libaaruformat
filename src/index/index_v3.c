@@ -26,7 +26,7 @@
 
 UT_array *process_index_v3(aaruformatContext *ctx)
 {
-    UT_array  *index_entries = NULL;
+    UT_array * index_entries = NULL;
     IndexEntry entry;
 
     if(ctx == NULL || ctx->imageStream == NULL) return NULL;
@@ -102,9 +102,9 @@ void add_subindex_entries(aaruformatContext *ctx, UT_array *index_entries, Index
 int32_t verify_index_v3(aaruformatContext *ctx)
 {
     size_t       read_bytes = 0;
-    IndexHeader2 index_header;
+    IndexHeader3 index_header;
     uint64_t     crc64         = 0;
-    IndexEntry  *index_entries = NULL;
+    IndexEntry * index_entries = NULL;
 
     if(ctx == NULL || ctx->imageStream == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
 
