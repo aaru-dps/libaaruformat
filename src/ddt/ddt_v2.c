@@ -27,16 +27,18 @@
 
 #include "aaruformat.h"
 
-int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUserDataDdt)
+int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUserDataDdt)
 {
-    int       pos       = 0;
-    size_t    readBytes = 0;
-    DdtHeader ddtHeader;
-    uint8_t * cmpData = NULL;
-    uint32_t *cdDdt   = NULL;
-    uint8_t   lzmaProperties[LZMA_PROPERTIES_LENGTH];
-    size_t    lzmaSize = 0;
-    int       errorNo  = 0;
+    int        pos       = 0;
+    size_t     readBytes = 0;
+    DdtHeader2 ddtHeader;
+    uint8_t *  cmpData = NULL;
+    uint32_t * cdDdt   = NULL;
+    uint8_t    lzmaProperties[LZMA_PROPERTIES_LENGTH];
+    size_t     lzmaSize      = 0;
+    int        errorNo       = 0;
+    crc64_ctx *crc64_context = NULL;
+    uint64_t   crc64         = 0;
 
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
@@ -56,29 +58,30 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
     // Even if those two checks shall have been done before
 
-    readBytes = fread(&ddtHeader, 1, sizeof(DdtHeader), ctx->imageStream);
+    readBytes = fread(&ddtHeader, 1, sizeof(DdtHeader2), ctx->imageStream);
 
-    if(readBytes != sizeof(DdtHeader))
+    if(readBytes != sizeof(DdtHeader2))
     {
         fprintf(stderr, "libaaruformat: Could not read block header at %" PRIu64 "\n", entry->offset);
 
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
-    *foundUserDataDdt = true;
+    *foundUserDataDdt = false;
 
     ctx->imageInfo.ImageSize += ddtHeader.cmpLength;
 
     if(entry->dataType == UserData)
     {
-        ctx->imageInfo.Sectors = ddtHeader.entries;
-        ctx->shift             = ddtHeader.shift;
-        ctx->ddtVersion        = 1;
+        // User area sectors is blocks stored in DDT minus the negative and overflow displacement blocks
+        ctx->imageInfo.Sectors = ddtHeader.blocks - ddtHeader.negative - ddtHeader.overflow;
+        // We need the header later for the shift calculations
+        ctx->userDataDdtHeader = ddtHeader;
+        ctx->ddtVersion        = 2;
 
         // Check for DDT compression
         switch(ddtHeader.compression)
         {
-            // TODO: Check CRC
             case Lzma:
                 lzmaSize = ddtHeader.cmpLength - LZMA_PROPERTIES_LENGTH;
 
@@ -139,30 +142,77 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
+                free(cmpData);
+
+                crc64_context = aaruf_crc64_init();
+
+                if(crc64_context == NULL)
+                {
+                    fprintf(stderr, "Could not initialize CRC64.\n");
+                    free(ctx->userDataDdt);
+                    ctx->userDataDdt = NULL;
+                    return AARUF_ERROR_CANNOT_READ_BLOCK;
+                }
+
+                aaruf_crc64_update(crc64_context, (uint8_t *)ctx->userDataDdt, readBytes);
+                aaruf_crc64_final(crc64_context, &crc64);
+
+                if(crc64 != ddtHeader.crc64)
+                {
+                    fprintf(stderr, "Expected DDT CRC 0x%16lX but got 0x%16lX.\n", ddtHeader.crc64, crc64);
+                    free(ctx->userDataDdt);
+                    ctx->userDataDdt = NULL;
+                    return AARUF_ERROR_INVALID_BLOCK_CRC;
+                }
+
                 ctx->inMemoryDdt  = true;
                 *foundUserDataDdt = true;
 
                 break;
-            // TODO: Check CRC
             case None:
-#ifdef __linux__
-                ctx->mappedMemoryDdtSize = sizeof(uint64_t) * ddtHeader.entries;
-                ctx->userDataDdt = mmap(NULL, ctx->mappedMemoryDdtSize, PROT_READ, MAP_SHARED, fileno(ctx->imageStream),
-                                        entry->offset + sizeof(ddtHeader));
-
-                if(ctx->userDataDdt == MAP_FAILED)
+                ctx->userDataDdt = (uint64_t *)malloc(ddtHeader.length);
+                if(ctx->userDataDdt == NULL)
                 {
-                    *foundUserDataDdt = false;
-                    fprintf(stderr, "libaaruformat: Could not read map deduplication table.\n");
+                    fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
+                    free(cmpData);
                     break;
                 }
 
-                ctx->inMemoryDdt = false;
+                readBytes = fread(ctx->userDataDdt, 1, ddtHeader.entries * sizeof(uint32_t), ctx->imageStream);
+
+                if(readBytes != ddtHeader.entries * sizeof(uint32_t))
+                {
+                    free(ctx->userDataDdt);
+                    ctx->userDataDdt = NULL;
+                    fprintf(stderr, "libaaruformat: Could not read deduplication table, continuing...\n");
+                    break;
+                }
+
+                crc64_context = aaruf_crc64_init();
+
+                if(crc64_context == NULL)
+                {
+                    fprintf(stderr, "Could not initialize CRC64.\n");
+                    free(ctx->userDataDdt);
+                    ctx->userDataDdt = NULL;
+                    return AARUF_ERROR_CANNOT_READ_BLOCK;
+                }
+
+                aaruf_crc64_update(crc64_context, (uint8_t *)ctx->userDataDdt, readBytes);
+                aaruf_crc64_final(crc64_context, &crc64);
+
+                if(crc64 != ddtHeader.crc64)
+                {
+                    fprintf(stderr, "Expected DDT CRC 0x%16lX but got 0x%16lX.\n", ddtHeader.crc64, crc64);
+                    free(ctx->userDataDdt);
+                    ctx->userDataDdt = NULL;
+                    return AARUF_ERROR_INVALID_BLOCK_CRC;
+                }
+
+                ctx->inMemoryDdt  = true;
+                *foundUserDataDdt = true;
+
                 break;
-#else  // TODO: Implement
-                fprintf(stderr, "libaaruformat: Uncompressed DDT not yet implemented...\n"); *foundUserDataDdt = false;
-                break;
-#endif
             default:
                 fprintf(stderr, "libaaruformat: Found unknown compression type %d, continuing...\n",
                         ddtHeader.compression);
@@ -174,7 +224,6 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
     {
         switch(ddtHeader.compression)
         {
-            // TODO: Check CRC
             case Lzma:
                 lzmaSize = ddtHeader.cmpLength - LZMA_PROPERTIES_LENGTH;
 
@@ -235,13 +284,33 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
+                crc64_context = aaruf_crc64_init();
+
+                if(crc64_context == NULL)
+                {
+                    fprintf(stderr, "Could not initialize CRC64.\n");
+                    free(ctx->userDataDdt);
+                    ctx->userDataDdt = NULL;
+                    return AARUF_ERROR_CANNOT_READ_BLOCK;
+                }
+
+                aaruf_crc64_update(crc64_context, (uint8_t *)cdDdt, readBytes);
+                aaruf_crc64_final(crc64_context, &crc64);
+
+                if(crc64 != ddtHeader.crc64)
+                {
+                    fprintf(stderr, "Expected DDT CRC 0x%16lX but got 0x%16lX.\n", ddtHeader.crc64, crc64);
+                    free(ctx->userDataDdt);
+                    ctx->userDataDdt = NULL;
+                    return AARUF_ERROR_INVALID_BLOCK_CRC;
+                }
+
                 if(entry->dataType == CdSectorPrefixCorrected) ctx->sectorPrefixDdt = cdDdt;
                 else if(entry->dataType == CdSectorSuffixCorrected) ctx->sectorSuffixDdt = cdDdt;
                 else free(cdDdt);
 
                 break;
 
-            // TODO: Check CRC
             case None:
                 cdDdt = (uint32_t *)malloc(ddtHeader.entries * sizeof(uint32_t));
 
@@ -258,6 +327,27 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                     free(cdDdt);
                     fprintf(stderr, "libaaruformat: Could not read deduplication table, continuing...\n");
                     break;
+                }
+
+                crc64_context = aaruf_crc64_init();
+
+                if(crc64_context == NULL)
+                {
+                    fprintf(stderr, "Could not initialize CRC64.\n");
+                    free(ctx->userDataDdt);
+                    ctx->userDataDdt = NULL;
+                    return AARUF_ERROR_CANNOT_READ_BLOCK;
+                }
+
+                aaruf_crc64_update(crc64_context, (uint8_t *)cdDdt, readBytes);
+                aaruf_crc64_final(crc64_context, &crc64);
+
+                if(crc64 != ddtHeader.crc64)
+                {
+                    fprintf(stderr, "Expected DDT CRC 0x%16lX but got 0x%16lX.\n", ddtHeader.crc64, crc64);
+                    free(ctx->userDataDdt);
+                    ctx->userDataDdt = NULL;
+                    return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
 
                 if(entry->dataType == CdSectorPrefixCorrected) ctx->sectorPrefixDdt = cdDdt;
