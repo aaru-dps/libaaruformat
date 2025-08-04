@@ -29,14 +29,15 @@ int32_t aaruf_verify_image(void *context)
     aaruformatContext *ctx           = NULL;
     uint64_t           crc64         = 0;
     size_t             read_bytes    = 0;
-    void              *buffer        = NULL;
-    crc64_ctx         *crc64_context = NULL;
+    void *             buffer        = NULL;
+    crc64_ctx *        crc64_context = NULL;
     BlockHeader        block_header;
     uint64_t           verified_bytes = 0;
     DdtHeader          ddt_header;
+    DdtHeader2         ddt2_header;
     TracksHeader       tracks_header;
     uint32_t           signature     = 0;
-    UT_array          *index_entries = NULL;
+    UT_array *         index_entries = NULL;
     int32_t            err           = 0;
 
     if(context == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
@@ -62,12 +63,9 @@ int32_t aaruf_verify_image(void *context)
     }
 
     // Check if the index is correct
-    if(signature == IndexBlock)
-        err = verify_index_v1(ctx);
-    else if(signature == IndexBlock2)
-        err = verify_index_v2(ctx);
-    else if(signature == IndexBlock3)
-        err = verify_index_v3(ctx);
+    if(signature == IndexBlock) err = verify_index_v1(ctx);
+    else if(signature == IndexBlock2) err = verify_index_v2(ctx);
+    else if(signature == IndexBlock3) err = verify_index_v3(ctx);
 
     if(err != AARUF_STATUS_OK)
     {
@@ -76,12 +74,9 @@ int32_t aaruf_verify_image(void *context)
     }
 
     // Process the index
-    if(signature == IndexBlock)
-        index_entries = process_index_v1(ctx);
-    else if(signature == IndexBlock2)
-        index_entries = process_index_v2(ctx);
-    else if(signature == IndexBlock3)
-        index_entries = process_index_v3(ctx);
+    if(signature == IndexBlock) index_entries = process_index_v1(ctx);
+    else if(signature == IndexBlock2) index_entries = process_index_v2(ctx);
+    else if(signature == IndexBlock3) index_entries = process_index_v3(ctx);
 
     if(index_entries == NULL)
     {
@@ -189,6 +184,46 @@ int32_t aaruf_verify_image(void *context)
                 if(crc64 != ddt_header.cmpCrc64)
                 {
                     fprintf(stderr, "Expected DDT CRC 0x%16llX but got 0x%16llX.\n", ddt_header.cmpCrc64, crc64);
+                    utarray_free(index_entries);
+                    return AARUF_ERROR_INVALID_BLOCK_CRC;
+                }
+
+                break;
+            case DeDuplicationTable2:
+                read_bytes = fread(&ddt2_header, 1, sizeof(DdtHeader2), ctx->imageStream);
+                if(read_bytes != sizeof(DdtHeader2))
+                {
+                    fprintf(stderr, "Could not read DDT header.\n");
+                    utarray_free(index_entries);
+                    return AARUF_ERROR_CANNOT_READ_BLOCK;
+                }
+
+                crc64_context = aaruf_crc64_init();
+
+                if(crc64_context == NULL)
+                {
+                    fprintf(stderr, "Could not initialize CRC64.\n");
+                    utarray_free(index_entries);
+                    return AARUF_ERROR_CANNOT_READ_BLOCK;
+                }
+
+                verified_bytes = 0;
+
+                while(verified_bytes + VERIFY_SIZE < ddt2_header.cmpLength)
+                {
+                    read_bytes = fread(buffer, 1, VERIFY_SIZE, ctx->imageStream);
+                    aaruf_crc64_update(crc64_context, buffer, read_bytes);
+                    verified_bytes += read_bytes;
+                }
+
+                read_bytes = fread(buffer, 1, ddt2_header.cmpLength - verified_bytes, ctx->imageStream);
+                aaruf_crc64_update(crc64_context, buffer, read_bytes);
+
+                aaruf_crc64_final(crc64_context, &crc64);
+
+                if(crc64 != ddt2_header.cmpCrc64)
+                {
+                    fprintf(stderr, "Expected DDT CRC 0x%16llX but got 0x%16llX.\n", ddt2_header.cmpCrc64, crc64);
                     utarray_free(index_entries);
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
