@@ -21,6 +21,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef __linux__
+#include <sys/mman.h>
+#endif
+
 #include "aaruformat.h"
 
 int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUserDataDdt)
