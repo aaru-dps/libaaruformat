@@ -171,16 +171,12 @@ The following table enumerates the supported size types.
 |Value
 |Description
 
-|Mini
+|Small
 |0
 |Allocates 2 bytes per entry. The high nibble (mask `0xF000`) encodes status information, while the low byte serves as a pointer to either a target sector or a subordinate indexing level.
 
-|Small
-|1
-|Allocates 3 bytes per entry. The highest nibble (mask `0xF00000`) stores status data; the remaining two bytes represent a pointer to the corresponding sector or next-level structure.
-
 |Big
-|2
+|1
 |Allocates 4 bytes per entry. The upper nibble (mask `0xF0000000`) holds status bits, and the lower 3 bytes function as a pointer to the relevant sector or hierarchical level.
 |===
 
