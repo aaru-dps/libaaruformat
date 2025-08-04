@@ -32,7 +32,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
     int       pos       = 0;
     size_t    readBytes = 0;
     DdtHeader ddtHeader;
-    uint8_t * cmpData = NULL;
+    uint8_t  *cmpData = NULL;
     uint32_t *cdDdt   = NULL;
     uint8_t   lzmaProperties[LZMA_PROPERTIES_LENGTH];
     size_t    lzmaSize = 0;
@@ -160,7 +160,8 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 ctx->inMemoryDdt = false;
                 break;
 #else  // TODO: Implement
-                fprintf(stderr, "libaaruformat: Uncompressed DDT not yet implemented...\n"); *foundUserDataDdt = false;
+                fprintf(stderr, "libaaruformat: Uncompressed DDT not yet implemented...\n");
+                *foundUserDataDdt = false;
                 break;
 #endif
             default:
@@ -199,7 +200,6 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                     fprintf(stderr, "Could not read LZMA properties, continuing...\n");
                     free(cmpData);
                     free(cdDdt);
-                    ctx->userDataDdt = NULL;
                     break;
                 }
 
@@ -209,7 +209,6 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                     fprintf(stderr, "Could not read compressed block, continuing...\n");
                     free(cmpData);
                     free(cdDdt);
-                    ctx->userDataDdt = NULL;
                     break;
                 }
 
@@ -222,7 +221,6 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                     fprintf(stderr, "Got error %d from LZMA, stopping...\n", errorNo);
                     free(cmpData);
                     free(cdDdt);
-                    ctx->userDataDdt = NULL;
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
@@ -231,13 +229,15 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                     fprintf(stderr, "Error decompressing block, should be {0} bytes but got {1} bytes., stopping...\n");
                     free(cmpData);
                     free(cdDdt);
-                    ctx->userDataDdt = NULL;
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
-                if(entry->dataType == CdSectorPrefixCorrected) ctx->sectorPrefixDdt = cdDdt;
-                else if(entry->dataType == CdSectorSuffixCorrected) ctx->sectorSuffixDdt = cdDdt;
-                else free(cdDdt);
+                if(entry->dataType == CdSectorPrefixCorrected)
+                    ctx->sectorPrefixDdt = cdDdt;
+                else if(entry->dataType == CdSectorSuffixCorrected)
+                    ctx->sectorSuffixDdt = cdDdt;
+                else
+                    free(cdDdt);
 
                 break;
 
@@ -260,9 +260,12 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                     break;
                 }
 
-                if(entry->dataType == CdSectorPrefixCorrected) ctx->sectorPrefixDdt = cdDdt;
-                else if(entry->dataType == CdSectorSuffixCorrected) ctx->sectorSuffixDdt = cdDdt;
-                else free(cdDdt);
+                if(entry->dataType == CdSectorPrefixCorrected)
+                    ctx->sectorPrefixDdt = cdDdt;
+                else if(entry->dataType == CdSectorSuffixCorrected)
+                    ctx->sectorSuffixDdt = cdDdt;
+                else
+                    free(cdDdt);
 
                 break;
             default:
