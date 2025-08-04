@@ -21,10 +21,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef __linux__
-#include <sys/mman.h>
-#endif
-
 #include "aaruformat.h"
 
 int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUserDataDdt)
@@ -32,13 +28,13 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
     int        pos       = 0;
     size_t     readBytes = 0;
     DdtHeader2 ddtHeader;
-    uint8_t *  cmpData = NULL;
-    uint32_t * cdDdt   = NULL;
+    uint8_t   *cmpData = NULL;
     uint8_t    lzmaProperties[LZMA_PROPERTIES_LENGTH];
     size_t     lzmaSize      = 0;
     int        errorNo       = 0;
     crc64_ctx *crc64_context = NULL;
     uint64_t   crc64         = 0;
+    uint8_t   *buffer        = NULL;
 
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
@@ -92,8 +88,8 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                     break;
                 }
 
-                ctx->userDataDdt = (uint64_t *)malloc(ddtHeader.length);
-                if(ctx->userDataDdt == NULL)
+                buffer = malloc(ddtHeader.length);
+                if(buffer == NULL)
                 {
                     fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
                     free(cmpData);
@@ -105,8 +101,7 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 {
                     fprintf(stderr, "Could not read LZMA properties, continuing...\n");
                     free(cmpData);
-                    free(ctx->userDataDdt);
-                    ctx->userDataDdt = NULL;
+                    free(buffer);
                     break;
                 }
 
@@ -115,21 +110,19 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 {
                     fprintf(stderr, "Could not read compressed block, continuing...\n");
                     free(cmpData);
-                    free(ctx->userDataDdt);
-                    ctx->userDataDdt = NULL;
+                    free(buffer);
                     break;
                 }
 
                 readBytes = ddtHeader.length;
-                errorNo   = aaruf_lzma_decode_buffer((uint8_t *)ctx->userDataDdt, &readBytes, cmpData, &lzmaSize,
-                                                     lzmaProperties, LZMA_PROPERTIES_LENGTH);
+                errorNo   = aaruf_lzma_decode_buffer(buffer, &readBytes, cmpData, &lzmaSize, lzmaProperties,
+                                                     LZMA_PROPERTIES_LENGTH);
 
                 if(errorNo != 0)
                 {
                     fprintf(stderr, "Got error %d from LZMA, stopping...\n", errorNo);
                     free(cmpData);
-                    free(ctx->userDataDdt);
-                    ctx->userDataDdt = NULL;
+                    free(buffer);
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
@@ -138,7 +131,6 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                     fprintf(stderr, "Error decompressing block, should be {0} bytes but got {1} bytes., stopping...\n");
                     free(cmpData);
                     free(ctx->userDataDdt);
-                    ctx->userDataDdt = NULL;
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
@@ -149,41 +141,44 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 if(crc64_context == NULL)
                 {
                     fprintf(stderr, "Could not initialize CRC64.\n");
-                    free(ctx->userDataDdt);
-                    ctx->userDataDdt = NULL;
+                    free(buffer);
                     return AARUF_ERROR_CANNOT_READ_BLOCK;
                 }
 
-                aaruf_crc64_update(crc64_context, (uint8_t *)ctx->userDataDdt, readBytes);
+                aaruf_crc64_update(crc64_context, buffer, readBytes);
                 aaruf_crc64_final(crc64_context, &crc64);
 
                 if(crc64 != ddtHeader.crc64)
                 {
                     fprintf(stderr, "Expected DDT CRC 0x%16lX but got 0x%16lX.\n", ddtHeader.crc64, crc64);
-                    free(ctx->userDataDdt);
-                    ctx->userDataDdt = NULL;
+                    free(buffer);
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
+
+                if(ddtHeader.sizeType == SmallDdtSizeType)
+                    ctx->userDataDdtMini = (uint16_t *)buffer;
+                else if(ddtHeader.sizeType == BigDdtSizeType)
+                    ctx->userDataDdtBig = (uint32_t *)buffer;
 
                 ctx->inMemoryDdt  = true;
                 *foundUserDataDdt = true;
 
                 break;
             case None:
-                ctx->userDataDdt = (uint64_t *)malloc(ddtHeader.length);
-                if(ctx->userDataDdt == NULL)
+                buffer = malloc(ddtHeader.length);
+
+                if(buffer == NULL)
                 {
                     fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
                     free(cmpData);
                     break;
                 }
 
-                readBytes = fread(ctx->userDataDdt, 1, ddtHeader.entries * sizeof(uint32_t), ctx->imageStream);
+                readBytes = fread(buffer, 1, ddtHeader.length, ctx->imageStream);
 
-                if(readBytes != ddtHeader.entries * sizeof(uint32_t))
+                if(readBytes != ddtHeader.length)
                 {
-                    free(ctx->userDataDdt);
-                    ctx->userDataDdt = NULL;
+                    free(buffer);
                     fprintf(stderr, "libaaruformat: Could not read deduplication table, continuing...\n");
                     break;
                 }
@@ -193,21 +188,24 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 if(crc64_context == NULL)
                 {
                     fprintf(stderr, "Could not initialize CRC64.\n");
-                    free(ctx->userDataDdt);
-                    ctx->userDataDdt = NULL;
+                    free(buffer);
                     return AARUF_ERROR_CANNOT_READ_BLOCK;
                 }
 
-                aaruf_crc64_update(crc64_context, (uint8_t *)ctx->userDataDdt, readBytes);
+                aaruf_crc64_update(crc64_context, buffer, readBytes);
                 aaruf_crc64_final(crc64_context, &crc64);
 
                 if(crc64 != ddtHeader.crc64)
                 {
                     fprintf(stderr, "Expected DDT CRC 0x%16lX but got 0x%16lX.\n", ddtHeader.crc64, crc64);
-                    free(ctx->userDataDdt);
-                    ctx->userDataDdt = NULL;
+                    free(buffer);
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
+
+                if(ddtHeader.sizeType == SmallDdtSizeType)
+                    ctx->userDataDdtMini = (uint16_t *)buffer;
+                else if(ddtHeader.sizeType == BigDdtSizeType)
+                    ctx->userDataDdtBig = (uint32_t *)buffer;
 
                 ctx->inMemoryDdt  = true;
                 *foundUserDataDdt = true;
@@ -234,8 +232,8 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                     break;
                 }
 
-                cdDdt = (uint32_t *)malloc(ddtHeader.length);
-                if(cdDdt == NULL)
+                buffer = malloc(ddtHeader.length);
+                if(buffer == NULL)
                 {
                     fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
                     free(cmpData);
@@ -247,8 +245,7 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 {
                     fprintf(stderr, "Could not read LZMA properties, continuing...\n");
                     free(cmpData);
-                    free(cdDdt);
-                    ctx->userDataDdt = NULL;
+                    free(buffer);
                     break;
                 }
 
@@ -257,21 +254,18 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 {
                     fprintf(stderr, "Could not read compressed block, continuing...\n");
                     free(cmpData);
-                    free(cdDdt);
-                    ctx->userDataDdt = NULL;
                     break;
                 }
 
                 readBytes = ddtHeader.length;
-                errorNo   = aaruf_lzma_decode_buffer((uint8_t *)cdDdt, &readBytes, cmpData, &lzmaSize, lzmaProperties,
+                errorNo   = aaruf_lzma_decode_buffer(buffer, &readBytes, cmpData, &lzmaSize, lzmaProperties,
                                                      LZMA_PROPERTIES_LENGTH);
 
                 if(errorNo != 0)
                 {
                     fprintf(stderr, "Got error %d from LZMA, stopping...\n", errorNo);
                     free(cmpData);
-                    free(cdDdt);
-                    ctx->userDataDdt = NULL;
+                    free(buffer);
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
@@ -279,8 +273,7 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 {
                     fprintf(stderr, "Error decompressing block, should be {0} bytes but got {1} bytes., stopping...\n");
                     free(cmpData);
-                    free(cdDdt);
-                    ctx->userDataDdt = NULL;
+                    free(buffer);
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
@@ -289,42 +282,53 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 if(crc64_context == NULL)
                 {
                     fprintf(stderr, "Could not initialize CRC64.\n");
-                    free(ctx->userDataDdt);
-                    ctx->userDataDdt = NULL;
+                    free(buffer);
                     return AARUF_ERROR_CANNOT_READ_BLOCK;
                 }
 
-                aaruf_crc64_update(crc64_context, (uint8_t *)cdDdt, readBytes);
+                aaruf_crc64_update(crc64_context, buffer, readBytes);
                 aaruf_crc64_final(crc64_context, &crc64);
 
                 if(crc64 != ddtHeader.crc64)
                 {
                     fprintf(stderr, "Expected DDT CRC 0x%16lX but got 0x%16lX.\n", ddtHeader.crc64, crc64);
-                    free(ctx->userDataDdt);
-                    ctx->userDataDdt = NULL;
+                    free(buffer);
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
 
-                if(entry->dataType == CdSectorPrefixCorrected) ctx->sectorPrefixDdt = cdDdt;
-                else if(entry->dataType == CdSectorSuffixCorrected) ctx->sectorSuffixDdt = cdDdt;
-                else free(cdDdt);
+                if(entry->dataType == CdSectorPrefixCorrected)
+                {
+                    if(ddtHeader.sizeType == SmallDdtSizeType)
+                        ctx->sectorPrefixDdtMini = (uint16_t *)buffer;
+                    else if(ddtHeader.sizeType == BigDdtSizeType)
+                        ctx->sectorPrefixDdt = (uint32_t *)buffer;
+                }
+                else if(entry->dataType == CdSectorSuffixCorrected)
+                {
+                    if(ddtHeader.sizeType == SmallDdtSizeType)
+                        ctx->sectorSuffixDdtMini = (uint16_t *)buffer;
+                    else if(ddtHeader.sizeType == BigDdtSizeType)
+                        ctx->sectorSuffixDdt = (uint32_t *)buffer;
+                }
+                else
+                    free(buffer);
 
                 break;
 
             case None:
-                cdDdt = (uint32_t *)malloc(ddtHeader.entries * sizeof(uint32_t));
+                buffer = malloc(ddtHeader.length);
 
-                if(cdDdt == NULL)
+                if(buffer == NULL)
                 {
                     fprintf(stderr, "libaaruformat: Cannot allocate memory for deduplication table.\n");
                     break;
                 }
 
-                readBytes = fread(cdDdt, 1, ddtHeader.entries * sizeof(uint32_t), ctx->imageStream);
+                readBytes = fread(buffer, 1, ddtHeader.length, ctx->imageStream);
 
-                if(readBytes != ddtHeader.entries * sizeof(uint32_t))
+                if(readBytes != ddtHeader.length)
                 {
-                    free(cdDdt);
+                    free(buffer);
                     fprintf(stderr, "libaaruformat: Could not read deduplication table, continuing...\n");
                     break;
                 }
@@ -335,24 +339,35 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 {
                     fprintf(stderr, "Could not initialize CRC64.\n");
                     free(ctx->userDataDdt);
-                    ctx->userDataDdt = NULL;
                     return AARUF_ERROR_CANNOT_READ_BLOCK;
                 }
 
-                aaruf_crc64_update(crc64_context, (uint8_t *)cdDdt, readBytes);
+                aaruf_crc64_update(crc64_context, buffer, readBytes);
                 aaruf_crc64_final(crc64_context, &crc64);
 
                 if(crc64 != ddtHeader.crc64)
                 {
                     fprintf(stderr, "Expected DDT CRC 0x%16lX but got 0x%16lX.\n", ddtHeader.crc64, crc64);
                     free(ctx->userDataDdt);
-                    ctx->userDataDdt = NULL;
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
 
-                if(entry->dataType == CdSectorPrefixCorrected) ctx->sectorPrefixDdt = cdDdt;
-                else if(entry->dataType == CdSectorSuffixCorrected) ctx->sectorSuffixDdt = cdDdt;
-                else free(cdDdt);
+                if(entry->dataType == CdSectorPrefixCorrected)
+                {
+                    if(ddtHeader.sizeType == SmallDdtSizeType)
+                        ctx->sectorPrefixDdtMini = (uint16_t *)buffer;
+                    else if(ddtHeader.sizeType == BigDdtSizeType)
+                        ctx->sectorPrefixDdt = (uint32_t *)buffer;
+                }
+                else if(entry->dataType == CdSectorSuffixCorrected)
+                {
+                    if(ddtHeader.sizeType == SmallDdtSizeType)
+                        ctx->sectorSuffixDdtMini = (uint16_t *)buffer;
+                    else if(ddtHeader.sizeType == BigDdtSizeType)
+                        ctx->sectorSuffixDdt = (uint32_t *)buffer;
+                }
+                else
+                    free(buffer);
 
                 break;
             default:

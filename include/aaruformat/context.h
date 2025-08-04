@@ -44,8 +44,8 @@ typedef struct Crc64Context
 typedef struct CdEccContext
 {
     bool      initedEdc;
-    uint8_t * eccBTable;
-    uint8_t * eccFTable;
+    uint8_t  *eccBTable;
+    uint8_t  *eccFTable;
     uint32_t *edcTable;
 } CdEccContext;
 
@@ -63,7 +63,7 @@ typedef struct Checksums
 
 typedef struct mediaTagEntry
 {
-    uint8_t *      data;
+    uint8_t       *data;
     int32_t        type;
     uint32_t       length;
     UT_hash_handle hh;
@@ -74,54 +74,58 @@ typedef struct aaruformatContext
     uint64_t                            magic;
     uint8_t                             libraryMajorVersion;
     uint8_t                             libraryMinorVersion;
-    FILE *                              imageStream;
+    FILE                               *imageStream;
     AaruHeaderV2                        header;
-    uint8_t *                           sectorPrefix;
-    uint8_t *                           sectorPrefixCorrected;
-    uint8_t *                           sectorSuffix;
-    uint8_t *                           sectorSuffixCorrected;
-    uint8_t *                           sectorSubchannel;
-    uint8_t *                           mode2Subheaders;
+    uint8_t                            *sectorPrefix;
+    uint8_t                            *sectorPrefixCorrected;
+    uint8_t                            *sectorSuffix;
+    uint8_t                            *sectorSuffixCorrected;
+    uint8_t                            *sectorSubchannel;
+    uint8_t                            *mode2Subheaders;
     uint8_t                             shift;
     bool                                inMemoryDdt;
-    uint64_t *                          userDataDdt;
+    uint64_t                           *userDataDdt;
     size_t                              mappedMemoryDdtSize;
-    uint32_t *                          sectorPrefixDdt;
-    uint32_t *                          sectorSuffixDdt;
+    uint32_t                           *sectorPrefixDdt;
+    uint32_t                           *sectorSuffixDdt;
     GeometryBlockHeader                 geometryBlock;
     MetadataBlockHeader                 metadataBlockHeader;
-    uint8_t *                           metadataBlock;
+    uint8_t                            *metadataBlock;
     TracksHeader                        tracksHeader;
-    TrackEntry *                        trackEntries;
+    TrackEntry                         *trackEntries;
     CicmMetadataBlock                   cicmBlockHeader;
-    uint8_t *                           cicmBlock;
+    uint8_t                            *cicmBlock;
     DumpHardwareHeader                  dumpHardwareHeader;
     struct DumpHardwareEntriesWithData *dumpHardwareEntriesWithData;
     struct ImageInfo                    imageInfo;
-    CdEccContext *                      eccCdContext;
+    CdEccContext                       *eccCdContext;
     uint8_t                             numberOfDataTracks;
-    TrackEntry *                        dataTracks;
-    bool *                              readableSectorTags;
+    TrackEntry                         *dataTracks;
+    bool                               *readableSectorTags;
     struct CacheHeader                  blockHeaderCache;
     struct CacheHeader                  blockCache;
     struct Checksums                    checksums;
-    struct mediaTagEntry *              mediaTags;
+    struct mediaTagEntry               *mediaTags;
     DdtHeader2                          userDataDdtHeader;
     int                                 ddtVersion;
+    uint16_t                           *userDataDdtMini;
+    uint32_t                           *userDataDdtBig;
+    uint16_t                           *sectorPrefixDdtMini;
+    uint16_t                           *sectorSuffixDdtMini;
 } aaruformatContext;
 
 typedef struct DumpHardwareEntriesWithData
 {
     DumpHardwareEntry  entry;
     struct DumpExtent *extents;
-    uint8_t *          manufacturer;
-    uint8_t *          model;
-    uint8_t *          revision;
-    uint8_t *          firmware;
-    uint8_t *          serial;
-    uint8_t *          softwareName;
-    uint8_t *          softwareVersion;
-    uint8_t *          softwareOperatingSystem;
+    uint8_t           *manufacturer;
+    uint8_t           *model;
+    uint8_t           *revision;
+    uint8_t           *firmware;
+    uint8_t           *serial;
+    uint8_t           *softwareName;
+    uint8_t           *softwareVersion;
+    uint8_t           *softwareOperatingSystem;
 } DumpHardwareEntriesWithData;
 
 #pragma pack(push, 1)

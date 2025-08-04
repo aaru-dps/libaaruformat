@@ -292,6 +292,12 @@ typedef enum
     AudioMedia  = 3
 } XmlMediaType;
 
+typedef enum
+{
+    SmallDdtSizeType = 0,
+    BigDdtSizeType   = 1
+} DdtSizeType;
+
 #endif  // LIBAARUFORMAT_ENUMS_H
 
 #ifndef _MSC_VER
