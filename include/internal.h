@@ -39,5 +39,7 @@ void      process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry
 void      add_subindex_entries(aaruformatContext *ctx, UT_array *index_entries, IndexEntry *subindex_entry);
 int32_t   decode_ddt_entry_v1(aaruformatContext *ctx, uint64_t sectorAddress, uint64_t *offset, uint64_t *blockOffset,
                               uint8_t *sectorStatus);
+int32_t   decode_ddt_entry_v2(aaruformatContext *ctx, uint64_t sectorAddress, uint64_t *offset, uint64_t *blockOffset,
+                              uint8_t *sectorStatus);
 
 #endif  // LIBAARUFORMAT_INTERNAL_H

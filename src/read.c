@@ -81,7 +81,7 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
     if(ctx->ddtVersion == 1)
         errorNo = decode_ddt_entry_v1(ctx, sectorAddress, &offset, &blockOffset, &sectorStatus);
     else if(ctx->ddtVersion == 2)
-        return AARUF_ERROR_CANNOT_READ_BLOCK;
+        errorNo = decode_ddt_entry_v2(ctx, sectorAddress, &offset, &blockOffset, &sectorStatus);
 
     if(errorNo != AARUF_STATUS_OK) return errorNo;
 

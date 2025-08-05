@@ -379,3 +379,57 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
     return AARUF_STATUS_OK;
 }
+
+int32_t decode_ddt_entry_v2(aaruformatContext *ctx, uint64_t sectorAddress, uint64_t *offset, uint64_t *blockOffset,
+                            uint8_t *sectorStatus)
+{
+    uint64_t ddtEntry = 0;
+
+    // Check if the context and image stream are valid
+    if(ctx == NULL || ctx->imageStream == NULL)
+    {
+        fprintf(stderr, "Invalid context or image stream.\n");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // TODO: Implement multi-level tables
+    if(ctx->userDataDdtHeader.tableShift != 0) return AARUF_ERROR_CANNOT_READ_BLOCK;
+
+    // TODO: Take into account the negative and overflow blocks, library-wide
+    sectorAddress += ctx->userDataDdtHeader.negative;
+
+    if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+        ddtEntry = ctx->userDataDdtMini[sectorAddress];
+    else if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
+        ddtEntry = ctx->userDataDdtBig[sectorAddress];
+    else
+    {
+        fprintf(stderr, "libaaruformat: Unknown DDT size type %d.\n", ctx->userDataDdtHeader.sizeType);
+        return AARUF_ERROR_CANNOT_READ_BLOCK;
+    }
+
+    if(ddtEntry == 0)
+    {
+        *sectorStatus = SectorStatusNotDumped;
+        *offset       = 0;
+        *blockOffset  = 0;
+        return AARUF_STATUS_OK;
+    }
+
+    if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+    {
+        *sectorStatus = ddtEntry >> 12;
+        ddtEntry &= 0xfff;
+    }
+    else if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
+    {
+        *sectorStatus = ddtEntry >> 28;
+        ddtEntry &= 0x0fffffff;
+    }
+
+    const uint64_t offsetMask = (uint64_t)((1 << ctx->userDataDdtHeader.dataShift) - 1);
+    *offset                   = (ddtEntry & offsetMask) * (1 << ctx->userDataDdtHeader.blockAlignmentShift);
+    *blockOffset              = ddtEntry >> ctx->userDataDdtHeader.dataShift;
+
+    return AARUF_STATUS_OK;
+}
