@@ -21,6 +21,8 @@
 
 #include <aaruformat.h>
 
+#include "internal.h"
+
 int32_t aaruf_read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t *length)
 {
     aaruformatContext *ctx;
@@ -55,18 +57,17 @@ int32_t aaruf_read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t
 
 int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32_t *length)
 {
-    aaruformatContext *ctx = NULL;
-    uint64_t ddtEntry = 0;
-    uint32_t offsetMask = 0;
-    uint64_t offset = 0;
-    uint64_t blockOffset = 0;
-    BlockHeader *blockHeader = NULL;
-    uint8_t *block = NULL;
-    size_t readBytes = 0;
+    aaruformatContext *ctx         = NULL;
+    uint64_t           offset      = 0;
+    uint64_t           blockOffset = 0;
+    BlockHeader       *blockHeader = NULL;
+    uint8_t           *block       = NULL;
+    size_t             readBytes   = 0;
     uint8_t            lzmaProperties[LZMA_PROPERTIES_LENGTH];
-    size_t lzmaSize = 0;
-    uint8_t *cmpData = NULL;
-    int errorNo = 0;
+    size_t             lzmaSize     = 0;
+    uint8_t           *cmpData      = NULL;
+    int                errorNo      = 0;
+    uint8_t            sectorStatus = 0;
 
     if(context == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
 
@@ -77,13 +78,15 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
 
     if(sectorAddress > ctx->imageInfo.Sectors - 1) return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
 
-    ddtEntry    = ctx->userDataDdt[sectorAddress];
-    offsetMask  = (uint32_t)((1 << ctx->shift) - 1);
-    offset      = ddtEntry & offsetMask;
-    blockOffset = ddtEntry >> ctx->shift;
+    if(ctx->ddtVersion == 1)
+        errorNo = decode_ddt_entry_v1(ctx, sectorAddress, &offset, &blockOffset, &sectorStatus);
+    else if(ctx->ddtVersion == 2)
+        return AARUF_ERROR_CANNOT_READ_BLOCK;
+
+    if(errorNo != AARUF_STATUS_OK) return errorNo;
 
     // Partially written image... as we can't know the real sector size just assume it's common :/
-    if(ddtEntry == 0)
+    if(sectorStatus == SectorStatusNotDumped)
     {
         memset(data, 0, ctx->imageInfo.SectorSize);
         *length = ctx->imageInfo.SectorSize;
@@ -279,14 +282,14 @@ int32_t aaruf_read_track_sector(void *context, uint8_t *data, uint64_t sectorAdd
 
 int32_t aaruf_read_sector_long(void *context, uint64_t sectorAddress, uint8_t *data, uint32_t *length)
 {
-    aaruformatContext *ctx = NULL;
-    uint32_t bareLength = 0;
-    uint32_t tagLength = 0;
-    uint8_t *bareData = NULL;
-    int32_t res = 0;
+    aaruformatContext *ctx        = NULL;
+    uint32_t           bareLength = 0;
+    uint32_t           tagLength  = 0;
+    uint8_t           *bareData   = NULL;
+    int32_t            res        = 0;
     TrackEntry         trk;
-    int i = 0;
-    bool trkFound = false;
+    int                i        = 0;
+    bool               trkFound = false;
 
     if(context == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
 

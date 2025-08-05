@@ -277,3 +277,27 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
     return AARUF_STATUS_OK;
 }
+
+int32_t decode_ddt_entry_v1(aaruformatContext *ctx, uint64_t sectorAddress, uint64_t *offset, uint64_t *blockOffset,
+                            uint8_t *sectorStatus)
+{
+    // Check if the context and image stream are valid
+    if(ctx == NULL || ctx->imageStream == NULL)
+    {
+        fprintf(stderr, "Invalid context or image stream.\n");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const uint64_t ddtEntry   = ctx->userDataDdt[sectorAddress];
+    const uint32_t offsetMask = (uint32_t)((1 << ctx->shift) - 1);
+    *offset                   = ddtEntry & offsetMask;
+    *blockOffset              = ddtEntry >> ctx->shift;
+
+    // Partially written image... as we can't know the real sector size just assume it's common :/
+    if(ddtEntry == 0)
+        *sectorStatus = SectorStatusNotDumped;
+    else
+        *sectorStatus = SectorStatusDumped;
+
+    return AARUF_STATUS_OK;
+}
