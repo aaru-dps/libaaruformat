@@ -298,6 +298,32 @@ typedef enum
     BigDdtSizeType   = 1
 } DdtSizeType;
 
+typedef enum
+{
+    /**Sector(s) have not yet been acquired during image dumping.*/
+    SectorStatusNotDumped       = 0x0,
+    /**Sector(s) have been successfully dumped without error.*/
+    SectorStatusDumped          = 0x1,
+    /**Sector(s) encountered an error during dumping and may be incomplete or corrupt.*/
+    SectorStatusErrored         = 0x2,
+    /**Sector contains valid MODE 1 data with regenerable suffix or prefix.*/
+    SectorStatusMode1Correct    = 0x3,
+    /**Sector suffix is verified and regenerable, corresponding to MODE 2 Form 1.*/
+    SectorStatusMode2Form1Ok    = 0x4,
+    /**Sector suffix matches MODE 2 Form 2 format with a valid CRC.*/
+    SectorStatusMode2Form2Ok    = 0x5,
+    /**Sector suffix matches MODE 2 Form 2 format but contains an empty or missing CRC.*/
+    SectorStatusMode2Form2NoCrc = 0x6,
+    /**Pointer references a twin sector table.*/
+    SectorStatusTwin            = 0x7,
+    /**Sector is physically unrecorded; repeated reads return non-deterministic or random data.*/
+    SectorStatusUnrecorded      = 0x8,
+    /**Sector content is encrypted and stored in its original encrypted form within the image.*/
+    SectorStatusEncrypted       = 0x9,
+    /**Sector content was originally encrypted on media but is stored decrypted in the image.*/
+    SectorStatusUnencrypted     = 0xA
+} SectorStatus;
+
 #endif  // LIBAARUFORMAT_ENUMS_H
 
 #ifndef _MSC_VER
