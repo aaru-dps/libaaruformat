@@ -41,5 +41,9 @@ int32_t   decode_ddt_entry_v1(aaruformatContext *ctx, uint64_t sectorAddress, ui
                               uint8_t *sectorStatus);
 int32_t   decode_ddt_entry_v2(aaruformatContext *ctx, uint64_t sectorAddress, uint64_t *offset, uint64_t *blockOffset,
                               uint8_t *sectorStatus);
+int32_t   decode_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, uint64_t *offset,
+                                     uint64_t *blockOffset, uint8_t *sectorStatus);
+int32_t   decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, uint64_t *offset,
+                                    uint64_t *blockOffset, uint8_t *sectorStatus);
 
 #endif  // LIBAARUFORMAT_INTERNAL_H

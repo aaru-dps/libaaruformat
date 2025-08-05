@@ -112,6 +112,10 @@ typedef struct aaruformatContext
     uint32_t                           *userDataDdtBig;
     uint16_t                           *sectorPrefixDdtMini;
     uint16_t                           *sectorSuffixDdtMini;
+    uint64_t                            cachedDdtOffset;
+    uint16_t                           *cachedSecondaryDdtSmall;
+    uint32_t                           *cachedSecondaryDdtBig;
+
 } aaruformatContext;
 
 typedef struct DumpHardwareEntriesWithData
