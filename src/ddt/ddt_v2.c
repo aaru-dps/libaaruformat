@@ -428,8 +428,8 @@ int32_t decode_ddt_entry_v2(aaruformatContext *ctx, uint64_t sectorAddress, uint
     }
 
     const uint64_t offsetMask = (uint64_t)((1 << ctx->userDataDdtHeader.dataShift) - 1);
-    *offset                   = (ddtEntry & offsetMask) * (1 << ctx->userDataDdtHeader.blockAlignmentShift);
-    *blockOffset              = ddtEntry >> ctx->userDataDdtHeader.dataShift;
+    *offset                   = ddtEntry & offsetMask;
+    *blockOffset              = (ddtEntry >> ctx->userDataDdtHeader.dataShift) * (1 << ctx->userDataDdtHeader.blockAlignmentShift);
 
     return AARUF_STATUS_OK;
 }
