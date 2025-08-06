@@ -26,6 +26,22 @@
 
 #include "termbox2.h"
 
+void draw_progress_bar(int row, int percent)
+{
+    int width     = tb_width() / 2;
+    int bar_width = width - 4;  // leave space for borders
+    int filled    = (bar_width * percent) / 100;
+
+    // Draw progress bar outline
+    tb_printf(2, row, TB_YELLOW | TB_BOLD, TB_BLUE, "[");
+    tb_printf(bar_width + 3, row, TB_YELLOW | TB_BOLD, TB_BLUE, "]");
+
+    // Fill progress bar
+    for(int i = 0; i < filled; ++i) { tb_set_cell(3 + i, row, '=', TB_YELLOW | TB_BOLD, TB_BLUE); }
+
+    tb_present();
+}
+
 int compare(char *path1, char *path2)
 {
     int                      ret                  = AARUF_STATUS_OK;
@@ -441,11 +457,78 @@ int compare(char *path1, char *path2)
 
     tb_present();
 
-finished:
+    lr++;
+    uint64_t sectors = ctx1->imageInfo.Sectors;
+    if(ctx2->imageInfo.Sectors < sectors) sectors = ctx2->imageInfo.Sectors;
+    bool     imageContentsAreDifferent = false;
+    uint32_t sectorSize                = ctx1->imageInfo.SectorSize;
+    if(ctx2->imageInfo.SectorSize > sectorSize) sectorSize = ctx2->imageInfo.SectorSize;
+    uint8_t *buffer1 = malloc(sectorSize);
+
+    if(buffer1 == NULL)
+    {
+        tb_printf(2, lr, TB_RED | TB_BOLD, TB_BLUE, "Error allocating memory for buffer: %s", errno);
+        tb_present();
+        ret = AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        goto finished;
+    }
+
+    uint8_t *buffer2 = malloc(sectorSize);
+
+    if(buffer2 == NULL)
+    {
+        free(buffer1);
+        tb_printf(2, lr, TB_RED | TB_BOLD, TB_BLUE, "Error allocating memory for buffer: %s", errno);
+        tb_present();
+        ret = AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        goto finished;
+    }
+
+    for(uint64_t i = 0; i < sectors; i++)
+    {
+        tb_printf(2, height - 5, TB_WHITE | TB_BOLD, TB_BLUE, "Comparing sector %llu of %llu", i + 1, sectors);
+        draw_progress_bar(height - 4, i * 100 / sectors);
+
+        errno = aaruf_read_sector(ctx1, i, buffer1, &sectorSize);
+        if(errno != AARUF_STATUS_OK && errno != AARUF_STATUS_SECTOR_NOT_DUMPED)
+        {
+            tb_printf(2, lr++, TB_RED | TB_BOLD, TB_BLUE, "Error reading sector %llu: %s", i, errno);
+            tb_present();
+            continue;
+        }
+
+        errno = aaruf_read_sector(ctx2, i, buffer2, &sectorSize);
+        if(errno != AARUF_STATUS_OK && errno != AARUF_STATUS_SECTOR_NOT_DUMPED)
+        {
+            tb_printf(2, rr++, TB_RED | TB_BOLD, TB_BLUE, "Error reading sector %llu: %s", i, errno);
+            tb_present();
+            continue;
+        }
+
+        for(uint32_t j = 0; j < sectorSize; j++)
+            if(buffer1[j] != buffer2[j])
+            {
+                imageContentsAreDifferent = true;
+                tb_printf(2, lr++, TB_RED | TB_BOLD, TB_BLUE, "Sector %llu differs at byte %u", i, j);
+                tb_present();
+                break;  // Exit the loop on first difference
+            }
+    }
+    draw_progress_bar(height - 4, 100);  // Fill the progress bar to 100%
+
+    free(buffer1);
+    free(buffer2);
+
     if(imagesAreDifferent)
-        tb_printf(2, height - 2, TB_RED | TB_BOLD, TB_BLUE, "Images are different!");
+        tb_printf(2, height - 3, TB_RED | TB_BOLD, TB_BLUE, "Images are different!");
     else
-        tb_printf(2, height - 2, TB_GREEN | TB_BOLD, TB_BLUE, "Images are identical!");
+        tb_printf(2, height - 3, TB_GREEN | TB_BOLD, TB_BLUE, "Images are identical!");
+    if(imageContentsAreDifferent)
+        tb_printf(2, height - 2, TB_RED | TB_BOLD, TB_BLUE, "Images contents are different!");
+    else
+        tb_printf(2, height - 2, TB_GREEN | TB_BOLD, TB_BLUE, "Images contents are identical!");
+
+finished:
     tb_printf(2, height - 1, TB_WHITE | TB_BOLD, TB_BLUE, "Press any key to exit...");
     tb_present();  // Render the buffer to the terminal
     // Wait for a key press before exiting
