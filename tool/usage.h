@@ -28,5 +28,6 @@ void usage_read();
 void usage_read_long();
 void usage_verify();
 void usage_verify_sectors();
+void usage_compare();
 
 #endif  // LIBAARUFORMAT_USAGE_H

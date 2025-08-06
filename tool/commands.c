@@ -63,6 +63,26 @@ int cmd_info(int argc, char *argv[])
     return result;
 }
 
+int cmd_compare(int argc, char *argv[])
+{
+    struct arg_str *filename1  = arg_str1(NULL, NULL, "<filename1>", "First image to compare");
+    struct arg_str *filename2  = arg_str1(NULL, NULL, "<filename2>", "Second image to compare");
+    struct arg_end *end        = arg_end(10);
+    void           *argtable[] = {filename1, filename2, end};
+
+    if(arg_parse(argc, argv, argtable) > 0)
+    {
+        arg_print_errors(stderr, end, "compare");
+        usage_compare();
+        arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
+        return -1;
+    }
+
+    int result = compare(filename1->sval[0], filename2->sval[0]);
+    arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
+    return result;
+}
+
 int cmd_read_common(int argc, char *argv[], bool long_mode)
 {
     struct arg_int *sector     = arg_int1(NULL, NULL, "<sector>", "Sector number");
@@ -119,6 +139,7 @@ Command commands[] = {
     {     "read_long",      cmd_read_long},
     {        "verify",         cmd_verify},
     {"verify_sectors", cmd_verify_sectors},
+    {       "compare",        cmd_compare},
 };
 
 const size_t num_commands = sizeof(commands) / sizeof(commands[0]);

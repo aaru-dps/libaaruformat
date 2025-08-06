@@ -99,3 +99,13 @@ void usage_verify_sectors()
     printf("Arguments:\n");
     printf("  <filename>       Path to image file.\n");
 }
+
+void usage_compare()
+{
+    printf("\nUsage:\n");
+    printf("  aaruformattool compare <filename1> <filename2>\n\n");
+    printf("Compares two AaruFormat images.\n");
+    printf("Arguments:\n");
+    printf("  <filename1>      Path to first image file.\n");
+    printf("  <filename2>      Path to second image file.\n");
+}
