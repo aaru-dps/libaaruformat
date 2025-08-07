@@ -47,6 +47,19 @@ int aaruf_close(void *context)
         return -1;
     }
 
+    if(ctx->isWriting)
+    {
+        // Write the header at the beginning of the file
+        fseek(ctx->imageStream, 0, SEEK_SET);
+        if(fwrite(&ctx->header, sizeof(AaruHeaderV2), 1, ctx->imageStream) != 1)
+        {
+            fclose(ctx->imageStream);
+            ctx->imageStream = NULL;
+            errno = AARUF_ERROR_CANNOT_WRITE_HEADER;
+            return -1;
+        }
+    }
+
     // This may do nothing if imageStream is NULL, but as the behaviour is undefined, better sure than sorry
     if(ctx->imageStream != NULL)
     {

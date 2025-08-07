@@ -16,31 +16,31 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _MSC_VER
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
-#endif
+#include <stddef.h>
+#include <stdint.h>
 
-#ifndef LIBAARUFORMAT_STRUCTS_H
-#define LIBAARUFORMAT_STRUCTS_H
+#ifdef _WIN32
+#include <windows.h>
 
-#include <aaru.h>
-#include <stdbool.h>
-#include <stdio.h>
+uint64_t get_filetime_uint64()
+{
+    FILETIME   ft;
+    SYSTEMTIME st;
+    GetSystemTime(&st);  // UTC time
+    SystemTimeToFileTime(&st, &ft);
+    return ((uint64_t)ft.dwHighDateTime << 32) | ft.dwLowDateTime;
+}
 
-#include "enums.h"
-#include "structs/checksum.h"
-#include "structs/data.h"
-#include "structs/ddt.h"
-#include "structs/dump.h"
-#include "structs/header.h"
-#include "structs/index.h"
-#include "structs/metadata.h"
-#include "structs/optical.h"
-#include "structs/options.h"
+#else
+#include <sys/time.h>
 
-#endif  // LIBAARUFORMAT_STRUCTS_H
+uint64_t get_filetime_uint64()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);  // seconds + microseconds since 1970
 
-#ifndef _MSC_VER
-#pragma clang diagnostic pop
+    const uint64_t EPOCH_DIFF = 11644473600ULL;  // seconds between 1601 and 1970
+    uint64_t       ft         = (tv.tv_sec + EPOCH_DIFF) * 10000000ULL + tv.tv_usec * 10;
+    return ft;
+}
 #endif

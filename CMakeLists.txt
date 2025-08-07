@@ -117,7 +117,11 @@ add_library(aaruformat SHARED include/aaruformat/consts.h include/aaruformat/enu
             src/blocks/dump.c
             src/blocks/checksum.c
             src/index/index_v3.c
-            src/ddt/ddt_v2.c)
+            src/ddt/ddt_v2.c
+            include/aaruformat/structs/options.h
+            src/options.c
+            src/create.c
+            src/time.c)
 
 include_directories(include include/aaruformat)
 

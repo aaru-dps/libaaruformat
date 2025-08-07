@@ -16,31 +16,22 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _MSC_VER
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
-#endif
+#ifndef LIBAARUFORMAT_OPTIONS_H
+#define LIBAARUFORMAT_OPTIONS_H
 
-#ifndef LIBAARUFORMAT_STRUCTS_H
-#define LIBAARUFORMAT_STRUCTS_H
+typedef struct
+{
+    bool     compress;
+    bool     deduplicate;
+    uint32_t dictionary;
+    uint8_t  table_shift;
+    uint8_t  data_shift;
+    uint8_t  block_alignment;
+    bool     md5;
+    bool     sha1;
+    bool     sha256;
+    bool     blake3;
+    bool     spamsum;
+} aaru_options;
 
-#include <aaru.h>
-#include <stdbool.h>
-#include <stdio.h>
-
-#include "enums.h"
-#include "structs/checksum.h"
-#include "structs/data.h"
-#include "structs/ddt.h"
-#include "structs/dump.h"
-#include "structs/header.h"
-#include "structs/index.h"
-#include "structs/metadata.h"
-#include "structs/optical.h"
-#include "structs/options.h"
-
-#endif  // LIBAARUFORMAT_STRUCTS_H
-
-#ifndef _MSC_VER
-#pragma clang diagnostic pop
-#endif
+#endif  // LIBAARUFORMAT_OPTIONS_H

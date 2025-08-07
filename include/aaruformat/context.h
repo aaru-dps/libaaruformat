@@ -115,7 +115,7 @@ typedef struct aaruformatContext
     uint64_t                            cachedDdtOffset;
     uint16_t                           *cachedSecondaryDdtSmall;
     uint32_t                           *cachedSecondaryDdtBig;
-
+    bool                                isWriting;
 } aaruformatContext;
 
 typedef struct DumpHardwareEntriesWithData

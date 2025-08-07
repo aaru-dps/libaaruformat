@@ -62,6 +62,11 @@ AARU_EXPORT int AARU_CALL aaruf_identify_stream(FILE *imageStream);
 
 AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath);
 
+AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, uint32_t mediaType, uint32_t sectorSize,
+                                         uint64_t userSectors, uint64_t negativeSectors, uint64_t overflowSectors,
+                                         const char *options, const uint8_t *applicationName,
+                                         uint8_t applicationMajorVersion, uint8_t applicationMinorVersion);
+
 AARU_EXPORT int AARU_CALL aaruf_close(void *context);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t *length);
