@@ -25,8 +25,12 @@
 #include "internal.h"
 #include "structs/options.h"
 
+#include "log.h"
+
 aaru_options parse_options(const char *options)
 {
+    TRACE("Entering aaruf_open(%s)", options);
+
     aaru_options parsed = {.compress        = true,
                            .deduplicate     = true,
                            .dictionary      = 33554432,
@@ -93,5 +97,9 @@ aaru_options parse_options(const char *options)
         token = strtok(NULL, ";");
     }
 
+    TRACE("Exiting aaruf_open() = {compress: %d, deduplicate: %d, dictionary: %u, table_shift: %u, "
+          "data_shift: %u, block_alignment: %u, md5: %d, sha1: %d, sha256: %d, blake3: %d, spamsum: %d}",
+          parsed.compress, parsed.deduplicate, parsed.dictionary, parsed.table_shift, parsed.data_shift,
+          parsed.block_alignment, parsed.md5, parsed.sha1, parsed.sha256, parsed.blake3, parsed.spamsum);
     return parsed;
 }

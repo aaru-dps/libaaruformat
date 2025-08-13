@@ -30,6 +30,8 @@
 
 int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUserDataDdt)
 {
+    TRACE("Entering process_ddt_v1(%p, %p, %d)", ctx, entry, *foundUserDataDdt);
+
     int       pos       = 0;
     size_t    readBytes = 0;
     DdtHeader ddtHeader;
@@ -42,27 +44,32 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
     {
-        fprintf(stderr, "Invalid context or image stream.\n");
+        FATAL("Invalid context or image stream.");
+
+        TRACE("Exiting process_ddt_v1() = AARUF_ERROR_NOT_AARUFORMAT");
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
     // Seek to block
+    TRACE("Seeking to DDT block at position %" PRIu64, entry->offset);
     pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
     if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
     {
-        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
 
+        TRACE("Exiting process_ddt_v1() = AARUF_ERROR_CANNOT_READ_BLOCK");
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
     // Even if those two checks shall have been done before
-
+    TRACE("Reading DDT block header at position %" PRIu64, entry->offset);
     readBytes = fread(&ddtHeader, 1, sizeof(DdtHeader), ctx->imageStream);
 
     if(readBytes != sizeof(DdtHeader))
     {
-        FATAL("Could not read block header at %" PRIu64 "\n", entry->offset);
+        FATAL("Could not read block header at %" PRIu64 "", entry->offset);
 
+        TRACE("Exiting process_ddt_v1() = AARUF_ERROR_CANNOT_READ_BLOCK");
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
@@ -86,14 +93,14 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 cmpData = (uint8_t *)malloc(lzmaSize);
                 if(cmpData == NULL)
                 {
-                    TRACE("Cannot allocate memory for DDT, continuing...\n");
+                    TRACE("Cannot allocate memory for DDT, continuing...");
                     break;
                 }
 
                 ctx->userDataDdt = (uint64_t *)malloc(ddtHeader.length);
                 if(ctx->userDataDdt == NULL)
                 {
-                    TRACE("Cannot allocate memory for DDT, continuing...\n");
+                    TRACE("Cannot allocate memory for DDT, continuing...");
                     free(cmpData);
                     break;
                 }
@@ -101,7 +108,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 readBytes = fread(lzmaProperties, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
                 if(readBytes != LZMA_PROPERTIES_LENGTH)
                 {
-                    TRACE("Could not read LZMA properties, continuing...\n");
+                    TRACE("Could not read LZMA properties, continuing...");
                     free(cmpData);
                     free(ctx->userDataDdt);
                     ctx->userDataDdt = NULL;
@@ -111,7 +118,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 readBytes = fread(cmpData, 1, lzmaSize, ctx->imageStream);
                 if(readBytes != lzmaSize)
                 {
-                    TRACE("Could not read compressed block, continuing...\n");
+                    TRACE("Could not read compressed block, continuing...");
                     free(cmpData);
                     free(ctx->userDataDdt);
                     ctx->userDataDdt = NULL;
@@ -119,12 +126,13 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 }
 
                 readBytes = ddtHeader.length;
-                errorNo   = aaruf_lzma_decode_buffer((uint8_t *)ctx->userDataDdt, &readBytes, cmpData, &lzmaSize,
-                                                     lzmaProperties, LZMA_PROPERTIES_LENGTH);
+                TRACE("Decompressing block of size %zu bytes", ddtHeader.length);
+                errorNo = aaruf_lzma_decode_buffer((uint8_t *)ctx->userDataDdt, &readBytes, cmpData, &lzmaSize,
+                                                   lzmaProperties, LZMA_PROPERTIES_LENGTH);
 
                 if(errorNo != 0)
                 {
-                    FATAL("Got error %d from LZMA, stopping...\n", errorNo);
+                    FATAL("Got error %d from LZMA, stopping...", errorNo);
                     free(cmpData);
                     free(ctx->userDataDdt);
                     ctx->userDataDdt = NULL;
@@ -133,7 +141,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 if(readBytes != ddtHeader.length)
                 {
-                    FATAL("Error decompressing block, should be {0} bytes but got {1} bytes., stopping...\n");
+                    FATAL("Error decompressing block, should be {0} bytes but got {1} bytes., stopping...");
                     free(cmpData);
                     free(ctx->userDataDdt);
                     ctx->userDataDdt = NULL;
@@ -147,6 +155,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
             // TODO: Check CRC
             case None:
 #ifdef __linux__
+                TRACE("Memory mapping deduplication table at position %" PRIu64, entry->offset + sizeof(ddtHeader));
                 ctx->mappedMemoryDdtSize = sizeof(uint64_t) * ddtHeader.entries;
                 ctx->userDataDdt = mmap(NULL, ctx->mappedMemoryDdtSize, PROT_READ, MAP_SHARED, fileno(ctx->imageStream),
                                         entry->offset + sizeof(ddtHeader));
@@ -154,19 +163,19 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 if(ctx->userDataDdt == MAP_FAILED)
                 {
                     *foundUserDataDdt = false;
-                    FATAL("Could not read map deduplication table.\n");
+                    FATAL("Could not read map deduplication table.");
                     break;
                 }
 
                 ctx->inMemoryDdt = false;
                 break;
 #else  // TODO: Implement
-                TRACE("Uncompressed DDT not yet implemented...\n");
+                TRACE("Uncompressed DDT not yet implemented...");
                 *foundUserDataDdt = false;
                 break;
 #endif
             default:
-                TRACE("Found unknown compression type %d, continuing...\n", ddtHeader.compression);
+                TRACE("Found unknown compression type %d, continuing...", ddtHeader.compression);
                 *foundUserDataDdt = false;
                 break;
         }
@@ -182,14 +191,14 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 cmpData = (uint8_t *)malloc(lzmaSize);
                 if(cmpData == NULL)
                 {
-                    TRACE("Cannot allocate memory for DDT, continuing...\n");
+                    TRACE("Cannot allocate memory for DDT, continuing...");
                     break;
                 }
 
                 cdDdt = (uint32_t *)malloc(ddtHeader.length);
                 if(cdDdt == NULL)
                 {
-                    TRACE("Cannot allocate memory for DDT, continuing...\n");
+                    TRACE("Cannot allocate memory for DDT, continuing...");
                     free(cmpData);
                     break;
                 }
@@ -197,7 +206,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 readBytes = fread(lzmaProperties, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
                 if(readBytes != LZMA_PROPERTIES_LENGTH)
                 {
-                    TRACE("Could not read LZMA properties, continuing...\n");
+                    TRACE("Could not read LZMA properties, continuing...");
                     free(cmpData);
                     free(cdDdt);
                     break;
@@ -206,19 +215,20 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 readBytes = fread(cmpData, 1, lzmaSize, ctx->imageStream);
                 if(readBytes != lzmaSize)
                 {
-                    TRACE("Could not read compressed block, continuing...\n");
+                    TRACE("Could not read compressed block, continuing...");
                     free(cmpData);
                     free(cdDdt);
                     break;
                 }
 
                 readBytes = ddtHeader.length;
-                errorNo   = aaruf_lzma_decode_buffer((uint8_t *)cdDdt, &readBytes, cmpData, &lzmaSize, lzmaProperties,
-                                                     LZMA_PROPERTIES_LENGTH);
+                TRACE("Decompressing block of size %zu bytes", ddtHeader.length);
+                errorNo = aaruf_lzma_decode_buffer((uint8_t *)cdDdt, &readBytes, cmpData, &lzmaSize, lzmaProperties,
+                                                   LZMA_PROPERTIES_LENGTH);
 
                 if(errorNo != 0)
                 {
-                    FATAL("Got error %d from LZMA, stopping...\n", errorNo);
+                    FATAL("Got error %d from LZMA, stopping...", errorNo);
                     free(cmpData);
                     free(cdDdt);
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
@@ -226,7 +236,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 if(readBytes != ddtHeader.length)
                 {
-                    FATAL("Error decompressing block, should be {0} bytes but got {1} bytes., stopping...\n");
+                    FATAL("Error decompressing block, should be {0} bytes but got {1} bytes., stopping...");
                     free(cmpData);
                     free(cdDdt);
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
@@ -247,7 +257,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 if(cdDdt == NULL)
                 {
-                    TRACE("Cannot allocate memory for deduplication table.\n");
+                    TRACE("Cannot allocate memory for deduplication table.");
                     break;
                 }
 
@@ -256,7 +266,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 if(readBytes != ddtHeader.entries * sizeof(uint32_t))
                 {
                     free(cdDdt);
-                    TRACE("Could not read deduplication table, continuing...\n");
+                    TRACE("Could not read deduplication table, continuing...");
                     break;
                 }
 
@@ -269,21 +279,25 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 break;
             default:
-                TRACE("Found unknown compression type %d, continuing...\n", ddtHeader.compression);
+                TRACE("Found unknown compression type %d, continuing...", ddtHeader.compression);
                 break;
         }
     }
 
+    TRACE("Exiting process_ddt_v1() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
 }
 
 int32_t decode_ddt_entry_v1(aaruformatContext *ctx, uint64_t sectorAddress, uint64_t *offset, uint64_t *blockOffset,
                             uint8_t *sectorStatus)
 {
+    TRACE("Entering decode_ddt_entry_v1(%p, %" PRIu64 ", %llu, %llu, %d)", ctx, sectorAddress, *offset, *blockOffset,
+          *sectorStatus);
+
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
     {
-        fprintf(stderr, "Invalid context or image stream.\n");
+        FATAL("Invalid context or image stream.");
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
@@ -297,6 +311,9 @@ int32_t decode_ddt_entry_v1(aaruformatContext *ctx, uint64_t sectorAddress, uint
         *sectorStatus = SectorStatusNotDumped;
     else
         *sectorStatus = SectorStatusDumped;
+
+    TRACE("Exiting decode_ddt_entry_v1(%p, %" PRIu64 ", %llu, %llu, %d) = AARUF_STATUS_OK", ctx, sectorAddress, *offset,
+          *blockOffset, *sectorStatus);
 
     return AARUF_STATUS_OK;
 }

@@ -26,6 +26,8 @@
 
 void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
+    TRACE("Entering process_checksum_block(%p, %p)", ctx, entry);
+
     int                  pos       = 0;
     size_t               readBytes = 0;
     ChecksumHeader       checksum_header;
@@ -36,7 +38,7 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
     {
-        fprintf(stderr, "Invalid context or image stream.\n");
+        FATAL("Invalid context or image stream.");
         return;
     }
 
@@ -44,12 +46,13 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
     pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
     if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
     {
-        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
 
         return;
     }
 
     // Even if those two checks shall have been done before
+    TRACE("Reading checksum block header at position %" PRIu64, entry->offset);
     readBytes = fread(&checksum_header, 1, sizeof(ChecksumHeader), ctx->imageStream);
 
     if(readBytes != sizeof(ChecksumHeader))
@@ -65,6 +68,7 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
         FATAL("Incorrect identifier for checksum block at position %" PRIu64 "\n", entry->offset);
     }
 
+    TRACE("Allocating %u bytes for checksum block", checksum_header.length);
     data = (uint8_t *)malloc(checksum_header.length);
 
     if(data == NULL)
@@ -74,6 +78,7 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
         return;
     }
 
+    TRACE("Reading checksum block data at position %" PRIu64, entry->offset + sizeof(ChecksumHeader));
     readBytes = fread(data, 1, checksum_header.length, ctx->imageStream);
 
     if(readBytes != checksum_header.length)
@@ -85,6 +90,7 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
     }
 
     pos = 0;
+    TRACE("Processing %u checksum entries", checksum_header.entries);
     for(j = 0; j < checksum_header.entries; j++)
     {
         checksum_entry = (ChecksumEntry *)(&data[pos]);
@@ -92,21 +98,25 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
 
         if(checksum_entry->type == Md5)
         {
+            TRACE("Found MD5 checksum");
             memcpy(ctx->checksums.md5, &data[pos], MD5_DIGEST_LENGTH);
             ctx->checksums.hasMd5 = true;
         }
         else if(checksum_entry->type == Sha1)
         {
+            TRACE("Found SHA1 checksum");
             memcpy(ctx->checksums.sha1, &data[pos], SHA1_DIGEST_LENGTH);
             ctx->checksums.hasSha1 = true;
         }
         else if(checksum_entry->type == Sha256)
         {
+            TRACE("Found SHA256 checksum");
             memcpy(ctx->checksums.sha256, &data[pos], SHA256_DIGEST_LENGTH);
             ctx->checksums.hasSha256 = true;
         }
         else if(checksum_entry->type == SpamSum)
         {
+            TRACE("Found SpamSum checksum of size %u", checksum_entry->length);
             ctx->checksums.spamsum = malloc(checksum_entry->length + 1);
 
             if(ctx->checksums.spamsum != NULL)
@@ -123,4 +133,6 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
 
     checksum_entry = NULL;
     free(data);
+
+    TRACE("Exiting process_checksum_block()");
 }

@@ -27,6 +27,8 @@
 
 int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUserDataDdt)
 {
+    TRACE("Entering process_ddt_v2(%p, %p, %d)", ctx, entry, *foundUserDataDdt);
+
     int        pos       = 0;
     size_t     readBytes = 0;
     DdtHeader2 ddtHeader;
@@ -41,7 +43,9 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
     {
-        fprintf(stderr, "Invalid context or image stream.\n");
+        FATAL("Invalid context or image stream.");
+
+        TRACE("Exiting process_ddt_v2() = AARUF_ERROR_NOT_AARUFORMAT");
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
@@ -49,19 +53,21 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
     pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
     if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
     {
-        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
 
+        TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
     // Even if those two checks shall have been done before
-
+    TRACE("Reading DDT block header at position %" PRIu64, entry->offset);
     readBytes = fread(&ddtHeader, 1, sizeof(DdtHeader2), ctx->imageStream);
 
     if(readBytes != sizeof(DdtHeader2))
     {
-        FATAL("Could not read block header at %" PRIu64 "\n", entry->offset);
+        FATAL("Could not read block header at %" PRIu64 "", entry->offset);
 
+        TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
@@ -86,14 +92,14 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 cmpData = (uint8_t *)malloc(lzmaSize);
                 if(cmpData == NULL)
                 {
-                    fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
+                    TRACE("Cannot allocate memory for DDT, continuing...");
                     break;
                 }
 
                 buffer = malloc(ddtHeader.length);
                 if(buffer == NULL)
                 {
-                    fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
+                    TRACE("Cannot allocate memory for DDT, continuing...");
                     free(cmpData);
                     break;
                 }
@@ -101,7 +107,7 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 readBytes = fread(lzmaProperties, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
                 if(readBytes != LZMA_PROPERTIES_LENGTH)
                 {
-                    fprintf(stderr, "Could not read LZMA properties, continuing...\n");
+                    TRACE("Could not read LZMA properties, continuing...");
                     free(cmpData);
                     free(buffer);
                     break;
@@ -110,29 +116,32 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 readBytes = fread(cmpData, 1, lzmaSize, ctx->imageStream);
                 if(readBytes != lzmaSize)
                 {
-                    fprintf(stderr, "Could not read compressed block, continuing...\n");
+                    TRACE("Could not read compressed block, continuing...");
                     free(cmpData);
                     free(buffer);
                     break;
                 }
 
                 readBytes = ddtHeader.length;
-                errorNo   = aaruf_lzma_decode_buffer(buffer, &readBytes, cmpData, &lzmaSize, lzmaProperties,
-                                                     LZMA_PROPERTIES_LENGTH);
+                TRACE("Decompressing block of size %zu bytes", ddtHeader.length);
+                errorNo = aaruf_lzma_decode_buffer(buffer, &readBytes, cmpData, &lzmaSize, lzmaProperties,
+                                                   LZMA_PROPERTIES_LENGTH);
 
                 if(errorNo != 0)
                 {
-                    fprintf(stderr, "Got error %d from LZMA, stopping...\n", errorNo);
+                    FATAL("Got error %d from LZMA, stopping...", errorNo);
                     free(cmpData);
                     free(buffer);
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
                 if(readBytes != ddtHeader.length)
                 {
-                    fprintf(stderr, "Error decompressing block, should be {0} bytes but got {1} bytes., stopping...\n");
+                    FATAL("Error decompressing block, should be {0} bytes but got {1} bytes., stopping...");
                     free(cmpData);
                     free(buffer);
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
@@ -142,8 +151,10 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 if(crc64_context == NULL)
                 {
-                    fprintf(stderr, "Could not initialize CRC64.\n");
+                    FATAL("Could not initialize CRC64.");
                     free(buffer);
+
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
                     return AARUF_ERROR_CANNOT_READ_BLOCK;
                 }
 
@@ -152,8 +163,9 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 if(crc64 != ddtHeader.crc64)
                 {
-                    fprintf(stderr, "Expected DDT CRC 0x%16lX but got 0x%16lX.\n", ddtHeader.crc64, crc64);
+                    FATAL("Expected DDT CRC 0x%16lX but got 0x%16lX.", ddtHeader.crc64, crc64);
                     free(buffer);
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_INVALID_BLOCK_CRC");
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
 
@@ -171,16 +183,17 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 if(buffer == NULL)
                 {
-                    fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
+                    TRACE("Cannot allocate memory for DDT, continuing...");
                     break;
                 }
 
+                TRACE("Reading DDT of length %zu bytes", ddtHeader.length);
                 readBytes = fread(buffer, 1, ddtHeader.length, ctx->imageStream);
 
                 if(readBytes != ddtHeader.length)
                 {
                     free(buffer);
-                    FATAL("Could not read deduplication table, continuing...\n");
+                    FATAL("Could not read deduplication table, continuing...");
                     break;
                 }
 
@@ -188,8 +201,9 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 if(crc64_context == NULL)
                 {
-                    fprintf(stderr, "Could not initialize CRC64.\n");
+                    FATAL("Could not initialize CRC64.");
                     free(buffer);
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
                     return AARUF_ERROR_CANNOT_READ_BLOCK;
                 }
 
@@ -198,8 +212,9 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 if(crc64 != ddtHeader.crc64)
                 {
-                    fprintf(stderr, "Expected DDT CRC 0x%16lX but got 0x%16lX.\n", ddtHeader.crc64, crc64);
+                    FATAL("Expected DDT CRC 0x%16lX but got 0x%16lX.", ddtHeader.crc64, crc64);
                     free(buffer);
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_INVALID_BLOCK_CRC");
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
 
@@ -213,7 +228,7 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 break;
             default:
-                TRACE("Found unknown compression type %d, continuing...\n", ddtHeader.compression);
+                TRACE("Found unknown compression type %d, continuing...", ddtHeader.compression);
                 *foundUserDataDdt = false;
                 break;
         }
@@ -228,14 +243,14 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 cmpData = (uint8_t *)malloc(lzmaSize);
                 if(cmpData == NULL)
                 {
-                    fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
+                    TRACE("Cannot allocate memory for DDT, continuing...");
                     break;
                 }
 
                 buffer = malloc(ddtHeader.length);
                 if(buffer == NULL)
                 {
-                    fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
+                    TRACE("Cannot allocate memory for DDT, continuing...");
                     free(cmpData);
                     break;
                 }
@@ -243,7 +258,7 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 readBytes = fread(lzmaProperties, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
                 if(readBytes != LZMA_PROPERTIES_LENGTH)
                 {
-                    fprintf(stderr, "Could not read LZMA properties, continuing...\n");
+                    TRACE("Could not read LZMA properties, continuing...");
                     free(cmpData);
                     free(buffer);
                     break;
@@ -252,29 +267,32 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 readBytes = fread(cmpData, 1, lzmaSize, ctx->imageStream);
                 if(readBytes != lzmaSize)
                 {
-                    fprintf(stderr, "Could not read compressed block, continuing...\n");
+                    TRACE("Could not read compressed block, continuing...");
                     free(cmpData);
                     free(buffer);
                     break;
                 }
 
                 readBytes = ddtHeader.length;
-                errorNo   = aaruf_lzma_decode_buffer(buffer, &readBytes, cmpData, &lzmaSize, lzmaProperties,
-                                                     LZMA_PROPERTIES_LENGTH);
+                TRACE("Decompressing block of size %zu bytes", ddtHeader.length);
+                errorNo = aaruf_lzma_decode_buffer(buffer, &readBytes, cmpData, &lzmaSize, lzmaProperties,
+                                                   LZMA_PROPERTIES_LENGTH);
 
                 if(errorNo != 0)
                 {
-                    fprintf(stderr, "Got error %d from LZMA, stopping...\n", errorNo);
+                    FATAL("Got error %d from LZMA, stopping...", errorNo);
                     free(cmpData);
                     free(buffer);
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
                 if(readBytes != ddtHeader.length)
                 {
-                    fprintf(stderr, "Error decompressing block, should be {0} bytes but got {1} bytes., stopping...\n");
+                    FATAL("Error decompressing block, should be {0} bytes but got {1} bytes., stopping...");
                     free(cmpData);
                     free(buffer);
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
@@ -282,8 +300,9 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 if(crc64_context == NULL)
                 {
-                    fprintf(stderr, "Could not initialize CRC64.\n");
+                    FATAL("Could not initialize CRC64.");
                     free(buffer);
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
                     return AARUF_ERROR_CANNOT_READ_BLOCK;
                 }
 
@@ -292,8 +311,9 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 if(crc64 != ddtHeader.crc64)
                 {
-                    fprintf(stderr, "Expected DDT CRC 0x%16lX but got 0x%16lX.\n", ddtHeader.crc64, crc64);
+                    FATAL("Expected DDT CRC 0x%16lX but got 0x%16lX.", ddtHeader.crc64, crc64);
                     free(buffer);
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_INVALID_BLOCK_CRC");
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
 
@@ -321,7 +341,7 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 if(buffer == NULL)
                 {
-                    TRACE("Cannot allocate memory for deduplication table.\n");
+                    TRACE("Cannot allocate memory for deduplication table.");
                     break;
                 }
 
@@ -330,7 +350,7 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 if(readBytes != ddtHeader.length)
                 {
                     free(buffer);
-                    FATAL("Could not read deduplication table, continuing...\n");
+                    FATAL("Could not read deduplication table, continuing...");
                     break;
                 }
 
@@ -338,8 +358,9 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 if(crc64_context == NULL)
                 {
-                    fprintf(stderr, "Could not initialize CRC64.\n");
+                    FATAL(stderr, "Could not initialize CRC64.");
                     free(buffer);
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
                     return AARUF_ERROR_CANNOT_READ_BLOCK;
                 }
 
@@ -348,7 +369,7 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 if(crc64 != ddtHeader.crc64)
                 {
-                    fprintf(stderr, "Expected DDT CRC 0x%16lX but got 0x%16lX.\n", ddtHeader.crc64, crc64);
+                    FATAL("Expected DDT CRC 0x%16lX but got 0x%16lX.", ddtHeader.crc64, crc64);
                     free(buffer);
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
@@ -372,21 +393,26 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 break;
             default:
-                TRACE("Found unknown compression type %d, continuing...\n", ddtHeader.compression);
+                TRACE("Found unknown compression type %d, continuing...", ddtHeader.compression);
                 break;
         }
     }
 
+    TRACE("Exiting process_ddt_v2() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
 }
 
 int32_t decode_ddt_entry_v2(aaruformatContext *ctx, uint64_t sectorAddress, uint64_t *offset, uint64_t *blockOffset,
                             uint8_t *sectorStatus)
 {
+    TRACE("Entering decode_ddt_entry_v2(%p, %" PRIu64 ", %llu, %llu, %d)", ctx, sectorAddress, *offset, *blockOffset,
+          *sectorStatus);
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
     {
-        fprintf(stderr, "Invalid context or image stream.\n");
+        FATAL("Invalid context or image stream.");
+
+        TRACE("Exiting decode_ddt_entry_v2() = AARUF_ERROR_NOT_AARUFORMAT");
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
@@ -399,17 +425,27 @@ int32_t decode_ddt_entry_v2(aaruformatContext *ctx, uint64_t sectorAddress, uint
 int32_t decode_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, uint64_t *offset,
                                    uint64_t *blockOffset, uint8_t *sectorStatus)
 {
+    TRACE("Entering decode_ddt_single_level_v2(%p, %" PRIu64 ", %llu, %llu, %d)", ctx, sectorAddress, *offset,
+          *blockOffset, *sectorStatus);
+
     uint64_t ddtEntry = 0;
 
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
     {
-        fprintf(stderr, "Invalid context or image stream.\n");
+        FATAL("Invalid context or image stream.");
+
+        TRACE("Exiting decode_ddt_single_level_v2() = AARUF_ERROR_NOT_AARUFORMAT");
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
     // Should not really be here
-    if(ctx->userDataDdtHeader.tableShift != 0) return AARUF_ERROR_CANNOT_READ_BLOCK;
+    if(ctx->userDataDdtHeader.tableShift != 0)
+    {
+        FATAL("DDT table shift is not zero, but we are in single-level DDT decoding.");
+        TRACE("Exiting decode_ddt_single_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
+        return AARUF_ERROR_CANNOT_READ_BLOCK;
+    }
 
     // TODO: Take into account the negative and overflow blocks, library-wide
     sectorAddress += ctx->userDataDdtHeader.negative;
@@ -420,7 +456,8 @@ int32_t decode_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sectorAddres
         ddtEntry = ctx->userDataDdtBig[sectorAddress];
     else
     {
-        TRACE("Unknown DDT size type %d.\n", ctx->userDataDdtHeader.sizeType);
+        FATAL("Unknown DDT size type %d.", ctx->userDataDdtHeader.sizeType);
+        TRACE("Exiting decode_ddt_single_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
@@ -429,6 +466,8 @@ int32_t decode_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sectorAddres
         *sectorStatus = SectorStatusNotDumped;
         *offset       = 0;
         *blockOffset  = 0;
+        TRACE("Exiting decode_ddt_single_level_v2(%p, %" PRIu64 ", %llu, %llu, %d) = AARUF_STATUS_OK", ctx,
+              sectorAddress, *offset, *blockOffset, *sectorStatus);
         return AARUF_STATUS_OK;
     }
 
@@ -447,12 +486,17 @@ int32_t decode_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sectorAddres
     *offset                   = ddtEntry & offsetMask;
     *blockOffset = (ddtEntry >> ctx->userDataDdtHeader.dataShift) * (1 << ctx->userDataDdtHeader.blockAlignmentShift);
 
+    TRACE("Exiting decode_ddt_single_level_v2(%p, %" PRIu64 ", %llu, %llu, %d) = AARUF_STATUS_OK", ctx, sectorAddress,
+          *offset, *blockOffset, *sectorStatus);
     return AARUF_STATUS_OK;
 }
 
 int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, uint64_t *offset,
                                   uint64_t *blockOffset, uint8_t *sectorStatus)
 {
+    TRACE("Entering decode_ddt_multi_level_v2(%p, %" PRIu64 ", %llu, %llu, %d)", ctx, sectorAddress, *offset,
+          *blockOffset, *sectorStatus);
+
     uint64_t   ddtEntry = 0;
     uint8_t    lzmaProperties[LZMA_PROPERTIES_LENGTH];
     size_t     lzmaSize           = 0;
@@ -468,12 +512,19 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
     {
-        fprintf(stderr, "Invalid context or image stream.\n");
+        FATAL("Invalid context or image stream.");
+
+        TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_NOT_AARUFORMAT");
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
     // Should not really be here
-    if(ctx->userDataDdtHeader.tableShift == 0) return AARUF_ERROR_CANNOT_READ_BLOCK;
+    if(ctx->userDataDdtHeader.tableShift == 0)
+    {
+        FATAL("DDT table shift is zero, but we are in multi-level DDT decoding.");
+        TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
+        return AARUF_ERROR_CANNOT_READ_BLOCK;
+    }
 
     // TODO: Take into account the negative and overflow blocks, library-wide
     sectorAddress += ctx->userDataDdtHeader.negative;
@@ -487,7 +538,8 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
         secondaryDdtOffset = ctx->userDataDdtBig[ddtPosition];
     else
     {
-        TRACE("Unknown DDT size type %d.\n", ctx->userDataDdtHeader.sizeType);
+        FATAL("Unknown DDT size type %d.", ctx->userDataDdtHeader.sizeType);
+        TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
@@ -503,15 +555,15 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
 
         if(readBytes != sizeof(DdtHeader2))
         {
-            FATAL("Could not read block header at %" PRIu64 "\n", secondaryDdtOffset);
-
+            FATAL("Could not read block header at %" PRIu64 "", secondaryDdtOffset);
+            TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
             return AARUF_ERROR_CANNOT_READ_BLOCK;
         }
 
         if(ddtHeader.identifier != DeDuplicationTable2 || ddtHeader.type != UserData)
         {
-            TRACE("Invalid block header at %" PRIu64 "\n", secondaryDdtOffset);
-
+            FATAL("Invalid block header at %" PRIu64 "", secondaryDdtOffset);
+            TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
             return AARUF_ERROR_CANNOT_READ_BLOCK;
         }
 
@@ -524,14 +576,15 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
                 cmpData = (uint8_t *)malloc(lzmaSize);
                 if(cmpData == NULL)
                 {
-                    fprintf(stderr, "Cannot allocate memory for DDT, stopping...\n");
+                    FATAL("Cannot allocate memory for DDT, stopping...");
+                    TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
                 buffer = malloc(ddtHeader.length);
                 if(buffer == NULL)
                 {
-                    fprintf(stderr, "Cannot allocate memory for DDT, stopping...\n");
+                    FATAL("Cannot allocate memory for DDT, stopping...");
                     free(cmpData);
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
@@ -539,38 +592,43 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
                 readBytes = fread(lzmaProperties, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
                 if(readBytes != LZMA_PROPERTIES_LENGTH)
                 {
-                    fprintf(stderr, "Could not read LZMA properties, stopping...\n");
+                    FATAL("Could not read LZMA properties, stopping...");
                     free(cmpData);
                     free(buffer);
+                    TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
                 readBytes = fread(cmpData, 1, lzmaSize, ctx->imageStream);
                 if(readBytes != lzmaSize)
                 {
-                    fprintf(stderr, "Could not read compressed block, stopping...\n");
+                    FATAL("Could not read compressed block, stopping...");
                     free(cmpData);
                     free(buffer);
+                    TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
+                TRACE("Decompressing block of size %zu bytes", ddtHeader.length);
                 readBytes = ddtHeader.length;
                 errorNo   = aaruf_lzma_decode_buffer(buffer, &readBytes, cmpData, &lzmaSize, lzmaProperties,
                                                      LZMA_PROPERTIES_LENGTH);
 
                 if(errorNo != 0)
                 {
-                    fprintf(stderr, "Got error %d from LZMA, stopping...\n", errorNo);
+                    FATAL("Got error %d from LZMA, stopping...", errorNo);
                     free(cmpData);
                     free(buffer);
+                    TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
                 if(readBytes != ddtHeader.length)
                 {
-                    fprintf(stderr, "Error decompressing block, should be {0} bytes but got {1} bytes., stopping...\n");
+                    FATAL("Error decompressing block, should be {0} bytes but got {1} bytes., stopping...");
                     free(cmpData);
                     free(buffer);
+                    TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
@@ -580,8 +638,9 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
 
                 if(crc64_context == NULL)
                 {
-                    fprintf(stderr, "Could not initialize CRC64.\n");
+                    FATAL("Could not initialize CRC64.");
                     free(buffer);
+                    TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
                     return AARUF_ERROR_CANNOT_READ_BLOCK;
                 }
 
@@ -590,8 +649,9 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
 
                 if(crc64 != ddtHeader.crc64)
                 {
-                    fprintf(stderr, "Expected DDT CRC 0x%16lX but got 0x%16lX.\n", ddtHeader.crc64, crc64);
+                    FATAL("Expected DDT CRC 0x%16lX but got 0x%16lX.", ddtHeader.crc64, crc64);
                     free(buffer);
+                    TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_INVALID_BLOCK_CRC");
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
 
@@ -608,7 +668,8 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
 
                 if(buffer == NULL)
                 {
-                    fprintf(stderr, "Cannot allocate memory for DDT, stopping...\n");
+                    FATAL(stderr, "Cannot allocate memory for DDT, stopping...");
+                    TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
                     return AARUF_ERROR_CANNOT_READ_BLOCK;
                 }
 
@@ -617,7 +678,8 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
                 if(readBytes != ddtHeader.length)
                 {
                     free(buffer);
-                    FATAL("Could not read deduplication table, stopping...\n");
+                    FATAL("Could not read deduplication table, stopping...");
+                    TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
                     return AARUF_ERROR_CANNOT_READ_BLOCK;
                 }
 
@@ -625,8 +687,9 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
 
                 if(crc64_context == NULL)
                 {
-                    fprintf(stderr, "Could not initialize CRC64.\n");
+                    FATAL("Could not initialize CRC64.");
                     free(buffer);
+                    TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
                     return AARUF_ERROR_CANNOT_READ_BLOCK;
                 }
 
@@ -635,8 +698,9 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
 
                 if(crc64 != ddtHeader.crc64)
                 {
-                    fprintf(stderr, "Expected DDT CRC 0x%16lX but got 0x%16lX.\n", ddtHeader.crc64, crc64);
+                    FATAL("Expected DDT CRC 0x%16lX but got 0x%16lX.", ddtHeader.crc64, crc64);
                     free(buffer);
+                    TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_INVALID_BLOCK_CRC");
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
 
@@ -649,7 +713,8 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
 
                 break;
             default:
-                TRACE("Found unknown compression type %d, stopping...\n", ddtHeader.compression);
+                FATAL("Found unknown compression type %d, stopping...", ddtHeader.compression);
+                TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
                 return AARUF_ERROR_CANNOT_READ_BLOCK;
         }
     }
@@ -664,6 +729,9 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
         *sectorStatus = SectorStatusNotDumped;
         *offset       = 0;
         *blockOffset  = 0;
+
+        TRACE("Exiting decode_ddt_multi_level_v2(%p, %" PRIu64 ", %llu, %llu, %d) = AARUF_STATUS_OK", ctx,
+              sectorAddress, *offset, *blockOffset, *sectorStatus);
         return AARUF_STATUS_OK;
     }
 
@@ -682,5 +750,7 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
     *offset                   = ddtEntry & offsetMask;
     *blockOffset = (ddtEntry >> ctx->userDataDdtHeader.dataShift) * (1 << ctx->userDataDdtHeader.blockAlignmentShift);
 
+    TRACE("Exiting decode_ddt_multi_level_v2(%p, %" PRIu64 ", %llu, %llu, %d) = AARUF_STATUS_OK", ctx, sectorAddress,
+          *offset, *blockOffset, *sectorStatus);
     return AARUF_STATUS_OK;
 }

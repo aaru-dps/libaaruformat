@@ -51,6 +51,8 @@ TARGET_WITH_SIMD FORCE_INLINE uint64x2_t fold(uint64x2_t in, uint64x2_t foldCons
 
 AARU_EXPORT TARGET_WITH_SIMD uint64_t AARU_CALL aaruf_crc64_vmull(uint64_t previous_crc, const uint8_t *data, long len)
 {
+    TRACE("Entering aaruf_crc64_vmull(%llu, %p, %ld)", previous_crc, data, len);
+
     const uint64_t k1 = 0xe05dd497ca393ae4;  // bitReflect(expMod65(128 + 64, poly, 1)) << 1;
     const uint64_t k2 = 0xdabe95afc7875f40;  // bitReflect(expMod65(128, poly, 1)) << 1;
     const uint64_t mu = 0x9c3e466c172963d5;  // (bitReflect(div129by65(poly)) << 1) | 1;
@@ -171,6 +173,8 @@ AARU_EXPORT TARGET_WITH_SIMD uint64_t AARU_CALL aaruf_crc64_vmull(uint64_t previ
     const uint64x2_t T1 = sse2neon_vmull_p64(vget_low_u64(R), vget_low_u64(foldConstants2));
     const uint64x2_t T2 = veorq_u64(
         veorq_u64(sse2neon_vmull_p64(vget_low_u64(T1), vget_high_u64(foldConstants2)), mm_slli_si128(T1, 8)), R);
+
+    TRACE("Exiting aaruf_crc64_vmull()");
 
     return ~vgetq_lane_u64(T2, 1);
 }

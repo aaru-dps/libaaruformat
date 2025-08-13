@@ -28,6 +28,7 @@
 // Process data blocks found while opening an AaruFormat file
 int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
 {
+    TRACE("Entering process_data_block(%p, %p)", ctx, entry);
     BlockHeader    blockHeader;
     int            pos         = 0;
     size_t         readBytes   = 0;
@@ -44,7 +45,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
     {
-        fprintf(stderr, "Invalid context or image stream.\n");
+        FATAL("Invalid context or image stream.");
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
@@ -52,7 +53,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
     pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
     if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
     {
-        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
 
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
@@ -60,14 +61,18 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
     // Even if those two checks shall have been done before
 
     // NOP block, skip
+    TRACE("NoData block found, exiting");
+    TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
     if(entry->dataType == NoData) return AARUF_STATUS_OK;
 
+    TRACE("Reading block header at position %" PRIu64, entry->offset);
     readBytes = fread(&blockHeader, 1, sizeof(BlockHeader), ctx->imageStream);
 
     if(readBytes != sizeof(BlockHeader))
     {
-        FATAL("Could not read block header at %" PRIu64 "\n", entry->offset);
+        FATAL("Could not read block header at %" PRIu64, entry->offset);
 
+        TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
         return AARUF_STATUS_OK;
     }
 
@@ -76,37 +81,43 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
     // Unused, skip
     if(entry->dataType == UserData)
     {
-        if(blockHeader.sectorSize > ctx->imageInfo.SectorSize) ctx->imageInfo.SectorSize = blockHeader.sectorSize;
+        if(blockHeader.sectorSize > ctx->imageInfo.SectorSize)
+        {
+            TRACE("Setting sector size to %" PRIu64 " bytes", blockHeader.sectorSize);
+            ctx->imageInfo.SectorSize = blockHeader.sectorSize;
+        }
 
+        TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
         return AARUF_STATUS_OK;
     }
 
     if(blockHeader.identifier != entry->blockType)
     {
-        TRACE("Incorrect identifier for data block at position %" PRIu64 "\n", entry->offset);
+        TRACE("Incorrect identifier for data block at position %" PRIu64, entry->offset);
 
+        TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
         return AARUF_STATUS_OK;
     }
 
     if(blockHeader.type != entry->dataType)
     {
-        TRACE("Expected block with data type %4.4s at position %" PRIu64
-                " but found data type %4.4s\n",
-                (char *)&entry->blockType, entry->offset, (char *)&blockHeader.type);
+        TRACE("Expected block with data type %4.4s at position %" PRIu64 " but found data type %4.4s",
+              (char *)&entry->blockType, entry->offset, (char *)&blockHeader.type);
 
+        TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
         return AARUF_STATUS_OK;
     }
 
-    TRACE("Found data block with type %4.4s at position %" PRIu64 "\n",
-            (char *)&entry->blockType, entry->offset);
+    TRACE("Found data block with type %4.4s at position %" PRIu64, (char *)&entry->blockType, entry->offset);
 
     if(blockHeader.compression == Lzma || blockHeader.compression == LzmaClauniaSubchannelTransform)
     {
         if(blockHeader.compression == LzmaClauniaSubchannelTransform && blockHeader.type != CdSectorSubchannel)
         {
-            fprintf(stderr, "Invalid compression type %d for block with data type %d, continuing...\n",
-                    blockHeader.compression, blockHeader.type);
+            TRACE("Invalid compression type %d for block with data type %d, continuing...", blockHeader.compression,
+                  blockHeader.type);
 
+            TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         }
 
@@ -115,33 +126,41 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
         cmpData = (uint8_t *)malloc(lzmaSize);
         if(cmpData == NULL)
         {
-            fprintf(stderr, "Cannot allocate memory for block, continuing...\n");
+            TRACE("Cannot allocate memory for block, continuing...");
+
+            TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         }
 
         data = (uint8_t *)malloc(blockHeader.length);
         if(data == NULL)
         {
-            fprintf(stderr, "Cannot allocate memory for block, continuing...\n");
+            TRACE("Cannot allocate memory for block, continuing...");
             free(cmpData);
+
+            TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         }
 
         readBytes = fread(lzmaProperties, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
         if(readBytes != LZMA_PROPERTIES_LENGTH)
         {
-            fprintf(stderr, "Could not read LZMA properties, continuing...\n");
+            TRACE("Could not read LZMA properties, continuing...");
             free(cmpData);
             free(data);
+
+            TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         }
 
         readBytes = fread(cmpData, 1, lzmaSize, ctx->imageStream);
         if(readBytes != lzmaSize)
         {
-            fprintf(stderr, "Could not read compressed block, continuing...\n");
+            TRACE("Could not read compressed block, continuing...");
             free(cmpData);
             free(data);
+
+            TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         }
 
@@ -151,19 +170,21 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
 
         if(errorNo != 0)
         {
-            fprintf(stderr, "Got error %d from LZMA, continuing...\n", errorNo);
+            TRACE("Got error %d from LZMA, continuing...", errorNo);
             free(cmpData);
             free(data);
 
+            TRACE("Exiting process_data_block() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
             return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
         }
 
         if(readBytes != blockHeader.length)
         {
-            fprintf(stderr, "Error decompressing block, should be {0} bytes but got {1} bytes., continuing...\n");
+            TRACE("Error decompressing block, should be {0} bytes but got {1} bytes., continuing...");
             free(cmpData);
             free(data);
 
+            TRACE("Exiting process_data_block() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
             return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
         }
 
@@ -172,10 +193,11 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
             cstData = malloc(blockHeader.length);
             if(cstData == NULL)
             {
-                fprintf(stderr, "Cannot allocate memory for block, continuing...\n");
+                TRACE("Cannot allocate memory for block, continuing...");
                 free(cmpData);
                 free(data);
 
+                TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
                 return AARUF_STATUS_OK;
             }
 
@@ -192,8 +214,9 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
         data = (uint8_t *)malloc(blockHeader.length);
         if(data == NULL)
         {
-            fprintf(stderr, "Cannot allocate memory for block, continuing...\n");
+            fprintf(stderr, "Cannot allocate memory for block, continuing...");
 
+            TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         }
 
@@ -202,15 +225,17 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
         if(readBytes != blockHeader.length)
         {
             free(data);
-            fprintf(stderr, "Could not read block, continuing...\n");
+            fprintf(stderr, "Could not read block, continuing...");
 
+            TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         }
     }
     else
     {
-        TRACE("Found unknown compression type %d, continuing...\n", blockHeader.compression);
+        TRACE("Found unknown compression type %d, continuing...", blockHeader.compression);
 
+        TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
         return AARUF_STATUS_OK;
     }
 
@@ -223,9 +248,10 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
 
         if(crc64 != blockHeader.crc64)
         {
-            TRACE("Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64 ", continuing...\n",
-                    crc64, blockHeader.crc64);
+            TRACE("Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64 ", continuing...", crc64,
+                  blockHeader.crc64);
 
+            TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         }
     }
@@ -274,7 +300,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
 
             if(mediaTag == NULL)
             {
-                TRACE("Cannot allocate memory for media tag entry.\n");
+                TRACE("Cannot allocate memory for media tag entry.");
                 break;
             }
             memset(mediaTag, 0, sizeof(mediaTagEntry));
@@ -287,7 +313,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
 
             if(oldMediaTag != NULL)
             {
-                TRACE("Replaced media tag with type %d\n", oldMediaTag->type);
+                TRACE("Replaced media tag with type %d", oldMediaTag->type);
                 free(oldMediaTag->data);
                 free(oldMediaTag);
                 oldMediaTag = NULL;
@@ -296,5 +322,6 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
             break;
     }
 
+    TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
 }

@@ -34,7 +34,7 @@ void process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry)
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
     {
-        FATAL("Invalid context or image stream.\n");
+        FATAL("Invalid context or image stream.");
         return;
     }
 

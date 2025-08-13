@@ -44,48 +44,65 @@ void *aaruf_open(const char *filepath)
     slog_init("aaruformat.log", SLOG_FLAGS_ALL, 0);
 #endif
 
+    TRACE("Logging initialized");
+
+    TRACE("Entering aaruf_open(%s)", filepath);
+
+    TRACE("Allocating memory for context");
     ctx = (aaruformatContext *)malloc(sizeof(aaruformatContext));
     memset(ctx, 0, sizeof(aaruformatContext));
 
     if(ctx == NULL)
     {
+        FATAL("Not enough memory to create context");
         errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
+
+        TRACE("Exiting aaruf_open() = NULL");
         return NULL;
     }
 
+    TRACE("Opening file %s", filepath);
     ctx->imageStream = fopen(filepath, "rb");
 
     if(ctx->imageStream == NULL)
     {
+        FATAL("Error %d opening file %s for reading", errno, filepath);
         errorNo = errno;
         free(ctx);
         errno = errorNo;
 
+        TRACE("Exiting aaruf_open() = NULL");
         return NULL;
     }
 
+    TRACE("Reading header at position 0");
     fseek(ctx->imageStream, 0, SEEK_SET);
     readBytes = fread(&ctx->header, 1, sizeof(AaruHeader), ctx->imageStream);
 
     if(readBytes != sizeof(AaruHeader))
     {
+        FATAL("Could not read header");
         free(ctx);
         errno = AARUF_ERROR_FILE_TOO_SMALL;
 
+        TRACE("Exiting aaruf_open() = NULL");
         return NULL;
     }
 
     if(ctx->header.identifier != DIC_MAGIC && ctx->header.identifier != AARU_MAGIC)
     {
+        FATAL("Incorrect identifier for AaruFormat file: %8.8s", (char *)&ctx->header.identifier);
         free(ctx);
         errno = AARUF_ERROR_NOT_AARUFORMAT;
 
+        TRACE("Exiting aaruf_open() = NULL");
         return NULL;
     }
 
     // Read new header version
     if(ctx->header.imageMajorVersion >= AARUF_VERSION_V2)
     {
+        TRACE("Reading new header version at position 0");
         fseek(ctx->imageStream, 0, SEEK_SET);
         readBytes = fread(&ctx->header, 1, sizeof(AaruHeaderV2), ctx->imageStream);
 
@@ -100,26 +117,33 @@ void *aaruf_open(const char *filepath)
 
     if(ctx->header.imageMajorVersion > AARUF_VERSION)
     {
+        FATAL("Incompatible AaruFormat version %d.%d found, maximum supported is %d.%d", ctx->header.imageMajorVersion,
+              ctx->header.imageMinorVersion, AARUF_VERSION_V2, 0);
         free(ctx);
         errno = AARUF_ERROR_INCOMPATIBLE_VERSION;
 
+        TRACE("Exiting aaruf_open() = NULL");
         return NULL;
     }
 
-    TRACE("Opening image version %d.%d\n", ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
+    TRACE("Opening image version %d.%d", ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
 
+    TRACE("Allocating memory for readable sector tags bitmap");
     ctx->readableSectorTags = (bool *)malloc(sizeof(bool) * MaxSectorTag);
 
     if(ctx->readableSectorTags == NULL)
     {
+        FATAL("Could not allocate memory for readable sector tags bitmap");
         free(ctx);
         errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
 
+        TRACE("Exiting aaruf_open() = NULL");
         return NULL;
     }
 
     memset(ctx->readableSectorTags, 0, sizeof(bool) * MaxSectorTag);
 
+    TRACE("Setting up image info");
     ctx->imageInfo.Application        = ctx->header.application;
     ctx->imageInfo.ApplicationVersion = (uint8_t *)malloc(32);
     if(ctx->imageInfo.ApplicationVersion != NULL)
@@ -137,6 +161,7 @@ void *aaruf_open(const char *filepath)
     ctx->imageInfo.MediaType = ctx->header.mediaType;
 
     // Read the index header
+    TRACE("Reading index header at position %" PRIu64, ctx->header.indexOffset);
     pos = fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET);
     if(pos < 0)
     {
@@ -160,9 +185,11 @@ void *aaruf_open(const char *filepath)
     if(readBytes != sizeof(uint32_t) ||
        (signature != IndexBlock && signature != IndexBlock2 && signature != IndexBlock3))
     {
+        FATAL("Could not read index header or incorrect identifier %4.4s", (char *)&signature);
         free(ctx);
         errno = AARUF_ERROR_CANNOT_READ_INDEX;
 
+        TRACE("Exiting aaruf_open() = NULL");
         return NULL;
     }
 
@@ -175,20 +202,21 @@ void *aaruf_open(const char *filepath)
 
     if(index_entries == NULL)
     {
-        fprintf(stderr, "Could not process index.\n");
+        FATAL("Could not process index.");
         utarray_free(index_entries);
         free(ctx);
         errno = AARUF_ERROR_CANNOT_READ_INDEX;
 
+        TRACE("Exiting aaruf_open() = NULL");
         return NULL;
     }
 
-    TRACE("Index at %" PRIu64 " contains %d entries\n", ctx->header.indexOffset, utarray_len(index_entries));
+    TRACE("Index at %" PRIu64 " contains %d entries", ctx->header.indexOffset, utarray_len(index_entries));
 
     for(i = 0; i < utarray_len(index_entries); i++)
     {
         IndexEntry *entry = (IndexEntry *)utarray_eltptr(index_entries, i);
-        TRACE("Block type %4.4s with data type %d is indexed to be at %" PRIu64 "\n", (char *)&entry->blockType,
+        TRACE("Block type %4.4s with data type %d is indexed to be at %" PRIu64 "", (char *)&entry->blockType,
               entry->dataType, entry->offset);
     }
 
@@ -201,13 +229,13 @@ void *aaruf_open(const char *filepath)
 
         if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
         {
-            fprintf(stderr,
-                    "libaaruformat: Could not seek to %" PRIu64 " as indicated by index entry %d, continuing...\n",
-                    entry->offset, i);
+            TRACE("Could not seek to %" PRIu64 " as indicated by index entry %d, continuing...", entry->offset, i);
 
             continue;
         }
 
+        TRACE("Processing block type %4.4s with data type %d at position %" PRIu64 "", (char *)&entry->blockType,
+              entry->dataType, entry->offset);
         switch(entry->blockType)
         {
             case DataBlock:
@@ -276,9 +304,8 @@ void *aaruf_open(const char *filepath)
 
                 break;
             default:
-                fprintf(stderr,
-                        "libaaruformat: Unhandled block type %4.4s with data type %d is indexed to be at %" PRIu64 "\n",
-                        (char *)&entry->blockType, entry->dataType, entry->offset);
+                TRACE("Unhandled block type %4.4s with data type %d is indexed to be at %" PRIu64 "",
+                      (char *)&entry->blockType, entry->dataType, entry->offset);
                 break;
         }
     }
@@ -287,8 +314,10 @@ void *aaruf_open(const char *filepath)
 
     if(!foundUserDataDdt)
     {
-        FATAL("Could not find user data deduplication table, aborting...\n");
+        FATAL("Could not find user data deduplication table, aborting...");
         aaruf_close(ctx);
+
+        TRACE("Exiting aaruf_open() = NULL");
         return NULL;
     }
 
@@ -304,6 +333,7 @@ void *aaruf_open(const char *filepath)
     }
 
     // Initialize caches
+    TRACE("Initializing caches");
     ctx->blockHeaderCache.cache     = NULL;
     ctx->blockHeaderCache.max_items = MAX_CACHE_SIZE / (ctx->imageInfo.SectorSize * (1 << ctx->shift));
     ctx->blockCache.cache           = NULL;
@@ -312,11 +342,13 @@ void *aaruf_open(const char *filepath)
     // TODO: Cache tracks and sessions?
 
     // Initialize ECC for Compact Disc
+    TRACE("Initializing ECC for Compact Disc");
     ctx->eccCdContext = (CdEccContext *)aaruf_ecc_cd_init();
 
     ctx->magic               = AARU_MAGIC;
     ctx->libraryMajorVersion = LIBAARUFORMAT_MAJOR_VERSION;
     ctx->libraryMinorVersion = LIBAARUFORMAT_MINOR_VERSION;
 
+    TRACE("Exiting aaruf_open() = %p", ctx);
     return ctx;
 }

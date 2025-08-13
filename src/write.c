@@ -24,19 +24,41 @@
 
 #include "aaruformat.h"
 #include "internal.h"
+#include "log.h"
 
 int32_t aaruf_write_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint8_t sectorStatus, uint32_t length)
 {
+    TRACE("Entering aaruf_write_sector(%p, %" PRIu64 ", %p, %u, %u)", context, sectorAddress, data, sectorStatus,
+          length);
+
     // Check context is correct AaruFormat context
-    if(context == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
 
     aaruformatContext *ctx = context;
 
     // Not a libaaruformat context
-    if(ctx->magic != AARU_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
 
     // Check we are writing
-    if(!ctx->isWriting) return AARUF_READ_ONLY;
+    if(!ctx->isWriting)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
 
     // TODO: Check not trying to write beyond media limits
 
@@ -51,29 +73,47 @@ int32_t aaruf_write_sector(void *context, uint64_t sectorAddress, uint8_t *data,
         // TODO: Implement compression
         ))
     {
+        TRACE("Closing current block before writing new data");
         int error = aaruf_close_current_block(ctx);
 
-        if(error != AARUF_STATUS_OK) return error;
+        if(error != AARUF_STATUS_OK)
+        {
+            FATAL("Error closing current block: %d", error);
+
+            TRACE("Exiting aaruf_write_sector() = %d", error);
+            return error;
+        }
     }
 
     // No block set
     if(ctx->writingBufferPosition == 0)
     {
+        TRACE("Creating new writing block");
         ctx->currentBlockHeader.identifier  = DataBlock;
         ctx->currentBlockHeader.type        = UserData;
         ctx->currentBlockHeader.compression = None;  // TODO: Compression
         ctx->currentBlockHeader.sectorSize  = length;
 
         // TODO: Optical discs
-
         uint32_t maxBufferSize = (1 << ctx->userDataDdtHeader.dataShift) * ctx->currentBlockHeader.sectorSize;
-        ctx->writingBuffer     = (uint8_t *)malloc(maxBufferSize);
-        if(ctx->writingBuffer == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        TRACE("Setting max buffer size to %u bytes", maxBufferSize);
 
+        TRACE("Allocating memory for writing buffer");
+        ctx->writingBuffer = (uint8_t *)malloc(maxBufferSize);
+        if(ctx->writingBuffer == NULL)
+        {
+            FATAL("Could not allocate memory");
+
+            TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        }
+
+        TRACE("Initializing CRC64 context");
         ctx->crc64Context = aaruf_crc64_init();
 
         // Get current file position
         long pos = ftell(ctx->imageStream);
+        TRACE("Saving current file position as next block position: %ld", pos);
 
         // Calculate and save next block aligned position
         ctx->nextBlockPosition =
@@ -82,11 +122,16 @@ int32_t aaruf_write_sector(void *context, uint64_t sectorAddress, uint8_t *data,
 
     // TODO: DDT entry
 
+    TRACE("Copying data to writing buffer at position %zu", ctx->writingBufferPosition);
     memcpy(ctx->writingBuffer, data, length);
+    TRACE("Advancing writing buffer position to %zu", ctx->writingBufferPosition + length);
     ctx->writingBufferPosition += length;
+    TRACE("Updating CRC64");
     aaruf_crc64_update(ctx->crc64Context, data, length);
+    TRACE("Advancing current block offset to %zu", ctx->currentBlockOffset + 1);
     ctx->currentBlockOffset++;
 
+    TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
 }
 

@@ -24,42 +24,63 @@
 
 #include "aaruformat.h"
 #include "internal.h"
+#include "log.h"
 
 void *aaruf_create(const char *filepath, uint32_t mediaType, uint32_t sectorSize, uint64_t userSectors,
                    uint64_t negativeSectors, uint64_t overflowSectors, const char *options,
                    const uint8_t *applicationName, uint8_t applicationNameLength, uint8_t applicationMajorVersion,
                    uint8_t applicationMinorVersion)
 {
+    TRACE("Entering aaruf_create(%s, %u, %u, %llu, %llu, %llu, %s, %s, %u, %u, %u)", filepath, mediaType, sectorSize,
+          userSectors, negativeSectors, overflowSectors, options,
+          applicationName ? (const char *)applicationName : "NULL", applicationNameLength, applicationMajorVersion,
+          applicationMinorVersion);
+
     // Parse the options
+    TRACE("Parsing options");
     aaru_options parsedOptions = parse_options(options);
 
     // Allocate context
+    TRACE("Allocating memory for context");
     aaruformatContext *ctx = malloc(sizeof(aaruformatContext));
     if(ctx == NULL)
     {
+        FATAL("Not enough memory to create context");
         errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
+
+        TRACE("Exiting aaruf_create() = NULL");
         return NULL;
     }
 
     memset(ctx, 0, sizeof(aaruformatContext));
 
     // Create the image file
+    TRACE("Creating image file %s", filepath);
     ctx->imageStream = fopen(filepath, "wb+");
     if(ctx->imageStream == NULL)
     {
+        FATAL("Error %d opening file %s for writing", errno, filepath);
         free(ctx);
         errno = AARUF_ERROR_CANNOT_CREATE_FILE;
+
+        TRACE("Exiting aaruf_create() = NULL");
+
         return NULL;
     }
 
     if(applicationNameLength > AARU_HEADER_APP_NAME_LEN)
     {
+        FATAL("Application name too long (%u bytes, maximum %u bytes)", applicationNameLength,
+              AARU_HEADER_APP_NAME_LEN);
         free(ctx);
         errno = AARUF_ERROR_INVALID_APP_NAME_LENGTH;
+
+        TRACE("Exiting aaruf_create() = NULL");
         return NULL;
     }
 
     // Initialize header
+    TRACE("Initializing header");
     ctx->header.identifier = AARU_MAGIC;
     memcpy(ctx->header.application, applicationName, applicationNameLength);
     ctx->header.imageMajorVersion       = AARUF_VERSION_V2;
@@ -83,7 +104,8 @@ void *aaruf_create(const char *filepath, uint32_t mediaType, uint32_t sectorSize
 
     memset(ctx->readableSectorTags, 0, sizeof(bool) * MaxSectorTag);
 
-    // Initilize image info
+    // Initialize image info
+    TRACE("Initializing image info");
     ctx->imageInfo.Application        = ctx->header.application;
     ctx->imageInfo.ApplicationVersion = (uint8_t *)malloc(32);
     if(ctx->imageInfo.ApplicationVersion != NULL)
@@ -106,6 +128,7 @@ void *aaruf_create(const char *filepath, uint32_t mediaType, uint32_t sectorSize
     ctx->imageInfo.SectorSize           = sectorSize;
 
     // Initialize caches
+    TRACE("Initializing caches");
     ctx->blockHeaderCache.cache     = NULL;
     ctx->blockHeaderCache.max_items = MAX_CACHE_SIZE / (ctx->imageInfo.SectorSize * (1 << ctx->shift));
     ctx->blockCache.cache           = NULL;
@@ -114,6 +137,7 @@ void *aaruf_create(const char *filepath, uint32_t mediaType, uint32_t sectorSize
     // TODO: Cache tracks and sessions?
 
     // Initialize ECC for Compact Disc
+    TRACE("Initializing Compact Disc ECC");
     ctx->eccCdContext = (CdEccContext *)aaruf_ecc_cd_init();
 
     ctx->magic               = AARU_MAGIC;
@@ -121,6 +145,7 @@ void *aaruf_create(const char *filepath, uint32_t mediaType, uint32_t sectorSize
     ctx->libraryMinorVersion = LIBAARUFORMAT_MINOR_VERSION;
 
     // Initialize DDT2
+    TRACE("Initializing DDT2");
     ctx->inMemoryDdt                           = true;
     ctx->userDataDdtHeader.identifier          = DeDuplicationTable2;
     ctx->userDataDdtHeader.type                = UserData;
@@ -142,4 +167,8 @@ void *aaruf_create(const char *filepath, uint32_t mediaType, uint32_t sectorSize
 
     // Is writing
     ctx->isWriting = true;
+
+    TRACE("Exiting aaruf_create() = %p", ctx);
+    // Return context
+    return ctx;
 }

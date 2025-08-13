@@ -23,6 +23,8 @@
 #include <smmintrin.h>
 #include <wmmintrin.h>
 
+#include "log.h"
+
 #ifdef _MSC_VER
 #include <intrin.h>
 #endif
@@ -82,6 +84,8 @@ CLMUL static __m128i fold(__m128i in, __m128i foldConstants)
 
 AARU_EXPORT CLMUL uint64_t AARU_CALL aaruf_crc64_clmul(uint64_t crc, const uint8_t *data, long length)
 {
+    TRACE("Entering aaruf_crc64_clmul(%" PRIu64 ", %p, %ld)", crc, data, length);
+
     const uint64_t k1 = 0xe05dd497ca393ae4;  // bitReflect(expMod65(128 + 64, poly, 1)) << 1;
     const uint64_t k2 = 0xdabe95afc7875f40;  // bitReflect(expMod65(128, poly, 1)) << 1;
     const uint64_t mu = 0x9c3e466c172963d5;  // (bitReflect(div129by65(poly)) << 1) | 1;
@@ -196,6 +200,8 @@ AARU_EXPORT CLMUL uint64_t AARU_CALL aaruf_crc64_clmul(uint64_t crc, const uint8
     const __m128i T1 = _mm_clmulepi64_si128(R, foldConstants2, 0x00);
     const __m128i T2 =
         _mm_xor_si128(_mm_xor_si128(_mm_clmulepi64_si128(T1, foldConstants2, 0x10), _mm_slli_si128(T1, 8)), R);
+
+    TRACE("Exiting aaruf_crc64_clmul()");
 
 #if defined(_WIN64)
     return ~_mm_extract_epi64(T2, 1);

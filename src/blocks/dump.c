@@ -26,6 +26,7 @@
 
 void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
+    TRACE("Entering process_dumphw_block(%p, %p)", ctx, entry);
     int      pos       = 0;
     size_t   readBytes = 0;
     uint64_t crc64     = 0;
@@ -35,7 +36,9 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
     {
-        FATAL("Invalid context or image stream.\n");
+        FATAL("Invalid context or image stream.");
+
+        TRACE("Exiting process_dumphw_block()");
         return;
     }
 
@@ -43,33 +46,38 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
     pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
     if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
     {
-        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
 
+        TRACE("Exiting process_dumphw_block()");
         return;
     }
 
     // Even if those two checks shall have been done before
+    TRACE("Reading dump hardware block header at position %" PRIu64, entry->offset);
     readBytes = fread(&ctx->dumpHardwareHeader, 1, sizeof(DumpHardwareHeader), ctx->imageStream);
 
     if(readBytes != sizeof(DumpHardwareHeader))
     {
         memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
-        TRACE("Could not read dump hardware block header, continuing...\n");
+        TRACE("Could not read dump hardware block header, continuing...");
+        TRACE("Exiting process_dumphw_block()");
         return;
     }
 
     if(ctx->dumpHardwareHeader.identifier != DumpHardwareBlock)
     {
         memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
-        TRACE("Incorrect identifier for data block at position %" PRIu64 "\n", entry->offset);
+        TRACE("Incorrect identifier for data block at position %" PRIu64, entry->offset);
     }
 
+    TRACE("Allocating memory for dump hardware block of length %u", ctx->dumpHardwareHeader.length);
     data = (uint8_t *)malloc(ctx->dumpHardwareHeader.length);
 
     if(data == NULL)
     {
         memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
-        TRACE("Could not allocate memory for dump hardware block, continuing...\n");
+        TRACE("Could not allocate memory for dump hardware block, continuing...");
+        TRACE("Exiting process_dumphw_block()");
         return;
     }
 
@@ -85,8 +93,9 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
         if(crc64 != ctx->dumpHardwareHeader.crc64)
         {
             free(data);
-            TRACE("Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64 ", continuing...\n", crc64,
+            TRACE("Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64 ", continuing...", crc64,
                   ctx->dumpHardwareHeader.crc64);
+            TRACE("Exiting process_dumphw_block()");
             return;
         }
     }
@@ -100,12 +109,14 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
     if(ctx->dumpHardwareEntriesWithData == NULL)
     {
         memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
-        TRACE("Could not allocate memory for dump hardware block, continuing...\n");
+        TRACE("Could not allocate memory for dump hardware block, continuing...");
+        TRACE("Exiting process_dumphw_block()");
         return;
     }
 
     memset(ctx->dumpHardwareEntriesWithData, 0, sizeof(DumpHardwareEntriesWithData) * ctx->dumpHardwareHeader.entries);
 
+    TRACE("Processing %u dump hardware block entries", ctx->dumpHardwareHeader.entries);
     for(e = 0; e < ctx->dumpHardwareHeader.entries; e++)
     {
         readBytes = fread(&ctx->dumpHardwareEntriesWithData[e].entry, 1, sizeof(DumpHardwareEntry), ctx->imageStream);
@@ -113,7 +124,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
         if(readBytes != sizeof(DumpHardwareEntry))
         {
             ctx->dumpHardwareHeader.entries = e;
-            TRACE("Could not read dump hardware block entry, continuing...\n");
+            TRACE("Could not read dump hardware block entry, continuing...");
             break;
         }
 
@@ -134,7 +145,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
                     free(ctx->dumpHardwareEntriesWithData[e].manufacturer);
                     ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength = 0;
                     TRACE("Could not read dump hardware block entry manufacturer, "
-                          "continuing...\n");
+                          "continuing...");
                 }
             }
         }
@@ -154,7 +165,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
                 {
                     free(ctx->dumpHardwareEntriesWithData[e].model);
                     ctx->dumpHardwareEntriesWithData[e].entry.modelLength = 0;
-                    TRACE("Could not read dump hardware block entry model, continuing...\n");
+                    TRACE("Could not read dump hardware block entry model, continuing...");
                 }
             }
         }
@@ -176,7 +187,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
                     free(ctx->dumpHardwareEntriesWithData[e].revision);
                     ctx->dumpHardwareEntriesWithData[e].entry.revisionLength = 0;
                     TRACE("Could not read dump hardware block entry revision, "
-                          "continuing...\n");
+                          "continuing...");
                 }
             }
         }
@@ -198,7 +209,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
                     free(ctx->dumpHardwareEntriesWithData[e].firmware);
                     ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength = 0;
                     TRACE("Could not read dump hardware block entry firmware, "
-                          "continuing...\n");
+                          "continuing...");
                 }
             }
         }
@@ -218,7 +229,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
                 {
                     free(ctx->dumpHardwareEntriesWithData[e].serial);
                     ctx->dumpHardwareEntriesWithData[e].entry.serialLength = 0;
-                    TRACE("Could not read dump hardware block entry serial, continuing...\n");
+                    TRACE("Could not read dump hardware block entry serial, continuing...");
                 }
             }
         }
@@ -240,7 +251,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
                     free(ctx->dumpHardwareEntriesWithData[e].softwareName);
                     ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength = 0;
                     TRACE("Could not read dump hardware block entry software name, "
-                          "continuing...\n");
+                          "continuing...");
                 }
             }
         }
@@ -262,7 +273,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
                     free(ctx->dumpHardwareEntriesWithData[e].softwareVersion);
                     ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength = 0;
                     TRACE("Could not read dump hardware block entry software version, "
-                          "continuing...\n");
+                          "continuing...");
                 }
             }
         }
@@ -286,7 +297,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
                     free(ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem);
                     ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength = 0;
                     TRACE("Could not read dump hardware block entry manufacturer, "
-                          "continuing...\n");
+                          "continuing...");
                 }
             }
         }
@@ -297,7 +308,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
         if(ctx->dumpHardwareEntriesWithData[e].extents == NULL)
         {
             TRACE("Could not allocate memory for dump hardware block extents, "
-                  "continuing...\n");
+                  "continuing...");
             continue;
         }
 
@@ -307,10 +318,11 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
         if(readBytes != ctx->dumpHardwareEntriesWithData->entry.extents)
         {
             free(ctx->dumpHardwareEntriesWithData[e].extents);
-            TRACE("Could not read dump hardware block extents, continuing...\n");
+            TRACE("Could not read dump hardware block extents, continuing...");
             continue;
         }
 
         // TODO: qsort()
     }
+    TRACE("Exiting process_dumphw_block()");
 }

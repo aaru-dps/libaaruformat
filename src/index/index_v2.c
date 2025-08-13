@@ -21,14 +21,17 @@
 #include <stdlib.h>
 
 #include "aaruformat.h"
+#include "log.h"
 #include "utarray.h"
 
 UT_array *process_index_v2(aaruformatContext *ctx)
 {
+    TRACE("Entering process_index_v2(%p)", ctx);
+
     UT_array  *index_entries = NULL;
     IndexEntry entry;
 
-    if(ctx == NULL || ctx->imageStream == NULL) return NULL;
+    if(ctx == NULL || ctx->imageStream == NULL) {return NULL;}
 
     // Initialize the index entries array
     UT_icd index_entry_icd = {sizeof(IndexEntry), NULL, NULL, NULL};
@@ -36,6 +39,7 @@ UT_array *process_index_v2(aaruformatContext *ctx)
     utarray_new(index_entries, &index_entry_icd);
 
     // Read the index header
+    TRACE("Reading index header at position %llu", ctx->header.indexOffset);
     fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET);
     IndexHeader2 idx_header;
     fread(&idx_header, sizeof(IndexHeader2), 1, ctx->imageStream);
@@ -43,8 +47,10 @@ UT_array *process_index_v2(aaruformatContext *ctx)
     // Check if the index header is valid
     if(idx_header.identifier != IndexBlock2)
     {
-        fprintf(stderr, "Incorrect index identifier.\n");
+        FATAL("Incorrect index identifier.");
         utarray_free(index_entries);
+
+        TRACE("Exiting process_index_v2() = NULL");
         return NULL;
     }
 
@@ -54,44 +60,60 @@ UT_array *process_index_v2(aaruformatContext *ctx)
         utarray_push_back(index_entries, &entry);
     }
 
+    TRACE("Read %d index entries from index block at position %llu", idx_header.entries, ctx->header.indexOffset);
     return index_entries;
 }
 
 int32_t verify_index_v2(aaruformatContext *ctx)
 {
+    TRACE("Entering verify_index_v2(%p)", ctx);
+
     size_t       read_bytes = 0;
     IndexHeader2 index_header;
     uint64_t     crc64         = 0;
     IndexEntry  *index_entries = NULL;
 
-    if(ctx == NULL || ctx->imageStream == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
+    if(ctx == NULL || ctx->imageStream == NULL)
+    {
+        FATAL("Invalid context or image stream.");
+
+        TRACE("Exiting verify_index_v2() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
 
     // This will traverse all blocks and check their CRC64 without uncompressing them
-    fprintf(stderr, "Checking index integrity at %llu.\n", ctx->header.indexOffset);
+    TRACE("Checking index integrity at %llu.", ctx->header.indexOffset);
     fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET);
 
     // Read the index header
+    TRACE("Reading index header at position %llu", ctx->header.indexOffset);
     read_bytes = fread(&index_header, 1, sizeof(IndexHeader2), ctx->imageStream);
 
     if(read_bytes != sizeof(IndexHeader2))
     {
-        fprintf(stderr, "Could not read index header.\n");
+        FATAL("Could not read index header.");
+
+        TRACE("Exiting verify_index_v2() = AARUF_ERROR_CANNOT_READ_HEADER");
         return AARUF_ERROR_CANNOT_READ_HEADER;
     }
 
     if(index_header.identifier != IndexBlock2)
     {
-        fprintf(stderr, "Incorrect index identifier.\n");
+        FATAL("Incorrect index identifier.");
+
+        TRACE("Exiting verify_index_v2() = AARUF_ERROR_CANNOT_READ_INDEX");
         return AARUF_ERROR_CANNOT_READ_INDEX;
     }
 
-    fprintf(stderr, "Index at %llu contains %d entries.\n", ctx->header.indexOffset, index_header.entries);
+    TRACE("Index at %llu contains %d entries.", ctx->header.indexOffset, index_header.entries);
 
     index_entries = malloc(sizeof(IndexEntry) * index_header.entries);
 
     if(index_entries == NULL)
     {
-        fprintf(stderr, "Cannot allocate memory for index entries.\n");
+        FATAL("Cannot allocate memory for index entries.");
+
+        TRACE("Exiting verify_index_v2() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
         return AARUF_ERROR_NOT_ENOUGH_MEMORY;
     }
 
@@ -99,8 +121,10 @@ int32_t verify_index_v2(aaruformatContext *ctx)
 
     if(read_bytes != sizeof(IndexEntry) * index_header.entries)
     {
-        fprintf(stderr, "Could not read index entries.\n");
+        FATAL("Could not read index entries.");
         free(index_entries);
+
+        TRACE("Exiting verify_index_v2() = AARUF_ERROR_CANNOT_READ_INDEX");
         return AARUF_ERROR_CANNOT_READ_INDEX;
     }
 
@@ -111,10 +135,13 @@ int32_t verify_index_v2(aaruformatContext *ctx)
 
     if(crc64 != index_header.crc64)
     {
-        fprintf(stderr, "Expected index CRC 0x%16llX but got 0x%16llX.\n", index_header.crc64, crc64);
+        FATAL("Expected index CRC 0x%16llX but got 0x%16llX.", index_header.crc64, crc64);
         free(index_entries);
+
+        TRACE("Exiting verify_index_v2() = AARUF_ERROR_INVALID_BLOCK_CRC");
         return AARUF_ERROR_INVALID_BLOCK_CRC;
     }
 
+    TRACE("Exiting verify_index_v2() = AARUF_OK");
     return AARUF_STATUS_OK;
 }

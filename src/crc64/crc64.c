@@ -20,26 +20,37 @@
 
 #include <aaruformat.h>
 
+#include "log.h"
+
 AARU_EXPORT crc64_ctx *AARU_CALL aaruf_crc64_init(void)
 {
+    TRACE("Entering aaruf_crc64_init()");
     crc64_ctx *ctx = (crc64_ctx *)malloc(sizeof(crc64_ctx));
 
     if(!ctx) return NULL;
 
     ctx->crc = CRC64_ECMA_SEED;
 
+    TRACE("Exiting aaruf_crc64_init()");
     return ctx;
 }
 
 AARU_EXPORT int AARU_CALL aaruf_crc64_update(crc64_ctx *ctx, const uint8_t *data, uint32_t len)
 {
-    if(!ctx || !data) return -1;
+    TRACE("Entering aaruf_crc64_update(%p, %p, %u)", ctx, data, len);
+    if(!ctx || !data)
+    {
+        TRACE("Exiting aaruf_crc64_update() = -1");
+        return -1;
+    }
 
 #if defined(__x86_64__) || defined(__amd64) || defined(_M_AMD64) || defined(_M_X64) || defined(__I386__) || \
     defined(__i386__) || defined(__THW_INTEL) || defined(_M_IX86)
     if(have_clmul())
     {
         ctx->crc = ~aaruf_crc64_clmul(~ctx->crc, data, len);
+
+        TRACE("Exiting aaruf_crc64_update() = 0");
         return 0;
     }
 #endif
@@ -48,6 +59,8 @@ AARU_EXPORT int AARU_CALL aaruf_crc64_update(crc64_ctx *ctx, const uint8_t *data
     if(have_neon())
     {
         ctx->crc = ~aaruf_crc64_vmull(~ctx->crc, data, len);
+
+        TRACE("Exiting aaruf_crc64_update() = 0");
         return 0;
     }
 #endif
@@ -58,6 +71,7 @@ AARU_EXPORT int AARU_CALL aaruf_crc64_update(crc64_ctx *ctx, const uint8_t *data
 
     aaruf_crc64_slicing(&ctx->crc, data, len);
 
+    TRACE("Exiting aaruf_crc64_update() = 0");
     return 0;
 }
 

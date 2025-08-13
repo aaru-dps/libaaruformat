@@ -27,40 +27,48 @@
 // Process the metadata block found while opening an AaruFormat file
 void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
+    TRACE("Entering process_metadata_block(%p, %p)", ctx, entry);
     int    pos       = 0;
     size_t readBytes = 0;
 
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
     {
-        fprintf(stderr, "Invalid context or image stream.\n");
+        FATAL("Invalid context or image stream.");
+        TRACE("Exiting process_metadata_block()");
         return;
     }
 
     // Seek to block
+    TRACE("Seeking to metadata block at position %" PRIu64, entry->offset);
     pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
     if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
     {
-        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
 
+        TRACE("Exiting process_metadata_block()");
         return;
     }
 
     // Even if those two checks shall have been done before
-
+    TRACE("Reading metadata block header at position %" PRIu64, entry->offset);
     readBytes = fread(&ctx->metadataBlockHeader, 1, sizeof(MetadataBlockHeader), ctx->imageStream);
 
     if(readBytes != sizeof(MetadataBlockHeader))
     {
         memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
-        FATAL("Could not read metadata block header, continuing...\n");
+        FATAL("Could not read metadata block header, continuing...");
+
+        TRACE("Exiting process_metadata_block()");
         return;
     }
 
     if(ctx->metadataBlockHeader.identifier != entry->blockType)
     {
         memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
-        TRACE("Incorrect identifier for data block at position %" PRIu64 "\n", entry->offset);
+        TRACE("Incorrect identifier for data block at position %" PRIu64 "", entry->offset);
+
+        TRACE("Exiting process_metadata_block()");
         return;
     }
 
@@ -71,24 +79,28 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
     if(ctx->metadataBlock == NULL)
     {
         memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
-        FATAL("Could not allocate memory for metadata block, continuing...\n");
+        FATAL("Could not allocate memory for metadata block, continuing...");
+
+        TRACE("Exiting process_metadata_block()");
         return;
     }
 
+    TRACE("Reading metadata block of size %u at position %" PRIu64, ctx->metadataBlockHeader.blockSize,
+          entry->offset + sizeof(MetadataBlockHeader));
     readBytes = fread(ctx->metadataBlock, 1, ctx->metadataBlockHeader.blockSize, ctx->imageStream);
 
     if(readBytes != ctx->metadataBlockHeader.blockSize)
     {
         memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
         free(ctx->metadataBlock);
-        FATAL("Could not read metadata block, continuing...\n");
+        FATAL("Could not read metadata block, continuing...");
     }
 
     if(ctx->metadataBlockHeader.mediaSequence > 0 && ctx->metadataBlockHeader.lastMediaSequence > 0)
     {
         ctx->imageInfo.MediaSequence     = ctx->metadataBlockHeader.mediaSequence;
         ctx->imageInfo.LastMediaSequence = ctx->metadataBlockHeader.lastMediaSequence;
-        TRACE("Setting media sequence as %d of %d\n", ctx->imageInfo.MediaSequence, ctx->imageInfo.LastMediaSequence);
+        TRACE("Setting media sequence as %d of %d", ctx->imageInfo.MediaSequence, ctx->imageInfo.LastMediaSequence);
     }
 
     if(ctx->metadataBlockHeader.creatorLength > 0 &&
@@ -97,10 +109,8 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
     {
         ctx->imageInfo.Creator = (uint8_t *)malloc(ctx->metadataBlockHeader.creatorLength);
         if(ctx->imageInfo.Creator != NULL)
-        {
             memcpy(ctx->imageInfo.Creator, ctx->metadataBlock + ctx->metadataBlockHeader.creatorOffset,
                    ctx->metadataBlockHeader.creatorLength);
-        }
     }
 
     if(ctx->metadataBlockHeader.commentsLength > 0 &&
@@ -109,10 +119,8 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
     {
         ctx->imageInfo.Comments = (uint8_t *)malloc(ctx->metadataBlockHeader.commentsLength);
         if(ctx->imageInfo.Comments != NULL)
-        {
             memcpy(ctx->imageInfo.Comments, ctx->metadataBlock + ctx->metadataBlockHeader.commentsOffset,
                    ctx->metadataBlockHeader.commentsLength);
-        }
     }
 
     if(ctx->metadataBlockHeader.mediaTitleLength > 0 &&
@@ -121,10 +129,8 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
     {
         ctx->imageInfo.MediaTitle = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaTitleLength);
         if(ctx->imageInfo.MediaTitle != NULL)
-        {
             memcpy(ctx->imageInfo.MediaTitle, ctx->metadataBlock + ctx->metadataBlockHeader.mediaTitleOffset,
                    ctx->metadataBlockHeader.mediaTitleLength);
-        }
     }
 
     if(ctx->metadataBlockHeader.mediaManufacturerLength > 0 &&
@@ -133,11 +139,9 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
     {
         ctx->imageInfo.MediaManufacturer = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaManufacturerLength);
         if(ctx->imageInfo.MediaManufacturer != NULL)
-        {
             memcpy(ctx->imageInfo.MediaManufacturer,
                    ctx->metadataBlock + ctx->metadataBlockHeader.mediaManufacturerOffset,
                    ctx->metadataBlockHeader.mediaManufacturerLength);
-        }
     }
 
     if(ctx->metadataBlockHeader.mediaModelLength > 0 &&
@@ -146,10 +150,8 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
     {
         ctx->imageInfo.MediaModel = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaModelOffset);
         if(ctx->imageInfo.MediaModel != NULL)
-        {
             memcpy(ctx->imageInfo.MediaModel, ctx->metadataBlock + ctx->metadataBlockHeader.mediaModelOffset,
                    ctx->metadataBlockHeader.mediaModelLength);
-        }
     }
 
     if(ctx->metadataBlockHeader.mediaSerialNumberLength > 0 &&
@@ -158,11 +160,9 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
     {
         ctx->imageInfo.MediaSerialNumber = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaSerialNumberLength);
         if(ctx->imageInfo.MediaSerialNumber != NULL)
-        {
             memcpy(ctx->imageInfo.MediaSerialNumber,
                    ctx->metadataBlock + ctx->metadataBlockHeader.mediaSerialNumberOffset,
                    ctx->metadataBlockHeader.mediaManufacturerLength);
-        }
     }
 
     if(ctx->metadataBlockHeader.mediaBarcodeLength > 0 &&
@@ -171,10 +171,8 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
     {
         ctx->imageInfo.MediaBarcode = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaBarcodeLength);
         if(ctx->imageInfo.MediaBarcode != NULL)
-        {
             memcpy(ctx->imageInfo.MediaBarcode, ctx->metadataBlock + ctx->metadataBlockHeader.mediaBarcodeOffset,
                    ctx->metadataBlockHeader.mediaBarcodeLength);
-        }
     }
 
     if(ctx->metadataBlockHeader.mediaPartNumberLength > 0 &&
@@ -183,10 +181,8 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
     {
         ctx->imageInfo.MediaPartNumber = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaPartNumberLength);
         if(ctx->imageInfo.MediaPartNumber != NULL)
-        {
             memcpy(ctx->imageInfo.MediaPartNumber, ctx->metadataBlock + ctx->metadataBlockHeader.mediaPartNumberOffset,
                    ctx->metadataBlockHeader.mediaPartNumberLength);
-        }
     }
 
     if(ctx->metadataBlockHeader.driveManufacturerLength > 0 &&
@@ -195,11 +191,9 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
     {
         ctx->imageInfo.DriveManufacturer = (uint8_t *)malloc(ctx->metadataBlockHeader.driveManufacturerLength);
         if(ctx->imageInfo.DriveManufacturer != NULL)
-        {
             memcpy(ctx->imageInfo.DriveManufacturer,
                    ctx->metadataBlock + ctx->metadataBlockHeader.driveManufacturerOffset,
                    ctx->metadataBlockHeader.driveManufacturerLength);
-        }
     }
 
     if(ctx->metadataBlockHeader.driveModelLength > 0 &&
@@ -208,10 +202,8 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
     {
         ctx->imageInfo.DriveModel = (uint8_t *)malloc(ctx->metadataBlockHeader.driveModelLength);
         if(ctx->imageInfo.DriveModel != NULL)
-        {
             memcpy(ctx->imageInfo.DriveModel, ctx->metadataBlock + ctx->metadataBlockHeader.driveModelOffset,
                    ctx->metadataBlockHeader.driveModelLength);
-        }
     }
 
     if(ctx->metadataBlockHeader.driveSerialNumberLength > 0 &&
@@ -220,11 +212,9 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
     {
         ctx->imageInfo.DriveSerialNumber = (uint8_t *)malloc(ctx->metadataBlockHeader.driveSerialNumberLength);
         if(ctx->imageInfo.DriveSerialNumber != NULL)
-        {
             memcpy(ctx->imageInfo.DriveSerialNumber,
                    ctx->metadataBlock + ctx->metadataBlockHeader.driveSerialNumberOffset,
                    ctx->metadataBlockHeader.driveSerialNumberLength);
-        }
     }
 
     if(ctx->metadataBlockHeader.driveManufacturerLength > 0 &&
@@ -233,96 +223,109 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
     {
         ctx->imageInfo.DriveFirmwareRevision = (uint8_t *)malloc(ctx->metadataBlockHeader.driveFirmwareRevisionLength);
         if(ctx->imageInfo.DriveFirmwareRevision != NULL)
-        {
             memcpy(ctx->imageInfo.DriveFirmwareRevision,
                    ctx->metadataBlock + ctx->metadataBlockHeader.driveFirmwareRevisionLength,
                    ctx->metadataBlockHeader.driveFirmwareRevisionLength);
-        }
     }
+
+    TRACE("Exiting process_metadata_block()");
 }
 
 // Logical geometry block. It doesn't have a CRC coz, well, it's not so important
 void process_geometry_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
+    TRACE("Entering process_geometry_block(%p, %p)", ctx, entry);
     size_t readBytes = 0;
 
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
     {
-        FATAL("Invalid context or image stream.\n");
+        FATAL("Invalid context or image stream.");
+
+        TRACE("Exiting process_geometry_block()");
         return;
     }
 
     // Seek to block
     if(fseek(ctx->imageStream, entry->offset, SEEK_SET) != 0)
     {
-        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
+
+        TRACE("Exiting process_geometry_block()");
         return;
     }
 
+    TRACE("Reading geometry block header at position %" PRIu64, entry->offset);
     readBytes = fread(&ctx->geometryBlock, 1, sizeof(GeometryBlockHeader), ctx->imageStream);
 
     if(readBytes != sizeof(GeometryBlockHeader))
     {
         memset(&ctx->geometryBlock, 0, sizeof(GeometryBlockHeader));
-        TRACE("Could not read geometry block header, continuing...\n");
+        TRACE("Could not read geometry block header, continuing...");
         return;
     }
 
     if(ctx->geometryBlock.identifier != GeometryBlock)
     {
         memset(&ctx->geometryBlock, 0, sizeof(GeometryBlockHeader));
-        TRACE("Incorrect identifier for geometry block at position %" PRIu64 "\n", entry->offset);
+        TRACE("Incorrect identifier for geometry block at position %" PRIu64 "", entry->offset);
         return;
     }
 
     ctx->imageInfo.ImageSize += sizeof(GeometryBlockHeader);
 
-    TRACE("Geometry set to %d cylinders %d heads %d sectors per track\n", ctx->geometryBlock.cylinders,
+    TRACE("Geometry set to %d cylinders %d heads %d sectors per track", ctx->geometryBlock.cylinders,
           ctx->geometryBlock.heads, ctx->geometryBlock.sectorsPerTrack);
 
     ctx->imageInfo.Cylinders       = ctx->geometryBlock.cylinders;
     ctx->imageInfo.Heads           = ctx->geometryBlock.heads;
     ctx->imageInfo.SectorsPerTrack = ctx->geometryBlock.sectorsPerTrack;
+
+    TRACE("Exiting process_geometry_block()");
 }
 
 // CICM XML metadata block
 void process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
+    TRACE("Entering process_cicm_block(%p, %p)", ctx, entry);
     int    pos       = 0;
     size_t readBytes = 0;
 
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
     {
-        FATAL("Invalid context or image stream.\n");
+        FATAL("Invalid context or image stream.");
+
+        TRACE("Exiting process_cicm_block()");
         return;
     }
 
     // Seek to block
+    TRACE("Seeking to CICM XML metadata block at position %" PRIu64, entry->offset);
     pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
     if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
     {
-        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
 
+        TRACE("Exiting process_cicm_block()");
         return;
     }
 
     // Even if those two checks shall have been done before
-
+    TRACE("Reading CICM XML metadata block header at position %" PRIu64, entry->offset);
     readBytes = fread(&ctx->cicmBlockHeader, 1, sizeof(CicmMetadataBlock), ctx->imageStream);
 
     if(readBytes != sizeof(CicmMetadataBlock))
     {
         memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
-        TRACE("Could not read CICM XML metadata header, continuing...\n");
+        TRACE("Could not read CICM XML metadata header, continuing...");
         return;
     }
 
     if(ctx->cicmBlockHeader.identifier != CicmBlock)
     {
         memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
-        TRACE("Incorrect identifier for data block at position %" PRIu64 "\n", entry->offset);
+        TRACE("Incorrect identifier for data block at position %" PRIu64 "", entry->offset);
     }
 
     ctx->imageInfo.ImageSize += ctx->cicmBlockHeader.length;
@@ -332,18 +335,24 @@ void process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry)
     if(ctx->cicmBlock == NULL)
     {
         memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
-        TRACE("Could not allocate memory for CICM XML metadata block, continuing...\n");
+        TRACE("Could not allocate memory for CICM XML metadata block, continuing...");
+
+        TRACE("Exiting process_cicm_block()");
         return;
     }
 
+    TRACE("Reading CICM XML metadata block of size %u at position %" PRIu64, ctx->cicmBlockHeader.length,
+          entry->offset + sizeof(CicmMetadataBlock));
     readBytes = fread(ctx->cicmBlock, 1, ctx->cicmBlockHeader.length, ctx->imageStream);
 
     if(readBytes != ctx->metadataBlockHeader.blockSize)
     {
         memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
         free(ctx->cicmBlock);
-        TRACE("Could not read CICM XML metadata block, continuing...\n");
+        TRACE("Could not read CICM XML metadata block, continuing...");
     }
 
-    TRACE("Found CICM XML metadata block %" PRIu64 ".\n", entry->offset);
+    TRACE("Found CICM XML metadata block %" PRIu64 ".", entry->offset);
+
+    TRACE("Exiting process_cicm_block()");
 }

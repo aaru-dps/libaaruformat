@@ -27,15 +27,19 @@
 #include <aaruformat.h>
 
 #include "internal.h"
+#include "log.h"
 
 int aaruf_close(void *context)
 {
+    TRACE("Entering aaruf_close(%p)", context);
+
     int            i           = 0;
     mediaTagEntry *mediaTag    = NULL;
     mediaTagEntry *tmpMediaTag = NULL;
 
     if(context == NULL)
     {
+        FATAL("Invalid context");
         errno = EINVAL;
         return -1;
     }
@@ -45,14 +49,20 @@ int aaruf_close(void *context)
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
     {
+        FATAL("Invalid context");
         errno = EINVAL;
         return -1;
     }
 
     if(ctx->isWriting)
     {
+        TRACE("File is writing");
+
+        TRACE("Seeking to start of image");
         // Write the header at the beginning of the file
         fseek(ctx->imageStream, 0, SEEK_SET);
+
+        TRACE("Writing header at position 0");
         if(fwrite(&ctx->header, sizeof(AaruHeaderV2), 1, ctx->imageStream) != 1)
         {
             fclose(ctx->imageStream);
@@ -62,6 +72,7 @@ int aaruf_close(void *context)
         }
 
         // Close current block first
+        TRACE("Closing current block if any");
         if(ctx->writingBuffer != NULL)
         {
             int error = aaruf_close_current_block(ctx);
@@ -70,6 +81,7 @@ int aaruf_close(void *context)
         }
     }
 
+    TRACE("Freeing memory pointers");
     // This may do nothing if imageStream is NULL, but as the behaviour is undefined, better sure than sorry
     if(ctx->imageStream != NULL)
     {
@@ -90,17 +102,16 @@ int aaruf_close(void *context)
     free(ctx->mode2Subheaders);
     ctx->mode2Subheaders = NULL;
 
-    if(ctx->mediaTags != NULL)
-    {
-        HASH_ITER(hh, ctx->mediaTags, mediaTag, tmpMediaTag)
+    TRACE("Freeing media tags");
+    if(ctx->mediaTags != NULL) HASH_ITER(hh, ctx->mediaTags, mediaTag, tmpMediaTag)
         {
             HASH_DEL(ctx->mediaTags, mediaTag);
             free(mediaTag->data);
             free(mediaTag);
         }
-    }
 
 #ifdef __linux__  // TODO: Implement
+    TRACE("Unmapping user data DDT if it is not in memory");
     if(!ctx->inMemoryDdt)
     {
         munmap(ctx->userDataDdt, ctx->mappedMemoryDdtSize);
@@ -159,5 +170,6 @@ int aaruf_close(void *context)
 
     free(context);
 
+    TRACE("Exiting aaruf_close() = 0");
     return 0;
 }

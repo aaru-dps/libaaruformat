@@ -22,41 +22,65 @@
 #include <aaruformat.h>
 
 #include "internal.h"
+#include "log.h"
 
 int32_t aaruf_read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t *length)
 {
+    TRACE("Entering aaruf_read_media_tag(%p, %p, %d, %u)", context, data, tag, *length);
+
     aaruformatContext *ctx;
     mediaTagEntry     *item;
 
-    if(context == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+        TRACE("Exiting aaruf_read_media_tag() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
 
     ctx = context;
 
     // Not a libaaruformat context
-    if(ctx->magic != AARU_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+        TRACE("Exiting aaruf_read_media_tag() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
 
+    TRACE("Finding media tag %d", tag);
     HASH_FIND_INT(ctx->mediaTags, &tag, item);
 
     if(item == NULL)
     {
+        TRACE("Media tag not found");
         *length = 0;
+
+        TRACE("Exiting aaruf_read_media_tag() = AARUF_ERROR_MEDIA_TAG_NOT_PRESENT");
         return AARUF_ERROR_MEDIA_TAG_NOT_PRESENT;
     }
 
     if(data == NULL || *length < item->length)
     {
+        TRACE("Buffer too small for media tag %d, required %u bytes", tag, item->length);
         *length = item->length;
+
+        TRACE("Exiting aaruf_read_media_tag() = AARUF_ERROR_BUFFER_TOO_SMALL");
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
     *length = item->length;
     memcpy(data, item->data, item->length);
 
+    TRACE("Media tag %d read successfully, length %u", tag, *length);
+    TRACE("Exiting aaruf_read_media_tag() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
 }
 
 int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32_t *length)
 {
+    TRACE("Entering aaruf_read_sector(%p, %" PRIu64 ", %p, %u)", context, sectorAddress, data, *length);
+
     aaruformatContext *ctx         = NULL;
     uint64_t           offset      = 0;
     uint64_t           blockOffset = 0;
@@ -69,44 +93,86 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
     int                errorNo      = 0;
     uint8_t            sectorStatus = 0;
 
-    if(context == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
 
     ctx = context;
 
     // Not a libaaruformat context
-    if(ctx->magic != AARU_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
 
-    if(sectorAddress > ctx->imageInfo.Sectors - 1) return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
+        TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(sectorAddress > ctx->imageInfo.Sectors - 1)
+    {
+        FATAL("Sector address out of bounds");
+
+        TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+        return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
+    }
 
     if(ctx->ddtVersion == 1)
         errorNo = decode_ddt_entry_v1(ctx, sectorAddress, &offset, &blockOffset, &sectorStatus);
     else if(ctx->ddtVersion == 2)
         errorNo = decode_ddt_entry_v2(ctx, sectorAddress, &offset, &blockOffset, &sectorStatus);
 
-    if(errorNo != AARUF_STATUS_OK) return errorNo;
+    if(errorNo != AARUF_STATUS_OK)
+    {
+        FATAL("Error %d decoding DDT entry", errorNo);
+
+        TRACE("Exiting aaruf_read_sector() = %d", errorNo);
+        return errorNo;
+    }
 
     // Partially written image... as we can't know the real sector size just assume it's common :/
     if(sectorStatus == SectorStatusNotDumped)
     {
         memset(data, 0, ctx->imageInfo.SectorSize);
         *length = ctx->imageInfo.SectorSize;
+
+        TRACE("Exiting aaruf_read_sector() = AARUF_STATUS_SECTOR_NOT_DUMPED");
         return AARUF_STATUS_SECTOR_NOT_DUMPED;
     }
 
     // Check if block header is cached
+    TRACE("Checking if block header is cached");
     blockHeader = find_in_cache_uint64(&ctx->blockHeaderCache, blockOffset);
 
     // Read block header
     if(blockHeader == NULL)
     {
+        TRACE("Allocating memory for block header");
         blockHeader = malloc(sizeof(BlockHeader));
-        if(blockHeader == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        if(blockHeader == NULL)
+        {
+            FATAL("Not enough memory for block header");
 
+            TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        }
+
+        TRACE("Reading block header");
         fseek(ctx->imageStream, blockOffset, SEEK_SET);
         readBytes = fread(blockHeader, 1, sizeof(BlockHeader), ctx->imageStream);
 
-        if(readBytes != sizeof(BlockHeader)) return AARUF_ERROR_CANNOT_READ_HEADER;
+        if(readBytes != sizeof(BlockHeader))
+        {
+            FATAL("Error reading block header");
 
+            TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_READ_HEADER");
+            return AARUF_ERROR_CANNOT_READ_HEADER;
+        }
+
+        TRACE("Adding block header to cache");
         add_to_cache_uint64(&ctx->blockHeaderCache, blockOffset, blockHeader);
     }
     else
@@ -114,17 +180,24 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
 
     if(data == NULL || *length < blockHeader->sectorSize)
     {
+        TRACE("Buffer too small for sector, required %u bytes", blockHeader->sectorSize);
         *length = blockHeader->sectorSize;
+
+        TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_BUFFER_TOO_SMALL");
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
     // Check if block is cached
+    TRACE("Checking if block is cached");
     block = find_in_cache_uint64(&ctx->blockCache, blockOffset);
 
     if(block != NULL)
     {
+        TRACE("Getting data from cache");
         memcpy(data, block + offset, blockHeader->sectorSize);
         *length = blockHeader->sectorSize;
+
+        TRACE("Exiting aaruf_read_sector() = AARUF_STATUS_OK");
         return AARUF_STATUS_OK;
     }
 
@@ -132,33 +205,50 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
     switch(blockHeader->compression)
     {
         case None:
+            TRACE("Allocating memory for block");
             block = (uint8_t *)malloc(blockHeader->length);
-            if(block == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            if(block == NULL)
+            {
+                FATAL("Not enough memory for block");
 
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            TRACE("Reading block into memory");
             readBytes = fread(block, 1, blockHeader->length, ctx->imageStream);
 
             if(readBytes != blockHeader->length)
             {
+                FATAL("Could not read block");
                 free(block);
+
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_READ_BLOCK");
                 return AARUF_ERROR_CANNOT_READ_BLOCK;
             }
 
             break;
         case Lzma:
             lzmaSize = blockHeader->cmpLength - LZMA_PROPERTIES_LENGTH;
-            cmpData  = malloc(lzmaSize);
+            TRACE("Allocating memory for compressed data of size %zu bytes", lzmaSize);
+            cmpData = malloc(lzmaSize);
 
             if(cmpData == NULL)
             {
-                fprintf(stderr, "Cannot allocate memory for block...\n");
+                FATAL("Cannot allocate memory for block...");
+
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
 
+            TRACE("Allocating memory for block of size %zu bytes", blockHeader->length);
             block = malloc(blockHeader->length);
             if(block == NULL)
             {
-                fprintf(stderr, "Cannot allocate memory for block...\n");
+                FATAL("Cannot allocate memory for block...");
                 free(cmpData);
+
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
 
@@ -166,38 +256,47 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
 
             if(readBytes != LZMA_PROPERTIES_LENGTH)
             {
-                fprintf(stderr, "Could not read LZMA properties...\n");
+                FATAL("Could not read LZMA properties...");
                 free(block);
                 free(cmpData);
+
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                 return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
             }
 
             readBytes = fread(cmpData, 1, lzmaSize, ctx->imageStream);
             if(readBytes != lzmaSize)
             {
-                fprintf(stderr, "Could not read compressed block...\n");
+                FATAL("Could not read compressed block...");
                 free(cmpData);
                 free(block);
-                break;
+
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
             }
 
+            TRACE("Decompressing block of size %zu bytes", blockHeader->length);
             readBytes = blockHeader->length;
             errorNo =
                 aaruf_lzma_decode_buffer(block, &readBytes, cmpData, &lzmaSize, lzmaProperties, LZMA_PROPERTIES_LENGTH);
 
             if(errorNo != 0)
             {
-                fprintf(stderr, "Got error %d from LZMA...\n", errorNo);
+                FATAL("Got error %d from LZMA...", errorNo);
                 free(cmpData);
                 free(block);
+
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                 return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
             }
 
             if(readBytes != blockHeader->length)
             {
-                fprintf(stderr, "Error decompressing block, should be {0} bytes but got {1} bytes...\n");
+                FATAL("Error decompressing block, should be {0} bytes but got {1} bytes...");
                 free(cmpData);
                 free(block);
+
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                 return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
             }
 
@@ -205,38 +304,50 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
 
             break;
         case Flac:
+            TRACE("Allocating memory for compressed data of size %zu bytes", blockHeader->cmpLength);
             cmpData = malloc(blockHeader->cmpLength);
 
             if(cmpData == NULL)
             {
-                fprintf(stderr, "Cannot allocate memory for block...\n");
+                FATAL("Cannot allocate memory for block...");
+
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
 
+            TRACE("Allocating memory for block of size %zu bytes", blockHeader->length);
             block = malloc(blockHeader->length);
             if(block == NULL)
             {
-                fprintf(stderr, "Cannot allocate memory for block...\n");
+                FATAL("Cannot allocate memory for block...");
                 free(cmpData);
+
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
 
+            TRACE("Reading compressed data into memory");
             readBytes = fread(cmpData, 1, blockHeader->cmpLength, ctx->imageStream);
             if(readBytes != blockHeader->cmpLength)
             {
-                fprintf(stderr, "Could not read compressed block...\n");
+                FATAL("Could not read compressed block...");
                 free(cmpData);
                 free(block);
-                break;
+
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
             }
 
+            TRACE("Decompressing block of size %zu bytes", blockHeader->length);
             readBytes = aaruf_flac_decode_redbook_buffer(block, blockHeader->length, cmpData, blockHeader->cmpLength);
 
             if(readBytes != blockHeader->length)
             {
-                fprintf(stderr, "Error decompressing block, should be {0} bytes but got {1} bytes...\n");
+                FATAL("Error decompressing block, should be {0} bytes but got {1} bytes...");
                 free(cmpData);
                 free(block);
+
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                 return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
             }
 
@@ -244,44 +355,70 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
 
             break;
         default:
+            FATAL("Unsupported compression %d", blockHeader->compression);
+            TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_UNSUPPORTED_COMPRESSION");
             return AARUF_ERROR_UNSUPPORTED_COMPRESSION;
     }
 
     // Add block to cache
+    TRACE("Adding block to cache");
     add_to_cache_uint64(&ctx->blockCache, blockOffset, block);
 
     memcpy(data, block + (offset * blockHeader->sectorSize), blockHeader->sectorSize);
     *length = blockHeader->sectorSize;
+
+    TRACE("Exiting aaruf_read_sector() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
 }
 
 int32_t aaruf_read_track_sector(void *context, uint8_t *data, uint64_t sectorAddress, uint32_t *length, uint8_t track)
 {
+    TRACE("Entering aaruf_read_track_sector(%p, %p, %" PRIu64 ", %u, %d)", context, data, sectorAddress, *length,
+          track);
+
     aaruformatContext *ctx;
     int                i;
 
-    if(context == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_read_track_sector() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
 
     ctx = context;
 
     // Not a libaaruformat context
-    if(ctx->magic != AARU_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
-
-    if(ctx->imageInfo.XmlMediaType != OpticalDisc) return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
-
-    for(i = 0; i < ctx->numberOfDataTracks; i++)
+    if(ctx->magic != AARU_MAGIC)
     {
-        if(ctx->dataTracks[i].sequence == track)
-        {
-            return aaruf_read_sector(context, ctx->dataTracks[i].start + sectorAddress, data, length);
-        }
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_read_track_sector() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
+    if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+    {
+        FATAL("Incorrect media type %d, expected OpticalDisc", ctx->imageInfo.XmlMediaType);
+
+        TRACE("Exiting aaruf_read_track_sector() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+        return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+    }
+
+    for(i = 0; i < ctx->numberOfDataTracks; i++)
+        if(ctx->dataTracks[i].sequence == track)
+            return aaruf_read_sector(context, ctx->dataTracks[i].start + sectorAddress, data, length);
+
+    TRACE("Track %d not found", track);
+    TRACE("Exiting aaruf_read_track_sector() = AARUF_ERROR_TRACK_NOT_FOUND");
     return AARUF_ERROR_TRACK_NOT_FOUND;
 }
 
 int32_t aaruf_read_sector_long(void *context, uint64_t sectorAddress, uint8_t *data, uint32_t *length)
 {
+    TRACE("Entering aaruf_read_sector_long(%p, %" PRIu64 ", %p, %u)", context, sectorAddress, data, *length);
+
     aaruformatContext *ctx        = NULL;
     uint32_t           bareLength = 0;
     uint32_t           tagLength  = 0;
@@ -291,12 +428,24 @@ int32_t aaruf_read_sector_long(void *context, uint64_t sectorAddress, uint8_t *d
     int                i        = 0;
     bool               trkFound = false;
 
-    if(context == NULL) return AARUF_ERROR_NOT_AARUFORMAT;
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
 
     ctx = context;
 
     // Not a libaaruformat context
-    if(ctx->magic != AARU_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
 
     switch(ctx->imageInfo.XmlMediaType)
     {
@@ -304,6 +453,9 @@ int32_t aaruf_read_sector_long(void *context, uint64_t sectorAddress, uint8_t *d
             if(*length < 2352 || data == NULL)
             {
                 *length = 2352;
+                FATAL("Buffer too small for sector, required %u bytes", *length);
+
+                TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_BUFFER_TOO_SMALL");
                 return AARUF_ERROR_BUFFER_TOO_SMALL;
             }
             if((ctx->sectorSuffix == NULL || ctx->sectorPrefix == NULL) &&
@@ -313,31 +465,44 @@ int32_t aaruf_read_sector_long(void *context, uint64_t sectorAddress, uint8_t *d
             bareLength = 0;
             aaruf_read_sector(context, sectorAddress, NULL, &bareLength);
 
+            TRACE("Allocating memory for bare data");
             bareData = (uint8_t *)malloc(bareLength);
 
-            if(bareData == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            if(bareData == NULL)
+            {
+                FATAL("Could not allocate memory for bare data");
+
+                TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
 
             res = aaruf_read_sector(context, sectorAddress, bareData, &bareLength);
 
             if(res < AARUF_STATUS_OK)
             {
                 free(bareData);
+
+                TRACE("Exiting aaruf_read_sector_long() = %d", res);
                 return res;
             }
 
             trkFound = false;
 
             for(i = 0; i < ctx->numberOfDataTracks; i++)
-            {
                 if(sectorAddress >= ctx->dataTracks[i].start && sectorAddress <= ctx->dataTracks[i].end)
                 {
                     trkFound = true;
                     trk      = ctx->dataTracks[i];
                     break;
                 }
-            }
 
-            if(!trkFound) return AARUF_ERROR_TRACK_NOT_FOUND;
+            if(!trkFound)
+            {
+                FATAL("Track not found");
+
+                TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_TRACK_NOT_FOUND");
+                return AARUF_ERROR_TRACK_NOT_FOUND;
+            }
 
             switch(trk.type)
             {
@@ -358,19 +523,18 @@ int32_t aaruf_read_sector_long(void *context, uint64_t sectorAddress, uint8_t *d
                             res = AARUF_STATUS_OK;
                         }
                         else if((ctx->sectorPrefixDdt[sectorAddress] & CD_XFIX_MASK) == NotDumped)
-                        {
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
-                        }
                         else
-                        {
                             memcpy(data,
                                    ctx->sectorPrefixCorrected +
                                        ((ctx->sectorPrefixDdt[sectorAddress] & CD_DFIX_MASK) - 1) * 16,
                                    16);
-                        }
                     }
                     else
+                    {
+                        TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_REACHED_UNREACHABLE_CODE");
                         return AARUF_ERROR_REACHED_UNREACHABLE_CODE;
+                    }
 
                     if(res != AARUF_STATUS_OK) return res;
 
@@ -384,19 +548,18 @@ int32_t aaruf_read_sector_long(void *context, uint64_t sectorAddress, uint8_t *d
                             res = AARUF_STATUS_OK;
                         }
                         else if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == NotDumped)
-                        {
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
-                        }
                         else
-                        {
                             memcpy(data + 2064,
                                    ctx->sectorSuffixCorrected +
                                        ((ctx->sectorSuffixDdt[sectorAddress] & CD_DFIX_MASK) - 1) * 288,
                                    288);
-                        }
                     }
                     else
+                    {
+                        TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_REACHED_UNREACHABLE_CODE");
                         return AARUF_ERROR_REACHED_UNREACHABLE_CODE;
+                    }
 
                     return res;
                 case CdMode2Formless:
@@ -412,19 +575,18 @@ int32_t aaruf_read_sector_long(void *context, uint64_t sectorAddress, uint8_t *d
                             res = AARUF_STATUS_OK;
                         }
                         else if((ctx->sectorPrefixDdt[sectorAddress] & CD_XFIX_MASK) == NotDumped)
-                        {
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
-                        }
                         else
-                        {
                             memcpy(data,
                                    ctx->sectorPrefixCorrected +
                                        ((ctx->sectorPrefixDdt[sectorAddress] & CD_DFIX_MASK) - 1) * 16,
                                    16);
-                        }
                     }
                     else
+                    {
+                        TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_REACHED_UNREACHABLE_CODE");
                         return AARUF_ERROR_REACHED_UNREACHABLE_CODE;
+                    }
 
                     if(res != AARUF_STATUS_OK) return res;
 
@@ -445,9 +607,7 @@ int32_t aaruf_read_sector_long(void *context, uint64_t sectorAddress, uint8_t *d
                                 aaruf_ecc_cd_reconstruct(ctx->eccCdContext, data, CdMode2Form2);
                         }
                         else if((ctx->sectorSuffixDdt[sectorAddress] & CD_XFIX_MASK) == NotDumped)
-                        {
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
-                        }
                         else
                             // Mode 2 where ECC failed
                             memcpy(data + 24, bareData, 2328);
@@ -462,6 +622,10 @@ int32_t aaruf_read_sector_long(void *context, uint64_t sectorAddress, uint8_t *d
 
                     return res;
                 default:
+                    FATAL("Invalid track type %d", trk.type);
+                    free(bareData);
+
+                    TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_INVALID_TRACK_FORMAT");
                     return AARUF_ERROR_INVALID_TRACK_FORMAT;
             }
         case BlockMedia:
@@ -490,6 +654,9 @@ int32_t aaruf_read_sector_long(void *context, uint64_t sectorAddress, uint8_t *d
                             tagLength = 24;
                             break;
                         default:
+                            FATAL("Unsupported media type %d", ctx->imageInfo.MediaType);
+
+                            TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
                             return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
                     }
 
@@ -498,27 +665,51 @@ int32_t aaruf_read_sector_long(void *context, uint64_t sectorAddress, uint8_t *d
                     if(*length < tagLength + bareLength || data == NULL)
                     {
                         *length = tagLength + bareLength;
+                        FATAL("Buffer too small for sector, required %u bytes", *length);
+
+                        TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_BUFFER_TOO_SMALL");
                         return AARUF_ERROR_BUFFER_TOO_SMALL;
                     }
 
+                    TRACE("Allocating memory for bare data of size %u bytes", bareLength);
                     bareData = malloc(bareLength);
 
-                    if(bareData == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                    if(bareData == NULL)
+                    {
+                        FATAL("Could not allocate memory for bare data");
+
+                        TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                    }
 
                     res = aaruf_read_sector(context, sectorAddress, bareData, &bareLength);
 
-                    if(bareLength != 512) return res;
+                    if(bareLength != 512)
+                    {
+                        FATAL("Bare data length is %u, expected 512", bareLength);
+                        free(bareData);
+
+                        TRACE("Exiting aaruf_read_sector_long() = %d", res);
+                        return res;
+                    }
 
                     memcpy(data, ctx->sectorSubchannel + sectorAddress * tagLength, tagLength);
                     memcpy(data, bareData, 512);
 
                     free(bareData);
 
+                    TRACE("Exiting aaruf_read_sector_long() = %d", res);
                     return res;
                 default:
+                    FATAL("Incorrect media type %d for long sector reading", ctx->imageInfo.MediaType);
+
+                    TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
                     return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
             }
         default:
+            FATAL("Incorrect media type %d for long sector reading", ctx->imageInfo.MediaType);
+
+            TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
             return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
     }
 }

@@ -20,6 +20,7 @@
 #include <stdint.h>
 
 #include "aaruformat.h"
+#include "log.h"
 
 #if defined(__x86_64__) || defined(__amd64) || defined(_M_AMD64) || defined(_M_X64) || defined(__I386__) || \
     defined(__i386__) || defined(__THW_INTEL) || defined(_M_IX86)
@@ -37,6 +38,8 @@
 
 static void cpuid(int info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned *edx)
 {
+    TRACE("Entering cpuid(%d, %d, %d, %d, %d)", info, *eax, *ebx, *ecx, *edx);
+
 #ifdef _MSC_VER
     unsigned int registers[4];
     __cpuid(registers, info);
@@ -56,10 +59,14 @@ static void cpuid(int info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigne
     *ecx = _ecx;
     *edx = _edx;
 #endif
+
+    TRACE("Exiting cpuid(%d, %d, %d, %d, %d)", info, *eax, *ebx, *ecx, *edx);
 }
 
 static void cpuidex(int info, int count, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned *edx)
 {
+    TRACE("Entering cpuidex(%d, %d, %d, %d, %d, %d)", info, count, *eax, *ebx, *ecx, *edx);
+
 #ifdef _MSC_VER
     unsigned int registers[4];
     __cpuidex(registers, info, count);
@@ -79,10 +86,14 @@ static void cpuidex(int info, int count, unsigned *eax, unsigned *ebx, unsigned 
     *ecx = _ecx;
     *edx = _edx;
 #endif
+
+    TRACE("Exiting cpuidex(%d, %d, %d, %d, %d, %d)", info, count, *eax, *ebx, *ecx, *edx);
 }
 
 int have_clmul()
 {
+    TRACE("Entering have_clmul()");
+
     unsigned eax, ebx, ecx, edx;
     int      has_pclmulqdq;
     int      has_sse41;
@@ -91,22 +102,27 @@ int have_clmul()
     has_pclmulqdq = ecx & 0x2;     /* bit 1 */
     has_sse41     = ecx & 0x80000; /* bit 19 */
 
+    TRACE("Exiting have_clmul() = %d", has_pclmulqdq && has_sse41);
     return has_pclmulqdq && has_sse41;
 }
 
 int have_ssse3()
 {
+    TRACE("Entering have_ssse3()");
     unsigned eax, ebx, ecx, edx;
     cpuid(1 /* feature bits */, &eax, &ebx, &ecx, &edx);
 
+    TRACE("Exiting have_ssse3() = %d", ecx & 0x200);
     return ecx & 0x200;
 }
 
 int have_avx2()
 {
+    TRACE("Entering have_avx2()");
     unsigned eax, ebx, ecx, edx;
     cpuidex(7 /* extended feature bits */, 0, &eax, &ebx, &ecx, &edx);
 
+    TRACE("Exiting have_avx2() = %d", ebx & 0x20);
     return ebx & 0x20;
 }
 #endif
@@ -123,26 +139,38 @@ int have_avx2()
 #endif
 #endif
 
-#if(defined(__aarch64__) || defined(_M_ARM64) || defined(__arm__) || defined(_M_ARM)) && defined(__APPLE__)
+#if (defined(__aarch64__) || defined(_M_ARM64) || defined(__arm__) || defined(_M_ARM)) && defined(__APPLE__)
 int have_neon_apple()
 {
-    int value = 0;
-    size_t len = sizeof(int);
-    int    ret = sysctlbyname("hw.optional.neon", &value, &len, NULL, 0);
+    TRACE("Entering have_neon_apple()");
+    int    value = 0;
+    size_t len   = sizeof(int);
+    int    ret   = sysctlbyname("hw.optional.neon", &value, &len, NULL, 0);
 
-    if(ret != 0) return 0;
+    if(ret != 0)
+    {
+        TRACE("Exiting have_neon_apple() = 0");
+        return 0;
+    }
 
+    TRACE("Exiting have_neon_apple() = %d", value == 1);
     return value == 1;
 }
 
 int have_crc32_apple()
 {
-    int value = 0;
-    size_t len = sizeof(int);
-    int    ret = sysctlbyname("hw.optional.crc32", &value, &len, NULL, 0);
+    TRACE("Entering have_crc32_apple()");
+    int    value = 0;
+    size_t len   = sizeof(int);
+    int    ret   = sysctlbyname("hw.optional.crc32", &value, &len, NULL, 0);
 
-    if(ret != 0) return 0;
+    if(ret != 0)
+    {
+        TRACE("Exiting have_crc32_apple() = 0");
+        return 0;
+    }
 
+    TRACE("Exiting have_crc32_apple() = %d", value == 1);
     return value == 1;
 }
 
