@@ -44,24 +44,24 @@ void draw_progress_bar(int row, int percent)
 
 int compare(char *path1, char *path2)
 {
-    int                      ret                  = AARUF_STATUS_OK;
-    aaruformatContext const *ctx1                 = NULL;
-    aaruformatContext const *ctx2                 = NULL;
-    bool                     imagesAreDifferent   = false;
-    char                    *strBuffer            = NULL;
-    UErrorCode               u_error_code         = U_ZERO_ERROR;
-    int                      lr                   = 0;
-    int                      rr                   = 0;
-    uintattr_t               appVerColor          = TB_WHITE;
-    uintattr_t               imageVerColor        = TB_WHITE;
-    uintattr_t               mediaTypeColor       = TB_WHITE;
-    uintattr_t               creationTimeColor    = TB_WHITE;
-    uintattr_t               lastWrittenTimeColor = TB_WHITE;
-    uintattr_t               partitionsColor      = TB_WHITE;
-    uintattr_t               sessionsColor        = TB_WHITE;
-    uintattr_t               sectorsColor         = TB_WHITE;
-    uintattr_t               sectorSizeColor      = TB_WHITE;
-    uintattr_t               versionColor         = TB_WHITE;
+    int                ret                  = AARUF_STATUS_OK;
+    aaruformatContext *ctx1                 = NULL;
+    aaruformatContext *ctx2                 = NULL;
+    bool               imagesAreDifferent   = false;
+    char              *strBuffer            = NULL;
+    UErrorCode         u_error_code         = U_ZERO_ERROR;
+    int                lr                   = 0;
+    int                rr                   = 0;
+    uintattr_t         appVerColor          = TB_WHITE;
+    uintattr_t         imageVerColor        = TB_WHITE;
+    uintattr_t         mediaTypeColor       = TB_WHITE;
+    uintattr_t         creationTimeColor    = TB_WHITE;
+    uintattr_t         lastWrittenTimeColor = TB_WHITE;
+    uintattr_t         partitionsColor      = TB_WHITE;
+    uintattr_t         sessionsColor        = TB_WHITE;
+    uintattr_t         sectorsColor         = TB_WHITE;
+    uintattr_t         sectorSizeColor      = TB_WHITE;
+    uintattr_t         versionColor         = TB_WHITE;
 
     // Initialize termbox2
     if(tb_init() != 0) return 1;

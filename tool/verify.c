@@ -23,10 +23,10 @@
 
 #include "aaruformattool.h"
 
-int verify(char *path)
+int verify(const char *path)
 {
     aaruformatContext *ctx = NULL;
-    uint32_t res = 0;
+    uint32_t           res = 0;
 
     ctx = aaruf_open(path);
 
@@ -48,20 +48,20 @@ int verify(char *path)
     return res;
 }
 
-int verify_sectors(char *path)
+int verify_sectors(const char *path)
 {
-    aaruformatContext *ctx = NULL;
-    uint8_t *buffer = NULL;
-    uint32_t           buffer_len = 2352;
-    int32_t res = 0;
-    CdEccContext *cd_ecc_context = NULL;
-    ctx = aaruf_open(path);
-    bool verify_result = false;
-    bool has_edc = false, has_ecc_p = false, ecc_p_correct = false, has_ecc_q = false, ecc_q_correct = false;
-    bool edc_correct = false;
-    bool unknown = false;
+    aaruformatContext *ctx            = NULL;
+    uint8_t           *buffer         = NULL;
+    uint32_t           buffer_len     = 2352;
+    int32_t            res            = 0;
+    CdEccContext      *cd_ecc_context = NULL;
+    ctx                               = aaruf_open(path);
+    bool     verify_result            = false;
+    bool     has_edc = false, has_ecc_p = false, ecc_p_correct = false, has_ecc_q = false, ecc_q_correct = false;
+    bool     edc_correct = false;
+    bool     unknown     = false;
     uint64_t errors = 0, unknowns = 0;
-    bool any_error = false;
+    bool     any_error = false;
 
     if(ctx == NULL)
     {
@@ -80,7 +80,7 @@ int verify_sectors(char *path)
     unknowns       = 0;
     any_error      = false;
 
-    for (uint64_t s = 0; s < ctx->imageInfo.Sectors; s++)
+    for(uint64_t s = 0; s < ctx->imageInfo.Sectors; s++)
     {
         printf("\rVerifying sector %llu...", s);
         res = aaruf_read_sector_long(ctx, s, buffer, &buffer_len);
@@ -103,11 +103,11 @@ int verify_sectors(char *path)
             continue;
         }
 
-        if (has_edc && !edc_correct) printf("\rSector %llu has an incorrect EDC value.\n", s);
+        if(has_edc && !edc_correct) printf("\rSector %llu has an incorrect EDC value.\n", s);
 
-        if (has_ecc_p && !ecc_p_correct) printf("\rSector %llu has an incorrect EDC value.\n", s);
+        if(has_ecc_p && !ecc_p_correct) printf("\rSector %llu has an incorrect EDC value.\n", s);
 
-        if (has_ecc_q && !ecc_q_correct) printf("\rSector %llu has an incorrect EDC value.\n", s);
+        if(has_ecc_q && !ecc_q_correct) printf("\rSector %llu has an incorrect EDC value.\n", s);
 
         errors++;
         any_error = true;

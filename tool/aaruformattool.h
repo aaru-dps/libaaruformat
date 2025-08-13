@@ -29,8 +29,8 @@ char *byte_array_to_hex_string(const unsigned char *array, int array_size);
 int   read(unsigned long long sector_no, char *path);
 int   printhex(unsigned char *array, unsigned int length, int width, bool color);
 int   read_long(unsigned long long sector_no, char *path);
-int   verify(char *path);
-int   verify_sectors(char *path);
+int   verify(const char *path);
+int   verify_sectors(const char *path);
 bool  check_cd_sector_channel(CdEccContext *context, uint8_t *sector, bool *unknown, bool *has_edc, bool *edc_correct,
                               bool *has_ecc_p, bool *ecc_p_correct, bool *has_ecc_q, bool *ecc_q_correct);
 int   compare(char *path1, char *path2);
