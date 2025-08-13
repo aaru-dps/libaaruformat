@@ -26,6 +26,7 @@
 #endif
 
 #include "aaruformat.h"
+#include "log.h"
 
 int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUserDataDdt)
 {
@@ -49,7 +50,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
     pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
     if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
     {
-        fprintf(stderr, "libaaruformat: Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
 
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
@@ -60,7 +61,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
     if(readBytes != sizeof(DdtHeader))
     {
-        fprintf(stderr, "libaaruformat: Could not read block header at %" PRIu64 "\n", entry->offset);
+        FATAL("Could not read block header at %" PRIu64 "\n", entry->offset);
 
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
@@ -85,14 +86,14 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 cmpData = (uint8_t *)malloc(lzmaSize);
                 if(cmpData == NULL)
                 {
-                    fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
+                    TRACE("Cannot allocate memory for DDT, continuing...\n");
                     break;
                 }
 
                 ctx->userDataDdt = (uint64_t *)malloc(ddtHeader.length);
                 if(ctx->userDataDdt == NULL)
                 {
-                    fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
+                    TRACE("Cannot allocate memory for DDT, continuing...\n");
                     free(cmpData);
                     break;
                 }
@@ -100,7 +101,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 readBytes = fread(lzmaProperties, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
                 if(readBytes != LZMA_PROPERTIES_LENGTH)
                 {
-                    fprintf(stderr, "Could not read LZMA properties, continuing...\n");
+                    TRACE("Could not read LZMA properties, continuing...\n");
                     free(cmpData);
                     free(ctx->userDataDdt);
                     ctx->userDataDdt = NULL;
@@ -110,7 +111,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 readBytes = fread(cmpData, 1, lzmaSize, ctx->imageStream);
                 if(readBytes != lzmaSize)
                 {
-                    fprintf(stderr, "Could not read compressed block, continuing...\n");
+                    TRACE("Could not read compressed block, continuing...\n");
                     free(cmpData);
                     free(ctx->userDataDdt);
                     ctx->userDataDdt = NULL;
@@ -123,7 +124,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 if(errorNo != 0)
                 {
-                    fprintf(stderr, "Got error %d from LZMA, stopping...\n", errorNo);
+                    FATAL("Got error %d from LZMA, stopping...\n", errorNo);
                     free(cmpData);
                     free(ctx->userDataDdt);
                     ctx->userDataDdt = NULL;
@@ -132,7 +133,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 if(readBytes != ddtHeader.length)
                 {
-                    fprintf(stderr, "Error decompressing block, should be {0} bytes but got {1} bytes., stopping...\n");
+                    FATAL("Error decompressing block, should be {0} bytes but got {1} bytes., stopping...\n");
                     free(cmpData);
                     free(ctx->userDataDdt);
                     ctx->userDataDdt = NULL;
@@ -153,20 +154,19 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 if(ctx->userDataDdt == MAP_FAILED)
                 {
                     *foundUserDataDdt = false;
-                    fprintf(stderr, "libaaruformat: Could not read map deduplication table.\n");
+                    FATAL("Could not read map deduplication table.\n");
                     break;
                 }
 
                 ctx->inMemoryDdt = false;
                 break;
 #else  // TODO: Implement
-                fprintf(stderr, "libaaruformat: Uncompressed DDT not yet implemented...\n");
+                TRACE("Uncompressed DDT not yet implemented...\n");
                 *foundUserDataDdt = false;
                 break;
 #endif
             default:
-                fprintf(stderr, "libaaruformat: Found unknown compression type %d, continuing...\n",
-                        ddtHeader.compression);
+                TRACE("Found unknown compression type %d, continuing...\n", ddtHeader.compression);
                 *foundUserDataDdt = false;
                 break;
         }
@@ -182,14 +182,14 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 cmpData = (uint8_t *)malloc(lzmaSize);
                 if(cmpData == NULL)
                 {
-                    fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
+                    TRACE("Cannot allocate memory for DDT, continuing...\n");
                     break;
                 }
 
                 cdDdt = (uint32_t *)malloc(ddtHeader.length);
                 if(cdDdt == NULL)
                 {
-                    fprintf(stderr, "Cannot allocate memory for DDT, continuing...\n");
+                    TRACE("Cannot allocate memory for DDT, continuing...\n");
                     free(cmpData);
                     break;
                 }
@@ -197,7 +197,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 readBytes = fread(lzmaProperties, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
                 if(readBytes != LZMA_PROPERTIES_LENGTH)
                 {
-                    fprintf(stderr, "Could not read LZMA properties, continuing...\n");
+                    TRACE("Could not read LZMA properties, continuing...\n");
                     free(cmpData);
                     free(cdDdt);
                     break;
@@ -206,7 +206,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 readBytes = fread(cmpData, 1, lzmaSize, ctx->imageStream);
                 if(readBytes != lzmaSize)
                 {
-                    fprintf(stderr, "Could not read compressed block, continuing...\n");
+                    TRACE("Could not read compressed block, continuing...\n");
                     free(cmpData);
                     free(cdDdt);
                     break;
@@ -218,7 +218,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 if(errorNo != 0)
                 {
-                    fprintf(stderr, "Got error %d from LZMA, stopping...\n", errorNo);
+                    FATAL("Got error %d from LZMA, stopping...\n", errorNo);
                     free(cmpData);
                     free(cdDdt);
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
@@ -226,7 +226,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 if(readBytes != ddtHeader.length)
                 {
-                    fprintf(stderr, "Error decompressing block, should be {0} bytes but got {1} bytes., stopping...\n");
+                    FATAL("Error decompressing block, should be {0} bytes but got {1} bytes., stopping...\n");
                     free(cmpData);
                     free(cdDdt);
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
@@ -247,7 +247,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 if(cdDdt == NULL)
                 {
-                    fprintf(stderr, "libaaruformat: Cannot allocate memory for deduplication table.\n");
+                    TRACE("Cannot allocate memory for deduplication table.\n");
                     break;
                 }
 
@@ -256,7 +256,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 if(readBytes != ddtHeader.entries * sizeof(uint32_t))
                 {
                     free(cdDdt);
-                    fprintf(stderr, "libaaruformat: Could not read deduplication table, continuing...\n");
+                    TRACE("Could not read deduplication table, continuing...\n");
                     break;
                 }
 
@@ -269,8 +269,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 break;
             default:
-                fprintf(stderr, "libaaruformat: Found unknown compression type %d, continuing...\n",
-                        ddtHeader.compression);
+                TRACE("Found unknown compression type %d, continuing...\n", ddtHeader.compression);
                 break;
         }
     }

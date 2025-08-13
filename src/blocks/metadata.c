@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include "aaruformat.h"
+#include "log.h"
 
 // Process the metadata block found while opening an AaruFormat file
 void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
@@ -40,7 +41,7 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
     pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
     if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
     {
-        fprintf(stderr, "libaaruformat: Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
 
         return;
     }
@@ -52,14 +53,14 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
     if(readBytes != sizeof(MetadataBlockHeader))
     {
         memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
-        fprintf(stderr, "libaaruformat: Could not read metadata block header, continuing...\n");
+        FATAL("Could not read metadata block header, continuing...\n");
         return;
     }
 
     if(ctx->metadataBlockHeader.identifier != entry->blockType)
     {
         memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
-        fprintf(stderr, "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "\n", entry->offset);
+        TRACE("Incorrect identifier for data block at position %" PRIu64 "\n", entry->offset);
         return;
     }
 
@@ -70,7 +71,7 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
     if(ctx->metadataBlock == NULL)
     {
         memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
-        fprintf(stderr, "libaaruformat: Could not allocate memory for metadata block, continuing...\n");
+        FATAL("Could not allocate memory for metadata block, continuing...\n");
         return;
     }
 
@@ -80,15 +81,14 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
     {
         memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
         free(ctx->metadataBlock);
-        fprintf(stderr, "libaaruformat: Could not read metadata block, continuing...\n");
+        FATAL("Could not read metadata block, continuing...\n");
     }
 
     if(ctx->metadataBlockHeader.mediaSequence > 0 && ctx->metadataBlockHeader.lastMediaSequence > 0)
     {
         ctx->imageInfo.MediaSequence     = ctx->metadataBlockHeader.mediaSequence;
         ctx->imageInfo.LastMediaSequence = ctx->metadataBlockHeader.lastMediaSequence;
-        fprintf(stderr, "libaaruformat: Setting media sequence as %d of %d\n", ctx->imageInfo.MediaSequence,
-                ctx->imageInfo.LastMediaSequence);
+        TRACE("Setting media sequence as %d of %d\n", ctx->imageInfo.MediaSequence, ctx->imageInfo.LastMediaSequence);
     }
 
     if(ctx->metadataBlockHeader.creatorLength > 0 &&
@@ -249,14 +249,14 @@ void process_geometry_block(aaruformatContext *ctx, const IndexEntry *entry)
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
     {
-        fprintf(stderr, "Invalid context or image stream.\n");
+        FATAL("Invalid context or image stream.\n");
         return;
     }
 
     // Seek to block
     if(fseek(ctx->imageStream, entry->offset, SEEK_SET) != 0)
     {
-        fprintf(stderr, "libaaruformat: Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
         return;
     }
 
@@ -265,22 +265,21 @@ void process_geometry_block(aaruformatContext *ctx, const IndexEntry *entry)
     if(readBytes != sizeof(GeometryBlockHeader))
     {
         memset(&ctx->geometryBlock, 0, sizeof(GeometryBlockHeader));
-        fprintf(stderr, "libaaruformat: Could not read geometry block header, continuing...\n");
+        TRACE("Could not read geometry block header, continuing...\n");
         return;
     }
 
     if(ctx->geometryBlock.identifier != GeometryBlock)
     {
         memset(&ctx->geometryBlock, 0, sizeof(GeometryBlockHeader));
-        fprintf(stderr, "libaaruformat: Incorrect identifier for geometry block at position %" PRIu64 "\n",
-                entry->offset);
+        TRACE("Incorrect identifier for geometry block at position %" PRIu64 "\n", entry->offset);
         return;
     }
 
     ctx->imageInfo.ImageSize += sizeof(GeometryBlockHeader);
 
-    fprintf(stderr, "libaaruformat: Geometry set to %d cylinders %d heads %d sectors per track\n",
-            ctx->geometryBlock.cylinders, ctx->geometryBlock.heads, ctx->geometryBlock.sectorsPerTrack);
+    TRACE("Geometry set to %d cylinders %d heads %d sectors per track\n", ctx->geometryBlock.cylinders,
+          ctx->geometryBlock.heads, ctx->geometryBlock.sectorsPerTrack);
 
     ctx->imageInfo.Cylinders       = ctx->geometryBlock.cylinders;
     ctx->imageInfo.Heads           = ctx->geometryBlock.heads;
@@ -296,7 +295,7 @@ void process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry)
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
     {
-        fprintf(stderr, "Invalid context or image stream.\n");
+        FATAL("Invalid context or image stream.\n");
         return;
     }
 
@@ -304,7 +303,7 @@ void process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry)
     pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
     if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
     {
-        fprintf(stderr, "libaaruformat: Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
 
         return;
     }
@@ -316,14 +315,14 @@ void process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry)
     if(readBytes != sizeof(CicmMetadataBlock))
     {
         memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
-        fprintf(stderr, "libaaruformat: Could not read CICM XML metadata header, continuing...\n");
+        TRACE("Could not read CICM XML metadata header, continuing...\n");
         return;
     }
 
     if(ctx->cicmBlockHeader.identifier != CicmBlock)
     {
         memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
-        fprintf(stderr, "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "\n", entry->offset);
+        TRACE("Incorrect identifier for data block at position %" PRIu64 "\n", entry->offset);
     }
 
     ctx->imageInfo.ImageSize += ctx->cicmBlockHeader.length;
@@ -333,7 +332,7 @@ void process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry)
     if(ctx->cicmBlock == NULL)
     {
         memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
-        fprintf(stderr, "libaaruformat: Could not allocate memory for CICM XML metadata block, continuing...\n");
+        TRACE("Could not allocate memory for CICM XML metadata block, continuing...\n");
         return;
     }
 
@@ -343,8 +342,8 @@ void process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry)
     {
         memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
         free(ctx->cicmBlock);
-        fprintf(stderr, "libaaruformat: Could not read CICM XML metadata block, continuing...\n");
+        TRACE("Could not read CICM XML metadata block, continuing...\n");
     }
 
-    fprintf(stderr, "libaaruformat: Found CICM XML metadata block %" PRIu64 ".\n", entry->offset);
+    TRACE("Found CICM XML metadata block %" PRIu64 ".\n", entry->offset);
 }

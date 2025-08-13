@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include "aaruformat.h"
+#include "log.h"
 
 void process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
@@ -33,7 +34,7 @@ void process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry)
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
     {
-        fprintf(stderr, "Invalid context or image stream.\n");
+        FATAL("Invalid context or image stream.\n");
         return;
     }
 
@@ -41,7 +42,7 @@ void process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry)
     pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
     if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
     {
-        fprintf(stderr, "libaaruformat: Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
 
         return;
     }
@@ -52,14 +53,14 @@ void process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry)
     if(readBytes != sizeof(TracksHeader))
     {
         memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
-        fprintf(stderr, "libaaruformat: Could not read tracks header, continuing...\n");
+        TRACE("Could not read tracks header, continuing...\n");
         return;
     }
 
     if(ctx->tracksHeader.identifier != TracksBlock)
     {
         memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
-        fprintf(stderr, "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "\n", entry->offset);
+        TRACE("Incorrect identifier for data block at position %" PRIu64 "\n", entry->offset);
     }
 
     ctx->imageInfo.ImageSize += sizeof(TrackEntry) * ctx->tracksHeader.entries;
@@ -69,7 +70,7 @@ void process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry)
     if(ctx->trackEntries == NULL)
     {
         memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
-        fprintf(stderr, "libaaruformat: Could not allocate memory for metadata block, continuing...\n");
+        FATAL("Could not allocate memory for metadata block, continuing...\n");
         return;
     }
 
@@ -79,7 +80,7 @@ void process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry)
     {
         memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
         free(ctx->trackEntries);
-        fprintf(stderr, "libaaruformat: Could not read metadata block, continuing...\n");
+        FATAL("Could not read metadata block, continuing...\n");
 
         return;
     }
@@ -91,14 +92,12 @@ void process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry)
 
     if(crc64 != ctx->tracksHeader.crc64)
     {
-        fprintf(stderr,
-                "libaaruformat: Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64 ", continuing...\n",
-                crc64, ctx->tracksHeader.crc64);
+        TRACE("Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64 ", continuing...\n", crc64,
+              ctx->tracksHeader.crc64);
         return;
     }
 
-    fprintf(stderr, "libaaruformat: Found %d tracks at position %" PRIu64 ".\n", ctx->tracksHeader.entries,
-            entry->offset);
+    TRACE("Found %d tracks at position %" PRIu64 ".\n", ctx->tracksHeader.entries, entry->offset);
 
     ctx->imageInfo.HasPartitions = true;
     ctx->imageInfo.HasSessions   = true;

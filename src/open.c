@@ -25,6 +25,7 @@
 #include <aaruformat.h>
 
 #include "internal.h"
+#include "log.h"
 #include "utarray.h"
 
 void *aaruf_open(const char *filepath)
@@ -35,7 +36,13 @@ void *aaruf_open(const char *filepath)
     long               pos           = 0;
     int                i             = 0;
     uint32_t           signature     = 0;
-    UT_array *         index_entries = NULL;
+    UT_array          *index_entries = NULL;
+
+#ifdef USE_SLOG
+#include "slog.h"
+
+    slog_init("aaruformat.log", SLOG_FLAGS_ALL, 0);
+#endif
 
     ctx = (aaruformatContext *)malloc(sizeof(aaruformatContext));
     memset(ctx, 0, sizeof(aaruformatContext));
@@ -99,8 +106,7 @@ void *aaruf_open(const char *filepath)
         return NULL;
     }
 
-    fprintf(stderr, "libaaruformat: Opening image version %d.%d\n", ctx->header.imageMajorVersion,
-            ctx->header.imageMinorVersion);
+    TRACE("Opening image version %d.%d\n", ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
 
     ctx->readableSectorTags = (bool *)malloc(sizeof(bool) * MaxSectorTag);
 
@@ -151,8 +157,8 @@ void *aaruf_open(const char *filepath)
 
     readBytes = fread(&signature, 1, sizeof(uint32_t), ctx->imageStream);
 
-    if(readBytes != sizeof(uint32_t) || (signature != IndexBlock && signature != IndexBlock2 && signature !=
-                                         IndexBlock3))
+    if(readBytes != sizeof(uint32_t) ||
+       (signature != IndexBlock && signature != IndexBlock2 && signature != IndexBlock3))
     {
         free(ctx);
         errno = AARUF_ERROR_CANNOT_READ_INDEX;
@@ -160,9 +166,12 @@ void *aaruf_open(const char *filepath)
         return NULL;
     }
 
-    if(signature == IndexBlock) index_entries = process_index_v1(ctx);
-    else if(signature == IndexBlock2) index_entries = process_index_v2(ctx);
-    else if(signature == IndexBlock3) index_entries = process_index_v3(ctx);
+    if(signature == IndexBlock)
+        index_entries = process_index_v1(ctx);
+    else if(signature == IndexBlock2)
+        index_entries = process_index_v2(ctx);
+    else if(signature == IndexBlock3)
+        index_entries = process_index_v3(ctx);
 
     if(index_entries == NULL)
     {
@@ -174,14 +183,13 @@ void *aaruf_open(const char *filepath)
         return NULL;
     }
 
-    fprintf(stderr, "libaaruformat: Index at %" PRIu64 " contains %d entries\n", ctx->header.indexOffset,
-            utarray_len(index_entries));
+    TRACE("Index at %" PRIu64 " contains %d entries\n", ctx->header.indexOffset, utarray_len(index_entries));
 
     for(i = 0; i < utarray_len(index_entries); i++)
     {
         IndexEntry *entry = (IndexEntry *)utarray_eltptr(index_entries, i);
-        fprintf(stderr, "libaaruformat: Block type %4.4s with data type %d is indexed to be at %" PRIu64 "\n",
-                (char *)&entry->blockType, entry->dataType, entry->offset);
+        TRACE("Block type %4.4s with data type %d is indexed to be at %" PRIu64 "\n", (char *)&entry->blockType,
+              entry->dataType, entry->offset);
     }
 
     bool foundUserDataDdt    = false;
@@ -193,9 +201,9 @@ void *aaruf_open(const char *filepath)
 
         if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
         {
-            fprintf(
-                stderr, "libaaruformat: Could not seek to %" PRIu64 " as indicated by index entry %d, continuing...\n",
-                entry->offset, i);
+            fprintf(stderr,
+                    "libaaruformat: Could not seek to %" PRIu64 " as indicated by index entry %d, continuing...\n",
+                    entry->offset, i);
 
             continue;
         }
@@ -268,10 +276,9 @@ void *aaruf_open(const char *filepath)
 
                 break;
             default:
-                fprintf(
-                    stderr,
-                    "libaaruformat: Unhandled block type %4.4s with data type %d is indexed to be at %" PRIu64 "\n",
-                    (char *)&entry->blockType, entry->dataType, entry->offset);
+                fprintf(stderr,
+                        "libaaruformat: Unhandled block type %4.4s with data type %d is indexed to be at %" PRIu64 "\n",
+                        (char *)&entry->blockType, entry->dataType, entry->offset);
                 break;
         }
     }
@@ -280,7 +287,7 @@ void *aaruf_open(const char *filepath)
 
     if(!foundUserDataDdt)
     {
-        fprintf(stderr, "libaaruformat: Could not find user data deduplication table, aborting...\n");
+        FATAL("Could not find user data deduplication table, aborting...\n");
         aaruf_close(ctx);
         return NULL;
     }

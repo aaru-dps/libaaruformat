@@ -122,7 +122,8 @@ add_library(aaruformat SHARED include/aaruformat/consts.h include/aaruformat/enu
             src/options.c
             src/create.c
             src/time.c
-            src/write.c)
+            src/write.c
+            include/log.h)
 
 include_directories(include include/aaruformat)
 
@@ -176,7 +177,18 @@ elseif(OpenSSL_FOUND)
   TARGET_LINK_LIBRARIES_WHOLE_ARCHIVE(aaruformat ${OPENSSL_CRYPTO_LIBRARY})
 endif()
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+# Add slog submodule
+add_subdirectory(3rdparty/slog)
+
 include_directories(include 3rdparty/uthash/src)
+
+# Include slog headers
+include_directories(aaruformat 3rdparty/slog/src)
+
+# Enable TRACE and slog output
+add_compile_definitions(aaruformat ENABLE_TRACE USE_SLOG)
 
 include(CheckLibraryExists)
 
@@ -184,6 +196,9 @@ check_library_exists(m log "" HAVE_LIB_M)
 if(HAVE_LIB_M)
   TARGET_LINK_LIBRARIES_WHOLE_ARCHIVE(aaruformat m)
 endif()
+
+# Link slog
+target_link_libraries(aaruformat slog)
 
 add_subdirectory(tests)
 add_subdirectory(tool)

@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include "aaruformat.h"
+#include "log.h"
 #include "uthash.h"
 
 // Process data blocks found while opening an AaruFormat file
@@ -51,7 +52,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
     pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
     if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
     {
-        fprintf(stderr, "libaaruformat: Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
 
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
@@ -65,7 +66,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
 
     if(readBytes != sizeof(BlockHeader))
     {
-        fprintf(stderr, "libaaruformat: Could not read block header at %" PRIu64 "\n", entry->offset);
+        FATAL("Could not read block header at %" PRIu64 "\n", entry->offset);
 
         return AARUF_STATUS_OK;
     }
@@ -82,22 +83,21 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
 
     if(blockHeader.identifier != entry->blockType)
     {
-        fprintf(stderr, "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "\n", entry->offset);
+        TRACE("Incorrect identifier for data block at position %" PRIu64 "\n", entry->offset);
 
         return AARUF_STATUS_OK;
     }
 
     if(blockHeader.type != entry->dataType)
     {
-        fprintf(stderr,
-                "libaaruformat: Expected block with data type %4.4s at position %" PRIu64
+        TRACE("Expected block with data type %4.4s at position %" PRIu64
                 " but found data type %4.4s\n",
                 (char *)&entry->blockType, entry->offset, (char *)&blockHeader.type);
 
         return AARUF_STATUS_OK;
     }
 
-    fprintf(stderr, "libaaruformat: Found data block with type %4.4s at position %" PRIu64 "\n",
+    TRACE("Found data block with type %4.4s at position %" PRIu64 "\n",
             (char *)&entry->blockType, entry->offset);
 
     if(blockHeader.compression == Lzma || blockHeader.compression == LzmaClauniaSubchannelTransform)
@@ -209,7 +209,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
     }
     else
     {
-        fprintf(stderr, "libaaruformat: Found unknown compression type %d, continuing...\n", blockHeader.compression);
+        TRACE("Found unknown compression type %d, continuing...\n", blockHeader.compression);
 
         return AARUF_STATUS_OK;
     }
@@ -223,8 +223,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
 
         if(crc64 != blockHeader.crc64)
         {
-            fprintf(stderr,
-                    "libaaruformat: Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64 ", continuing...\n",
+            TRACE("Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64 ", continuing...\n",
                     crc64, blockHeader.crc64);
 
             return AARUF_STATUS_OK;
@@ -275,7 +274,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
 
             if(mediaTag == NULL)
             {
-                fprintf(stderr, "libaaruformat: Cannot allocate memory for media tag entry.\n");
+                TRACE("Cannot allocate memory for media tag entry.\n");
                 break;
             }
             memset(mediaTag, 0, sizeof(mediaTagEntry));
@@ -288,7 +287,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
 
             if(oldMediaTag != NULL)
             {
-                fprintf(stderr, "libaaruformat: Replaced media tag with type %d\n", oldMediaTag->type);
+                TRACE("Replaced media tag with type %d\n", oldMediaTag->type);
                 free(oldMediaTag->data);
                 free(oldMediaTag);
                 oldMediaTag = NULL;

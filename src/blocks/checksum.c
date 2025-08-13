@@ -1,20 +1,20 @@
 /*
-* This file is part of the Aaru Data Preservation Suite.
-* Copyright (c) 2019-2025 Natalia Portillo.
-*
-* This library is free software; you can redistribute it and/or modify
-* it under the terms of the GNU Lesser General Public License as
-* published by the Free Software Foundation; either version 2.1 of the
-* License, or (at your option) any later version.
-*
-* This library is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-* Lesser General Public License for more details.
-*
-* You should have received a copy of the GNU Lesser General Public
-* License along with this library; if not, see <http://www.gnu.org/licenses/>.
-*/
+ * This file is part of the Aaru Data Preservation Suite.
+ * Copyright (c) 2019-2025 Natalia Portillo.
+ *
+ * This library is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of the
+ * License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <inttypes.h>
 #include <stdint.h>
@@ -22,15 +22,16 @@
 #include <stdlib.h>
 
 #include "aaruformat.h"
+#include "log.h"
 
 void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
-    int    pos       = 0;
-    size_t readBytes = 0;
+    int                  pos       = 0;
+    size_t               readBytes = 0;
     ChecksumHeader       checksum_header;
     ChecksumEntry const *checksum_entry = NULL;
-    uint8_t             *data      = NULL;
-    int j = 0;
+    uint8_t             *data           = NULL;
+    int                  j              = 0;
 
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
@@ -43,7 +44,7 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
     pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
     if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
     {
-        fprintf(stderr, "libaaruformat: Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
 
         return;
     }
@@ -54,15 +55,14 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
     if(readBytes != sizeof(ChecksumHeader))
     {
         memset(&checksum_header, 0, sizeof(ChecksumHeader));
-        fprintf(stderr, "libaaruformat: Could not read checksums block header, continuing...\n");
+        FATAL("Could not read checksums block header, continuing...\n");
         return;
     }
 
     if(checksum_header.identifier != ChecksumBlock)
     {
         memset(&checksum_header, 0, sizeof(ChecksumHeader));
-        fprintf(stderr, "libaaruformat: Incorrect identifier for checksum block at position %" PRIu64 "\n",
-                entry->offset);
+        FATAL("Incorrect identifier for checksum block at position %" PRIu64 "\n", entry->offset);
     }
 
     data = (uint8_t *)malloc(checksum_header.length);
@@ -70,7 +70,7 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
     if(data == NULL)
     {
         memset(&checksum_header, 0, sizeof(ChecksumHeader));
-        fprintf(stderr, "libaaruformat: Could not allocate memory for checksum block, continuing...\n");
+        FATAL("Could not allocate memory for checksum block, continuing...\n");
         return;
     }
 
@@ -80,7 +80,7 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
     {
         memset(&checksum_header, 0, sizeof(ChecksumHeader));
         free(data);
-        fprintf(stderr, "libaaruformat: Could not read checksums block, continuing...\n");
+        FATAL("Could not read checksums block, continuing...\n");
         return;
     }
 

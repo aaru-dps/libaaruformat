@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include "aaruformat.h"
+#include "log.h"
 
 void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
@@ -34,7 +35,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
     {
-        fprintf(stderr, "Invalid context or image stream.\n");
+        FATAL("Invalid context or image stream.\n");
         return;
     }
 
@@ -42,7 +43,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
     pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
     if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
     {
-        fprintf(stderr, "libaaruformat: Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
 
         return;
     }
@@ -53,14 +54,14 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
     if(readBytes != sizeof(DumpHardwareHeader))
     {
         memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
-        fprintf(stderr, "libaaruformat: Could not read dump hardware block header, continuing...\n");
+        TRACE("Could not read dump hardware block header, continuing...\n");
         return;
     }
 
     if(ctx->dumpHardwareHeader.identifier != DumpHardwareBlock)
     {
         memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
-        fprintf(stderr, "libaaruformat: Incorrect identifier for data block at position %" PRIu64 "\n", entry->offset);
+        TRACE("Incorrect identifier for data block at position %" PRIu64 "\n", entry->offset);
     }
 
     data = (uint8_t *)malloc(ctx->dumpHardwareHeader.length);
@@ -68,7 +69,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
     if(data == NULL)
     {
         memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
-        fprintf(stderr, "libaaruformat: Could not allocate memory for dump hardware block, continuing...\n");
+        TRACE("Could not allocate memory for dump hardware block, continuing...\n");
         return;
     }
 
@@ -84,9 +85,8 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
         if(crc64 != ctx->dumpHardwareHeader.crc64)
         {
             free(data);
-            fprintf(stderr,
-                    "libaaruformat: Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64 ", continuing...\n",
-                    crc64, ctx->dumpHardwareHeader.crc64);
+            TRACE("Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64 ", continuing...\n", crc64,
+                  ctx->dumpHardwareHeader.crc64);
             return;
         }
     }
@@ -100,7 +100,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
     if(ctx->dumpHardwareEntriesWithData == NULL)
     {
         memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
-        fprintf(stderr, "libaaruformat: Could not allocate memory for dump hardware block, continuing...\n");
+        TRACE("Could not allocate memory for dump hardware block, continuing...\n");
         return;
     }
 
@@ -113,7 +113,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
         if(readBytes != sizeof(DumpHardwareEntry))
         {
             ctx->dumpHardwareHeader.entries = e;
-            fprintf(stderr, "libaaruformat: Could not read dump hardware block entry, continuing...\n");
+            TRACE("Could not read dump hardware block entry, continuing...\n");
             break;
         }
 
@@ -133,8 +133,8 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
                 {
                     free(ctx->dumpHardwareEntriesWithData[e].manufacturer);
                     ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength = 0;
-                    fprintf(stderr, "libaaruformat: Could not read dump hardware block entry manufacturer, "
-                                    "continuing...\n");
+                    TRACE("Could not read dump hardware block entry manufacturer, "
+                          "continuing...\n");
                 }
             }
         }
@@ -154,7 +154,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
                 {
                     free(ctx->dumpHardwareEntriesWithData[e].model);
                     ctx->dumpHardwareEntriesWithData[e].entry.modelLength = 0;
-                    fprintf(stderr, "libaaruformat: Could not read dump hardware block entry model, continuing...\n");
+                    TRACE("Could not read dump hardware block entry model, continuing...\n");
                 }
             }
         }
@@ -175,8 +175,8 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
                 {
                     free(ctx->dumpHardwareEntriesWithData[e].revision);
                     ctx->dumpHardwareEntriesWithData[e].entry.revisionLength = 0;
-                    fprintf(stderr, "libaaruformat: Could not read dump hardware block entry revision, "
-                                    "continuing...\n");
+                    TRACE("Could not read dump hardware block entry revision, "
+                          "continuing...\n");
                 }
             }
         }
@@ -197,8 +197,8 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
                 {
                     free(ctx->dumpHardwareEntriesWithData[e].firmware);
                     ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength = 0;
-                    fprintf(stderr, "libaaruformat: Could not read dump hardware block entry firmware, "
-                                    "continuing...\n");
+                    TRACE("Could not read dump hardware block entry firmware, "
+                          "continuing...\n");
                 }
             }
         }
@@ -218,7 +218,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
                 {
                     free(ctx->dumpHardwareEntriesWithData[e].serial);
                     ctx->dumpHardwareEntriesWithData[e].entry.serialLength = 0;
-                    fprintf(stderr, "libaaruformat: Could not read dump hardware block entry serial, continuing...\n");
+                    TRACE("Could not read dump hardware block entry serial, continuing...\n");
                 }
             }
         }
@@ -239,8 +239,8 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
                 {
                     free(ctx->dumpHardwareEntriesWithData[e].softwareName);
                     ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength = 0;
-                    fprintf(stderr, "libaaruformat: Could not read dump hardware block entry software name, "
-                                    "continuing...\n");
+                    TRACE("Could not read dump hardware block entry software name, "
+                          "continuing...\n");
                 }
             }
         }
@@ -261,8 +261,8 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
                 {
                     free(ctx->dumpHardwareEntriesWithData[e].softwareVersion);
                     ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength = 0;
-                    fprintf(stderr, "libaaruformat: Could not read dump hardware block entry software version, "
-                                    "continuing...\n");
+                    TRACE("Could not read dump hardware block entry software version, "
+                          "continuing...\n");
                 }
             }
         }
@@ -285,8 +285,8 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
                 {
                     free(ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem);
                     ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength = 0;
-                    fprintf(stderr, "libaaruformat: Could not read dump hardware block entry manufacturer, "
-                                    "continuing...\n");
+                    TRACE("Could not read dump hardware block entry manufacturer, "
+                          "continuing...\n");
                 }
             }
         }
@@ -296,8 +296,8 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
 
         if(ctx->dumpHardwareEntriesWithData[e].extents == NULL)
         {
-            fprintf(stderr, "libaaruformat: Could not allocate memory for dump hardware block extents, "
-                            "continuing...\n");
+            TRACE("Could not allocate memory for dump hardware block extents, "
+                  "continuing...\n");
             continue;
         }
 
@@ -307,7 +307,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
         if(readBytes != ctx->dumpHardwareEntriesWithData->entry.extents)
         {
             free(ctx->dumpHardwareEntriesWithData[e].extents);
-            fprintf(stderr, "libaaruformat: Could not read dump hardware block extents, continuing...\n");
+            TRACE("Could not read dump hardware block extents, continuing...\n");
             continue;
         }
 

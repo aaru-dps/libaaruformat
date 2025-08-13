@@ -23,6 +23,7 @@
 
 #include "aaruformat.h"
 #include "internal.h"
+#include "log.h"
 
 int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUserDataDdt)
 {
@@ -48,7 +49,7 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
     pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
     if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
     {
-        fprintf(stderr, "libaaruformat: Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
 
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
@@ -59,7 +60,7 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
     if(readBytes != sizeof(DdtHeader2))
     {
-        fprintf(stderr, "libaaruformat: Could not read block header at %" PRIu64 "\n", entry->offset);
+        FATAL("Could not read block header at %" PRIu64 "\n", entry->offset);
 
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
@@ -179,7 +180,7 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 if(readBytes != ddtHeader.length)
                 {
                     free(buffer);
-                    fprintf(stderr, "libaaruformat: Could not read deduplication table, continuing...\n");
+                    FATAL("Could not read deduplication table, continuing...\n");
                     break;
                 }
 
@@ -212,8 +213,7 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 break;
             default:
-                fprintf(stderr, "libaaruformat: Found unknown compression type %d, continuing...\n",
-                        ddtHeader.compression);
+                TRACE("Found unknown compression type %d, continuing...\n", ddtHeader.compression);
                 *foundUserDataDdt = false;
                 break;
         }
@@ -321,7 +321,7 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 if(buffer == NULL)
                 {
-                    fprintf(stderr, "libaaruformat: Cannot allocate memory for deduplication table.\n");
+                    TRACE("Cannot allocate memory for deduplication table.\n");
                     break;
                 }
 
@@ -330,7 +330,7 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
                 if(readBytes != ddtHeader.length)
                 {
                     free(buffer);
-                    fprintf(stderr, "libaaruformat: Could not read deduplication table, continuing...\n");
+                    FATAL("Could not read deduplication table, continuing...\n");
                     break;
                 }
 
@@ -372,8 +372,7 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
 
                 break;
             default:
-                fprintf(stderr, "libaaruformat: Found unknown compression type %d, continuing...\n",
-                        ddtHeader.compression);
+                TRACE("Found unknown compression type %d, continuing...\n", ddtHeader.compression);
                 break;
         }
     }
@@ -421,7 +420,7 @@ int32_t decode_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sectorAddres
         ddtEntry = ctx->userDataDdtBig[sectorAddress];
     else
     {
-        fprintf(stderr, "libaaruformat: Unknown DDT size type %d.\n", ctx->userDataDdtHeader.sizeType);
+        TRACE("Unknown DDT size type %d.\n", ctx->userDataDdtHeader.sizeType);
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
@@ -488,7 +487,7 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
         secondaryDdtOffset = ctx->userDataDdtBig[ddtPosition];
     else
     {
-        fprintf(stderr, "libaaruformat: Unknown DDT size type %d.\n", ctx->userDataDdtHeader.sizeType);
+        TRACE("Unknown DDT size type %d.\n", ctx->userDataDdtHeader.sizeType);
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
@@ -504,14 +503,14 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
 
         if(readBytes != sizeof(DdtHeader2))
         {
-            fprintf(stderr, "libaaruformat: Could not read block header at %" PRIu64 "\n", secondaryDdtOffset);
+            FATAL("Could not read block header at %" PRIu64 "\n", secondaryDdtOffset);
 
             return AARUF_ERROR_CANNOT_READ_BLOCK;
         }
 
         if(ddtHeader.identifier != DeDuplicationTable2 || ddtHeader.type != UserData)
         {
-            fprintf(stderr, "libaaruformat: Invalid block header at %" PRIu64 "\n", secondaryDdtOffset);
+            TRACE("Invalid block header at %" PRIu64 "\n", secondaryDdtOffset);
 
             return AARUF_ERROR_CANNOT_READ_BLOCK;
         }
@@ -618,7 +617,7 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
                 if(readBytes != ddtHeader.length)
                 {
                     free(buffer);
-                    fprintf(stderr, "libaaruformat: Could not read deduplication table, stopping...\n");
+                    FATAL("Could not read deduplication table, stopping...\n");
                     return AARUF_ERROR_CANNOT_READ_BLOCK;
                 }
 
@@ -650,8 +649,7 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
 
                 break;
             default:
-                fprintf(stderr, "libaaruformat: Found unknown compression type %d, stopping...\n",
-                        ddtHeader.compression);
+                TRACE("Found unknown compression type %d, stopping...\n", ddtHeader.compression);
                 return AARUF_ERROR_CANNOT_READ_BLOCK;
         }
     }

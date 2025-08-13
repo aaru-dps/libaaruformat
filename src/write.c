@@ -71,6 +71,13 @@ int32_t aaruf_write_sector(void *context, uint64_t sectorAddress, uint8_t *data,
         if(ctx->writingBuffer == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
 
         ctx->crc64Context = aaruf_crc64_init();
+
+        // Get current file position
+        long pos = ftell(ctx->imageStream);
+
+        // Calculate and save next block aligned position
+        ctx->nextBlockPosition =
+            pos / (1 << ctx->userDataDdtHeader.blockAlignmentShift) * (1 << ctx->userDataDdtHeader.blockAlignmentShift);
     }
 
     // TODO: DDT entry
@@ -105,13 +112,8 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
 
     // Write block header to file
 
-    // Get file position
-    long pos = ftell(ctx->imageStream);
-
-    // Fill file with zeroes until next aligned position according to DDT's block alignment shift
-    long next_alignment =
-        pos / (1 << ctx->userDataDdtHeader.blockAlignmentShift) * (1 << ctx->userDataDdtHeader.blockAlignmentShift);
-    fwrite("\0", 1, next_alignment - pos, ctx->imageStream);
+    // Move to expected block position
+    fseek(ctx->imageStream, ctx->nextBlockPosition, SEEK_SET);
 
     // Write block header
     if(fwrite(&ctx->currentBlockHeader, sizeof(BlockHeader), 1, ctx->imageStream) != 1)
