@@ -18,6 +18,7 @@
 
 #ifndef LIBAARUFORMAT_CRC64_H
 #define LIBAARUFORMAT_CRC64_H
+#include <stdint.h>
 
 typedef struct
 {

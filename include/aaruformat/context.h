@@ -19,6 +19,7 @@
 #ifndef LIBAARUFORMAT_CONTEXT_H
 #define LIBAARUFORMAT_CONTEXT_H
 
+#include "crc64.h"
 #include "lru.h"
 #include "structs.h"
 
@@ -116,6 +117,11 @@ typedef struct aaruformatContext
     uint16_t                           *cachedSecondaryDdtSmall;
     uint32_t                           *cachedSecondaryDdtBig;
     bool                                isWriting;
+    BlockHeader                         currentBlockHeader;
+    uint8_t                            *writingBuffer;
+    int                                 currentBlockOffset;
+    crc64_ctx                          *crc64Context;
+    int                                 writingBufferPosition;
 } aaruformatContext;
 
 typedef struct DumpHardwareEntriesWithData

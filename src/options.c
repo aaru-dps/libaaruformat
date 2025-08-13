@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "aaruformat.h"
 #include "internal.h"
 #include "structs/options.h"
 

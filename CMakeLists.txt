@@ -121,7 +121,8 @@ add_library(aaruformat SHARED include/aaruformat/consts.h include/aaruformat/enu
             include/aaruformat/structs/options.h
             src/options.c
             src/create.c
-            src/time.c)
+            src/time.c
+            src/write.c)
 
 include_directories(include include/aaruformat)
 

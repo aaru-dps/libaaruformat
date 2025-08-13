@@ -26,10 +26,12 @@
 
 #include <aaruformat.h>
 
+#include "internal.h"
+
 int aaruf_close(void *context)
 {
-    int i = 0;
-    mediaTagEntry *mediaTag = NULL;
+    int            i           = 0;
+    mediaTagEntry *mediaTag    = NULL;
     mediaTagEntry *tmpMediaTag = NULL;
 
     if(context == NULL)
@@ -55,8 +57,16 @@ int aaruf_close(void *context)
         {
             fclose(ctx->imageStream);
             ctx->imageStream = NULL;
-            errno = AARUF_ERROR_CANNOT_WRITE_HEADER;
+            errno            = AARUF_ERROR_CANNOT_WRITE_HEADER;
             return -1;
+        }
+
+        // Close current block first
+        if(ctx->writingBuffer != NULL)
+        {
+            int error = aaruf_close_current_block(ctx);
+
+            if(error != AARUF_STATUS_OK) return error;
         }
     }
 

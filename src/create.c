@@ -28,13 +28,13 @@
 void *aaruf_create(const char *filepath, uint32_t mediaType, uint32_t sectorSize, uint64_t userSectors,
                    uint64_t negativeSectors, uint64_t overflowSectors, const char *options,
                    const uint8_t *applicationName, uint8_t applicationNameLength, uint8_t applicationMajorVersion,
-                   uint8_t applicationMinorVersion);
+                   uint8_t applicationMinorVersion)
 {
     // Parse the options
     aaru_options parsedOptions = parse_options(options);
 
     // Allocate context
-    aaruformatContext *ctx = (aaruformatContext *)malloc(sizeof(aaruformatContext));
+    aaruformatContext *ctx = malloc(sizeof(aaruformatContext));
     if(ctx == NULL)
     {
         errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
