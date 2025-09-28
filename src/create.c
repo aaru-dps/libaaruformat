@@ -165,6 +165,45 @@ void *aaruf_create(const char *filepath, uint32_t mediaType, uint32_t sectorSize
 
     if(ctx->userDataDdtHeader.blocks % (1 << ctx->userDataDdtHeader.tableShift) != 0) ctx->userDataDdtHeader.entries++;
 
+    TRACE("Initializing primary/single DDT");
+    if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+        ctx->userDataDdtMini =
+            (uint16_t *)calloc(ctx->userDataDdtHeader.entries, sizeof(uint16_t));  // All entries to zero
+    else if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
+        ctx->userDataDdtBig =
+            (uint32_t *)calloc(ctx->userDataDdtHeader.entries, sizeof(uint32_t));  // All entries to zero
+
+    // Set the primary DDT offset (just after the header, block aligned)
+    ctx->primaryDdtOffset  = sizeof(AaruHeaderV2);  // Start just after the header
+    uint64_t alignmentMask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    ctx->primaryDdtOffset  = (ctx->primaryDdtOffset + alignmentMask) & ~alignmentMask;
+
+    TRACE("Primary DDT will be placed at offset %" PRIu64, ctx->primaryDdtOffset);
+
+    // Calculate size of primary DDT table
+    uint64_t primaryTableSize = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
+                                    ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
+                                    : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+
+    // Calculate where data blocks can start (after primary DDT + header)
+    uint64_t dataStartPosition = ctx->primaryDdtOffset + sizeof(DdtHeader2) + primaryTableSize;
+    ctx->nextBlockPosition     = (dataStartPosition + alignmentMask) & ~alignmentMask;
+
+    TRACE("Data blocks will start at position %" PRIu64, ctx->nextBlockPosition);
+
+    // Position file pointer at the data start position
+    if(fseek(ctx->imageStream, (long)ctx->nextBlockPosition, SEEK_SET) != 0)
+    {
+        FATAL("Could not seek to data start position");
+        free(ctx->readableSectorTags);
+        if(ctx->userDataDdtMini) free(ctx->userDataDdtMini);
+        if(ctx->userDataDdtBig) free(ctx->userDataDdtBig);
+        utarray_free(ctx->indexEntries);
+        free(ctx);
+        errno = AARUF_ERROR_CANNOT_CREATE_FILE;
+        return NULL;
+    }
+
     // Initialize index entries array
     TRACE("Initializing index entries array");
     UT_icd index_entry_icd = {sizeof(IndexEntry), NULL, NULL, NULL};
