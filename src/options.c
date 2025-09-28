@@ -29,7 +29,7 @@
 
 aaru_options parse_options(const char *options)
 {
-    TRACE("Entering aaruf_open(%s)", options);
+    TRACE("Entering parse_options(%s)", options);
 
     aaru_options parsed = {.compress        = true,
                            .deduplicate     = true,
