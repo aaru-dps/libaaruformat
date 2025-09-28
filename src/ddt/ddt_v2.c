@@ -1224,9 +1224,9 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, bool
     }
 
     // Step 5: Check if the specified block already has an existing secondary level table
-    createNewTable = secondaryDdtOffset == 0;
+    createNewTable = ctx->cachedSecondaryDdtSmall == NULL && ctx->cachedSecondaryDdtBig == NULL;
 
-    if(!createNewTable)
+    if(!createNewTable && secondaryDdtOffset != 0)
     {
         // Load existing table
         fseek(ctx->imageStream, secondaryDdtOffset, SEEK_SET);
@@ -1281,7 +1281,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, bool
 
         ctx->cachedDdtOffset = secondaryDdtOffset;
     }
-    else
+
+    if(createNewTable)
     {
         // Create a new empty table
         size_t tableSize = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType ? itemsPerDdtEntry * sizeof(uint16_t)
