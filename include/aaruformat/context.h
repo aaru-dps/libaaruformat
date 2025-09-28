@@ -115,6 +115,7 @@ typedef struct aaruformatContext
     uint16_t                           *sectorPrefixDdtMini;
     uint16_t                           *sectorSuffixDdtMini;
     uint64_t                            cachedDdtOffset;
+    uint64_t                            cachedDdtPosition;
     uint64_t                            primaryDdtOffset;
     uint16_t                           *cachedSecondaryDdtSmall;
     uint32_t                           *cachedSecondaryDdtBig;

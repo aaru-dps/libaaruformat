@@ -1138,7 +1138,9 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, bool
         else
             ctx->cachedSecondaryDdtBig = (uint32_t *)buffer;
 
-        ctx->cachedDdtOffset = 0;  // Will be set when written to file
+        ctx->cachedDdtOffset   = 0;            // Will be set when written to file
+        ctx->cachedDdtPosition = ddtPosition;  // Track which primary DDT position this new table belongs to
+        TRACE("Created new secondary DDT for position %" PRIu64, ddtPosition);
     }
 
     // Step 6: Update the corresponding DDT entry
