@@ -171,19 +171,59 @@ int aaruf_close(void *context)
                     else
                         ctx->userDataDdtBig[cachedDdtPosition] = (uint32_t)newSecondaryTableBlockOffset;
 
-                    // Write updated primary table back to its original position
+                    // Update index: remove old entry for cached DDT and add new one
+                    TRACE("Updating index for cached secondary DDT");
+
+                    // Remove old index entry for the cached DDT
+                    if(ctx->cachedDdtOffset != 0)
+                    {
+                        TRACE("Removing old index entry for DDT at offset %" PRIu64, ctx->cachedDdtOffset);
+                        IndexEntry *entry = NULL;
+
+                        // Find and remove the old index entry
+                        for(unsigned int i = 0; i < utarray_len(ctx->indexEntries); i++)
+                        {
+                            entry = (IndexEntry *)utarray_eltptr(ctx->indexEntries, i);
+                            if(entry && entry->offset == ctx->cachedDdtOffset &&
+                               entry->blockType == DeDuplicationTable2)
+                            {
+                                TRACE("Found old DDT index entry at position %u, removing", i);
+                                utarray_erase(ctx->indexEntries, i, 1);
+                                break;
+                            }
+                        }
+                    }
+
+                    // Add new index entry for the newly written secondary DDT
+                    IndexEntry newDdtEntry;
+                    newDdtEntry.blockType = DeDuplicationTable2;
+                    newDdtEntry.dataType  = UserData;
+                    newDdtEntry.offset    = endOfFile;
+
+                    utarray_push_back(ctx->indexEntries, &newDdtEntry);
+                    TRACE("Added new DDT index entry at offset %" PRIu64, endOfFile);
+
+                    // Write the updated primary table back to its original position in the file
+                    long savedPos = ftell(ctx->imageStream);
                     fseek(ctx->imageStream, ctx->primaryDdtOffset + sizeof(DdtHeader2), SEEK_SET);
 
                     size_t primaryTableSize = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
                                                   ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
                                                   : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
 
+                    size_t primaryWrittenBytes = 0;
                     if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-                        fwrite(ctx->userDataDdtMini, primaryTableSize, 1, ctx->imageStream);
+                        primaryWrittenBytes = fwrite(ctx->userDataDdtMini, primaryTableSize, 1, ctx->imageStream);
                     else
-                        fwrite(ctx->userDataDdtBig, primaryTableSize, 1, ctx->imageStream);
+                        primaryWrittenBytes = fwrite(ctx->userDataDdtBig, primaryTableSize, 1, ctx->imageStream);
 
-                    TRACE("Successfully wrote cached secondary DDT table and updated primary table");
+                    if(primaryWrittenBytes != 1)
+                    {
+                        TRACE("Could not flush primary DDT table to file.");
+                        return AARUF_ERROR_CANNOT_WRITE_HEADER;
+                    }
+
+                    fseek(ctx->imageStream, savedPos, SEEK_SET);
                 }
                 else
                     TRACE("Failed to write cached secondary DDT data");
@@ -266,8 +306,20 @@ int aaruf_close(void *context)
                 writtenBytes = fwrite(ctx->userDataDdtBig, primaryTableSize, 1, ctx->imageStream);
 
             if(writtenBytes == 1)
+            {
                 TRACE("Successfully wrote primary DDT header and table to file (%" PRIu64 " entries, %zu bytes)",
                       ctx->userDataDdtHeader.entries, primaryTableSize);
+
+                // Add primary DDT to index
+                TRACE("Adding primary DDT to index");
+                IndexEntry primaryDdtEntry;
+                primaryDdtEntry.blockType = DeDuplicationTable2;
+                primaryDdtEntry.dataType  = UserData;
+                primaryDdtEntry.offset    = ctx->primaryDdtOffset;
+
+                utarray_push_back(ctx->indexEntries, &primaryDdtEntry);
+                TRACE("Added primary DDT index entry at offset %" PRIu64, ctx->primaryDdtOffset);
+            }
             else
                 TRACE("Failed to write primary DDT table to file");
         }
@@ -333,10 +385,117 @@ int aaruf_close(void *context)
                 writtenBytes = fwrite(ctx->userDataDdtBig, primaryTableSize, 1, ctx->imageStream);
 
             if(writtenBytes == 1)
+            {
                 TRACE("Successfully wrote single-level DDT header and table to file (%" PRIu64 " entries, %zu bytes)",
                       ctx->userDataDdtHeader.entries, primaryTableSize);
+
+                // Add single-level DDT to index
+                TRACE("Adding single-level DDT to index");
+                IndexEntry singleDdtEntry;
+                singleDdtEntry.blockType = DeDuplicationTable2;
+                singleDdtEntry.dataType  = UserData;
+                singleDdtEntry.offset    = ctx->primaryDdtOffset;
+
+                utarray_push_back(ctx->indexEntries, &singleDdtEntry);
+                TRACE("Added single-level DDT index entry at offset %" PRIu64, ctx->primaryDdtOffset);
+            }
             else
                 TRACE("Failed to write single-level DDT table data to file");
+        }
+
+        // Write the complete index at the end of the file
+        TRACE("Writing index at the end of the file");
+        fseek(ctx->imageStream, 0, SEEK_END);
+        long indexPosition = ftell(ctx->imageStream);
+
+        // Align index position to block boundary if needed
+        uint64_t alignmentMask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+        if(indexPosition & alignmentMask)
+        {
+            uint64_t alignedPosition = (indexPosition + alignmentMask) & ~alignmentMask;
+            fseek(ctx->imageStream, alignedPosition, SEEK_SET);
+            indexPosition = alignedPosition;
+            TRACE("Aligned index position to %" PRIu64, alignedPosition);
+        }
+
+        // Prepare index header
+        IndexHeader3 indexHeader;
+        indexHeader.identifier = IndexBlock3;
+        indexHeader.entries    = utarray_len(ctx->indexEntries);
+        indexHeader.previous   = 0;  // No previous index for now
+
+        TRACE("Writing index with %" PRIu64 " entries at position %ld", indexHeader.entries, indexPosition);
+
+        // Calculate CRC64 of index entries
+        crc64_ctx *indexCrc64Context = aaruf_crc64_init();
+        if(indexCrc64Context != NULL && indexHeader.entries > 0)
+        {
+            size_t indexDataSize = indexHeader.entries * sizeof(IndexEntry);
+            aaruf_crc64_update(indexCrc64Context, (uint8_t *)utarray_front(ctx->indexEntries), indexDataSize);
+            aaruf_crc64_final(indexCrc64Context, &indexHeader.crc64);
+            TRACE("Calculated index CRC64: 0x%16lX", indexHeader.crc64);
+        }
+        else { indexHeader.crc64 = 0; }
+
+        // Write index header
+        if(fwrite(&indexHeader, sizeof(IndexHeader3), 1, ctx->imageStream) == 1)
+        {
+            TRACE("Successfully wrote index header");
+
+            // Write index entries
+            if(indexHeader.entries > 0)
+            {
+                size_t      entriesWritten = 0;
+                IndexEntry *entry          = NULL;
+
+                for(entry = (IndexEntry *)utarray_front(ctx->indexEntries); entry != NULL;
+                    entry = (IndexEntry *)utarray_next(ctx->indexEntries, entry))
+                {
+                    if(fwrite(entry, sizeof(IndexEntry), 1, ctx->imageStream) == 1)
+                    {
+                        entriesWritten++;
+                        TRACE("Wrote index entry: blockType=0x%08X dataType=%u offset=%" PRIu64, entry->blockType,
+                              entry->dataType, entry->offset);
+                    }
+                    else
+                    {
+                        TRACE("Failed to write index entry %zu", entriesWritten);
+                        break;
+                    }
+                }
+
+                if(entriesWritten == indexHeader.entries)
+                {
+                    TRACE("Successfully wrote all %zu index entries", entriesWritten);
+
+                    // Update header with index offset and rewrite it
+                    ctx->header.indexOffset = indexPosition;
+                    TRACE("Updating header with index offset: %" PRIu64, ctx->header.indexOffset);
+
+                    // Seek back to beginning and rewrite header
+                    fseek(ctx->imageStream, 0, SEEK_SET);
+                    if(fwrite(&ctx->header, sizeof(AaruHeaderV2), 1, ctx->imageStream) == 1)
+                    {
+                        TRACE("Successfully updated header with index offset");
+                    }
+                    else
+                    {
+                        TRACE("Failed to update header with index offset");
+                        return AARUF_ERROR_CANNOT_WRITE_HEADER;
+                    }
+                }
+                else
+                {
+                    TRACE("Failed to write all index entries (wrote %zu of %" PRIu64 ")", entriesWritten,
+                          indexHeader.entries);
+                    return AARUF_ERROR_CANNOT_WRITE_HEADER;
+                }
+            }
+        }
+        else
+        {
+            TRACE("Failed to write index header");
+            return AARUF_ERROR_CANNOT_WRITE_HEADER;
         }
     }
 
@@ -346,6 +505,13 @@ int aaruf_close(void *context)
     {
         fclose(ctx->imageStream);
         ctx->imageStream = NULL;
+    }
+
+    // Free index entries array
+    if(ctx->indexEntries != NULL)
+    {
+        utarray_free(ctx->indexEntries);
+        ctx->indexEntries = NULL;
     }
 
     free(ctx->sectorPrefix);

@@ -671,7 +671,7 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
 
                 if(buffer == NULL)
                 {
-                    FATAL(stderr, "Cannot allocate memory for DDT, stopping...");
+                    FATAL("Cannot allocate memory for DDT, stopping...");
                     TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
                     return AARUF_ERROR_CANNOT_READ_BLOCK;
                 }
@@ -976,6 +976,37 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, bool
             FATAL("Could not write DDT data to file.");
             return;
         }
+
+        // Update index: remove old entry and add new one for the evicted secondary DDT
+        TRACE("Updating index for evicted secondary DDT");
+
+        // Remove old index entry for the cached DDT
+        if(ctx->cachedDdtOffset != 0)
+        {
+            TRACE("Removing old index entry for DDT at offset %" PRIu64, ctx->cachedDdtOffset);
+            IndexEntry *entry = NULL;
+
+            // Find and remove the old index entry
+            for(unsigned int i = 0; i < utarray_len(ctx->indexEntries); i++)
+            {
+                entry = (IndexEntry *)utarray_eltptr(ctx->indexEntries, i);
+                if(entry && entry->offset == ctx->cachedDdtOffset && entry->blockType == DeDuplicationTable2)
+                {
+                    TRACE("Found old DDT index entry at position %u, removing", i);
+                    utarray_erase(ctx->indexEntries, i, 1);
+                    break;
+                }
+            }
+        }
+
+        // Add new index entry for the newly written secondary DDT
+        IndexEntry newDdtEntry;
+        newDdtEntry.blockType = DeDuplicationTable2;
+        newDdtEntry.dataType  = UserData;
+        newDdtEntry.offset    = endOfFile;
+
+        utarray_push_back(ctx->indexEntries, &newDdtEntry);
+        TRACE("Added new DDT index entry at offset %" PRIu64, endOfFile);
 
         // Step 4: Update the primary level table entry and flush it back to file
         uint64_t newSecondaryTableBlockOffset = endOfFile >> ctx->userDataDdtHeader.blockAlignmentShift;

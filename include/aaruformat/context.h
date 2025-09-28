@@ -22,6 +22,7 @@
 #include "crc64.h"
 #include "lru.h"
 #include "structs.h"
+#include "utarray.h"
 
 #ifndef MD5_DIGEST_LENGTH
 #define MD5_DIGEST_LENGTH 16
@@ -124,6 +125,7 @@ typedef struct aaruformatContext
     crc64_ctx                          *crc64Context;
     int                                 writingBufferPosition;
     long                                nextBlockPosition;
+    UT_array                           *indexEntries;
 } aaruformatContext;
 
 typedef struct DumpHardwareEntriesWithData

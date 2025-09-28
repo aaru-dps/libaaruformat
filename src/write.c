@@ -153,7 +153,15 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
             ctx->currentBlockHeader.cmpLength = ctx->currentBlockHeader.length;
     }
 
-    // TODO: Add to index
+    // Add to index
+    TRACE("Adding block to index");
+    IndexEntry indexEntry;
+    indexEntry.blockType = DataBlock;
+    indexEntry.dataType  = UserData;
+    indexEntry.offset    = ctx->nextBlockPosition;
+
+    utarray_push_back(ctx->indexEntries, &indexEntry);
+    TRACE("Block added to index at offset %" PRIu64, indexEntry.offset);
 
     // Write block header to file
 

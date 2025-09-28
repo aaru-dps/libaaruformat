@@ -165,6 +165,22 @@ void *aaruf_create(const char *filepath, uint32_t mediaType, uint32_t sectorSize
 
     if(ctx->userDataDdtHeader.blocks % (1 << ctx->userDataDdtHeader.tableShift) != 0) ctx->userDataDdtHeader.entries++;
 
+    // Initialize index entries array
+    TRACE("Initializing index entries array");
+    UT_icd index_entry_icd = {sizeof(IndexEntry), NULL, NULL, NULL};
+    utarray_new(ctx->indexEntries, &index_entry_icd);
+
+    if(ctx->indexEntries == NULL)
+    {
+        FATAL("Not enough memory to create index entries array");
+        free(ctx->readableSectorTags);
+        free(ctx);
+        errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
+
+        TRACE("Exiting aaruf_create() = NULL");
+        return NULL;
+    }
+
     // Is writing
     ctx->isWriting = true;
 
