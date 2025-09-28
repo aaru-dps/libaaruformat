@@ -43,6 +43,15 @@ aaru_options parse_options(const char *options)
                            .blake3          = false,
                            .spamsum         = false};
 
+    if(options == NULL)
+    {
+        TRACE("Exiting aaruf_open() = {compress: %d, deduplicate: %d, dictionary: %u, table_shift: %u, "
+              "data_shift: %u, block_alignment: %u, md5: %d, sha1: %d, sha256: %d, blake3: %d, spamsum: %d}",
+              parsed.compress, parsed.deduplicate, parsed.dictionary, parsed.table_shift, parsed.data_shift,
+              parsed.block_alignment, parsed.md5, parsed.sha1, parsed.sha256, parsed.blake3, parsed.spamsum);
+        return parsed;
+    }
+
     char buffer[1024];
     strncpy(buffer, options, sizeof(buffer));
     buffer[sizeof(buffer) - 1] = '\0';
