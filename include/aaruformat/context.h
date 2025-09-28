@@ -124,7 +124,7 @@ typedef struct aaruformatContext
     int                                 currentBlockOffset;
     crc64_ctx                          *crc64Context;
     int                                 writingBufferPosition;
-    long                                nextBlockPosition;
+    uint64_t                            nextBlockPosition;
     UT_array                           *indexEntries;
 } aaruformatContext;
 
