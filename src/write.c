@@ -112,14 +112,6 @@ int32_t aaruf_write_sector(void *context, uint64_t sectorAddress, uint8_t *data,
 
         TRACE("Initializing CRC64 context");
         ctx->crc64Context = aaruf_crc64_init();
-
-        // Get current file position
-        long pos = ftell(ctx->imageStream);
-        TRACE("Saving current file position as next block position: %ld", pos);
-
-        // Calculate and save next block aligned position
-        ctx->nextBlockPosition =
-            pos / (1 << ctx->userDataDdtHeader.blockAlignmentShift) * (1 << ctx->userDataDdtHeader.blockAlignmentShift);
     }
 
     TRACE("Copying data to writing buffer at position %zu", ctx->writingBufferPosition);
@@ -175,6 +167,12 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
     // Write block data
     if(fwrite(ctx->writingBuffer, ctx->currentBlockHeader.length, 1, ctx->imageStream) != 1)
         return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
+
+    // Update nextBlockPosition to point to the next available aligned position
+    uint64_t blockTotalSize = sizeof(BlockHeader) + ctx->currentBlockHeader.cmpLength;
+    uint64_t alignmentMask  = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    ctx->nextBlockPosition  = (ctx->nextBlockPosition + blockTotalSize + alignmentMask) & ~alignmentMask;
+    TRACE("Updated nextBlockPosition to %" PRIu64, ctx->nextBlockPosition);
 
     // Clear values
     free(ctx->writingBuffer);
