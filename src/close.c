@@ -81,8 +81,12 @@ int aaruf_close(void *context)
         }
 
         // Write cached secondary table to file end and update primary table entry with its position
-        if(ctx->userDataDdtHeader.tableShift > 0 && ctx->cachedDdtOffset != 0 &&
-           (ctx->cachedSecondaryDdtSmall != NULL || ctx->cachedSecondaryDdtBig != NULL))
+        // Check if we have a cached table that needs to be written (either it has an offset or exists in memory)
+        bool hasCachedSecondaryDdt = (ctx->userDataDdtHeader.tableShift > 0) &&
+                                     ((ctx->cachedDdtOffset != 0) ||
+                                      (ctx->cachedSecondaryDdtSmall != NULL || ctx->cachedSecondaryDdtBig != NULL));
+
+        if(hasCachedSecondaryDdt)
         {
             TRACE("Writing cached secondary DDT table to file");
 
@@ -123,10 +127,7 @@ int aaruf_close(void *context)
             uint64_t itemsPerDdtEntry = 1 << ctx->userDataDdtHeader.tableShift;
             ddtHeader.blocks          = itemsPerDdtEntry;
             ddtHeader.entries         = itemsPerDdtEntry;
-
-            // Calculate which DDT position this cached table represents
-            uint64_t cachedDdtPosition = ctx->cachedDdtOffset >> ctx->userDataDdtHeader.blockAlignmentShift;
-            ddtHeader.start            = cachedDdtPosition * itemsPerDdtEntry;
+            ddtHeader.start           = ctx->cachedDdtPosition * itemsPerDdtEntry;
 
             // Calculate data size
             if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
@@ -167,9 +168,9 @@ int aaruf_close(void *context)
                     uint64_t newSecondaryTableBlockOffset = endOfFile >> ctx->userDataDdtHeader.blockAlignmentShift;
 
                     if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-                        ctx->userDataDdtMini[cachedDdtPosition] = (uint16_t)newSecondaryTableBlockOffset;
+                        ctx->userDataDdtMini[ctx->cachedDdtPosition] = (uint16_t)newSecondaryTableBlockOffset;
                     else
-                        ctx->userDataDdtBig[cachedDdtPosition] = (uint32_t)newSecondaryTableBlockOffset;
+                        ctx->userDataDdtBig[ctx->cachedDdtPosition] = (uint32_t)newSecondaryTableBlockOffset;
 
                     // Update index: remove old entry for cached DDT and add new one
                     TRACE("Updating index for cached secondary DDT");
@@ -181,14 +182,14 @@ int aaruf_close(void *context)
                         IndexEntry *entry = NULL;
 
                         // Find and remove the old index entry
-                        for(unsigned int i = 0; i < utarray_len(ctx->indexEntries); i++)
+                        for(unsigned int k = 0; k < utarray_len(ctx->indexEntries); k++)
                         {
-                            entry = (IndexEntry *)utarray_eltptr(ctx->indexEntries, i);
+                            entry = (IndexEntry *)utarray_eltptr(ctx->indexEntries, k);
                             if(entry && entry->offset == ctx->cachedDdtOffset &&
                                entry->blockType == DeDuplicationTable2)
                             {
-                                TRACE("Found old DDT index entry at position %u, removing", i);
-                                utarray_erase(ctx->indexEntries, i, 1);
+                                TRACE("Found old DDT index entry at position %u, removing", k);
+                                utarray_erase(ctx->indexEntries, k, 1);
                                 break;
                             }
                         }

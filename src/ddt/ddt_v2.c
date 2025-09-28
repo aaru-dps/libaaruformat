@@ -900,6 +900,165 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, bool
         return;
     }
 
+    // Step 2.5: Handle case where we have a cached secondary DDT that has never been written to disk
+    // but does not contain the requested block
+    if(ctx->cachedDdtOffset == 0 && (ctx->cachedSecondaryDdtSmall != NULL || ctx->cachedSecondaryDdtBig != NULL))
+    {
+        // Only write the cached table to disk if the requested block belongs to a different DDT position
+        if(ddtPosition != ctx->cachedDdtPosition)
+        {
+            TRACE("Current secondary DDT in memory belongs to position %" PRIu64
+                  " but requested block needs position %" PRIu64,
+                  ctx->cachedDdtPosition, ddtPosition);
+
+            // Write the cached DDT to disk before proceeding with the new one
+
+            // Close the current data block first
+            if(ctx->writingBuffer != NULL) aaruf_close_current_block(ctx);
+
+            // Get current position and seek to end of file
+            currentPos = ftell(ctx->imageStream);
+            fseek(ctx->imageStream, 0, SEEK_END);
+            endOfFile = ftell(ctx->imageStream);
+
+            // Align to block boundary
+            uint64_t alignmentMask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+            endOfFile              = (endOfFile + alignmentMask) & ~alignmentMask;
+            fseek(ctx->imageStream, endOfFile, SEEK_SET);
+
+            // Prepare DDT header for the never-written cached table
+            memset(&ddtHeader, 0, sizeof(DdtHeader2));
+            ddtHeader.identifier          = DeDuplicationTable2;
+            ddtHeader.type                = UserData;
+            ddtHeader.compression         = None;  // Use no compression for simplicity
+            ddtHeader.levels              = ctx->userDataDdtHeader.levels;
+            ddtHeader.tableLevel          = ctx->userDataDdtHeader.tableLevel + 1;
+            ddtHeader.previousLevelOffset = ctx->primaryDdtOffset;
+            ddtHeader.negative            = ctx->userDataDdtHeader.negative;
+            ddtHeader.blocks              = itemsPerDdtEntry;
+            ddtHeader.overflow            = ctx->userDataDdtHeader.overflow;
+            ddtHeader.start = ctx->cachedDdtPosition * itemsPerDdtEntry;  // Use cached position with table shift
+            ddtHeader.blockAlignmentShift = ctx->userDataDdtHeader.blockAlignmentShift;
+            ddtHeader.dataShift           = ctx->userDataDdtHeader.dataShift;
+            ddtHeader.tableShift          = 0;  // Secondary tables are single level
+            ddtHeader.sizeType            = ctx->userDataDdtHeader.sizeType;
+            ddtHeader.entries             = itemsPerDdtEntry;
+
+            // Calculate data size
+            if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+                ddtHeader.length = itemsPerDdtEntry * sizeof(uint16_t);
+            else
+                ddtHeader.length = itemsPerDdtEntry * sizeof(uint32_t);
+
+            ddtHeader.cmpLength = ddtHeader.length;
+
+            // Calculate CRC64 of the data
+            crc64_context = aaruf_crc64_init();
+            if(crc64_context == NULL)
+            {
+                FATAL("Could not initialize CRC64.");
+                return;
+            }
+
+            if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+                aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cachedSecondaryDdtSmall, ddtHeader.length);
+            else
+                aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cachedSecondaryDdtBig, ddtHeader.length);
+
+            aaruf_crc64_final(crc64_context, &crc64);
+            ddtHeader.crc64    = crc64;
+            ddtHeader.cmpCrc64 = crc64;
+
+            // Write header
+            writtenBytes = fwrite(&ddtHeader, sizeof(DdtHeader2), 1, ctx->imageStream);
+            if(writtenBytes != 1)
+            {
+                FATAL("Could not write never-written DDT header to file.");
+                return;
+            }
+
+            // Write data
+            if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+                writtenBytes = fwrite(ctx->cachedSecondaryDdtSmall, ddtHeader.length, 1, ctx->imageStream);
+            else
+                writtenBytes = fwrite(ctx->cachedSecondaryDdtBig, ddtHeader.length, 1, ctx->imageStream);
+
+            if(writtenBytes != 1)
+            {
+                FATAL("Could not write never-written DDT data to file.");
+                return;
+            }
+
+            // Add index entry for the newly written secondary DDT
+            IndexEntry newDdtEntry;
+            newDdtEntry.blockType = DeDuplicationTable2;
+            newDdtEntry.dataType  = UserData;
+            newDdtEntry.offset    = endOfFile;
+
+            utarray_push_back(ctx->indexEntries, &newDdtEntry);
+            TRACE("Added new DDT index entry for never-written table at offset %" PRIu64, endOfFile);
+
+            // Update the primary level table entry to point to the new location of the secondary table
+            uint64_t newSecondaryTableBlockOffset = endOfFile >> ctx->userDataDdtHeader.blockAlignmentShift;
+
+            if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+                ctx->userDataDdtMini[ctx->cachedDdtPosition] = (uint16_t)newSecondaryTableBlockOffset;
+            else
+                ctx->userDataDdtBig[ctx->cachedDdtPosition] = (uint32_t)newSecondaryTableBlockOffset;
+
+            // Write the updated primary table back to its original position in the file
+            long savedPos = ftell(ctx->imageStream);
+            fseek(ctx->imageStream, ctx->primaryDdtOffset + sizeof(DdtHeader2), SEEK_SET);
+
+            size_t primaryTableSize = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
+                                          ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
+                                          : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+
+            if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+                writtenBytes = fwrite(ctx->userDataDdtMini, primaryTableSize, 1, ctx->imageStream);
+            else
+                writtenBytes = fwrite(ctx->userDataDdtBig, primaryTableSize, 1, ctx->imageStream);
+
+            if(writtenBytes != 1)
+            {
+                FATAL("Could not flush primary DDT table to file after writing never-written secondary table.");
+                return;
+            }
+
+            // Update nextBlockPosition to ensure future blocks don't overwrite the DDT
+            uint64_t ddtTotalSize  = sizeof(DdtHeader2) + ddtHeader.length;
+            ctx->nextBlockPosition = (endOfFile + ddtTotalSize + alignmentMask) & ~alignmentMask;
+            TRACE("Updated nextBlockPosition after never-written DDT write to %" PRIu64, ctx->nextBlockPosition);
+
+            // Free the cached table
+            if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType && ctx->cachedSecondaryDdtSmall)
+            {
+                free(ctx->cachedSecondaryDdtSmall);
+                ctx->cachedSecondaryDdtSmall = NULL;
+            }
+            else if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType && ctx->cachedSecondaryDdtBig)
+            {
+                free(ctx->cachedSecondaryDdtBig);
+                ctx->cachedSecondaryDdtBig = NULL;
+            }
+
+            // Reset cached values since we've written and freed the table
+            ctx->cachedDdtOffset   = 0;
+            ctx->cachedDdtPosition = 0;
+
+            // Restore file position
+            fseek(ctx->imageStream, savedPos, SEEK_SET);
+
+            TRACE("Successfully wrote never-written cached secondary DDT to disk");
+        }
+        else
+        {
+            // The cached DDT is actually for the requested block range, so we can use it directly
+            TRACE("Cached DDT is for the correct block range, using it directly");
+            // No need to write to disk, just continue with the cached table
+        }
+    }
+
     // Step 3: Write the currently in-memory cached secondary level table to the end of the file
     if(ctx->cachedDdtOffset != 0)
     {
