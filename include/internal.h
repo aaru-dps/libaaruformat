@@ -45,6 +45,10 @@ int32_t   decode_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sectorAddr
                                      uint64_t *blockOffset, uint8_t *sectorStatus);
 int32_t   decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, uint64_t *offset,
                                     uint64_t *blockOffset, uint8_t *sectorStatus);
+void      set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, bool negative, uint64_t offset,
+                                  uint64_t blockOffset, uint8_t sectorStatus);
+void      set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, bool negative, uint64_t offset,
+                                 uint64_t blockOffset, uint8_t sectorStatus);
 aaru_options parse_options(const char *options);
 uint64_t     get_filetime_uint64();
 int32_t      aaruf_close_current_block(aaruformatContext *ctx);

@@ -98,15 +98,15 @@ typedef struct aaruformatContext
     uint8_t                            *cicmBlock;
     DumpHardwareHeader                  dumpHardwareHeader;
     struct DumpHardwareEntriesWithData *dumpHardwareEntriesWithData;
-    struct ImageInfo                    imageInfo;
+    ImageInfo                           imageInfo;
     CdEccContext                       *eccCdContext;
     uint8_t                             numberOfDataTracks;
     TrackEntry                         *dataTracks;
     bool                               *readableSectorTags;
     struct CacheHeader                  blockHeaderCache;
     struct CacheHeader                  blockCache;
-    struct Checksums                    checksums;
-    struct mediaTagEntry               *mediaTags;
+    Checksums                           checksums;
+    mediaTagEntry                      *mediaTags;
     DdtHeader2                          userDataDdtHeader;
     int                                 ddtVersion;
     uint16_t                           *userDataDdtMini;
@@ -114,6 +114,7 @@ typedef struct aaruformatContext
     uint16_t                           *sectorPrefixDdtMini;
     uint16_t                           *sectorSuffixDdtMini;
     uint64_t                            cachedDdtOffset;
+    uint64_t                            primaryDdtOffset;
     uint16_t                           *cachedSecondaryDdtSmall;
     uint32_t                           *cachedSecondaryDdtBig;
     bool                                isWriting;
