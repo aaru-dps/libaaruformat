@@ -39,5 +39,6 @@ int cmd_read_long(int argc, char *argv[]);
 int cmd_verify(int argc, char *argv[]);
 int cmd_verify_sectors(int argc, char *argv[]);
 int cmd_compare(int argc, char *argv[]);
+int cmd_convert(int argc, char *argv[]);
 
 #endif  // LIBAARUFORMAT_COMMANDS_H

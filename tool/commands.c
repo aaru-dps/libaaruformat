@@ -132,6 +132,26 @@ int cmd_verify(int argc, char *argv[]) { return cmd_verify_common(argc, argv, fa
 
 int cmd_verify_sectors(int argc, char *argv[]) { return cmd_verify_common(argc, argv, true); }
 
+int cmd_convert(int argc, char *argv[])
+{
+    struct arg_str *input_filename  = arg_str1(NULL, NULL, "<input>", "Input image file");
+    struct arg_str *output_filename = arg_str1(NULL, NULL, "<output>", "Output image file");
+    struct arg_end *end             = arg_end(10);
+    void           *argtable[]      = {input_filename, output_filename, end};
+
+    if(arg_parse(argc, argv, argtable) > 0)
+    {
+        arg_print_errors(stderr, end, "convert");
+        usage_convert();
+        arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
+        return -1;
+    }
+
+    int result = convert(input_filename->sval[0], output_filename->sval[0]);
+    arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
+    return result;
+}
+
 Command commands[] = {
     {      "identify",       cmd_identify},
     {          "info",           cmd_info},
@@ -140,6 +160,7 @@ Command commands[] = {
     {        "verify",         cmd_verify},
     {"verify_sectors", cmd_verify_sectors},
     {       "compare",        cmd_compare},
+    {       "convert",        cmd_convert},
 };
 
 const size_t num_commands = sizeof(commands) / sizeof(commands[0]);

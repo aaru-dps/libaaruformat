@@ -39,7 +39,9 @@ void usage()
     printf("  read             Reads a sector and prints it out on screen.\n");
     printf("  read_long        Reads a sector with all its prefixes and suffixes.\n");
     printf("  verify           Verifies the integrity of blocks in an image.\n");
-    printf("  verify_sectors   Verifies the integrity of all sectors in an image.\n\n");
+    printf("  verify_sectors   Verifies the integrity of all sectors in an image.\n");
+    printf("  compare          Compares two AaruFormat images.\n");
+    printf("  convert          Converts an AaruFormat image to another AaruFormat image.\n\n");
     printf("For help with any verb, run:\n");
     printf("  aaruformattool <verb> --help\n");
 }
@@ -108,4 +110,14 @@ void usage_compare()
     printf("Arguments:\n");
     printf("  <filename1>      Path to first image file.\n");
     printf("  <filename2>      Path to second image file.\n");
+}
+
+void usage_convert()
+{
+    printf("\nUsage:\n");
+    printf("  aaruformattool convert <input> <output>\n\n");
+    printf("Converts an AaruFormat image by reading all sectors from input and writing them to output.\n");
+    printf("Arguments:\n");
+    printf("  <input>          Path to input image file.\n");
+    printf("  <output>         Path to output image file.\n");
 }
