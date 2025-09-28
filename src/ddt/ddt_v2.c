@@ -888,11 +888,13 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, bool
         if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
         {
             ddtEntry |= (uint64_t)sectorStatus << 12;
+            TRACE("Setting small secondary DDT entry %d to %u", sectorAddress % itemsPerDdtEntry, (uint16_t)ddtEntry);
             ctx->cachedSecondaryDdtSmall[sectorAddress % itemsPerDdtEntry] = (uint16_t)ddtEntry;
         }
         else if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
         {
             ddtEntry |= (uint64_t)sectorStatus << 28;
+            TRACE("Setting small secondary DDT entry %d to %u", sectorAddress % itemsPerDdtEntry, (uint16_t)ddtEntry);
             ctx->cachedSecondaryDdtBig[sectorAddress % itemsPerDdtEntry] = (uint32_t)ddtEntry;
         }
 
@@ -1309,11 +1311,13 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, bool
     if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
     {
         ddtEntry |= (uint64_t)sectorStatus << 12;
+        TRACE("Setting small secondary DDT entry %d to %u", sectorAddress % itemsPerDdtEntry, (uint16_t)ddtEntry);
         ctx->cachedSecondaryDdtSmall[sectorAddress % itemsPerDdtEntry] = (uint16_t)ddtEntry;
     }
     else if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
     {
         ddtEntry |= (uint64_t)sectorStatus << 28;
+        TRACE("Setting big secondary DDT entry %d to %u", sectorAddress % itemsPerDdtEntry, (uint32_t)ddtEntry);
         ctx->cachedSecondaryDdtBig[sectorAddress % itemsPerDdtEntry] = (uint32_t)ddtEntry;
     }
 
