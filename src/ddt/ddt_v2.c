@@ -910,8 +910,10 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, bool
         currentPos = ftell(ctx->imageStream);
         fseek(ctx->imageStream, 0, SEEK_END);
         endOfFile = ftell(ctx->imageStream);
-        endOfFile = endOfFile / (1 << ctx->userDataDdtHeader.blockAlignmentShift) *
-                    (1 << ctx->userDataDdtHeader.blockAlignmentShift);
+
+        // Align to block boundary
+        uint64_t alignmentMask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+        endOfFile              = (endOfFile + alignmentMask) & ~alignmentMask;
         fseek(ctx->imageStream, endOfFile, SEEK_SET);
 
         // Prepare DDT header for the cached table
