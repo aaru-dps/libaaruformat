@@ -1013,14 +1013,12 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, bool
         // Step 4: Update the primary level table entry and flush it back to file
         uint64_t newSecondaryTableBlockOffset = endOfFile >> ctx->userDataDdtHeader.blockAlignmentShift;
 
-        // Find which entry in the primary table corresponds to the cached secondary table
-        uint64_t cachedDdtPosition = ctx->cachedDdtOffset >> ctx->userDataDdtHeader.blockAlignmentShift;
-
         // Update the primary table entry to point to the new location of the secondary table
+        // Use ddtPosition which was calculated from sectorAddress, not cachedDdtOffset
         if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-            ctx->userDataDdtMini[cachedDdtPosition] = (uint16_t)newSecondaryTableBlockOffset;
+            ctx->userDataDdtMini[ddtPosition] = (uint16_t)newSecondaryTableBlockOffset;
         else
-            ctx->userDataDdtBig[cachedDdtPosition] = (uint32_t)newSecondaryTableBlockOffset;
+            ctx->userDataDdtBig[ddtPosition] = (uint32_t)newSecondaryTableBlockOffset;
 
         // Write the updated primary table back to its original position in the file
         long savedPos = ftell(ctx->imageStream);
