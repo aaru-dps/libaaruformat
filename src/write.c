@@ -85,6 +85,8 @@ int32_t aaruf_write_sector(void *context, uint64_t sectorAddress, uint8_t *data,
         }
     }
 
+    set_ddt_entry_v2(ctx, sectorAddress, ctx->currentBlockOffset, ctx->nextBlockPosition, sectorStatus);
+
     // No block set
     if(ctx->writingBufferPosition == 0)
     {
@@ -120,7 +122,6 @@ int32_t aaruf_write_sector(void *context, uint64_t sectorAddress, uint8_t *data,
             pos / (1 << ctx->userDataDdtHeader.blockAlignmentShift) * (1 << ctx->userDataDdtHeader.blockAlignmentShift);
     }
 
-    set_ddt_entry_v2(ctx, sectorAddress, ctx->currentBlockOffset, ctx->nextBlockPosition, sectorStatus);
     TRACE("Copying data to writing buffer at position %zu", ctx->writingBufferPosition);
     memcpy(ctx->writingBuffer, data, length);
     TRACE("Advancing writing buffer position to %zu", ctx->writingBufferPosition + length);

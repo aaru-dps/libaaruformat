@@ -903,10 +903,16 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, bool
     // Step 3: Write the currently in-memory cached secondary level table to the end of the file
     if(ctx->cachedDdtOffset != 0)
     {
+        // Close the current data block first
+        if(ctx->writingBuffer != NULL) aaruf_close_current_block(ctx);
+
         // Get current position and seek to end of file
         currentPos = ftell(ctx->imageStream);
         fseek(ctx->imageStream, 0, SEEK_END);
         endOfFile = ftell(ctx->imageStream);
+        endOfFile = endOfFile / (1 << ctx->userDataDdtHeader.blockAlignmentShift) *
+                    (1 << ctx->userDataDdtHeader.blockAlignmentShift);
+        fseek(ctx->imageStream, endOfFile, SEEK_SET);
 
         // Prepare DDT header for the cached table
         memset(&ddtHeader, 0, sizeof(DdtHeader2));
