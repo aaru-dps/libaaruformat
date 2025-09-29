@@ -193,7 +193,7 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
     if(block != NULL)
     {
         TRACE("Getting data from cache");
-        memcpy(data, block + offset, blockHeader->sectorSize);
+        memcpy(data, block + offset * blockHeader->sectorSize, blockHeader->sectorSize);
         *length = blockHeader->sectorSize;
 
         TRACE("Exiting aaruf_read_sector() = AARUF_STATUS_OK");
