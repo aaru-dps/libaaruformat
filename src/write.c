@@ -109,17 +109,12 @@ int32_t aaruf_write_sector(void *context, uint64_t sectorAddress, uint8_t *data,
             TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
             return AARUF_ERROR_NOT_ENOUGH_MEMORY;
         }
-
-        TRACE("Initializing CRC64 context");
-        ctx->crc64Context = aaruf_crc64_init();
     }
 
     TRACE("Copying data to writing buffer at position %zu", ctx->writingBufferPosition);
     memcpy(ctx->writingBuffer, data, length);
     TRACE("Advancing writing buffer position to %zu", ctx->writingBufferPosition + length);
     ctx->writingBufferPosition += length;
-    TRACE("Updating CRC64");
-    aaruf_crc64_update(ctx->crc64Context, data, length);
     TRACE("Advancing current block offset to %zu", ctx->currentBlockOffset + 1);
     ctx->currentBlockOffset++;
 
@@ -136,6 +131,11 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
     if(!ctx->isWriting) return AARUF_READ_ONLY;
 
     ctx->currentBlockHeader.length = ctx->currentBlockOffset * ctx->currentBlockHeader.sectorSize;
+
+    TRACE("Initializing CRC64 context");
+    ctx->crc64Context = aaruf_crc64_init();
+    TRACE("Updating CRC64");
+    aaruf_crc64_update(ctx->crc64Context, ctx->writingBuffer, ctx->currentBlockHeader.length);
     aaruf_crc64_final(ctx->crc64Context, &ctx->currentBlockHeader.crc64);
 
     switch(ctx->currentBlockHeader.compression)
