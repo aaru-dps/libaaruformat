@@ -136,7 +136,6 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
     // Partially written image... as we can't know the real sector size just assume it's common :/
     if(sectorStatus == SectorStatusNotDumped)
     {
-        memset(data, 0, ctx->imageInfo.SectorSize);
         *length = ctx->imageInfo.SectorSize;
 
         TRACE("Exiting aaruf_read_sector() = AARUF_STATUS_SECTOR_NOT_DUMPED");
