@@ -112,7 +112,7 @@ int32_t aaruf_write_sector(void *context, uint64_t sectorAddress, uint8_t *data,
     }
 
     TRACE("Copying data to writing buffer at position %zu", ctx->writingBufferPosition);
-    memcpy(ctx->writingBuffer, data, length);
+    memcpy(ctx->writingBuffer + ctx->writingBufferPosition, data, length);
     TRACE("Advancing writing buffer position to %zu", ctx->writingBufferPosition + length);
     ctx->writingBufferPosition += length;
     TRACE("Advancing current block offset to %zu", ctx->currentBlockOffset + 1);
