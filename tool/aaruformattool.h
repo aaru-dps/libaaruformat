@@ -34,6 +34,7 @@ int   verify_sectors(const char *path);
 bool  check_cd_sector_channel(CdEccContext *context, uint8_t *sector, bool *unknown, bool *has_edc, bool *edc_correct,
                               bool *has_ecc_p, bool *ecc_p_correct, bool *has_ecc_q, bool *ecc_q_correct);
 int   compare(char *path1, char *path2);
+int   cli_compare(char *path1, char *path2);
 int   convert(char *input_path, char *output_path);
 
 #endif  // LIBAARUFORMAT_TOOL_AARUFORMATTOOL_H_

@@ -41,6 +41,7 @@ void usage()
     printf("  verify           Verifies the integrity of blocks in an image.\n");
     printf("  verify_sectors   Verifies the integrity of all sectors in an image.\n");
     printf("  compare          Compares two AaruFormat images.\n");
+    printf("  cli-compare      Compares two AaruFormat images sector by sector (CLI mode).\n");
     printf("  convert          Converts an AaruFormat image to another AaruFormat image.\n\n");
     printf("For help with any verb, run:\n");
     printf("  aaruformattool <verb> --help\n");
@@ -107,6 +108,16 @@ void usage_compare()
     printf("\nUsage:\n");
     printf("  aaruformattool compare <filename1> <filename2>\n\n");
     printf("Compares two AaruFormat images.\n");
+    printf("Arguments:\n");
+    printf("  <filename1>      Path to first image file.\n");
+    printf("  <filename2>      Path to second image file.\n");
+}
+
+void usage_cli_compare()
+{
+    printf("\nUsage:\n");
+    printf("  aaruformattool cli-compare <filename1> <filename2>\n\n");
+    printf("Compares two AaruFormat images sector by sector and lists all different sectors.\n");
     printf("Arguments:\n");
     printf("  <filename1>      Path to first image file.\n");
     printf("  <filename2>      Path to second image file.\n");
