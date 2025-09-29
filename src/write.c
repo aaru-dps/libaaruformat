@@ -101,7 +101,7 @@ int32_t aaruf_write_sector(void *context, uint64_t sectorAddress, uint8_t *data,
         TRACE("Setting max buffer size to %u bytes", maxBufferSize);
 
         TRACE("Allocating memory for writing buffer");
-        ctx->writingBuffer = (uint8_t *)malloc(maxBufferSize);
+        ctx->writingBuffer = (uint8_t *)calloc(1, maxBufferSize);
         if(ctx->writingBuffer == NULL)
         {
             FATAL("Could not allocate memory");
