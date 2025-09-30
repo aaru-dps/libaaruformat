@@ -29,20 +29,16 @@
 #define EXPECTED_CRC64_63BYTES   0x29F331FC90702BF4
 #define EXPECTED_CRC64_2352BYTES 0x126435DB43477623
 
-static const uint8_t *buffer;
-static const uint8_t *buffer_misaligned;
+static uint8_t *buffer;
+static uint8_t *buffer_misaligned;
 
 class crc64Fixture : public ::testing::Test
 {
 public:
-    crc64Fixture()
-    {
-        // initialization;
-        // can also be done in SetUp()
-    }
+    crc64Fixture() = default;
 
 protected:
-    void SetUp()
+    void SetUp() override
     {
         char path[PATH_MAX];
         char filename[PATH_MAX];
@@ -51,24 +47,21 @@ protected:
         snprintf(filename, PATH_MAX, "%s/data/random", path);
 
         FILE *file = fopen(filename, "rb");
-        buffer     = (const uint8_t *)malloc(1048576);
-        fread((void *)buffer, 1, 1048576, file);
+        buffer     = static_cast<uint8_t *>(malloc(1048576));
+        fread(buffer, 1, 1048576, file);
         fclose(file);
 
-        buffer_misaligned = (const uint8_t *)malloc(1048577);
-        memcpy((void *)(buffer_misaligned + 1), buffer, 1048576);
+        buffer_misaligned = static_cast<uint8_t *>(malloc(1048577));
+        memcpy(buffer_misaligned + 1, buffer, 1048576);
     }
 
-    void TearDown()
+    void TearDown() override
     {
-        free((void *)buffer);
-        free((void *)buffer_misaligned);
+        free(buffer);
+        free(buffer_misaligned);
     }
 
-    ~crc64Fixture()
-    {
-        // resources cleanup, no exceptions allowed
-    }
+    ~crc64Fixture() override = default;
 
     // shared user data
 };

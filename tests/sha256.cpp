@@ -24,7 +24,7 @@
 
 #include "gtest/gtest.h"
 
-static const uint8_t *buffer;
+static uint8_t *buffer;
 
 unsigned char expected_sha256[SHA256_DIGEST_LENGTH] = {0x4d, 0x1a, 0x6b, 0x8a, 0x54, 0x67, 0x00, 0xc4, 0x8e, 0xda, 0x70,
                                                        0xd3, 0x39, 0x1c, 0x8f, 0x15, 0x8a, 0x8d, 0x12, 0xb2, 0x38, 0x92,
@@ -33,14 +33,10 @@ unsigned char expected_sha256[SHA256_DIGEST_LENGTH] = {0x4d, 0x1a, 0x6b, 0x8a, 0
 class sha256Fixture : public ::testing::Test
 {
 public:
-    sha256Fixture()
-    {
-        // initialization;
-        // can also be done in SetUp()
-    }
+    sha256Fixture() = default;
 
 protected:
-    void SetUp()
+    void SetUp() override
     {
         char path[PATH_MAX];
         char filename[PATH_MAX];
@@ -49,17 +45,14 @@ protected:
         snprintf(filename, PATH_MAX, "%s/data/random", path);
 
         FILE *file = fopen(filename, "rb");
-        buffer     = (const uint8_t *)malloc(1048576);
-        fread((void *)buffer, 1, 1048576, file);
+        buffer     = static_cast<uint8_t *>(malloc(1048576));
+        fread(buffer, 1, 1048576, file);
         fclose(file);
     }
 
-    void TearDown() { free((void *)buffer); }
+    void TearDown() override { free(buffer); }
 
-    ~sha256Fixture()
-    {
-        // resources cleanup, no exceptions allowed
-    }
+    ~sha256Fixture() override = default;
 
     // shared user data
 };

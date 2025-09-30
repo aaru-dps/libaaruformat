@@ -28,19 +28,15 @@
 
 #define EXPECTED_CRC32 0xdfbc99bb
 
-static const uint8_t *buffer;
+static uint8_t *buffer;
 
 class flacFixture : public ::testing::Test
 {
 public:
-    flacFixture()
-    {
-        // initialization;
-        // can also be done in SetUp()
-    }
+    flacFixture() = default;
 
 protected:
-    void SetUp()
+    void SetUp() override
     {
         char path[PATH_MAX];
         char filename[PATH_MAX];
@@ -49,24 +45,21 @@ protected:
         snprintf(filename, PATH_MAX, "%s/data/flac.flac", path);
 
         FILE *file = fopen(filename, "rb");
-        buffer     = (const uint8_t *)malloc(6534197);
-        fread((void *)buffer, 1, 6534197, file);
+        buffer     = static_cast<uint8_t *>(malloc(6534197));
+        fread(buffer, 1, 6534197, file);
         fclose(file);
     }
 
-    void TearDown() { free((void *)buffer); }
+    void TearDown() override { free(buffer); }
 
-    ~flacFixture()
-    {
-        // resources cleanup, no exceptions allowed
-    }
+    ~flacFixture() override = default;
 
     // shared user data
 };
 
 TEST_F(flacFixture, flac)
 {
-    auto *outBuf = (uint8_t *)malloc(9633792);
+    auto *outBuf = static_cast<uint8_t *>(malloc(9633792));
 
     auto decoded = aaruf_flac_decode_redbook_buffer(outBuf, 9633792, buffer, 6534197);
 
@@ -81,29 +74,29 @@ TEST_F(flacFixture, flac)
 
 TEST_F(flacFixture, flacCompress)
 {
-    size_t         original_len = 9633792;
-    uint           cmp_len      = original_len;
-    uint           decmp_len    = original_len;
-    char           path[PATH_MAX];
-    char           filename[PATH_MAX * 2];
-    FILE          *file;
-    uint32_t       original_crc, decmp_crc;
-    const uint8_t *original;
-    uint8_t       *cmp_buffer;
-    uint8_t       *decmp_buffer;
-    size_t         newSize;
+    size_t   original_len = 9633792;
+    uint     cmp_len      = original_len;
+    uint     decmp_len    = original_len;
+    char     path[PATH_MAX];
+    char     filename[PATH_MAX * 2];
+    FILE    *file;
+    uint32_t original_crc, decmp_crc;
+    uint8_t *original;
+    uint8_t *cmp_buffer;
+    uint8_t *decmp_buffer;
+    size_t   newSize;
 
     // Allocate buffers
-    original     = (const uint8_t *)malloc(original_len);
-    cmp_buffer   = (uint8_t *)malloc(cmp_len);
-    decmp_buffer = (uint8_t *)malloc(decmp_len);
+    original     = static_cast<uint8_t *>(malloc(original_len));
+    cmp_buffer   = static_cast<uint8_t *>(malloc(cmp_len));
+    decmp_buffer = static_cast<uint8_t *>(malloc(decmp_len));
 
     // Read the file
     getcwd(path, PATH_MAX);
     snprintf(filename, PATH_MAX, "%s/data/audio.bin", path);
 
     file = fopen(filename, "rb");
-    fread((void *)original, 1, original_len, file);
+    fread(original, 1, original_len, file);
     fclose(file);
 
     // Calculate the CRC
@@ -124,7 +117,7 @@ TEST_F(flacFixture, flacCompress)
     decmp_crc = crc32_data(decmp_buffer, decmp_len);
 
     // Free buffers
-    free((void *)original);
+    free(original);
     free(cmp_buffer);
     free(decmp_buffer);
 

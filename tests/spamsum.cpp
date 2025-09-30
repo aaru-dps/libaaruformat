@@ -29,20 +29,16 @@
 #define EXPECTED_SPAMSUM_63BYTES   "3:Ac4E9E5+S09q2kABV9:Ac4E9EgSs7kW9"
 #define EXPECTED_SPAMSUM_2352BYTES "48:pasCLoANDXmjCz1p2OpPm+Gek3xmZfJJ5DD4BacmmlodQMQa/58Z:csK1Nxz7XFGeJS/flHMQu2Z"
 
-static const uint8_t *buffer;
-static const uint8_t *buffer_misaligned;
+static uint8_t *buffer;
+static uint8_t *buffer_misaligned;
 
 class spamsumFixture : public ::testing::Test
 {
 public:
-    spamsumFixture()
-    {
-        // initialization;
-        // can also be done in SetUp()
-    }
+    spamsumFixture() = default;
 
 protected:
-    void SetUp()
+    void SetUp() override
     {
         char path[PATH_MAX];
         char filename[PATH_MAX];
@@ -51,24 +47,21 @@ protected:
         snprintf(filename, PATH_MAX, "%s/data/random", path);
 
         FILE *file = fopen(filename, "rb");
-        buffer     = (const uint8_t *)malloc(1048576);
-        fread((void *)buffer, 1, 1048576, file);
+        buffer     = static_cast<uint8_t *>(malloc(1048576));
+        fread(buffer, 1, 1048576, file);
         fclose(file);
 
-        buffer_misaligned = (const uint8_t *)malloc(1048577);
-        memcpy((void *)(buffer_misaligned + 1), buffer, 1048576);
+        buffer_misaligned = static_cast<uint8_t *>(malloc(1048577));
+        memcpy(buffer_misaligned + 1, buffer, 1048576);
     }
 
-    void TearDown()
+    void TearDown() override
     {
-        free((void *)buffer);
-        free((void *)buffer_misaligned);
+        free(buffer);
+        free(buffer_misaligned);
     }
 
-    ~spamsumFixture()
-    {
-        // resources cleanup, no exceptions allowed
-    }
+    ~spamsumFixture() override = default;
 
     // shared user data
 };
@@ -76,101 +69,101 @@ protected:
 TEST_F(spamsumFixture, spamsum_auto)
 {
     spamsum_ctx *ctx     = aaruf_spamsum_init();
-    const char  *spamsum = (const char *)malloc(FUZZY_MAX_RESULT);
+    char        *spamsum = static_cast<char *>(malloc(FUZZY_MAX_RESULT));
 
     EXPECT_NE(ctx, nullptr);
     EXPECT_NE(spamsum, nullptr);
 
     aaruf_spamsum_update(ctx, buffer, 1048576);
-    aaruf_spamsum_final(ctx, (uint8_t *)spamsum);
+    aaruf_spamsum_final(ctx, reinterpret_cast<uint8_t *>(spamsum));
     aaruf_spamsum_free(ctx);
 
     EXPECT_STREQ(spamsum, EXPECTED_SPAMSUM);
 
-    free((void *)spamsum);
+    free(spamsum);
 }
 
 TEST_F(spamsumFixture, spamsum_auto_misaligned)
 {
     spamsum_ctx *ctx     = aaruf_spamsum_init();
-    const char  *spamsum = (const char *)malloc(FUZZY_MAX_RESULT);
+    char        *spamsum = static_cast<char *>(malloc(FUZZY_MAX_RESULT));
 
     EXPECT_NE(ctx, nullptr);
     EXPECT_NE(spamsum, nullptr);
 
     aaruf_spamsum_update(ctx, buffer_misaligned + 1, 1048576);
-    aaruf_spamsum_final(ctx, (uint8_t *)spamsum);
+    aaruf_spamsum_final(ctx, reinterpret_cast<uint8_t *>(spamsum));
     aaruf_spamsum_free(ctx);
 
     EXPECT_STREQ(spamsum, EXPECTED_SPAMSUM);
 
-    free((void *)spamsum);
+    free(spamsum);
 }
 
 TEST_F(spamsumFixture, spamsum_auto_15bytes)
 {
     spamsum_ctx *ctx     = aaruf_spamsum_init();
-    const char  *spamsum = (const char *)malloc(FUZZY_MAX_RESULT);
+    char        *spamsum = static_cast<char *>(malloc(FUZZY_MAX_RESULT));
 
     EXPECT_NE(ctx, nullptr);
     EXPECT_NE(spamsum, nullptr);
 
     aaruf_spamsum_update(ctx, buffer, 15);
-    aaruf_spamsum_final(ctx, (uint8_t *)spamsum);
+    aaruf_spamsum_final(ctx, reinterpret_cast<uint8_t *>(spamsum));
     aaruf_spamsum_free(ctx);
 
     EXPECT_STREQ(spamsum, EXPECTED_SPAMSUM_15BYTES);
 
-    free((void *)spamsum);
+    free(spamsum);
 }
 
 TEST_F(spamsumFixture, spamsum_auto_31bytes)
 {
     spamsum_ctx *ctx     = aaruf_spamsum_init();
-    const char  *spamsum = (const char *)malloc(FUZZY_MAX_RESULT);
+    char        *spamsum = static_cast<char *>(malloc(FUZZY_MAX_RESULT));
 
     EXPECT_NE(ctx, nullptr);
     EXPECT_NE(spamsum, nullptr);
 
     aaruf_spamsum_update(ctx, buffer, 31);
-    aaruf_spamsum_final(ctx, (uint8_t *)spamsum);
+    aaruf_spamsum_final(ctx, reinterpret_cast<uint8_t *>(spamsum));
     aaruf_spamsum_free(ctx);
 
     EXPECT_STREQ(spamsum, EXPECTED_SPAMSUM_31BYTES);
 
-    free((void *)spamsum);
+    free(spamsum);
 }
 
 TEST_F(spamsumFixture, spamsum_auto_63bytes)
 {
     spamsum_ctx *ctx     = aaruf_spamsum_init();
-    const char  *spamsum = (const char *)malloc(FUZZY_MAX_RESULT);
+    char        *spamsum = static_cast<char *>(malloc(FUZZY_MAX_RESULT));
 
     EXPECT_NE(ctx, nullptr);
     EXPECT_NE(spamsum, nullptr);
 
     aaruf_spamsum_update(ctx, buffer, 63);
-    aaruf_spamsum_final(ctx, (uint8_t *)spamsum);
+    aaruf_spamsum_final(ctx, reinterpret_cast<uint8_t *>(spamsum));
     aaruf_spamsum_free(ctx);
 
     EXPECT_STREQ(spamsum, EXPECTED_SPAMSUM_63BYTES);
 
-    free((void *)spamsum);
+    free(spamsum);
 }
 
 TEST_F(spamsumFixture, spamsum_auto_2352bytes)
 {
     spamsum_ctx *ctx     = aaruf_spamsum_init();
-    const char  *spamsum = (const char *)malloc(FUZZY_MAX_RESULT);
+    char        *spamsum = static_cast<char *>(malloc(FUZZY_MAX_RESULT));
 
     EXPECT_NE(ctx, nullptr);
     EXPECT_NE(spamsum, nullptr);
 
     aaruf_spamsum_update(ctx, buffer, 2352);
-    aaruf_spamsum_final(ctx, (uint8_t *)spamsum);
+    aaruf_spamsum_final(ctx, reinterpret_cast<uint8_t *>(spamsum));
     aaruf_spamsum_free(ctx);
 
     EXPECT_STREQ(spamsum, EXPECTED_SPAMSUM_2352BYTES);
 
-    free((void *)spamsum);
+    free(spamsum);
 }

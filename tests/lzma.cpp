@@ -27,19 +27,15 @@
 
 #define EXPECTED_CRC32 0x954bf76e
 
-static const uint8_t *buffer;
+static uint8_t *buffer;
 
 class lzmaFixture : public ::testing::Test
 {
 public:
-    lzmaFixture()
-    {
-        // initialization;
-        // can also be done in SetUp()
-    }
+    lzmaFixture() = default;
 
 protected:
-    void SetUp()
+    void SetUp() override
     {
         char path[PATH_MAX];
         char filename[PATH_MAX];
@@ -48,17 +44,14 @@ protected:
         snprintf(filename, PATH_MAX, "%s/data/lzma.bin", path);
 
         FILE *file = fopen(filename, "rb");
-        buffer     = (const uint8_t *)malloc(1200275);
-        fread((void *)buffer, 1, 1200275, file);
+        buffer     = static_cast<uint8_t *>(malloc(1200275));
+        fread(buffer, 1, 1200275, file);
         fclose(file);
     }
 
-    void TearDown() { free((void *)buffer); }
+    void TearDown() override { free(buffer); }
 
-    ~lzmaFixture()
-    {
-        // resources cleanup, no exceptions allowed
-    }
+    ~lzmaFixture() override = default;
 
     // shared user data
 };
@@ -68,7 +61,7 @@ TEST_F(lzmaFixture, lzma)
     uint8_t params[] = {0x5D, 0x00, 0x00, 0x00, 0x02};
     size_t  destLen  = 8388608;
     size_t  srcLen   = 1200275;
-    auto   *outBuf   = (uint8_t *)malloc(8388608);
+    auto   *outBuf   = static_cast<uint8_t *>(malloc(8388608));
 
     auto err = aaruf_lzma_decode_buffer(outBuf, &destLen, buffer, &srcLen, params, 5);
 
@@ -84,31 +77,31 @@ TEST_F(lzmaFixture, lzma)
 
 TEST_F(lzmaFixture, lzmaCompress)
 {
-    size_t         original_len = 8388608;
-    size_t         cmp_len      = original_len;
-    size_t         decmp_len    = original_len;
-    char           path[PATH_MAX];
-    char           filename[PATH_MAX * 2];
-    FILE          *file;
-    uint32_t       original_crc, decmp_crc;
-    const uint8_t *original;
-    uint8_t       *cmp_buffer;
-    uint8_t       *decmp_buffer;
-    int            err;
-    uint8_t        props[5];
-    size_t         props_len = 5;
+    size_t   original_len = 8388608;
+    size_t   cmp_len      = original_len;
+    size_t   decmp_len    = original_len;
+    char     path[PATH_MAX];
+    char     filename[PATH_MAX * 2];
+    FILE    *file;
+    uint32_t original_crc, decmp_crc;
+    uint8_t *original;
+    uint8_t *cmp_buffer;
+    uint8_t *decmp_buffer;
+    int      err;
+    uint8_t  props[5];
+    size_t   props_len = 5;
 
     // Allocate buffers
-    original     = (const uint8_t *)malloc(original_len);
-    cmp_buffer   = (uint8_t *)malloc(cmp_len);
-    decmp_buffer = (uint8_t *)malloc(decmp_len);
+    original     = static_cast<uint8_t *>(malloc(original_len));
+    cmp_buffer   = static_cast<uint8_t *>(malloc(cmp_len));
+    decmp_buffer = static_cast<uint8_t *>(malloc(decmp_len));
 
     // Read the file
     getcwd(path, PATH_MAX);
     snprintf(filename, PATH_MAX, "%s/data/data.bin", path);
 
     file = fopen(filename, "rb");
-    fread((void *)original, 1, original_len, file);
+    fread(original, 1, original_len, file);
     fclose(file);
 
     // Calculate the CRC
@@ -128,7 +121,7 @@ TEST_F(lzmaFixture, lzmaCompress)
     decmp_crc = crc32_data(decmp_buffer, decmp_len);
 
     // Free buffers
-    free((void *)original);
+    free(original);
     free(cmp_buffer);
     free(decmp_buffer);
 
