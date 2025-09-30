@@ -123,12 +123,15 @@ add_library(aaruformat SHARED include/aaruformat/consts.h include/aaruformat/enu
             src/create.c
             src/time.c
             src/write.c
-            include/log.h)
+            include/log.h
+            src/ddt/hash_map.c
+            include/aaruformat/hash_map.h)
 
 include_directories(include include/aaruformat)
 
 include(3rdparty/flac.cmake)
 include(3rdparty/lzma.cmake)
+include(3rdparty/xxhash.cmake)
 
 macro(TARGET_LINK_LIBRARIES_WHOLE_ARCHIVE target)
   if(MSVC)
