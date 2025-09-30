@@ -723,9 +723,9 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
     }
 
     if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-        ddtEntry = ctx->cachedSecondaryDdtSmall[sectorAddress];
+        ddtEntry = ctx->cachedSecondaryDdtSmall[sectorAddress % itemsPerDdtEntry];
     else if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
-        ddtEntry = ctx->cachedSecondaryDdtBig[sectorAddress];
+        ddtEntry = ctx->cachedSecondaryDdtBig[sectorAddress % itemsPerDdtEntry];
 
     if(ddtEntry == 0)
     {
