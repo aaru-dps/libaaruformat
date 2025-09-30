@@ -1030,6 +1030,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, bool
             // Update nextBlockPosition to ensure future blocks don't overwrite the DDT
             uint64_t ddtTotalSize  = sizeof(DdtHeader2) + ddtHeader.length;
             ctx->nextBlockPosition = (endOfFile + ddtTotalSize + alignmentMask) & ~alignmentMask;
+            blockOffset            = ctx->nextBlockPosition;
+            offset                 = 0;
             TRACE("Updated nextBlockPosition after never-written DDT write to %" PRIu64, ctx->nextBlockPosition);
 
             // Free the cached table
@@ -1203,6 +1205,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, bool
         // Update nextBlockPosition to ensure future blocks don't overwrite the DDT
         uint64_t ddtTotalSize  = sizeof(DdtHeader2) + ddtHeader.length;
         ctx->nextBlockPosition = (endOfFile + ddtTotalSize + alignmentMask) & ~alignmentMask;
+        blockOffset            = ctx->nextBlockPosition;
+        offset                 = 0;
         TRACE("Updated nextBlockPosition after DDT write to %" PRIu64, ctx->nextBlockPosition);
 
         fseek(ctx->imageStream, savedPos, SEEK_SET);
