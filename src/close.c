@@ -203,8 +203,7 @@ int aaruf_close(void *context)
             }
 
             // Prepare DDT header for the cached table
-            DdtHeader2 ddt_header;
-            memset(&ddt_header, 0, sizeof(DdtHeader2));
+            DdtHeader2 ddt_header          = {0};
             ddt_header.identifier          = DeDuplicationTable2;
             ddt_header.type                = UserData;
             ddt_header.compression         = None;
