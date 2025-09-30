@@ -1025,8 +1025,11 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_addres
  * @param offset Offset to set for the sector.
  * @param block_offset Block offset to set for the sector.
  * @param sector_status Status to set for the sector.
+ *
+ * @return Returns one of the following status codes:
+ * @retval true if the entry was set successfully, false otherwise.
  */
-void set_ddt_entry_v2(aaruformatContext *ctx, uint64_t sector_address, uint64_t offset, uint64_t block_offset,
+bool set_ddt_entry_v2(aaruformatContext *ctx, uint64_t sector_address, uint64_t offset, uint64_t block_offset,
                       uint8_t sector_status)
 {
     TRACE("Entering set_ddt_entry_v2(%p, %" PRIu64 ", %llu, %llu, %d)", ctx, sector_address, offset, block_offset,
@@ -1040,9 +1043,9 @@ void set_ddt_entry_v2(aaruformatContext *ctx, uint64_t sector_address, uint64_t 
     }
 
     if(ctx->userDataDdtHeader.tableShift > 0)
-        set_ddt_multi_level_v2(ctx, sector_address, false, offset, block_offset, sector_status);
-    else
-        set_ddt_single_level_v2(ctx, sector_address, false, offset, block_offset, sector_status);
+        return set_ddt_multi_level_v2(ctx, sector_address, false, offset, block_offset, sector_status);
+
+    return set_ddt_single_level_v2(ctx, sector_address, false, offset, block_offset, sector_status);
 }
 
 /**
@@ -1056,8 +1059,11 @@ void set_ddt_entry_v2(aaruformatContext *ctx, uint64_t sector_address, uint64_t 
  * @param offset Offset to set for the sector.
  * @param block_offset Block offset to set for the sector.
  * @param sector_status Status to set for the sector.
+ *
+ * @return Returns one of the following status codes:
+ * @retval true if the entry was set successfully, false otherwise.
  */
-void set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, bool negative, uint64_t offset,
+bool set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, bool negative, uint64_t offset,
                              uint64_t block_offset, uint8_t sector_status)
 {
     TRACE("Entering set_ddt_single_level_v2(%p, %" PRIu64 ", %llu, %llu, %d)", ctx, sector_address, offset,
@@ -1067,14 +1073,16 @@ void set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, bo
     if(ctx == NULL || ctx->imageStream == NULL)
     {
         FATAL("Invalid context or image stream.");
-        return;
+        TRACE("Exiting set_ddt_single_level_v2() = false");
+        return false;
     }
 
     // Should not really be here
     if(ctx->userDataDdtHeader.tableShift != 0)
     {
         FATAL("DDT table shift is not zero, but we are in single-level DDT setting.");
-        return;
+        TRACE("Exiting set_ddt_single_level_v2() = false");
+        return false;
     }
 
     // Calculate positive or negative sector
@@ -1095,7 +1103,8 @@ void set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, bo
         if(ddt_entry > 0xFFF)
         {
             FATAL("DDT overflow: media does not fit in small DDT");
-            return;
+            TRACE("Exiting set_ddt_single_level_v2() = false");
+            return false;
         }
 
         ddt_entry |= (uint64_t)sector_status << 12;
@@ -1107,12 +1116,16 @@ void set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, bo
         if(ddt_entry > 0xFFFFFFF)
         {
             FATAL("DDT overflow: media does not fit in big DDT");
-            return;
+            TRACE("Exiting set_ddt_single_level_v2() = false");
+            return false;
         }
 
         ddt_entry |= (uint64_t)sector_status << 28;
         ctx->cachedSecondaryDdtBig[sector_address] = (uint32_t)ddt_entry;
     }
+
+    TRACE("Exiting set_ddt_single_level_v2() = true");
+    return true;
 }
 
 /**
@@ -1126,8 +1139,11 @@ void set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, bo
  * @param offset Offset to set for the sector.
  * @param block_offset Block offset to set for the sector.
  * @param sector_status Status to set for the sector.
+ *
+ * @return Returns one of the following status codes:
+ * @retval true if the entry was set successfully, false otherwise.
  */
-void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, bool negative, uint64_t offset,
+bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, bool negative, uint64_t offset,
                             uint64_t block_offset, uint8_t sector_status)
 {
     TRACE("Entering set_ddt_multi_level_v2(%p, %" PRIu64 ", %d, %" PRIu64 ", %" PRIu64 ", %d)", ctx, sector_address,
@@ -1151,14 +1167,16 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
     if(ctx == NULL || ctx->imageStream == NULL)
     {
         FATAL("Invalid context or image stream.");
-        return;
+        TRACE("Exiting set_ddt_multi_level_v2() = false");
+        return false;
     }
 
     // Should not really be here
     if(ctx->userDataDdtHeader.tableShift == 0)
     {
         FATAL("DDT table shift is zero, but we are in multi-level DDT setting.");
-        return;
+        TRACE("Exiting set_ddt_multi_level_v2() = false");
+        return false;
     }
 
     // Calculate positive or negative sector
@@ -1178,7 +1196,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
     else
     {
         FATAL("Unknown DDT size type %d.", ctx->userDataDdtHeader.sizeType);
-        return;
+        TRACE("Exiting set_ddt_multi_level_v2() = false");
+        return false;
     }
 
     // Position in file of the child DDT table
@@ -1198,7 +1217,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
             if(ddt_entry > 0xFFF)
             {
                 FATAL("DDT overflow: media does not fit in small DDT");
-                return;
+                TRACE("Exiting set_ddt_multi_level_v2() = false");
+                return false;
             }
 
             ddt_entry |= (uint64_t)sector_status << 12;
@@ -1212,6 +1232,7 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
             if(ddt_entry > 0xFFFFFFF)
             {
                 FATAL("DDT overflow: media does not fit in big DDT");
+                TRACE("Exiting set_ddt_multi_level_v2() = false");
                 return;
             }
 
@@ -1222,7 +1243,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
         }
 
         TRACE("Updated cached secondary DDT entry at position %" PRIu64, sector_address % items_per_ddt_entry);
-        return;
+        TRACE("Exiting set_ddt_multi_level_v2() = true");
+        return true;
     }
 
     // Step 2.5: Handle case where we have a cached secondary DDT that has never been written to disk
@@ -1282,7 +1304,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
             if(crc64_context == NULL)
             {
                 FATAL("Could not initialize CRC64.");
-                return;
+                TRACE("Exiting set_ddt_multi_level_v2() = false");
+                return false;
             }
 
             if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
@@ -1299,7 +1322,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
             if(written_bytes != 1)
             {
                 FATAL("Could not write never-written DDT header to file.");
-                return;
+                TRACE("Exiting set_ddt_multi_level_v2() = false");
+                return false;
             }
 
             // Write data
@@ -1311,7 +1335,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
             if(written_bytes != 1)
             {
                 FATAL("Could not write never-written DDT data to file.");
-                return;
+                TRACE("Exiting set_ddt_multi_level_v2() = false");
+                return false;
             }
 
             // Add index entry for the newly written secondary DDT
@@ -1347,7 +1372,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
             if(written_bytes != 1)
             {
                 FATAL("Could not flush primary DDT table to file after writing never-written secondary table.");
-                return;
+                TRACE("Exiting set_ddt_multi_level_v2() = false");
+                return false;
             }
 
             // Update nextBlockPosition to ensure future blocks don't overwrite the DDT
@@ -1433,7 +1459,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
         if(crc64_context == NULL)
         {
             FATAL("Could not initialize CRC64.");
-            return;
+            TRACE("Exiting set_ddt_multi_level_v2() = false");
+            return false;
         }
 
         if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
@@ -1450,7 +1477,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
         if(written_bytes != 1)
         {
             FATAL("Could not write DDT header to file.");
-            return;
+            TRACE("Exiting set_ddt_multi_level_v2() = false");
+            return false;
         }
 
         // Write data
@@ -1462,7 +1490,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
         if(written_bytes != 1)
         {
             FATAL("Could not write DDT data to file.");
-            return;
+            TRACE("Exiting set_ddt_multi_level_v2() = false");
+            return false;
         }
 
         // Update index: remove old entry and add new one for the evicted secondary DDT
@@ -1522,7 +1551,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
         if(written_bytes != 1)
         {
             FATAL("Could not flush primary DDT table to file.");
-            return;
+            TRACE("Exiting set_ddt_multi_level_v2() = false");
+            return false;
         }
 
         // Update nextBlockPosition to ensure future blocks don't overwrite the DDT
@@ -1563,7 +1593,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
            ddt_header.type != UserData)
         {
             FATAL("Invalid secondary DDT header at %" PRIu64, secondaryDdtOffset);
-            return;
+            TRACE("Exiting set_ddt_multi_level_v2() = false");
+            return false;
         }
 
         // Read the table data (assuming no compression for now)
@@ -1571,7 +1602,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
         if(buffer == NULL)
         {
             FATAL("Cannot allocate memory for secondary DDT.");
-            return;
+            TRACE("Exiting set_ddt_multi_level_v2() = false");
+            return false;
         }
 
         read_bytes = fread(buffer, 1, ddt_header.length, ctx->imageStream);
@@ -1579,7 +1611,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
         {
             FATAL("Could not read secondary DDT data.");
             free(buffer);
-            return;
+            TRACE("Exiting set_ddt_multi_level_v2() = false");
+            return false;
         }
 
         // Verify CRC
@@ -1588,7 +1621,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
         {
             FATAL("Could not initialize CRC64.");
             free(buffer);
-            return;
+            TRACE("Exiting set_ddt_multi_level_v2() = false");
+            return false;
         }
 
         aaruf_crc64_update(crc64_context, buffer, read_bytes);
@@ -1598,7 +1632,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
         {
             FATAL("Secondary DDT CRC mismatch. Expected 0x%16lX but got 0x%16lX.", ddtHeader.crc64, crc64);
             free(buffer);
-            return;
+            TRACE("Exiting set_ddt_multi_level_v2() = false");
+            return false;
         }
 
         // Cache the loaded table
@@ -1621,7 +1656,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
         if(buffer == NULL)
         {
             FATAL("Cannot allocate memory for new secondary DDT.");
-            return;
+            TRACE("Exiting set_ddt_multi_level_v2() = false");
+            return false;
         }
 
         if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
@@ -1645,7 +1681,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
         if(ddt_entry > 0xFFF)
         {
             FATAL("DDT overflow: media does not fit in small DDT");
-            return;
+            TRACE("Exiting set_ddt_multi_level_v2() = false");
+            return false;
         }
 
         ddt_entry |= (uint64_t)sector_status << 12;
@@ -1658,7 +1695,8 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
         if(ddt_entry > 0xFFFFFFF)
         {
             FATAL("DDT overflow: media does not fit in big DDT");
-            return;
+            TRACE("Exiting set_ddt_multi_level_v2() = false");
+            return false;
         }
 
         ddt_entry |= (uint64_t)sector_status << 28;
@@ -1667,5 +1705,6 @@ void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
     }
 
     TRACE("Updated secondary DDT entry at position %" PRIu64, sector_address % items_per_ddt_entry);
-    TRACE("Exiting set_ddt_multi_level_v2()");
+    TRACE("Exiting set_ddt_multi_level_v2() = true");
+    return true;
 }

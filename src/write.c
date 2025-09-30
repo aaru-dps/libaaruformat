@@ -68,6 +68,12 @@
  *         - The fwrite() call for the block data fails
  *         - Disk space is insufficient or file system errors occur
  *
+ * @retval AARUF_ERROR_CANNOT_SET_DDT_ENTRY (-25) Failed to update the deduplication table (DDT) entry.
+ *         This occurs when:
+ *         - The DDT entry for the specified sector address could not be set or updated
+ *         - Internal DDT management functions return failure
+ *         - DDT table corruption or memory issues prevent entry updates
+ *
  * @note Block Management:
  *       - The function automatically closes the current block when sector size changes
  *       - Blocks are also closed when they reach the maximum size (determined by dataShift)
@@ -149,7 +155,13 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, const uint8_t
         }
     }
 
-    set_ddt_entry_v2(ctx, sector_address, ctx->currentBlockOffset, ctx->nextBlockPosition, sector_status);
+    bool ddt_ok = set_ddt_entry_v2(ctx, sector_address, ctx->currentBlockOffset, ctx->nextBlockPosition, sector_status);
+
+    if(!ddt_ok)
+    {
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_CANNOT_SET_DDT_ENTRY");
+        return AARUF_ERROR_CANNOT_SET_DDT_ENTRY;
+    }
 
     // No block set
     if(ctx->writingBufferPosition == 0)
