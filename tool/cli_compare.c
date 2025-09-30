@@ -18,28 +18,28 @@
  */
 
 #include <aaruformat.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
-#include <stdbool.h>
 
 #include "aaruformattool.h"
 
-int cli_compare(char *path1, char *path2)
+int cli_compare(const char *path1, const char *path2)
 {
-    aaruformatContext *ctx1 = NULL;
-    aaruformatContext *ctx2 = NULL;
-    uint8_t           *buffer1 = NULL;
-    uint8_t           *buffer2 = NULL;
-    uint32_t           buffer1_length = 0;
-    uint32_t           buffer2_length = 0;
-    uint64_t           total_sectors = 0;
+    aaruformatContext *ctx1              = NULL;
+    aaruformatContext *ctx2              = NULL;
+    uint8_t           *buffer1           = NULL;
+    uint8_t           *buffer2           = NULL;
+    uint32_t           buffer1_length    = 0;
+    uint32_t           buffer2_length    = 0;
+    uint64_t           total_sectors     = 0;
     uint64_t           different_sectors = 0;
     uint64_t           sectors_processed = 0;
-    int                result = 0;
-    int32_t            read_result1 = 0;
-    int32_t            read_result2 = 0;
+    int                result            = 0;
+    int32_t            read_result1      = 0;
+    int32_t            read_result2      = 0;
 
     printf("Opening first image: %s\n", path1);
     ctx1 = aaruf_open(path1);
@@ -60,27 +60,24 @@ int cli_compare(char *path1, char *path2)
 
     // Access image information through context structure
     printf("\nImage Information:\n");
-    printf("Image 1: %llu sectors, %u bytes per sector\n",
-           (unsigned long long)ctx1->imageInfo.Sectors, ctx1->imageInfo.SectorSize);
-    printf("Image 2: %llu sectors, %u bytes per sector\n",
-           (unsigned long long)ctx2->imageInfo.Sectors, ctx2->imageInfo.SectorSize);
+    printf("Image 1: %llu sectors, %u bytes per sector\n", (unsigned long long)ctx1->imageInfo.Sectors,
+           ctx1->imageInfo.SectorSize);
+    printf("Image 2: %llu sectors, %u bytes per sector\n", (unsigned long long)ctx2->imageInfo.Sectors,
+           ctx2->imageInfo.SectorSize);
 
     if(ctx1->imageInfo.Sectors != ctx2->imageInfo.Sectors)
     {
         fprintf(stderr, "Warning: Images have different number of sectors\n");
-        total_sectors = ctx1->imageInfo.Sectors < ctx2->imageInfo.Sectors ?
-                       ctx1->imageInfo.Sectors : ctx2->imageInfo.Sectors;
+        total_sectors =
+            ctx1->imageInfo.Sectors < ctx2->imageInfo.Sectors ? ctx1->imageInfo.Sectors : ctx2->imageInfo.Sectors;
         printf("Will compare first %llu sectors\n", (unsigned long long)total_sectors);
     }
-    else
-    {
-        total_sectors = ctx1->imageInfo.Sectors;
-    }
+    else { total_sectors = ctx1->imageInfo.Sectors; }
 
     if(ctx1->imageInfo.SectorSize != ctx2->imageInfo.SectorSize)
     {
-        fprintf(stderr, "Error: Images have different sector sizes (%u vs %u)\n",
-                ctx1->imageInfo.SectorSize, ctx2->imageInfo.SectorSize);
+        fprintf(stderr, "Error: Images have different sector sizes (%u vs %u)\n", ctx1->imageInfo.SectorSize,
+                ctx2->imageInfo.SectorSize);
         aaruf_close(ctx1);
         aaruf_close(ctx2);
         return -1;
@@ -128,8 +125,7 @@ int cli_compare(char *path1, char *path2)
             sectors_different = true;
         }
         else if(sector1_available && sector2_available &&
-                (buffer1_length != buffer2_length ||
-                 memcmp(buffer1, buffer2, buffer1_length) != 0))
+                (buffer1_length != buffer2_length || memcmp(buffer1, buffer2, buffer1_length) != 0))
         {
             // Both sectors are available - compare their content
             sectors_different = true;
@@ -154,8 +150,7 @@ int cli_compare(char *path1, char *path2)
         if(sectors_processed % 1000 == 0 || sector == total_sectors - 1)
         {
             int progress = (int)((sectors_processed * 100) / total_sectors);
-            printf("Progress: %d%% (%llu/%llu sectors)\r",
-                   progress, (unsigned long long)sectors_processed,
+            printf("Progress: %d%% (%llu/%llu sectors)\r", progress, (unsigned long long)sectors_processed,
                    (unsigned long long)total_sectors);
             fflush(stdout);
         }
@@ -173,8 +168,7 @@ int cli_compare(char *path1, char *path2)
     }
     else
     {
-        printf("✗ Images are different (%llu sectors differ)\n",
-               (unsigned long long)different_sectors);
+        printf("✗ Images are different (%llu sectors differ)\n", (unsigned long long)different_sectors);
         result = 1;  // Non-zero exit code to indicate differences
     }
 

@@ -19,7 +19,7 @@
 
 #include <aaruformat.h>
 
-int identify(char *path)
+int identify(const char *path)
 {
     int ret = 0;
 

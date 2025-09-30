@@ -42,7 +42,7 @@ void draw_progress_bar(int row, int percent)
     tb_present();
 }
 
-int compare(char *path1, char *path2)
+int compare(const char *path1, const char *path2)
 {
     int                ret                  = AARUF_STATUS_OK;
     aaruformatContext *ctx1                 = NULL;

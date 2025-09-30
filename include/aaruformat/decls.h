@@ -83,7 +83,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, uint64_t sectorAd
 AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, uint64_t sectorAddress, uint8_t *data,
                                                      uint32_t *length);
 
-AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sectorAddress, uint8_t *data,
+AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sectorAddress, const uint8_t *data,
                                                  uint8_t sectorStatus, uint32_t length);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context);

@@ -38,7 +38,8 @@
  * @param length Length of the data buffer.
  * @return AARUF_STATUS_OK on success, or an error code on failure.
  */
-int32_t aaruf_write_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint8_t sectorStatus, uint32_t length)
+int32_t aaruf_write_sector(void *context, uint64_t sectorAddress, const uint8_t *data, uint8_t sectorStatus,
+                           uint32_t length)
 {
     TRACE("Entering aaruf_write_sector(%p, %" PRIu64 ", %p, %u, %u)", context, sectorAddress, data, sectorStatus,
           length);

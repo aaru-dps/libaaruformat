@@ -27,7 +27,7 @@ struct CacheHeader
  * @param key Key
  * @return Value if found, NULL if not
  */
-void *find_in_cache(struct CacheHeader *cache, char *key);
+void *find_in_cache(struct CacheHeader *cache, const char *key);
 
 /**
  * Adds an item to the specified cache
@@ -35,7 +35,7 @@ void *find_in_cache(struct CacheHeader *cache, char *key);
  * @param key Key
  * @param value Value
  */
-void add_to_cache(struct CacheHeader *cache, char *key, void *value);
+void add_to_cache(struct CacheHeader *cache, const char *key, void *value);
 
 /**
  * Finds an item in the specified cache using a 64-bit integer key

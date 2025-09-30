@@ -13,15 +13,15 @@
 // this code is in the public domain http://unlicense.org/
 
 /**
- * @brief Finds a value in the cache by string key and updates its LRU position.
+ * @brief Finds a value in the cache by string key.
  *
- * Searches for a cache entry by key. If found, moves it to the front (most recently used).
+ * Searches for a value in the cache using a string key and moves it to the front if found.
  *
  * @param cache Pointer to the cache header.
  * @param key String key to search for.
  * @return Pointer to the value if found, or NULL if not found.
  */
-void *find_in_cache(struct CacheHeader *cache, char *key)
+void *find_in_cache(struct CacheHeader *cache, const char *key)
 {
     struct CacheEntry *entry;
     HASH_FIND_STR(cache->cache, key, entry);
@@ -44,7 +44,7 @@ void *find_in_cache(struct CacheHeader *cache, char *key)
  * @param key String key to add.
  * @param value Pointer to the value to store.
  */
-void add_to_cache(struct CacheHeader *cache, char *key, void *value)
+void add_to_cache(struct CacheHeader *cache, const char *key, void *value)
 {
     struct CacheEntry *entry, *tmp_entry;
     // TODO: Is this needed or we're just losing cycles? uthash does not free the entry

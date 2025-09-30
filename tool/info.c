@@ -27,7 +27,7 @@
 
 #include "aaruformattool.h"
 
-int info(char *path)
+int info(const char *path)
 {
     aaruformatContext   *ctx          = NULL;
     char                *strBuffer    = NULL;

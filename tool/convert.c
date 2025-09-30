@@ -26,7 +26,7 @@
 
 #include "aaruformattool.h"
 
-int convert(char *input_path, char *output_path)
+int convert(const char *input_path, const char *output_path)
 {
     aaruformatContext *input_ctx     = NULL;
     aaruformatContext *output_ctx    = NULL;

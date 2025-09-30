@@ -24,12 +24,12 @@
 
 #include "aaruformattool.h"
 
-int read(unsigned long long sector_no, char *path)
+int read(unsigned long long sector_no, const char *path)
 {
-    aaruformatContext *ctx = NULL;
-    int32_t res = 0;
-    uint32_t length = 0;
-    uint8_t *data = NULL;
+    aaruformatContext *ctx    = NULL;
+    int32_t            res    = 0;
+    uint32_t           length = 0;
+    uint8_t           *data   = NULL;
 
     ctx = aaruf_open(path);
 
@@ -72,14 +72,16 @@ int read(unsigned long long sector_no, char *path)
     free(data);
 
     aaruf_close(ctx);
+
+    return AARUF_STATUS_OK;
 }
 
-int read_long(unsigned long long sector_no, char *path)
+int read_long(unsigned long long sector_no, const char *path)
 {
-    aaruformatContext *ctx = NULL;
-    int32_t res = 0;
-    uint32_t length = 0;
-    uint8_t *data = NULL;
+    aaruformatContext *ctx    = NULL;
+    int32_t            res    = 0;
+    uint32_t           length = 0;
+    uint8_t           *data   = NULL;
 
     ctx = aaruf_open(path);
 
@@ -122,4 +124,6 @@ int read_long(unsigned long long sector_no, char *path)
     free(data);
 
     aaruf_close(ctx);
+
+    return AARUF_STATUS_OK;
 }
