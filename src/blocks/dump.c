@@ -35,11 +35,11 @@
 void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
     TRACE("Entering process_dumphw_block(%p, %p)", ctx, entry);
-    int      pos       = 0;
-    size_t   readBytes = 0;
-    uint64_t crc64     = 0;
-    uint16_t e         = 0;
-    uint8_t *data      = NULL;
+    int      pos        = 0;
+    size_t   read_bytes = 0;
+    uint64_t crc64      = 0;
+    uint16_t e          = 0;
+    uint8_t *data       = NULL;
 
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
@@ -62,9 +62,9 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
 
     // Even if those two checks shall have been done before
     TRACE("Reading dump hardware block header at position %" PRIu64, entry->offset);
-    readBytes = fread(&ctx->dumpHardwareHeader, 1, sizeof(DumpHardwareHeader), ctx->imageStream);
+    read_bytes = fread(&ctx->dumpHardwareHeader, 1, sizeof(DumpHardwareHeader), ctx->imageStream);
 
-    if(readBytes != sizeof(DumpHardwareHeader))
+    if(read_bytes != sizeof(DumpHardwareHeader))
     {
         memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
         TRACE("Could not read dump hardware block header, continuing...");
@@ -89,9 +89,9 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
         return;
     }
 
-    readBytes = fread(data, 1, ctx->dumpHardwareHeader.length, ctx->imageStream);
+    read_bytes = fread(data, 1, ctx->dumpHardwareHeader.length, ctx->imageStream);
 
-    if(readBytes == ctx->dumpHardwareHeader.length)
+    if(read_bytes == ctx->dumpHardwareHeader.length)
     {
         crc64 = aaruf_crc64_data(data, ctx->dumpHardwareHeader.length);
 
@@ -109,7 +109,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
     }
 
     free(data);
-    fseek(ctx->imageStream, -(long)readBytes, SEEK_CUR);
+    fseek(ctx->imageStream, -(long)read_bytes, SEEK_CUR);
 
     ctx->dumpHardwareEntriesWithData =
         (DumpHardwareEntriesWithData *)malloc(sizeof(DumpHardwareEntriesWithData) * ctx->dumpHardwareHeader.entries);
@@ -127,9 +127,9 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
     TRACE("Processing %u dump hardware block entries", ctx->dumpHardwareHeader.entries);
     for(e = 0; e < ctx->dumpHardwareHeader.entries; e++)
     {
-        readBytes = fread(&ctx->dumpHardwareEntriesWithData[e].entry, 1, sizeof(DumpHardwareEntry), ctx->imageStream);
+        read_bytes = fread(&ctx->dumpHardwareEntriesWithData[e].entry, 1, sizeof(DumpHardwareEntry), ctx->imageStream);
 
-        if(readBytes != sizeof(DumpHardwareEntry))
+        if(read_bytes != sizeof(DumpHardwareEntry))
         {
             ctx->dumpHardwareHeader.entries = e;
             TRACE("Could not read dump hardware block entry, continuing...");
@@ -145,10 +145,10 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
             {
                 ctx->dumpHardwareEntriesWithData[e]
                     .manufacturer[ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength] = 0;
-                readBytes = fread(ctx->dumpHardwareEntriesWithData[e].manufacturer, 1,
-                                  ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength, ctx->imageStream);
+                read_bytes = fread(ctx->dumpHardwareEntriesWithData[e].manufacturer, 1,
+                                   ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength, ctx->imageStream);
 
-                if(readBytes != ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength)
+                if(read_bytes != ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength)
                 {
                     free(ctx->dumpHardwareEntriesWithData[e].manufacturer);
                     ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength = 0;
@@ -166,10 +166,10 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
             if(ctx->dumpHardwareEntriesWithData[e].model != NULL)
             {
                 ctx->dumpHardwareEntriesWithData[e].model[ctx->dumpHardwareEntriesWithData[e].entry.modelLength] = 0;
-                readBytes = fread(ctx->dumpHardwareEntriesWithData[e].model, 1,
-                                  ctx->dumpHardwareEntriesWithData[e].entry.modelLength, ctx->imageStream);
+                read_bytes = fread(ctx->dumpHardwareEntriesWithData[e].model, 1,
+                                   ctx->dumpHardwareEntriesWithData[e].entry.modelLength, ctx->imageStream);
 
-                if(readBytes != ctx->dumpHardwareEntriesWithData[e].entry.modelLength)
+                if(read_bytes != ctx->dumpHardwareEntriesWithData[e].entry.modelLength)
                 {
                     free(ctx->dumpHardwareEntriesWithData[e].model);
                     ctx->dumpHardwareEntriesWithData[e].entry.modelLength = 0;
@@ -187,10 +187,10 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
             {
                 ctx->dumpHardwareEntriesWithData[e].revision[ctx->dumpHardwareEntriesWithData[e].entry.revisionLength] =
                     0;
-                readBytes = fread(ctx->dumpHardwareEntriesWithData[e].revision, 1,
-                                  ctx->dumpHardwareEntriesWithData[e].entry.revisionLength, ctx->imageStream);
+                read_bytes = fread(ctx->dumpHardwareEntriesWithData[e].revision, 1,
+                                   ctx->dumpHardwareEntriesWithData[e].entry.revisionLength, ctx->imageStream);
 
-                if(readBytes != ctx->dumpHardwareEntriesWithData[e].entry.revisionLength)
+                if(read_bytes != ctx->dumpHardwareEntriesWithData[e].entry.revisionLength)
                 {
                     free(ctx->dumpHardwareEntriesWithData[e].revision);
                     ctx->dumpHardwareEntriesWithData[e].entry.revisionLength = 0;
@@ -209,10 +209,10 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
             {
                 ctx->dumpHardwareEntriesWithData[e].firmware[ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength] =
                     0;
-                readBytes = fread(ctx->dumpHardwareEntriesWithData[e].firmware, 1,
-                                  ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength, ctx->imageStream);
+                read_bytes = fread(ctx->dumpHardwareEntriesWithData[e].firmware, 1,
+                                   ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength, ctx->imageStream);
 
-                if(readBytes != ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength)
+                if(read_bytes != ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength)
                 {
                     free(ctx->dumpHardwareEntriesWithData[e].firmware);
                     ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength = 0;
@@ -230,10 +230,10 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
             if(ctx->dumpHardwareEntriesWithData[e].serial != NULL)
             {
                 ctx->dumpHardwareEntriesWithData[e].serial[ctx->dumpHardwareEntriesWithData[e].entry.serialLength] = 0;
-                readBytes = fread(ctx->dumpHardwareEntriesWithData[e].serial, 1,
-                                  ctx->dumpHardwareEntriesWithData[e].entry.serialLength, ctx->imageStream);
+                read_bytes = fread(ctx->dumpHardwareEntriesWithData[e].serial, 1,
+                                   ctx->dumpHardwareEntriesWithData[e].entry.serialLength, ctx->imageStream);
 
-                if(readBytes != ctx->dumpHardwareEntriesWithData[e].entry.serialLength)
+                if(read_bytes != ctx->dumpHardwareEntriesWithData[e].entry.serialLength)
                 {
                     free(ctx->dumpHardwareEntriesWithData[e].serial);
                     ctx->dumpHardwareEntriesWithData[e].entry.serialLength = 0;
@@ -251,10 +251,10 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
             {
                 ctx->dumpHardwareEntriesWithData[e]
                     .softwareName[ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength] = 0;
-                readBytes = fread(ctx->dumpHardwareEntriesWithData[e].softwareName, 1,
-                                  ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength, ctx->imageStream);
+                read_bytes = fread(ctx->dumpHardwareEntriesWithData[e].softwareName, 1,
+                                   ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength, ctx->imageStream);
 
-                if(readBytes != ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength)
+                if(read_bytes != ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength)
                 {
                     free(ctx->dumpHardwareEntriesWithData[e].softwareName);
                     ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength = 0;
@@ -273,10 +273,10 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
             {
                 ctx->dumpHardwareEntriesWithData[e]
                     .softwareVersion[ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength] = 0;
-                readBytes = fread(ctx->dumpHardwareEntriesWithData[e].softwareVersion, 1,
-                                  ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength, ctx->imageStream);
+                read_bytes = fread(ctx->dumpHardwareEntriesWithData[e].softwareVersion, 1,
+                                   ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength, ctx->imageStream);
 
-                if(readBytes != ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength)
+                if(read_bytes != ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength)
                 {
                     free(ctx->dumpHardwareEntriesWithData[e].softwareVersion);
                     ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength = 0;
@@ -296,11 +296,11 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
                 ctx->dumpHardwareEntriesWithData[e]
                     .softwareOperatingSystem[ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength] =
                     0;
-                readBytes =
+                read_bytes =
                     fread(ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem, 1,
                           ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength, ctx->imageStream);
 
-                if(readBytes != ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength)
+                if(read_bytes != ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength)
                 {
                     free(ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem);
                     ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength = 0;
@@ -320,10 +320,10 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
             continue;
         }
 
-        readBytes = fread(ctx->dumpHardwareEntriesWithData[e].extents, sizeof(DumpExtent),
-                          ctx->dumpHardwareEntriesWithData[e].entry.extents, ctx->imageStream);
+        read_bytes = fread(ctx->dumpHardwareEntriesWithData[e].extents, sizeof(DumpExtent),
+                           ctx->dumpHardwareEntriesWithData[e].entry.extents, ctx->imageStream);
 
-        if(readBytes != ctx->dumpHardwareEntriesWithData->entry.extents)
+        if(read_bytes != ctx->dumpHardwareEntriesWithData->entry.extents)
         {
             free(ctx->dumpHardwareEntriesWithData[e].extents);
             TRACE("Could not read dump hardware block extents, continuing...");

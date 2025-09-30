@@ -88,21 +88,21 @@ int32_t aaruf_read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t
     return AARUF_STATUS_OK;
 }
 
-int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32_t *length)
+int32_t aaruf_read_sector(void *context, uint64_t sector_address, uint8_t *data, uint32_t *length)
 {
-    TRACE("Entering aaruf_read_sector(%p, %" PRIu64 ", %p, %u)", context, sectorAddress, data, *length);
+    TRACE("Entering aaruf_read_sector(%p, %" PRIu64 ", %p, %u)", context, sector_address, data, *length);
 
-    aaruformatContext *ctx         = NULL;
-    uint64_t           offset      = 0;
-    uint64_t           blockOffset = 0;
-    BlockHeader       *blockHeader = NULL;
-    uint8_t           *block       = NULL;
-    size_t             readBytes   = 0;
-    uint8_t            lzmaProperties[LZMA_PROPERTIES_LENGTH];
-    size_t             lzmaSize     = 0;
-    uint8_t           *cmpData      = NULL;
-    int                errorNo      = 0;
-    uint8_t            sectorStatus = 0;
+    aaruformatContext *ctx          = NULL;
+    uint64_t           offset       = 0;
+    uint64_t           block_offset = 0;
+    BlockHeader       *block_header = NULL;
+    uint8_t           *block        = NULL;
+    size_t             read_bytes   = 0;
+    uint8_t            lzma_properties[LZMA_PROPERTIES_LENGTH];
+    size_t             lzma_size     = 0;
+    uint8_t           *cmp_data      = NULL;
+    int                error_no      = 0;
+    uint8_t            sector_status = 0;
 
     if(context == NULL)
     {
@@ -123,7 +123,7 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(sectorAddress > ctx->imageInfo.Sectors - 1)
+    if(sector_address > ctx->imageInfo.Sectors - 1)
     {
         FATAL("Sector address out of bounds");
 
@@ -132,20 +132,20 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
     }
 
     if(ctx->ddtVersion == 1)
-        errorNo = decode_ddt_entry_v1(ctx, sectorAddress, &offset, &blockOffset, &sectorStatus);
+        error_no = decode_ddt_entry_v1(ctx, sector_address, &offset, &block_offset, &sector_status);
     else if(ctx->ddtVersion == 2)
-        errorNo = decode_ddt_entry_v2(ctx, sectorAddress, &offset, &blockOffset, &sectorStatus);
+        error_no = decode_ddt_entry_v2(ctx, sector_address, &offset, &block_offset, &sector_status);
 
-    if(errorNo != AARUF_STATUS_OK)
+    if(error_no != AARUF_STATUS_OK)
     {
-        FATAL("Error %d decoding DDT entry", errorNo);
+        FATAL("Error %d decoding DDT entry", error_no);
 
-        TRACE("Exiting aaruf_read_sector() = %d", errorNo);
-        return errorNo;
+        TRACE("Exiting aaruf_read_sector() = %d", error_no);
+        return error_no;
     }
 
     // Partially written image... as we can't know the real sector size just assume it's common :/
-    if(sectorStatus == SectorStatusNotDumped)
+    if(sector_status == SectorStatusNotDumped)
     {
         *length = ctx->imageInfo.SectorSize;
 
@@ -155,14 +155,14 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
 
     // Check if block header is cached
     TRACE("Checking if block header is cached");
-    blockHeader = find_in_cache_uint64(&ctx->blockHeaderCache, blockOffset);
+    block_header = find_in_cache_uint64(&ctx->blockHeaderCache, block_offset);
 
     // Read block header
-    if(blockHeader == NULL)
+    if(block_header == NULL)
     {
         TRACE("Allocating memory for block header");
-        blockHeader = malloc(sizeof(BlockHeader));
-        if(blockHeader == NULL)
+        block_header = malloc(sizeof(BlockHeader));
+        if(block_header == NULL)
         {
             FATAL("Not enough memory for block header");
 
@@ -171,10 +171,10 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
         }
 
         TRACE("Reading block header");
-        fseek(ctx->imageStream, blockOffset, SEEK_SET);
-        readBytes = fread(blockHeader, 1, sizeof(BlockHeader), ctx->imageStream);
+        fseek(ctx->imageStream, block_offset, SEEK_SET);
+        read_bytes = fread(block_header, 1, sizeof(BlockHeader), ctx->imageStream);
 
-        if(readBytes != sizeof(BlockHeader))
+        if(read_bytes != sizeof(BlockHeader))
         {
             FATAL("Error reading block header");
 
@@ -183,15 +183,15 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
         }
 
         TRACE("Adding block header to cache");
-        add_to_cache_uint64(&ctx->blockHeaderCache, blockOffset, blockHeader);
+        add_to_cache_uint64(&ctx->blockHeaderCache, block_offset, block_header);
     }
     else
-        fseek(ctx->imageStream, blockOffset + sizeof(BlockHeader), SEEK_SET);  // Advance as if reading the header
+        fseek(ctx->imageStream, block_offset + sizeof(BlockHeader), SEEK_SET);  // Advance as if reading the header
 
-    if(data == NULL || *length < blockHeader->sectorSize)
+    if(data == NULL || *length < block_header->sectorSize)
     {
-        TRACE("Buffer too small for sector, required %u bytes", blockHeader->sectorSize);
-        *length = blockHeader->sectorSize;
+        TRACE("Buffer too small for sector, required %u bytes", block_header->sectorSize);
+        *length = block_header->sectorSize;
 
         TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_BUFFER_TOO_SMALL");
         return AARUF_ERROR_BUFFER_TOO_SMALL;
@@ -199,24 +199,24 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
 
     // Check if block is cached
     TRACE("Checking if block is cached");
-    block = find_in_cache_uint64(&ctx->blockCache, blockOffset);
+    block = find_in_cache_uint64(&ctx->blockCache, block_offset);
 
     if(block != NULL)
     {
         TRACE("Getting data from cache");
-        memcpy(data, block + offset * blockHeader->sectorSize, blockHeader->sectorSize);
-        *length = blockHeader->sectorSize;
+        memcpy(data, block + offset * block_header->sectorSize, block_header->sectorSize);
+        *length = block_header->sectorSize;
 
         TRACE("Exiting aaruf_read_sector() = AARUF_STATUS_OK");
         return AARUF_STATUS_OK;
     }
 
     // Decompress block
-    switch(blockHeader->compression)
+    switch(block_header->compression)
     {
         case None:
             TRACE("Allocating memory for block");
-            block = (uint8_t *)malloc(blockHeader->length);
+            block = (uint8_t *)malloc(block_header->length);
             if(block == NULL)
             {
                 FATAL("Not enough memory for block");
@@ -226,9 +226,9 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
             }
 
             TRACE("Reading block into memory");
-            readBytes = fread(block, 1, blockHeader->length, ctx->imageStream);
+            read_bytes = fread(block, 1, block_header->length, ctx->imageStream);
 
-            if(readBytes != blockHeader->length)
+            if(read_bytes != block_header->length)
             {
                 FATAL("Could not read block");
                 free(block);
@@ -239,11 +239,11 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
 
             break;
         case Lzma:
-            lzmaSize = blockHeader->cmpLength - LZMA_PROPERTIES_LENGTH;
-            TRACE("Allocating memory for compressed data of size %zu bytes", lzmaSize);
-            cmpData = malloc(lzmaSize);
+            lzma_size = block_header->cmpLength - LZMA_PROPERTIES_LENGTH;
+            TRACE("Allocating memory for compressed data of size %zu bytes", lzma_size);
+            cmp_data = malloc(lzma_size);
 
-            if(cmpData == NULL)
+            if(cmp_data == NULL)
             {
                 FATAL("Cannot allocate memory for block...");
 
@@ -251,73 +251,73 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
 
-            TRACE("Allocating memory for block of size %zu bytes", blockHeader->length);
-            block = malloc(blockHeader->length);
+            TRACE("Allocating memory for block of size %zu bytes", block_header->length);
+            block = malloc(block_header->length);
             if(block == NULL)
             {
                 FATAL("Cannot allocate memory for block...");
-                free(cmpData);
+                free(cmp_data);
 
                 TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
 
-            readBytes = fread(lzmaProperties, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
+            read_bytes = fread(lzma_properties, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
 
-            if(readBytes != LZMA_PROPERTIES_LENGTH)
+            if(read_bytes != LZMA_PROPERTIES_LENGTH)
             {
                 FATAL("Could not read LZMA properties...");
                 free(block);
-                free(cmpData);
+                free(cmp_data);
 
                 TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                 return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
             }
 
-            readBytes = fread(cmpData, 1, lzmaSize, ctx->imageStream);
-            if(readBytes != lzmaSize)
+            read_bytes = fread(cmp_data, 1, lzma_size, ctx->imageStream);
+            if(read_bytes != lzma_size)
             {
                 FATAL("Could not read compressed block...");
-                free(cmpData);
+                free(cmp_data);
                 free(block);
 
                 TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                 return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
             }
 
-            TRACE("Decompressing block of size %zu bytes", blockHeader->length);
-            readBytes = blockHeader->length;
-            errorNo =
-                aaruf_lzma_decode_buffer(block, &readBytes, cmpData, &lzmaSize, lzmaProperties, LZMA_PROPERTIES_LENGTH);
+            TRACE("Decompressing block of size %zu bytes", block_header->length);
+            read_bytes = block_header->length;
+            error_no   = aaruf_lzma_decode_buffer(block, &read_bytes, cmp_data, &lzma_size, lzma_properties,
+                                                  LZMA_PROPERTIES_LENGTH);
 
-            if(errorNo != 0)
+            if(error_no != 0)
             {
-                FATAL("Got error %d from LZMA...", errorNo);
-                free(cmpData);
+                FATAL("Got error %d from LZMA...", error_no);
+                free(cmp_data);
                 free(block);
 
                 TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                 return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
             }
 
-            if(readBytes != blockHeader->length)
+            if(read_bytes != block_header->length)
             {
                 FATAL("Error decompressing block, should be {0} bytes but got {1} bytes...");
-                free(cmpData);
+                free(cmp_data);
                 free(block);
 
                 TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                 return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
             }
 
-            free(cmpData);
+            free(cmp_data);
 
             break;
         case Flac:
-            TRACE("Allocating memory for compressed data of size %zu bytes", blockHeader->cmpLength);
-            cmpData = malloc(blockHeader->cmpLength);
+            TRACE("Allocating memory for compressed data of size %zu bytes", block_header->cmpLength);
+            cmp_data = malloc(block_header->cmpLength);
 
-            if(cmpData == NULL)
+            if(cmp_data == NULL)
             {
                 FATAL("Cannot allocate memory for block...");
 
@@ -325,57 +325,58 @@ int32_t aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, 
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
 
-            TRACE("Allocating memory for block of size %zu bytes", blockHeader->length);
-            block = malloc(blockHeader->length);
+            TRACE("Allocating memory for block of size %zu bytes", block_header->length);
+            block = malloc(block_header->length);
             if(block == NULL)
             {
                 FATAL("Cannot allocate memory for block...");
-                free(cmpData);
+                free(cmp_data);
 
                 TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
 
             TRACE("Reading compressed data into memory");
-            readBytes = fread(cmpData, 1, blockHeader->cmpLength, ctx->imageStream);
-            if(readBytes != blockHeader->cmpLength)
+            read_bytes = fread(cmp_data, 1, block_header->cmpLength, ctx->imageStream);
+            if(read_bytes != block_header->cmpLength)
             {
                 FATAL("Could not read compressed block...");
-                free(cmpData);
+                free(cmp_data);
                 free(block);
 
                 TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                 return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
             }
 
-            TRACE("Decompressing block of size %zu bytes", blockHeader->length);
-            readBytes = aaruf_flac_decode_redbook_buffer(block, blockHeader->length, cmpData, blockHeader->cmpLength);
+            TRACE("Decompressing block of size %zu bytes", block_header->length);
+            read_bytes =
+                aaruf_flac_decode_redbook_buffer(block, block_header->length, cmp_data, block_header->cmpLength);
 
-            if(readBytes != blockHeader->length)
+            if(read_bytes != block_header->length)
             {
                 FATAL("Error decompressing block, should be {0} bytes but got {1} bytes...");
-                free(cmpData);
+                free(cmp_data);
                 free(block);
 
                 TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                 return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
             }
 
-            free(cmpData);
+            free(cmp_data);
 
             break;
         default:
-            FATAL("Unsupported compression %d", blockHeader->compression);
+            FATAL("Unsupported compression %d", block_header->compression);
             TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_UNSUPPORTED_COMPRESSION");
             return AARUF_ERROR_UNSUPPORTED_COMPRESSION;
     }
 
     // Add block to cache
     TRACE("Adding block to cache");
-    add_to_cache_uint64(&ctx->blockCache, blockOffset, block);
+    add_to_cache_uint64(&ctx->blockCache, block_offset, block);
 
-    memcpy(data, block + (offset * blockHeader->sectorSize), blockHeader->sectorSize);
-    *length = blockHeader->sectorSize;
+    memcpy(data, block + (offset * block_header->sectorSize), block_header->sectorSize);
+    *length = block_header->sectorSize;
 
     TRACE("Exiting aaruf_read_sector() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;

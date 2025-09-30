@@ -36,12 +36,12 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
     TRACE("Entering process_checksum_block(%p, %p)", ctx, entry);
 
-    int                  pos       = 0;
-    size_t               readBytes = 0;
+    int                  pos             = 0;
+    size_t               read_bytes      = 0;
     ChecksumHeader       checksum_header;
-    ChecksumEntry const *checksum_entry = NULL;
-    uint8_t             *data           = NULL;
-    int                  j              = 0;
+    ChecksumEntry const *checksum_entry  = NULL;
+    uint8_t             *data            = NULL;
+    int                  j               = 0;
 
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
@@ -61,9 +61,9 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
 
     // Even if those two checks shall have been done before
     TRACE("Reading checksum block header at position %" PRIu64, entry->offset);
-    readBytes = fread(&checksum_header, 1, sizeof(ChecksumHeader), ctx->imageStream);
+    read_bytes = fread(&checksum_header, 1, sizeof(ChecksumHeader), ctx->imageStream);
 
-    if(readBytes != sizeof(ChecksumHeader))
+    if(read_bytes != sizeof(ChecksumHeader))
     {
         memset(&checksum_header, 0, sizeof(ChecksumHeader));
         FATAL("Could not read checksums block header, continuing...\n");
@@ -87,9 +87,9 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
     }
 
     TRACE("Reading checksum block data at position %" PRIu64, entry->offset + sizeof(ChecksumHeader));
-    readBytes = fread(data, 1, checksum_header.length, ctx->imageStream);
+    read_bytes = fread(data, 1, checksum_header.length, ctx->imageStream);
 
-    if(readBytes != checksum_header.length)
+    if(read_bytes != checksum_header.length)
     {
         memset(&checksum_header, 0, sizeof(ChecksumHeader));
         free(data);

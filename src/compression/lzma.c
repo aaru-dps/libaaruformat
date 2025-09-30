@@ -31,15 +31,15 @@
  * @param dst_buffer Pointer to the destination buffer.
  * @param dst_size Pointer to the size of the destination buffer; updated with the actual size.
  * @param src_buffer Pointer to the source (compressed) buffer.
- * @param srcLen Pointer to the size of the source buffer; updated with the actual size read.
+ * @param src_len Pointer to the size of the source buffer; updated with the actual size read.
  * @param props Pointer to the LZMA properties.
- * @param propsSize Size of the LZMA properties.
+ * @param props_size Size of the LZMA properties.
  * @return 0 on success, or an error code on failure.
  */
 AARU_EXPORT int32_t AARU_CALL aaruf_lzma_decode_buffer(uint8_t *dst_buffer, size_t *dst_size, const uint8_t *src_buffer,
-                                                       size_t *srcLen, const uint8_t *props, size_t propsSize)
+                                                       size_t *src_len, const uint8_t *props, size_t props_size)
 {
-    return LzmaUncompress(dst_buffer, dst_size, src_buffer, srcLen, props, propsSize);
+    return LzmaUncompress(dst_buffer, dst_size, src_buffer, src_len, props, props_size);
 }
 
 /**
@@ -50,23 +50,23 @@ AARU_EXPORT int32_t AARU_CALL aaruf_lzma_decode_buffer(uint8_t *dst_buffer, size
  * @param dst_buffer Pointer to the destination buffer.
  * @param dst_size Pointer to the size of the destination buffer; updated with the actual size.
  * @param src_buffer Pointer to the source (uncompressed) buffer.
- * @param srcLen Size of the source buffer.
- * @param outProps Pointer to the output LZMA properties.
- * @param outPropsSize Pointer to the size of the output LZMA properties.
+ * @param src_len Size of the source buffer.
+ * @param out_props Pointer to the output LZMA properties.
+ * @param out_props_size Pointer to the size of the output LZMA properties.
  * @param level Compression level.
- * @param dictSize Dictionary size.
+ * @param dict_size Dictionary size.
  * @param lc LZMA literal context bits.
  * @param lp LZMA literal position bits.
  * @param pb LZMA position bits.
  * @param fb Number of fast bytes.
- * @param numThreads Number of threads to use.
+ * @param num_threads Number of threads to use.
  * @return 0 on success, or an error code on failure.
  */
 AARU_EXPORT int32_t AARU_CALL aaruf_lzma_encode_buffer(uint8_t *dst_buffer, size_t *dst_size, const uint8_t *src_buffer,
-                                                       size_t srcLen, uint8_t *outProps, size_t *outPropsSize,
-                                                       int32_t level, uint32_t dictSize, int32_t lc, int32_t lp,
-                                                       int32_t pb, int32_t fb, int32_t numThreads)
+                                                       size_t src_len, uint8_t *out_props, size_t *out_props_size,
+                                                       int32_t level, uint32_t dict_size, int32_t lc, int32_t lp,
+                                                       int32_t pb, int32_t fb, int32_t num_threads)
 {
-    return LzmaCompress(dst_buffer, dst_size, src_buffer, srcLen, outProps, outPropsSize, level, dictSize, lc, lp, pb,
-                        fb, numThreads);
+    return LzmaCompress(dst_buffer, dst_size, src_buffer, src_len, out_props, out_props_size, level, dict_size, lc, lp,
+                        pb, fb, num_threads);
 }

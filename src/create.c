@@ -32,31 +32,31 @@
  * Allocates and initializes a new aaruformat context and image file with the specified parameters.
  *
  * @param filepath Path to the image file to create.
- * @param mediaType Media type identifier.
- * @param sectorSize Size of each sector in bytes.
- * @param userSectors Number of user data sectors.
- * @param negativeSectors Number of negative sectors.
- * @param overflowSectors Number of overflow sectors.
+ * @param media_type Media type identifier.
+ * @param sector_size Size of each sector in bytes.
+ * @param user_sectors Number of user data sectors.
+ * @param negative_sectors Number of negative sectors.
+ * @param overflow_sectors Number of overflow sectors.
  * @param options String with creation options.
- * @param applicationName Pointer to the application name string.
- * @param applicationNameLength Length of the application name string.
- * @param applicationMajorVersion Major version of the application.
- * @param applicationMinorVersion Minor version of the application.
+ * @param application_name Pointer to the application name string.
+ * @param application_name_length Length of the application name string.
+ * @param application_major_version Major version of the application.
+ * @param application_minor_version Minor version of the application.
  * @return Pointer to the created aaruformat context, or NULL on failure.
  */
-void *aaruf_create(const char *filepath, uint32_t mediaType, uint32_t sectorSize, uint64_t userSectors,
-                   uint64_t negativeSectors, uint64_t overflowSectors, const char *options,
-                   const uint8_t *applicationName, uint8_t applicationNameLength, uint8_t applicationMajorVersion,
-                   uint8_t applicationMinorVersion)
+void *aaruf_create(const char *filepath, uint32_t media_type, uint32_t sector_size, uint64_t user_sectors,
+                   uint64_t negative_sectors, uint64_t overflow_sectors, const char *options,
+                   const uint8_t *application_name, uint8_t application_name_length, uint8_t application_major_version,
+                   uint8_t application_minor_version)
 {
-    TRACE("Entering aaruf_create(%s, %u, %u, %llu, %llu, %llu, %s, %s, %u, %u, %u)", filepath, mediaType, sectorSize,
-          userSectors, negativeSectors, overflowSectors, options,
-          applicationName ? (const char *)applicationName : "NULL", applicationNameLength, applicationMajorVersion,
-          applicationMinorVersion);
+    TRACE("Entering aaruf_create(%s, %u, %u, %llu, %llu, %llu, %s, %s, %u, %u, %u)", filepath, media_type, sector_size,
+          user_sectors, negative_sectors, overflow_sectors, options,
+          application_name ? (const char *)application_name : "NULL", application_name_length,
+          application_major_version, application_minor_version);
 
     // Parse the options
     TRACE("Parsing options");
-    aaru_options parsedOptions = parse_options(options);
+    aaru_options parsed_options = parse_options(options);
 
     // Allocate context
     TRACE("Allocating memory for context");
@@ -86,9 +86,9 @@ void *aaruf_create(const char *filepath, uint32_t mediaType, uint32_t sectorSize
         return NULL;
     }
 
-    if(applicationNameLength > AARU_HEADER_APP_NAME_LEN)
+    if(application_name_length > AARU_HEADER_APP_NAME_LEN)
     {
-        FATAL("Application name too long (%u bytes, maximum %u bytes)", applicationNameLength,
+        FATAL("Application name too long (%u bytes, maximum %u bytes)", application_name_length,
               AARU_HEADER_APP_NAME_LEN);
         free(ctx);
         errno = AARUF_ERROR_INVALID_APP_NAME_LENGTH;
@@ -100,12 +100,12 @@ void *aaruf_create(const char *filepath, uint32_t mediaType, uint32_t sectorSize
     // Initialize header
     TRACE("Initializing header");
     ctx->header.identifier = AARU_MAGIC;
-    memcpy(ctx->header.application, applicationName, applicationNameLength);
+    memcpy(ctx->header.application, application_name, application_name_length);
     ctx->header.imageMajorVersion       = AARUF_VERSION_V2;
     ctx->header.imageMinorVersion       = 0;
-    ctx->header.applicationMajorVersion = applicationMajorVersion;
-    ctx->header.applicationMinorVersion = applicationMinorVersion;
-    ctx->header.mediaType               = mediaType;
+    ctx->header.applicationMajorVersion = application_major_version;
+    ctx->header.applicationMinorVersion = application_minor_version;
+    ctx->header.mediaType               = media_type;
     ctx->header.indexOffset             = 0;
     ctx->header.creationTime            = get_filetime_uint64();
     ctx->header.lastWrittenTime         = get_filetime_uint64();
@@ -143,7 +143,7 @@ void *aaruf_create(const char *filepath, uint32_t mediaType, uint32_t sectorSize
     ctx->imageInfo.CreationTime         = ctx->header.creationTime;
     ctx->imageInfo.LastModificationTime = ctx->header.lastWrittenTime;
     ctx->imageInfo.XmlMediaType         = aaruf_get_xml_mediatype(ctx->header.mediaType);
-    ctx->imageInfo.SectorSize           = sectorSize;
+    ctx->imageInfo.SectorSize           = sector_size;
 
     // Initialize caches
     TRACE("Initializing caches");
@@ -171,13 +171,13 @@ void *aaruf_create(const char *filepath, uint32_t mediaType, uint32_t sectorSize
     ctx->userDataDdtHeader.levels              = 2;
     ctx->userDataDdtHeader.tableLevel          = 0;
     ctx->userDataDdtHeader.previousLevelOffset = 0;
-    ctx->userDataDdtHeader.negative            = negativeSectors;
-    ctx->userDataDdtHeader.blocks              = userSectors + overflowSectors + negativeSectors;
-    ctx->userDataDdtHeader.overflow            = overflowSectors;
+    ctx->userDataDdtHeader.negative            = negative_sectors;
+    ctx->userDataDdtHeader.blocks              = user_sectors + overflow_sectors + negative_sectors;
+    ctx->userDataDdtHeader.overflow            = overflow_sectors;
     ctx->userDataDdtHeader.start               = 0;
-    ctx->userDataDdtHeader.blockAlignmentShift = parsedOptions.block_alignment;
-    ctx->userDataDdtHeader.dataShift           = parsedOptions.data_shift;
-    ctx->userDataDdtHeader.tableShift          = parsedOptions.table_shift;
+    ctx->userDataDdtHeader.blockAlignmentShift = parsed_options.block_alignment;
+    ctx->userDataDdtHeader.dataShift           = parsed_options.data_shift;
+    ctx->userDataDdtHeader.tableShift          = parsed_options.table_shift;
     ctx->userDataDdtHeader.sizeType            = 1;
     ctx->userDataDdtHeader.entries = ctx->userDataDdtHeader.blocks / (1 << ctx->userDataDdtHeader.tableShift);
 

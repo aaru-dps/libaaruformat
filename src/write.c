@@ -32,16 +32,16 @@
  * Writes the given data to the specified sector address in the image, with the given status and length.
  *
  * @param context Pointer to the aaruformat context.
- * @param sectorAddress Logical sector address to write.
+ * @param sector_address Logical sector address to write.
  * @param data Pointer to the data buffer to write.
- * @param sectorStatus Status of the sector to write.
+ * @param sector_status Status of the sector to write.
  * @param length Length of the data buffer.
  * @return AARUF_STATUS_OK on success, or an error code on failure.
  */
-int32_t aaruf_write_sector(void *context, uint64_t sectorAddress, const uint8_t *data, uint8_t sectorStatus,
+int32_t aaruf_write_sector(void *context, uint64_t sector_address, const uint8_t *data, uint8_t sector_status,
                            uint32_t length)
 {
-    TRACE("Entering aaruf_write_sector(%p, %" PRIu64 ", %p, %u, %u)", context, sectorAddress, data, sectorStatus,
+    TRACE("Entering aaruf_write_sector(%p, %" PRIu64 ", %p, %u, %u)", context, sector_address, data, sector_status,
           length);
 
     // Check context is correct AaruFormat context
@@ -98,7 +98,7 @@ int32_t aaruf_write_sector(void *context, uint64_t sectorAddress, const uint8_t 
         }
     }
 
-    set_ddt_entry_v2(ctx, sectorAddress, ctx->currentBlockOffset, ctx->nextBlockPosition, sectorStatus);
+    set_ddt_entry_v2(ctx, sector_address, ctx->currentBlockOffset, ctx->nextBlockPosition, sector_status);
 
     // No block set
     if(ctx->writingBufferPosition == 0)
@@ -110,11 +110,11 @@ int32_t aaruf_write_sector(void *context, uint64_t sectorAddress, const uint8_t 
         ctx->currentBlockHeader.sectorSize  = length;
 
         // TODO: Optical discs
-        uint32_t maxBufferSize = (1 << ctx->userDataDdtHeader.dataShift) * ctx->currentBlockHeader.sectorSize;
-        TRACE("Setting max buffer size to %u bytes", maxBufferSize);
+        uint32_t max_buffer_size = (1 << ctx->userDataDdtHeader.dataShift) * ctx->currentBlockHeader.sectorSize;
+        TRACE("Setting max buffer size to %u bytes", max_buffer_size);
 
         TRACE("Allocating memory for writing buffer");
-        ctx->writingBuffer = (uint8_t *)calloc(1, maxBufferSize);
+        ctx->writingBuffer = (uint8_t *)calloc(1, max_buffer_size);
         if(ctx->writingBuffer == NULL)
         {
             FATAL("Could not allocate memory");
@@ -160,13 +160,13 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
 
     // Add to index
     TRACE("Adding block to index");
-    IndexEntry indexEntry;
-    indexEntry.blockType = DataBlock;
-    indexEntry.dataType  = UserData;
-    indexEntry.offset    = ctx->nextBlockPosition;
+    IndexEntry index_entry;
+    index_entry.blockType = DataBlock;
+    index_entry.dataType  = UserData;
+    index_entry.offset    = ctx->nextBlockPosition;
 
-    utarray_push_back(ctx->indexEntries, &indexEntry);
-    TRACE("Block added to index at offset %" PRIu64, indexEntry.offset);
+    utarray_push_back(ctx->indexEntries, &index_entry);
+    TRACE("Block added to index at offset %" PRIu64, index_entry.offset);
 
     // Write block header to file
 
@@ -182,9 +182,9 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
         return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
 
     // Update nextBlockPosition to point to the next available aligned position
-    uint64_t blockTotalSize = sizeof(BlockHeader) + ctx->currentBlockHeader.cmpLength;
-    uint64_t alignmentMask  = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
-    ctx->nextBlockPosition  = (ctx->nextBlockPosition + blockTotalSize + alignmentMask) & ~alignmentMask;
+    uint64_t block_total_size = sizeof(BlockHeader) + ctx->currentBlockHeader.cmpLength;
+    uint64_t alignment_mask   = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    ctx->nextBlockPosition    = (ctx->nextBlockPosition + block_total_size + alignment_mask) & ~alignment_mask;
     TRACE("Updated nextBlockPosition to %" PRIu64, ctx->nextBlockPosition);
 
     // Clear values

@@ -34,9 +34,9 @@
  */
 void process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
-    int      pos       = 0;
-    size_t   readBytes = 0;
-    uint64_t crc64     = 0;
+    int      pos        = 0;
+    size_t   read_bytes = 0;
+    uint64_t crc64      = 0;
     int      j = 0, k = 0;
 
     // Check if the context and image stream are valid
@@ -56,9 +56,9 @@ void process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry)
     }
 
     // Even if those two checks shall have been done before
-    readBytes = fread(&ctx->tracksHeader, 1, sizeof(TracksHeader), ctx->imageStream);
+    read_bytes = fread(&ctx->tracksHeader, 1, sizeof(TracksHeader), ctx->imageStream);
 
-    if(readBytes != sizeof(TracksHeader))
+    if(read_bytes != sizeof(TracksHeader))
     {
         memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
         TRACE("Could not read tracks header, continuing...\n");
@@ -82,9 +82,9 @@ void process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry)
         return;
     }
 
-    readBytes = fread(ctx->trackEntries, sizeof(TrackEntry), ctx->tracksHeader.entries, ctx->imageStream);
+    read_bytes = fread(ctx->trackEntries, sizeof(TrackEntry), ctx->tracksHeader.entries, ctx->imageStream);
 
-    if(readBytes != ctx->tracksHeader.entries)
+    if(read_bytes != ctx->tracksHeader.entries)
     {
         memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
         free(ctx->trackEntries);

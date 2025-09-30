@@ -31,6 +31,7 @@
 /**
  *     Contains an enumeration of all known types of media.
  */
+// NOLINTBEGIN(readability-identifier-naming)
 typedef enum
 {
     // Generics, types 0 to 9
@@ -995,6 +996,8 @@ typedef enum
     //
 } MediaType;
 
+// NOLINTEND(readability-identifier-naming)
+
 /**
  *      Contains information about a dump image and its contents
  */
@@ -1090,6 +1093,7 @@ typedef enum
 /*
  *     Metadata present for each media.
  */
+// NOLINTBEGIN(readability-identifier-naming)
 typedef enum
 {
     /* CD table of contents */
@@ -1166,6 +1170,8 @@ typedef enum
     Xbox_PFI                      = 67, /* Compact Disc Lead-in */
     CD_LeadIn                     = 68
 } MediaTagType;
+
+// NOLINTEND(readability-identifier-naming)
 
 #endif  // LIBAARUFORMAT_AARU_H
 

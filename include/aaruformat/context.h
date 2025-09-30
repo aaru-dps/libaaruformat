@@ -45,10 +45,10 @@ typedef struct Crc64Context
 
 typedef struct CdEccContext
 {
-    bool      initedEdc;
-    uint8_t  *eccBTable;
-    uint8_t  *eccFTable;
-    uint32_t *edcTable;
+    bool      inited_edc;
+    uint8_t  *ecc_b_table;
+    uint8_t  *ecc_f_table;
+    uint32_t *edc_table;
 } CdEccContext;
 
 typedef struct Checksums

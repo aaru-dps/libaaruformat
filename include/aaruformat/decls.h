@@ -58,15 +58,15 @@
 
 AARU_EXPORT int AARU_CALL aaruf_identify(const char *filename);
 
-AARU_EXPORT int AARU_CALL aaruf_identify_stream(FILE *imageStream);
+AARU_EXPORT int AARU_CALL aaruf_identify_stream(FILE *image_stream);
 
 AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath);
 
-AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, uint32_t mediaType, uint32_t sectorSize,
-                                         uint64_t userSectors, uint64_t negativeSectors, uint64_t overflowSectors,
-                                         const char *options, const uint8_t *applicationName,
-                                         uint8_t applicationNameLength, uint8_t applicationMajorVersion,
-                                         uint8_t applicationMinorVersion);
+AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, uint32_t media_type, uint32_t sector_size,
+                                         uint64_t user_sectors, uint64_t negative_sectors, uint64_t overflow_sectors,
+                                         const char *options, const uint8_t *application_name,
+                                         uint8_t application_name_length, uint8_t application_major_version,
+                                         uint8_t application_minor_version);
 
 AARU_EXPORT int AARU_CALL aaruf_close(void *context);
 
@@ -79,12 +79,13 @@ AARU_EXPORT void AARU_CALL       aaruf_crc64_free(crc64_ctx *ctx);
 AARU_EXPORT void AARU_CALL       aaruf_crc64_slicing(uint64_t *previous_crc, const uint8_t *data, uint32_t len);
 AARU_EXPORT uint64_t AARU_CALL   aaruf_crc64_data(const uint8_t *data, uint32_t len);
 
-AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint32_t *length);
-AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, uint64_t sectorAddress, uint8_t *data,
+AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, uint64_t sector_address, uint8_t *data,
+                                                uint32_t *length);
+AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, uint64_t sector_address, uint8_t *data,
                                                      uint32_t *length);
 
-AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sectorAddress, const uint8_t *data,
-                                                 uint8_t sectorStatus, uint32_t length);
+AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_address, const uint8_t *data,
+                                                 uint8_t sector_status, uint32_t length);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context);
 
@@ -99,18 +100,18 @@ AARU_EXPORT bool AARU_CALL aaruf_ecc_cd_is_suffix_correct(void *context, const u
 AARU_EXPORT bool AARU_CALL aaruf_ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector);
 
 AARU_EXPORT bool AARU_CALL aaruf_ecc_cd_check(void *context, const uint8_t *address, const uint8_t *data,
-                                              uint32_t majorCount, uint32_t minorCount, uint32_t majorMult,
-                                              uint32_t minorInc, const uint8_t *ecc, int32_t addressOffset,
-                                              int32_t dataOffset, int32_t eccOffset);
+                                              uint32_t major_count, uint32_t minor_count, uint32_t major_mult,
+                                              uint32_t minor_inc, const uint8_t *ecc, int32_t address_offset,
+                                              int32_t data_offset, int32_t ecc_offset);
 
 AARU_EXPORT void AARU_CALL aaruf_ecc_cd_write(void *context, const uint8_t *address, const uint8_t *data,
-                                              uint32_t majorCount, uint32_t minorCount, uint32_t majorMult,
-                                              uint32_t minorInc, uint8_t *ecc, int32_t addressOffset,
-                                              int32_t dataOffset, int32_t eccOffset);
+                                              uint32_t major_count, uint32_t minor_count, uint32_t major_mult,
+                                              uint32_t minor_inc, uint8_t *ecc, int32_t address_offset,
+                                              int32_t data_offset, int32_t ecc_offset);
 
 AARU_EXPORT void AARU_CALL aaruf_ecc_cd_write_sector(void *context, const uint8_t *address, const uint8_t *data,
-                                                     uint8_t *ecc, int32_t addressOffset, int32_t dataOffset,
-                                                     int32_t eccOffset);
+                                                     uint8_t *ecc, int32_t address_offset, int32_t data_offset,
+                                                     int32_t ecc_offset);
 
 AARU_LOCAL void AARU_CALL aaruf_cd_lba_to_msf(int64_t pos, uint8_t *minute, uint8_t *second, uint8_t *frame);
 
@@ -120,7 +121,7 @@ AARU_EXPORT void AARU_CALL aaruf_ecc_cd_reconstruct(void *context, uint8_t *sect
 
 AARU_EXPORT uint32_t AARU_CALL aaruf_edc_cd_compute(void *context, uint32_t edc, const uint8_t *src, int size, int pos);
 
-AARU_EXPORT int32_t AARU_CALL aaruf_read_track_sector(void *context, uint8_t *data, uint64_t sectorAddress,
+AARU_EXPORT int32_t AARU_CALL aaruf_read_track_sector(void *context, uint8_t *data, uint64_t sector_address,
                                                       uint32_t *length, uint8_t track);
 
 AARU_LOCAL int32_t AARU_CALL aaruf_get_media_tag_type_for_datatype(int32_t type);
@@ -148,12 +149,12 @@ AARU_EXPORT size_t AARU_CALL aaruf_flac_encode_redbook_buffer(
     uint32_t application_id_len);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_lzma_decode_buffer(uint8_t *dst_buffer, size_t *dst_size, const uint8_t *src_buffer,
-                                                       size_t *src_size, const uint8_t *props, size_t propsSize);
+                                                       size_t *src_size, const uint8_t *props, size_t props_size);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_lzma_encode_buffer(uint8_t *dst_buffer, size_t *dst_size, const uint8_t *src_buffer,
-                                                       size_t src_size, uint8_t *outProps, size_t *outPropsSize,
-                                                       int32_t level, uint32_t dictSize, int32_t lc, int32_t lp,
-                                                       int32_t pb, int32_t fb, int32_t numThreads);
+                                                       size_t src_size, uint8_t *out_props, size_t *out_props_size,
+                                                       int32_t level, uint32_t dict_size, int32_t lc, int32_t lp,
+                                                       int32_t pb, int32_t fb, int32_t num_threads);
 
 #if defined(__x86_64__) || defined(__amd64) || defined(_M_AMD64) || defined(_M_X64) || defined(__I386__) || \
     defined(__i386__) || defined(__THW_INTEL) || defined(_M_IX86)

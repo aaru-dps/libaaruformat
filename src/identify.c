@@ -49,16 +49,16 @@ int aaruf_identify(const char *filename)
  *
  * Determines if the provided stream is an AaruFormat image.
  *
- * @param imageStream Stream of the file to identify.
+ * @param image_stream Stream of the file to identify.
  * @return If positive, confidence value (100 = maximum confidence, 0 = not recognized). If negative, error value.
  */
-int aaruf_identify_stream(FILE *imageStream)
+int aaruf_identify_stream(FILE *image_stream)
 {
-    fseek(imageStream, 0, SEEK_SET);
+    fseek(image_stream, 0, SEEK_SET);
 
     AaruHeader header;
 
-    size_t ret = fread(&header, sizeof(AaruHeader), 1, imageStream);
+    size_t ret = fread(&header, sizeof(AaruHeader), 1, image_stream);
 
     if(ret != 1) return 0;
 

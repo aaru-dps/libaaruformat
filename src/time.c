@@ -37,7 +37,8 @@ uint64_t get_filetime_uint64()
 /**
  * @brief Gets the current time as a 64-bit FILETIME value.
  *
- * Returns the current system time as a 64-bit value compatible with Windows FILETIME (number of 100-nanosecond intervals since January 1, 1601 UTC).
+ * Returns the current system time as a 64-bit value compatible with Windows FILETIME (number of 100-nanosecond
+ * intervals since January 1, 1601 UTC).
  *
  * @return The current time as a 64-bit FILETIME value.
  */
@@ -46,9 +47,8 @@ uint64_t get_filetime_uint64()
     struct timeval tv;
     gettimeofday(&tv, NULL);  // seconds + microseconds since 1970
 
-    const uint64_t EPOCH_DIFF = 11644473600ULL;  // seconds between 1601 and 1970
-    uint64_t       ft         = (tv.tv_sec + EPOCH_DIFF) * 10000000ULL + tv.tv_usec * 10;
+    const uint64_t epoch_diff = 11644473600ULL;  // seconds between 1601 and 1970
+    uint64_t       ft         = (tv.tv_sec + epoch_diff) * 10000000ULL + tv.tv_usec * 10;
     return ft;
 }
 #endif
-

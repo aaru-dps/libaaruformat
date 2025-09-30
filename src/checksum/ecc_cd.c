@@ -44,32 +44,32 @@ void *aaruf_ecc_cd_init()
     if(context == NULL) return NULL;
 
     TRACE("Allocating memory for ECC F table");
-    context->eccFTable = (uint8_t *)malloc(sizeof(uint8_t) * 256);
+    context->ecc_f_table = (uint8_t *)malloc(sizeof(uint8_t) * 256);
 
-    if(context->eccFTable == NULL)
+    if(context->ecc_f_table == NULL)
     {
         free(context);
         return NULL;
     }
 
     TRACE("Allocating memory for ECC B table");
-    context->eccBTable = (uint8_t *)malloc(sizeof(uint8_t) * 256);
+    context->ecc_b_table = (uint8_t *)malloc(sizeof(uint8_t) * 256);
 
-    if(context->eccBTable == NULL)
+    if(context->ecc_b_table == NULL)
     {
-        free(context->eccFTable);
+        free(context->ecc_f_table);
         free(context);
         return NULL;
     }
 
     TRACE("Allocating memory for EDC table");
 
-    context->edcTable = (uint32_t *)malloc(sizeof(uint32_t) * 256);
+    context->edc_table = (uint32_t *)malloc(sizeof(uint32_t) * 256);
 
-    if(context->edcTable == NULL)
+    if(context->edc_table == NULL)
     {
-        free(context->eccFTable);
-        free(context->eccBTable);
+        free(context->ecc_f_table);
+        free(context->ecc_b_table);
         free(context);
         return NULL;
     }
@@ -77,15 +77,15 @@ void *aaruf_ecc_cd_init()
     TRACE("Initializing EDC tables");
     for(i = 0; i < 256; i++)
     {
-        edc                       = i;
-        j                         = (uint32_t)((i << 1) ^ ((i & 0x80) == 0x80 ? 0x11D : 0));
-        context->eccFTable[i]     = (uint8_t)j;
-        context->eccBTable[i ^ j] = (uint8_t)i;
+        edc                         = i;
+        j                           = (uint32_t)((i << 1) ^ ((i & 0x80) == 0x80 ? 0x11D : 0));
+        context->ecc_f_table[i]     = (uint8_t)j;
+        context->ecc_b_table[i ^ j] = (uint8_t)i;
         for(j = 0; j < 8; j++) edc = (edc >> 1) ^ ((edc & 1) > 0 ? 0xD8018001 : 0);
-        context->edcTable[i] = edc;
+        context->edc_table[i] = edc;
     }
 
-    context->initedEdc = true;
+    context->inited_edc = true;
 
     TRACE("Exiting aaruf_ecc_cd_init()");
     return context;
@@ -102,7 +102,7 @@ bool aaruf_ecc_cd_is_suffix_correct(void *context, const uint8_t *sector)
 {
     TRACE("Entering aaruf_ecc_cd_is_suffix_correct(%p, %p)", context, sector);
     CdEccContext *ctx;
-    uint32_t      storedEdc, edc, calculatedEdc;
+    uint32_t      stored_edc, edc, calculated_edc;
     int           size, pos;
 
     if(context == NULL || sector == NULL)
@@ -112,7 +112,7 @@ bool aaruf_ecc_cd_is_suffix_correct(void *context, const uint8_t *sector)
     }
 
     ctx = (CdEccContext *)context;
-    if(!ctx->initedEdc)
+    if(!ctx->inited_edc)
     {
         TRACE("Exiting aaruf_ecc_cd_is_suffix_correct() without initialized context");
         return false;
@@ -127,29 +127,32 @@ bool aaruf_ecc_cd_is_suffix_correct(void *context, const uint8_t *sector)
         return false;
     }
 
-    bool correctEccP = aaruf_ecc_cd_check(context, sector, sector, 86, 24, 2, 86, sector, 0xC, 0x10, 0x81C);
-    if(!correctEccP)
+    bool correct_ecc_p = aaruf_ecc_cd_check(context, sector, sector, 86, 24, 2, 86, sector, 0xC, 0x10, 0x81C);
+    if(!correct_ecc_p)
     {
         TRACE("Exiting aaruf_ecc_cd_is_suffix_correct() = false");
         return false;
     }
 
-    bool correctEccQ = aaruf_ecc_cd_check(context, sector, sector, 52, 43, 86, 88, sector, 0xC, 0x10, 0x81C + 0xAC);
-    if(!correctEccQ)
+    bool correct_ecc_q = aaruf_ecc_cd_check(context, sector, sector, 52, 43, 86, 88, sector, 0xC, 0x10, 0x81C + 0xAC);
+    if(!correct_ecc_q)
     {
         TRACE("Exiting aaruf_ecc_cd_is_suffix_correct() = false");
         return false;
     }
 
-    storedEdc = (sector[0x813] << 24) + (sector[0x812] << 16) + (sector[0x811] << 8) + sector[0x810];
-    edc       = 0;
-    size      = 0x810;
-    pos       = 0;
-    for(; size > 0; size--) edc = (edc >> 8) ^ ctx->edcTable[(edc ^ sector[pos++]) & 0xFF];
-    calculatedEdc = edc;
+    stored_edc = (uint32_t)sector[0x808] | (uint32_t)sector[0x809] << 8 | (uint32_t)sector[0x80A] << 16 |
+                 (uint32_t)sector[0x80B] << 24;
+    calculated_edc = aaruf_edc_cd_compute(context, 0, sector + 16, size, pos);
 
-    TRACE("Exiting aaruf_ecc_cd_is_suffix_correct() = %u == %u", calculatedEdc, storedEdc);
-    return calculatedEdc == storedEdc;
+    if(stored_edc != calculated_edc)
+    {
+        TRACE("Exiting aaruf_ecc_cd_is_suffix_correct() = false");
+        return false;
+    }
+
+    TRACE("Exiting aaruf_ecc_cd_is_suffix_correct() = %u == %u", calculated_edc, stored_edc);
+    return calculated_edc == stored_edc;
 }
 
 /**
@@ -163,7 +166,7 @@ bool aaruf_ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector)
 {
     TRACE("Entering aaruf_ecc_cd_is_suffix_correct_mode2(%p, %p)", context, sector);
     CdEccContext *ctx;
-    uint32_t      storedEdc, edc, calculatedEdc;
+    uint32_t      stored_edc, edc, calculated_edc;
     int           size, pos;
     uint8_t       zeroaddress[4];
 
@@ -175,7 +178,7 @@ bool aaruf_ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector)
 
     ctx = (CdEccContext *)context;
 
-    if(!ctx->initedEdc)
+    if(!ctx->inited_edc)
     {
         TRACE("Exiting aaruf_ecc_cd_is_suffix_correct_mode2() without initialized context");
         return false;
@@ -183,27 +186,25 @@ bool aaruf_ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector)
 
     memset(&zeroaddress, 4, sizeof(uint8_t));
 
-    bool correctEccP = aaruf_ecc_cd_check(context, zeroaddress, sector, 86, 24, 2, 86, sector, 0, 0x10, 0x81C);
-    if(!correctEccP)
+    bool correct_ecc_p = aaruf_ecc_cd_check(context, zeroaddress, sector, 86, 24, 2, 86, sector, 0, 0x10, 0x81C);
+    if(!correct_ecc_p)
     {
         TRACE("Exiting aaruf_ecc_cd_is_suffix_correct_mode2() = false");
         return false;
     }
-    bool correctEccQ = aaruf_ecc_cd_check(context, zeroaddress, sector, 52, 43, 86, 88, sector, 0, 0x10, 0x81C + 0xAC);
-    if(!correctEccQ)
+    bool correct_ecc_q =
+        aaruf_ecc_cd_check(context, zeroaddress, sector, 52, 43, 86, 88, sector, 0, 0x10, 0x81C + 0xAC);
+    if(!correct_ecc_q)
     {
         TRACE("Exiting aaruf_ecc_cd_is_suffix_correct_mode2() = false");
         return false;
     }
-    storedEdc = (sector[0x81B] << 24) + (sector[0x81A] << 16) + (sector[0x819] << 8) + sector[0x818];
-    edc       = 0;
-    size      = 0x808;
-    pos       = 0x10;
-    for(; size > 0; size--) edc = (edc >> 8) ^ ctx->edcTable[(edc ^ sector[pos++]) & 0xFF];
-    calculatedEdc = edc;
+    stored_edc = (uint32_t)sector[0x92C] | (uint32_t)sector[0x92D] << 8 | (uint32_t)sector[0x92E] << 16 |
+                 (uint32_t)sector[0x92F] << 24;
+    calculated_edc = aaruf_edc_cd_compute(context, 0, sector + 16, size, pos);
 
-    TRACE("Exiting aaruf_ecc_cd_is_suffix_correct_mode2() = %u == %u", calculatedEdc, storedEdc);
-    return calculatedEdc == storedEdc;
+    TRACE("Exiting aaruf_ecc_cd_is_suffix_correct_mode2() = %u == %u", calculated_edc, stored_edc);
+    return calculated_edc == stored_edc;
 }
 
 /**
@@ -212,26 +213,26 @@ bool aaruf_ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector)
  * @param context Pointer to the ECC context.
  * @param address Pointer to the address field.
  * @param data Pointer to the data field.
- * @param majorCount Number of major iterations.
- * @param minorCount Number of minor iterations.
- * @param majorMult Major multiplier.
- * @param minorInc Minor increment.
+ * @param major_count Number of major iterations.
+ * @param minor_count Number of minor iterations.
+ * @param major_mult Major multiplier.
+ * @param minor_inc Minor increment.
  * @param ecc Pointer to the ECC field.
- * @param addressOffset Offset for the address field.
- * @param dataOffset Offset for the data field.
- * @param eccOffset Offset for the ECC field.
+ * @param address_offset Offset for the address field.
+ * @param data_offset Offset for the data field.
+ * @param ecc_offset Offset for the ECC field.
  * @return true if ECC is correct, false otherwise.
  */
-bool aaruf_ecc_cd_check(void *context, const uint8_t *address, const uint8_t *data, uint32_t majorCount,
-                        uint32_t minorCount, uint32_t majorMult, uint32_t minorInc, const uint8_t *ecc,
-                        int32_t addressOffset, int32_t dataOffset, int32_t eccOffset)
+bool aaruf_ecc_cd_check(void *context, const uint8_t *address, const uint8_t *data, uint32_t major_count,
+                        uint32_t minor_count, uint32_t major_mult, uint32_t minor_inc, const uint8_t *ecc,
+                        int32_t address_offset, int32_t data_offset, int32_t ecc_offset)
 {
-    TRACE("Entering aaruf_ecc_cd_check(%p, %p, %p, %u, %u, %u, %u, %p, %d, %d, %d)", context, address, data, majorCount,
-          minorCount, majorMult, minorInc, ecc, addressOffset, dataOffset, eccOffset);
+    TRACE("Entering aaruf_ecc_cd_check(%p, %p, %p, %u, %u, %u, %u, %p, %d, %d, %d)", context, address, data,
+          major_count, minor_count, major_mult, minor_inc, ecc, address_offset, data_offset, ecc_offset);
 
     CdEccContext *ctx;
     uint32_t      size, major, idx, minor;
-    uint8_t       eccA, eccB, temp;
+    uint8_t       ecc_a, ecc_b, temp;
 
     if(context == NULL || address == NULL || data == NULL || ecc == NULL)
     {
@@ -241,30 +242,30 @@ bool aaruf_ecc_cd_check(void *context, const uint8_t *address, const uint8_t *da
 
     ctx = (CdEccContext *)context;
 
-    if(!ctx->initedEdc)
+    if(!ctx->inited_edc)
     {
         TRACE("Exiting aaruf_ecc_cd_check() without initialized context");
         return false;
     }
 
-    size = majorCount * minorCount;
-    for(major = 0; major < majorCount; major++)
+    size = major_count * minor_count;
+    for(major = 0; major < major_count; major++)
     {
-        idx  = (major >> 1) * majorMult + (major & 1);
-        eccA = 0;
-        eccB = 0;
-        for(minor = 0; minor < minorCount; minor++)
+        idx   = (major >> 1) * major_mult + (major & 1);
+        ecc_a = 0;
+        ecc_b = 0;
+        for(minor = 0; minor < minor_count; minor++)
         {
-            temp = idx < 4 ? address[idx + addressOffset] : data[idx + dataOffset - 4];
-            idx += minorInc;
+            temp = idx < 4 ? address[idx + address_offset] : data[idx + data_offset - 4];
+            idx += minor_inc;
             if(idx >= size) idx -= size;
-            eccA ^= temp;
-            eccB ^= temp;
-            eccA = ctx->eccFTable[eccA];
+            ecc_a ^= temp;
+            ecc_b ^= temp;
+            ecc_a = ctx->ecc_f_table[ecc_a];
         }
 
-        eccA = ctx->eccBTable[ctx->eccFTable[eccA] ^ eccB];
-        if(ecc[major + eccOffset] != eccA || ecc[major + majorCount + eccOffset] != (eccA ^ eccB))
+        ecc_a = ctx->ecc_b_table[ctx->ecc_f_table[ecc_a] ^ ecc_b];
+        if(ecc[major + ecc_offset] != ecc_a || ecc[major + major_count + ecc_offset] != (ecc_a ^ ecc_b))
         {
             TRACE("Exiting aaruf_ecc_cd_check() = false, ECC mismatch at major %u", major);
             return false;
@@ -281,25 +282,25 @@ bool aaruf_ecc_cd_check(void *context, const uint8_t *address, const uint8_t *da
  * @param context Pointer to the ECC context.
  * @param address Pointer to the address field.
  * @param data Pointer to the data field.
- * @param majorCount Number of major iterations.
- * @param minorCount Number of minor iterations.
- * @param majorMult Major multiplier.
- * @param minorInc Minor increment.
+ * @param major_count Number of major iterations.
+ * @param minor_count Number of minor iterations.
+ * @param major_mult Major multiplier.
+ * @param minor_inc Minor increment.
  * @param ecc Pointer to the ECC field to write.
- * @param addressOffset Offset for the address field.
- * @param dataOffset Offset for the data field.
- * @param eccOffset Offset for the ECC field.
+ * @param address_offset Offset for the address field.
+ * @param data_offset Offset for the data field.
+ * @param ecc_offset Offset for the ECC field.
  */
-void aaruf_ecc_cd_write(void *context, const uint8_t *address, const uint8_t *data, uint32_t majorCount,
-                        uint32_t minorCount, uint32_t majorMult, uint32_t minorInc, uint8_t *ecc, int32_t addressOffset,
-                        int32_t dataOffset, int32_t eccOffset)
+void aaruf_ecc_cd_write(void *context, const uint8_t *address, const uint8_t *data, uint32_t major_count,
+                        uint32_t minor_count, uint32_t major_mult, uint32_t minor_inc, uint8_t *ecc,
+                        int32_t address_offset, int32_t data_offset, int32_t ecc_offset)
 {
-    TRACE("Entering aaruf_ecc_cd_write(%p, %p, %p, %u, %u, %u, %u, %p, %d, %d, %d)", context, address, data, majorCount,
-          minorCount, majorMult, minorInc, ecc, addressOffset, dataOffset, eccOffset);
+    TRACE("Entering aaruf_ecc_cd_write(%p, %p, %p, %u, %u, %u, %u, %p, %d, %d, %d)", context, address, data,
+          major_count, minor_count, major_mult, minor_inc, ecc, address_offset, data_offset, ecc_offset);
 
     CdEccContext *ctx;
     uint32_t      size, major, idx, minor;
-    uint8_t       eccA, eccB, temp;
+    uint8_t       ecc_a, ecc_b, temp;
 
     if(context == NULL || address == NULL || data == NULL || ecc == NULL)
     {
@@ -309,32 +310,32 @@ void aaruf_ecc_cd_write(void *context, const uint8_t *address, const uint8_t *da
 
     ctx = (CdEccContext *)context;
 
-    if(!ctx->initedEdc)
+    if(!ctx->inited_edc)
     {
         TRACE("Exiting aaruf_ecc_cd_write() without initialized context");
         return;
     }
 
-    size = majorCount * minorCount;
-    for(major = 0; major < majorCount; major++)
+    size = major_count * minor_count;
+    for(major = 0; major < major_count; major++)
     {
-        idx  = (major >> 1) * majorMult + (major & 1);
-        eccA = 0;
-        eccB = 0;
+        idx   = (major >> 1) * major_mult + (major & 1);
+        ecc_a = 0;
+        ecc_b = 0;
 
-        for(minor = 0; minor < minorCount; minor++)
+        for(minor = 0; minor < minor_count; minor++)
         {
-            temp = idx < 4 ? address[idx + addressOffset] : data[idx + dataOffset - 4];
-            idx += minorInc;
+            temp = idx < 4 ? address[idx + address_offset] : data[idx + data_offset - 4];
+            idx += minor_inc;
             if(idx >= size) idx -= size;
-            eccA ^= temp;
-            eccB ^= temp;
-            eccA = ctx->eccFTable[eccA];
+            ecc_a ^= temp;
+            ecc_b ^= temp;
+            ecc_a = ctx->ecc_f_table[ecc_a];
         }
 
-        eccA                                = ctx->eccBTable[ctx->eccFTable[eccA] ^ eccB];
-        ecc[major + eccOffset]              = eccA;
-        ecc[major + majorCount + eccOffset] = (eccA ^ eccB);
+        ecc_a                                 = ctx->ecc_b_table[ctx->ecc_f_table[ecc_a] ^ ecc_b];
+        ecc[major + ecc_offset]               = ecc_a;
+        ecc[major + major_count + ecc_offset] = (ecc_a ^ ecc_b);
     }
 
     TRACE("Exiting aaruf_ecc_cd_write()");
@@ -347,18 +348,19 @@ void aaruf_ecc_cd_write(void *context, const uint8_t *address, const uint8_t *da
  * @param address Pointer to the address field.
  * @param data Pointer to the data field.
  * @param ecc Pointer to the ECC field to write.
- * @param addressOffset Offset for the address field.
- * @param dataOffset Offset for the data field.
- * @param eccOffset Offset for the ECC field.
+ * @param address_offset Offset for the address field.
+ * @param data_offset Offset for the data field.
+ * @param ecc_offset Offset for the ECC field.
  */
 void aaruf_ecc_cd_write_sector(void *context, const uint8_t *address, const uint8_t *data, uint8_t *ecc,
-                               int32_t addressOffset, int32_t dataOffset, int32_t eccOffset)
+                               int32_t address_offset, int32_t data_offset, int32_t ecc_offset)
 {
-    TRACE("Entering aaruf_ecc_cd_write_sector(%p, %p, %p, %p, %d, %d, %d)", context, address, data, ecc, addressOffset,
-          dataOffset, eccOffset);
+    TRACE("Entering aaruf_ecc_cd_write_sector(%p, %p, %p, %p, %d, %d, %d)", context, address, data, ecc, address_offset,
+          data_offset, ecc_offset);
 
-    aaruf_ecc_cd_write(context, address, data, 86, 24, 2, 86, ecc, addressOffset, dataOffset, eccOffset);          // P
-    aaruf_ecc_cd_write(context, address, data, 52, 43, 86, 88, ecc, addressOffset, dataOffset, eccOffset + 0xAC);  // Q
+    aaruf_ecc_cd_write(context, address, data, 86, 24, 2, 86, ecc, address_offset, data_offset, ecc_offset);  // P
+    aaruf_ecc_cd_write(context, address, data, 52, 43, 86, 88, ecc, address_offset, data_offset,
+                       ecc_offset + 0xAC);  // Q
 
     TRACE("Exiting aaruf_ecc_cd_write_sector()");
 }
@@ -460,7 +462,7 @@ void aaruf_ecc_cd_reconstruct(void *context, uint8_t *sector, uint8_t type)
 {
     TRACE("Entering aaruf_ecc_cd_reconstruct(%p, %p, %u)", context, sector, type);
 
-    uint32_t computedEdc;
+    uint32_t computed_edc;
     uint8_t  zeroaddress[4];
 
     CdEccContext *ctx;
@@ -473,7 +475,7 @@ void aaruf_ecc_cd_reconstruct(void *context, uint8_t *sector, uint8_t type)
 
     ctx = (CdEccContext *)context;
 
-    if(!ctx->initedEdc)
+    if(!ctx->inited_edc)
     {
         TRACE("Exiting aaruf_ecc_cd_reconstruct() without initialized context");
         return;
@@ -485,16 +487,16 @@ void aaruf_ecc_cd_reconstruct(void *context, uint8_t *sector, uint8_t type)
         // Compute EDC
         //
         case CdMode1:
-            computedEdc = aaruf_edc_cd_compute(context, 0, sector, 0x810, 0);
-            memcpy(sector + 0x810, &computedEdc, 4);
+            computed_edc = aaruf_edc_cd_compute(context, 0, sector, 0x810, 0);
+            memcpy(sector + 0x810, &computed_edc, 4);
             break;
         case CdMode2Form1:
-            computedEdc = aaruf_edc_cd_compute(context, 0, sector, 0x808, 0x10);
-            memcpy(sector + 0x818, &computedEdc, 4);
+            computed_edc = aaruf_edc_cd_compute(context, 0, sector, 0x808, 0x10);
+            memcpy(sector + 0x818, &computed_edc, 4);
             break;
         case CdMode2Form2:
-            computedEdc = aaruf_edc_cd_compute(context, 0, sector, 0x91C, 0x10);
-            memcpy(sector + 0x92C, &computedEdc, 4);
+            computed_edc = aaruf_edc_cd_compute(context, 0, sector, 0x91C, 0x10);
+            memcpy(sector + 0x92C, &computed_edc, 4);
             break;
         default:
             TRACE("Exiting aaruf_ecc_cd_reconstruct() with unknown type %u", type);
@@ -560,13 +562,13 @@ uint32_t aaruf_edc_cd_compute(void *context, uint32_t edc, const uint8_t *src, i
 
     ctx = (CdEccContext *)context;
 
-    if(!ctx->initedEdc)
+    if(!ctx->inited_edc)
     {
         TRACE("Exiting aaruf_edc_cd_compute() without initialized context");
         return 0;
     }
 
-    for(; size > 0; size--) edc = (edc >> 8) ^ ctx->edcTable[(edc ^ src[pos++]) & 0xFF];
+    for(; size > 0; size--) edc = (edc >> 8) ^ ctx->edc_table[(edc ^ src[pos++]) & 0xFF];
 
     TRACE("Exiting aaruf_edc_cd_compute() = 0x%08X", edc);
     return edc;

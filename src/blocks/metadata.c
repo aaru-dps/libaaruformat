@@ -35,8 +35,8 @@
 void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
     TRACE("Entering process_metadata_block(%p, %p)", ctx, entry);
-    int    pos       = 0;
-    size_t readBytes = 0;
+    int    pos        = 0;
+    size_t read_bytes = 0;
 
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
@@ -59,9 +59,9 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
 
     // Even if those two checks shall have been done before
     TRACE("Reading metadata block header at position %" PRIu64, entry->offset);
-    readBytes = fread(&ctx->metadataBlockHeader, 1, sizeof(MetadataBlockHeader), ctx->imageStream);
+    read_bytes = fread(&ctx->metadataBlockHeader, 1, sizeof(MetadataBlockHeader), ctx->imageStream);
 
-    if(readBytes != sizeof(MetadataBlockHeader))
+    if(read_bytes != sizeof(MetadataBlockHeader))
     {
         memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
         FATAL("Could not read metadata block header, continuing...");
@@ -94,9 +94,9 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
 
     TRACE("Reading metadata block of size %u at position %" PRIu64, ctx->metadataBlockHeader.blockSize,
           entry->offset + sizeof(MetadataBlockHeader));
-    readBytes = fread(ctx->metadataBlock, 1, ctx->metadataBlockHeader.blockSize, ctx->imageStream);
+    read_bytes = fread(ctx->metadataBlock, 1, ctx->metadataBlockHeader.blockSize, ctx->imageStream);
 
-    if(readBytes != ctx->metadataBlockHeader.blockSize)
+    if(read_bytes != ctx->metadataBlockHeader.blockSize)
     {
         memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
         free(ctx->metadataBlock);
@@ -249,7 +249,7 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
 void process_geometry_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
     TRACE("Entering process_geometry_block(%p, %p)", ctx, entry);
-    size_t readBytes = 0;
+    size_t read_bytes = 0;
 
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
@@ -270,9 +270,9 @@ void process_geometry_block(aaruformatContext *ctx, const IndexEntry *entry)
     }
 
     TRACE("Reading geometry block header at position %" PRIu64, entry->offset);
-    readBytes = fread(&ctx->geometryBlock, 1, sizeof(GeometryBlockHeader), ctx->imageStream);
+    read_bytes = fread(&ctx->geometryBlock, 1, sizeof(GeometryBlockHeader), ctx->imageStream);
 
-    if(readBytes != sizeof(GeometryBlockHeader))
+    if(read_bytes != sizeof(GeometryBlockHeader))
     {
         memset(&ctx->geometryBlock, 0, sizeof(GeometryBlockHeader));
         TRACE("Could not read geometry block header, continuing...");
@@ -309,8 +309,8 @@ void process_geometry_block(aaruformatContext *ctx, const IndexEntry *entry)
 void process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
     TRACE("Entering process_cicm_block(%p, %p)", ctx, entry);
-    int    pos       = 0;
-    size_t readBytes = 0;
+    int    pos        = 0;
+    size_t read_bytes = 0;
 
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
@@ -334,9 +334,9 @@ void process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry)
 
     // Even if those two checks shall have been done before
     TRACE("Reading CICM XML metadata block header at position %" PRIu64, entry->offset);
-    readBytes = fread(&ctx->cicmBlockHeader, 1, sizeof(CicmMetadataBlock), ctx->imageStream);
+    read_bytes = fread(&ctx->cicmBlockHeader, 1, sizeof(CicmMetadataBlock), ctx->imageStream);
 
-    if(readBytes != sizeof(CicmMetadataBlock))
+    if(read_bytes != sizeof(CicmMetadataBlock))
     {
         memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
         TRACE("Could not read CICM XML metadata header, continuing...");
@@ -364,9 +364,9 @@ void process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry)
 
     TRACE("Reading CICM XML metadata block of size %u at position %" PRIu64, ctx->cicmBlockHeader.length,
           entry->offset + sizeof(CicmMetadataBlock));
-    readBytes = fread(ctx->cicmBlock, 1, ctx->cicmBlockHeader.length, ctx->imageStream);
+    read_bytes = fread(ctx->cicmBlock, 1, ctx->cicmBlockHeader.length, ctx->imageStream);
 
-    if(readBytes != ctx->metadataBlockHeader.blockSize)
+    if(read_bytes != ctx->metadataBlockHeader.blockSize)
     {
         memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
         free(ctx->cicmBlock);

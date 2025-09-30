@@ -39,8 +39,8 @@
 void *aaruf_open(const char *filepath)
 {
     aaruformatContext *ctx           = NULL;
-    int                errorNo       = 0;
-    size_t             readBytes     = 0;
+    int                error_no      = 0;
+    size_t             read_bytes    = 0;
     long               pos           = 0;
     int                i             = 0;
     uint32_t           signature     = 0;
@@ -75,9 +75,9 @@ void *aaruf_open(const char *filepath)
     if(ctx->imageStream == NULL)
     {
         FATAL("Error %d opening file %s for reading", errno, filepath);
-        errorNo = errno;
+        error_no = errno;
         free(ctx);
-        errno = errorNo;
+        errno = error_no;
 
         TRACE("Exiting aaruf_open() = NULL");
         return NULL;
@@ -85,9 +85,9 @@ void *aaruf_open(const char *filepath)
 
     TRACE("Reading header at position 0");
     fseek(ctx->imageStream, 0, SEEK_SET);
-    readBytes = fread(&ctx->header, 1, sizeof(AaruHeader), ctx->imageStream);
+    read_bytes = fread(&ctx->header, 1, sizeof(AaruHeader), ctx->imageStream);
 
-    if(readBytes != sizeof(AaruHeader))
+    if(read_bytes != sizeof(AaruHeader))
     {
         FATAL("Could not read header");
         free(ctx);
@@ -112,9 +112,9 @@ void *aaruf_open(const char *filepath)
     {
         TRACE("Reading new header version at position 0");
         fseek(ctx->imageStream, 0, SEEK_SET);
-        readBytes = fread(&ctx->header, 1, sizeof(AaruHeaderV2), ctx->imageStream);
+        read_bytes = fread(&ctx->header, 1, sizeof(AaruHeaderV2), ctx->imageStream);
 
-        if(readBytes != sizeof(AaruHeaderV2))
+        if(read_bytes != sizeof(AaruHeaderV2))
         {
             free(ctx);
             errno = AARUF_ERROR_FILE_TOO_SMALL;
@@ -188,9 +188,9 @@ void *aaruf_open(const char *filepath)
         return NULL;
     }
 
-    readBytes = fread(&signature, 1, sizeof(uint32_t), ctx->imageStream);
+    read_bytes = fread(&signature, 1, sizeof(uint32_t), ctx->imageStream);
 
-    if(readBytes != sizeof(uint32_t) ||
+    if(read_bytes != sizeof(uint32_t) ||
        (signature != IndexBlock && signature != IndexBlock2 && signature != IndexBlock3))
     {
         FATAL("Could not read index header or incorrect identifier %4.4s", (char *)&signature);
@@ -228,7 +228,7 @@ void *aaruf_open(const char *filepath)
               entry->dataType, entry->offset);
     }
 
-    bool foundUserDataDdt    = false;
+    bool found_user_data_ddt = false;
     ctx->imageInfo.ImageSize = 0;
     for(i = 0; i < utarray_len(index_entries); i++)
     {
@@ -247,13 +247,13 @@ void *aaruf_open(const char *filepath)
         switch(entry->blockType)
         {
             case DataBlock:
-                errorNo = process_data_block(ctx, entry);
+                error_no = process_data_block(ctx, entry);
 
-                if(errorNo != AARUF_STATUS_OK)
+                if(error_no != AARUF_STATUS_OK)
                 {
                     utarray_free(index_entries);
                     free(ctx);
-                    errno = errorNo;
+                    errno = error_no;
 
                     return NULL;
                 }
@@ -261,26 +261,26 @@ void *aaruf_open(const char *filepath)
                 break;
 
             case DeDuplicationTable:
-                errorNo = process_ddt_v1(ctx, entry, &foundUserDataDdt);
+                error_no = process_ddt_v1(ctx, entry, &found_user_data_ddt);
 
-                if(errorNo != AARUF_STATUS_OK)
+                if(error_no != AARUF_STATUS_OK)
                 {
                     utarray_free(index_entries);
                     free(ctx);
-                    errno = errorNo;
+                    errno = error_no;
 
                     return NULL;
                 }
 
                 break;
             case DeDuplicationTable2:
-                errorNo = process_ddt_v2(ctx, entry, &foundUserDataDdt);
+                error_no = process_ddt_v2(ctx, entry, &found_user_data_ddt);
 
-                if(errorNo != AARUF_STATUS_OK)
+                if(error_no != AARUF_STATUS_OK)
                 {
                     utarray_free(index_entries);
                     free(ctx);
-                    errno = errorNo;
+                    errno = error_no;
 
                     return NULL;
                 }
@@ -320,7 +320,7 @@ void *aaruf_open(const char *filepath)
 
     utarray_free(index_entries);
 
-    if(!foundUserDataDdt)
+    if(!found_user_data_ddt)
     {
         FATAL("Could not find user data deduplication table, aborting...");
         aaruf_close(ctx);

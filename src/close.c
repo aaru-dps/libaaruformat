@@ -41,9 +41,9 @@ int aaruf_close(void *context)
 {
     TRACE("Entering aaruf_close(%p)", context);
 
-    int            i           = 0;
-    mediaTagEntry *mediaTag    = NULL;
-    mediaTagEntry *tmpMediaTag = NULL;
+    int            i             = 0;
+    mediaTagEntry *media_tag     = NULL;
+    mediaTagEntry *tmp_media_tag = NULL;
 
     if(context == NULL)
     {
@@ -90,95 +90,97 @@ int aaruf_close(void *context)
 
         // Write cached secondary table to file end and update primary table entry with its position
         // Check if we have a cached table that needs to be written (either it has an offset or exists in memory)
-        bool hasCachedSecondaryDdt = (ctx->userDataDdtHeader.tableShift > 0) &&
-                                     ((ctx->cachedDdtOffset != 0) ||
-                                      (ctx->cachedSecondaryDdtSmall != NULL || ctx->cachedSecondaryDdtBig != NULL));
+        bool has_cached_secondary_ddt = (ctx->userDataDdtHeader.tableShift > 0) &&
+                                        ((ctx->cachedDdtOffset != 0) ||
+                                         (ctx->cachedSecondaryDdtSmall != NULL || ctx->cachedSecondaryDdtBig != NULL));
 
-        if(hasCachedSecondaryDdt)
+        if(has_cached_secondary_ddt)
         {
             TRACE("Writing cached secondary DDT table to file");
 
             fseek(ctx->imageStream, 0, SEEK_END);
-            long endOfFile = ftell(ctx->imageStream);
+            long end_of_file = ftell(ctx->imageStream);
 
             // Align the position according to block alignment shift
-            uint64_t alignmentMask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
-            if(endOfFile & alignmentMask)
+            uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+            if(end_of_file & alignment_mask)
             {
                 // Calculate the next aligned position
-                uint64_t alignedPosition = (endOfFile + alignmentMask) & ~alignmentMask;
+                uint64_t aligned_position = (end_of_file + alignment_mask) & ~alignment_mask;
 
                 // Seek to the aligned position and pad with zeros if necessary
-                fseek(ctx->imageStream, alignedPosition, SEEK_SET);
-                endOfFile = alignedPosition;
+                fseek(ctx->imageStream, aligned_position, SEEK_SET);
+                end_of_file = aligned_position;
 
                 TRACE("Aligned DDT write position from %ld to %" PRIu64 " (alignment shift: %d)",
-                      ftell(ctx->imageStream) - (alignedPosition - endOfFile), alignedPosition,
+                      ftell(ctx->imageStream) - (aligned_position - end_of_file), aligned_position,
                       ctx->userDataDdtHeader.blockAlignmentShift);
             }
 
             // Prepare DDT header for the cached table
-            DdtHeader2 ddtHeader          = {0};
-            ddtHeader.identifier          = DeDuplicationTable2;
-            ddtHeader.type                = UserData;
-            ddtHeader.compression         = None;
-            ddtHeader.levels              = ctx->userDataDdtHeader.levels;
-            ddtHeader.tableLevel          = ctx->userDataDdtHeader.tableLevel + 1;
-            ddtHeader.previousLevelOffset = ctx->primaryDdtOffset;
-            ddtHeader.negative            = ctx->userDataDdtHeader.negative;
-            ddtHeader.overflow            = ctx->userDataDdtHeader.overflow;
-            ddtHeader.blockAlignmentShift = ctx->userDataDdtHeader.blockAlignmentShift;
-            ddtHeader.dataShift           = ctx->userDataDdtHeader.dataShift;
-            ddtHeader.tableShift          = 0;  // Secondary tables are single level
-            ddtHeader.sizeType            = ctx->userDataDdtHeader.sizeType;
+            DdtHeader2 ddt_header;
+            memset(&ddt_header, 0, sizeof(DdtHeader2));
+            ddt_header.identifier          = DeDuplicationTable2;
+            ddt_header.type                = UserData;
+            ddt_header.compression         = None;
+            ddt_header.levels              = ctx->userDataDdtHeader.levels;
+            ddt_header.tableLevel          = ctx->userDataDdtHeader.tableLevel + 1;
+            ddt_header.previousLevelOffset = ctx->primaryDdtOffset;
+            ddt_header.negative            = ctx->userDataDdtHeader.negative;
+            ddt_header.overflow            = ctx->userDataDdtHeader.overflow;
+            ddt_header.blockAlignmentShift = ctx->userDataDdtHeader.blockAlignmentShift;
+            ddt_header.dataShift           = ctx->userDataDdtHeader.dataShift;
+            ddt_header.tableShift          = 0;  // Secondary tables are single level
+            ddt_header.sizeType            = ctx->userDataDdtHeader.sizeType;
 
-            uint64_t itemsPerDdtEntry = 1 << ctx->userDataDdtHeader.tableShift;
-            ddtHeader.blocks          = itemsPerDdtEntry;
-            ddtHeader.entries         = itemsPerDdtEntry;
-            ddtHeader.start           = ctx->cachedDdtPosition * itemsPerDdtEntry;
+            uint64_t items_per_ddt_entry = 1 << ctx->userDataDdtHeader.tableShift;
+            ddt_header.blocks            = items_per_ddt_entry;
+            ddt_header.entries           = items_per_ddt_entry;
+            ddt_header.start             = ctx->cachedDdtPosition * items_per_ddt_entry;
 
             // Calculate data size
             if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-                ddtHeader.length = itemsPerDdtEntry * sizeof(uint16_t);
+                ddt_header.length = items_per_ddt_entry * sizeof(uint16_t);
             else
-                ddtHeader.length = itemsPerDdtEntry * sizeof(uint32_t);
+                ddt_header.length = items_per_ddt_entry * sizeof(uint32_t);
 
-            ddtHeader.cmpLength = ddtHeader.length;
+            ddt_header.cmpLength = ddt_header.length;
 
             // Calculate CRC64 of the data
             crc64_ctx *crc64_context = aaruf_crc64_init();
             if(crc64_context != NULL)
             {
                 if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-                    aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cachedSecondaryDdtSmall, ddtHeader.length);
+                    aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cachedSecondaryDdtSmall, ddt_header.length);
                 else
-                    aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cachedSecondaryDdtBig, ddtHeader.length);
+                    aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cachedSecondaryDdtBig, ddt_header.length);
 
                 uint64_t crc64;
                 aaruf_crc64_final(crc64_context, &crc64);
-                ddtHeader.crc64    = crc64;
-                ddtHeader.cmpCrc64 = crc64;
+                ddt_header.crc64    = crc64;
+                ddt_header.cmpCrc64 = crc64;
             }
 
             // Write header
-            if(fwrite(&ddtHeader, sizeof(DdtHeader2), 1, ctx->imageStream) == 1)
+            if(fwrite(&ddt_header, sizeof(DdtHeader2), 1, ctx->imageStream) == 1)
             {
                 // Write data
-                size_t writtenBytes = 0;
+                size_t written_bytes = 0;
                 if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-                    writtenBytes = fwrite(ctx->cachedSecondaryDdtSmall, ddtHeader.length, 1, ctx->imageStream);
+                    written_bytes = fwrite(ctx->cachedSecondaryDdtSmall, ddt_header.length, 1, ctx->imageStream);
                 else
-                    writtenBytes = fwrite(ctx->cachedSecondaryDdtBig, ddtHeader.length, 1, ctx->imageStream);
+                    written_bytes = fwrite(ctx->cachedSecondaryDdtBig, ddt_header.length, 1, ctx->imageStream);
 
-                if(writtenBytes == 1)
+                if(written_bytes == 1)
                 {
                     // Update primary table entry to point to new location
-                    uint64_t newSecondaryTableBlockOffset = endOfFile >> ctx->userDataDdtHeader.blockAlignmentShift;
+                    uint64_t new_secondary_table_block_offset =
+                        end_of_file >> ctx->userDataDdtHeader.blockAlignmentShift;
 
                     if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-                        ctx->userDataDdtMini[ctx->cachedDdtPosition] = (uint16_t)newSecondaryTableBlockOffset;
+                        ctx->userDataDdtMini[ctx->cachedDdtPosition] = (uint16_t)new_secondary_table_block_offset;
                     else
-                        ctx->userDataDdtBig[ctx->cachedDdtPosition] = (uint32_t)newSecondaryTableBlockOffset;
+                        ctx->userDataDdtBig[ctx->cachedDdtPosition] = (uint32_t)new_secondary_table_block_offset;
 
                     // Update index: remove old entry for cached DDT and add new one
                     TRACE("Updating index for cached secondary DDT");
@@ -204,35 +206,35 @@ int aaruf_close(void *context)
                     }
 
                     // Add new index entry for the newly written secondary DDT
-                    IndexEntry newDdtEntry;
-                    newDdtEntry.blockType = DeDuplicationTable2;
-                    newDdtEntry.dataType  = UserData;
-                    newDdtEntry.offset    = endOfFile;
+                    IndexEntry new_ddt_entry;
+                    new_ddt_entry.blockType = DeDuplicationTable2;
+                    new_ddt_entry.dataType  = UserData;
+                    new_ddt_entry.offset    = end_of_file;
 
-                    utarray_push_back(ctx->indexEntries, &newDdtEntry);
-                    TRACE("Added new DDT index entry at offset %" PRIu64, endOfFile);
+                    utarray_push_back(ctx->indexEntries, &new_ddt_entry);
+                    TRACE("Added new DDT index entry at offset %" PRIu64, end_of_file);
 
                     // Write the updated primary table back to its original position in the file
-                    long savedPos = ftell(ctx->imageStream);
+                    long saved_pos = ftell(ctx->imageStream);
                     fseek(ctx->imageStream, ctx->primaryDdtOffset + sizeof(DdtHeader2), SEEK_SET);
 
-                    size_t primaryTableSize = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
-                                                  ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
-                                                  : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+                    size_t primary_table_size = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
+                                                    ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
+                                                    : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
 
-                    size_t primaryWrittenBytes = 0;
+                    size_t primary_written_bytes = 0;
                     if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-                        primaryWrittenBytes = fwrite(ctx->userDataDdtMini, primaryTableSize, 1, ctx->imageStream);
+                        primary_written_bytes = fwrite(ctx->userDataDdtMini, primary_table_size, 1, ctx->imageStream);
                     else
-                        primaryWrittenBytes = fwrite(ctx->userDataDdtBig, primaryTableSize, 1, ctx->imageStream);
+                        primary_written_bytes = fwrite(ctx->userDataDdtBig, primary_table_size, 1, ctx->imageStream);
 
-                    if(primaryWrittenBytes != 1)
+                    if(primary_written_bytes != 1)
                     {
                         TRACE("Could not flush primary DDT table to file.");
                         return AARUF_ERROR_CANNOT_WRITE_HEADER;
                     }
 
-                    fseek(ctx->imageStream, savedPos, SEEK_SET);
+                    fseek(ctx->imageStream, saved_pos, SEEK_SET);
                 }
                 else
                     TRACE("Failed to write cached secondary DDT data");
@@ -266,14 +268,14 @@ int aaruf_close(void *context)
             crc64_ctx *crc64_context = aaruf_crc64_init();
             if(crc64_context != NULL)
             {
-                size_t primaryTableSize = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
-                                              ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
-                                              : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+                size_t primary_table_size = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
+                                                ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
+                                                : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
 
                 if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-                    aaruf_crc64_update(crc64_context, (uint8_t *)ctx->userDataDdtMini, primaryTableSize);
+                    aaruf_crc64_update(crc64_context, (uint8_t *)ctx->userDataDdtMini, primary_table_size);
                 else
-                    aaruf_crc64_update(crc64_context, (uint8_t *)ctx->userDataDdtBig, primaryTableSize);
+                    aaruf_crc64_update(crc64_context, (uint8_t *)ctx->userDataDdtBig, primary_table_size);
 
                 uint64_t crc64;
                 aaruf_crc64_final(crc64_context, &crc64);
@@ -286,8 +288,8 @@ int aaruf_close(void *context)
                 // dataShift, tableShift, sizeType, entries, blocks, start are already set during creation
                 ctx->userDataDdtHeader.crc64       = crc64;
                 ctx->userDataDdtHeader.cmpCrc64    = crc64;
-                ctx->userDataDdtHeader.length      = primaryTableSize;
-                ctx->userDataDdtHeader.cmpLength   = primaryTableSize;
+                ctx->userDataDdtHeader.length      = primary_table_size;
+                ctx->userDataDdtHeader.cmpLength   = primary_table_size;
 
                 TRACE("Calculated CRC64 for primary DDT: 0x%16lX", crc64);
             }
@@ -303,30 +305,30 @@ int aaruf_close(void *context)
             }
 
             // Then write the table data (position is already after the header)
-            size_t primaryTableSize = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
-                                          ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
-                                          : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+            size_t primary_table_size = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
+                                            ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
+                                            : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
 
             // Write the primary table data
-            size_t writtenBytes = 0;
+            size_t written_bytes = 0;
             if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-                writtenBytes = fwrite(ctx->userDataDdtMini, primaryTableSize, 1, ctx->imageStream);
+                written_bytes = fwrite(ctx->userDataDdtMini, primary_table_size, 1, ctx->imageStream);
             else
-                writtenBytes = fwrite(ctx->userDataDdtBig, primaryTableSize, 1, ctx->imageStream);
+                written_bytes = fwrite(ctx->userDataDdtBig, primary_table_size, 1, ctx->imageStream);
 
-            if(writtenBytes == 1)
+            if(written_bytes == 1)
             {
                 TRACE("Successfully wrote primary DDT header and table to file (%" PRIu64 " entries, %zu bytes)",
-                      ctx->userDataDdtHeader.entries, primaryTableSize);
+                      ctx->userDataDdtHeader.entries, primary_table_size);
 
                 // Add primary DDT to index
                 TRACE("Adding primary DDT to index");
-                IndexEntry primaryDdtEntry;
-                primaryDdtEntry.blockType = DeDuplicationTable2;
-                primaryDdtEntry.dataType  = UserData;
-                primaryDdtEntry.offset    = ctx->primaryDdtOffset;
+                IndexEntry primary_ddt_entry;
+                primary_ddt_entry.blockType = DeDuplicationTable2;
+                primary_ddt_entry.dataType  = UserData;
+                primary_ddt_entry.offset    = ctx->primaryDdtOffset;
 
-                utarray_push_back(ctx->indexEntries, &primaryDdtEntry);
+                utarray_push_back(ctx->indexEntries, &primary_ddt_entry);
                 TRACE("Added primary DDT index entry at offset %" PRIu64, ctx->primaryDdtOffset);
             }
             else
@@ -342,14 +344,14 @@ int aaruf_close(void *context)
             crc64_ctx *crc64_context = aaruf_crc64_init();
             if(crc64_context != NULL)
             {
-                size_t primaryTableSize = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
-                                              ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
-                                              : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+                size_t primary_table_size = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
+                                                ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
+                                                : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
 
                 if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-                    aaruf_crc64_update(crc64_context, (uint8_t *)ctx->userDataDdtMini, primaryTableSize);
+                    aaruf_crc64_update(crc64_context, (uint8_t *)ctx->userDataDdtMini, primary_table_size);
                 else
-                    aaruf_crc64_update(crc64_context, (uint8_t *)ctx->userDataDdtBig, primaryTableSize);
+                    aaruf_crc64_update(crc64_context, (uint8_t *)ctx->userDataDdtBig, primary_table_size);
 
                 uint64_t crc64;
                 aaruf_crc64_final(crc64_context, &crc64);
@@ -365,8 +367,8 @@ int aaruf_close(void *context)
                 // blockAlignmentShift, dataShift, tableShift, sizeType, entries, blocks, start are already set
                 ctx->userDataDdtHeader.crc64               = crc64;
                 ctx->userDataDdtHeader.cmpCrc64            = crc64;
-                ctx->userDataDdtHeader.length              = primaryTableSize;
-                ctx->userDataDdtHeader.cmpLength           = primaryTableSize;
+                ctx->userDataDdtHeader.length              = primary_table_size;
+                ctx->userDataDdtHeader.cmpLength           = primary_table_size;
 
                 TRACE("Calculated CRC64 for single-level DDT: 0x%16lX", crc64);
             }
@@ -382,30 +384,30 @@ int aaruf_close(void *context)
             }
 
             // Then write the table data (position is already after the header)
-            size_t primaryTableSize = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
-                                          ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
-                                          : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+            size_t primary_table_size = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
+                                            ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
+                                            : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
 
             // Write the primary table data
-            size_t writtenBytes = 0;
+            size_t written_bytes = 0;
             if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-                writtenBytes = fwrite(ctx->userDataDdtMini, primaryTableSize, 1, ctx->imageStream);
+                written_bytes = fwrite(ctx->userDataDdtMini, primary_table_size, 1, ctx->imageStream);
             else
-                writtenBytes = fwrite(ctx->userDataDdtBig, primaryTableSize, 1, ctx->imageStream);
+                written_bytes = fwrite(ctx->userDataDdtBig, primary_table_size, 1, ctx->imageStream);
 
-            if(writtenBytes == 1)
+            if(written_bytes == 1)
             {
                 TRACE("Successfully wrote single-level DDT header and table to file (%" PRIu64 " entries, %zu bytes)",
-                      ctx->userDataDdtHeader.entries, primaryTableSize);
+                      ctx->userDataDdtHeader.entries, primary_table_size);
 
                 // Add single-level DDT to index
                 TRACE("Adding single-level DDT to index");
-                IndexEntry singleDdtEntry;
-                singleDdtEntry.blockType = DeDuplicationTable2;
-                singleDdtEntry.dataType  = UserData;
-                singleDdtEntry.offset    = ctx->primaryDdtOffset;
+                IndexEntry single_ddt_entry;
+                single_ddt_entry.blockType = DeDuplicationTable2;
+                single_ddt_entry.dataType  = UserData;
+                single_ddt_entry.offset    = ctx->primaryDdtOffset;
 
-                utarray_push_back(ctx->indexEntries, &singleDdtEntry);
+                utarray_push_back(ctx->indexEntries, &single_ddt_entry);
                 TRACE("Added single-level DDT index entry at offset %" PRIu64, ctx->primaryDdtOffset);
             }
             else
@@ -415,70 +417,70 @@ int aaruf_close(void *context)
         // Write the complete index at the end of the file
         TRACE("Writing index at the end of the file");
         fseek(ctx->imageStream, 0, SEEK_END);
-        long indexPosition = ftell(ctx->imageStream);
+        long index_position = ftell(ctx->imageStream);
 
         // Align index position to block boundary if needed
-        uint64_t alignmentMask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
-        if(indexPosition & alignmentMask)
+        uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+        if(index_position & alignment_mask)
         {
-            uint64_t alignedPosition = (indexPosition + alignmentMask) & ~alignmentMask;
-            fseek(ctx->imageStream, alignedPosition, SEEK_SET);
-            indexPosition = alignedPosition;
-            TRACE("Aligned index position to %" PRIu64, alignedPosition);
+            uint64_t aligned_position = (index_position + alignment_mask) & ~alignment_mask;
+            fseek(ctx->imageStream, aligned_position, SEEK_SET);
+            index_position = aligned_position;
+            TRACE("Aligned index position to %" PRIu64, aligned_position);
         }
 
         // Prepare index header
-        IndexHeader3 indexHeader;
-        indexHeader.identifier = IndexBlock3;
-        indexHeader.entries    = utarray_len(ctx->indexEntries);
-        indexHeader.previous   = 0;  // No previous index for now
+        IndexHeader3 index_header;
+        index_header.identifier = IndexBlock3;
+        index_header.entries    = utarray_len(ctx->indexEntries);
+        index_header.previous   = 0;  // No previous index for now
 
-        TRACE("Writing index with %" PRIu64 " entries at position %ld", indexHeader.entries, indexPosition);
+        TRACE("Writing index with %" PRIu64 " entries at position %ld", index_header.entries, index_position);
 
         // Calculate CRC64 of index entries
-        crc64_ctx *indexCrc64Context = aaruf_crc64_init();
-        if(indexCrc64Context != NULL && indexHeader.entries > 0)
+        crc64_ctx *index_crc64_context = aaruf_crc64_init();
+        if(index_crc64_context != NULL && index_header.entries > 0)
         {
-            size_t indexDataSize = indexHeader.entries * sizeof(IndexEntry);
-            aaruf_crc64_update(indexCrc64Context, (uint8_t *)utarray_front(ctx->indexEntries), indexDataSize);
-            aaruf_crc64_final(indexCrc64Context, &indexHeader.crc64);
-            TRACE("Calculated index CRC64: 0x%16lX", indexHeader.crc64);
+            size_t index_data_size = index_header.entries * sizeof(IndexEntry);
+            aaruf_crc64_update(index_crc64_context, (uint8_t *)utarray_front(ctx->indexEntries), index_data_size);
+            aaruf_crc64_final(index_crc64_context, &index_header.crc64);
+            TRACE("Calculated index CRC64: 0x%16lX", index_header.crc64);
         }
-        else { indexHeader.crc64 = 0; }
+        else { index_header.crc64 = 0; }
 
         // Write index header
-        if(fwrite(&indexHeader, sizeof(IndexHeader3), 1, ctx->imageStream) == 1)
+        if(fwrite(&index_header, sizeof(IndexHeader3), 1, ctx->imageStream) == 1)
         {
             TRACE("Successfully wrote index header");
 
             // Write index entries
-            if(indexHeader.entries > 0)
+            if(index_header.entries > 0)
             {
-                size_t      entriesWritten = 0;
-                IndexEntry *entry          = NULL;
+                size_t      entries_written = 0;
+                IndexEntry *entry           = NULL;
 
                 for(entry = (IndexEntry *)utarray_front(ctx->indexEntries); entry != NULL;
                     entry = (IndexEntry *)utarray_next(ctx->indexEntries, entry))
                 {
                     if(fwrite(entry, sizeof(IndexEntry), 1, ctx->imageStream) == 1)
                     {
-                        entriesWritten++;
+                        entries_written++;
                         TRACE("Wrote index entry: blockType=0x%08X dataType=%u offset=%" PRIu64, entry->blockType,
                               entry->dataType, entry->offset);
                     }
                     else
                     {
-                        TRACE("Failed to write index entry %zu", entriesWritten);
+                        TRACE("Failed to write index entry %zu", entries_written);
                         break;
                     }
                 }
 
-                if(entriesWritten == indexHeader.entries)
+                if(entries_written == index_header.entries)
                 {
-                    TRACE("Successfully wrote all %zu index entries", entriesWritten);
+                    TRACE("Successfully wrote all %zu index entries", entries_written);
 
                     // Update header with index offset and rewrite it
-                    ctx->header.indexOffset = indexPosition;
+                    ctx->header.indexOffset = index_position;
                     TRACE("Updating header with index offset: %" PRIu64, ctx->header.indexOffset);
 
                     // Seek back to beginning and rewrite header
@@ -495,8 +497,8 @@ int aaruf_close(void *context)
                 }
                 else
                 {
-                    TRACE("Failed to write all index entries (wrote %zu of %" PRIu64 ")", entriesWritten,
-                          indexHeader.entries);
+                    TRACE("Failed to write all index entries (wrote %zu of %" PRIu64 ")", entries_written,
+                          index_header.entries);
                     return AARUF_ERROR_CANNOT_WRITE_HEADER;
                 }
             }
@@ -537,11 +539,11 @@ int aaruf_close(void *context)
     ctx->mode2Subheaders = NULL;
 
     TRACE("Freeing media tags");
-    if(ctx->mediaTags != NULL) HASH_ITER(hh, ctx->mediaTags, mediaTag, tmpMediaTag)
+    if(ctx->mediaTags != NULL) HASH_ITER(hh, ctx->mediaTags, media_tag, tmp_media_tag)
         {
-            HASH_DEL(ctx->mediaTags, mediaTag);
-            free(mediaTag->data);
-            free(mediaTag);
+            HASH_DEL(ctx->mediaTags, media_tag);
+            free(media_tag->data);
+            free(media_tag);
         }
 
 #ifdef __linux__  // TODO: Implement

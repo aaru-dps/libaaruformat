@@ -34,22 +34,22 @@
  */
 int32_t aaruf_cst_transform(const uint8_t *interleaved, uint8_t *sequential, size_t length)
 {
-    uint8_t *p = NULL;
-    uint8_t *q = NULL;
-    uint8_t *r = NULL;
-    uint8_t *s = NULL;
-    uint8_t *t = NULL;
-    uint8_t *u = NULL;
-    uint8_t *v = NULL;
-    uint8_t *w = NULL;
-    size_t qStart = 0;
-    size_t rStart = 0;
-    size_t sStart = 0;
-    size_t tStart = 0;
-    size_t uStart = 0;
-    size_t vStart = 0;
-    size_t wStart = 0;
-    size_t i = 0;
+    uint8_t *p       = NULL;
+    uint8_t *q       = NULL;
+    uint8_t *r       = NULL;
+    uint8_t *s       = NULL;
+    uint8_t *t       = NULL;
+    uint8_t *u       = NULL;
+    uint8_t *v       = NULL;
+    uint8_t *w       = NULL;
+    size_t   q_start = 0;
+    size_t   r_start = 0;
+    size_t   s_start = 0;
+    size_t   t_start = 0;
+    size_t   u_start = 0;
+    size_t   v_start = 0;
+    size_t   w_start = 0;
+    size_t   i       = 0;
 
     if(interleaved == NULL || sequential == NULL) return AARUF_ERROR_BUFFER_TOO_SMALL;
 
@@ -150,24 +150,24 @@ int32_t aaruf_cst_transform(const uint8_t *interleaved, uint8_t *sequential, siz
         w[i / 8] += interleaved[i + 7] & 0x01;
     }
 
-    qStart = (length / 8) * 1;
-    rStart = (length / 8) * 2;
-    sStart = (length / 8) * 3;
-    tStart = (length / 8) * 4;
-    uStart = (length / 8) * 5;
-    vStart = (length / 8) * 6;
-    wStart = (length / 8) * 7;
+    q_start = (length / 8) * 1;
+    r_start = (length / 8) * 2;
+    s_start = (length / 8) * 3;
+    t_start = (length / 8) * 4;
+    u_start = (length / 8) * 5;
+    v_start = (length / 8) * 6;
+    w_start = (length / 8) * 7;
 
     for(i = 0; i < (length / 8); i++)
     {
-        sequential[i]          = p[i];
-        sequential[qStart + i] = q[i];
-        sequential[rStart + i] = r[i];
-        sequential[sStart + i] = s[i];
-        sequential[tStart + i] = t[i];
-        sequential[uStart + i] = u[i];
-        sequential[vStart + i] = v[i];
-        sequential[wStart + i] = w[i];
+        sequential[i]           = p[i];
+        sequential[q_start + i] = q[i];
+        sequential[r_start + i] = r[i];
+        sequential[s_start + i] = s[i];
+        sequential[t_start + i] = t[i];
+        sequential[u_start + i] = u[i];
+        sequential[v_start + i] = v[i];
+        sequential[w_start + i] = w[i];
     }
 
     free(p);
@@ -193,13 +193,13 @@ int32_t aaruf_cst_transform(const uint8_t *interleaved, uint8_t *sequential, siz
 int32_t aaruf_cst_untransform(const uint8_t *sequential, uint8_t *interleaved, size_t length)
 {
     uint8_t *p, *q, *r, *s, *t, *u, *v, *w;
-    size_t   qStart;
-    size_t   rStart;
-    size_t   sStart;
-    size_t   tStart;
-    size_t   uStart;
-    size_t   vStart;
-    size_t   wStart;
+    size_t   q_start;
+    size_t   r_start;
+    size_t   s_start;
+    size_t   t_start;
+    size_t   u_start;
+    size_t   v_start;
+    size_t   w_start;
     size_t   i;
 
     if(interleaved == NULL || sequential == NULL) return AARUF_ERROR_BUFFER_TOO_SMALL;
@@ -226,24 +226,24 @@ int32_t aaruf_cst_untransform(const uint8_t *sequential, uint8_t *interleaved, s
         return AARUF_ERROR_NOT_ENOUGH_MEMORY;
     }
 
-    qStart = (length / 8) * 1;
-    rStart = (length / 8) * 2;
-    sStart = (length / 8) * 3;
-    tStart = (length / 8) * 4;
-    uStart = (length / 8) * 5;
-    vStart = (length / 8) * 6;
-    wStart = (length / 8) * 7;
+    q_start = (length / 8) * 1;
+    r_start = (length / 8) * 2;
+    s_start = (length / 8) * 3;
+    t_start = (length / 8) * 4;
+    u_start = (length / 8) * 5;
+    v_start = (length / 8) * 6;
+    w_start = (length / 8) * 7;
 
     for(i = 0; i < (length / 8); i++)
     {
         p[i] = sequential[i];
-        q[i] = sequential[qStart + i];
-        r[i] = sequential[rStart + i];
-        s[i] = sequential[sStart + i];
-        t[i] = sequential[tStart + i];
-        u[i] = sequential[uStart + i];
-        v[i] = sequential[vStart + i];
-        w[i] = sequential[wStart + i];
+        q[i] = sequential[q_start + i];
+        r[i] = sequential[r_start + i];
+        s[i] = sequential[s_start + i];
+        t[i] = sequential[t_start + i];
+        u[i] = sequential[u_start + i];
+        v[i] = sequential[v_start + i];
+        w[i] = sequential[w_start + i];
     }
 
     memset(interleaved, 0, length);
