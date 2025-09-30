@@ -1,3 +1,7 @@
+#include <inttypes.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include <uthash.h>
 
@@ -47,28 +51,9 @@ void add_to_cache(struct CacheHeader *cache, char *key, void *value)
 
 FORCE_INLINE char *int64_to_string(uint64_t number)
 {
-    char *charKey;
-
-    charKey = malloc(17);
-
-    charKey[0]  = (char)(number >> 60);
-    charKey[1]  = (char)((number & 0xF00000000000000ULL) >> 56);
-    charKey[2]  = (char)((number & 0xF0000000000000ULL) >> 52);
-    charKey[3]  = (char)((number & 0xF000000000000ULL) >> 48);
-    charKey[4]  = (char)((number & 0xF00000000000ULL) >> 44);
-    charKey[5]  = (char)((number & 0xF0000000000ULL) >> 40);
-    charKey[6]  = (char)((number & 0xF000000000ULL) >> 36);
-    charKey[7]  = (char)((number & 0xF00000000ULL) >> 32);
-    charKey[8]  = (char)((number & 0xF0000000ULL) >> 28);
-    charKey[9]  = (char)((number & 0xF000000ULL) >> 24);
-    charKey[10] = (char)((number & 0xF00000ULL) >> 20);
-    charKey[11] = (char)((number & 0xF0000ULL) >> 16);
-    charKey[12] = (char)((number & 0xF000ULL) >> 12);
-    charKey[13] = (char)((number & 0xF00ULL) >> 8);
-    charKey[14] = (char)((number & 0xF0ULL) >> 4);
-    charKey[15] = (char)(number & 0xFULL);
-    charKey[16] = 0;
-
+    char *charKey = malloc(17);  // 16 hex digits + null terminator
+    if(!charKey) return NULL;
+    snprintf(charKey, 17, "%016" PRIX64, number);
     return charKey;
 }
 
