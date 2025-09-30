@@ -24,6 +24,17 @@
 #include "internal.h"
 #include "log.h"
 
+/**
+ * @brief Reads a media tag from the AaruFormat image.
+ *
+ * Reads the specified media tag from the image and stores it in the provided buffer.
+ *
+ * @param context Pointer to the aaruformat context.
+ * @param data Pointer to the buffer to store the tag data.
+ * @param tag Tag identifier to read.
+ * @param length Pointer to the length of the buffer; updated with the actual length read.
+ * @return AARUF_STATUS_OK on success, or an error code on failure.
+ */
 int32_t aaruf_read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t *length)
 {
     TRACE("Entering aaruf_read_media_tag(%p, %p, %d, %u)", context, data, tag, *length);

@@ -34,6 +34,17 @@ static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *
 static void error_callback(const FLAC__StreamDecoder *decoder, FLAC__StreamDecoderErrorStatus status,
                            void *client_data);
 
+/**
+ * @brief Decodes a FLAC-compressed Red Book audio buffer.
+ *
+ * Decompresses FLAC-compressed Red Book audio data into the destination buffer.
+ *
+ * @param dst_buffer Pointer to the destination buffer.
+ * @param dst_size Size of the destination buffer.
+ * @param src_buffer Pointer to the source (compressed) buffer.
+ * @param src_size Size of the source buffer.
+ * @return Number of bytes written to the destination buffer.
+ */
 AARU_EXPORT size_t AARU_CALL aaruf_flac_decode_redbook_buffer(uint8_t *dst_buffer, size_t dst_size,
                                                               const uint8_t *src_buffer, size_t src_size)
 {
@@ -141,6 +152,27 @@ static FLAC__StreamEncoderWriteStatus encoder_write_callback(const FLAC__StreamE
                                                              const FLAC__byte buffer[], size_t bytes, uint32_t samples,
                                                              uint32_t current_frame, void *client_data);
 
+/**
+ * @brief Encodes a Red Book audio buffer to FLAC format.
+ *
+ * @param dst_buffer Pointer to the destination buffer for FLAC data.
+ * @param dst_size Size of the destination buffer in bytes.
+ * @param src_buffer Pointer to the source Red Book audio buffer.
+ * @param src_size Size of the source buffer in bytes.
+ * @param blocksize FLAC block size.
+ * @param do_mid_side_stereo Enable mid-side stereo encoding.
+ * @param loose_mid_side_stereo Enable loose mid-side stereo encoding.
+ * @param apodization Apodization string for FLAC encoder.
+ * @param max_lpc_order Maximum LPC order.
+ * @param qlp_coeff_precision QLP coefficient precision.
+ * @param do_qlp_coeff_prec_search Enable QLP coefficient precision search.
+ * @param do_exhaustive_model_search Enable exhaustive model search.
+ * @param min_residual_partition_order Minimum residual partition order.
+ * @param max_residual_partition_order Maximum residual partition order.
+ * @param application_id Application ID string for FLAC encoder.
+ * @param application_id_len Length of the application ID string.
+ * @return Number of bytes written to the destination buffer.
+ */
 AARU_EXPORT size_t AARU_CALL aaruf_flac_encode_redbook_buffer(
     uint8_t *dst_buffer, size_t dst_size, const uint8_t *src_buffer, size_t src_size, uint32_t blocksize,
     int32_t do_mid_side_stereo, int32_t loose_mid_side_stereo, const char *apodization, uint32_t max_lpc_order,

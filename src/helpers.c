@@ -20,7 +20,14 @@
 
 #include <aaruformat.h>
 
-// Converts between image data type and aaru media tag type
+/**
+ * @brief Converts an image data type to an Aaru media tag type.
+ *
+ * Maps the given image data type to the corresponding Aaru media tag type.
+ *
+ * @param type Image data type identifier.
+ * @return Corresponding Aaru media tag type, or -1 if not found.
+ */
 int32_t aaruf_get_media_tag_type_for_datatype(int32_t type)
 {
     switch(type)

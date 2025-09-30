@@ -24,6 +24,14 @@
 #include "aaruformat.h"
 #include "log.h"
 
+/**
+ * @brief Processes a tracks block from the image stream.
+ *
+ * Reads a tracks block from the image and updates the context with its contents.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @param entry Pointer to the index entry describing the tracks block.
+ */
 void process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
     int      pos       = 0;

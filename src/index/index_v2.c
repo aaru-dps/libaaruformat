@@ -24,6 +24,14 @@
 #include "log.h"
 #include "utarray.h"
 
+/**
+ * @brief Processes an index block (version 2) from the image stream.
+ *
+ * Reads and parses an index block (version 2) from the image, returning an array of index entries.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @return Pointer to a UT_array of IndexEntry structures, or NULL on failure.
+ */
 UT_array *process_index_v2(aaruformatContext *ctx)
 {
     TRACE("Entering process_index_v2(%p)", ctx);
@@ -64,6 +72,14 @@ UT_array *process_index_v2(aaruformatContext *ctx)
     return index_entries;
 }
 
+/**
+ * @brief Verifies the integrity of an index block (version 2) in the image stream.
+ *
+ * Checks the CRC64 of the index block without decompressing it.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @return Status code (AARUF_STATUS_OK on success, or an error code).
+ */
 int32_t verify_index_v2(aaruformatContext *ctx)
 {
     TRACE("Entering verify_index_v2(%p)", ctx);

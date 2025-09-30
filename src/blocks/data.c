@@ -25,7 +25,15 @@
 #include "log.h"
 #include "uthash.h"
 
-// Process data blocks found while opening an AaruFormat file
+/**
+ * @brief Processes a data block from the image stream.
+ *
+ * Reads a data block from the image, decompresses if needed, and updates the context with its contents.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @param entry Pointer to the index entry describing the data block.
+ * @return AARUF_STATUS_OK on success, or an error code on failure.
+ */
 int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
 {
     TRACE("Entering process_data_block(%p, %p)", ctx, entry);

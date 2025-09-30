@@ -34,6 +34,13 @@ uint64_t get_filetime_uint64()
 #else
 #include <sys/time.h>
 
+/**
+ * @brief Gets the current time as a 64-bit FILETIME value.
+ *
+ * Returns the current system time as a 64-bit value compatible with Windows FILETIME (number of 100-nanosecond intervals since January 1, 1601 UTC).
+ *
+ * @return The current time as a 64-bit FILETIME value.
+ */
 uint64_t get_filetime_uint64()
 {
     struct timeval tv;
@@ -44,3 +51,4 @@ uint64_t get_filetime_uint64()
     return ft;
 }
 #endif
+

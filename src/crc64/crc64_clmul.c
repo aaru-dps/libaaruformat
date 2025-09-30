@@ -82,6 +82,14 @@ CLMUL static __m128i fold(__m128i in, __m128i foldConstants)
     return _mm_xor_si128(_mm_clmulepi64_si128(in, foldConstants, 0x00), _mm_clmulepi64_si128(in, foldConstants, 0x11));
 }
 
+/**
+ * @brief Computes CRC64 using the CLMUL (carry-less multiplication) instruction set.
+ *
+ * @param crc Initial CRC64 value.
+ * @param data Pointer to the data buffer.
+ * @param length Length of the data buffer in bytes.
+ * @return Computed CRC64 value.
+ */
 AARU_EXPORT CLMUL uint64_t AARU_CALL aaruf_crc64_clmul(uint64_t crc, const uint8_t *data, long length)
 {
     TRACE("Entering aaruf_crc64_clmul(%" PRIu64 ", %p, %ld)", crc, data, length);

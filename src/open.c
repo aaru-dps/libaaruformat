@@ -28,6 +28,14 @@
 #include "log.h"
 #include "utarray.h"
 
+/**
+ * @brief Opens an existing AaruFormat image file.
+ *
+ * Opens the specified image file and returns a pointer to the initialized aaruformat context.
+ *
+ * @param filepath Path to the image file to open.
+ * @return Pointer to the opened aaruformat context, or NULL on failure.
+ */
 void *aaruf_open(const char *filepath)
 {
     aaruformatContext *ctx           = NULL;

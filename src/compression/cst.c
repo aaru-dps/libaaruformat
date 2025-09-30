@@ -22,6 +22,16 @@
 
 #include "aaruformat.h"
 
+/**
+ * @brief Transforms interleaved subchannel data to sequential format.
+ *
+ * Converts interleaved subchannel data into a sequential format for further processing.
+ *
+ * @param interleaved Pointer to the interleaved data buffer.
+ * @param sequential Pointer to the output sequential data buffer.
+ * @param length Length of the data buffer.
+ * @return AARUF_STATUS_OK on success, or an error code on failure.
+ */
 int32_t aaruf_cst_transform(const uint8_t *interleaved, uint8_t *sequential, size_t length)
 {
     uint8_t *p = NULL;
@@ -172,6 +182,14 @@ int32_t aaruf_cst_transform(const uint8_t *interleaved, uint8_t *sequential, siz
     return AARUF_STATUS_OK;
 }
 
+/**
+ * @brief Reverses the CST (Claunia's Subchannel Transform) transformation from sequential to interleaved data.
+ *
+ * @param sequential Pointer to the sequential data buffer.
+ * @param interleaved Pointer to the output buffer for interleaved data.
+ * @param length Length of the data in bytes.
+ * @return AARUF_STATUS_OK on success, or an error code on failure.
+ */
 int32_t aaruf_cst_untransform(const uint8_t *sequential, uint8_t *interleaved, size_t length)
 {
     uint8_t *p, *q, *r, *s, *t, *u, *v, *w;

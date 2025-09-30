@@ -25,6 +25,14 @@
 #include "log.h"
 #include "utarray.h"
 
+/**
+ * @brief Processes an index block (version 3) from the image stream.
+ *
+ * Reads and parses an index block (version 3) from the image, returning an array of index entries.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @return Pointer to a UT_array of IndexEntry structures, or NULL on failure.
+ */
 UT_array *process_index_v3(aaruformatContext *ctx)
 {
     TRACE("Entering process_index_v3(%p)", ctx);
@@ -71,7 +79,15 @@ UT_array *process_index_v3(aaruformatContext *ctx)
     return index_entries;
 }
 
-// Add entries from a subindex to the array of index entries
+/**
+ * @brief Adds entries from a subindex block (version 3) to the main index entries array.
+ *
+ * Recursively reads subindex blocks and appends their entries to the main index entries array.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @param index_entries Pointer to the UT_array of main index entries.
+ * @param subindex_entry Pointer to the subindex entry to process.
+ */
 void add_subindex_entries(aaruformatContext *ctx, UT_array *index_entries, IndexEntry *subindex_entry)
 {
     TRACE("Entering add_subindex_entries(%p, %p, %p)", ctx, index_entries, subindex_entry);
@@ -112,6 +128,14 @@ void add_subindex_entries(aaruformatContext *ctx, UT_array *index_entries, Index
     TRACE("Exiting add_subindex_entries() after adding %d entries", subindex_header.entries);
 }
 
+/**
+ * @brief Verifies the integrity of an index block (version 3) in the image stream.
+ *
+ * Checks the CRC64 of the index block and all subindexes without decompressing them.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @return Status code (AARUF_STATUS_OK on success, or an error code).
+ */
 int32_t verify_index_v3(aaruformatContext *ctx)
 {
     TRACE("Entering verify_index_v3(%p)", ctx);

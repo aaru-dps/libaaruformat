@@ -25,6 +25,14 @@
 
 #define VERIFY_SIZE 1048576
 
+/**
+ * @brief Verifies the integrity of an AaruFormat image file.
+ *
+ * Checks the integrity of all blocks and deduplication tables in the image.
+ *
+ * @param context Pointer to the aaruformat context.
+ * @return AARUF_STATUS_OK on success, or an error code on failure.
+ */
 int32_t aaruf_verify_image(void *context)
 {
     TRACE("Entering aaruf_verify_image(%p)", context);

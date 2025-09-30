@@ -24,6 +24,14 @@
 #include "aaruformat.h"
 #include "log.h"
 
+/**
+ * @brief Processes a dump hardware block from the image stream.
+ *
+ * Reads a dump hardware block from the image and updates the context with its contents.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @param entry Pointer to the index entry describing the dump hardware block.
+ */
 void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
     TRACE("Entering process_dumphw_block(%p, %p)", ctx, entry);

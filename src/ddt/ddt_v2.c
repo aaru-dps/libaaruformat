@@ -25,6 +25,16 @@
 #include "internal.h"
 #include "log.h"
 
+/**
+ * @brief Processes a DDT v2 block from the image stream.
+ *
+ * Reads and decompresses (if needed) a DDT v2 block, verifies its CRC, and loads it into memory.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @param entry Pointer to the index entry describing the DDT block.
+ * @param foundUserDataDdt Pointer to a boolean that will be set to true if a user data DDT was found and loaded.
+ * @return AARUF_STATUS_OK on success, or an error code on failure.
+ */
 int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUserDataDdt)
 {
     TRACE("Entering process_ddt_v2(%p, %p, %d)", ctx, entry, *foundUserDataDdt);
@@ -405,6 +415,18 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
     return AARUF_STATUS_OK;
 }
 
+/**
+ * @brief Decodes a DDT v2 entry for a given sector address.
+ *
+ * Determines the offset and block offset for a sector using the DDT v2 table(s).
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @param sectorAddress Logical sector address to decode.
+ * @param offset Pointer to store the resulting offset.
+ * @param blockOffset Pointer to store the resulting block offset.
+ * @param sectorStatus Pointer to store the sector status.
+ * @return AARUF_STATUS_OK on success, or an error code on failure.
+ */
 int32_t decode_ddt_entry_v2(aaruformatContext *ctx, uint64_t sectorAddress, uint64_t *offset, uint64_t *blockOffset,
                             uint8_t *sectorStatus)
 {
@@ -425,6 +447,18 @@ int32_t decode_ddt_entry_v2(aaruformatContext *ctx, uint64_t sectorAddress, uint
     return decode_ddt_single_level_v2(ctx, sectorAddress, offset, blockOffset, sectorStatus);
 }
 
+/**
+ * @brief Decodes a single-level DDT v2 entry for a given sector address.
+ *
+ * Used when the DDT table does not use multi-level indirection.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @param sectorAddress Logical sector address to decode.
+ * @param offset Pointer to store the resulting offset.
+ * @param blockOffset Pointer to store the resulting block offset.
+ * @param sectorStatus Pointer to store the sector status.
+ * @return AARUF_STATUS_OK on success, or an error code on failure.
+ */
 int32_t decode_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, uint64_t *offset,
                                    uint64_t *blockOffset, uint8_t *sectorStatus)
 {
@@ -494,6 +528,18 @@ int32_t decode_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sectorAddres
     return AARUF_STATUS_OK;
 }
 
+/**
+ * @brief Decodes a multi-level DDT v2 entry for a given sector address.
+ *
+ * Used when the DDT table uses multi-level indirection (tableShift > 0).
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @param sectorAddress Logical sector address to decode.
+ * @param offset Pointer to store the resulting offset.
+ * @param blockOffset Pointer to store the resulting block offset.
+ * @param sectorStatus Pointer to store the sector status.
+ * @return AARUF_STATUS_OK on success, or an error code on failure.
+ */
 int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, uint64_t *offset,
                                   uint64_t *blockOffset, uint8_t *sectorStatus)
 {
@@ -758,6 +804,17 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress
     return AARUF_STATUS_OK;
 }
 
+/**
+ * @brief Sets a DDT v2 entry for a given sector address.
+ *
+ * Updates the DDT v2 table(s) with the specified offset, block offset, and sector status for a sector.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @param sectorAddress Logical sector address to set.
+ * @param offset Offset to set for the sector.
+ * @param blockOffset Block offset to set for the sector.
+ * @param sectorStatus Status to set for the sector.
+ */
 void set_ddt_entry_v2(aaruformatContext *ctx, uint64_t sectorAddress, uint64_t offset, uint64_t blockOffset,
                       uint8_t sectorStatus)
 {
@@ -777,6 +834,18 @@ void set_ddt_entry_v2(aaruformatContext *ctx, uint64_t sectorAddress, uint64_t o
         set_ddt_single_level_v2(ctx, sectorAddress, false, offset, blockOffset, sectorStatus);
 }
 
+/**
+ * @brief Sets a single-level DDT v2 entry for a given sector address.
+ *
+ * Used when the DDT table does not use multi-level indirection.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @param sectorAddress Logical sector address to set.
+ * @param negative Indicates if the sector address is negative.
+ * @param offset Offset to set for the sector.
+ * @param blockOffset Block offset to set for the sector.
+ * @param sectorStatus Status to set for the sector.
+ */
 void set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, bool negative, uint64_t offset,
                              uint64_t blockOffset, uint8_t sectorStatus)
 {
@@ -835,6 +904,18 @@ void set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, boo
     }
 }
 
+/**
+ * @brief Sets a multi-level DDT v2 entry for a given sector address.
+ *
+ * Used when the DDT table uses multi-level indirection (tableShift > 0).
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @param sectorAddress Logical sector address to set.
+ * @param negative Indicates if the sector address is negative.
+ * @param offset Offset to set for the sector.
+ * @param blockOffset Block offset to set for the sector.
+ * @param sectorStatus Status to set for the sector.
+ */
 void set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sectorAddress, bool negative, uint64_t offset,
                             uint64_t blockOffset, uint8_t sectorStatus)
 {

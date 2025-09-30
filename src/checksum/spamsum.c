@@ -48,6 +48,14 @@ AARU_EXPORT spamsum_ctx *AARU_CALL aaruf_spamsum_init(void)
     return ctx;
 }
 
+/**
+ * @brief Updates the spamsum context with new data.
+ *
+ * @param ctx Pointer to the spamsum context.
+ * @param data Pointer to the data to process.
+ * @param len Length of the data in bytes.
+ * @return 0 on success, -1 on error.
+ */
 AARU_EXPORT int AARU_CALL aaruf_spamsum_update(spamsum_ctx *ctx, const uint8_t *data, uint32_t len)
 {
     if(!ctx || !data) return -1;
@@ -59,6 +67,11 @@ AARU_EXPORT int AARU_CALL aaruf_spamsum_update(spamsum_ctx *ctx, const uint8_t *
     return 0;
 }
 
+/**
+ * @brief Frees a spamsum (fuzzy hash) context.
+ *
+ * @param ctx Pointer to the spamsum context to free.
+ */
 AARU_EXPORT void AARU_CALL aaruf_spamsum_free(spamsum_ctx *ctx)
 {
     if(ctx) free(ctx);

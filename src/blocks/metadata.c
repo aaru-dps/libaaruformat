@@ -24,7 +24,14 @@
 #include "aaruformat.h"
 #include "log.h"
 
-// Process the metadata block found while opening an AaruFormat file
+/**
+ * @brief Processes a metadata block from the image stream.
+ *
+ * Reads a metadata block from the image and updates the context with its contents.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @param entry Pointer to the index entry describing the metadata block.
+ */
 void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
     TRACE("Entering process_metadata_block(%p, %p)", ctx, entry);
@@ -231,7 +238,14 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
     TRACE("Exiting process_metadata_block()");
 }
 
-// Logical geometry block. It doesn't have a CRC coz, well, it's not so important
+/**
+ * @brief Processes a logical geometry block from the image stream.
+ *
+ * Reads a logical geometry block from the image and updates the context with its contents.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @param entry Pointer to the index entry describing the geometry block.
+ */
 void process_geometry_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
     TRACE("Entering process_geometry_block(%p, %p)", ctx, entry);
@@ -284,7 +298,14 @@ void process_geometry_block(aaruformatContext *ctx, const IndexEntry *entry)
     TRACE("Exiting process_geometry_block()");
 }
 
-// CICM XML metadata block
+/**
+ * @brief Processes a CICM XML metadata block from the image stream.
+ *
+ * Reads a CICM XML metadata block from the image and updates the context with its contents.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @param entry Pointer to the index entry describing the CICM block.
+ */
 void process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
     TRACE("Entering process_cicm_block(%p, %p)", ctx, entry);

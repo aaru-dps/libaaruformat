@@ -26,6 +26,18 @@
 #include "internal.h"
 #include "log.h"
 
+/**
+ * @brief Writes a sector to the AaruFormat image.
+ *
+ * Writes the given data to the specified sector address in the image, with the given status and length.
+ *
+ * @param context Pointer to the aaruformat context.
+ * @param sectorAddress Logical sector address to write.
+ * @param data Pointer to the data buffer to write.
+ * @param sectorStatus Status of the sector to write.
+ * @param length Length of the data buffer.
+ * @return AARUF_STATUS_OK on success, or an error code on failure.
+ */
 int32_t aaruf_write_sector(void *context, uint64_t sectorAddress, uint8_t *data, uint8_t sectorStatus, uint32_t length)
 {
     TRACE("Entering aaruf_write_sector(%p, %" PRIu64 ", %p, %u, %u)", context, sectorAddress, data, sectorStatus,

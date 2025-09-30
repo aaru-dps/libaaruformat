@@ -27,6 +27,14 @@
 
 #include "log.h"
 
+/**
+ * @brief Parses the options string for AaruFormat image creation/opening.
+ *
+ * Parses the options string and returns a struct with the parsed options for image creation or opening.
+ *
+ * @param options String with options to parse (may be NULL).
+ * @return Parsed options as an aaru_options struct.
+ */
 aaru_options parse_options(const char *options)
 {
     TRACE("Entering parse_options(%s)", options);

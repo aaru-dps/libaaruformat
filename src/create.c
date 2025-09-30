@@ -26,6 +26,24 @@
 #include "internal.h"
 #include "log.h"
 
+/**
+ * @brief Creates a new AaruFormat image file.
+ *
+ * Allocates and initializes a new aaruformat context and image file with the specified parameters.
+ *
+ * @param filepath Path to the image file to create.
+ * @param mediaType Media type identifier.
+ * @param sectorSize Size of each sector in bytes.
+ * @param userSectors Number of user data sectors.
+ * @param negativeSectors Number of negative sectors.
+ * @param overflowSectors Number of overflow sectors.
+ * @param options String with creation options.
+ * @param applicationName Pointer to the application name string.
+ * @param applicationNameLength Length of the application name string.
+ * @param applicationMajorVersion Major version of the application.
+ * @param applicationMinorVersion Minor version of the application.
+ * @return Pointer to the created aaruformat context, or NULL on failure.
+ */
 void *aaruf_create(const char *filepath, uint32_t mediaType, uint32_t sectorSize, uint64_t userSectors,
                    uint64_t negativeSectors, uint64_t overflowSectors, const char *options,
                    const uint8_t *applicationName, uint8_t applicationNameLength, uint8_t applicationMajorVersion,

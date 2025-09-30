@@ -22,6 +22,13 @@
 
 #include "log.h"
 
+/**
+ * @brief Initializes a CRC64 context.
+ *
+ * Allocates and initializes a CRC64 context for checksum calculations.
+ *
+ * @return Pointer to the initialized crc64_ctx structure, or NULL on failure.
+ */
 AARU_EXPORT crc64_ctx *AARU_CALL aaruf_crc64_init(void)
 {
     TRACE("Entering aaruf_crc64_init()");
@@ -35,6 +42,16 @@ AARU_EXPORT crc64_ctx *AARU_CALL aaruf_crc64_init(void)
     return ctx;
 }
 
+/**
+ * @brief Updates the CRC64 context with new data.
+ *
+ * Processes the given data buffer and updates the CRC64 value in the context.
+ *
+ * @param ctx Pointer to the CRC64 context.
+ * @param data Pointer to the data buffer.
+ * @param len Length of the data buffer.
+ * @return 0 on success, or -1 on error.
+ */
 AARU_EXPORT int AARU_CALL aaruf_crc64_update(crc64_ctx *ctx, const uint8_t *data, uint32_t len)
 {
     TRACE("Entering aaruf_crc64_update(%p, %p, %u)", ctx, data, len);
@@ -75,6 +92,13 @@ AARU_EXPORT int AARU_CALL aaruf_crc64_update(crc64_ctx *ctx, const uint8_t *data
     return 0;
 }
 
+/**
+ * @brief Updates a CRC64 value using the slicing-by-8 algorithm.
+ *
+ * @param previous_crc Pointer to the previous CRC64 value (input/output).
+ * @param data Pointer to the data buffer.
+ * @param len Length of the data buffer in bytes.
+ */
 AARU_EXPORT void AARU_CALL aaruf_crc64_slicing(uint64_t *previous_crc, const uint8_t *data, uint32_t len)
 {
     uint64_t c = *previous_crc;
@@ -107,6 +131,13 @@ AARU_EXPORT void AARU_CALL aaruf_crc64_slicing(uint64_t *previous_crc, const uin
     *previous_crc = c;
 }
 
+/**
+ * @brief Computes the final CRC64 value from the context.
+ *
+ * @param ctx Pointer to the CRC64 context.
+ * @param crc Pointer to store the resulting CRC64 value.
+ * @return 0 on success, -1 on error.
+ */
 AARU_EXPORT int AARU_CALL aaruf_crc64_final(crc64_ctx *ctx, uint64_t *crc)
 {
     if(!ctx) return -1;
@@ -116,6 +147,11 @@ AARU_EXPORT int AARU_CALL aaruf_crc64_final(crc64_ctx *ctx, uint64_t *crc)
     return 0;
 }
 
+/**
+ * @brief Frees a CRC64 context.
+ *
+ * @param ctx Pointer to the CRC64 context to free.
+ */
 AARU_EXPORT void AARU_CALL aaruf_crc64_free(crc64_ctx *ctx)
 {
     if(ctx) free(ctx);

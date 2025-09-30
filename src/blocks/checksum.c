@@ -24,6 +24,14 @@
 #include "aaruformat.h"
 #include "log.h"
 
+/**
+ * @brief Processes a checksum block from the image stream.
+ *
+ * Reads a checksum block, parses its entries, and stores the checksums (MD5, SHA1, SHA256, SpamSum) in the context.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @param entry Pointer to the index entry describing the checksum block.
+ */
 void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
     TRACE("Entering process_checksum_block(%p, %p)", ctx, entry);

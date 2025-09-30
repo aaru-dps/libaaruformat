@@ -29,6 +29,14 @@
 #include "internal.h"
 #include "log.h"
 
+/**
+ * @brief Closes an AaruFormat image context and frees resources.
+ *
+ * Closes the image file, frees memory, and releases all resources associated with the context.
+ *
+ * @param context Pointer to the aaruformat context to close.
+ * @return 0 on success, or -1 on error.
+ */
 int aaruf_close(void *context)
 {
     TRACE("Entering aaruf_close(%p)", context);

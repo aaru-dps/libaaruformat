@@ -36,6 +36,17 @@
 
 #endif
 
+/**
+ * @brief Executes the CPUID instruction to retrieve CPU information.
+ *
+ * Retrieves information about the CPU based on the specified info code.
+ *
+ * @param info The information code to query.
+ * @param eax Pointer to store the EAX register result.
+ * @param ebx Pointer to store the EBX register result.
+ * @param ecx Pointer to store the ECX register result.
+ * @param edx Pointer to store the EDX register result.
+ */
 static void cpuid(int info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned *edx)
 {
     TRACE("Entering cpuid(%d, %d, %d, %d, %d)", info, *eax, *ebx, *ecx, *edx);
@@ -63,6 +74,16 @@ static void cpuid(int info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigne
     TRACE("Exiting cpuid(%d, %d, %d, %d, %d)", info, *eax, *ebx, *ecx, *edx);
 }
 
+/**
+ * @brief Executes the CPUID instruction with the given info and count.
+ *
+ * @param info CPUID info code.
+ * @param count CPUID count code.
+ * @param eax Pointer to store EAX result.
+ * @param ebx Pointer to store EBX result.
+ * @param ecx Pointer to store ECX result.
+ * @param edx Pointer to store EDX result.
+ */
 static void cpuidex(int info, int count, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned *edx)
 {
     TRACE("Entering cpuidex(%d, %d, %d, %d, %d, %d)", info, count, *eax, *ebx, *ecx, *edx);
@@ -90,6 +111,11 @@ static void cpuidex(int info, int count, unsigned *eax, unsigned *ebx, unsigned 
     TRACE("Exiting cpuidex(%d, %d, %d, %d, %d, %d)", info, count, *eax, *ebx, *ecx, *edx);
 }
 
+/**
+ * @brief Checks if the CPU supports PCLMULQDQ (carry-less multiplication) and SSE4.1.
+ *
+ * @return Non-zero if supported, zero otherwise.
+ */
 int have_clmul()
 {
     TRACE("Entering have_clmul()");
@@ -106,6 +132,11 @@ int have_clmul()
     return has_pclmulqdq && has_sse41;
 }
 
+/**
+ * @brief Checks if the CPU supports SSSE3 instructions.
+ *
+ * @return Non-zero if supported, zero otherwise.
+ */
 int have_ssse3()
 {
     TRACE("Entering have_ssse3()");
@@ -116,6 +147,11 @@ int have_ssse3()
     return ecx & 0x200;
 }
 
+/**
+ * @brief Checks if the CPU supports AVX2 instructions.
+ *
+ * @return Non-zero if supported, zero otherwise.
+ */
 int have_avx2()
 {
     TRACE("Entering have_avx2()");
@@ -140,6 +176,11 @@ int have_avx2()
 #endif
 
 #if (defined(__aarch64__) || defined(_M_ARM64) || defined(__arm__) || defined(_M_ARM)) && defined(__APPLE__)
+/**
+ * @brief Checks if the CPU supports NEON instructions on Apple platforms.
+ *
+ * @return Non-zero if supported, zero otherwise.
+ */
 int have_neon_apple()
 {
     TRACE("Entering have_neon_apple()");
@@ -157,6 +198,11 @@ int have_neon_apple()
     return value == 1;
 }
 
+/**
+ * @brief Checks if the CPU supports CRC32 instructions on Apple platforms.
+ *
+ * @return Non-zero if supported, zero otherwise.
+ */
 int have_crc32_apple()
 {
     TRACE("Entering have_crc32_apple()");
@@ -174,6 +220,11 @@ int have_crc32_apple()
     return value == 1;
 }
 
+/**
+ * @brief Checks if the CPU supports cryptographic instructions on Apple platforms.
+ *
+ * @return Non-zero if supported, zero otherwise.
+ */
 int have_crypto_apple() { return 0; }
 #endif
 

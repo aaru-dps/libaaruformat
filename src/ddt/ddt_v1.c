@@ -28,6 +28,16 @@
 #include "aaruformat.h"
 #include "log.h"
 
+/**
+ * @brief Processes a DDT v1 block from the image stream.
+ *
+ * Reads and decompresses (if needed) a DDT v1 block, verifies its integrity, and loads it into memory or maps it.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @param entry Pointer to the index entry describing the DDT block.
+ * @param foundUserDataDdt Pointer to a boolean that will be set to true if a user data DDT was found and loaded.
+ * @return AARUF_STATUS_OK on success, or an error code on failure.
+ */
 int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUserDataDdt)
 {
     TRACE("Entering process_ddt_v1(%p, %p, %d)", ctx, entry, *foundUserDataDdt);
@@ -288,6 +298,18 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *foundUse
     return AARUF_STATUS_OK;
 }
 
+/**
+ * @brief Decodes a DDT v1 entry for a given sector address.
+ *
+ * Determines the offset and block offset for a sector using the DDT v1 table.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @param sectorAddress Logical sector address to decode.
+ * @param offset Pointer to store the resulting offset.
+ * @param blockOffset Pointer to store the resulting block offset.
+ * @param sectorStatus Pointer to store the sector status.
+ * @return AARUF_STATUS_OK on success, or an error code on failure.
+ */
 int32_t decode_ddt_entry_v1(aaruformatContext *ctx, uint64_t sectorAddress, uint64_t *offset, uint64_t *blockOffset,
                             uint8_t *sectorStatus)
 {

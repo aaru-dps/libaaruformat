@@ -25,6 +25,13 @@
 #include "aaruformat.h"
 #include "log.h"
 
+/**
+ * @brief Initializes a Compact Disc ECC context.
+ *
+ * Allocates and initializes a context for Compact Disc ECC calculations.
+ *
+ * @return Pointer to the initialized CdEccContext structure, or NULL on failure.
+ */
 void *aaruf_ecc_cd_init()
 {
     TRACE("Entering aaruf_ecc_cd_init()");
@@ -84,6 +91,13 @@ void *aaruf_ecc_cd_init()
     return context;
 }
 
+/**
+ * @brief Checks if the suffix (EDC/ECC) of a CD sector is correct (Mode 1).
+ *
+ * @param context Pointer to the ECC context.
+ * @param sector Pointer to the sector data.
+ * @return true if the suffix is correct, false otherwise.
+ */
 bool aaruf_ecc_cd_is_suffix_correct(void *context, const uint8_t *sector)
 {
     TRACE("Entering aaruf_ecc_cd_is_suffix_correct(%p, %p)", context, sector);
@@ -138,6 +152,13 @@ bool aaruf_ecc_cd_is_suffix_correct(void *context, const uint8_t *sector)
     return calculatedEdc == storedEdc;
 }
 
+/**
+ * @brief Checks if the suffix (EDC/ECC) of a CD sector is correct (Mode 2).
+ *
+ * @param context Pointer to the ECC context.
+ * @param sector Pointer to the sector data.
+ * @return true if the suffix is correct, false otherwise.
+ */
 bool aaruf_ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector)
 {
     TRACE("Entering aaruf_ecc_cd_is_suffix_correct_mode2(%p, %p)", context, sector);
@@ -185,6 +206,22 @@ bool aaruf_ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector)
     return calculatedEdc == storedEdc;
 }
 
+/**
+ * @brief Checks the ECC of a CD sector.
+ *
+ * @param context Pointer to the ECC context.
+ * @param address Pointer to the address field.
+ * @param data Pointer to the data field.
+ * @param majorCount Number of major iterations.
+ * @param minorCount Number of minor iterations.
+ * @param majorMult Major multiplier.
+ * @param minorInc Minor increment.
+ * @param ecc Pointer to the ECC field.
+ * @param addressOffset Offset for the address field.
+ * @param dataOffset Offset for the data field.
+ * @param eccOffset Offset for the ECC field.
+ * @return true if ECC is correct, false otherwise.
+ */
 bool aaruf_ecc_cd_check(void *context, const uint8_t *address, const uint8_t *data, uint32_t majorCount,
                         uint32_t minorCount, uint32_t majorMult, uint32_t minorInc, const uint8_t *ecc,
                         int32_t addressOffset, int32_t dataOffset, int32_t eccOffset)
@@ -238,6 +275,21 @@ bool aaruf_ecc_cd_check(void *context, const uint8_t *address, const uint8_t *da
     return true;
 }
 
+/**
+ * @brief Writes ECC for a CD sector.
+ *
+ * @param context Pointer to the ECC context.
+ * @param address Pointer to the address field.
+ * @param data Pointer to the data field.
+ * @param majorCount Number of major iterations.
+ * @param minorCount Number of minor iterations.
+ * @param majorMult Major multiplier.
+ * @param minorInc Minor increment.
+ * @param ecc Pointer to the ECC field to write.
+ * @param addressOffset Offset for the address field.
+ * @param dataOffset Offset for the data field.
+ * @param eccOffset Offset for the ECC field.
+ */
 void aaruf_ecc_cd_write(void *context, const uint8_t *address, const uint8_t *data, uint32_t majorCount,
                         uint32_t minorCount, uint32_t majorMult, uint32_t minorInc, uint8_t *ecc, int32_t addressOffset,
                         int32_t dataOffset, int32_t eccOffset)
@@ -288,6 +340,17 @@ void aaruf_ecc_cd_write(void *context, const uint8_t *address, const uint8_t *da
     TRACE("Exiting aaruf_ecc_cd_write()");
 }
 
+/**
+ * @brief Writes ECC for a full CD sector (both P and Q ECC).
+ *
+ * @param context Pointer to the ECC context.
+ * @param address Pointer to the address field.
+ * @param data Pointer to the data field.
+ * @param ecc Pointer to the ECC field to write.
+ * @param addressOffset Offset for the address field.
+ * @param dataOffset Offset for the data field.
+ * @param eccOffset Offset for the ECC field.
+ */
 void aaruf_ecc_cd_write_sector(void *context, const uint8_t *address, const uint8_t *data, uint8_t *ecc,
                                int32_t addressOffset, int32_t dataOffset, int32_t eccOffset)
 {
@@ -300,6 +363,14 @@ void aaruf_ecc_cd_write_sector(void *context, const uint8_t *address, const uint
     TRACE("Exiting aaruf_ecc_cd_write_sector()");
 }
 
+/**
+ * @brief Converts a CD LBA (Logical Block Address) to MSF (Minute:Second:Frame) format.
+ *
+ * @param pos LBA position.
+ * @param minute Pointer to store the minute value.
+ * @param second Pointer to store the second value.
+ * @param frame Pointer to store the frame value.
+ */
 void aaruf_cd_lba_to_msf(int64_t pos, uint8_t *minute, uint8_t *second, uint8_t *frame)
 {
     TRACE("Entering aaruf_cd_lba_to_msf(%lld, %p, %p, %p)", pos, minute, second, frame);
@@ -311,8 +382,14 @@ void aaruf_cd_lba_to_msf(int64_t pos, uint8_t *minute, uint8_t *second, uint8_t 
     TRACE("Exiting aaruf_cd_lba_to_msf() = %u:%u:%u", *minute, *second, *frame);
 }
 
-void aaruf_ecc_cd_reconstruct_prefix(uint8_t *sector,  // must point to a full 2352-byte sector
-                                     uint8_t type, int64_t lba)
+/**
+ * @brief Reconstructs the prefix (sync, address, mode) of a CD sector.
+ *
+ * @param sector Pointer to the sector data (must be 2352 bytes).
+ * @param type Track type (mode).
+ * @param lba Logical Block Address.
+ */
+void aaruf_ecc_cd_reconstruct_prefix(uint8_t *sector, uint8_t type, int64_t lba)
 {
     TRACE("Entering aaruf_ecc_cd_reconstruct_prefix(%p, %u, %lld)", sector, type, lba);
 
@@ -372,9 +449,14 @@ void aaruf_ecc_cd_reconstruct_prefix(uint8_t *sector,  // must point to a full 2
     TRACE("Exiting aaruf_ecc_cd_reconstruct_prefix()");
 }
 
-void aaruf_ecc_cd_reconstruct(void    *context,
-                              uint8_t *sector,  // must point to a full 2352-byte sector
-                              uint8_t  type)
+/**
+ * @brief Reconstructs the EDC and ECC fields of a CD sector.
+ *
+ * @param context Pointer to the ECC context.
+ * @param sector Pointer to the sector data (must be 2352 bytes).
+ * @param type Track type (mode).
+ */
+void aaruf_ecc_cd_reconstruct(void *context, uint8_t *sector, uint8_t type)
 {
     TRACE("Entering aaruf_ecc_cd_reconstruct(%p, %p, %u)", context, sector, type);
 
@@ -454,6 +536,16 @@ void aaruf_ecc_cd_reconstruct(void    *context,
     TRACE("Exiting aaruf_ecc_cd_reconstruct()");
 }
 
+/**
+ * @brief Computes the EDC (Error Detection Code) for a CD sector.
+ *
+ * @param context Pointer to the ECC context.
+ * @param edc Initial EDC value.
+ * @param src Pointer to the data to compute EDC over.
+ * @param size Number of bytes to process.
+ * @param pos Starting position in the data.
+ * @return Computed EDC value.
+ */
 uint32_t aaruf_edc_cd_compute(void *context, uint32_t edc, const uint8_t *src, int size, int pos)
 {
     TRACE("Entering aaruf_edc_cd_compute(%p, %u, %p, %d, %d)", context, edc, src, size, pos);

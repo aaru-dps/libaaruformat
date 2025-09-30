@@ -21,12 +21,13 @@
 
 #include <aaruformat.h>
 
-//! Identifies a file as aaruformat, using path
-/*!
+/**
+ * @brief Identifies a file as an AaruFormat image using a file path.
  *
- * @param filename path to the file to aaruf_identify
- * @return If positive, confidence value, with 100 being maximum confidentiality, and 0 not recognizing the file.
- * If negative, error value
+ * Opens the file at the given path and determines if it is an AaruFormat image.
+ *
+ * @param filename Path to the file to identify.
+ * @return If positive, confidence value (100 = maximum confidence, 0 = not recognized). If negative, error value.
  */
 int aaruf_identify(const char *filename)
 {
@@ -43,12 +44,13 @@ int aaruf_identify(const char *filename)
     return ret;
 }
 
-//! Identifies a file as aaruformat, using an already existing stream
-/*!
+/**
+ * @brief Identifies a file as an AaruFormat image using an open stream.
  *
- * @param imageStream stream of the file to aaruf_identify
- * @return If positive, confidence value, with 100 being maximum confidentiality, and 0 not recognizing the file.
- * If negative, error value
+ * Determines if the provided stream is an AaruFormat image.
+ *
+ * @param imageStream Stream of the file to identify.
+ * @return If positive, confidence value (100 = maximum confidence, 0 = not recognized). If negative, error value.
  */
 int aaruf_identify_stream(FILE *imageStream)
 {

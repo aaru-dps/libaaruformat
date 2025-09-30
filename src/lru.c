@@ -12,6 +12,15 @@
 // by Jehiah Czebotar 2011 - jehiah@gmail.com
 // this code is in the public domain http://unlicense.org/
 
+/**
+ * @brief Finds a value in the cache by string key and updates its LRU position.
+ *
+ * Searches for a cache entry by key. If found, moves it to the front (most recently used).
+ *
+ * @param cache Pointer to the cache header.
+ * @param key String key to search for.
+ * @return Pointer to the value if found, or NULL if not found.
+ */
 void *find_in_cache(struct CacheHeader *cache, char *key)
 {
     struct CacheEntry *entry;
@@ -26,6 +35,15 @@ void *find_in_cache(struct CacheHeader *cache, char *key)
     return NULL;
 }
 
+/**
+ * @brief Adds a value to the cache with a string key, pruning if necessary.
+ *
+ * Adds a new entry to the cache. If the cache exceeds its maximum size, prunes the least recently used entry.
+ *
+ * @param cache Pointer to the cache header.
+ * @param key String key to add.
+ * @param value Pointer to the value to store.
+ */
 void add_to_cache(struct CacheHeader *cache, char *key, void *value)
 {
     struct CacheEntry *entry, *tmp_entry;
@@ -57,11 +75,29 @@ FORCE_INLINE char *int64_to_string(uint64_t number)
     return charKey;
 }
 
+/**
+ * @brief Finds a value in the cache by uint64_t key, using string conversion.
+ *
+ * Converts the uint64_t key to a string and searches for the entry in the cache.
+ *
+ * @param cache Pointer to the cache header.
+ * @param key 64-bit integer key to search for.
+ * @return Pointer to the value if found, or NULL if not found.
+ */
 void *find_in_cache_uint64(struct CacheHeader *cache, uint64_t key)
 {
     return find_in_cache(cache, int64_to_string(key));
 }
 
+/**
+ * @brief Adds a value to the cache with a uint64_t key, using string conversion.
+ *
+ * Converts the uint64_t key to a string and adds the entry to the cache.
+ *
+ * @param cache Pointer to the cache header.
+ * @param key 64-bit integer key to add.
+ * @param value Pointer to the value to store.
+ */
 void add_to_cache_uint64(struct CacheHeader *cache, uint64_t key, void *value)
 {
     return add_to_cache(cache, int64_to_string(key), value);

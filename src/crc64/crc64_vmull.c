@@ -49,6 +49,14 @@ TARGET_WITH_SIMD FORCE_INLINE uint64x2_t fold(uint64x2_t in, uint64x2_t foldCons
                      sse2neon_vmull_p64(vget_high_u64(in), vget_high_u64(foldConstants)));
 }
 
+/**
+ * @brief Computes CRC64 using the ARM NEON VMULL instruction set.
+ *
+ * @param previous_crc Initial CRC64 value.
+ * @param data Pointer to the data buffer.
+ * @param len Length of the data buffer in bytes.
+ * @return Computed CRC64 value.
+ */
 AARU_EXPORT TARGET_WITH_SIMD uint64_t AARU_CALL aaruf_crc64_vmull(uint64_t previous_crc, const uint8_t *data, long len)
 {
     TRACE("Entering aaruf_crc64_vmull(%llu, %p, %ld)", previous_crc, data, len);

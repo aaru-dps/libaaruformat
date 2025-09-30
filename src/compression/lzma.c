@@ -23,12 +23,45 @@
 
 #include "../../3rdparty/lzma-21.03beta/C/LzmaLib.h"
 
+/**
+ * @brief Decodes an LZMA-compressed buffer.
+ *
+ * Decompresses data from the source buffer into the destination buffer using LZMA.
+ *
+ * @param dst_buffer Pointer to the destination buffer.
+ * @param dst_size Pointer to the size of the destination buffer; updated with the actual size.
+ * @param src_buffer Pointer to the source (compressed) buffer.
+ * @param srcLen Pointer to the size of the source buffer; updated with the actual size read.
+ * @param props Pointer to the LZMA properties.
+ * @param propsSize Size of the LZMA properties.
+ * @return 0 on success, or an error code on failure.
+ */
 AARU_EXPORT int32_t AARU_CALL aaruf_lzma_decode_buffer(uint8_t *dst_buffer, size_t *dst_size, const uint8_t *src_buffer,
                                                        size_t *srcLen, const uint8_t *props, size_t propsSize)
 {
     return LzmaUncompress(dst_buffer, dst_size, src_buffer, srcLen, props, propsSize);
 }
 
+/**
+ * @brief Encodes a buffer using LZMA compression.
+ *
+ * Compresses data from the source buffer into the destination buffer using LZMA.
+ *
+ * @param dst_buffer Pointer to the destination buffer.
+ * @param dst_size Pointer to the size of the destination buffer; updated with the actual size.
+ * @param src_buffer Pointer to the source (uncompressed) buffer.
+ * @param srcLen Size of the source buffer.
+ * @param outProps Pointer to the output LZMA properties.
+ * @param outPropsSize Pointer to the size of the output LZMA properties.
+ * @param level Compression level.
+ * @param dictSize Dictionary size.
+ * @param lc LZMA literal context bits.
+ * @param lp LZMA literal position bits.
+ * @param pb LZMA position bits.
+ * @param fb Number of fast bytes.
+ * @param numThreads Number of threads to use.
+ * @return 0 on success, or an error code on failure.
+ */
 AARU_EXPORT int32_t AARU_CALL aaruf_lzma_encode_buffer(uint8_t *dst_buffer, size_t *dst_size, const uint8_t *src_buffer,
                                                        size_t srcLen, uint8_t *outProps, size_t *outPropsSize,
                                                        int32_t level, uint32_t dictSize, int32_t lc, int32_t lp,
