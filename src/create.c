@@ -30,6 +30,9 @@
  * @brief Creates a new AaruFormat image file.
  *
  * Allocates and initializes a new aaruformat context and image file with the specified parameters.
+ * This function sets up all necessary data structures including headers, DDT (deduplication table),
+ * caches, and index entries for writing a new AaruFormat image. It also handles file creation,
+ * memory allocation, and proper initialization of the writing context.
  *
  * @param filepath Path to the image file to create.
  * @param media_type Media type identifier.
@@ -37,12 +40,63 @@
  * @param user_sectors Number of user data sectors.
  * @param negative_sectors Number of negative sectors.
  * @param overflow_sectors Number of overflow sectors.
- * @param options String with creation options.
+ * @param options String with creation options (parsed for alignment and shift parameters).
  * @param application_name Pointer to the application name string.
- * @param application_name_length Length of the application name string.
+ * @param application_name_length Length of the application name string (must be ≤ AARU_HEADER_APP_NAME_LEN).
  * @param application_major_version Major version of the application.
  * @param application_minor_version Minor version of the application.
- * @return Pointer to the created aaruformat context, or NULL on failure.
+ *
+ * @return Returns one of the following:
+ * @retval aaruformatContext* Successfully created and initialized context. The returned pointer contains:
+ *         - Properly initialized AaruFormat headers and metadata
+ *         - Allocated and configured DDT structures for deduplication
+ *         - Initialized block and header caches for performance
+ *         - Open file stream ready for writing operations
+ *         - Index entries array ready for block tracking
+ *         - ECC context initialized for Compact Disc support
+ *
+ * @retval NULL Creation failed. The specific error can be determined by checking errno, which will be set to:
+ *         - AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) when memory allocation fails for:
+ *           * Context allocation
+ *           * Readable sector tags array allocation
+ *           * Application version string allocation
+ *           * Image version string allocation
+ *           * DDT table allocation (userDataDdtMini or userDataDdtBig)
+ *           * Index entries array allocation
+ *         - AARUF_ERROR_CANNOT_CREATE_FILE (-19) when file operations fail:
+ *           * Unable to open the specified filepath for writing
+ *           * File seek operations fail during initialization
+ *           * File system errors or permission issues
+ *         - AARUF_ERROR_INVALID_APP_NAME_LENGTH (-20) when:
+ *           * application_name_length exceeds AARU_HEADER_APP_NAME_LEN
+ *
+ * @note Memory Management:
+ *       - The function performs extensive memory allocation for various context structures
+ *       - On failure, all previously allocated memory is properly cleaned up
+ *       - The returned context must be freed using appropriate cleanup functions
+ *
+ * @note File Operations:
+ *       - Creates a new file at the specified path (overwrites existing files)
+ *       - Opens the file in binary read/write mode ("wb+")
+ *       - Positions the file pointer at the calculated data start position
+ *       - File alignment is handled based on parsed options
+ *
+ * @note DDT Initialization:
+ *       - Uses DDT version 2 format with configurable compression and alignment
+ *       - Supports both small (16-bit) and big (32-bit) DDT entry sizes
+ *       - Calculates optimal table sizes based on sector counts and shift parameters
+ *       - All DDT entries are initialized to zero (indicating unallocated sectors)
+ *
+ * @note Options Parsing:
+ *       - The options string is parsed to extract block_alignment, data_shift, and table_shift
+ *       - These parameters affect memory usage, performance, and file organization
+ *       - Invalid options may result in suboptimal performance but won't cause failure
+ *
+ * @warning The created context is in writing mode and expects proper finalization
+ *          before closing to ensure index and metadata are written correctly.
+ *
+ * @warning Application name length validation is strict - exceeding the limit will
+ *          cause creation failure with AARUF_ERROR_INVALID_APP_NAME_LENGTH.
  */
 void *aaruf_create(const char *filepath, uint32_t media_type, uint32_t sector_size, uint64_t user_sectors,
                    uint64_t negative_sectors, uint64_t overflow_sectors, const char *options,

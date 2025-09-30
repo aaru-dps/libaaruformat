@@ -33,9 +33,94 @@
  * @brief Closes an AaruFormat image context and frees resources.
  *
  * Closes the image file, frees memory, and releases all resources associated with the context.
+ * For images opened in write mode, this function performs critical finalization operations
+ * including writing cached DDT tables, updating the index, writing the final image header,
+ * and ensuring all data structures are properly persisted. It handles both single-level
+ * and multi-level DDT structures and performs comprehensive cleanup of all allocated resources.
  *
  * @param context Pointer to the aaruformat context to close.
- * @return 0 on success, or -1 on error.
+ *
+ * @return Returns one of the following status codes:
+ * @retval 0 Successfully closed the context and freed all resources. This is returned when:
+ *         - The context is valid and properly initialized
+ *         - For write mode: All cached data is successfully written to the image file
+ *         - DDT tables (single-level or multi-level) are successfully written and indexed
+ *         - The image index is successfully written with proper CRC validation
+ *         - The final image header is updated with correct index offset and written
+ *         - All memory resources are successfully freed
+ *         - The image stream is closed without errors
+ *
+ * @retval -1 Context validation failed. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
+ *         - The errno is set to EINVAL to indicate invalid argument
+ *
+ * @retval AARUF_ERROR_CANNOT_WRITE_HEADER (-16) Write operations failed. This occurs when:
+ *         - Cannot write the initial image header at position 0 (for write mode)
+ *         - Cannot write cached secondary DDT header or data to the image file
+ *         - Cannot write primary DDT header or table data to the image file
+ *         - Cannot write single-level DDT header or table data to the image file
+ *         - Cannot write index header to the image file
+ *         - Cannot write all index entries to the image file
+ *         - Cannot update the final image header with the correct index offset
+ *         - Any file I/O operation fails during the finalization process
+ *
+ * @retval Error codes from aaruf_close_current_block() may be propagated when:
+ *         - The current writing buffer cannot be properly closed and written
+ *         - Block finalization fails during the close operation
+ *         - Compression or writing of the final block encounters errors
+ *
+ * @note Write Mode Finalization Process:
+ *       - Writes the image header at the beginning of the file
+ *       - Closes any open writing buffer (current block being written)
+ *       - Writes cached secondary DDT tables and updates primary DDT references
+ *       - Writes primary DDT tables (single-level or multi-level) with CRC validation
+ *       - Writes the complete index with all block references at the end of the file
+ *       - Updates the image header with the final index offset
+ *
+ * @note DDT Finalization:
+ *       - For multi-level DDTs: Writes cached secondary tables and updates primary table pointers
+ *       - For single-level DDTs: Writes the complete table directly to the designated position
+ *       - Calculates and validates CRC64 checksums for all DDT data
+ *       - Updates index entries to reference newly written DDT blocks
+ *
+ * @note Index Writing:
+ *       - Creates IndexHeader3 structure with entry count and CRC validation
+ *       - Writes all IndexEntry structures sequentially after the header
+ *       - Aligns index position to block boundaries for optimal access
+ *       - Updates the main image header with the final index file offset
+ *
+ * @note Memory Cleanup:
+ *       - Frees all allocated DDT tables (userDataDdtMini, userDataDdtBig, cached secondary tables)
+ *       - Frees sector metadata arrays (sectorPrefix, sectorSuffix, sectorSubchannel, etc.)
+ *       - Frees media tag hash table and all associated tag data
+ *       - Frees track entries, metadata blocks, and hardware information
+ *       - Closes LRU caches for block headers and data
+ *       - Unmaps memory-mapped DDT structures (Linux-specific)
+ *
+ * @note Platform-Specific Operations:
+ *       - Linux: Unmaps memory-mapped DDT structures using munmap() if not loaded in memory
+ *       - Other platforms: Standard memory deallocation only
+ *
+ * @note Error Handling Strategy:
+ *       - Critical write failures return immediately with error codes
+ *       - Memory cleanup continues even if some write operations fail
+ *       - All allocated resources are freed regardless of write success/failure
+ *       - File stream is always closed, even on error conditions
+ *
+ * @warning This function must be called to properly finalize write-mode images.
+ *          Failing to call aaruf_close() on write-mode contexts will result in
+ *          incomplete or corrupted image files.
+ *
+ * @warning After calling this function, the context pointer becomes invalid and
+ *          should not be used. All operations on the context will result in
+ *          undefined behavior.
+ *
+ * @warning For write-mode contexts, this function performs extensive file I/O.
+ *          Ensure sufficient disk space and proper file permissions before calling.
+ *
+ * @warning The function sets errno to EINVAL for context validation failures
+ *          but uses library-specific error codes for write operation failures.
  */
 int aaruf_close(void *context)
 {

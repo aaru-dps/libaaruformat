@@ -30,13 +30,64 @@
  * @brief Writes a sector to the AaruFormat image.
  *
  * Writes the given data to the specified sector address in the image, with the given status and length.
+ * This function handles buffering data into blocks, automatically closing blocks when necessary (sector
+ * size changes or block size limits are reached), and managing the deduplication table (DDT) entries.
  *
  * @param context Pointer to the aaruformat context.
  * @param sector_address Logical sector address to write.
  * @param data Pointer to the data buffer to write.
  * @param sector_status Status of the sector to write.
  * @param length Length of the data buffer.
- * @return AARUF_STATUS_OK on success, or an error code on failure.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully wrote the sector data. This is returned when:
+ *         - The sector data is successfully copied to the writing buffer
+ *         - The DDT entry is successfully updated for the sector address
+ *         - Block management operations complete successfully
+ *         - Buffer positions and offsets are properly updated
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
+ *
+ * @retval AARUF_READ_ONLY (-22) Attempting to write to a read-only image. This occurs when:
+ *         - The context's isWriting flag is false
+ *         - The image was opened in read-only mode
+ *
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
+ *         - Failed to allocate memory for the writing buffer when creating a new block
+ *         - The system is out of available memory for buffer allocation
+ *
+ * @retval AARUF_ERROR_CANNOT_WRITE_BLOCK_HEADER (-23) Failed to write block header to the image file.
+ *         This can occur during automatic block closure when:
+ *         - The fwrite() call for the block header fails
+ *         - Disk space is insufficient or file system errors occur
+ *
+ * @retval AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA (-24) Failed to write block data to the image file.
+ *         This can occur during automatic block closure when:
+ *         - The fwrite() call for the block data fails
+ *         - Disk space is insufficient or file system errors occur
+ *
+ * @note Block Management:
+ *       - The function automatically closes the current block when sector size changes
+ *       - Blocks are also closed when they reach the maximum size (determined by dataShift)
+ *       - New blocks are created automatically when needed with appropriate headers
+ *
+ * @note Memory Management:
+ *       - Writing buffers are allocated on-demand when creating new blocks
+ *       - Buffer memory is freed when blocks are closed
+ *       - Buffer size is calculated based on sector size and data shift parameters
+ *
+ * @note DDT Updates:
+ *       - Each written sector updates the corresponding DDT entry
+ *       - DDT entries track block offset, position, and sector status
+ *       - Uses DDT version 2 format for entries
+ *
+ * @warning The function may trigger automatic block closure, which can result in disk I/O
+ *          operations and potential write errors even for seemingly simple sector writes.
+ *
+ * @warning No bounds checking is performed on sector_address. Writing beyond media limits
+ *          may result in undefined behavior (TODO: implement bounds checking).
  */
 int32_t aaruf_write_sector(void *context, uint64_t sector_address, const uint8_t *data, uint8_t sector_status,
                            uint32_t length)

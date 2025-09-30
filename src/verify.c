@@ -28,10 +28,74 @@
 /**
  * @brief Verifies the integrity of an AaruFormat image file.
  *
- * Checks the integrity of all blocks and deduplication tables in the image.
+ * Checks the integrity of all blocks and deduplication tables in the image by validating CRC64
+ * checksums for each indexed block. This function performs comprehensive verification of data blocks,
+ * DDT v1 and v2 tables, tracks blocks, and other structural components. It reads blocks in chunks
+ * to optimize memory usage during verification and supports version-specific CRC endianness handling.
  *
  * @param context Pointer to the aaruformat context.
- * @return AARUF_STATUS_OK on success, or an error code on failure.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully verified image integrity. This is returned when:
+ *         - All indexed blocks are successfully read and processed
+ *         - All CRC64 checksums match their expected values
+ *         - Index verification passes for the detected index version
+ *         - All block headers are readable and valid
+ *         - Memory allocation for verification buffer succeeds
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
+ *
+ * @retval AARUF_ERROR_CANNOT_READ_HEADER (-6) Failed to read critical headers. This occurs when:
+ *         - Cannot read the index signature from the image stream
+ *         - File I/O errors prevent reading header structures
+ *
+ * @retval AARUF_ERROR_CANNOT_READ_INDEX (-4) Index processing or validation failed. This occurs when:
+ *         - Index signature is not a recognized type (IndexBlock, IndexBlock2, or IndexBlock3)
+ *         - Index verification functions return error codes
+ *         - Index processing functions return NULL (corrupted or invalid index)
+ *
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
+ *         - Cannot allocate VERIFY_SIZE (1MB) buffer for reading block data during verification
+ *         - System is out of available memory for verification operations
+ *
+ * @retval AARUF_ERROR_CANNOT_READ_BLOCK (-7) Block reading failed. This occurs when:
+ *         - Cannot read block headers (DataBlock, DeDuplicationTable, DeDuplicationTable2, TracksBlock)
+ *         - File I/O errors prevent reading block structure data
+ *         - CRC64 context initialization fails (internal error)
+ *
+ * @retval AARUF_ERROR_INVALID_BLOCK_CRC (-18) CRC verification failed. This occurs when:
+ *         - Calculated CRC64 doesn't match the expected CRC64 in block headers
+ *         - Data corruption is detected in any verified block
+ *         - This applies to DataBlock, DeDuplicationTable, DeDuplicationTable2, and TracksBlock types
+ *
+ * @note Verification Process:
+ *       - Reads blocks in VERIFY_SIZE (1MB) chunks to optimize memory usage
+ *       - Supports version-specific CRC64 endianness (v1 uses byte-swapped CRC64)
+ *       - Verifies only blocks that have CRC checksums (skips blocks without checksums)
+ *       - Unknown block types are logged but don't cause verification failure
+ *
+ * @note Block Types Verified:
+ *       - DataBlock: Verifies compressed data CRC64 against block header
+ *       - DeDuplicationTable (v1): Verifies DDT data CRC64 with version-specific endianness
+ *       - DeDuplicationTable2 (v2): Verifies DDT data CRC64 (no endianness conversion)
+ *       - TracksBlock: Verifies track entries CRC64 with version-specific endianness
+ *       - Other block types are ignored during verification
+ *
+ * @note Performance Considerations:
+ *       - Uses chunked reading to minimize memory footprint during verification
+ *       - Processes blocks sequentially to maintain good disk access patterns
+ *       - CRC64 contexts are created and destroyed for each block to prevent memory leaks
+ *
+ * @warning This function performs read-only verification and does not modify the image.
+ *          It requires the image to be properly opened with a valid context.
+ *
+ * @warning Verification failure indicates data corruption or tampering. Images that
+ *          fail verification should not be trusted for data recovery operations.
+ *
+ * @warning The function allocates a 1MB buffer for verification. Ensure sufficient
+ *          memory is available before calling this function on resource-constrained systems.
  */
 int32_t aaruf_verify_image(void *context)
 {

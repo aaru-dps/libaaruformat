@@ -29,11 +29,45 @@
  * @brief Processes a data block from the image stream.
  *
  * Reads a data block from the image, decompresses if needed, and updates the context with its contents.
+ * This function handles various types of data blocks including compressed (LZMA) and uncompressed data,
+ * performs CRC validation, and stores the processed data in the appropriate context fields.
  *
  * @param ctx Pointer to the aaruformat context.
  * @param entry Pointer to the index entry describing the data block.
- * @return AARUF_STATUS_OK on success, or an error code on failure.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully processed the data block. This is returned when:
+ *         - The block is processed successfully and all validations pass
+ *         - A NoData block type is encountered (these are skipped)
+ *         - A UserData block type is encountered (these update sector size but are otherwise skipped)
+ *         - Block validation fails but processing continues (non-fatal errors like CRC mismatches)
+ *         - Memory allocation failures occur (processing continues with other blocks)
+ *         - Block reading failures occur (processing continues with other blocks)
+ *         - Unknown compression types are encountered (block is skipped)
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context or image stream is invalid (NULL pointers).
+ *
+ * @retval AARUF_ERROR_CANNOT_READ_BLOCK (-7) Failed to seek to the block position in the image stream.
+ *         This occurs when fseek() fails or the file position doesn't match the expected offset.
+ *
+ * @retval AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK (-17) LZMA decompression failed. This can happen when:
+ *         - The LZMA decoder returns an error code
+ *         - The decompressed data size doesn't match the expected block length
+ *
+ * @note Most validation and reading errors are treated as non-fatal and result in AARUF_STATUS_OK
+ *       being returned while the problematic block is skipped. This allows processing to continue
+ *       with other blocks in the image.
+ *
+ * @note The function performs the following validations:
+ *       - Block identifier matches the expected block type
+ *       - Block data type matches the expected data type
+ *       - CRC64 checksum validation (with version-specific byte order handling)
+ *       - Proper decompression for LZMA-compressed blocks
+ *
+ * @warning Memory allocated for block data is stored in the context and should be freed when
+ *          the context is destroyed. The function may replace existing data in the context.
  */
+
 int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
 {
     TRACE("Entering process_data_block(%p, %p)", ctx, entry);

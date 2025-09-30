@@ -32,11 +32,54 @@
  * @brief Processes a DDT v1 block from the image stream.
  *
  * Reads and decompresses (if needed) a DDT v1 block, verifies its integrity, and loads it into memory or maps it.
+ * This function handles both user data DDT blocks and CD sector prefix/suffix corrected DDT blocks, supporting
+ * both LZMA compression and uncompressed formats. On Linux, uncompressed blocks can be memory-mapped for
+ * improved performance.
  *
  * @param ctx Pointer to the aaruformat context.
  * @param entry Pointer to the index entry describing the DDT block.
- * @param foundUserDataDdt Pointer to a boolean that will be set to true if a user data DDT was found and loaded.
- * @return AARUF_STATUS_OK on success, or an error code on failure.
+ * @param found_user_data_ddt Pointer to a boolean that will be set to true if a user data DDT was found and loaded.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully processed the DDT block. This is returned when:
+ *         - The DDT block is successfully read, decompressed (if needed), and loaded into memory
+ *         - Memory mapping of uncompressed DDT succeeds on Linux systems
+ *         - CD sector prefix/suffix corrected DDT blocks are processed successfully
+ *         - Memory allocation failures occur for non-critical operations (processing continues)
+ *         - File reading errors occur for compressed data or LZMA properties (processing continues)
+ *         - Unknown compression types are encountered (block is skipped)
+ *         - Memory mapping fails on Linux (sets found_user_data_ddt to false but continues)
+ *         - Uncompressed DDT is encountered on non-Linux systems (not yet implemented, continues)
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context or image stream is invalid (NULL pointers).
+ *
+ * @retval AARUF_ERROR_CANNOT_READ_BLOCK (-7) Failed to access the DDT block in the image stream. This occurs when:
+ *         - fseek() fails to position at the DDT block offset
+ *         - The file position doesn't match the expected offset after seeking
+ *         - Failed to read the DDT header from the image stream
+ *         - The number of bytes read for the DDT header is insufficient
+ *
+ * @retval AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK (-17) LZMA decompression failed. This can happen when:
+ *         - The LZMA decoder returns a non-zero error code during decompression
+ *         - The decompressed data size doesn't match the expected DDT block length
+ *         - This error causes immediate function termination and memory cleanup
+ *
+ * @note The function exhibits different error handling strategies depending on the operation:
+ *       - Critical errors (seek failures, header read failures, decompression failures) cause immediate return
+ *       - Non-critical errors (memory allocation failures, unknown compression types) allow processing to continue
+ *       - The found_user_data_ddt flag is updated to reflect the success of user data DDT loading
+ *
+ * @note Memory Management:
+ *       - Allocated DDT data is stored in the context (ctx->userDataDdt, ctx->sectorPrefixDdt, ctx->sectorSuffixDdt)
+ *       - On Linux, uncompressed DDTs may be memory-mapped instead of allocated
+ *       - Memory is automatically cleaned up on decompression errors
+ *
+ * @note Platform-specific behavior:
+ *       - Linux: Supports memory mapping of uncompressed DDT blocks for better performance
+ *       - Non-Linux: Uncompressed DDT processing is not yet implemented
+ *
+ * @warning The function modifies context state including sector count, shift value, and DDT version.
+ *          Ensure proper context cleanup when the function completes.
  */
 int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *found_user_data_ddt)
 {
@@ -301,14 +344,44 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
 /**
  * @brief Decodes a DDT v1 entry for a given sector address.
  *
- * Determines the offset and block offset for a sector using the DDT v1 table.
+ * Determines the offset and block offset for a sector using the DDT v1 table. This function performs
+ * bit manipulation on the DDT entry to extract the sector offset within a block and the block offset,
+ * and determines whether the sector was dumped or not based on the DDT entry value.
  *
- * @param ctx Pointer to the aaruformat context.
- * @param sector_address Logical sector address to decode.
- * @param offset Pointer to store the resulting offset.
- * @param block_offset Pointer to store the resulting block offset.
- * @param sector_status Pointer to store the sector status.
- * @return AARUF_STATUS_OK on success, or an error code on failure.
+ * @param ctx Pointer to the aaruformat context containing the loaded DDT table.
+ * @param sector_address Logical sector address to decode (must be within valid range).
+ * @param offset Pointer to store the resulting sector offset within the block.
+ * @param block_offset Pointer to store the resulting block offset in the image.
+ * @param sector_status Pointer to store the sector status (dumped or not dumped).
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully decoded the DDT entry. This is always returned when:
+ *         - The context and image stream are valid
+ *         - The DDT entry is successfully extracted and decoded
+ *         - The offset, block_offset, and sector_status are successfully populated
+ *         - A zero DDT entry is encountered (indicates sector not dumped)
+ *         - A non-zero DDT entry is encountered (indicates sector was dumped)
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context or image stream is invalid (NULL pointers).
+ *         This is the only error condition that can occur in this function.
+ *
+ * @note This is a lightweight function that performs only basic validation and bit manipulation.
+ *       It does not perform bounds checking on the sector_address parameter.
+ *
+ * @note DDT Entry Decoding:
+ *       - Uses a bit mask derived from ctx->shift to extract the offset within block
+ *       - Right-shifts the DDT entry by ctx->shift bits to get the block offset
+ *       - A zero DDT entry indicates the sector was not dumped (SectorStatusNotDumped)
+ *       - A non-zero DDT entry indicates the sector was dumped (SectorStatusDumped)
+ *
+ * @warning The function assumes:
+ *         - The DDT table (ctx->userDataDdt) has been properly loaded by process_ddt_v1()
+ *         - The sector_address is within the valid range of the DDT table
+ *         - The shift value (ctx->shift) has been properly initialized
+ *         - All output parameters (offset, block_offset, sector_status) are valid pointers
+ *
+ * @warning No bounds checking is performed on sector_address. Accessing beyond the DDT table
+ *          boundaries will result in undefined behavior.
  */
 int32_t decode_ddt_entry_v1(aaruformatContext *ctx, uint64_t sector_address, uint64_t *offset, uint64_t *block_offset,
                             uint8_t *sector_status)

@@ -29,11 +29,69 @@
  * @brief Processes a DDT v2 block from the image stream.
  *
  * Reads and decompresses (if needed) a DDT v2 block, verifies its CRC, and loads it into memory.
+ * This function handles both user data DDT blocks and CD sector prefix/suffix corrected DDT blocks,
+ * supporting both LZMA compression and uncompressed formats. It performs CRC64 validation and
+ * stores the processed DDT data in the appropriate context fields based on size type (small/big).
  *
  * @param ctx Pointer to the aaruformat context.
  * @param entry Pointer to the index entry describing the DDT block.
- * @param foundUserDataDdt Pointer to a boolean that will be set to true if a user data DDT was found and loaded.
- * @return AARUF_STATUS_OK on success, or an error code on failure.
+ * @param found_user_data_ddt Pointer to a boolean that will be set to true if a user data DDT was found and loaded.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully processed the DDT block. This is returned when:
+ *         - The DDT block is successfully read, decompressed (if needed), and loaded into memory
+ *         - CRC64 validation passes for the DDT data
+ *         - User data DDT blocks are processed and context is properly updated
+ *         - CD sector prefix/suffix corrected DDT blocks are processed successfully
+ *         - Memory allocation failures occur for non-critical operations (processing continues)
+ *         - File reading errors occur for compressed data or LZMA properties (processing continues)
+ *         - Unknown compression types are encountered (block is skipped)
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context or image stream is invalid (NULL pointers).
+ *
+ * @retval AARUF_ERROR_CANNOT_READ_BLOCK (-7) Failed to access the DDT block in the image stream. This occurs when:
+ *         - fseek() fails to position at the DDT block offset
+ *         - The file position doesn't match the expected offset after seeking
+ *         - Failed to read the DDT header from the image stream
+ *         - The number of bytes read for the DDT header is insufficient
+ *         - CRC64 context initialization fails (internal error)
+ *
+ * @retval AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK (-17) LZMA decompression failed. This can happen when:
+ *         - The LZMA decoder returns a non-zero error code during decompression
+ *         - The decompressed data size doesn't match the expected DDT block length
+ *         - This error causes immediate function termination and memory cleanup
+ *
+ * @retval AARUF_ERROR_INVALID_BLOCK_CRC (-18) CRC64 validation failed. This occurs when:
+ *         - Calculated CRC64 doesn't match the expected CRC64 in the DDT header
+ *         - Data corruption is detected in the DDT block
+ *         - This applies to both compressed and uncompressed DDT blocks
+ *
+ * @note Error Handling Strategy:
+ *       - Critical errors (seek failures, header read failures, decompression failures, CRC failures) cause immediate return
+ *       - Non-critical errors (memory allocation failures, unknown compression types) allow processing to continue
+ *       - The found_user_data_ddt flag is updated to reflect the success of user data DDT loading
+ *
+ * @note DDT v2 Features:
+ *       - Supports both small (16-bit) and big (32-bit) DDT entry sizes
+ *       - Handles multi-level DDT hierarchies with tableShift parameter
+ *       - Updates context with sector counts, DDT version, and primary DDT offset
+ *       - Stores DDT data in size-appropriate context fields (userDataDdtMini/Big, sectorPrefixDdt, etc.)
+ *
+ * @note Memory Management:
+ *       - Allocated DDT data is stored in the context and becomes part of the context lifecycle
+ *       - Memory is automatically cleaned up on decompression or CRC validation errors
+ *       - Buffer memory is reused for the final DDT data storage (no double allocation)
+ *
+ * @note CRC Validation:
+ *       - All DDT blocks undergo CRC64 validation regardless of compression type
+ *       - CRC is calculated on the final decompressed data
+ *       - Uses standard CRC64 calculation (no version-specific endianness conversion like v1)
+ *
+ * @warning The function modifies context state including sector count, DDT version, and primary DDT offset.
+ *          Ensure proper context cleanup when the function completes.
+ *
+ * @warning Memory allocated for DDT data becomes part of the context and should not be freed separately.
+ *          The context cleanup functions will handle DDT memory deallocation.
  */
 int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *found_user_data_ddt)
 {
@@ -418,14 +476,45 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
 /**
  * @brief Decodes a DDT v2 entry for a given sector address.
  *
- * Determines the offset and block offset for a sector using the DDT v2 table(s).
+ * Determines the offset and block offset for a sector using the DDT v2 table(s). This function acts
+ * as a dispatcher that automatically selects between single-level and multi-level DDT decoding based
+ * on the tableShift parameter in the DDT header. It provides a unified interface for DDT v2 entry
+ * decoding regardless of the underlying table structure complexity.
  *
- * @param ctx Pointer to the aaruformat context.
- * @param sector_address Logical sector address to decode.
- * @param offset Pointer to store the resulting offset.
- * @param block_offset Pointer to store the resulting block offset.
- * @param sector_status Pointer to store the sector status.
- * @return AARUF_STATUS_OK on success, or an error code on failure.
+ * @param ctx Pointer to the aaruformat context containing the loaded DDT structures.
+ * @param sector_address Logical sector address to decode (will be adjusted for negative sectors).
+ * @param offset Pointer to store the resulting sector offset within the block.
+ * @param block_offset Pointer to store the resulting block offset in the image.
+ * @param sector_status Pointer to store the sector status (dumped, not dumped, etc.).
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully decoded the DDT entry. This is always returned when:
+ *         - The context and image stream are valid
+ *         - The appropriate decoding function (single-level or multi-level) completes successfully
+ *         - All output parameters are properly populated with decoded values
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context or image stream is invalid (NULL pointers).
+ *         This is the only error condition that can occur at this dispatcher level.
+ *
+ * @retval Other error codes may be returned by the underlying decoding functions:
+ *         - From decode_ddt_single_level_v2(): AARUF_ERROR_CANNOT_READ_BLOCK (-7)
+ *         - From decode_ddt_multi_level_v2(): AARUF_ERROR_CANNOT_READ_BLOCK (-7),
+ *           AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK (-17), AARUF_ERROR_INVALID_BLOCK_CRC (-18)
+ *
+ * @note Function Selection:
+ *       - If tableShift > 0: Uses multi-level DDT decoding (decode_ddt_multi_level_v2)
+ *       - If tableShift = 0: Uses single-level DDT decoding (decode_ddt_single_level_v2)
+ *       - The tableShift parameter is read from ctx->userDataDdtHeader.tableShift
+ *
+ * @note This function performs minimal validation and primarily acts as a dispatcher.
+ *       Most error conditions and complex logic are handled by the underlying functions.
+ *
+ * @warning The function assumes the DDT has been properly loaded by process_ddt_v2().
+ *          Calling this function with an uninitialized or corrupted DDT will result in
+ *          undefined behavior from the underlying decoding functions.
+ *
+ * @warning All output parameters must be valid pointers. No bounds checking is performed
+ *          on the sector_address parameter at this level.
  */
 int32_t decode_ddt_entry_v2(aaruformatContext *ctx, uint64_t sector_address, uint64_t *offset, uint64_t *block_offset,
                             uint8_t *sector_status)
@@ -450,14 +539,61 @@ int32_t decode_ddt_entry_v2(aaruformatContext *ctx, uint64_t sector_address, uin
 /**
  * @brief Decodes a single-level DDT v2 entry for a given sector address.
  *
- * Used when the DDT table does not use multi-level indirection.
+ * Used when the DDT table does not use multi-level indirection (tableShift = 0). This function
+ * performs direct lookup in the primary DDT table to extract sector offset, block offset, and
+ * sector status information. It handles both small (16-bit) and big (32-bit) DDT entry formats
+ * and performs bit manipulation to decode the packed DDT entry values.
  *
- * @param ctx Pointer to the aaruformat context.
- * @param sector_address Logical sector address to decode.
- * @param offset Pointer to store the resulting offset.
- * @param block_offset Pointer to store the resulting block offset.
- * @param sector_status Pointer to store the sector status.
- * @return AARUF_STATUS_OK on success, or an error code on failure.
+ * @param ctx Pointer to the aaruformat context containing the loaded DDT table.
+ * @param sector_address Logical sector address to decode (adjusted for negative sectors).
+ * @param offset Pointer to store the resulting sector offset within the block.
+ * @param block_offset Pointer to store the resulting block offset in the image.
+ * @param sector_status Pointer to store the sector status (dumped, not dumped, etc.).
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully decoded the DDT entry. This is always returned when:
+ *         - The context and image stream are valid
+ *         - The tableShift validation passes (must be 0)
+ *         - The DDT size type is recognized (SmallDdtSizeType or BigDdtSizeType)
+ *         - The DDT entry is successfully extracted and decoded
+ *         - All output parameters are properly populated with decoded values
+ *         - Zero DDT entries are handled (indicates sector not dumped)
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context or image stream is invalid (NULL pointers).
+ *
+ * @retval AARUF_ERROR_CANNOT_READ_BLOCK (-7) Configuration or validation errors. This occurs when:
+ *         - The tableShift is not zero (should use multi-level decoding instead)
+ *         - The DDT size type is unknown/unsupported (not SmallDdtSizeType or BigDdtSizeType)
+ *         - Internal consistency checks fail
+ *
+ * @note DDT Entry Decoding (Small DDT - 16-bit entries):
+ *       - Bits 15-12: Sector status (4 bits)
+ *       - Bits 11-0: Combined offset and block index (12 bits)
+ *       - Offset mask: Derived from dataShift parameter
+ *       - Block offset: Calculated using blockAlignmentShift parameter
+ *
+ * @note DDT Entry Decoding (Big DDT - 32-bit entries):
+ *       - Bits 31-28: Sector status (4 bits)
+ *       - Bits 27-0: Combined offset and block index (28 bits)
+ *       - Offset mask and block offset calculated same as small DDT
+ *
+ * @note Negative Sector Handling:
+ *       - Sector address is automatically adjusted by adding ctx->userDataDdtHeader.negative
+ *       - This allows proper indexing into the DDT table for negative sector addresses
+ *
+ * @note Zero Entry Handling:
+ *       - A zero DDT entry indicates the sector was not dumped
+ *       - Sets sector_status to SectorStatusNotDumped and zeros offset/block_offset
+ *       - This is a normal condition and not an error
+ *
+ * @warning The function assumes the DDT table has been properly loaded and is accessible
+ *          via ctx->userDataDdtMini or ctx->userDataDdtBig depending on size type.
+ *
+ * @warning No bounds checking is performed on sector_address. Accessing beyond the DDT
+ *          table boundaries will result in undefined behavior.
+ *
+ * @warning This function should only be called when tableShift is 0. Calling it with
+ *          tableShift > 0 will result in AARUF_ERROR_CANNOT_READ_BLOCK.
  */
 int32_t decode_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, uint64_t *offset,
                                    uint64_t *block_offset, uint8_t *sector_status)
@@ -531,14 +667,89 @@ int32_t decode_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_addre
 /**
  * @brief Decodes a multi-level DDT v2 entry for a given sector address.
  *
- * Used when the DDT table uses multi-level indirection (tableShift > 0).
+ * Used when the DDT table uses multi-level indirection (tableShift > 0). This function handles
+ * the complex process of navigating a hierarchical DDT structure where the primary table points
+ * to secondary tables that contain the actual sector mappings. It includes caching mechanisms
+ * for secondary tables, supports both compressed and uncompressed secondary tables, and performs
+ * comprehensive validation including CRC verification.
  *
- * @param ctx Pointer to the aaruformat context.
- * @param sector_address Logical sector address to decode.
- * @param offset Pointer to store the resulting offset.
- * @param block_offset Pointer to store the resulting block offset.
- * @param sector_status Pointer to store the sector status.
- * @return AARUF_STATUS_OK on success, or an error code on failure.
+ * @param ctx Pointer to the aaruformat context containing the loaded primary DDT table.
+ * @param sector_address Logical sector address to decode (adjusted for negative sectors).
+ * @param offset Pointer to store the resulting sector offset within the block.
+ * @param block_offset Pointer to store the resulting block offset in the image.
+ * @param sector_status Pointer to store the sector status (dumped, not dumped, etc.).
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully decoded the DDT entry. This is returned when:
+ *         - The context and image stream are valid
+ *         - The tableShift validation passes (must be > 0)
+ *         - The DDT size type is recognized (SmallDdtSizeType or BigDdtSizeType)
+ *         - Secondary DDT table is successfully loaded (from cache or file)
+ *         - Secondary DDT decompression succeeds (if needed)
+ *         - Secondary DDT CRC validation passes
+ *         - The DDT entry is successfully extracted and decoded
+ *         - All output parameters are properly populated with decoded values
+ *         - Zero DDT entries are handled (indicates sector not dumped)
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context or image stream is invalid (NULL pointers).
+ *
+ * @retval AARUF_ERROR_CANNOT_READ_BLOCK (-7) Configuration, validation, or file access errors. This occurs when:
+ *         - The tableShift is zero (should use single-level decoding instead)
+ *         - The DDT size type is unknown/unsupported (not SmallDdtSizeType or BigDdtSizeType)
+ *         - Cannot read the secondary DDT header from the image stream
+ *         - Secondary DDT header validation fails (wrong identifier or type)
+ *         - Cannot read uncompressed secondary DDT data from the image stream
+ *         - CRC64 context initialization fails (internal error)
+ *         - Memory allocation fails for secondary DDT data (critical failure)
+ *         - Unknown compression type encountered in secondary DDT
+ *
+ * @retval AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK (-17) LZMA decompression failed for secondary DDT. This occurs when:
+ *         - Memory allocation fails for compressed data or decompression buffer
+ *         - Cannot read LZMA properties from the image stream
+ *         - Cannot read compressed secondary DDT data from the image stream
+ *         - The LZMA decoder returns a non-zero error code during decompression
+ *         - The decompressed data size doesn't match the expected secondary DDT length
+ *
+ * @retval AARUF_ERROR_INVALID_BLOCK_CRC (-18) CRC64 validation failed for secondary DDT. This occurs when:
+ *         - Calculated CRC64 doesn't match the expected CRC64 in the secondary DDT header
+ *         - Data corruption is detected in the secondary DDT data
+ *         - This applies to both compressed and uncompressed secondary DDT blocks
+ *
+ * @note Multi-level DDT Navigation:
+ *       - Uses tableShift to calculate items per DDT entry (2^tableShift)
+ *       - Calculates DDT position by dividing sector address by items per entry
+ *       - Retrieves secondary DDT offset from primary table at calculated position
+ *       - Converts block offset to file offset using blockAlignmentShift
+ *
+ * @note Secondary DDT Caching:
+ *       - Maintains a single cached secondary DDT in memory (ctx->cachedSecondaryDdtSmall/Big)
+ *       - Compares requested offset with cached offset (ctx->cachedDdtOffset)
+ *       - Only loads from disk if the requested secondary DDT is not currently cached
+ *       - Caching improves performance for sequential sector access patterns
+ *
+ * @note Secondary DDT Processing:
+ *       - Supports both LZMA compression and uncompressed formats
+ *       - Performs full CRC64 validation of secondary DDT data
+ *       - Handles both small (16-bit) and big (32-bit) entry formats
+ *       - Same bit manipulation as single-level DDT for final entry decoding
+ *
+ * @note Error Handling Strategy:
+ *       - Memory allocation failures for secondary DDT loading are treated as critical errors
+ *       - File I/O errors and validation failures cause immediate function termination
+ *       - Unknown compression types are treated as errors (unlike the processing functions)
+ *       - All allocated memory is cleaned up on error conditions
+ *
+ * @warning This function should only be called when tableShift > 0. Calling it with
+ *          tableShift = 0 will result in AARUF_ERROR_CANNOT_READ_BLOCK.
+ *
+ * @warning The function assumes the primary DDT table has been properly loaded and is accessible
+ *          via ctx->userDataDdtMini or ctx->userDataDdtBig depending on size type.
+ *
+ * @warning Secondary DDT caching means that memory usage can increase during operation.
+ *          The cached secondary DDT is replaced when a different secondary table is needed.
+ *
+ * @warning No bounds checking is performed on sector_address or calculated DDT positions.
+ *          Accessing beyond table boundaries will result in undefined behavior.
  */
 int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, uint64_t *offset,
                                   uint64_t *block_offset, uint8_t *sector_status)

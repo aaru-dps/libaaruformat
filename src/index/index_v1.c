@@ -28,9 +28,53 @@
  * @brief Processes an index block (version 1) from the image stream.
  *
  * Reads and parses an index block (version 1) from the image, returning an array of index entries.
+ * This function handles the legacy index format used in early AaruFormat versions, providing
+ * compatibility with older image files. It reads the IndexHeader structure followed by a
+ * sequential list of IndexEntry structures, validating the index identifier for format correctness.
  *
- * @param ctx Pointer to the aaruformat context.
- * @return Pointer to a UT_array of IndexEntry structures, or NULL on failure.
+ * @param ctx Pointer to the aaruformat context containing the image stream and header information.
+ *
+ * @return Returns one of the following values:
+ * @retval UT_array* Successfully processed the index block. This is returned when:
+ *         - The context and image stream are valid
+ *         - The index header is successfully read from the position specified in ctx->header.indexOffset
+ *         - The index identifier matches IndexBlock (legacy format identifier)
+ *         - All index entries are successfully read and stored in the UT_array
+ *         - Memory allocation for the index entries array succeeds
+ *         - The returned array contains all index entries from the version 1 index block
+ *
+ * @retval NULL Index processing failed. This occurs when:
+ *         - The context parameter is NULL
+ *         - The image stream (ctx->imageStream) is NULL or invalid
+ *         - Cannot read the IndexHeader structure from the image stream
+ *         - The index identifier doesn't match IndexBlock (incorrect format or corruption)
+ *         - Memory allocation fails for the UT_array structure
+ *         - File I/O errors occur while reading index entries
+ *
+ * @note Index Structure (Version 1):
+ *       - IndexHeader: Contains identifier (IndexBlock), entry count, and metadata
+ *       - IndexEntry array: Sequential list of entries describing block locations and types
+ *       - No CRC validation is performed during processing (use verify_index_v1 for validation)
+ *       - No compression support in version 1 index format
+ *
+ * @note Memory Management:
+ *       - Returns a newly allocated UT_array that must be freed by the caller using utarray_free()
+ *       - On error, any partially allocated memory is cleaned up before returning NULL
+ *       - Each IndexEntry is copied into the array (no reference to original stream data)
+ *
+ * @note Version Compatibility:
+ *       - Supports only legacy IndexBlock format (not IndexBlock2 or IndexBlock3)
+ *       - Compatible with early AaruFormat and DiscImageChef image files
+ *       - Does not handle subindex or hierarchical index structures
+ *
+ * @warning The caller is responsible for freeing the returned UT_array using utarray_free().
+ *          Failure to free the array will result in memory leaks.
+ *
+ * @warning This function does not validate the CRC integrity of the index data.
+ *          Use verify_index_v1() to ensure index integrity before processing.
+ *
+ * @warning The function assumes ctx->header.indexOffset points to a valid index block.
+ *          Invalid offsets may cause file access errors or reading incorrect data.
  */
 UT_array *process_index_v1(aaruformatContext *ctx)
 {
@@ -75,10 +119,78 @@ UT_array *process_index_v1(aaruformatContext *ctx)
 /**
  * @brief Verifies the integrity of an index block (version 1) in the image stream.
  *
- * Checks the CRC64 of the index block without decompressing it.
+ * Checks the CRC64 of the index block without decompressing it. This function performs
+ * comprehensive validation of the index structure including header validation, data
+ * integrity verification, and version-specific CRC calculation. It ensures the index
+ * block is valid and uncorrupted before the image can be safely used for data access.
  *
- * @param ctx Pointer to the aaruformat context.
- * @return Status code (AARUF_STATUS_OK on success, or an error code).
+ * @param ctx Pointer to the aaruformat context containing image stream and header information.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully verified index integrity. This is returned when:
+ *         - The context and image stream are valid
+ *         - The index header is successfully read from ctx->header.indexOffset
+ *         - The index identifier matches IndexBlock (version 1 format)
+ *         - Memory allocation for index entries succeeds
+ *         - All index entries are successfully read from the image stream
+ *         - CRC64 calculation completes successfully with version-specific endianness handling
+ *         - The calculated CRC64 matches the expected CRC64 in the index header
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) Invalid context or stream. This occurs when:
+ *         - The context parameter is NULL
+ *         - The image stream (ctx->imageStream) is NULL or invalid
+ *
+ * @retval AARUF_ERROR_CANNOT_READ_HEADER (-6) Index header reading failed. This occurs when:
+ *         - Cannot read the complete IndexHeader structure from the image stream
+ *         - File I/O errors prevent accessing the header at ctx->header.indexOffset
+ *         - Insufficient data available at the specified index offset
+ *
+ * @retval AARUF_ERROR_CANNOT_READ_INDEX (-19) Index format or data access errors. This occurs when:
+ *         - The index identifier doesn't match IndexBlock (wrong format or corruption)
+ *         - Cannot read all index entries from the image stream
+ *         - File I/O errors during index entry reading
+ *         - Index structure is corrupted or truncated
+ *
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
+ *         - Cannot allocate memory for the index entries array
+ *         - System memory exhaustion prevents loading index data for verification
+ *
+ * @retval AARUF_ERROR_INVALID_BLOCK_CRC (-18) CRC64 validation failed. This occurs when:
+ *         - The calculated CRC64 doesn't match the expected CRC64 in the index header
+ *         - Index data corruption is detected
+ *         - Data integrity verification fails indicating potential file damage
+ *
+ * @note CRC64 Validation Process:
+ *       - Reads all index entries into memory for CRC calculation
+ *       - Calculates CRC64 over the complete index entries array
+ *       - Applies version-specific endianness conversion for compatibility
+ *       - For imageMajorVersion <= AARUF_VERSION_V1: Uses bswap_64() for byte order correction
+ *       - Compares calculated CRC64 with the value stored in the index header
+ *
+ * @note Version Compatibility:
+ *       - Handles legacy byte order differences from original C# implementation
+ *       - Supports IndexBlock format (version 1 only)
+ *       - Does not support IndexBlock2 or IndexBlock3 formats
+ *
+ * @note Memory Management:
+ *       - Allocates temporary memory for index entries during verification
+ *       - Automatically frees allocated memory on both success and error conditions
+ *       - Memory usage is proportional to the number of index entries
+ *
+ * @note Verification Scope:
+ *       - Validates index header structure and identifier
+ *       - Verifies data integrity through CRC64 calculation
+ *       - Does not validate individual index entry contents or block references
+ *       - Does not check for logical consistency of referenced blocks
+ *
+ * @warning This function reads the entire index into memory for CRC calculation.
+ *          Large indexes may require significant memory allocation.
+ *
+ * @warning The function assumes ctx->header.indexOffset points to a valid index location.
+ *          Invalid offsets will cause file access errors or incorrect validation.
+ *
+ * @warning CRC validation failure indicates potential data corruption and may suggest
+ *          the image file is damaged or has been modified outside of library control.
  */
 int32_t verify_index_v1(aaruformatContext *ctx)
 {

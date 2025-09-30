@@ -32,9 +32,78 @@
  * @brief Opens an existing AaruFormat image file.
  *
  * Opens the specified image file and returns a pointer to the initialized aaruformat context.
+ * This function performs comprehensive validation of the image file format, reads and processes
+ * all index entries, initializes data structures for reading operations, and sets up caches
+ * for optimal performance. It supports multiple AaruFormat versions and handles various block
+ * types including data blocks, deduplication tables, metadata, and checksums.
  *
  * @param filepath Path to the image file to open.
- * @return Pointer to the opened aaruformat context, or NULL on failure.
+ *
+ * @return Returns one of the following:
+ * @retval aaruformatContext* Successfully opened and initialized context. The returned pointer contains:
+ *         - Validated AaruFormat headers and metadata
+ *         - Processed index entries with all discoverable blocks
+ *         - Loaded deduplication tables (DDT) for efficient sector access
+ *         - Initialized block and header caches for performance
+ *         - Open file stream ready for reading operations
+ *         - Populated image information and geometry data
+ *         - ECC context initialized for error correction support
+ *
+ * @retval NULL Opening failed. The specific error can be determined by checking errno, which will be set to:
+ *         - AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) when memory allocation fails for:
+ *           * Context allocation
+ *           * Readable sector tags bitmap allocation
+ *           * Application version string allocation
+ *           * Image version string allocation
+ *         - AARUF_ERROR_FILE_TOO_SMALL (-2) when file reading fails:
+ *           * Cannot read the AaruFormat header (file too small or corrupted)
+ *           * Cannot read the extended header for version 2+ formats
+ *         - AARUF_ERROR_NOT_AARUFORMAT (-1) when format validation fails:
+ *           * File identifier doesn't match DIC_MAGIC or AARU_MAGIC
+ *           * File is not a valid AaruFormat image
+ *         - AARUF_ERROR_INCOMPATIBLE_VERSION (-3) when:
+ *           * Image major version exceeds the maximum supported version
+ *           * Future format versions that cannot be read by this library
+ *         - AARUF_ERROR_CANNOT_READ_INDEX (-4) when index processing fails:
+ *           * Cannot seek to the index offset specified in the header
+ *           * Cannot read the index signature
+ *           * Index signature is not a recognized index block type
+ *           * Index processing functions return NULL (corrupted index)
+ *         - Other error codes may be propagated from block processing functions:
+ *           * Data block processing errors
+ *           * DDT processing errors
+ *           * Metadata processing errors
+ *
+ * @note Format Support:
+ *       - Supports AaruFormat versions 1.x and 2.x
+ *       - Automatically detects and handles different index formats (v1, v2, v3)
+ *       - Backwards compatible with older DIC format identifiers
+ *       - Handles both small and large deduplication tables
+ *
+ * @note Block Processing:
+ *       - Processes all indexed blocks including data, DDT, geometry, metadata, tracks, CICM, dump hardware, and checksums
+ *       - Non-critical block processing errors are logged but don't prevent opening
+ *       - Critical errors (DDT processing failures) cause opening to fail
+ *       - Unknown block types are logged but ignored
+ *
+ * @note Memory Management:
+ *       - Allocates memory for various context structures and caches
+ *       - On failure, all previously allocated memory is properly cleaned up
+ *       - The returned context must be freed using aaruf_close()
+ *
+ * @note Performance Optimization:
+ *       - Initializes block and header caches based on sector size and available memory
+ *       - Cache sizes are calculated to optimize memory usage and access patterns
+ *       - ECC context is pre-initialized for Compact Disc support
+ *
+ * @warning The function requires a valid user data deduplication table to be present.
+ *          Images without a DDT will fail to open even if otherwise valid.
+ *
+ * @warning File access is performed in binary read mode. The file must be accessible
+ *          and not locked by other processes.
+ *
+ * @warning Some memory allocations (version strings) are optional and failure doesn't
+ *          prevent opening, but may affect functionality that depends on version information.
  */
 void *aaruf_open(const char *filepath)
 {
