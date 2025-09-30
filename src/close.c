@@ -593,6 +593,14 @@ int aaruf_close(void *context)
             TRACE("Failed to write index header");
             return AARUF_ERROR_CANNOT_WRITE_HEADER;
         }
+
+        if(ctx->deduplicate && ctx->sectorHashMap != NULL)
+        {
+            TRACE("Clearing sector hash map");
+            // Clear sector hash map
+            free_map(ctx->sectorHashMap);
+            ctx->sectorHashMap = NULL;
+        }
     }
 
     TRACE("Freeing memory pointers");

@@ -20,6 +20,7 @@
 #define LIBAARUFORMAT_CONTEXT_H
 
 #include "crc64.h"
+#include "hash_map.h"
 #include "lru.h"
 #include "structs.h"
 #include "utarray.h"
@@ -127,6 +128,8 @@ typedef struct aaruformatContext
     int                                 writingBufferPosition;
     uint64_t                            nextBlockPosition;
     UT_array                           *indexEntries;
+    hash_map_t                         *sectorHashMap;
+    bool                                deduplicate;
 } aaruformatContext;
 
 typedef struct DumpHardwareEntriesWithData

@@ -25,6 +25,7 @@
 #include "aaruformat.h"
 #include "internal.h"
 #include "log.h"
+#include "xxhash.h"
 
 /**
  * @brief Writes a sector to the AaruFormat image.
@@ -153,6 +154,19 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, const uint8_t
             TRACE("Exiting aaruf_write_sector() = %d", error);
             return error;
         }
+    }
+
+    uint64_t ddt_entry = 0;
+
+    if(ctx->deduplicate)
+    {
+        // Calculate 64-bit XXH3 hash of the sector
+        TRACE("Hashing sector data for deduplication");
+        uint64_t hash = XXH3_64bits(data, length);
+
+        // Check if the hash is already in the map
+        bool existing = lookup_map(ctx->sectorHashMap, hash, &ddt_entry);
+        TRACE("Block does %s exist in deduplication map", existing ? "already" : "not yet");
     }
 
     bool ddt_ok = set_ddt_entry_v2(ctx, sector_address, ctx->currentBlockOffset, ctx->nextBlockPosition, sector_status);

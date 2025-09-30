@@ -292,6 +292,10 @@ void *aaruf_create(const char *filepath, uint32_t media_type, uint32_t sector_si
         return NULL;
     }
 
+    ctx->deduplicate = parsed_options.deduplicate;
+    if(ctx->deduplicate)
+        ctx->sectorHashMap = create_map(ctx->userDataDdtHeader.blocks * 25 / 100);  // 25% of total sectors
+
     // Is writing
     ctx->isWriting = true;
 
