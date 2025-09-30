@@ -157,6 +157,7 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, const uint8_t
     }
 
     uint64_t ddt_entry = 0;
+    bool ddt_ok;
 
     if(ctx->deduplicate)
     {
@@ -167,9 +168,28 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, const uint8_t
         // Check if the hash is already in the map
         bool existing = lookup_map(ctx->sectorHashMap, hash, &ddt_entry);
         TRACE("Block does %s exist in deduplication map", existing ? "already" : "not yet");
-    }
 
-    bool ddt_ok = set_ddt_entry_v2(ctx, sector_address, ctx->currentBlockOffset, ctx->nextBlockPosition, sector_status);
+        ddt_ok = set_ddt_entry_v2(ctx, sector_address, ctx->currentBlockOffset, ctx->nextBlockPosition, sector_status,
+                                   &ddt_entry);
+        if(!ddt_ok)
+        {
+            TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_CANNOT_SET_DDT_ENTRY");
+            return AARUF_ERROR_CANNOT_SET_DDT_ENTRY;
+        }
+
+        if(existing)
+        {
+            TRACE("Sector exists, so not writing to image");
+            TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        }
+
+        TRACE("Inserting sector hash into deduplication map, proceeding to write into image as normal");
+        insert_map(ctx->sectorHashMap, hash, ddt_entry);
+    }
+    else
+        ddt_ok = set_ddt_entry_v2(ctx, sector_address, ctx->currentBlockOffset, ctx->nextBlockPosition, sector_status,
+                                   &ddt_entry);
 
     if(!ddt_ok)
     {

@@ -67,7 +67,8 @@
  *         - This applies to both compressed and uncompressed DDT blocks
  *
  * @note Error Handling Strategy:
- *       - Critical errors (seek failures, header read failures, decompression failures, CRC failures) cause immediate return
+ *       - Critical errors (seek failures, header read failures, decompression failures, CRC failures) cause immediate
+ * return
  *       - Non-critical errors (memory allocation failures, unknown compression types) allow processing to continue
  *       - The found_user_data_ddt flag is updated to reflect the success of user data DDT loading
  *
@@ -1025,12 +1026,13 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_addres
  * @param offset Offset to set for the sector.
  * @param block_offset Block offset to set for the sector.
  * @param sector_status Status to set for the sector.
+ * @param ddt_entry Existing DDT entry or 0 to create a new one. If 0, a new entry is returned.
  *
  * @return Returns one of the following status codes:
  * @retval true if the entry was set successfully, false otherwise.
  */
 bool set_ddt_entry_v2(aaruformatContext *ctx, uint64_t sector_address, uint64_t offset, uint64_t block_offset,
-                      uint8_t sector_status)
+                      uint8_t sector_status, uint64_t *ddt_entry)
 {
     TRACE("Entering set_ddt_entry_v2(%p, %" PRIu64 ", %llu, %llu, %d)", ctx, sector_address, offset, block_offset,
           sector_status);
@@ -1043,9 +1045,9 @@ bool set_ddt_entry_v2(aaruformatContext *ctx, uint64_t sector_address, uint64_t 
     }
 
     if(ctx->userDataDdtHeader.tableShift > 0)
-        return set_ddt_multi_level_v2(ctx, sector_address, false, offset, block_offset, sector_status);
+        return set_ddt_multi_level_v2(ctx, sector_address, false, offset, block_offset, sector_status, ddt_entry);
 
-    return set_ddt_single_level_v2(ctx, sector_address, false, offset, block_offset, sector_status);
+    return set_ddt_single_level_v2(ctx, sector_address, false, offset, block_offset, sector_status, ddt_entry);
 }
 
 /**
@@ -1059,12 +1061,13 @@ bool set_ddt_entry_v2(aaruformatContext *ctx, uint64_t sector_address, uint64_t 
  * @param offset Offset to set for the sector.
  * @param block_offset Block offset to set for the sector.
  * @param sector_status Status to set for the sector.
+ * @param ddt_entry Existing DDT entry or 0 to create a new one. If 0, a new entry is returned.
  *
  * @return Returns one of the following status codes:
  * @retval true if the entry was set successfully, false otherwise.
  */
 bool set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, bool negative, uint64_t offset,
-                             uint64_t block_offset, uint8_t sector_status)
+                             uint64_t block_offset, uint8_t sector_status, uint64_t *ddt_entry)
 {
     TRACE("Entering set_ddt_single_level_v2(%p, %" PRIu64 ", %llu, %llu, %d)", ctx, sector_address, offset,
           block_offset, sector_status);
@@ -1091,37 +1094,38 @@ bool set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, bo
     else
         sector_address += ctx->userDataDdtHeader.negative;
 
-    uint64_t ddt_entry = 0;
-
-    uint64_t block_index = block_offset >> ctx->userDataDdtHeader.blockAlignmentShift;
-    ddt_entry            = offset & ((1ULL << ctx->userDataDdtHeader.dataShift) - 1) | block_index
-                                                                                << ctx->userDataDdtHeader.dataShift;
+    if(*ddt_entry == 0)
+    {
+        uint64_t block_index = block_offset >> ctx->userDataDdtHeader.blockAlignmentShift;
+        *ddt_entry =
+            offset & ((1ULL << ctx->userDataDdtHeader.dataShift) - 1) | block_index << ctx->userDataDdtHeader.dataShift;
+    }
 
     if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
     {
         // Overflow detection for DDT entry
-        if(ddt_entry > 0xFFF)
+        if(*ddt_entry > 0xFFF)
         {
             FATAL("DDT overflow: media does not fit in small DDT");
             TRACE("Exiting set_ddt_single_level_v2() = false");
             return false;
         }
 
-        ddt_entry |= (uint64_t)sector_status << 12;
-        ctx->cachedSecondaryDdtSmall[sector_address] = (uint16_t)ddt_entry;
+        *ddt_entry |= (uint64_t)sector_status << 12;
+        ctx->cachedSecondaryDdtSmall[sector_address] = (uint16_t)*ddt_entry;
     }
     else if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
     {
         // Overflow detection for DDT entry
-        if(ddt_entry > 0xFFFFFFF)
+        if(*ddt_entry > 0xFFFFFFF)
         {
             FATAL("DDT overflow: media does not fit in big DDT");
             TRACE("Exiting set_ddt_single_level_v2() = false");
             return false;
         }
 
-        ddt_entry |= (uint64_t)sector_status << 28;
-        ctx->cachedSecondaryDdtBig[sector_address] = (uint32_t)ddt_entry;
+        *ddt_entry |= (uint64_t)sector_status << 28;
+        ctx->cachedSecondaryDdtBig[sector_address] = (uint32_t)*ddt_entry;
     }
 
     TRACE("Exiting set_ddt_single_level_v2() = true");
@@ -1139,12 +1143,13 @@ bool set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, bo
  * @param offset Offset to set for the sector.
  * @param block_offset Block offset to set for the sector.
  * @param sector_status Status to set for the sector.
+ * @param ddt_entry Existing DDT entry or 0 to create a new one. If 0, a new entry is returned.
  *
  * @return Returns one of the following status codes:
  * @retval true if the entry was set successfully, false otherwise.
  */
 bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, bool negative, uint64_t offset,
-                            uint64_t block_offset, uint8_t sector_status)
+                            uint64_t block_offset, uint8_t sector_status, uint64_t *ddt_entry)
 {
     TRACE("Entering set_ddt_multi_level_v2(%p, %" PRIu64 ", %d, %" PRIu64 ", %" PRIu64 ", %d)", ctx, sector_address,
           negative, offset, block_offset, sector_status);
@@ -1152,7 +1157,6 @@ bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
     uint64_t   items_per_ddt_entry  = 0;
     uint64_t   ddt_position         = 0;
     uint64_t   secondary_ddt_offset = 0;
-    uint64_t   ddt_entry            = 0;
     uint64_t   block_index          = 0;
     uint8_t   *buffer               = NULL;
     crc64_ctx *crc64_context        = NULL;
@@ -1207,39 +1211,49 @@ bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
     if(ctx->cachedDdtOffset == secondary_ddt_offset && secondary_ddt_offset != 0)
     {
         // Update the corresponding DDT entry directly in the cached table
-        block_index = block_offset >> ctx->userDataDdtHeader.blockAlignmentShift;
-        ddt_entry   = offset & (1ULL << ctx->userDataDdtHeader.dataShift) - 1 | block_index
-                                                                                  << ctx->userDataDdtHeader.dataShift;
+        if(*ddt_entry == 0)
+        {
+            block_index = block_offset >> ctx->userDataDdtHeader.blockAlignmentShift;
+            *ddt_entry  = offset & (1ULL << ctx->userDataDdtHeader.dataShift) - 1 |
+                         block_index << ctx->userDataDdtHeader.dataShift;
+
+            if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+            {
+                // Overflow detection for DDT entry
+                if(*ddt_entry > 0xFFF)
+                {
+                    FATAL("DDT overflow: media does not fit in small DDT");
+                    TRACE("Exiting set_ddt_multi_level_v2() = false");
+                    return false;
+                }
+
+                *ddt_entry |= (uint64_t)sector_status << 12;
+            }
+            else if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
+            {
+                // Overflow detection for DDT entry
+                if(*ddt_entry > 0xFFFFFFF)
+                {
+                    FATAL("DDT overflow: media does not fit in big DDT");
+                    TRACE("Exiting set_ddt_multi_level_v2() = false");
+                    return false;
+                }
+
+                *ddt_entry |= (uint64_t)sector_status << 28;
+            }
+        }
 
         if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
         {
-            // Overflow detection for DDT entry
-            if(ddt_entry > 0xFFF)
-            {
-                FATAL("DDT overflow: media does not fit in small DDT");
-                TRACE("Exiting set_ddt_multi_level_v2() = false");
-                return false;
-            }
-
-            ddt_entry |= (uint64_t)sector_status << 12;
             TRACE("Setting small secondary DDT entry %d to %u", sector_address % items_per_ddt_entry,
-                  (uint16_t)ddt_entry);
-            ctx->cachedSecondaryDdtSmall[sector_address % items_per_ddt_entry] = (uint16_t)ddt_entry;
+                  (uint16_t)*ddt_entry);
+            ctx->cachedSecondaryDdtSmall[sector_address % items_per_ddt_entry] = (uint16_t)*ddt_entry;
         }
         else if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
         {
-            // Overflow detection for DDT entry
-            if(ddt_entry > 0xFFFFFFF)
-            {
-                FATAL("DDT overflow: media does not fit in big DDT");
-                TRACE("Exiting set_ddt_multi_level_v2() = false");
-                return false;
-            }
-
-            ddt_entry |= (uint64_t)sector_status << 28;
             TRACE("Setting small secondary DDT entry %d to %u", sector_address % items_per_ddt_entry,
-                  (uint16_t)ddt_entry);
-            ctx->cachedSecondaryDdtBig[sector_address % items_per_ddt_entry] = (uint32_t)ddt_entry;
+                  (uint16_t)*ddt_entry);
+            ctx->cachedSecondaryDdtBig[sector_address % items_per_ddt_entry] = (uint32_t)*ddt_entry;
         }
 
         TRACE("Updated cached secondary DDT entry at position %" PRIu64, sector_address % items_per_ddt_entry);
@@ -1671,37 +1685,47 @@ bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
     }
 
     // Step 6: Update the corresponding DDT entry
-    block_index = block_offset >> ctx->userDataDdtHeader.blockAlignmentShift;
-    ddt_entry   = offset & (1ULL << ctx->userDataDdtHeader.dataShift) - 1 | block_index
-                                                                              << ctx->userDataDdtHeader.dataShift;
+    if(*ddt_entry == 0)
+    {
+        block_index = block_offset >> ctx->userDataDdtHeader.blockAlignmentShift;
+        *ddt_entry   = offset & (1ULL << ctx->userDataDdtHeader.dataShift) - 1 | block_index
+                                                                                  << ctx->userDataDdtHeader.dataShift;
+
+        if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+        {
+            // Overflow detection for DDT entry
+            if(*ddt_entry > 0xFFF)
+            {
+                FATAL("DDT overflow: media does not fit in small DDT");
+                TRACE("Exiting set_ddt_multi_level_v2() = false");
+                return false;
+            }
+
+            *ddt_entry |= (uint64_t)sector_status << 12;
+        }
+        else if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
+        {
+            // Overflow detection for DDT entry
+            if(*ddt_entry > 0xFFFFFFF)
+            {
+                FATAL("DDT overflow: media does not fit in big DDT");
+                TRACE("Exiting set_ddt_multi_level_v2() = false");
+                return false;
+            }
+
+            *ddt_entry |= (uint64_t)sector_status << 28;
+        }
+    }
 
     if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
     {
-        // Overflow detection for DDT entry
-        if(ddt_entry > 0xFFF)
-        {
-            FATAL("DDT overflow: media does not fit in small DDT");
-            TRACE("Exiting set_ddt_multi_level_v2() = false");
-            return false;
-        }
-
-        ddt_entry |= (uint64_t)sector_status << 12;
-        TRACE("Setting small secondary DDT entry %d to %u", sector_address % items_per_ddt_entry, (uint16_t)ddt_entry);
-        ctx->cachedSecondaryDdtSmall[sector_address % items_per_ddt_entry] = (uint16_t)ddt_entry;
+        TRACE("Setting small secondary DDT entry %d to %u", sector_address % items_per_ddt_entry, (uint16_t)*ddt_entry);
+        ctx->cachedSecondaryDdtSmall[sector_address % items_per_ddt_entry] = (uint16_t)*ddt_entry;
     }
     else if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
     {
-        // Overflow detection for DDT entry
-        if(ddt_entry > 0xFFFFFFF)
-        {
-            FATAL("DDT overflow: media does not fit in big DDT");
-            TRACE("Exiting set_ddt_multi_level_v2() = false");
-            return false;
-        }
-
-        ddt_entry |= (uint64_t)sector_status << 28;
-        TRACE("Setting big secondary DDT entry %d to %u", sector_address % items_per_ddt_entry, (uint32_t)ddt_entry);
-        ctx->cachedSecondaryDdtBig[sector_address % items_per_ddt_entry] = (uint32_t)ddt_entry;
+        TRACE("Setting big secondary DDT entry %d to %u", sector_address % items_per_ddt_entry, (uint32_t)*ddt_entry);
+        ctx->cachedSecondaryDdtBig[sector_address % items_per_ddt_entry] = (uint32_t)*ddt_entry;
     }
 
     TRACE("Updated secondary DDT entry at position %" PRIu64, sector_address % items_per_ddt_entry);
