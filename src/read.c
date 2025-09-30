@@ -28,12 +28,18 @@
  * @brief Reads a media tag from the AaruFormat image.
  *
  * Reads the specified media tag from the image and stores it in the provided buffer.
+ * Media tags contain metadata information about the storage medium such as disc
+ * information, lead-in/lead-out data, or manufacturer-specific information.
  *
  * @param context Pointer to the aaruformat context.
- * @param data Pointer to the buffer to store the tag data.
+ * @param data Pointer to the buffer to store the tag data. Can be NULL to query tag length.
  * @param tag Tag identifier to read.
- * @param length Pointer to the length of the buffer; updated with the actual length read.
- * @return AARUF_STATUS_OK on success, or an error code on failure.
+ * @param length Pointer to the length of the buffer on input; updated with actual tag length on output.
+ *
+ * @return AARUF_STATUS_OK on success,
+ *         AARUF_ERROR_NOT_AARUFORMAT if context is NULL or invalid (magic number mismatch),
+ *         AARUF_ERROR_MEDIA_TAG_NOT_PRESENT if the requested media tag identifier does not exist in the image,
+ *         AARUF_ERROR_BUFFER_TOO_SMALL if data is NULL or provided buffer size is insufficient for the tag data.
  */
 int32_t aaruf_read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t *length)
 {
@@ -88,6 +94,30 @@ int32_t aaruf_read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t
     return AARUF_STATUS_OK;
 }
 
+/**
+ * @brief Reads a sector from the AaruFormat image.
+ *
+ * Reads user data from the specified sector address in the image. This function
+ * reads only the user data portion of the sector, without any additional metadata
+ * or ECC/EDC information.
+ *
+ * @param context Pointer to the aaruformat context.
+ * @param sector_address The logical sector address to read from.
+ * @param data Pointer to buffer where sector data will be stored. Can be NULL to query length.
+ * @param length Pointer to variable containing buffer size on input, actual data length on output.
+ *
+ * @return AARUF_STATUS_OK on success,
+ *         AARUF_STATUS_SECTOR_NOT_DUMPED if sector was not dumped during imaging,
+ *         AARUF_ERROR_NOT_AARUFORMAT if context is NULL or invalid (magic number mismatch),
+ *         AARUF_ERROR_SECTOR_OUT_OF_BOUNDS if sector address exceeds image sector count,
+ *         AARUF_ERROR_BUFFER_TOO_SMALL if data is NULL or buffer size is insufficient,
+ *         AARUF_ERROR_NOT_ENOUGH_MEMORY if memory allocation fails for block operations,
+ *         AARUF_ERROR_CANNOT_READ_HEADER if block header cannot be read from image stream,
+ *         AARUF_ERROR_CANNOT_READ_BLOCK if block data cannot be read from image stream,
+ *         AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK if LZMA or FLAC decompression fails,
+ *         AARUF_ERROR_UNSUPPORTED_COMPRESSION if block uses unsupported compression algorithm,
+ *         or other error codes from DDT decoding functions.
+ */
 int32_t aaruf_read_sector(void *context, uint64_t sector_address, uint8_t *data, uint32_t *length)
 {
     TRACE("Entering aaruf_read_sector(%p, %" PRIu64 ", %p, %u)", context, sector_address, data, *length);
@@ -382,6 +412,33 @@ int32_t aaruf_read_sector(void *context, uint64_t sector_address, uint8_t *data,
     return AARUF_STATUS_OK;
 }
 
+/**
+ * @brief Reads a sector from a specific track in the AaruFormat image.
+ *
+ * Reads user data from the specified sector address within a particular track.
+ * This function is specifically designed for optical disc images where sectors
+ * are organized by tracks. The sector address is relative to the start of the track.
+ *
+ * @param context Pointer to the aaruformat context.
+ * @param data Pointer to buffer where sector data will be stored.
+ * @param sector_address The sector address relative to the track start.
+ * @param length Pointer to variable containing buffer size on input, actual data length on output.
+ * @param track The track number to read from.
+ *
+ * @return AARUF_STATUS_OK on success,
+ *         AARUF_STATUS_SECTOR_NOT_DUMPED if sector was not dumped during imaging,
+ *         AARUF_ERROR_NOT_AARUFORMAT if context is NULL or invalid (magic number mismatch),
+ *         AARUF_ERROR_INCORRECT_MEDIA_TYPE if media is not an optical disc,
+ *         AARUF_ERROR_TRACK_NOT_FOUND if the specified track sequence does not exist,
+ *         AARUF_ERROR_SECTOR_OUT_OF_BOUNDS if calculated sector address exceeds image bounds,
+ *         AARUF_ERROR_BUFFER_TOO_SMALL if data buffer is NULL or insufficient size,
+ *         AARUF_ERROR_NOT_ENOUGH_MEMORY if memory allocation fails during sector reading,
+ *         AARUF_ERROR_CANNOT_READ_HEADER if block header cannot be read from image stream,
+ *         AARUF_ERROR_CANNOT_READ_BLOCK if block data cannot be read from image stream,
+ *         AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK if LZMA or FLAC decompression fails,
+ *         AARUF_ERROR_UNSUPPORTED_COMPRESSION if block uses unsupported compression,
+ *         or other error codes from underlying aaruf_read_sector function.
+ */
 int32_t aaruf_read_track_sector(void *context, uint8_t *data, uint64_t sectorAddress, uint32_t *length, uint8_t track)
 {
     TRACE("Entering aaruf_read_track_sector(%p, %p, %" PRIu64 ", %u, %d)", context, data, sectorAddress, *length,
@@ -426,6 +483,35 @@ int32_t aaruf_read_track_sector(void *context, uint8_t *data, uint64_t sectorAdd
     return AARUF_ERROR_TRACK_NOT_FOUND;
 }
 
+/**
+ * @brief Reads a complete sector with all metadata from the AaruFormat image.
+ *
+ * Reads the complete sector data including user data, ECC/EDC, subchannel data,
+ * and other metadata depending on the media type. For optical discs, this returns
+ * a full 2352-byte sector with sync, header, user data, and ECC/EDC. For block
+ * media with tags, this includes both the user data and tag information.
+ *
+ * @param context Pointer to the aaruformat context.
+ * @param sectorAddress The logical sector address to read from.
+ * @param data Pointer to buffer where complete sector data will be stored. Can be NULL to query length.
+ * @param length Pointer to variable containing buffer size on input, actual data length on output.
+ *
+ * @return AARUF_STATUS_OK on success,
+ *         AARUF_STATUS_SECTOR_NOT_DUMPED if sector was not dumped during imaging,
+ *         AARUF_ERROR_NOT_AARUFORMAT if context is NULL or invalid (magic number mismatch),
+ *         AARUF_ERROR_BUFFER_TOO_SMALL if data is NULL or buffer size insufficient for complete sector,
+ *         AARUF_ERROR_NOT_ENOUGH_MEMORY if memory allocation fails for bare data operations,
+ *         AARUF_ERROR_TRACK_NOT_FOUND if sector's track cannot be found in track list,
+ *         AARUF_ERROR_INCORRECT_MEDIA_TYPE if media type doesn't support long sector reading,
+ *         AARUF_ERROR_INVALID_TRACK_FORMAT if track has an unsupported or invalid format,
+ *         AARUF_ERROR_REACHED_UNREACHABLE_CODE if internal logic reaches unexpected state,
+ *         AARUF_ERROR_SECTOR_OUT_OF_BOUNDS if sector address exceeds image bounds (from aaruf_read_sector),
+ *         AARUF_ERROR_CANNOT_READ_HEADER if block header cannot be read (from aaruf_read_sector),
+ *         AARUF_ERROR_CANNOT_READ_BLOCK if block data cannot be read (from aaruf_read_sector),
+ *         AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK if decompression fails (from aaruf_read_sector),
+ *         AARUF_ERROR_UNSUPPORTED_COMPRESSION if compression algorithm not supported (from aaruf_read_sector),
+ *         or other error codes from underlying aaruf_read_sector function calls.
+ */
 int32_t aaruf_read_sector_long(void *context, uint64_t sectorAddress, uint8_t *data, uint32_t *length)
 {
     TRACE("Entering aaruf_read_sector_long(%p, %" PRIu64 ", %p, %u)", context, sectorAddress, data, *length);
