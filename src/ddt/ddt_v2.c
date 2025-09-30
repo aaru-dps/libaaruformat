@@ -1039,7 +1039,7 @@ bool set_ddt_entry_v2(aaruformatContext *ctx, uint64_t sector_address, uint64_t 
     if(ctx == NULL || ctx->imageStream == NULL)
     {
         FATAL("Invalid context or image stream.");
-        return;
+        return false;
     }
 
     if(ctx->userDataDdtHeader.tableShift > 0)
@@ -1233,7 +1233,7 @@ bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
             {
                 FATAL("DDT overflow: media does not fit in big DDT");
                 TRACE("Exiting set_ddt_multi_level_v2() = false");
-                return;
+                return false;
             }
 
             ddt_entry |= (uint64_t)sector_status << 28;
