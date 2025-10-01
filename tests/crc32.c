@@ -28,13 +28,13 @@ extern "C"
     {
         uint32_t localHashInt = CRC32_ISO_SEED;
         uint32_t localTable[256];
-        int      i, j;
+        int      i;
 
         for(i = 0; i < 256; i++)
         {
             uint32_t entry = (uint32_t)i;
 
-            for(j = 0; j < 8; j++)
+            for(int j = 0; j < 8; j++)
                 if((entry & 1) == 1)
                     entry = (entry >> 1) ^ CRC32_ISO_POLY;
                 else

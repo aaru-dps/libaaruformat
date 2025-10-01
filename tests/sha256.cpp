@@ -66,15 +66,13 @@ protected:
 
 TEST_F(sha256Fixture, sha256)
 {
-    SHA256_CTX   *ctx;
     unsigned char hash[SHA256_DIGEST_LENGTH];
-    int           ret;
 
-    ctx = static_cast<SHA256_CTX *>(malloc(sizeof(SHA256_CTX)));
+    SHA256_CTX *ctx = static_cast<SHA256_CTX *>(malloc(sizeof(SHA256_CTX)));
 
     EXPECT_NE(nullptr, ctx);
 
-    ret = SHA256_Init(ctx);
+    int ret = SHA256_Init(ctx);
 
     EXPECT_EQ(ret, 1);
 

@@ -74,36 +74,30 @@ TEST_F(flacFixture, flac)
 
 TEST_F(flacFixture, flacCompress)
 {
-    size_t   original_len = 9633792;
-    uint     cmp_len      = original_len;
-    uint     decmp_len    = original_len;
-    char     path[PATH_MAX];
-    char     filename[PATH_MAX * 2];
-    FILE    *file;
-    uint32_t original_crc, decmp_crc;
-    uint8_t *original;
-    uint8_t *cmp_buffer;
-    uint8_t *decmp_buffer;
-    size_t   newSize;
+    size_t original_len = 9633792;
+    uint   cmp_len      = original_len;
+    uint   decmp_len    = original_len;
+    char   path[PATH_MAX];
+    char   filename[PATH_MAX * 2];
 
     // Allocate buffers
-    original     = static_cast<uint8_t *>(malloc(original_len));
-    cmp_buffer   = static_cast<uint8_t *>(malloc(cmp_len));
-    decmp_buffer = static_cast<uint8_t *>(malloc(decmp_len));
+    uint8_t *original     = static_cast<uint8_t *>(malloc(original_len));
+    uint8_t *cmp_buffer   = static_cast<uint8_t *>(malloc(cmp_len));
+    uint8_t *decmp_buffer = static_cast<uint8_t *>(malloc(decmp_len));
 
     // Read the file
     getcwd(path, PATH_MAX);
     snprintf(filename, PATH_MAX, "%s/data/audio.bin", path);
 
-    file = fopen(filename, "rb");
+    FILE *file = fopen(filename, "rb");
     fread(original, 1, original_len, file);
     fclose(file);
 
     // Calculate the CRC
-    original_crc = crc32_data(original, original_len);
+    uint32_t original_crc = crc32_data(original, original_len);
 
     // Compress
-    newSize = aaruf_flac_encode_redbook_buffer(
+    size_t newSize = aaruf_flac_encode_redbook_buffer(
         cmp_buffer, cmp_len, original, original_len, 4608, 1, 0, "partial_tukey(0/1.0/1.0)", 12, 0, 1, false, 0, 8,
         "Aaru.Compression.Native.Tests", strlen("Aaru.Compression.Native.Tests"));
     cmp_len = newSize;
@@ -114,7 +108,7 @@ TEST_F(flacFixture, flacCompress)
 
     EXPECT_EQ(decmp_len, original_len);
 
-    decmp_crc = crc32_data(decmp_buffer, decmp_len);
+    uint32_t decmp_crc = crc32_data(decmp_buffer, decmp_len);
 
     // Free buffers
     free(original);

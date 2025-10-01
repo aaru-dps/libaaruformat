@@ -54,8 +54,7 @@ static uint64_t div129by65(uint64_t poly)
 {
     uint64_t q = 0;
     uint64_t h = poly;
-    uint32_t i;
-    for(i = 0; i < 64; ++i)
+    for(uint32_t i = 0; i < 64; ++i)
     {
         q |= (h & (1ull << 63)) >> i;
         h = (h << 1) ^ (poly & ((int64_t)h >> 63));

@@ -121,12 +121,10 @@ int have_clmul()
     TRACE("Entering have_clmul()");
 
     unsigned eax, ebx, ecx, edx;
-    int      has_pclmulqdq;
-    int      has_sse41;
     cpuid(1 /* feature bits */, &eax, &ebx, &ecx, &edx);
 
-    has_pclmulqdq = ecx & 0x2;     /* bit 1 */
-    has_sse41     = ecx & 0x80000; /* bit 19 */
+    int has_pclmulqdq = ecx & 0x2;     /* bit 1 */
+    int has_sse41     = ecx & 0x80000; /* bit 19 */
 
     TRACE("Exiting have_clmul() = %d", has_pclmulqdq && has_sse41);
     return has_pclmulqdq && has_sse41;

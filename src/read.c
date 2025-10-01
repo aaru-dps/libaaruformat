@@ -86,8 +86,7 @@ int32_t aaruf_read_media_tag(void *context, uint8_t *data, const int32_t tag, ui
 {
     TRACE("Entering aaruf_read_media_tag(%p, %p, %d, %u)", context, data, tag, *length);
 
-    aaruformatContext *ctx;
-    mediaTagEntry     *item;
+    mediaTagEntry *item;
 
     if(context == NULL)
     {
@@ -96,7 +95,7 @@ int32_t aaruf_read_media_tag(void *context, uint8_t *data, const int32_t tag, ui
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    ctx = context;
+    const aaruformatContext *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -607,9 +606,6 @@ int32_t aaruf_read_track_sector(void *context, uint8_t *data, const uint64_t sec
     TRACE("Entering aaruf_read_track_sector(%p, %p, %" PRIu64 ", %u, %d)", context, data, sector_address, *length,
           track);
 
-    aaruformatContext *ctx;
-    int                i;
-
     if(context == NULL)
     {
         FATAL("Invalid context");
@@ -618,7 +614,7 @@ int32_t aaruf_read_track_sector(void *context, uint8_t *data, const uint64_t sec
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    ctx = context;
+    aaruformatContext *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -637,7 +633,7 @@ int32_t aaruf_read_track_sector(void *context, uint8_t *data, const uint64_t sec
         return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
     }
 
-    for(i = 0; i < ctx->numberOfDataTracks; i++)
+    for(int i = 0; i < ctx->numberOfDataTracks; i++)
         if(ctx->dataTracks[i].sequence == track)
             return aaruf_read_sector(context, ctx->dataTracks[i].start + sector_address, data, length);
 

@@ -192,26 +192,18 @@ int32_t aaruf_cst_transform(const uint8_t *interleaved, uint8_t *sequential, con
  */
 int32_t aaruf_cst_untransform(const uint8_t *sequential, uint8_t *interleaved, const size_t length)
 {
-    uint8_t *p, *q, *r, *s, *t, *u, *v, *w;
-    size_t   q_start;
-    size_t   r_start;
-    size_t   s_start;
-    size_t   t_start;
-    size_t   u_start;
-    size_t   v_start;
-    size_t   w_start;
-    size_t   i;
+    size_t i;
 
     if(interleaved == NULL || sequential == NULL) return AARUF_ERROR_BUFFER_TOO_SMALL;
 
-    p = malloc(length / 8);
-    q = malloc(length / 8);
-    r = malloc(length / 8);
-    s = malloc(length / 8);
-    t = malloc(length / 8);
-    u = malloc(length / 8);
-    v = malloc(length / 8);
-    w = malloc(length / 8);
+    uint8_t *p = malloc(length / 8);
+    uint8_t *q = malloc(length / 8);
+    uint8_t *r = malloc(length / 8);
+    uint8_t *s = malloc(length / 8);
+    uint8_t *t = malloc(length / 8);
+    uint8_t *u = malloc(length / 8);
+    uint8_t *v = malloc(length / 8);
+    uint8_t *w = malloc(length / 8);
 
     if(p == NULL || q == NULL || r == NULL || s == NULL || t == NULL || u == NULL || v == NULL || w == NULL)
     {
@@ -226,13 +218,13 @@ int32_t aaruf_cst_untransform(const uint8_t *sequential, uint8_t *interleaved, c
         return AARUF_ERROR_NOT_ENOUGH_MEMORY;
     }
 
-    q_start = (length / 8) * 1;
-    r_start = (length / 8) * 2;
-    s_start = (length / 8) * 3;
-    t_start = (length / 8) * 4;
-    u_start = (length / 8) * 5;
-    v_start = (length / 8) * 6;
-    w_start = (length / 8) * 7;
+    size_t q_start = (length / 8) * 1;
+    size_t r_start = (length / 8) * 2;
+    size_t s_start = (length / 8) * 3;
+    size_t t_start = (length / 8) * 4;
+    size_t u_start = (length / 8) * 5;
+    size_t v_start = (length / 8) * 6;
+    size_t w_start = (length / 8) * 7;
 
     for(i = 0; i < (length / 8); i++)
     {
