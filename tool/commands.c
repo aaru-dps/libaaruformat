@@ -39,7 +39,7 @@ int cmd_identify(int argc, char *argv[])
         return -1;
     }
 
-    int result = identify(filename->sval[0]);
+    const int result = identify(filename->sval[0]);
     arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
     return result;
 }
@@ -58,7 +58,7 @@ int cmd_info(int argc, char *argv[])
         return -1;
     }
 
-    int result = info(filename->sval[0]);
+    const int result = info(filename->sval[0]);
     arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
     return result;
 }
@@ -78,7 +78,7 @@ int cmd_compare(int argc, char *argv[])
         return -1;
     }
 
-    int result = compare(filename1->sval[0], filename2->sval[0]);
+    const int result = compare(filename1->sval[0], filename2->sval[0]);
     arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
     return result;
 }
@@ -98,7 +98,7 @@ int cmd_cli_compare(int argc, char *argv[])
         return -1;
     }
 
-    int result = cli_compare(filename1->sval[0], filename2->sval[0]);
+    const int result = cli_compare(filename1->sval[0], filename2->sval[0]);
     arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
     return result;
 }
@@ -118,7 +118,8 @@ int cmd_read_common(int argc, char *argv[], bool long_mode)
         return -1;
     }
 
-    int result = long_mode ? read_long(sector->ival[0], filename->sval[0]) : read(sector->ival[0], filename->sval[0]);
+    const int result =
+        long_mode ? read_long(sector->ival[0], filename->sval[0]) : read(sector->ival[0], filename->sval[0]);
 
     arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
     return result;
@@ -142,7 +143,7 @@ int cmd_verify_common(int argc, char *argv[], bool sectors_mode)
         return -1;
     }
 
-    int result = sectors_mode ? verify_sectors(filename->sval[0]) : verify(filename->sval[0]);
+    const int result = sectors_mode ? verify_sectors(filename->sval[0]) : verify(filename->sval[0]);
 
     arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
     return result;
@@ -167,7 +168,7 @@ int cmd_convert(int argc, char *argv[])
         return -1;
     }
 
-    int result = convert(input_filename->sval[0], output_filename->sval[0]);
+    const int result = convert(input_filename->sval[0], output_filename->sval[0]);
     arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
     return result;
 }

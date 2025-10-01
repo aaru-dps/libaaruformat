@@ -24,7 +24,7 @@ extern "C"
 #define CRC32_ISO_POLY 0xEDB88320
 #define CRC32_ISO_SEED 0xFFFFFFFF
 
-    uint32_t crc32_data(const uint8_t *data, uint32_t len)
+    uint32_t crc32_data(const uint8_t *data, const uint32_t len)
     {
         uint32_t localHashInt = CRC32_ISO_SEED;
         uint32_t localTable[256];

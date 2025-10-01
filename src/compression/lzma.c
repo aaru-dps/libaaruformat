@@ -37,7 +37,7 @@
  * @return 0 on success, or an error code on failure.
  */
 AARU_EXPORT int32_t AARU_CALL aaruf_lzma_decode_buffer(uint8_t *dst_buffer, size_t *dst_size, const uint8_t *src_buffer,
-                                                       size_t *src_len, const uint8_t *props, size_t props_size)
+                                                       size_t *src_len, const uint8_t *props, const size_t props_size)
 {
     return LzmaUncompress(dst_buffer, dst_size, src_buffer, src_len, props, props_size);
 }
@@ -63,9 +63,10 @@ AARU_EXPORT int32_t AARU_CALL aaruf_lzma_decode_buffer(uint8_t *dst_buffer, size
  * @return 0 on success, or an error code on failure.
  */
 AARU_EXPORT int32_t AARU_CALL aaruf_lzma_encode_buffer(uint8_t *dst_buffer, size_t *dst_size, const uint8_t *src_buffer,
-                                                       size_t src_len, uint8_t *out_props, size_t *out_props_size,
-                                                       int32_t level, uint32_t dict_size, int32_t lc, int32_t lp,
-                                                       int32_t pb, int32_t fb, int32_t num_threads)
+                                                       const size_t src_len, uint8_t *out_props, size_t *out_props_size,
+                                                       const int32_t level, const uint32_t dict_size, const int32_t lc,
+                                                       const int32_t lp, const int32_t pb, const int32_t fb,
+                                                       const int32_t num_threads)
 {
     return LzmaCompress(dst_buffer, dst_size, src_buffer, src_len, out_props, out_props_size, level, dict_size, lc, lp,
                         pb, fb, num_threads);

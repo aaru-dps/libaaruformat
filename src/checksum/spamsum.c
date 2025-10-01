@@ -56,11 +56,11 @@ AARU_EXPORT spamsum_ctx *AARU_CALL aaruf_spamsum_init(void)
  * @param len Length of the data in bytes.
  * @return 0 on success, -1 on error.
  */
-AARU_EXPORT int AARU_CALL aaruf_spamsum_update(spamsum_ctx *ctx, const uint8_t *data, uint32_t len)
+AARU_EXPORT int AARU_CALL aaruf_spamsum_update(spamsum_ctx *ctx, const uint8_t *data, const uint32_t len)
 {
     if(!ctx || !data) return -1;
 
-    for (int i = 0; i < len; i++) fuzzy_engine_step(ctx, data[i]);
+    for(int i = 0; i < len; i++) fuzzy_engine_step(ctx, data[i]);
 
     ctx->total_size += len;
 
@@ -88,7 +88,7 @@ AARU_LOCAL inline void fuzzy_engine_step(spamsum_ctx *ctx, uint8_t c)
      * When the rolling hash hits a reset value then we emit a normal hash
      * as a element of the signature and reset the normal hash. */
     roll_hash(ctx, c);
-    uint64_t h = ROLL_SUM(ctx);
+    const uint64_t h = ROLL_SUM(ctx);
 
     for(i = ctx->bh_start; i < ctx->bh_end; ++i)
     {
@@ -178,8 +178,8 @@ AARU_LOCAL inline void fuzzy_try_fork_blockhash(spamsum_ctx *ctx)
 
     // assert(ctx->bh_end != 0);
 
-    uint32_t obh             = ctx->bh_end - 1;
-    uint32_t nbh             = ctx->bh_end;
+    const uint32_t obh       = ctx->bh_end - 1;
+    const uint32_t nbh       = ctx->bh_end;
     ctx->bh[nbh].h           = ctx->bh[obh].h;
     ctx->bh[nbh].half_h      = ctx->bh[obh].half_h;
     ctx->bh[nbh].digest[0]   = 0;

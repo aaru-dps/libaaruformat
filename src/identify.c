@@ -89,7 +89,7 @@ int aaruf_identify(const char *filename)
 
     if(stream == NULL) return errno;
 
-    int ret = aaruf_identify_stream(stream);
+    const int ret = aaruf_identify_stream(stream);
 
     fclose(stream);
 
@@ -164,7 +164,7 @@ int aaruf_identify_stream(FILE *image_stream)
 
     AaruHeader header;
 
-    size_t ret = fread(&header, sizeof(AaruHeader), 1, image_stream);
+    const size_t ret = fread(&header, sizeof(AaruHeader), 1, image_stream);
 
     if(ret != 1) return 0;
 

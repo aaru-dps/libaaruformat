@@ -68,7 +68,7 @@ void add_to_cache(struct CacheHeader *cache, const char *key, void *value)
     }
 }
 
-FORCE_INLINE char *uint64_to_string(uint64_t number)
+FORCE_INLINE char *uint64_to_string(const uint64_t number)
 {
     char *char_key = malloc(17);  // 16 hex digits + null terminator
     if(!char_key) return NULL;
@@ -85,7 +85,7 @@ FORCE_INLINE char *uint64_to_string(uint64_t number)
  * @param key 64-bit integer key to search for.
  * @return Pointer to the value if found, or NULL if not found.
  */
-void *find_in_cache_uint64(struct CacheHeader *cache, uint64_t key)
+void *find_in_cache_uint64(struct CacheHeader *cache, const uint64_t key)
 {
     return find_in_cache(cache, uint64_to_string(key));
 }
@@ -99,7 +99,7 @@ void *find_in_cache_uint64(struct CacheHeader *cache, uint64_t key)
  * @param key 64-bit integer key to add.
  * @param value Pointer to the value to store.
  */
-void add_to_cache_uint64(struct CacheHeader *cache, uint64_t key, void *value)
+void add_to_cache_uint64(struct CacheHeader *cache, const uint64_t key, void *value)
 {
     return add_to_cache(cache, uint64_to_string(key), value);
 }

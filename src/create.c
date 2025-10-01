@@ -98,10 +98,10 @@
  * @warning Application name length validation is strict - exceeding the limit will
  *          cause creation failure with AARUF_ERROR_INVALID_APP_NAME_LENGTH.
  */
-void *aaruf_create(const char *filepath, uint32_t media_type, uint32_t sector_size, uint64_t user_sectors,
-                   uint64_t negative_sectors, uint64_t overflow_sectors, const char *options,
-                   const uint8_t *application_name, uint8_t application_name_length, uint8_t application_major_version,
-                   uint8_t application_minor_version)
+void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32_t sector_size,
+                   const uint64_t user_sectors, const uint64_t negative_sectors, const uint64_t overflow_sectors,
+                   const char *options, const uint8_t *application_name, const uint8_t application_name_length,
+                   const uint8_t application_major_version, const uint8_t application_minor_version)
 {
     TRACE("Entering aaruf_create(%s, %u, %u, %llu, %llu, %llu, %s, %s, %u, %u, %u)", filepath, media_type, sector_size,
           user_sectors, negative_sectors, overflow_sectors, options,
@@ -110,7 +110,7 @@ void *aaruf_create(const char *filepath, uint32_t media_type, uint32_t sector_si
 
     // Parse the options
     TRACE("Parsing options");
-    aaru_options parsed_options = parse_options(options);
+    const aaru_options parsed_options = parse_options(options);
 
     // Allocate context
     TRACE("Allocating memory for context");
@@ -246,20 +246,20 @@ void *aaruf_create(const char *filepath, uint32_t media_type, uint32_t sector_si
             (uint32_t *)calloc(ctx->userDataDdtHeader.entries, sizeof(uint32_t));  // All entries to zero
 
     // Set the primary DDT offset (just after the header, block aligned)
-    ctx->primaryDdtOffset  = sizeof(AaruHeaderV2);  // Start just after the header
-    uint64_t alignmentMask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
-    ctx->primaryDdtOffset  = (ctx->primaryDdtOffset + alignmentMask) & ~alignmentMask;
+    ctx->primaryDdtOffset        = sizeof(AaruHeaderV2);  // Start just after the header
+    const uint64_t alignmentMask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    ctx->primaryDdtOffset        = (ctx->primaryDdtOffset + alignmentMask) & ~alignmentMask;
 
     TRACE("Primary DDT will be placed at offset %" PRIu64, ctx->primaryDdtOffset);
 
     // Calculate size of primary DDT table
-    uint64_t primaryTableSize = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
-                                    ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
-                                    : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+    const uint64_t primaryTableSize = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
+                                          ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
+                                          : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
 
     // Calculate where data blocks can start (after primary DDT + header)
-    uint64_t dataStartPosition = ctx->primaryDdtOffset + sizeof(DdtHeader2) + primaryTableSize;
-    ctx->nextBlockPosition     = (dataStartPosition + alignmentMask) & ~alignmentMask;
+    const uint64_t dataStartPosition = ctx->primaryDdtOffset + sizeof(DdtHeader2) + primaryTableSize;
+    ctx->nextBlockPosition           = (dataStartPosition + alignmentMask) & ~alignmentMask;
 
     TRACE("Data blocks will start at position %" PRIu64, ctx->nextBlockPosition);
 
@@ -278,7 +278,7 @@ void *aaruf_create(const char *filepath, uint32_t media_type, uint32_t sector_si
 
     // Initialize index entries array
     TRACE("Initializing index entries array");
-    UT_icd index_entry_icd = {sizeof(IndexEntry), NULL, NULL, NULL};
+    const UT_icd index_entry_icd = {sizeof(IndexEntry), NULL, NULL, NULL};
     utarray_new(ctx->indexEntries, &index_entry_icd);
 
     if(ctx->indexEntries == NULL)

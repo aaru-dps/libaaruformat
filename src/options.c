@@ -74,7 +74,7 @@ aaru_options parse_options(const char *options)
             const char *key   = token;
             const char *value = equal + 1;
 
-            bool bval = strncmp(value, "true", 4) == 0;
+            const bool bval = strncmp(value, "true", 4) == 0;
 
             if(strncmp(key, "compress", 8) == 0)
                 parsed.compress = bval;

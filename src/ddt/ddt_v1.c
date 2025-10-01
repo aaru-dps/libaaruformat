@@ -383,8 +383,8 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
  * @warning No bounds checking is performed on sector_address. Accessing beyond the DDT table
  *          boundaries will result in undefined behavior.
  */
-int32_t decode_ddt_entry_v1(aaruformatContext *ctx, uint64_t sector_address, uint64_t *offset, uint64_t *block_offset,
-                            uint8_t *sector_status)
+int32_t decode_ddt_entry_v1(aaruformatContext *ctx, const uint64_t sector_address, uint64_t *offset,
+                            uint64_t *block_offset, uint8_t *sector_status)
 {
     TRACE("Entering decode_ddt_entry_v1(%p, %" PRIu64 ", %p, %p, %p)", ctx, sector_address, offset, block_offset,
           sector_status);

@@ -127,14 +127,15 @@ bool aaruf_ecc_cd_is_suffix_correct(void *context, const uint8_t *sector)
         return false;
     }
 
-    bool correct_ecc_p = aaruf_ecc_cd_check(context, sector, sector, 86, 24, 2, 86, sector, 0xC, 0x10, 0x81C);
+    const bool correct_ecc_p = aaruf_ecc_cd_check(context, sector, sector, 86, 24, 2, 86, sector, 0xC, 0x10, 0x81C);
     if(!correct_ecc_p)
     {
         TRACE("Exiting aaruf_ecc_cd_is_suffix_correct() = false");
         return false;
     }
 
-    bool correct_ecc_q = aaruf_ecc_cd_check(context, sector, sector, 52, 43, 86, 88, sector, 0xC, 0x10, 0x81C + 0xAC);
+    const bool correct_ecc_q =
+        aaruf_ecc_cd_check(context, sector, sector, 52, 43, 86, 88, sector, 0xC, 0x10, 0x81C + 0xAC);
     if(!correct_ecc_q)
     {
         TRACE("Exiting aaruf_ecc_cd_is_suffix_correct() = false");
@@ -186,13 +187,14 @@ bool aaruf_ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector)
 
     memset(&zeroaddress, 4, sizeof(uint8_t));
 
-    bool correct_ecc_p = aaruf_ecc_cd_check(context, zeroaddress, sector, 86, 24, 2, 86, sector, 0, 0x10, 0x81C);
+    const bool correct_ecc_p = aaruf_ecc_cd_check(context, zeroaddress, sector, 86, 24, 2, 86, sector, 0, 0x10, 0x81C);
     if(!correct_ecc_p)
     {
         TRACE("Exiting aaruf_ecc_cd_is_suffix_correct_mode2() = false");
         return false;
     }
-    bool correct_ecc_q =
+
+    const bool correct_ecc_q =
         aaruf_ecc_cd_check(context, zeroaddress, sector, 52, 43, 86, 88, sector, 0, 0x10, 0x81C + 0xAC);
     if(!correct_ecc_q)
     {
@@ -223,9 +225,10 @@ bool aaruf_ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector)
  * @param ecc_offset Offset for the ECC field.
  * @return true if ECC is correct, false otherwise.
  */
-bool aaruf_ecc_cd_check(void *context, const uint8_t *address, const uint8_t *data, uint32_t major_count,
-                        uint32_t minor_count, uint32_t major_mult, uint32_t minor_inc, const uint8_t *ecc,
-                        int32_t address_offset, int32_t data_offset, int32_t ecc_offset)
+bool aaruf_ecc_cd_check(void *context, const uint8_t *address, const uint8_t *data, const uint32_t major_count,
+                        const uint32_t minor_count, const uint32_t major_mult, const uint32_t minor_inc,
+                        const uint8_t *ecc, const int32_t address_offset, const int32_t data_offset,
+                        const int32_t ecc_offset)
 {
     TRACE("Entering aaruf_ecc_cd_check(%p, %p, %p, %u, %u, %u, %u, %p, %d, %d, %d)", context, address, data,
           major_count, minor_count, major_mult, minor_inc, ecc, address_offset, data_offset, ecc_offset);
@@ -291,9 +294,9 @@ bool aaruf_ecc_cd_check(void *context, const uint8_t *address, const uint8_t *da
  * @param data_offset Offset for the data field.
  * @param ecc_offset Offset for the ECC field.
  */
-void aaruf_ecc_cd_write(void *context, const uint8_t *address, const uint8_t *data, uint32_t major_count,
-                        uint32_t minor_count, uint32_t major_mult, uint32_t minor_inc, uint8_t *ecc,
-                        int32_t address_offset, int32_t data_offset, int32_t ecc_offset)
+void aaruf_ecc_cd_write(void *context, const uint8_t *address, const uint8_t *data, const uint32_t major_count,
+                        const uint32_t minor_count, const uint32_t major_mult, const uint32_t minor_inc, uint8_t *ecc,
+                        const int32_t address_offset, const int32_t data_offset, const int32_t ecc_offset)
 {
     TRACE("Entering aaruf_ecc_cd_write(%p, %p, %p, %u, %u, %u, %u, %p, %d, %d, %d)", context, address, data,
           major_count, minor_count, major_mult, minor_inc, ecc, address_offset, data_offset, ecc_offset);
@@ -353,7 +356,7 @@ void aaruf_ecc_cd_write(void *context, const uint8_t *address, const uint8_t *da
  * @param ecc_offset Offset for the ECC field.
  */
 void aaruf_ecc_cd_write_sector(void *context, const uint8_t *address, const uint8_t *data, uint8_t *ecc,
-                               int32_t address_offset, int32_t data_offset, int32_t ecc_offset)
+                               const int32_t address_offset, const int32_t data_offset, const int32_t ecc_offset)
 {
     TRACE("Entering aaruf_ecc_cd_write_sector(%p, %p, %p, %p, %d, %d, %d)", context, address, data, ecc, address_offset,
           data_offset, ecc_offset);
@@ -373,7 +376,7 @@ void aaruf_ecc_cd_write_sector(void *context, const uint8_t *address, const uint
  * @param second Pointer to store the second value.
  * @param frame Pointer to store the frame value.
  */
-void aaruf_cd_lba_to_msf(int64_t pos, uint8_t *minute, uint8_t *second, uint8_t *frame)
+void aaruf_cd_lba_to_msf(const int64_t pos, uint8_t *minute, uint8_t *second, uint8_t *frame)
 {
     TRACE("Entering aaruf_cd_lba_to_msf(%lld, %p, %p, %p)", pos, minute, second, frame);
 
@@ -391,7 +394,7 @@ void aaruf_cd_lba_to_msf(int64_t pos, uint8_t *minute, uint8_t *second, uint8_t 
  * @param type Track type (mode).
  * @param lba Logical Block Address.
  */
-void aaruf_ecc_cd_reconstruct_prefix(uint8_t *sector, uint8_t type, int64_t lba)
+void aaruf_ecc_cd_reconstruct_prefix(uint8_t *sector, const uint8_t type, const int64_t lba)
 {
     TRACE("Entering aaruf_ecc_cd_reconstruct_prefix(%p, %u, %lld)", sector, type, lba);
 
@@ -458,7 +461,7 @@ void aaruf_ecc_cd_reconstruct_prefix(uint8_t *sector, uint8_t type, int64_t lba)
  * @param sector Pointer to the sector data (must be 2352 bytes).
  * @param type Track type (mode).
  */
-void aaruf_ecc_cd_reconstruct(void *context, uint8_t *sector, uint8_t type)
+void aaruf_ecc_cd_reconstruct(void *context, uint8_t *sector, const uint8_t type)
 {
     TRACE("Entering aaruf_ecc_cd_reconstruct(%p, %p, %u)", context, sector, type);
 

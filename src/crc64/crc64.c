@@ -157,7 +157,7 @@ AARU_EXPORT void AARU_CALL aaruf_crc64_free(crc64_ctx *ctx)
     if(ctx) free(ctx);
 }
 
-AARU_EXPORT uint64_t AARU_CALL aaruf_crc64_data(const uint8_t *data, uint32_t len)
+AARU_EXPORT uint64_t AARU_CALL aaruf_crc64_data(const uint8_t *data, const uint32_t len)
 {
     crc64_ctx *ctx = aaruf_crc64_init();
     uint64_t   crc = 0;

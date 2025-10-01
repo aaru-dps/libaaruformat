@@ -517,8 +517,8 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
  * @warning All output parameters must be valid pointers. No bounds checking is performed
  *          on the sector_address parameter at this level.
  */
-int32_t decode_ddt_entry_v2(aaruformatContext *ctx, uint64_t sector_address, uint64_t *offset, uint64_t *block_offset,
-                            uint8_t *sector_status)
+int32_t decode_ddt_entry_v2(aaruformatContext *ctx, const uint64_t sector_address, uint64_t *offset,
+                            uint64_t *block_offset, uint8_t *sector_status)
 {
     TRACE("Entering decode_ddt_entry_v2(%p, %" PRIu64 ", %llu, %llu, %d)", ctx, sector_address, *offset, *block_offset,
           *sector_status);
@@ -1031,8 +1031,8 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_addres
  * @return Returns one of the following status codes:
  * @retval true if the entry was set successfully, false otherwise.
  */
-bool set_ddt_entry_v2(aaruformatContext *ctx, uint64_t sector_address, uint64_t offset, uint64_t block_offset,
-                      uint8_t sector_status, uint64_t *ddt_entry)
+bool set_ddt_entry_v2(aaruformatContext *ctx, const uint64_t sector_address, const uint64_t offset,
+                      const uint64_t block_offset, const uint8_t sector_status, uint64_t *ddt_entry)
 {
     TRACE("Entering set_ddt_entry_v2(%p, %" PRIu64 ", %llu, %llu, %d)", ctx, sector_address, offset, block_offset,
           sector_status);
@@ -1066,8 +1066,9 @@ bool set_ddt_entry_v2(aaruformatContext *ctx, uint64_t sector_address, uint64_t 
  * @return Returns one of the following status codes:
  * @retval true if the entry was set successfully, false otherwise.
  */
-bool set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, bool negative, uint64_t offset,
-                             uint64_t block_offset, uint8_t sector_status, uint64_t *ddt_entry)
+bool set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, const bool negative,
+                             const uint64_t offset, const uint64_t block_offset, const uint8_t sector_status,
+                             uint64_t *ddt_entry)
 {
     TRACE("Entering set_ddt_single_level_v2(%p, %" PRIu64 ", %llu, %llu, %d)", ctx, sector_address, offset,
           block_offset, sector_status);
@@ -1096,7 +1097,7 @@ bool set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, bo
 
     if(*ddt_entry == 0)
     {
-        uint64_t block_index = block_offset >> ctx->userDataDdtHeader.blockAlignmentShift;
+        const uint64_t block_index = block_offset >> ctx->userDataDdtHeader.blockAlignmentShift;
         *ddt_entry =
             offset & ((1ULL << ctx->userDataDdtHeader.dataShift) - 1) | block_index << ctx->userDataDdtHeader.dataShift;
     }
@@ -1688,8 +1689,8 @@ bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
     if(*ddt_entry == 0)
     {
         block_index = block_offset >> ctx->userDataDdtHeader.blockAlignmentShift;
-        *ddt_entry   = offset & (1ULL << ctx->userDataDdtHeader.dataShift) - 1 | block_index
-                                                                                  << ctx->userDataDdtHeader.dataShift;
+        *ddt_entry  = offset & (1ULL << ctx->userDataDdtHeader.dataShift) - 1 | block_index
+                                                                                   << ctx->userDataDdtHeader.dataShift;
 
         if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
         {

@@ -82,7 +82,7 @@
  * @warning Media tag data is stored as-is from the original medium. No format
  *          conversion or validation is performed on the tag content.
  */
-int32_t aaruf_read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t *length)
+int32_t aaruf_read_media_tag(void *context, uint8_t *data, const int32_t tag, uint32_t *length)
 {
     TRACE("Entering aaruf_read_media_tag(%p, %p, %d, %u)", context, data, tag, *length);
 
@@ -238,7 +238,7 @@ int32_t aaruf_read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t
  * @warning Sector addresses are zero-based. The maximum valid address is
  *          ctx->imageInfo.Sectors - 1.
  */
-int32_t aaruf_read_sector(void *context, uint64_t sector_address, uint8_t *data, uint32_t *length)
+int32_t aaruf_read_sector(void *context, const uint64_t sector_address, uint8_t *data, uint32_t *length)
 {
     TRACE("Entering aaruf_read_sector(%p, %" PRIu64 ", %p, %u)", context, sector_address, data, *length);
 
@@ -601,7 +601,8 @@ int32_t aaruf_read_sector(void *context, uint64_t sector_address, uint8_t *data,
  * @warning Track sequence numbers may not be contiguous. Always verify track
  *          existence before assuming a track number is valid.
  */
-int32_t aaruf_read_track_sector(void *context, uint8_t *data, uint64_t sector_address, uint32_t *length, uint8_t track)
+int32_t aaruf_read_track_sector(void *context, uint8_t *data, const uint64_t sector_address, uint32_t *length,
+                                const uint8_t track)
 {
     TRACE("Entering aaruf_read_track_sector(%p, %p, %" PRIu64 ", %u, %d)", context, data, sector_address, *length,
           track);
@@ -744,18 +745,18 @@ int32_t aaruf_read_track_sector(void *context, uint8_t *data, uint64_t sector_ad
  * @warning Not all AaruFormat images contain the metadata necessary for long sector
  *          reading. Some images may only support basic sector reading via aaruf_read_sector().
  */
-int32_t aaruf_read_sector_long(void *context, uint64_t sector_address, uint8_t *data, uint32_t *length)
+int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, uint8_t *data, uint32_t *length)
 {
     TRACE("Entering aaruf_read_sector_long(%p, %" PRIu64 ", %p, %u)", context, sector_address, data, *length);
 
-    aaruformatContext *ctx        = NULL;
-    uint32_t           bare_length = 0;
-    uint32_t           tag_length  = 0;
-    uint8_t           *bare_data   = NULL;
-    int32_t            res        = 0;
-    TrackEntry         trk;
-    int                i        = 0;
-    bool               trk_found = false;
+    const aaruformatContext *ctx         = NULL;
+    uint32_t                 bare_length = 0;
+    uint32_t                 tag_length  = 0;
+    uint8_t                 *bare_data   = NULL;
+    int32_t                  res         = 0;
+    TrackEntry               trk;
+    int                      i         = 0;
+    bool                     trk_found = false;
 
     if(context == NULL)
     {
@@ -821,7 +822,7 @@ int32_t aaruf_read_sector_long(void *context, uint64_t sector_address, uint8_t *
                 if(sector_address >= ctx->dataTracks[i].start && sector_address <= ctx->dataTracks[i].end)
                 {
                     trk_found = true;
-                    trk      = ctx->dataTracks[i];
+                    trk       = ctx->dataTracks[i];
                     break;
                 }
 

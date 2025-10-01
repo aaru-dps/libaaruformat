@@ -84,10 +84,10 @@ UT_array *process_index_v2(aaruformatContext *ctx)
     UT_array  *index_entries = NULL;
     IndexEntry entry;
 
-    if(ctx == NULL || ctx->imageStream == NULL) {return NULL;}
+    if(ctx == NULL || ctx->imageStream == NULL) { return NULL; }
 
     // Initialize the index entries array
-    UT_icd index_entry_icd = {sizeof(IndexEntry), NULL, NULL, NULL};
+    const UT_icd index_entry_icd = {sizeof(IndexEntry), NULL, NULL, NULL};
 
     utarray_new(index_entries, &index_entry_icd);
 
