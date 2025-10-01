@@ -34,19 +34,19 @@
 // Reverses bits
 static uint64_t bitReflect(uint64_t v)
 {
-    v = ((v >> 1) & 0x5555555555555555) | ((v & 0x5555555555555555) << 1);
-    v = ((v >> 2) & 0x3333333333333333) | ((v & 0x3333333333333333) << 2);
-    v = ((v >> 4) & 0x0F0F0F0F0F0F0F0F) | ((v & 0x0F0F0F0F0F0F0F0F) << 4);
-    v = ((v >> 8) & 0x00FF00FF00FF00FF) | ((v & 0x00FF00FF00FF00FF) << 8);
-    v = ((v >> 16) & 0x0000FFFF0000FFFF) | ((v & 0x0000FFFF0000FFFF) << 16);
-    v = (v >> 32) | (v << 32);
+    v = v >> 1 & 0x5555555555555555 | (v & 0x5555555555555555) << 1;
+    v = v >> 2 & 0x3333333333333333 | (v & 0x3333333333333333) << 2;
+    v = v >> 4 & 0x0F0F0F0F0F0F0F0F | (v & 0x0F0F0F0F0F0F0F0F) << 4;
+    v = v >> 8 & 0x00FF00FF00FF00FF | (v & 0x00FF00FF00FF00FF) << 8;
+    v = v >> 16 & 0x0000FFFF0000FFFF | (v & 0x0000FFFF0000FFFF) << 16;
+    v = v >> 32 | v << 32;
     return v;
 }
 
 // Computes r*x^N mod p(x)
 static uint64_t expMod65(uint32_t n, uint64_t p, uint64_t r)
 {
-    return n == 0 ? r : expMod65(n - 1, p, (r << 1) ^ (p & ((int64_t)r >> 63)));
+    return n == 0 ? r : expMod65(n - 1, p, r << 1 ^ p & (int64_t)r >> 63);
 }
 
 // Computes x^129 / p(x); the result has an implicit 65th bit.
@@ -56,8 +56,8 @@ static uint64_t div129by65(uint64_t poly)
     uint64_t h = poly;
     for(uint32_t i = 0; i < 64; ++i)
     {
-        q |= (h & (1ull << 63)) >> i;
-        h = (h << 1) ^ (poly & ((int64_t)h >> 63));
+        q |= (h & 1ull << 63) >> i;
+        h = h << 1 ^ poly & (int64_t)h >> 63;
     }
     return q;
 }
@@ -106,7 +106,7 @@ AARU_EXPORT CLMUL uint64_t AARU_CALL aaruf_crc64_clmul(const uint64_t crc, const
 
     // Align pointers
     const __m128i *aligned_data = (const __m128i *)((uintptr_t)data & ~(uintptr_t)15);
-    const __m128i *aligned_end  = (const __m128i *)(((uintptr_t)end + 15) & ~(uintptr_t)15);
+    const __m128i *aligned_end  = (const __m128i *)((uintptr_t)end + 15 & ~(uintptr_t)15);
 
     const size_t lead_in_size  = data - (const uint8_t *)aligned_data;
     const size_t lead_out_size = (const uint8_t *)aligned_end - end;
@@ -214,8 +214,7 @@ AARU_EXPORT CLMUL uint64_t AARU_CALL aaruf_crc64_clmul(const uint64_t crc, const
 #if defined(_WIN64)
     return ~_mm_extract_epi64(t2_reg, 1);
 #else
-    return ~(((uint64_t)(uint32_t)_mm_extract_epi32(t2_reg, 3) << 32) |
-             (uint64_t)(uint32_t)_mm_extract_epi32(t2_reg, 2));
+    return ~((uint64_t)(uint32_t)_mm_extract_epi32(t2_reg, 3) << 32 | (uint64_t)(uint32_t)_mm_extract_epi32(t2_reg, 2));
 #endif
 }
 

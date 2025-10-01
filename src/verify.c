@@ -199,7 +199,7 @@ int32_t aaruf_verify_image(void *context)
 
     for(int i = 0; i < utarray_len(index_entries); i++)
     {
-        IndexEntry *entry = (IndexEntry *)utarray_eltptr(index_entries, i);
+        IndexEntry *entry = utarray_eltptr(index_entries, i);
         TRACE("Checking block with type %4.4s at position %" PRIu64 "", (char *)&entry->blockType, entry->offset);
 
         fseek(ctx->imageStream, entry->offset, SEEK_SET);

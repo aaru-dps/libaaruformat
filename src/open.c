@@ -81,7 +81,8 @@
  *       - Handles both small and large deduplication tables
  *
  * @note Block Processing:
- *       - Processes all indexed blocks including data, DDT, geometry, metadata, tracks, CICM, dump hardware, and checksums
+ *       - Processes all indexed blocks including data, DDT, geometry, metadata, tracks, CICM, dump hardware, and
+ * checksums
  *       - Non-critical block processing errors are logged but don't prevent opening
  *       - Critical errors (DDT processing failures) cause opening to fail
  *       - Unknown block types are logged but ignored
@@ -292,7 +293,7 @@ void *aaruf_open(const char *filepath)
 
     for(i = 0; i < utarray_len(index_entries); i++)
     {
-        IndexEntry *entry = (IndexEntry *)utarray_eltptr(index_entries, i);
+        IndexEntry *entry = utarray_eltptr(index_entries, i);
         TRACE("Block type %4.4s with data type %d is indexed to be at %" PRIu64 "", (char *)&entry->blockType,
               entry->dataType, entry->offset);
     }
@@ -301,7 +302,7 @@ void *aaruf_open(const char *filepath)
     ctx->imageInfo.ImageSize = 0;
     for(i = 0; i < utarray_len(index_entries); i++)
     {
-        IndexEntry *entry = (IndexEntry *)utarray_eltptr(index_entries, i);
+        IndexEntry *entry = utarray_eltptr(index_entries, i);
         pos               = fseek(ctx->imageStream, entry->offset, SEEK_SET);
 
         if(pos < 0 || ftell(ctx->imageStream) != entry->offset)

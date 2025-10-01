@@ -150,15 +150,15 @@ int32_t aaruf_cst_transform(const uint8_t *interleaved, uint8_t *sequential, con
         w[i / 8] += interleaved[i + 7] & 0x01;
     }
 
-    q_start = (length / 8) * 1;
-    r_start = (length / 8) * 2;
-    s_start = (length / 8) * 3;
-    t_start = (length / 8) * 4;
-    u_start = (length / 8) * 5;
-    v_start = (length / 8) * 6;
-    w_start = (length / 8) * 7;
+    q_start = length / 8 * 1;
+    r_start = length / 8 * 2;
+    s_start = length / 8 * 3;
+    t_start = length / 8 * 4;
+    u_start = length / 8 * 5;
+    v_start = length / 8 * 6;
+    w_start = length / 8 * 7;
 
-    for(i = 0; i < (length / 8); i++)
+    for(i = 0; i < length / 8; i++)
     {
         sequential[i]           = p[i];
         sequential[q_start + i] = q[i];
@@ -218,15 +218,15 @@ int32_t aaruf_cst_untransform(const uint8_t *sequential, uint8_t *interleaved, c
         return AARUF_ERROR_NOT_ENOUGH_MEMORY;
     }
 
-    size_t q_start = (length / 8) * 1;
-    size_t r_start = (length / 8) * 2;
-    size_t s_start = (length / 8) * 3;
-    size_t t_start = (length / 8) * 4;
-    size_t u_start = (length / 8) * 5;
-    size_t v_start = (length / 8) * 6;
-    size_t w_start = (length / 8) * 7;
+    size_t q_start = length / 8 * 1;
+    size_t r_start = length / 8 * 2;
+    size_t s_start = length / 8 * 3;
+    size_t t_start = length / 8 * 4;
+    size_t u_start = length / 8 * 5;
+    size_t v_start = length / 8 * 6;
+    size_t w_start = length / 8 * 7;
 
-    for(i = 0; i < (length / 8); i++)
+    for(i = 0; i < length / 8; i++)
     {
         p[i] = sequential[i];
         q[i] = sequential[q_start + i];
@@ -242,77 +242,77 @@ int32_t aaruf_cst_untransform(const uint8_t *sequential, uint8_t *interleaved, c
 
     for(i = 0; i < length; i += 8)
     {
-        interleaved[i] += ((p[i / 8] & 0x80) == 0x80 ? 0x80 : 0);
-        interleaved[i + 1] += ((p[i / 8] & 0x40) == 0x40 ? 0x80 : 0);
-        interleaved[i + 2] += ((p[i / 8] & 0x20) == 0x20 ? 0x80 : 0);
-        interleaved[i + 3] += ((p[i / 8] & 0x10) == 0x10 ? 0x80 : 0);
-        interleaved[i + 4] += ((p[i / 8] & 0x08) == 0x08 ? 0x80 : 0);
-        interleaved[i + 5] += ((p[i / 8] & 0x04) == 0x04 ? 0x80 : 0);
-        interleaved[i + 6] += ((p[i / 8] & 0x02) == 0x02 ? 0x80 : 0);
-        interleaved[i + 7] += ((p[i / 8] & 0x01) == 0x01 ? 0x80 : 0);
+        interleaved[i] += (p[i / 8] & 0x80) == 0x80 ? 0x80 : 0;
+        interleaved[i + 1] += (p[i / 8] & 0x40) == 0x40 ? 0x80 : 0;
+        interleaved[i + 2] += (p[i / 8] & 0x20) == 0x20 ? 0x80 : 0;
+        interleaved[i + 3] += (p[i / 8] & 0x10) == 0x10 ? 0x80 : 0;
+        interleaved[i + 4] += (p[i / 8] & 0x08) == 0x08 ? 0x80 : 0;
+        interleaved[i + 5] += (p[i / 8] & 0x04) == 0x04 ? 0x80 : 0;
+        interleaved[i + 6] += (p[i / 8] & 0x02) == 0x02 ? 0x80 : 0;
+        interleaved[i + 7] += (p[i / 8] & 0x01) == 0x01 ? 0x80 : 0;
 
-        interleaved[i] += ((q[i / 8] & 0x80) == 0x80 ? 0x40 : 0);
-        interleaved[i + 1] += ((q[i / 8] & 0x40) == 0x40 ? 0x40 : 0);
-        interleaved[i + 2] += ((q[i / 8] & 0x20) == 0x20 ? 0x40 : 0);
-        interleaved[i + 3] += ((q[i / 8] & 0x10) == 0x10 ? 0x40 : 0);
-        interleaved[i + 4] += ((q[i / 8] & 0x08) == 0x08 ? 0x40 : 0);
-        interleaved[i + 5] += ((q[i / 8] & 0x04) == 0x04 ? 0x40 : 0);
-        interleaved[i + 6] += ((q[i / 8] & 0x02) == 0x02 ? 0x40 : 0);
-        interleaved[i + 7] += ((q[i / 8] & 0x01) == 0x01 ? 0x40 : 0);
+        interleaved[i] += (q[i / 8] & 0x80) == 0x80 ? 0x40 : 0;
+        interleaved[i + 1] += (q[i / 8] & 0x40) == 0x40 ? 0x40 : 0;
+        interleaved[i + 2] += (q[i / 8] & 0x20) == 0x20 ? 0x40 : 0;
+        interleaved[i + 3] += (q[i / 8] & 0x10) == 0x10 ? 0x40 : 0;
+        interleaved[i + 4] += (q[i / 8] & 0x08) == 0x08 ? 0x40 : 0;
+        interleaved[i + 5] += (q[i / 8] & 0x04) == 0x04 ? 0x40 : 0;
+        interleaved[i + 6] += (q[i / 8] & 0x02) == 0x02 ? 0x40 : 0;
+        interleaved[i + 7] += (q[i / 8] & 0x01) == 0x01 ? 0x40 : 0;
 
-        interleaved[i] += ((r[i / 8] & 0x80) == 0x80 ? 0x20 : 0);
-        interleaved[i + 1] += ((r[i / 8] & 0x40) == 0x40 ? 0x20 : 0);
-        interleaved[i + 2] += ((r[i / 8] & 0x20) == 0x20 ? 0x20 : 0);
-        interleaved[i + 3] += ((r[i / 8] & 0x10) == 0x10 ? 0x20 : 0);
-        interleaved[i + 4] += ((r[i / 8] & 0x08) == 0x08 ? 0x20 : 0);
-        interleaved[i + 5] += ((r[i / 8] & 0x04) == 0x04 ? 0x20 : 0);
-        interleaved[i + 6] += ((r[i / 8] & 0x02) == 0x02 ? 0x20 : 0);
-        interleaved[i + 7] += ((r[i / 8] & 0x01) == 0x01 ? 0x20 : 0);
+        interleaved[i] += (r[i / 8] & 0x80) == 0x80 ? 0x20 : 0;
+        interleaved[i + 1] += (r[i / 8] & 0x40) == 0x40 ? 0x20 : 0;
+        interleaved[i + 2] += (r[i / 8] & 0x20) == 0x20 ? 0x20 : 0;
+        interleaved[i + 3] += (r[i / 8] & 0x10) == 0x10 ? 0x20 : 0;
+        interleaved[i + 4] += (r[i / 8] & 0x08) == 0x08 ? 0x20 : 0;
+        interleaved[i + 5] += (r[i / 8] & 0x04) == 0x04 ? 0x20 : 0;
+        interleaved[i + 6] += (r[i / 8] & 0x02) == 0x02 ? 0x20 : 0;
+        interleaved[i + 7] += (r[i / 8] & 0x01) == 0x01 ? 0x20 : 0;
 
-        interleaved[i] += ((s[i / 8] & 0x80) == 0x80 ? 0x10 : 0);
-        interleaved[i + 1] += ((s[i / 8] & 0x40) == 0x40 ? 0x10 : 0);
-        interleaved[i + 2] += ((s[i / 8] & 0x20) == 0x20 ? 0x10 : 0);
-        interleaved[i + 3] += ((s[i / 8] & 0x10) == 0x10 ? 0x10 : 0);
-        interleaved[i + 4] += ((s[i / 8] & 0x08) == 0x08 ? 0x10 : 0);
-        interleaved[i + 5] += ((s[i / 8] & 0x04) == 0x04 ? 0x10 : 0);
-        interleaved[i + 6] += ((s[i / 8] & 0x02) == 0x02 ? 0x10 : 0);
-        interleaved[i + 7] += ((s[i / 8] & 0x01) == 0x01 ? 0x10 : 0);
+        interleaved[i] += (s[i / 8] & 0x80) == 0x80 ? 0x10 : 0;
+        interleaved[i + 1] += (s[i / 8] & 0x40) == 0x40 ? 0x10 : 0;
+        interleaved[i + 2] += (s[i / 8] & 0x20) == 0x20 ? 0x10 : 0;
+        interleaved[i + 3] += (s[i / 8] & 0x10) == 0x10 ? 0x10 : 0;
+        interleaved[i + 4] += (s[i / 8] & 0x08) == 0x08 ? 0x10 : 0;
+        interleaved[i + 5] += (s[i / 8] & 0x04) == 0x04 ? 0x10 : 0;
+        interleaved[i + 6] += (s[i / 8] & 0x02) == 0x02 ? 0x10 : 0;
+        interleaved[i + 7] += (s[i / 8] & 0x01) == 0x01 ? 0x10 : 0;
 
-        interleaved[i] += ((t[i / 8] & 0x80) == 0x80 ? 0x08 : 0);
-        interleaved[i + 1] += ((t[i / 8] & 0x40) == 0x40 ? 0x08 : 0);
-        interleaved[i + 2] += ((t[i / 8] & 0x20) == 0x20 ? 0x08 : 0);
-        interleaved[i + 3] += ((t[i / 8] & 0x10) == 0x10 ? 0x08 : 0);
-        interleaved[i + 4] += ((t[i / 8] & 0x08) == 0x08 ? 0x08 : 0);
-        interleaved[i + 5] += ((t[i / 8] & 0x04) == 0x04 ? 0x08 : 0);
-        interleaved[i + 6] += ((t[i / 8] & 0x02) == 0x02 ? 0x08 : 0);
-        interleaved[i + 7] += ((t[i / 8] & 0x01) == 0x01 ? 0x08 : 0);
+        interleaved[i] += (t[i / 8] & 0x80) == 0x80 ? 0x08 : 0;
+        interleaved[i + 1] += (t[i / 8] & 0x40) == 0x40 ? 0x08 : 0;
+        interleaved[i + 2] += (t[i / 8] & 0x20) == 0x20 ? 0x08 : 0;
+        interleaved[i + 3] += (t[i / 8] & 0x10) == 0x10 ? 0x08 : 0;
+        interleaved[i + 4] += (t[i / 8] & 0x08) == 0x08 ? 0x08 : 0;
+        interleaved[i + 5] += (t[i / 8] & 0x04) == 0x04 ? 0x08 : 0;
+        interleaved[i + 6] += (t[i / 8] & 0x02) == 0x02 ? 0x08 : 0;
+        interleaved[i + 7] += (t[i / 8] & 0x01) == 0x01 ? 0x08 : 0;
 
-        interleaved[i] += ((u[i / 8] & 0x80) == 0x80 ? 0x04 : 0);
-        interleaved[i + 1] += ((u[i / 8] & 0x40) == 0x40 ? 0x04 : 0);
-        interleaved[i + 2] += ((u[i / 8] & 0x20) == 0x20 ? 0x04 : 0);
-        interleaved[i + 3] += ((u[i / 8] & 0x10) == 0x10 ? 0x04 : 0);
-        interleaved[i + 4] += ((u[i / 8] & 0x08) == 0x08 ? 0x04 : 0);
-        interleaved[i + 5] += ((u[i / 8] & 0x04) == 0x04 ? 0x04 : 0);
-        interleaved[i + 6] += ((u[i / 8] & 0x02) == 0x02 ? 0x04 : 0);
-        interleaved[i + 7] += ((u[i / 8] & 0x01) == 0x01 ? 0x04 : 0);
+        interleaved[i] += (u[i / 8] & 0x80) == 0x80 ? 0x04 : 0;
+        interleaved[i + 1] += (u[i / 8] & 0x40) == 0x40 ? 0x04 : 0;
+        interleaved[i + 2] += (u[i / 8] & 0x20) == 0x20 ? 0x04 : 0;
+        interleaved[i + 3] += (u[i / 8] & 0x10) == 0x10 ? 0x04 : 0;
+        interleaved[i + 4] += (u[i / 8] & 0x08) == 0x08 ? 0x04 : 0;
+        interleaved[i + 5] += (u[i / 8] & 0x04) == 0x04 ? 0x04 : 0;
+        interleaved[i + 6] += (u[i / 8] & 0x02) == 0x02 ? 0x04 : 0;
+        interleaved[i + 7] += (u[i / 8] & 0x01) == 0x01 ? 0x04 : 0;
 
-        interleaved[i] += ((v[i / 8] & 0x80) == 0x80 ? 0x02 : 0);
-        interleaved[i + 1] += ((v[i / 8] & 0x40) == 0x40 ? 0x02 : 0);
-        interleaved[i + 2] += ((v[i / 8] & 0x20) == 0x20 ? 0x02 : 0);
-        interleaved[i + 3] += ((v[i / 8] & 0x10) == 0x10 ? 0x02 : 0);
-        interleaved[i + 4] += ((v[i / 8] & 0x08) == 0x08 ? 0x02 : 0);
-        interleaved[i + 5] += ((v[i / 8] & 0x04) == 0x04 ? 0x02 : 0);
-        interleaved[i + 6] += ((v[i / 8] & 0x02) == 0x02 ? 0x02 : 0);
-        interleaved[i + 7] += ((v[i / 8] & 0x01) == 0x01 ? 0x02 : 0);
+        interleaved[i] += (v[i / 8] & 0x80) == 0x80 ? 0x02 : 0;
+        interleaved[i + 1] += (v[i / 8] & 0x40) == 0x40 ? 0x02 : 0;
+        interleaved[i + 2] += (v[i / 8] & 0x20) == 0x20 ? 0x02 : 0;
+        interleaved[i + 3] += (v[i / 8] & 0x10) == 0x10 ? 0x02 : 0;
+        interleaved[i + 4] += (v[i / 8] & 0x08) == 0x08 ? 0x02 : 0;
+        interleaved[i + 5] += (v[i / 8] & 0x04) == 0x04 ? 0x02 : 0;
+        interleaved[i + 6] += (v[i / 8] & 0x02) == 0x02 ? 0x02 : 0;
+        interleaved[i + 7] += (v[i / 8] & 0x01) == 0x01 ? 0x02 : 0;
 
-        interleaved[i] += ((w[i / 8] & 0x80) == 0x80 ? 0x01 : 0);
-        interleaved[i + 1] += ((w[i / 8] & 0x40) == 0x40 ? 0x01 : 0);
-        interleaved[i + 2] += ((w[i / 8] & 0x20) == 0x20 ? 0x01 : 0);
-        interleaved[i + 3] += ((w[i / 8] & 0x10) == 0x10 ? 0x01 : 0);
-        interleaved[i + 4] += ((w[i / 8] & 0x08) == 0x08 ? 0x01 : 0);
-        interleaved[i + 5] += ((w[i / 8] & 0x04) == 0x04 ? 0x01 : 0);
-        interleaved[i + 6] += ((w[i / 8] & 0x02) == 0x02 ? 0x01 : 0);
-        interleaved[i + 7] += ((w[i / 8] & 0x01) == 0x01 ? 0x01 : 0);
+        interleaved[i] += (w[i / 8] & 0x80) == 0x80 ? 0x01 : 0;
+        interleaved[i + 1] += (w[i / 8] & 0x40) == 0x40 ? 0x01 : 0;
+        interleaved[i + 2] += (w[i / 8] & 0x20) == 0x20 ? 0x01 : 0;
+        interleaved[i + 3] += (w[i / 8] & 0x10) == 0x10 ? 0x01 : 0;
+        interleaved[i + 4] += (w[i / 8] & 0x08) == 0x08 ? 0x01 : 0;
+        interleaved[i + 5] += (w[i / 8] & 0x04) == 0x04 ? 0x01 : 0;
+        interleaved[i + 6] += (w[i / 8] & 0x02) == 0x02 ? 0x01 : 0;
+        interleaved[i + 7] += (w[i / 8] & 0x01) == 0x01 ? 0x01 : 0;
     }
 
     free(p);

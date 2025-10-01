@@ -32,10 +32,9 @@ int info(const char *path)
     aaruformatContext   *ctx          = NULL;
     char                *strBuffer    = NULL;
     UErrorCode           u_error_code = U_ZERO_ERROR;
-    uint                 i = 0;
-    mediaTagEntry const *mediaTag    = NULL;
-    mediaTagEntry const *tmpMediaTag = NULL;
-    UChar                ustr[128];
+    uint                 i            = 0;
+    mediaTagEntry const *mediaTag     = NULL;
+    mediaTagEntry const *tmpMediaTag  = NULL;
 
     ctx = aaruf_open(path);
 
@@ -53,7 +52,7 @@ int info(const char *path)
 
     strBuffer = malloc(65);
     memset(strBuffer, 0, 65);
-    ucnv_convert(NULL, "UTF-16LE", strBuffer, 64, (const char *)ctx->header.application, 64, &u_error_code);
+    ucnv_convert(NULL, "UTF-16LE", strBuffer, 64, ctx->header.application, 64, &u_error_code);
     if(u_error_code == U_ZERO_ERROR) printf("\tApplication: %s\n", strBuffer);
     free(strBuffer);
 
@@ -285,7 +284,7 @@ int info(const char *path)
                 memset(strBuffer, 0, ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength + 1);
                 ucnv_convert(NULL, "UTF-8", strBuffer,
                              (int)ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength,
-                             (char *)(ctx->dumpHardwareEntriesWithData[i].manufacturer),
+                             (char *)ctx->dumpHardwareEntriesWithData[i].manufacturer,
                              (int)ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength, &u_error_code);
                 printf("\t\tManufacturer: %s\n", strBuffer);
                 free(strBuffer);
@@ -296,7 +295,7 @@ int info(const char *path)
                 strBuffer = malloc(ctx->dumpHardwareEntriesWithData[i].entry.modelLength + 1);
                 memset(strBuffer, 0, ctx->dumpHardwareEntriesWithData[i].entry.modelLength + 1);
                 ucnv_convert(NULL, "UTF-8", strBuffer, (int)ctx->dumpHardwareEntriesWithData[i].entry.modelLength,
-                             (char *)(ctx->dumpHardwareEntriesWithData[i].model),
+                             (char *)ctx->dumpHardwareEntriesWithData[i].model,
                              (int)ctx->dumpHardwareEntriesWithData[i].entry.modelLength, &u_error_code);
                 printf("\t\tModel: %s\n", strBuffer);
                 free(strBuffer);
@@ -307,7 +306,7 @@ int info(const char *path)
                 strBuffer = malloc(ctx->dumpHardwareEntriesWithData[i].entry.revisionLength + 1);
                 memset(strBuffer, 0, ctx->dumpHardwareEntriesWithData[i].entry.revisionLength + 1);
                 ucnv_convert(NULL, "UTF-8", strBuffer, (int)ctx->dumpHardwareEntriesWithData[i].entry.revisionLength,
-                             (char *)(ctx->dumpHardwareEntriesWithData[i].revision),
+                             (char *)ctx->dumpHardwareEntriesWithData[i].revision,
                              (int)ctx->dumpHardwareEntriesWithData[i].entry.revisionLength, &u_error_code);
                 printf("\t\tRevision: %s\n", strBuffer);
                 free(strBuffer);
@@ -318,7 +317,7 @@ int info(const char *path)
                 strBuffer = malloc(ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength + 1);
                 memset(strBuffer, 0, ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength + 1);
                 ucnv_convert(NULL, "UTF-8", strBuffer, (int)ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength,
-                             (char *)(ctx->dumpHardwareEntriesWithData[i].firmware),
+                             (char *)ctx->dumpHardwareEntriesWithData[i].firmware,
                              (int)ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength, &u_error_code);
                 printf("\t\tFirmware version: %s\n", strBuffer);
                 free(strBuffer);
@@ -329,7 +328,7 @@ int info(const char *path)
                 strBuffer = malloc(ctx->dumpHardwareEntriesWithData[i].entry.serialLength + 1);
                 memset(strBuffer, 0, ctx->dumpHardwareEntriesWithData[i].entry.serialLength + 1);
                 ucnv_convert(NULL, "UTF-8", strBuffer, (int)ctx->dumpHardwareEntriesWithData[i].entry.serialLength,
-                             (char *)(ctx->dumpHardwareEntriesWithData[i].serial),
+                             (char *)ctx->dumpHardwareEntriesWithData[i].serial,
                              (int)ctx->dumpHardwareEntriesWithData[i].entry.serialLength, &u_error_code);
                 printf("\t\tSerial number: %s\n", strBuffer);
                 free(strBuffer);
@@ -341,7 +340,7 @@ int info(const char *path)
                 memset(strBuffer, 0, ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength + 1);
                 ucnv_convert(NULL, "UTF-8", strBuffer,
                              (int)ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength,
-                             (char *)(ctx->dumpHardwareEntriesWithData[i].softwareName),
+                             (char *)ctx->dumpHardwareEntriesWithData[i].softwareName,
                              (int)ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength, &u_error_code);
                 printf("\t\tSoftware name: %s\n", strBuffer);
                 free(strBuffer);
@@ -353,7 +352,7 @@ int info(const char *path)
                 memset(strBuffer, 0, ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength + 1);
                 ucnv_convert(NULL, "UTF-8", strBuffer,
                              (int)ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength,
-                             (char *)(ctx->dumpHardwareEntriesWithData[i].softwareVersion),
+                             (char *)ctx->dumpHardwareEntriesWithData[i].softwareVersion,
                              (int)ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength, &u_error_code);
                 printf("\t\tSoftware version: %s\n", strBuffer);
                 free(strBuffer);
@@ -365,7 +364,7 @@ int info(const char *path)
                 memset(strBuffer, 0, ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength + 1);
                 ucnv_convert(NULL, "UTF-8", strBuffer,
                              (int)ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength,
-                             (char *)(ctx->dumpHardwareEntriesWithData[i].softwareOperatingSystem),
+                             (char *)ctx->dumpHardwareEntriesWithData[i].softwareOperatingSystem,
                              (int)ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength,
                              &u_error_code);
                 printf("\t\tSoftware operating system: %s\n", strBuffer);

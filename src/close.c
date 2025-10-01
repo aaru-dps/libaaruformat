@@ -174,9 +174,9 @@ int aaruf_close(void *context)
 
         // Write cached secondary table to file end and update primary table entry with its position
         // Check if we have a cached table that needs to be written (either it has an offset or exists in memory)
-        bool has_cached_secondary_ddt = (ctx->userDataDdtHeader.tableShift > 0) &&
-                                        ((ctx->cachedDdtOffset != 0) ||
-                                         (ctx->cachedSecondaryDdtSmall != NULL || ctx->cachedSecondaryDdtBig != NULL));
+        bool has_cached_secondary_ddt =
+            ctx->userDataDdtHeader.tableShift > 0 &&
+            (ctx->cachedDdtOffset != 0 || ctx->cachedSecondaryDdtSmall != NULL || ctx->cachedSecondaryDdtBig != NULL);
 
         if(has_cached_secondary_ddt)
         {
@@ -190,7 +190,7 @@ int aaruf_close(void *context)
             if(end_of_file & alignment_mask)
             {
                 // Calculate the next aligned position
-                uint64_t aligned_position = (end_of_file + alignment_mask) & ~alignment_mask;
+                uint64_t aligned_position = end_of_file + alignment_mask & ~alignment_mask;
 
                 // Seek to the aligned position and pad with zeros if necessary
                 fseek(ctx->imageStream, aligned_position, SEEK_SET);
@@ -506,7 +506,7 @@ int aaruf_close(void *context)
         uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
         if(index_position & alignment_mask)
         {
-            uint64_t aligned_position = (index_position + alignment_mask) & ~alignment_mask;
+            uint64_t aligned_position = index_position + alignment_mask & ~alignment_mask;
             fseek(ctx->imageStream, aligned_position, SEEK_SET);
             index_position = aligned_position;
             TRACE("Aligned index position to %" PRIu64, aligned_position);

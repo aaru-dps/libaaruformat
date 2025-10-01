@@ -88,7 +88,7 @@ int convert(const char *input_path, const char *output_path)
         if(sector % 1000 == 0 || sector == total_sectors - 1)
         {
             printf("\rProgress: %llu/%llu sectors (%.1f%%)", (unsigned long long)sector + 1,
-                   (unsigned long long)total_sectors, ((double)(sector + 1) / total_sectors) * 100.0);
+                   (unsigned long long)total_sectors, (double)(sector + 1) / total_sectors * 100.0);
             fflush(stdout);
         }
 

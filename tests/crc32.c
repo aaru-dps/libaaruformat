@@ -36,14 +36,14 @@ extern "C"
 
             for(int j = 0; j < 8; j++)
                 if((entry & 1) == 1)
-                    entry = (entry >> 1) ^ CRC32_ISO_POLY;
+                    entry = entry >> 1 ^ CRC32_ISO_POLY;
                 else
                     entry >>= 1;
 
             localTable[i] = entry;
         }
 
-        for(i = 0; i < len; i++) localHashInt = (localHashInt >> 8) ^ localTable[data[i] ^ (localHashInt & 0xff)];
+        for(i = 0; i < len; i++) localHashInt = localHashInt >> 8 ^ localTable[data[i] ^ localHashInt & 0xff];
 
         localHashInt ^= CRC32_ISO_SEED;
 

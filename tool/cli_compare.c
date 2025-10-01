@@ -110,8 +110,8 @@ int cli_compare(const char *path1, const char *path2)
         read_result2 = aaruf_read_sector(ctx2, sector, buffer2, &buffer2_length);
 
         // Handle read errors or missing sectors
-        const bool sector1_available = (read_result1 == AARUF_STATUS_OK);
-        const bool sector2_available = (read_result2 == AARUF_STATUS_OK);
+        const bool sector1_available = read_result1 == AARUF_STATUS_OK;
+        const bool sector2_available = read_result2 == AARUF_STATUS_OK;
         bool       sectors_different = false;
 
         if(!sector1_available && !sector2_available)
@@ -149,7 +149,7 @@ int cli_compare(const char *path1, const char *path2)
         // Update progress every 1000 sectors or at the end
         if(sectors_processed % 1000 == 0 || sector == total_sectors - 1)
         {
-            const int progress = (int)((sectors_processed * 100) / total_sectors);
+            const int progress = (int)(sectors_processed * 100 / total_sectors);
             printf("Progress: %d%% (%llu/%llu sectors)\r", progress, (unsigned long long)sectors_processed,
                    (unsigned long long)total_sectors);
             fflush(stdout);

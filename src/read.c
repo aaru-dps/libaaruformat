@@ -524,7 +524,7 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, uint8_t 
     TRACE("Adding block to cache");
     add_to_cache_uint64(&ctx->blockCache, block_offset, block);
 
-    memcpy(data, block + (offset * block_header->sectorSize), block_header->sectorSize);
+    memcpy(data, block + offset * block_header->sectorSize, block_header->sectorSize);
     *length = block_header->sectorSize;
 
     TRACE("Exiting aaruf_read_sector() = AARUF_STATUS_OK");
@@ -840,7 +840,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, uin
                     memcpy(data + 16, bare_data, 2048);
 
                     if(ctx->sectorPrefix != NULL)
-                        memcpy(data, ctx->sectorPrefix + (sector_address * 16), 16);
+                        memcpy(data, ctx->sectorPrefix + sector_address * 16, 16);
                     else if(ctx->sectorPrefixDdt != NULL)
                     {
                         if((ctx->sectorPrefixDdt[sector_address] & CD_XFIX_MASK) == Correct)

@@ -36,12 +36,12 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
     TRACE("Entering process_checksum_block(%p, %p)", ctx, entry);
 
-    int                  pos             = 0;
-    size_t               read_bytes      = 0;
+    int                  pos        = 0;
+    size_t               read_bytes = 0;
     ChecksumHeader       checksum_header;
-    ChecksumEntry const *checksum_entry  = NULL;
-    uint8_t             *data            = NULL;
-    int                  j               = 0;
+    ChecksumEntry const *checksum_entry = NULL;
+    uint8_t             *data           = NULL;
+    int                  j              = 0;
 
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
@@ -101,7 +101,7 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
     TRACE("Processing %u checksum entries", checksum_header.entries);
     for(j = 0; j < checksum_header.entries; j++)
     {
-        checksum_entry = (ChecksumEntry *)(&data[pos]);
+        checksum_entry = (ChecksumEntry *)&data[pos];
         pos += sizeof(ChecksumEntry);
 
         if(checksum_entry->type == Md5)

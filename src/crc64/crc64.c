@@ -32,7 +32,7 @@
 AARU_EXPORT crc64_ctx *AARU_CALL aaruf_crc64_init(void)
 {
     TRACE("Entering aaruf_crc64_init()");
-    crc64_ctx *ctx = (crc64_ctx *)malloc(sizeof(crc64_ctx));
+    crc64_ctx *ctx = malloc(sizeof(crc64_ctx));
 
     if(!ctx) return NULL;
 
@@ -107,26 +107,26 @@ AARU_EXPORT void AARU_CALL aaruf_crc64_slicing(uint64_t *previous_crc, const uin
     {
         const uint8_t *limit = NULL;
 
-        while((uintptr_t)(data) & 3)
+        while((uintptr_t)data & 3)
         {
-            c = crc64_table[0][*data++ ^ ((c) & 0xFF)] ^ ((c) >> 8);
+            c = crc64_table[0][*data++ ^ c & 0xFF] ^ c >> 8;
             --len;
         }
 
-        limit = data + (len & ~(uint32_t)(3));
-        len &= (uint32_t)(3);
+        limit = data + (len & ~(uint32_t)3);
+        len &= (uint32_t)3;
 
         while(data < limit)
         {
-            const uint32_t tmp = c ^ *(const uint32_t *)(data);
+            const uint32_t tmp = c ^ *(const uint32_t *)data;
             data += 4;
 
-            c = crc64_table[3][((tmp) & 0xFF)] ^ crc64_table[2][(((tmp) >> 8) & 0xFF)] ^ ((c) >> 32) ^
-                crc64_table[1][(((tmp) >> 16) & 0xFF)] ^ crc64_table[0][((tmp) >> 24)];
+            c = crc64_table[3][(tmp & 0xFF)] ^ crc64_table[2][(tmp >> 8 & 0xFF)] ^ c >> 32 ^
+                crc64_table[1][(tmp >> 16 & 0xFF)] ^ crc64_table[0][(tmp >> 24)];
         }
     }
 
-    while(len-- != 0) c = crc64_table[0][*data++ ^ ((c) & 0xFF)] ^ ((c) >> 8);
+    while(len-- != 0) c = crc64_table[0][*data++ ^ c & 0xFF] ^ c >> 8;
 
     *previous_crc = c;
 }

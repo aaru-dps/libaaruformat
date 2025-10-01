@@ -83,7 +83,7 @@ bool check_cd_sector_channel(CdEccContext *context, const uint8_t *sector, bool 
         edc  = 0;
         size = 0x810;
         pos  = 0;
-        for(; size > 0; size--) edc = (edc >> 8) ^ context->edc_table[(edc ^ sector[pos++]) & 0xFF];
+        for(; size > 0; size--) edc = edc >> 8 ^ context->edc_table[(edc ^ sector[pos++]) & 0xFF];
         calculatedEdc = edc;
 
         *edc_correct = calculatedEdc == storedEdc;
@@ -128,7 +128,7 @@ bool check_cd_sector_channel(CdEccContext *context, const uint8_t *sector, bool 
             edc       = 0;
             size      = 0x808;
             pos       = 0x10;
-            for(; size > 0; size--) edc = (edc >> 8) ^ context->edc_table[(edc ^ sector[pos++]) & 0xFF];
+            for(; size > 0; size--) edc = edc >> 8 ^ context->edc_table[(edc ^ sector[pos++]) & 0xFF];
             calculatedEdc = edc;
 
             *edc_correct = calculatedEdc == storedEdc;
@@ -151,7 +151,7 @@ bool check_cd_sector_channel(CdEccContext *context, const uint8_t *sector, bool 
         edc       = 0;
         size      = 0x808;
         pos       = 0x10;
-        for(; size > 0; size--) edc = (edc >> 8) ^ context->edc_table[(edc ^ sector[pos++]) & 0xFF];
+        for(; size > 0; size--) edc = edc >> 8 ^ context->edc_table[(edc ^ sector[pos++]) & 0xFF];
         calculatedEdc = edc;
 
         *edc_correct = calculatedEdc == storedEdc;

@@ -36,7 +36,7 @@ static uint8_t b64[] = {0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x
 
 AARU_EXPORT spamsum_ctx *AARU_CALL aaruf_spamsum_init(void)
 {
-    spamsum_ctx *ctx = (spamsum_ctx *)malloc(sizeof(spamsum_ctx));
+    spamsum_ctx *ctx = malloc(sizeof(spamsum_ctx));
     if(!ctx) return NULL;
 
     memset(ctx, 0, sizeof(spamsum_ctx));
@@ -192,7 +192,7 @@ AARU_EXPORT int AARU_CALL aaruf_spamsum_final(spamsum_ctx *ctx, uint8_t *result)
 {
     uint32_t bi     = ctx->bh_start;
     uint32_t h      = ROLL_SUM(ctx);
-    int      remain = (int)(FUZZY_MAX_RESULT - 1); /* Exclude terminating '\0'. */
+    int      remain = FUZZY_MAX_RESULT - 1; /* Exclude terminating '\0'. */
 
     if(!result) return -1;
 

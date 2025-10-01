@@ -81,7 +81,7 @@ void *aaruf_ecc_cd_init()
         j                           = i << 1 ^ ((i & 0x80) == 0x80 ? 0x11D : 0);
         context->ecc_f_table[i]     = (uint8_t)j;
         context->ecc_b_table[i ^ j] = (uint8_t)i;
-        for(j = 0; j < 8; j++) edc = (edc >> 1) ^ ((edc & 1) > 0 ? 0xD8018001 : 0);
+        for(j = 0; j < 8; j++) edc = edc >> 1 ^ ((edc & 1) > 0 ? 0xD8018001 : 0);
         context->edc_table[i] = edc;
     }
 
@@ -328,7 +328,7 @@ void aaruf_ecc_cd_write(void *context, const uint8_t *address, const uint8_t *da
 
         ecc_a                                 = ctx->ecc_b_table[ctx->ecc_f_table[ecc_a] ^ ecc_b];
         ecc[major + ecc_offset]               = ecc_a;
-        ecc[major + major_count + ecc_offset] = (ecc_a ^ ecc_b);
+        ecc[major + major_count + ecc_offset] = ecc_a ^ ecc_b;
     }
 
     TRACE("Exiting aaruf_ecc_cd_write()");
@@ -557,7 +557,7 @@ uint32_t aaruf_edc_cd_compute(void *context, uint32_t edc, const uint8_t *src, i
         return 0;
     }
 
-    for(; size > 0; size--) edc = (edc >> 8) ^ ctx->edc_table[(edc ^ src[pos++]) & 0xFF];
+    for(; size > 0; size--) edc = edc >> 8 ^ ctx->edc_table[(edc ^ src[pos++]) & 0xFF];
 
     TRACE("Exiting aaruf_edc_cd_compute() = 0x%08X", edc);
     return edc;

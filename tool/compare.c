@@ -30,7 +30,7 @@ void draw_progress_bar(int row, int percent)
 {
     const int width     = tb_width() / 2;
     const int bar_width = width - 4;  // leave space for borders
-    const int filled    = (bar_width * percent) / 100;
+    const int filled    = bar_width * percent / 100;
 
     // Draw progress bar outline
     tb_printf(2, row, TB_YELLOW | TB_BOLD, TB_BLUE, "[");

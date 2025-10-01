@@ -248,7 +248,7 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
     // Set the primary DDT offset (just after the header, block aligned)
     ctx->primaryDdtOffset        = sizeof(AaruHeaderV2);  // Start just after the header
     const uint64_t alignmentMask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
-    ctx->primaryDdtOffset        = (ctx->primaryDdtOffset + alignmentMask) & ~alignmentMask;
+    ctx->primaryDdtOffset        = ctx->primaryDdtOffset + alignmentMask & ~alignmentMask;
 
     TRACE("Primary DDT will be placed at offset %" PRIu64, ctx->primaryDdtOffset);
 
@@ -259,7 +259,7 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
 
     // Calculate where data blocks can start (after primary DDT + header)
     const uint64_t dataStartPosition = ctx->primaryDdtOffset + sizeof(DdtHeader2) + primaryTableSize;
-    ctx->nextBlockPosition           = (dataStartPosition + alignmentMask) & ~alignmentMask;
+    ctx->nextBlockPosition           = dataStartPosition + alignmentMask & ~alignmentMask;
 
     TRACE("Data blocks will start at position %" PRIu64, ctx->nextBlockPosition);
 

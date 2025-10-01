@@ -157,7 +157,7 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, const uint8_t
     }
 
     uint64_t ddt_entry = 0;
-    bool ddt_ok;
+    bool     ddt_ok;
 
     if(ctx->deduplicate)
     {
@@ -170,7 +170,7 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, const uint8_t
         TRACE("Block does %s exist in deduplication map", existing ? "already" : "not yet");
 
         ddt_ok = set_ddt_entry_v2(ctx, sector_address, ctx->currentBlockOffset, ctx->nextBlockPosition, sector_status,
-                                   &ddt_entry);
+                                  &ddt_entry);
         if(!ddt_ok)
         {
             TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_CANNOT_SET_DDT_ENTRY");
@@ -189,7 +189,7 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, const uint8_t
     }
     else
         ddt_ok = set_ddt_entry_v2(ctx, sector_address, ctx->currentBlockOffset, ctx->nextBlockPosition, sector_status,
-                                   &ddt_entry);
+                                  &ddt_entry);
 
     if(!ddt_ok)
     {
@@ -281,7 +281,7 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
     // Update nextBlockPosition to point to the next available aligned position
     uint64_t block_total_size = sizeof(BlockHeader) + ctx->currentBlockHeader.cmpLength;
     uint64_t alignment_mask   = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
-    ctx->nextBlockPosition    = (ctx->nextBlockPosition + block_total_size + alignment_mask) & ~alignment_mask;
+    ctx->nextBlockPosition    = ctx->nextBlockPosition + block_total_size + alignment_mask & ~alignment_mask;
     TRACE("Updated nextBlockPosition to %" PRIu64, ctx->nextBlockPosition);
 
     // Clear values

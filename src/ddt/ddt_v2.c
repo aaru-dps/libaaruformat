@@ -1098,8 +1098,8 @@ bool set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, co
     if(*ddt_entry == 0)
     {
         const uint64_t block_index = block_offset >> ctx->userDataDdtHeader.blockAlignmentShift;
-        *ddt_entry =
-            offset & ((1ULL << ctx->userDataDdtHeader.dataShift) - 1) | block_index << ctx->userDataDdtHeader.dataShift;
+        *ddt_entry                 = offset & (1ULL << ctx->userDataDdtHeader.dataShift) - 1 | block_index
+                                                                                   << ctx->userDataDdtHeader.dataShift;
     }
 
     if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
@@ -1164,7 +1164,6 @@ bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
     uint64_t   crc64                = 0;
     DdtHeader2 ddt_header;
     size_t     written_bytes    = 0;
-    long       current_pos      = 0;
     long       end_of_file      = 0;
     bool       create_new_table = false;
 
@@ -1279,13 +1278,12 @@ bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
             if(ctx->writingBuffer != NULL) aaruf_close_current_block(ctx);
 
             // Get current position and seek to end of file
-            current_pos = ftell(ctx->imageStream);
             fseek(ctx->imageStream, 0, SEEK_END);
             end_of_file = ftell(ctx->imageStream);
 
             // Align to block boundary
             uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
-            end_of_file             = (end_of_file + alignment_mask) & ~alignment_mask;
+            end_of_file             = end_of_file + alignment_mask & ~alignment_mask;
             fseek(ctx->imageStream, end_of_file, SEEK_SET);
 
             // Prepare DDT header for the never-written cached table
@@ -1393,7 +1391,7 @@ bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
 
             // Update nextBlockPosition to ensure future blocks don't overwrite the DDT
             uint64_t ddt_total_size = sizeof(DdtHeader2) + ddt_header.length;
-            ctx->nextBlockPosition  = (end_of_file + ddt_total_size + alignment_mask) & ~alignment_mask;
+            ctx->nextBlockPosition  = end_of_file + ddt_total_size + alignment_mask & ~alignment_mask;
             block_offset            = ctx->nextBlockPosition;
             offset                  = 0;
             TRACE("Updated nextBlockPosition after never-written DDT write to %" PRIu64, ctx->nextBlockPosition);
@@ -1430,6 +1428,7 @@ bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
     // Step 3: Write the currently in-memory cached secondary level table to the end of the file
     if(ctx->cachedDdtOffset != 0)
     {
+        long current_pos = 0;
         // Close the current data block first
         if(ctx->writingBuffer != NULL) aaruf_close_current_block(ctx);
 
@@ -1440,7 +1439,7 @@ bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
 
         // Align to block boundary
         uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
-        end_of_file             = (end_of_file + alignment_mask) & ~alignment_mask;
+        end_of_file             = end_of_file + alignment_mask & ~alignment_mask;
         fseek(ctx->imageStream, end_of_file, SEEK_SET);
 
         // Prepare DDT header for the cached table
@@ -1572,7 +1571,7 @@ bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
 
         // Update nextBlockPosition to ensure future blocks don't overwrite the DDT
         uint64_t ddt_total_size = sizeof(DdtHeader2) + ddt_header.length;
-        ctx->nextBlockPosition  = (end_of_file + ddt_total_size + alignment_mask) & ~alignment_mask;
+        ctx->nextBlockPosition  = end_of_file + ddt_total_size + alignment_mask & ~alignment_mask;
         block_offset            = ctx->nextBlockPosition;
         offset                  = 0;
         TRACE("Updated nextBlockPosition after DDT write to %" PRIu64, ctx->nextBlockPosition);
