@@ -17,9 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "usage.h"
 #include <stdio.h>
+
 #include "aaruformat.h"
+#include "usage.h"
 #include "version.h"  // Optional if you want a central place for version macros
 
 void print_banner()
