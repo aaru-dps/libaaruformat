@@ -460,8 +460,8 @@ int aaruf_close(void *context)
             // Write the DDT header first
             fseek(ctx->imageStream, ctx->primaryDdtOffset, SEEK_SET);
 
-            size_t headerWritten = fwrite(&ctx->userDataDdtHeader, sizeof(DdtHeader2), 1, ctx->imageStream);
-            if(headerWritten != 1)
+            size_t header_written = fwrite(&ctx->userDataDdtHeader, sizeof(DdtHeader2), 1, ctx->imageStream);
+            if(header_written != 1)
             {
                 TRACE("Failed to write single-level DDT header to file");
                 return AARUF_ERROR_CANNOT_WRITE_HEADER;
