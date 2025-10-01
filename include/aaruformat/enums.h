@@ -16,13 +16,13 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef LIBAARUFORMAT_ENUMS_H
+#define LIBAARUFORMAT_ENUMS_H
+
 #ifndef _MSC_VER
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #endif
-
-#ifndef LIBAARUFORMAT_ENUMS_H
-#define LIBAARUFORMAT_ENUMS_H
 
 /** List of known compression types */
 typedef enum
@@ -324,8 +324,8 @@ typedef enum
     SectorStatusUnencrypted     = 0xA
 } SectorStatus;
 
-#endif  // LIBAARUFORMAT_ENUMS_H
-
 #ifndef _MSC_VER
 #pragma clang diagnostic pop
 #endif
+
+#endif  // LIBAARUFORMAT_ENUMS_H

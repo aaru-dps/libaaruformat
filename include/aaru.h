@@ -16,13 +16,13 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef LIBAARUFORMAT_AARU_H
+#define LIBAARUFORMAT_AARU_H
+
 #ifndef _MSC_VER
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #endif
-
-#ifndef LIBAARUFORMAT_AARU_H
-#define LIBAARUFORMAT_AARU_H
 
 #include <stdint.h>
 
@@ -1173,8 +1173,8 @@ typedef enum
 
 // NOLINTEND(readability-identifier-naming)
 
-#endif  // LIBAARUFORMAT_AARU_H
-
 #ifndef _MSC_VER
 #pragma clang diagnostic pop
 #endif
+
+#endif  // LIBAARUFORMAT_AARU_H

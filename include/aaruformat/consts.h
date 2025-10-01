@@ -16,13 +16,13 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef LIBAARUFORMAT_CONSTS_H
+#define LIBAARUFORMAT_CONSTS_H
+
 #ifndef _MSC_VER
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedMacroInspection"
 #endif
-
-#ifndef LIBAARUFORMAT_CONSTS_H
-#define LIBAARUFORMAT_CONSTS_H
 
 /** Magic identidier = "DICMFRMT". */
 #define DIC_MAGIC              0x544D52464D434944
@@ -59,8 +59,8 @@
 #define CRC64_ECMA_POLY 0xC96C5795D7870F42
 #define CRC64_ECMA_SEED 0xFFFFFFFFFFFFFFFF
 
-#endif  // LIBAARUFORMAT_CONSTS_H
-
 #ifndef _MSC_VER
 #pragma clang diagnostic pop
 #endif
+
+#endif  // LIBAARUFORMAT_CONSTS_H
