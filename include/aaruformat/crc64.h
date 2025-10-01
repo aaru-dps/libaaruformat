@@ -20,11 +20,49 @@
 #define LIBAARUFORMAT_CRC64_H
 #include <stdint.h>
 
+/** \file aaruformat/crc64.h
+ *  \brief CRC64 (ECMA-182) core context and precomputed slicing-by-4 tables.
+ *
+ *  Exposes:
+ *   - \ref crc64_ctx: minimal incremental state (initialize crc to CRC64_ECMA_SEED).
+ *   - crc64_table[4][256]: 4-way (slicing-by-4) lookup tables for high-throughput updates.
+ *   - CRC64_ECMA_POLY / CRC64_ECMA_SEED macros matching ECMA-182 (reflected polynomial, all-bits-set seed).
+ *
+ *  Algorithm characteristics:
+ *   - Polynomial: 0xC96C5795D7870F42 (reflected form).
+ *   - Seed / initial value: 0xFFFFFFFFFFFFFFFFULL.
+ *   - Final XOR: none (raw accumulator is the result).
+ *   - Bit order: reflected; least significant bit processed first.
+ *
+ *  Table layout & optimization:
+ *   Four 256-entry tables are used (slicing-by-4) allowing 4-byte chunks to be folded per iteration, reducing data
+ *   dependency chains compared to a single-table approach. This improves throughput on modern CPUs with abundant ILP.
+ *
+ *  Incremental usage (pseudo-code):
+ *  \code{.c}
+ *  crc64_ctx ctx = { .crc = CRC64_ECMA_SEED };
+ *  ctx.crc = crc64_update(ctx.crc, buf, len); // internal helper using crc64_table
+ *  // ctx.crc now holds ECMA-182 CRC64 value.
+ *  \endcode
+ *
+ *  Thread safety: The table is read-only; each thread must use its own crc64_ctx.
+ *  Endianness: Table values are host-endian 64-bit constants; algorithm result is endianness-agnostic.
+ */
+
+/** \struct crc64_ctx
+ *  \brief Minimal ECMA-182 CRC64 incremental state container (running value only).
+ */
 typedef struct
 {
-    uint64_t crc;
+    uint64_t crc;  ///< Running CRC value (initialize to CRC64_ECMA_SEED before first update).
 } crc64_ctx;
 
+/** \var crc64_table
+ *  \brief Precomputed slicing-by-4 ECMA-182 CRC64 lookup tables (4 * 256 * 8 = 8192 bytes).
+ *
+ *  Each row corresponds to one byte lane in a 4-byte block update; actual folding logic resides in the implementation.
+ *  Content generated offline; do not modify manually.
+ */
 const static uint64_t crc64_table[4][256] = {
     {0x0000000000000000, 0xB32E4CBE03A75F6F, 0xF4843657A840A05B, 0x47AA7AE9ABE7FF34, 0x7BD0C384FF8F5E33,
      0xC8FE8F3AFC28015C, 0x8F54F5D357CFFE68, 0x3C7AB96D5468A107, 0xF7A18709FF1EBC66, 0x448FCBB7FCB9E309,
@@ -236,7 +274,9 @@ const static uint64_t crc64_table[4][256] = {
      0x1E5CD90C6EC2440D}
 };
 
-#define CRC64_ECMA_POLY 0xC96C5795D7870F42
-#define CRC64_ECMA_SEED 0xFFFFFFFFFFFFFFFF
+/** ECMA-182 reflected polynomial constant. */
+#define CRC64_ECMA_POLY 0xC96C5795D7870F42ULL
+/** ECMA-182 initial seed (all bits set). */
+#define CRC64_ECMA_SEED 0xFFFFFFFFFFFFFFFFULL
 
 #endif  // LIBAARUFORMAT_CRC64_H

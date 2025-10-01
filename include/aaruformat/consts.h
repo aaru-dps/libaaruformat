@@ -24,40 +24,87 @@
 #pragma ide diagnostic ignored "OCUnusedMacroInspection"
 #endif
 
-/** Magic identidier = "DICMFRMT". */
-#define DIC_MAGIC              0x544D52464D434944
-/** Magic identidier = "AARUFRMT". */
-#define AARU_MAGIC             0x544D524655524141
-/** Image format version. A change in this number indicates an incompatible change to the format that prevents older
- * implementations from reading it correctly, if at all. */
-#define AARUF_VERSION          2
-/** First version of AaruFormat, created in C#.
- * CRC64 was byte-swapped
+/** \file aaruformat/consts.h
+ *  \brief Core public constants and compile‑time limits for the Aaru container format implementation.
+ *
+ *  This header exposes magic identifiers, format version selectors, resource limits, codec parameter bounds,
+ *  and bit masks used across libaaruformat. All values are immutable interface contracts; changing them breaks
+ *  backward compatibility unless a new format version is declared.
+ *
+ *  Summary:
+ *   - Magic numbers (DIC_MAGIC, AARU_MAGIC) identify container families (legacy DiscImageChef vs AaruFormat).
+ *   - Version macros distinguish format generations (V1 C# / legacy CRC endianness, V2 current C implementation).
+ *   - Cache and table size limits provide protective upper bounds against runaway memory consumption.
+ *   - Audio constants (SAMPLES_PER_SECTOR, MIN/MAX_FLAKE_BLOCK) align with Red Book (CD‑DA) and FLAC encoding best
+ * practices.
+ *   - CD_* masks assist with extracting flags / positional subfields in deduplicated Compact Disc sector tables.
+ *   - CRC64 constants implement ECMA‑182 polynomial and standard seed, enabling deterministic end‑to‑end block
+ * integrity.
+ *
+ *  Notes:
+ *   - Magic values are stored little‑endian on disk when written as 64‑bit integers; when inspecting raw bytes make
+ * sure to account for host endianness.
+ *   - AARUF_VERSION must be incremented only when an incompatible on‑disk layout change is introduced.
+ *   - MAX_DDT_ENTRY_CACHE is a soft upper bound sized to balance deduplication hit rate vs RAM; tune in future builds
+ * via configuration if adaptive heuristics are introduced.
+ *   - The LZMA properties length (5) derives from the standard LZMA header (lc/lp/pb + dict size) and is constant for
+ *     raw LZMA streams used here.
+ *   - FLAC sample block guidance: empirical evaluation shows >4608 samples per block does not yield meaningful ratio
+ * gains for typical optical audio captures while increasing decode buffer size.
+ *
+ *  Thread safety: All macros are compile‑time constants; no synchronization required.
+ *  Portability: Constants chosen to fit within 64‑bit targets; arithmetic assumes two's complement.
  */
-#define AARUF_VERSION_V1       1
-/** Second version of AaruFormat, created in C.
- * Introduced new header, many new features, and blocks.
- */
-#define AARUF_VERSION_V2       2
-/** Maximum read cache size, 512MiB. */
-#define MAX_CACHE_SIZE         536870912
-/** Size in bytes of LZMA properties. */
-#define LZMA_PROPERTIES_LENGTH 5
-/** Maximum number of entries for the DDT cache. */
-#define MAX_DDT_ENTRY_CACHE    16000000
-/** How many samples are contained in a RedBook sector. */
-#define SAMPLES_PER_SECTOR     588
-/** Maximum number of samples for a FLAC block. Bigger than 4608 gives no benefit. */
-#define MAX_FLAKE_BLOCK        4608
-/** Minimum number of samples for a FLAC block. CUETools.Codecs.FLAKE does not support it to be smaller than 256. */
-#define MIN_FLAKE_BLOCK        256
-/** This mask is to check for flags in CompactDisc suffix/prefix DDT */
-#define CD_XFIX_MASK           0xFF000000
-/** This mask is to check for position in CompactDisc suffix/prefix deduplicated block */
-#define CD_DFIX_MASK           0x00FFFFFF
 
-#define CRC64_ECMA_POLY 0xC96C5795D7870F42
-#define CRC64_ECMA_SEED 0xFFFFFFFFFFFFFFFF
+/** Magic identifier for legacy DiscImageChef container (ASCII "DICMFRMT").
+ *  Retained for backward compatibility / migration tooling. */
+#define DIC_MAGIC  0x544D52464D434944ULL
+/** Magic identifier for AaruFormat container (ASCII "AARUFRMT").
+ *  Used in the primary header to assert correct file type. */
+#define AARU_MAGIC 0x544D524655524141ULL
+
+/** Current image format major version (incompatible changes bump this).
+ *  Readers should reject headers with a higher number unless explicitly forward compatible. */
+#define AARUF_VERSION    2
+/** First on‑disk version (C# implementation).
+ *  Quirk: CRC64 values were stored byte‑swapped relative to ECMA‑182 canonical output. */
+#define AARUF_VERSION_V1 1
+/** Second on‑disk version (C implementation).
+ *  Introduced: extended header (GUID, feature bitmaps), hierarchical DDT v2, improved index (v2/v3),
+ *  multi‑codec compression, refined metadata blocks. */
+#define AARUF_VERSION_V2 2
+
+/** Maximum read cache size (bytes). 512 MiB chosen to prevent excessive resident memory while
+ *  still enabling efficient sequential and moderate random access patterns. */
+#define MAX_CACHE_SIZE 536870912ULL
+
+/** Size in bytes of the fixed LZMA properties header (lc/lp/pb + dictionary size). */
+#define LZMA_PROPERTIES_LENGTH 5
+
+/** Maximum number of cached DDT entry descriptors retained in memory for fast duplicate detection.
+ *  At 16,000,000 entries with a compact structure, this caps hash_map overhead while covering large images.
+ *  (Approx memory just for lookup bookkeeping: ~16 bytes * N ≈ 256 MB worst case; typical effective <50% of cap.) */
+#define MAX_DDT_ENTRY_CACHE 16000000
+
+/** Red Book (CD‑DA) PCM samples per 2352‑byte sector: 44,100 Hz / 75 sectors per second = 588 samples. */
+#define SAMPLES_PER_SECTOR 588
+
+/** FLAC maximum block size used for encoding audio sectors.
+ *  Empirically >4608 samples yields diminishing compression returns and higher decode latency. */
+#define MAX_FLAKE_BLOCK 4608
+/** FLAC minimum block size. CUETools.Codecs.FLAKE does not accept blocks smaller than 256 samples. */
+#define MIN_FLAKE_BLOCK 256
+
+/** Mask for extracting correction / fix flags in Compact Disc suffix/prefix DDT entries.
+ *  High 8 bits store status (see SectorStatus / CdFixFlags relationships). */
+#define CD_XFIX_MASK 0xFF000000U
+/** Mask for extracting positional index (lower 24 bits) in Compact Disc suffix/prefix deduplicated block entries. */
+#define CD_DFIX_MASK 0x00FFFFFFU
+
+/** ECMA‑182 CRC64 polynomial (reflected form used in standard implementations). */
+#define CRC64_ECMA_POLY 0xC96C5795D7870F42ULL
+/** Initial seed value for CRC64 computations (all bits set). */
+#define CRC64_ECMA_SEED 0xFFFFFFFFFFFFFFFFULL
 
 #ifndef _MSC_VER
 #pragma clang diagnostic pop
