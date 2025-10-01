@@ -126,7 +126,6 @@ int aaruf_close(void *context)
 {
     TRACE("Entering aaruf_close(%p)", context);
 
-    int            i             = 0;
     mediaTagEntry *media_tag     = NULL;
     mediaTagEntry *tmp_media_tag = NULL;
 
@@ -661,7 +660,7 @@ int aaruf_close(void *context)
 
     if(ctx->dumpHardwareEntriesWithData != NULL)
     {
-        for(i = 0; i < ctx->dumpHardwareHeader.entries; i++)
+        for(int i = 0; i < ctx->dumpHardwareHeader.entries; i++)
         {
             free(ctx->dumpHardwareEntriesWithData[i].extents);
             ctx->dumpHardwareEntriesWithData[i].extents = NULL;

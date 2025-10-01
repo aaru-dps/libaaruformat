@@ -37,7 +37,6 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
     TRACE("Entering process_dumphw_block(%p, %p)", ctx, entry);
     int      pos        = 0;
     size_t   read_bytes = 0;
-    uint64_t crc64      = 0;
     uint16_t e          = 0;
     uint8_t *data       = NULL;
 
@@ -93,7 +92,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
 
     if(read_bytes == ctx->dumpHardwareHeader.length)
     {
-        crc64 = aaruf_crc64_data(data, ctx->dumpHardwareHeader.length);
+        uint64_t crc64 = aaruf_crc64_data(data, ctx->dumpHardwareHeader.length);
 
         // Due to how C# wrote it, it is effectively reversed
         if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);

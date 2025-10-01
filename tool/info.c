@@ -32,7 +32,7 @@ int info(const char *path)
     aaruformatContext   *ctx          = NULL;
     char                *strBuffer    = NULL;
     UErrorCode           u_error_code = U_ZERO_ERROR;
-    uint                 i = 0, j = 0;
+    uint                 i = 0;
     mediaTagEntry const *mediaTag    = NULL;
     mediaTagEntry const *tmpMediaTag = NULL;
     UChar                ustr[128];
@@ -372,7 +372,7 @@ int info(const char *path)
                 free(strBuffer);
             }
 
-            for(j = 0; j < ctx->dumpHardwareEntriesWithData[i].entry.extents; j++)
+            for(uint j = 0; j < ctx->dumpHardwareEntriesWithData[i].entry.extents; j++)
             {
                 printf("\t\tExtent %d:\n", j);
                 printf("\t\t\tStart: %llu\n", ctx->dumpHardwareEntriesWithData[i].extents[j].start);

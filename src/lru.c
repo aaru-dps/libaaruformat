@@ -46,7 +46,7 @@ void *find_in_cache(struct CacheHeader *cache, const char *key)
  */
 void add_to_cache(struct CacheHeader *cache, const char *key, void *value)
 {
-    struct CacheEntry *entry, *tmp_entry;
+    struct CacheEntry *entry;
     // TODO: Is this needed or we're just losing cycles? uthash does not free the entry
     entry        = malloc(sizeof(struct CacheEntry));
     entry->key   = strdup(key);
@@ -56,6 +56,7 @@ void add_to_cache(struct CacheHeader *cache, const char *key, void *value)
     // prune the cache to MAX_CACHE_SIZE
     if(HASH_COUNT(cache->cache) >= cache->max_items)
     {
+        struct CacheEntry *tmp_entry;
         HASH_ITER(hh, cache->cache, entry, tmp_entry)
         {
             // prune the first entry (loop is based on insertion order so this deletes the oldest item)

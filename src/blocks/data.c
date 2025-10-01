@@ -80,9 +80,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
     mediaTagEntry *old_media_tag = NULL;
     mediaTagEntry *media_tag     = NULL;
     uint8_t       *data          = NULL;
-    int            error_no      = 0;
     uint8_t        lzma_properties[LZMA_PROPERTIES_LENGTH];
-    uint64_t       crc64 = 0;
 
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
@@ -154,6 +152,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
 
     if(block_header.compression == Lzma || block_header.compression == LzmaClauniaSubchannelTransform)
     {
+        int error_no = 0;
         if(block_header.compression == LzmaClauniaSubchannelTransform && block_header.type != CdSectorSubchannel)
         {
             TRACE("Invalid compression type %d for block with data type %d, continuing...", block_header.compression,
@@ -283,7 +282,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
 
     if(block_header.length > 0)
     {
-        crc64 = aaruf_crc64_data(data, block_header.length);
+        uint64_t crc64 = aaruf_crc64_data(data, block_header.length);
 
         // Due to how C# wrote it, it is effectively reversed
         if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);

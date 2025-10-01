@@ -25,7 +25,6 @@
 bool check_cd_sector_channel(CdEccContext *context, uint8_t *sector, bool *unknown, bool *has_edc, bool *edc_correct,
                              bool *has_ecc_p, bool *ecc_p_correct, bool *has_ecc_q, bool *ecc_q_correct)
 {
-    int i = 0;
     uint32_t storedEdc = 0, edc = 0, calculatedEdc = 0;
     int size = 0, pos = 0;
     uint8_t  zeroaddress[4];
@@ -48,7 +47,7 @@ bool check_cd_sector_channel(CdEccContext *context, uint8_t *sector, bool *unkno
 
     if((sector[0x00F] & 0x03) == 0x00)  // Mode 0
     {
-        for(i = 0x010; i < 0x930; i++)
+        for(int i = 0x010; i < 0x930; i++)
             if(sector[i] != 0x00)
             {
                 fprintf(stderr, "Mode 0 sector with error at address: %2X:%2X:%2X.\n", sector[0x00C], sector[0x00D],

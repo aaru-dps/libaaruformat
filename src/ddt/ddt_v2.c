@@ -763,7 +763,6 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_addres
     size_t     lzma_size            = 0;
     uint8_t   *cmp_data             = NULL;
     uint8_t   *buffer               = NULL;
-    int32_t    error_no             = 0;
     crc64_ctx *crc64_context        = NULL;
     uint64_t   crc64                = 0;
     int        items_per_ddt_entry  = 0;
@@ -810,6 +809,7 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_addres
     // Is the one we have cached the same as the one we need to read?
     if(ctx->cachedDdtOffset != secondary_ddt_offset)
     {
+        int32_t error_no = 0;
         fseek(ctx->imageStream, secondary_ddt_offset, SEEK_SET);
         DdtHeader2 ddt_header;
         size_t     read_bytes = fread(&ddt_header, 1, sizeof(DdtHeader2), ctx->imageStream);
