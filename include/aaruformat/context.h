@@ -209,6 +209,9 @@ typedef struct aaruformatContext
     UT_array   *indexEntries;   ///< Flattened index entries (UT_array of IndexEntry).
     hash_map_t *sectorHashMap;  ///< Deduplication hash map (fingerprint->entry mapping).
     bool        deduplicate;    ///< Storage deduplication active (duplicates coalesce).
+
+    bool     rewinded;            ///< True if stream has been rewound after open (write path).
+    uint64_t last_written_block;  ///< Last written block number (write path).
 } aaruformatContext;
 
 /** \struct DumpHardwareEntriesWithData

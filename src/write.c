@@ -146,6 +146,16 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
     }
 
     // TODO: Check rewinded for disabling checksums
+    if(!ctx->rewinded)
+    {
+        if(sector_address <= ctx->last_written_block)
+        {
+            TRACE("Rewinded");
+            ctx->rewinded = true;
+        }
+        else
+            ctx->last_written_block = sector_address;
+    }
 
     // TODO: If optical disc check track
 

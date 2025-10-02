@@ -307,6 +307,9 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
     if(ctx->deduplicate)
         ctx->sectorHashMap = create_map(ctx->userDataDdtHeader.blocks * 25 / 100);  // 25% of total sectors
 
+    ctx->rewinded           = false;
+    ctx->last_written_block = 0;
+
     // Is writing
     ctx->isWriting = true;
 
