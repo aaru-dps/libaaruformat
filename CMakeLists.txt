@@ -129,7 +129,7 @@ add_library(aaruformat SHARED include/aaruformat/consts.h include/aaruformat/enu
             src/md5.c
             include/md5.h)
 
-include_directories(include include/aaruformat)
+include_directories(include include/aaruformat 3rdparty/uthash/include 3rdparty/uthash/src)
 
 include(3rdparty/flac.cmake)
 include(3rdparty/lzma.cmake)
