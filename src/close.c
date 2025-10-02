@@ -500,6 +500,13 @@ int aaruf_close(void *context)
         uint64_t alignment_mask;
         uint64_t aligned_position;
 
+        // Finalize pending checksums
+        if(ctx->calculating_md5)
+        {
+            ctx->checksums.hasMd5 = true;
+            aaruf_md5_final(&ctx->md5_context, ctx->checksums.md5);
+        }
+
         // Write the checksums block
         bool has_checksums =
             ctx->checksums.hasMd5 || ctx->checksums.hasSha1 || ctx->checksums.hasSha256 || ctx->checksums.hasSpamSum;

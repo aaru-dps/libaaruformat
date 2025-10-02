@@ -22,6 +22,7 @@
 #include "crc64.h"
 #include "hash_map.h"
 #include "lru.h"
+#include "md5.h"
 #include "structs.h"
 #include "utarray.h"
 
@@ -212,6 +213,8 @@ typedef struct aaruformatContext
 
     bool     rewinded;            ///< True if stream has been rewound after open (write path).
     uint64_t last_written_block;  ///< Last written block number (write path).
+    bool     calculating_md5;     ///< True if whole-image MD5 being calculated on-the-fly.
+    md5_ctx  md5_context;         ///< Opaque MD5 context for streaming updates
 } aaruformatContext;
 
 /** \struct DumpHardwareEntriesWithData

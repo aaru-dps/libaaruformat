@@ -145,17 +145,23 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
         return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
     }
 
-    // TODO: Check rewinded for disabling checksums
     if(!ctx->rewinded)
     {
         if(sector_address <= ctx->last_written_block)
         {
             TRACE("Rewinded");
             ctx->rewinded = true;
+
+            // Disable MD5 calculation
+            if(ctx->calculating_md5) ctx->calculating_md5 = false;
         }
         else
             ctx->last_written_block = sector_address;
     }
+
+    // Calculate MD5 on-the-fly if requested and sector is within user sectors (not negative or overflow)
+    if(ctx->calculating_md5 && !negative && sector_address <= ctx->imageInfo.Sectors)
+        aaruf_md5_update(&ctx->md5_context, data, length);
 
     // TODO: If optical disc check track
 
