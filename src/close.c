@@ -497,16 +497,105 @@ int aaruf_close(void *context)
                 TRACE("Failed to write single-level DDT table data to file");
         }
 
+        uint64_t alignment_mask;
+        uint64_t aligned_position;
+
+        // Write the checksums block
+        bool has_checksums =
+            ctx->checksums.hasMd5 || ctx->checksums.hasSha1 || ctx->checksums.hasSha256 || ctx->checksums.hasSpamSum;
+
+        if(has_checksums)
+        {
+            ChecksumHeader checksum_header = {0};
+            checksum_header.identifier     = ChecksumBlock;
+
+            fseek(ctx->imageStream, 0, SEEK_END);
+            long checksum_position = ftell(ctx->imageStream);
+            // Align index position to block boundary if needed
+            alignment_mask         = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+            if(checksum_position & alignment_mask)
+            {
+                aligned_position = checksum_position + alignment_mask & ~alignment_mask;
+                fseek(ctx->imageStream, aligned_position, SEEK_SET);
+                checksum_position = aligned_position;
+            }
+
+            // Skip checksum_header
+            fseek(ctx->imageStream, sizeof(checksum_header), SEEK_CUR);
+
+            if(ctx->checksums.hasMd5)
+            {
+                TRACE("Writing MD5 checksum entry");
+                ChecksumEntry md5_entry = {0};
+                md5_entry.length        = MD5_DIGEST_LENGTH;
+                md5_entry.type          = Md5;
+                fwrite(&md5_entry, sizeof(ChecksumEntry), 1, ctx->imageStream);
+                fwrite(&ctx->checksums.md5, MD5_DIGEST_LENGTH, 1, ctx->imageStream);
+                checksum_header.length += sizeof(ChecksumEntry) + MD5_DIGEST_LENGTH;
+                checksum_header.entries++;
+            }
+
+            if(ctx->checksums.hasSha1)
+            {
+                TRACE("Writing SHA1 checksum entry");
+                ChecksumEntry sha1_entry = {0};
+                sha1_entry.length        = SHA1_DIGEST_LENGTH;
+                sha1_entry.type          = Sha1;
+                fwrite(&sha1_entry, sizeof(ChecksumEntry), 1, ctx->imageStream);
+                fwrite(&ctx->checksums.sha1, SHA1_DIGEST_LENGTH, 1, ctx->imageStream);
+                checksum_header.length += sizeof(ChecksumEntry) + SHA1_DIGEST_LENGTH;
+                checksum_header.entries++;
+            }
+
+            if(ctx->checksums.hasSha256)
+            {
+                TRACE("Writing SHA256 checksum entry");
+                ChecksumEntry sha256_entry = {0};
+                sha256_entry.length        = SHA256_DIGEST_LENGTH;
+                sha256_entry.type          = Sha256;
+                fwrite(&sha256_entry, sizeof(ChecksumEntry), 1, ctx->imageStream);
+                fwrite(&ctx->checksums.sha256, SHA256_DIGEST_LENGTH, 1, ctx->imageStream);
+                checksum_header.length += sizeof(ChecksumEntry) + SHA1_DIGEST_LENGTH;
+                checksum_header.entries++;
+            }
+
+            if(ctx->checksums.hasSpamSum)
+            {
+                TRACE("Writing SpamSum checksum entry");
+                ChecksumEntry spamsum_entry = {0};
+                spamsum_entry.length        = strlen((const char *)ctx->checksums.spamsum);
+                spamsum_entry.type          = SpamSum;
+                fwrite(&spamsum_entry, sizeof(ChecksumEntry), 1, ctx->imageStream);
+                fwrite(&ctx->checksums.spamsum, spamsum_entry.length, 1, ctx->imageStream);
+                checksum_header.length += sizeof(ChecksumEntry) + spamsum_entry.length;
+                checksum_header.entries++;
+            }
+
+            fseek(ctx->imageStream, checksum_position, SEEK_SET);
+            TRACE("Writing checksum header");
+            fwrite(&checksum_header, sizeof(ChecksumHeader), 1, ctx->imageStream);
+
+            // Add checksum block to index
+            TRACE("Adding checksum block to index");
+            IndexEntry checksum_index_entry;
+            checksum_index_entry.blockType = ChecksumBlock;
+            checksum_index_entry.dataType  = 0;
+            checksum_index_entry.offset    = checksum_position;
+
+            utarray_push_back(ctx->indexEntries, &checksum_index_entry);
+            TRACE("Added checksum block index entry at offset %" PRIu64, checksum_position);
+        }
+
         // Write the complete index at the end of the file
         TRACE("Writing index at the end of the file");
         fseek(ctx->imageStream, 0, SEEK_END);
         long index_position = ftell(ctx->imageStream);
 
         // Align index position to block boundary if needed
-        uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+        alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
         if(index_position & alignment_mask)
         {
-            uint64_t aligned_position = index_position + alignment_mask & ~alignment_mask;
+            aligned_position = index_position + alignment_mask & ~alignment_mask;
             fseek(ctx->imageStream, aligned_position, SEEK_SET);
             index_position = aligned_position;
             TRACE("Aligned index position to %" PRIu64, aligned_position);
