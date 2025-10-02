@@ -101,11 +101,6 @@
 /** Mask for extracting positional index (lower 24 bits) in Compact Disc suffix/prefix deduplicated block entries. */
 #define CD_DFIX_MASK 0x00FFFFFFU
 
-/** ECMA‑182 CRC64 polynomial (reflected form used in standard implementations). */
-#define CRC64_ECMA_POLY 0xC96C5795D7870F42ULL
-/** Initial seed value for CRC64 computations (all bits set). */
-#define CRC64_ECMA_SEED 0xFFFFFFFFFFFFFFFFULL
-
 #ifndef _MSC_VER
 #pragma clang diagnostic pop
 #endif
