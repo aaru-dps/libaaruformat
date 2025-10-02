@@ -185,6 +185,9 @@ endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Add slog submodule
+if(POLICY CMP0000)
+  cmake_policy(VERSION 3.5)
+endif()
 add_subdirectory(3rdparty/slog)
 
 include_directories(include 3rdparty/uthash/src)

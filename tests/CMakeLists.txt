@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.13)
+
 # 'Google_test' is the subproject name
 project(tests)
 
