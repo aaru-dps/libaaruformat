@@ -93,9 +93,6 @@
  *
  * @warning The function may trigger automatic block closure, which can result in disk I/O
  *          operations and potential write errors even for seemingly simple sector writes.
- *
- * @warning No bounds checking is performed on sector_address. Writing beyond media limits
- *          may result in undefined behavior (TODO: implement bounds checking).
  */
 int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative, const uint8_t *data,
                            uint8_t sector_status, uint32_t length)
@@ -132,7 +129,21 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
         return AARUF_READ_ONLY;
     }
 
-    // TODO: Check not trying to write beyond media limits
+    if(negative && sector_address > ctx->userDataDdtHeader.negative - 1)
+    {
+        FATAL("Sector address out of bounds");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+        return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
+    }
+
+    if(!negative && sector_address > ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow - 1)
+    {
+        FATAL("Sector address out of bounds");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+        return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
+    }
 
     // TODO: Check rewinded for disabling checksums
 

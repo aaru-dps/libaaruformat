@@ -273,11 +273,19 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(sector_address > ctx->imageInfo.Sectors - 1)
+    if(negative && sector_address > ctx->userDataDdtHeader.negative - 1)
     {
         FATAL("Sector address out of bounds");
 
-        TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+        return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
+    }
+
+    if(!negative && sector_address > ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow - 1)
+    {
+        FATAL("Sector address out of bounds");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
         return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
     }
 
@@ -751,7 +759,8 @@ int32_t aaruf_read_track_sector(void *context, uint8_t *data, const uint64_t sec
  * @warning Not all AaruFormat images contain the metadata necessary for long sector
  *          reading. Some images may only support basic sector reading via aaruf_read_sector().
  */
-int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, bool negative, uint8_t *data, uint32_t *length)
+int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, bool negative, uint8_t *data,
+                               uint32_t *length)
 {
     TRACE("Entering aaruf_read_sector_long(%p, %" PRIu64 ", %d, %p, %u)", context, sector_address, data, *length);
 
@@ -781,6 +790,22 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
 
         TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_NOT_AARUFORMAT");
         return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(negative && sector_address > ctx->userDataDdtHeader.negative - 1)
+    {
+        FATAL("Sector address out of bounds");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+        return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
+    }
+
+    if(!negative && sector_address > ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow - 1)
+    {
+        FATAL("Sector address out of bounds");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+        return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
     }
 
     uint64_t corrected_sector_address = sector_address;
@@ -981,7 +1006,8 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                 case AppleSonyDS:
                 case AppleWidget:
                 case PriamDataTower:
-                    if(ctx->sectorSubchannel == NULL) return aaruf_read_sector(context, sector_address, negative, data, length);
+                    if(ctx->sectorSubchannel == NULL)
+                        return aaruf_read_sector(context, sector_address, negative, data, length);
 
                     switch(ctx->imageInfo.MediaType)
                     {
