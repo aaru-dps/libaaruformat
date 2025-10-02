@@ -161,8 +161,13 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake-modules")
 
 # include(FindLibreSSL.cmake)
 
+# Check for OpenSSL and SHA256_Init
 find_package(OpenSSL QUIET)
 find_package(LibreSSL QUIET)
+
+include(CheckFunctionExists)
+set(CMAKE_REQUIRED_LIBRARIES OpenSSL::Crypto)
+check_function_exists(SHA256_Init HAVE_OPENSSL_SHA256_INIT)
 
 if(OpenSSL_FOUND)
   message("-- OpenSSL VERSION: ${OPENSSL_VERSION}")
@@ -172,13 +177,13 @@ if(LIBRESSL_FOUND)
   message("-- LibreSSL VERSION: ${LIBRESSL_VERSION}")
 endif()
 
-if(OpenSSL_FOUND OR LIBRESSL_FOUND)
+if((OpenSSL_FOUND OR LIBRESSL_FOUND) AND HAVE_OPENSSL_SHA256_INIT)
   add_compile_definitions(AARU_HAS_SHA256)
 endif()
 
 if(LIBRESSL_FOUND)
   TARGET_LINK_LIBRARIES_WHOLE_ARCHIVE(aaruformat ${LIBRESSL_CRYPTO_LIBRARY})
-elseif(OpenSSL_FOUND)
+  elif(OpenSSL_FOUND)
   TARGET_LINK_LIBRARIES_WHOLE_ARCHIVE(aaruformat ${OPENSSL_CRYPTO_LIBRARY})
 endif()
 
