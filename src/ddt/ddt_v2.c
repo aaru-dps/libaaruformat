@@ -1100,30 +1100,26 @@ bool set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, co
         const uint64_t block_index = block_offset >> ctx->userDataDdtHeader.blockAlignmentShift;
         *ddt_entry                 = offset & (1ULL << ctx->userDataDdtHeader.dataShift) - 1 | block_index
                                                                                    << ctx->userDataDdtHeader.dataShift;
-    }
+        if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+        {  // Overflow detection for DDT entry
+            if(*ddt_entry > 0xFFF)
+            {
+                FATAL("DDT overflow: media does not fit in small DDT");
+                TRACE("Exiting set_ddt_single_level_v2() = false");
+                return false;
+            }
 
-    if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-    {
-        // Overflow detection for DDT entry
-        if(*ddt_entry > 0xFFF)
-        {
-            FATAL("DDT overflow: media does not fit in small DDT");
-            TRACE("Exiting set_ddt_single_level_v2() = false");
-            return false;
+            *ddt_entry |= (uint64_t)sector_status << 12;
         }
-
-        *ddt_entry |= (uint64_t)sector_status << 12;
-        ctx->cachedSecondaryDdtSmall[sector_address] = (uint16_t)*ddt_entry;
-    }
-    else if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
-    {
-        // Overflow detection for DDT entry
-        if(*ddt_entry > 0xFFFFFFF)
+        else if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
         {
-            FATAL("DDT overflow: media does not fit in big DDT");
-            TRACE("Exiting set_ddt_single_level_v2() = false");
-            return false;
-        }
+            // Overflow detection for DDT entry
+            if(*ddt_entry > 0xFFFFFFF)
+            {
+                FATAL("DDT overflow: media does not fit in big DDT");
+                TRACE("Exiting set_ddt_single_level_v2() = false");
+                return false;
+            }
 
             *ddt_entry |= (uint64_t)sector_status << 28;
         }
