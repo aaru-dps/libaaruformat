@@ -72,18 +72,6 @@
 #define SHA256_DIGEST_LENGTH 32
 #endif
 
-/** \struct Crc64Context
- *  \brief Internal (legacy) CRC64 computation context (superseded by crt \ref crc64_ctx usage).
- *
- *  Kept for compatibility with earlier code paths; new code should prefer the opaque crc64_ctx API.
- */
-typedef struct Crc64Context
-{
-    uint64_t finalSeed;   ///< Final CRC value (post processing) or running seed.
-    uint64_t table[256];  ///< Precomputed 256-entry lookup table for the ECMA polynomial.
-    uint64_t hashInt;     ///< Intermediate accumulator.
-} Crc64Context;
-
 /** \struct CdEccContext
  *  \brief Lookup tables and state for Compact Disc EDC/ECC (P/Q) regeneration / verification.
  *
