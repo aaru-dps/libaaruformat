@@ -1125,8 +1125,19 @@ bool set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, co
             return false;
         }
 
-        *ddt_entry |= (uint64_t)sector_status << 28;
-        ctx->cachedSecondaryDdtBig[sector_address] = (uint32_t)*ddt_entry;
+            *ddt_entry |= (uint64_t)sector_status << 28;
+        }
+    }
+
+    if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+    {
+        TRACE("Setting small single-level DDT entry %d to %u", sector_address, (uint16_t)*ddt_entry);
+        ctx->userDataDdtMini[sector_address] = (uint16_t)*ddt_entry;
+    }
+    else if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
+    {
+        TRACE("Setting big single-level DDT entry %d to %u", sector_address, (uint32_t)*ddt_entry);
+        ctx->userDataDdtBig[sector_address] = (uint32_t)*ddt_entry;
     }
 
     TRACE("Exiting set_ddt_single_level_v2() = true");
