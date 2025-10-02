@@ -31,11 +31,12 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/data.bin
 add_executable(tests_run crc64.cpp spamsum.cpp crc32.c crc32.h flac.cpp lzma.cpp sha256.cpp md5.cpp)
 
 # Link libraries including OpenSSL for SHA256 test
-target_link_libraries(tests_run gtest gtest_main "aaruformat")
+target_link_libraries(tests_run PRIVATE gtest gtest_main aaruformat)
 
 # Link OpenSSL/LibreSSL for tests that use crypto functions directly
 if(LIBRESSL_FOUND)
-    target_link_libraries(tests_run ${LIBRESSL_CRYPTO_LIBRARY})
+  target_link_libraries(tests_run PRIVATE ${LIBRESSL_CRYPTO_LIBRARY})
 elseif(OpenSSL_FOUND)
     target_link_libraries(tests_run ${OPENSSL_CRYPTO_LIBRARY})
+  target_link_libraries(tests_run PRIVATE ${OPENSSL_CRYPTO_LIBRARY})
 endif()
