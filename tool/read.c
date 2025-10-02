@@ -39,7 +39,7 @@ int read(const unsigned long long sector_no, const char *path)
         return errno;
     }
 
-    res = aaruf_read_sector(ctx, sector_no, NULL, &length);
+    res = aaruf_read_sector(ctx, sector_no, false, NULL, &length);
 
     if(res != AARUF_STATUS_OK && res != AARUF_ERROR_BUFFER_TOO_SMALL)
     {
@@ -58,7 +58,7 @@ int read(const unsigned long long sector_no, const char *path)
         return AARUF_ERROR_NOT_ENOUGH_MEMORY;
     }
 
-    res = aaruf_read_sector(ctx, sector_no, data, &length);
+    res = aaruf_read_sector(ctx, sector_no, false, data, &length);
 
     if(res != AARUF_STATUS_OK)
     {
@@ -91,7 +91,7 @@ int read_long(const unsigned long long sector_no, const char *path)
         return errno;
     }
 
-    res = aaruf_read_sector_long(ctx, sector_no, NULL, &length);
+    res = aaruf_read_sector_long(ctx, sector_no, false, NULL, &length);
 
     if(res != AARUF_STATUS_OK && res != AARUF_ERROR_BUFFER_TOO_SMALL)
     {
@@ -110,7 +110,7 @@ int read_long(const unsigned long long sector_no, const char *path)
         return AARUF_ERROR_NOT_ENOUGH_MEMORY;
     }
 
-    res = aaruf_read_sector_long(ctx, sector_no, data, &length);
+    res = aaruf_read_sector_long(ctx, sector_no, false, data, &length);
 
     if(res != AARUF_STATUS_OK)
     {

@@ -145,6 +145,7 @@ int32_t aaruf_read_media_tag(void *context, uint8_t *data, const int32_t tag, ui
  *
  * @param context Pointer to the aaruformat context.
  * @param sector_address The logical sector address to read from.
+ * @param negative Indicates if the sector address is negative.
  * @param data Pointer to buffer where sector data will be stored. Can be NULL to query length.
  * @param length Pointer to variable containing buffer size on input, actual data length on output.
  *
@@ -237,9 +238,9 @@ int32_t aaruf_read_media_tag(void *context, uint8_t *data, const int32_t tag, ui
  * @warning Sector addresses are zero-based. The maximum valid address is
  *          ctx->imageInfo.Sectors - 1.
  */
-int32_t aaruf_read_sector(void *context, const uint64_t sector_address, uint8_t *data, uint32_t *length)
+int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool negative, uint8_t *data, uint32_t *length)
 {
-    TRACE("Entering aaruf_read_sector(%p, %" PRIu64 ", %p, %u)", context, sector_address, data, *length);
+    TRACE("Entering aaruf_read_sector(%p, %" PRIu64 ", %d, %p, %u)", context, sector_address, negative, data, *length);
 
     aaruformatContext *ctx          = NULL;
     uint64_t           offset       = 0;
@@ -281,9 +282,17 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, uint8_t 
     }
 
     if(ctx->ddtVersion == 1)
+    {
+        if(negative)
+        {
+            FATAL("Negative sector addresses not supported in this image");
+            return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
+        }
+
         error_no = decode_ddt_entry_v1(ctx, sector_address, &offset, &block_offset, &sector_status);
+    }
     else if(ctx->ddtVersion == 2)
-        error_no = decode_ddt_entry_v2(ctx, sector_address, &offset, &block_offset, &sector_status);
+        error_no = decode_ddt_entry_v2(ctx, sector_address, negative, &offset, &block_offset, &sector_status);
 
     if(error_no != AARUF_STATUS_OK)
     {
@@ -635,7 +644,7 @@ int32_t aaruf_read_track_sector(void *context, uint8_t *data, const uint64_t sec
 
     for(int i = 0; i < ctx->numberOfDataTracks; i++)
         if(ctx->dataTracks[i].sequence == track)
-            return aaruf_read_sector(context, ctx->dataTracks[i].start + sector_address, data, length);
+            return aaruf_read_sector(context, ctx->dataTracks[i].start + sector_address, false, data, length);
 
     TRACE("Track %d not found", track);
     TRACE("Exiting aaruf_read_track_sector() = AARUF_ERROR_TRACK_NOT_FOUND");
@@ -654,6 +663,7 @@ int32_t aaruf_read_track_sector(void *context, uint8_t *data, const uint64_t sec
  *
  * @param context Pointer to the aaruformat context.
  * @param sector_address The logical sector address to read from.
+ * @param negative Indicates if the sector address is negative.
  * @param data Pointer to buffer where complete sector data will be stored. Can be NULL to query length.
  * @param length Pointer to variable containing buffer size on input, actual data length on output.
  *
@@ -741,9 +751,9 @@ int32_t aaruf_read_track_sector(void *context, uint8_t *data, const uint64_t sec
  * @warning Not all AaruFormat images contain the metadata necessary for long sector
  *          reading. Some images may only support basic sector reading via aaruf_read_sector().
  */
-int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, uint8_t *data, uint32_t *length)
+int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, bool negative, uint8_t *data, uint32_t *length)
 {
-    TRACE("Entering aaruf_read_sector_long(%p, %" PRIu64 ", %p, %u)", context, sector_address, data, *length);
+    TRACE("Entering aaruf_read_sector_long(%p, %" PRIu64 ", %d, %p, %u)", context, sector_address, data, *length);
 
     const aaruformatContext *ctx         = NULL;
     uint32_t                 bare_length = 0;
@@ -773,6 +783,14 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, uin
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
+    uint64_t corrected_sector_address = sector_address;
+
+    // Calculate positive or negative sector
+    if(negative)
+        corrected_sector_address -= ctx->userDataDdtHeader.negative;
+    else
+        corrected_sector_address += ctx->userDataDdtHeader.negative;
+
     switch(ctx->imageInfo.XmlMediaType)
     {
         case OpticalDisc:
@@ -786,10 +804,10 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, uin
             }
             if((ctx->sectorSuffix == NULL || ctx->sectorPrefix == NULL) &&
                (ctx->sectorSuffixCorrected == NULL || ctx->sectorPrefixCorrected == NULL))
-                return aaruf_read_sector(context, sector_address, data, length);
+                return aaruf_read_sector(context, sector_address, negative, data, length);
 
             bare_length = 0;
-            aaruf_read_sector(context, sector_address, NULL, &bare_length);
+            aaruf_read_sector(context, sector_address, negative, NULL, &bare_length);
 
             TRACE("Allocating memory for bare data");
             bare_data = (uint8_t *)malloc(bare_length);
@@ -802,7 +820,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, uin
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
 
-            res = aaruf_read_sector(context, sector_address, bare_data, &bare_length);
+            res = aaruf_read_sector(context, sector_address, negative, bare_data, &bare_length);
 
             if(res < AARUF_STATUS_OK)
             {
@@ -840,20 +858,20 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, uin
                     memcpy(data + 16, bare_data, 2048);
 
                     if(ctx->sectorPrefix != NULL)
-                        memcpy(data, ctx->sectorPrefix + sector_address * 16, 16);
+                        memcpy(data, ctx->sectorPrefix + corrected_sector_address * 16, 16);
                     else if(ctx->sectorPrefixDdt != NULL)
                     {
-                        if((ctx->sectorPrefixDdt[sector_address] & CD_XFIX_MASK) == Correct)
+                        if((ctx->sectorPrefixDdt[corrected_sector_address] & CD_XFIX_MASK) == Correct)
                         {
                             aaruf_ecc_cd_reconstruct_prefix(data, trk.type, sector_address);
                             res = AARUF_STATUS_OK;
                         }
-                        else if((ctx->sectorPrefixDdt[sector_address] & CD_XFIX_MASK) == NotDumped)
+                        else if((ctx->sectorPrefixDdt[corrected_sector_address] & CD_XFIX_MASK) == NotDumped)
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
                         else
                             memcpy(data,
                                    ctx->sectorPrefixCorrected +
-                                       ((ctx->sectorPrefixDdt[sector_address] & CD_DFIX_MASK) - 1) * 16,
+                                       ((ctx->sectorPrefixDdt[corrected_sector_address] & CD_DFIX_MASK) - 1) * 16,
                                    16);
                     }
                     else
@@ -865,20 +883,20 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, uin
                     if(res != AARUF_STATUS_OK) return res;
 
                     if(ctx->sectorSuffix != NULL)
-                        memcpy(data + 2064, ctx->sectorSuffix + sector_address * 288, 288);
+                        memcpy(data + 2064, ctx->sectorSuffix + corrected_sector_address * 288, 288);
                     else if(ctx->sectorSuffixDdt != NULL)
                     {
-                        if((ctx->sectorSuffixDdt[sector_address] & CD_XFIX_MASK) == Correct)
+                        if((ctx->sectorSuffixDdt[corrected_sector_address] & CD_XFIX_MASK) == Correct)
                         {
                             aaruf_ecc_cd_reconstruct(ctx->eccCdContext, data, trk.type);
                             res = AARUF_STATUS_OK;
                         }
-                        else if((ctx->sectorSuffixDdt[sector_address] & CD_XFIX_MASK) == NotDumped)
+                        else if((ctx->sectorSuffixDdt[corrected_sector_address] & CD_XFIX_MASK) == NotDumped)
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
                         else
                             memcpy(data + 2064,
                                    ctx->sectorSuffixCorrected +
-                                       ((ctx->sectorSuffixDdt[sector_address] & CD_DFIX_MASK) - 1) * 288,
+                                       ((ctx->sectorSuffixDdt[corrected_sector_address] & CD_DFIX_MASK) - 1) * 288,
                                    288);
                     }
                     else
@@ -892,20 +910,20 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, uin
                 case CdMode2Form1:
                 case CdMode2Form2:
                     if(ctx->sectorPrefix != NULL)
-                        memcpy(data, ctx->sectorPrefix + sector_address * 16, 16);
+                        memcpy(data, ctx->sectorPrefix + corrected_sector_address * 16, 16);
                     else if(ctx->sectorPrefixDdt != NULL)
                     {
-                        if((ctx->sectorPrefixDdt[sector_address] & CD_XFIX_MASK) == Correct)
+                        if((ctx->sectorPrefixDdt[corrected_sector_address] & CD_XFIX_MASK) == Correct)
                         {
                             aaruf_ecc_cd_reconstruct_prefix(data, trk.type, sector_address);
                             res = AARUF_STATUS_OK;
                         }
-                        else if((ctx->sectorPrefixDdt[sector_address] & CD_XFIX_MASK) == NotDumped)
+                        else if((ctx->sectorPrefixDdt[corrected_sector_address] & CD_XFIX_MASK) == NotDumped)
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
                         else
                             memcpy(data,
                                    ctx->sectorPrefixCorrected +
-                                       ((ctx->sectorPrefixDdt[sector_address] & CD_DFIX_MASK) - 1) * 16,
+                                       ((ctx->sectorPrefixDdt[corrected_sector_address] & CD_DFIX_MASK) - 1) * 16,
                                    16);
                     }
                     else
@@ -918,21 +936,21 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, uin
 
                     if(ctx->mode2Subheaders != NULL && ctx->sectorSuffixDdt != NULL)
                     {
-                        memcpy(data + 16, ctx->mode2Subheaders + sector_address * 8, 8);
+                        memcpy(data + 16, ctx->mode2Subheaders + corrected_sector_address * 8, 8);
 
-                        if((ctx->sectorSuffixDdt[sector_address] & CD_XFIX_MASK) == Mode2Form1Ok)
+                        if((ctx->sectorSuffixDdt[corrected_sector_address] & CD_XFIX_MASK) == Mode2Form1Ok)
                         {
                             memcpy(data + 24, bare_data, 2048);
                             aaruf_ecc_cd_reconstruct(ctx->eccCdContext, data, CdMode2Form1);
                         }
-                        else if((ctx->sectorSuffixDdt[sector_address] & CD_XFIX_MASK) == Mode2Form2Ok ||
-                                (ctx->sectorSuffixDdt[sector_address] & CD_XFIX_MASK) == Mode2Form2NoCrc)
+                        else if((ctx->sectorSuffixDdt[corrected_sector_address] & CD_XFIX_MASK) == Mode2Form2Ok ||
+                                (ctx->sectorSuffixDdt[corrected_sector_address] & CD_XFIX_MASK) == Mode2Form2NoCrc)
                         {
                             memcpy(data + 24, bare_data, 2324);
-                            if((ctx->sectorSuffixDdt[sector_address] & CD_XFIX_MASK) == Mode2Form2Ok)
+                            if((ctx->sectorSuffixDdt[corrected_sector_address] & CD_XFIX_MASK) == Mode2Form2Ok)
                                 aaruf_ecc_cd_reconstruct(ctx->eccCdContext, data, CdMode2Form2);
                         }
-                        else if((ctx->sectorSuffixDdt[sector_address] & CD_XFIX_MASK) == NotDumped)
+                        else if((ctx->sectorSuffixDdt[corrected_sector_address] & CD_XFIX_MASK) == NotDumped)
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
                         else
                             // Mode 2 where ECC failed
@@ -940,7 +958,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, uin
                     }
                     else if(ctx->mode2Subheaders != NULL)
                     {
-                        memcpy(data + 16, ctx->mode2Subheaders + sector_address * 8, 8);
+                        memcpy(data + 16, ctx->mode2Subheaders + corrected_sector_address * 8, 8);
                         memcpy(data + 24, bare_data, 2328);
                     }
                     else
@@ -963,7 +981,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, uin
                 case AppleSonyDS:
                 case AppleWidget:
                 case PriamDataTower:
-                    if(ctx->sectorSubchannel == NULL) return aaruf_read_sector(context, sector_address, data, length);
+                    if(ctx->sectorSubchannel == NULL) return aaruf_read_sector(context, sector_address, negative, data, length);
 
                     switch(ctx->imageInfo.MediaType)
                     {
@@ -1008,7 +1026,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, uin
                         return AARUF_ERROR_NOT_ENOUGH_MEMORY;
                     }
 
-                    res = aaruf_read_sector(context, sector_address, bare_data, &bare_length);
+                    res = aaruf_read_sector(context, sector_address, negative, bare_data, &bare_length);
 
                     if(bare_length != 512)
                     {
@@ -1019,7 +1037,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, uin
                         return res;
                     }
 
-                    memcpy(data, ctx->sectorSubchannel + sector_address * tag_length, tag_length);
+                    memcpy(data, ctx->sectorSubchannel + corrected_sector_address * tag_length, tag_length);
                     memcpy(data, bare_data, 512);
 
                     free(bare_data);

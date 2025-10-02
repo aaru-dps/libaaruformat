@@ -83,7 +83,7 @@ int verify_sectors(const char *path)
     for(uint64_t s = 0; s < ctx->imageInfo.Sectors; s++)
     {
         printf("\rVerifying sector %llu...", s);
-        res = aaruf_read_sector_long(ctx, s, buffer, &buffer_len);
+        res = aaruf_read_sector_long(ctx, s, buffer, false, &buffer_len);
 
         if(res != AARUF_STATUS_OK)
         {

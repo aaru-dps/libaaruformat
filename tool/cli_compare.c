@@ -106,8 +106,8 @@ int cli_compare(const char *path1, const char *path2)
         buffer1_length = ctx1->imageInfo.SectorSize;
         buffer2_length = ctx2->imageInfo.SectorSize;
 
-        read_result1 = aaruf_read_sector(ctx1, sector, buffer1, &buffer1_length);
-        read_result2 = aaruf_read_sector(ctx2, sector, buffer2, &buffer2_length);
+        read_result1 = aaruf_read_sector(ctx1, sector, false, buffer1, &buffer1_length);
+        read_result2 = aaruf_read_sector(ctx2, sector, false, buffer2, &buffer2_length);
 
         // Handle read errors or missing sectors
         const bool sector1_available = read_result1 == AARUF_STATUS_OK;

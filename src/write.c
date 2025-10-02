@@ -36,6 +36,7 @@
  *
  * @param context Pointer to the aaruformat context.
  * @param sector_address Logical sector address to write.
+ * @param negative Indicates if the sector address is negative.
  * @param data Pointer to the data buffer to write.
  * @param sector_status Status of the sector to write.
  * @param length Length of the data buffer.
@@ -96,11 +97,11 @@
  * @warning No bounds checking is performed on sector_address. Writing beyond media limits
  *          may result in undefined behavior (TODO: implement bounds checking).
  */
-int32_t aaruf_write_sector(void *context, uint64_t sector_address, const uint8_t *data, uint8_t sector_status,
-                           uint32_t length)
+int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative, const uint8_t *data,
+                           uint8_t sector_status, uint32_t length)
 {
-    TRACE("Entering aaruf_write_sector(%p, %" PRIu64 ", %p, %u, %u)", context, sector_address, data, sector_status,
-          length);
+    TRACE("Entering aaruf_write_sector(%p, %" PRIu64 ", %d, %p, %u, %u)", context, sector_address, negative, data,
+          sector_status, length);
 
     // Check context is correct AaruFormat context
     if(context == NULL)
@@ -169,8 +170,8 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, const uint8_t
         bool existing = lookup_map(ctx->sectorHashMap, hash, &ddt_entry);
         TRACE("Block does %s exist in deduplication map", existing ? "already" : "not yet");
 
-        ddt_ok = set_ddt_entry_v2(ctx, sector_address, ctx->currentBlockOffset, ctx->nextBlockPosition, sector_status,
-                                  &ddt_entry);
+        ddt_ok = set_ddt_entry_v2(ctx, sector_address, negative, ctx->currentBlockOffset, ctx->nextBlockPosition,
+                                  sector_status, &ddt_entry);
         if(!ddt_ok)
         {
             TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_CANNOT_SET_DDT_ENTRY");
@@ -188,8 +189,8 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, const uint8_t
         insert_map(ctx->sectorHashMap, hash, ddt_entry);
     }
     else
-        ddt_ok = set_ddt_entry_v2(ctx, sector_address, ctx->currentBlockOffset, ctx->nextBlockPosition, sector_status,
-                                  &ddt_entry);
+        ddt_ok = set_ddt_entry_v2(ctx, sector_address, negative, ctx->currentBlockOffset, ctx->nextBlockPosition,
+                                  sector_status, &ddt_entry);
 
     if(!ddt_ok)
     {

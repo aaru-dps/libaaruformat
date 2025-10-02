@@ -489,7 +489,7 @@ int compare(const char *path1, const char *path2)
         tb_printf(2, height - 5, TB_WHITE | TB_BOLD, TB_BLUE, "Comparing sector %llu of %llu", i + 1, sectors);
         draw_progress_bar(height - 4, i * 100 / sectors);
 
-        errno = aaruf_read_sector(ctx1, i, buffer1, &sectorSize);
+        errno = aaruf_read_sector(ctx1, i, false, buffer1, &sectorSize);
         if(errno != AARUF_STATUS_OK && errno != AARUF_STATUS_SECTOR_NOT_DUMPED)
         {
             tb_printf(2, lr++, TB_RED | TB_BOLD, TB_BLUE, "Error reading sector %llu: %s", i, errno);
@@ -497,7 +497,7 @@ int compare(const char *path1, const char *path2)
             continue;
         }
 
-        errno = aaruf_read_sector(ctx2, i, buffer2, &sectorSize);
+        errno = aaruf_read_sector(ctx2, i, false, buffer2, &sectorSize);
         if(errno != AARUF_STATUS_OK && errno != AARUF_STATUS_SECTOR_NOT_DUMPED)
         {
             tb_printf(2, rr++, TB_RED | TB_BOLD, TB_BLUE, "Error reading sector %llu: %s", i, errno);

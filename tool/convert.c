@@ -93,7 +93,7 @@ int convert(const char *input_path, const char *output_path)
         }
 
         // Read sector from input
-        res = aaruf_read_sector(input_ctx, sector, sector_data, &read_length);
+        res = aaruf_read_sector(input_ctx, sector, false, sector_data, &read_length);
         if(res != AARUF_STATUS_OK)
         {
             printf("\nError %d when reading sector %llu from input image.\n", res, (unsigned long long)sector);
@@ -101,7 +101,7 @@ int convert(const char *input_path, const char *output_path)
         }
 
         // Write sector to output
-        res = aaruf_write_sector(output_ctx, sector, sector_data, SectorStatusDumped, read_length);
+        res = aaruf_write_sector(output_ctx, sector, false, sector_data, SectorStatusDumped, read_length);
         if(res != AARUF_STATUS_OK)
         {
             printf("\nError %d when writing sector %llu to output image.\n", res, (unsigned long long)sector);

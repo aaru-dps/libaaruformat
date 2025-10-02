@@ -484,6 +484,7 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
  *
  * @param ctx Pointer to the aaruformat context containing the loaded DDT structures.
  * @param sector_address Logical sector address to decode (will be adjusted for negative sectors).
+ * @param negative Indicates if the sector address is negative.
  * @param offset Pointer to store the resulting sector offset within the block.
  * @param block_offset Pointer to store the resulting block offset in the image.
  * @param sector_status Pointer to store the sector status (dumped, not dumped, etc.).
@@ -517,11 +518,11 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
  * @warning All output parameters must be valid pointers. No bounds checking is performed
  *          on the sector_address parameter at this level.
  */
-int32_t decode_ddt_entry_v2(aaruformatContext *ctx, const uint64_t sector_address, uint64_t *offset,
+int32_t decode_ddt_entry_v2(aaruformatContext *ctx, const uint64_t sector_address, bool negative, uint64_t *offset,
                             uint64_t *block_offset, uint8_t *sector_status)
 {
-    TRACE("Entering decode_ddt_entry_v2(%p, %" PRIu64 ", %llu, %llu, %d)", ctx, sector_address, *offset, *block_offset,
-          *sector_status);
+    TRACE("Entering decode_ddt_entry_v2(%p, %" PRIu64 ", %d, %llu, %llu, %d)", ctx, sector_address, negative, *offset,
+          *block_offset, *sector_status);
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
     {
@@ -532,9 +533,9 @@ int32_t decode_ddt_entry_v2(aaruformatContext *ctx, const uint64_t sector_addres
     }
 
     if(ctx->userDataDdtHeader.tableShift > 0)
-        return decode_ddt_multi_level_v2(ctx, sector_address, offset, block_offset, sector_status);
+        return decode_ddt_multi_level_v2(ctx, sector_address, negative, offset, block_offset, sector_status);
 
-    return decode_ddt_single_level_v2(ctx, sector_address, offset, block_offset, sector_status);
+    return decode_ddt_single_level_v2(ctx, sector_address, negative, offset, block_offset, sector_status);
 }
 
 /**
@@ -547,6 +548,7 @@ int32_t decode_ddt_entry_v2(aaruformatContext *ctx, const uint64_t sector_addres
  *
  * @param ctx Pointer to the aaruformat context containing the loaded DDT table.
  * @param sector_address Logical sector address to decode (adjusted for negative sectors).
+ * @param negative Indicates if the sector address is negative.
  * @param offset Pointer to store the resulting sector offset within the block.
  * @param block_offset Pointer to store the resulting block offset in the image.
  * @param sector_status Pointer to store the sector status (dumped, not dumped, etc.).
@@ -596,11 +598,11 @@ int32_t decode_ddt_entry_v2(aaruformatContext *ctx, const uint64_t sector_addres
  * @warning This function should only be called when tableShift is 0. Calling it with
  *          tableShift > 0 will result in AARUF_ERROR_CANNOT_READ_BLOCK.
  */
-int32_t decode_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, uint64_t *offset,
+int32_t decode_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, bool negative, uint64_t *offset,
                                    uint64_t *block_offset, uint8_t *sector_status)
 {
-    TRACE("Entering decode_ddt_single_level_v2(%p, %" PRIu64 ", %llu, %llu, %d)", ctx, sector_address, *offset,
-          *block_offset, *sector_status);
+    TRACE("Entering decode_ddt_single_level_v2(%p, %" PRIu64 ", %d, %llu, %llu, %d)", ctx, sector_address, negative,
+          *offset, *block_offset, *sector_status);
 
     uint64_t ddt_entry = 0;
 
@@ -621,8 +623,11 @@ int32_t decode_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_addre
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
-    // TODO: Take into account the negative and overflow blocks, library-wide
-    sector_address += ctx->userDataDdtHeader.negative;
+    // Calculate positive or negative sector
+    if(negative)
+        sector_address -= ctx->userDataDdtHeader.negative;
+    else
+        sector_address += ctx->userDataDdtHeader.negative;
 
     if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
         ddt_entry = ctx->userDataDdtMini[sector_address];
@@ -660,8 +665,8 @@ int32_t decode_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_addre
     *offset                    = ddt_entry & offset_mask;
     *block_offset = (ddt_entry >> ctx->userDataDdtHeader.dataShift) * (1 << ctx->userDataDdtHeader.blockAlignmentShift);
 
-    TRACE("Exiting decode_ddt_single_level_v2(%p, %" PRIu64 ", %llu, %llu, %d) = AARUF_STATUS_OK", ctx, sector_address,
-          *offset, *block_offset, *sector_status);
+    TRACE("Exiting decode_ddt_single_level_v2(%p, %" PRIu64 ", %d, %llu, %llu, %d) = AARUF_STATUS_OK", ctx,
+          sector_address, negative, *offset, *block_offset, *sector_status);
     return AARUF_STATUS_OK;
 }
 
@@ -676,6 +681,7 @@ int32_t decode_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_addre
  *
  * @param ctx Pointer to the aaruformat context containing the loaded primary DDT table.
  * @param sector_address Logical sector address to decode (adjusted for negative sectors).
+ * @param negative Indicates if the sector address is negative.
  * @param offset Pointer to store the resulting sector offset within the block.
  * @param block_offset Pointer to store the resulting block offset in the image.
  * @param sector_status Pointer to store the sector status (dumped, not dumped, etc.).
@@ -752,11 +758,11 @@ int32_t decode_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_addre
  * @warning No bounds checking is performed on sector_address or calculated DDT positions.
  *          Accessing beyond table boundaries will result in undefined behavior.
  */
-int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, uint64_t *offset,
+int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, bool negative, uint64_t *offset,
                                   uint64_t *block_offset, uint8_t *sector_status)
 {
-    TRACE("Entering decode_ddt_multi_level_v2(%p, %" PRIu64 ", %llu, %llu, %d)", ctx, sector_address, *offset,
-          *block_offset, *sector_status);
+    TRACE("Entering decode_ddt_multi_level_v2(%p, %" PRIu64 ", %d, %llu, %llu, %d)", ctx, sector_address, negative,
+          *offset, *block_offset, *sector_status);
 
     uint64_t   ddt_entry = 0;
     uint8_t    lzma_properties[LZMA_PROPERTIES_LENGTH];
@@ -786,8 +792,11 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_addres
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
-    // TODO: Take into account the negative and overflow blocks, library-wide
-    sector_address += ctx->userDataDdtHeader.negative;
+    // Calculate positive or negative sector
+    if(negative)
+        sector_address -= ctx->userDataDdtHeader.negative;
+    else
+        sector_address += ctx->userDataDdtHeader.negative;
 
     items_per_ddt_entry = 1 << ctx->userDataDdtHeader.tableShift;
     ddt_position        = sector_address / items_per_ddt_entry;
@@ -1011,8 +1020,8 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_addres
     *offset                    = ddt_entry & offset_mask;
     *block_offset = (ddt_entry >> ctx->userDataDdtHeader.dataShift) * (1 << ctx->userDataDdtHeader.blockAlignmentShift);
 
-    TRACE("Exiting decode_ddt_multi_level_v2(%p, %" PRIu64 ", %llu, %llu, %d) = AARUF_STATUS_OK", ctx, sector_address,
-          *offset, *block_offset, *sector_status);
+    TRACE("Exiting decode_ddt_multi_level_v2(%p, %" PRIu64 ", %d, %llu, %llu, %d) = AARUF_STATUS_OK", ctx,
+          sector_address, negative, *offset, *block_offset, *sector_status);
     return AARUF_STATUS_OK;
 }
 
@@ -1023,6 +1032,7 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_addres
  *
  * @param ctx Pointer to the aaruformat context.
  * @param sector_address Logical sector address to set.
+ * @param negative Indicates if the sector address is negative.
  * @param offset Offset to set for the sector.
  * @param block_offset Block offset to set for the sector.
  * @param sector_status Status to set for the sector.
@@ -1031,11 +1041,11 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_addres
  * @return Returns one of the following status codes:
  * @retval true if the entry was set successfully, false otherwise.
  */
-bool set_ddt_entry_v2(aaruformatContext *ctx, const uint64_t sector_address, const uint64_t offset,
+bool set_ddt_entry_v2(aaruformatContext *ctx, const uint64_t sector_address, bool negative, const uint64_t offset,
                       const uint64_t block_offset, const uint8_t sector_status, uint64_t *ddt_entry)
 {
-    TRACE("Entering set_ddt_entry_v2(%p, %" PRIu64 ", %llu, %llu, %d)", ctx, sector_address, offset, block_offset,
-          sector_status);
+    TRACE("Entering set_ddt_entry_v2(%p, %" PRIu64 ", %d, %llu, %llu, %d)", ctx, sector_address, negative, offset,
+          block_offset, sector_status);
 
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
@@ -1070,8 +1080,8 @@ bool set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, co
                              const uint64_t offset, const uint64_t block_offset, const uint8_t sector_status,
                              uint64_t *ddt_entry)
 {
-    TRACE("Entering set_ddt_single_level_v2(%p, %" PRIu64 ", %llu, %llu, %d)", ctx, sector_address, offset,
-          block_offset, sector_status);
+    TRACE("Entering set_ddt_single_level_v2(%p, %" PRIu64 ", %d, %llu, %llu, %d)", ctx, sector_address, negative,
+          offset, block_offset, sector_status);
 
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
