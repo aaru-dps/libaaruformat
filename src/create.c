@@ -231,9 +231,20 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
     ctx->userDataDdtHeader.start               = 0;
     ctx->userDataDdtHeader.blockAlignmentShift = parsed_options.block_alignment;
     ctx->userDataDdtHeader.dataShift           = parsed_options.data_shift;
-    ctx->userDataDdtHeader.tableShift          = parsed_options.table_shift;
     ctx->userDataDdtHeader.sizeType            = 1;
     ctx->userDataDdtHeader.entries = ctx->userDataDdtHeader.blocks / (1 << ctx->userDataDdtHeader.tableShift);
+
+    if(parsed_options.table_shift == -1)
+    {
+        uint64_t total_sectors = user_sectors + overflow_sectors + negative_sectors;
+
+        if(total_sectors < 0x8388608ULL)
+            ctx->userDataDdtHeader.tableShift = 0;
+        else
+            ctx->userDataDdtHeader.tableShift = 22;
+    }
+    else
+        ctx->userDataDdtHeader.tableShift = parsed_options.table_shift;
 
     if(ctx->userDataDdtHeader.blocks % (1 << ctx->userDataDdtHeader.tableShift) != 0) ctx->userDataDdtHeader.entries++;
 

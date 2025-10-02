@@ -42,7 +42,7 @@ aaru_options parse_options(const char *options)
     aaru_options parsed = {.compress        = true,
                            .deduplicate     = true,
                            .dictionary      = 33554432,
-                           .table_shift     = 9,
+                           .table_shift     = -1,
                            .data_shift      = 12,
                            .block_alignment = 9,
                            .md5             = false,

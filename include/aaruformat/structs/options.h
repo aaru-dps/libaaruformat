@@ -219,7 +219,7 @@ typedef struct
     bool     deduplicate;  ///< Storage dedup flag (DDT always exists). true=share identical sector content, false=store
                            ///< each instance.
     uint32_t dictionary;   ///< LZMA dictionary size in bytes (>= 4096 recommended). Default: 33554432 (32 MiB).
-    uint8_t  table_shift;  ///< DDT table shift (multi-level fan-out exponent). Default: 9.
+    int8_t   table_shift;  ///< DDT table shift (multi-level fan-out exponent). Default: heuristically calculated.
     uint8_t  data_shift;   ///< Global data shift: low bits encode sector offset inside a block (2^data_shift span).
     uint8_t  block_alignment;  ///< log2 underlying block alignment (2^n bytes). Default: 9 (512 bytes).
     bool     md5;              ///< Generate MD5 checksum (ChecksumAlgorithm::Md5) when finalizing image.
