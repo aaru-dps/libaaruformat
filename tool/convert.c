@@ -109,6 +109,20 @@ int convert(const char *input_path, const char *output_path)
         }
     }
 
+    size_t tracks_length = 0;
+    res                  = aaruf_get_tracks(input_ctx, NULL, &tracks_length);
+    if(res != AARUF_ERROR_TRACK_NOT_FOUND && res == AARUF_ERROR_BUFFER_TOO_SMALL)
+    {
+        uint8_t *tracks = calloc(1, tracks_length);
+
+        res = aaruf_get_tracks(input_ctx, tracks, &tracks_length);
+        if(res == AARUF_STATUS_OK)
+        {
+            res = aaruf_set_tracks(output_ctx, (TrackEntry *)tracks, (int)(tracks_length / sizeof(TrackEntry)));
+            if(res != AARUF_STATUS_OK) printf("\nError %d when setting tracks on output image.\n", res);
+        }
+    }
+
     printf("\n");
 
     // Clean up
