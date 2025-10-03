@@ -121,6 +121,43 @@
  *
  * @warning The function sets errno to EINVAL for context validation failures
  *          but uses library-specific error codes for write operation failures.
+ *
+ * @note Checksum Block Writing:
+ *       - Finalizes any active checksum calculations (MD5, SHA1, SHA256, SpamSum, BLAKE3)
+ *       - Builds a ChecksumHeader followed by one or more ChecksumEntry records
+ *       - Each checksum entry stores its algorithm type, length, and raw digest/value
+ *       - The entire checksum block is aligned to the same block boundary policy as other appended blocks
+ *       - Adds a corresponding index entry (blockType = ChecksumBlock)
+ *       - Sets header.featureCompatible |= AARU_FEATURE_RW_BLAKE3 when a BLAKE3 digest is written
+ *
+ * @note Tracks Block Writing:
+ *       - When track metadata (tracksHeader.entries > 0) is present, writes a TracksHeader plus all TrackEntry items
+ *       - Aligns the block prior to writing if required by blockAlignmentShift
+ *       - Appends an index entry (blockType = TracksBlock)
+ *
+ * @note Alignment Strategy:
+ *       - Secondary DDT tables, checksum block, tracks block, and final index are all aligned to 2^blockAlignmentShift
+ *         by padding forward to the next boundary when the current file position is unaligned
+ *       - Alignment ensures predictable block addressing for deduplication and fast random access
+ *
+ * @note Deduplication Hash Map Cleanup:
+ *       - If ctx->deduplicate is true and sectorHashMap exists, free_map() is invoked to release the hash map before
+ *         final context deallocation
+ *
+ * @note Feature Flags:
+ *       - BLAKE3 presence triggers setting the AARU_FEATURE_RW_BLAKE3 bit in the image header's featureCompatible mask
+ *
+ * @note Index CRC (Clarification):
+ *       - A CRC64 is computed over the contiguous array of IndexEntry structures and stored in IndexHeader3.crc64;
+ *         zero is stored if no entries exist or CRC context allocation fails
+ *
+ * @note Error Propagation (Clarification):
+ *       - Failures after partially writing certain optional blocks (checksum, tracks) do not prevent subsequent memory
+ *         cleanup, but may still return AARUF_ERROR_CANNOT_WRITE_HEADER if a critical header/table write fails
+ *
+ * @note Resource Ownership (Clarification):
+ *       - All dynamically allocated checksum buffers (e.g., SpamSum string) and cryptographic contexts are finalized
+ *         or freed prior to context memory release
  */
 int aaruf_close(void *context)
 {
