@@ -317,7 +317,6 @@ int32_t aaruf_get_tracks(const void *context, uint8_t *buffer, size_t *length)
     return AARUF_STATUS_OK;
 }
 
-
 /**
  * @brief Replace (or clear) the in-memory track table for an AaruFormat image context.
  *
@@ -437,6 +436,42 @@ int32_t aaruf_set_tracks(void *context, TrackEntry *tracks, const int count)
     }
     memcpy(ctx->trackEntries, tracks, sizeof(TrackEntry) * count);
     ctx->tracksHeader.crc64 = aaruf_crc64_data((const uint8_t *)ctx->trackEntries, sizeof(TrackEntry) * count);
+
+    ctx->imageInfo.HasPartitions = true;
+    ctx->imageInfo.HasSessions   = true;
+
+    free(ctx->dataTracks);
+
+    ctx->numberOfDataTracks = 0;
+
+    for(int j = 0; j < ctx->tracksHeader.entries; j++)
+        if(ctx->trackEntries[j].sequence > 0 && ctx->trackEntries[j].sequence <= 99) ctx->numberOfDataTracks++;
+
+    if(ctx->numberOfDataTracks > 0)
+    {
+        ctx->dataTracks = malloc(sizeof(TrackEntry) * ctx->numberOfDataTracks);
+
+        if(ctx->dataTracks == NULL)
+        {
+            free(ctx->trackEntries);
+            ctx->trackEntries = NULL;
+            memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
+            FATAL("Could not allocate memory for data tracks");
+
+            TRACE("Exiting aaruf_set_tracks() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        }
+    }
+    else
+        ctx->dataTracks = NULL;
+
+    if(ctx->dataTracks != NULL)
+    {
+        int k = 0;
+        for(int j = 0; j < ctx->tracksHeader.entries; j++)
+            if(ctx->trackEntries[j].sequence > 0 && ctx->trackEntries[j].sequence <= 99)
+                memcpy(&ctx->dataTracks[k++], &ctx->trackEntries[j], sizeof(TrackEntry));
+    }
 
     TRACE("Exiting aaruf_set_tracks() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
