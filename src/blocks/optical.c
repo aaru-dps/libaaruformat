@@ -26,12 +26,87 @@
 #include "log.h"
 
 /**
- * @brief Processes a tracks block from the image stream.
+ * @brief Parse and integrate a Tracks block from the image stream into the context.
  *
- * Reads a tracks block from the image and updates the context with its contents.
+ * This function seeks to the byte offset specified by the supplied @p entry, reads a
+ * TracksHeader followed by the declared number of TrackEntry records, validates the block
+ * through its CRC64, and populates multiple fields in the provided @p ctx:
  *
- * @param ctx Pointer to the aaruformat context.
- * @param entry Pointer to the index entry describing the tracks block.
+ *  - ctx->tracksHeader (identifier, entries, crc64)
+ *  - ctx->trackEntries (raw array with ALL tracks in on-disk order)
+ *  - ctx->dataTracks (array filtered to data track sequences in [1..99])
+ *  - ctx->numberOfDataTracks
+ *  - ctx->imageInfo.ImageSize (incremented by sizeof(TrackEntry) * entries)
+ *  - ctx->imageInfo.HasPartitions / HasSessions (both set true unconditionally on success path before filtering)
+ *
+ * It also performs a legacy endian correction of the computed CRC for images whose major version
+ * is <= AARUF_VERSION_V1 (historical writer quirk).
+ *
+ * The function is intended for internal library use during image opening / indexing and is NOT
+ * part of the stable public API (no versioning guarantees). Callers outside the library should use
+ * the higher-level image open helpers that trigger this parsing implicitly.
+ *
+ * Error & early-return behavior (no exception mechanism, all via logging + early return):
+ *  - NULL @p ctx or NULL ctx->imageStream: Logs FATAL and returns immediately; context left untouched.
+ *  - Seek failure: FATAL + return; context left untouched.
+ *  - TracksHeader read short: tracksHeader zeroed, TRACE logged, return.
+ *  - Identifier mismatch: tracksHeader zeroed, TRACE logged, return.
+ *  - Allocation failure for trackEntries: tracksHeader zeroed, FATAL logged, return.
+ *  - Short read of TrackEntry array: tracksHeader zeroed, allocated trackEntries freed, FATAL logged, return.
+ *  - CRC mismatch: TRACE logged and return; (NOTE: at this point trackEntries remain allocated and
+ *    tracksHeader retains the just-read values, but caller receives no explicit status.)
+ *
+ * Memory management:
+ *  - Allocates ctx->trackEntries with malloc() sized to entries * sizeof(TrackEntry).
+ *  - Allocates ctx->dataTracks only if at least one filtered data track is found; otherwise sets it to NULL.
+ *  - On certain failure paths (short reads) allocated memory is freed; on CRC mismatch memory is kept.
+ *  - Pre-existing ctx->trackEntries or ctx->dataTracks are NOT freed before overwriting pointers, so
+ *    repeated calls without prior cleanup will leak memory. The function is therefore expected to be
+ *    called exactly once per context lifetime. This constraint should be observed by library code.
+ *
+ * Filtering rule for ctx->dataTracks:
+ *  - Any TrackEntry with sequence in inclusive range [1, 99] is considered a data track (historical
+ *    convention in format) and copied into ctx->dataTracks preserving original order.
+ *
+ * Thread safety:
+ *  - Not thread-safe: mutates shared state in @p ctx without synchronization.
+ *  - Must not be called concurrently with readers/writers referencing the same context.
+ *
+ * Preconditions (@pre):
+ *  - @p ctx != NULL
+ *  - @p ctx->imageStream is a valid FILE* opened for reading at least up to the block region.
+ *  - @p entry != NULL and entry->offset points to the start of a well-formed Tracks block.
+ *
+ * Postconditions (@post) on success (CRC valid):
+ *  - ctx->tracksHeader.identifier == TracksBlock
+ *  - ctx->tracksHeader.entries > 0 implies ctx->trackEntries != NULL
+ *  - ctx->dataTracks != NULL iff numberOfDataTracks > 0
+ *  - numberOfDataTracks <= tracksHeader.entries
+ *  - imageInfo flags (HasPartitions, HasSessions) set true
+ *
+ * Limitations / Caveats:
+ *  - No explicit status code: callers infer success by inspecting ctx->tracksHeader.entries and
+ *    presence of ctx->trackEntries after invocation.
+ *  - In case of CRC mismatch trackEntries are retained though not guaranteed trustworthy; caller may
+ *    wish to discard them or trigger re-read.
+ *  - Potential memory leak if invoked multiple times without freeing previous arrays.
+ *
+ * Logging strategy:
+ *  - FATAL used for unrecoverable structural or resource errors.
+ *  - TRACE used for informational / soft failures (e.g., CRC mismatch, identifier mismatch, short read).
+ *
+ * @param ctx   Mutable pointer to an aaruformatContext receiving parsed track metadata.
+ * @param entry Pointer to the index entry describing this Tracks block (offset required; size not
+ *              strictly used beyond informational logging and sequential reading).
+ *
+ * @return void This function does not return a status code; errors are reported via logging side effects.
+ *
+ * @warning Not idempotent and not leak-safe if called more than once for a context.
+ * @warning Absence of a returned status requires defensive post-call validation by the caller.
+ * @warning CRC mismatch leaves possibly invalid data in ctx->trackEntries.
+ *
+ * @see aaruf_get_tracks()
+ * @see aaruf_set_tracks()
  */
 void process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
