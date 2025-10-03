@@ -231,6 +231,14 @@ typedef struct aaruformatContext
     blake3_hasher *blake3_context;       ///< Opaque BLAKE3 context for streaming updates
     uint8_t        currentTrackType;  ///< Current track type (when writing optical images with tracks, needed for block
                                       ///< compression type).
+    bool           writingLong;       ///< True if writing long sectors
+    uint8_t       *sectorPrefixBuffer;        ///< Buffer for storing sector prefixes when writing optical images
+    uint8_t       *sectorSuffixBuffer;        ///< Buffer for storing sector suffixes when writing optical images
+    size_t         sectorPrefixBufferLength;  ///< Length of sectorPrefixBuffer
+    size_t         sectorSuffixBufferLength;  ///< Length of sectorSuffixBuffer
+    size_t         sectorPrefixBufferOffset;  ///< Current position in sectorPrefixBuffer
+    size_t         sectorSuffixBufferOffset;  ///< Current position in sectorSuffixBuffer
+    uint8_t       *mode2_subheaders;          ///< Buffer for storing MODE2 subheaders when writing MODE2 tracks
 } aaruformatContext;
 
 /** \struct DumpHardwareEntriesWithData

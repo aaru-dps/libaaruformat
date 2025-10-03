@@ -168,19 +168,19 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
     }
 
     // Calculate MD5 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-    if(ctx->calculating_md5 && !negative && sector_address <= ctx->imageInfo.Sectors)
+    if(ctx->calculating_md5 && !negative && sector_address <= ctx->imageInfo.Sectors && !ctx->writingLong)
         aaruf_md5_update(&ctx->md5_context, data, length);
     // Calculate SHA1 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-    if(ctx->calculating_sha1 && !negative && sector_address <= ctx->imageInfo.Sectors)
+    if(ctx->calculating_sha1 && !negative && sector_address <= ctx->imageInfo.Sectors && !ctx->writingLong)
         aaruf_sha1_update(&ctx->sha1_context, data, length);
     // Calculate SHA256 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-    if(ctx->calculating_sha256 && !negative && sector_address <= ctx->imageInfo.Sectors)
+    if(ctx->calculating_sha256 && !negative && sector_address <= ctx->imageInfo.Sectors && !ctx->writingLong)
         aaruf_sha256_update(&ctx->sha256_context, data, length);
     // Calculate SpamSum on-the-fly if requested and sector is within user sectors (not negative or overflow)
-    if(ctx->calculating_sha256 && !negative && sector_address <= ctx->imageInfo.Sectors)
+    if(ctx->calculating_sha256 && !negative && sector_address <= ctx->imageInfo.Sectors && !ctx->writingLong)
         aaruf_spamsum_update(ctx->spamsum_context, data, length);
     // Calculate BLAKE3 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-    if(ctx->calculating_blake3 && !negative && sector_address <= ctx->imageInfo.Sectors)
+    if(ctx->calculating_blake3 && !negative && sector_address <= ctx->imageInfo.Sectors && !ctx->writingLong)
         blake3_hasher_update(ctx->blake3_context, data, length);
 
     // Close current block first
@@ -306,6 +306,637 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
 
     TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Writes a full ("long") raw sector (2352 bytes) from optical media, splitting and validating structure.
+ *
+ * This function is specialized for raw CD sector ingestion when the caller provides the complete 2352-byte
+ * (or derived) raw sector including synchronization pattern, header (prefix), user data area and suffix
+ * (EDC/ECC / parity depending on the mode). It supports:
+ *   - Audio (2352 bytes of PCM) and Data raw sectors which are simply forwarded to aaruf_write_sector().
+ *   - CD Mode 1 sectors (sync + header + 2048 user bytes + EDC + ECC P + ECC Q).
+ *   - CD Mode 2 (Form 1, Form 2 and Formless) sectors, handling sub-headers, EDC, and ECC as appropriate.
+ *
+ * For each sector, the function:
+ *   1. Locates the track definition covering the provided logical sector (LBA) and derives its type.
+ *   2. Validates input length (must be exactly 2352 for optical raw sectors at present).
+ *   3. Performs rewind detection: if sectors are written out of strictly increasing order, ongoing hash
+ *      calculations (MD5, SHA1, SHA256, SpamSum, BLAKE3) are disabled to prevent incorrect streaming digests.
+ *   4. Optionally updates hash digests if still enabled and the sector lies within the user range (i.e. not
+ *      negative / overflow) – this is performed on the full raw content for long sectors.
+ *   5. Splits the sector into prefix, user data, and suffix portions depending on mode and validates:
+ *        - Prefix (sync + header) timing/address fields (MM:SS:FF → LBA) and mode byte.
+ *        - For Mode 1: checks prefix conformity and ECC / EDC correctness via helper routines.
+ *        - For Mode 2: distinguishes Form 1 vs Form 2 (bit flags), validates ECC (Form 1) and EDC (both forms),
+ *          and extracts sub-header (8 bytes) for separate storage.
+ *   6. Stores anomalous (non-conforming or errored) prefix/suffix fragments into dynamically growing buffers
+ *      (sectorPrefixBuffer / sectorSuffixBuffer) and records miniature DDT entries (sectorPrefixDdtMini /
+ *      sectorSuffixDdtMini) with offsets and status bits. Correct standard patterns are recorded without
+ *      copying (status code only) to save space.
+ *   7. Writes only the user data portion (2048 for Mode 1 & Mode 2 Form 1, 2324 for Mode 2 Form 2, 2352 for
+ *      audio or for already treated Data) to the standard user data path by delegating to aaruf_write_sector(),
+ *      passing an appropriate derived sector status (e.g. SectorStatusMode1Correct, SectorStatusMode2Form1Ok,
+ *      SectorStatusErrored, etc.).
+ *
+ * Deduplication: Long sector handling itself does not directly hash for deduplication; dedupe is applied when
+ * aaruf_write_sector() is invoked for the extracted user data segment.
+ *
+ * Memory allocation strategy:
+ *   - Mini DDT arrays (prefix/suffix) are lazily allocated on first need sized for the total addressable sector
+ *     span (negative + user + overflow).
+ *   - Prefix (16-byte units) and suffix buffers (288-byte units; or smaller copies for Form 2 EDC) grow by
+ *     doubling when capacity would be exceeded.
+ *   - Mode 2 sub-header storage (8 bytes per sector) is also lazily allocated.
+ *
+ * Address normalization: Internally a corrected index (corrected_sector_address) is computed by offsetting the
+ * raw logical sector number with the negative-region size to provide a linear index across negative, user and
+ * overflow regions.
+ *
+ * Sector status encoding (high nibble of 16-bit mini DDT entries):
+ *   - SectorStatusMode1Correct / SectorStatusMode2Form1Ok / SectorStatusMode2Form2Ok / ... mark validated content.
+ *   - SectorStatusErrored marks stored anomalous fragments whose data was copied into side buffers.
+ *   - SectorStatusNotDumped marks all-zero (empty) raw sectors treated as not dumped.
+ *   - Additional specific codes differentiate Mode 2 Form 2 without CRC vs with correct CRC, etc.
+ *
+ * Rewind side effects: Once a rewind is detected (writing an LBA <= previously written), all on-the-fly hash
+ * computations are disabled permanently for the session in order to maintain integrity guarantees of the
+ * produced digest values.
+ *
+ * Limitations / TODO:
+ *   - BlockMedia (non-optical) handling is currently unimplemented and returns AARUF_ERROR_INCORRECT_MEDIA_TYPE.
+ *   - Only 2352-byte raw sectors are accepted; other raw lengths (e.g. 2448 with subchannel) are not handled here.
+ *   - Compression for block writing is not yet implemented (mirrors limitations of aaruf_write_sector()).
+ *
+ * Thread safety: This function is not thread-safe. The context carries mutable shared buffers and state.
+ *
+ * Error handling model: On encountering an error (allocation failure, bounds, incorrect size, media type) the
+ * function logs a fatal message via FATAL() and returns immediately with an appropriate negative error code.
+ * Partial allocations made earlier in the same call are not rolled back beyond what standard free-on-close does.
+ *
+ * Preconditions:
+ *   - context is a valid aaruformatContext with magic == AARU_MAGIC.
+ *   - Image opened for writing (isWriting == true).
+ *   - sector_address within allowed negative / user / overflow ranges depending on 'negative'.
+ *
+ * Postconditions on success:
+ *   - User data DDT updated (indirectly via aaruf_write_sector()).
+ *   - For Mode 1 / Mode 2 sectors: prefix/suffix / sub-header metadata structures updated accordingly.
+ *   - User data portion appended (buffered) into current block (or new block created) via aaruf_write_sector().
+ *   - Hash contexts updated unless rewind occurred.
+ *
+ * @param context Pointer to the aaruformat context.
+ * @param sector_address Logical Block Address (LBA) for the raw sector (0-based user LBA,
+ *        can include negative region when 'negative' is true).
+ * @param negative true if sector_address refers to the negative (pre-gap) region; false for user/overflow.
+ * @param data Pointer to 2352-byte raw sector buffer (sync+header+userdata+EDC/ECC) or audio PCM.
+ * @param sector_status Initial sector status hint provided by caller (may be overridden for derived writing call).
+ * @param length Length in bytes of the provided raw buffer. Must be exactly 2352 for optical sectors.
+ *
+ * @return One of:
+ * @retval AARUF_STATUS_OK Sector processed and (user data portion) queued/written successfully.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT Invalid or NULL context / magic mismatch.
+ * @retval AARUF_READ_ONLY Image opened read-only.
+ * @retval AARUF_ERROR_SECTOR_OUT_OF_BOUNDS sector_address outside negative/user/overflow bounds.
+ * @retval AARUF_ERROR_INCORRECT_DATA_SIZE length != 2352 for optical disc long sector ingestion.
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY Failed to allocate or grow any required buffer (mini DDT,
+ *         prefix, suffix, sub-headers).
+ * @retval AARUF_ERROR_INCORRECT_MEDIA_TYPE Media type unsupported for long sector writes (non OpticalDisc).
+ * @retval AARUF_ERROR_CANNOT_SET_DDT_ENTRY Propagated from underlying aaruf_write_sector() when DDT update fails.
+ * @retval AARUF_ERROR_CANNOT_WRITE_BLOCK_HEADER Propagated from block flush inside aaruf_write_sector().
+ * @retval AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA Propagated from block flush inside aaruf_write_sector().
+ *
+ * @note The function returns immediately after delegating to aaruf_write_sector() for user data; any status
+ *       described there may propagate. That function performs deduplication and block finalization.
+ *
+ * @warning Do not mix calls to aaruf_write_sector() and aaruf_write_sector_long() with out-of-order addresses
+ *          if you rely on calculated digests; rewind will disable digest updates irrevocably.
+ */
+int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool negative, const uint8_t *data,
+                                uint8_t sector_status, uint32_t length)
+{
+    TRACE("Entering aaruf_write_sector_long(%p, %" PRIu64 ", %d, %p, %u, %u)", context, sector_address, negative, data,
+          sector_status, length);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->isWriting)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    if(negative && sector_address > ctx->userDataDdtHeader.negative - 1)
+    {
+        FATAL("Sector address out of bounds");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+        return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
+    }
+
+    if(!negative && sector_address > ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow - 1)
+    {
+        FATAL("Sector address out of bounds");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+        return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
+    }
+
+    switch(ctx->imageInfo.XmlMediaType)
+    {
+        case OpticalDisc:
+            TrackEntry track = {0};
+
+            for(int i = 0; i < ctx->tracksHeader.entries; i++)
+                if(sector_address >= ctx->trackEntries[i].start && sector_address <= ctx->trackEntries[i].end)
+                {
+                    track = ctx->trackEntries[i];
+                    break;
+                }
+
+            if(track.sequence == 0 && track.start == 0 && track.end == 0) track.type = Data;
+
+            if(length != 2352)
+            {
+                FATAL("Incorrect sector size");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            ctx->writingLong = true;
+
+            if(!ctx->rewinded)
+            {
+                if(sector_address <= ctx->last_written_block)
+                {
+                    TRACE("Rewinded");
+                    ctx->rewinded = true;
+
+                    // Disable MD5 calculation
+                    if(ctx->calculating_md5) ctx->calculating_md5 = false;
+                    // Disable SHA1 calculation
+                    if(ctx->calculating_sha1) ctx->calculating_sha1 = false;
+                    // Disable SHA256 calculation
+                    if(ctx->calculating_sha256) ctx->calculating_sha256 = false;
+                    // Disable SpamSum calculation
+                    if(ctx->calculating_spamsum) ctx->calculating_spamsum = false;
+                    // Disable BLAKE3 calculation
+                    if(ctx->calculating_blake3) ctx->calculating_blake3 = false;
+                }
+                else
+                    ctx->last_written_block = sector_address;
+            }
+
+            // Calculate MD5 on-the-fly if requested and sector is within user sectors (not negative or overflow)
+            if(ctx->calculating_md5 && !negative && sector_address <= ctx->imageInfo.Sectors)
+                aaruf_md5_update(&ctx->md5_context, data, length);
+            // Calculate SHA1 on-the-fly if requested and sector is within user sectors (not negative or overflow)
+            if(ctx->calculating_sha1 && !negative && sector_address <= ctx->imageInfo.Sectors)
+                aaruf_sha1_update(&ctx->sha1_context, data, length);
+            // Calculate SHA256 on-the-fly if requested and sector is within user sectors (not negative or overflow)
+            if(ctx->calculating_sha256 && !negative && sector_address <= ctx->imageInfo.Sectors)
+                aaruf_sha256_update(&ctx->sha256_context, data, length);
+            // Calculate SpamSum on-the-fly if requested and sector is within user sectors (not negative or overflow)
+            if(ctx->calculating_sha256 && !negative && sector_address <= ctx->imageInfo.Sectors)
+                aaruf_spamsum_update(ctx->spamsum_context, data, length);
+            // Calculate BLAKE3 on-the-fly if requested and sector is within user sectors (not negative or overflow)
+            if(ctx->calculating_blake3 && !negative && sector_address <= ctx->imageInfo.Sectors)
+                blake3_hasher_update(ctx->blake3_context, data, length);
+
+            bool prefix_correct;
+
+            uint64_t corrected_sector_address = sector_address;
+
+            // Calculate positive or negative sector
+            if(negative)
+                corrected_sector_address -= ctx->userDataDdtHeader.negative;
+            else
+                corrected_sector_address += ctx->userDataDdtHeader.negative;
+
+            // Split raw cd sector data in prefix (sync, header), user data and suffix (edc, ecc p, ecc q)
+            switch(track.type)
+            {
+                case Audio:
+                case Data:
+                    return aaruf_write_sector(context, sector_address, negative, data, sector_status, length);
+                case CdMode1:
+
+                    // If we do not have a DDT V2 for sector prefix, create one
+                    if(ctx->sectorPrefixDdtMini == NULL)
+                    {
+                        ctx->sectorPrefixDdtMini =
+                            calloc(1, sizeof(uint16_t) * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
+                                                          ctx->userDataDdtHeader.overflow));
+
+                        if(ctx->sectorPrefixDdtMini == NULL)
+                        {
+                            FATAL("Could not allocate memory for CD sector prefix DDT");
+
+                            TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                        }
+                    }
+
+                    // If we do not have a DDT V2 for sector suffix, create one
+                    if(ctx->sectorSuffixDdtMini == NULL)
+                    {
+                        ctx->sectorSuffixDdtMini =
+                            calloc(1, sizeof(uint16_t) * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
+                                                          ctx->userDataDdtHeader.overflow));
+
+                        if(ctx->sectorSuffixDdtMini == NULL)
+                        {
+                            FATAL("Could not allocate memory for CD sector prefix DDT");
+
+                            TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                        }
+                    }
+
+                    if(ctx->sectorPrefixBuffer == NULL)
+                    {
+                        ctx->sectorPrefixBufferLength = 16 * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
+                                                              ctx->userDataDdtHeader.overflow);
+                        ctx->sectorPrefixBuffer       = malloc(ctx->sectorPrefixBufferLength);
+
+                        if(ctx->sectorPrefixBuffer == NULL)
+                        {
+                            FATAL("Could not allocate memory for CD sector prefix buffer");
+
+                            TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                        }
+                    }
+
+                    if(ctx->sectorSuffixBuffer == NULL)
+                    {
+                        ctx->sectorSuffixBufferLength =
+                            288 * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
+                                   ctx->userDataDdtHeader.overflow);
+                        ctx->sectorSuffixBuffer = malloc(ctx->sectorSuffixBufferLength);
+
+                        if(ctx->sectorSuffixBuffer == NULL)
+                        {
+                            FATAL("Could not allocate memory for CD sector suffix buffer");
+
+                            TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                        }
+                    }
+
+                    bool empty = true;
+
+                    for(int i = 0; i < length; i++)
+                        if(data[i] != 0)
+                        {
+                            empty = false;
+                            break;
+                        }
+
+                    if(empty)
+                    {
+                        ctx->sectorPrefixDdtMini[corrected_sector_address] = SectorStatusNotDumped;
+                        ctx->sectorSuffixDdtMini[corrected_sector_address] = SectorStatusNotDumped;
+                        return aaruf_write_sector(context, sector_address, negative, data + 16, SectorStatusNotDumped,
+                                                  2048);
+                    }
+
+                    prefix_correct = true;
+
+                    if(data[0x00] != 0x00 || data[0x01] != 0xFF || data[0x02] != 0xFF || data[0x03] != 0xFF ||
+                       data[0x04] != 0xFF || data[0x05] != 0xFF || data[0x06] != 0xFF || data[0x07] != 0xFF ||
+                       data[0x08] != 0xFF || data[0x09] != 0xFF || data[0x0A] != 0xFF || data[0x0B] != 0x00 ||
+                       data[0x0F] != 0x01)
+                        prefix_correct = false;
+
+                    if(prefix_correct)
+                    {
+                        const int minute     = (data[0x0C] >> 4) * 10 + (data[0x0C] & 0x0F);
+                        const int second     = (data[0x0D] >> 4) * 10 + (data[0x0D] & 0x0F);
+                        const int frame      = (data[0x0E] >> 4) * 10 + (data[0x0E] & 0x0F);
+                        const int stored_lba = minute * 60 * 75 + second * 75 + frame - 150;
+                        prefix_correct       = stored_lba == sector_address;
+                    }
+
+                    if(prefix_correct)
+                        ctx->sectorPrefixDdtMini[corrected_sector_address] = SectorStatusMode1Correct << 12;
+                    else
+                    {
+                        // Copy CD prefix from data buffer to prefix buffer
+                        memcpy(ctx->sectorPrefixBuffer + ctx->sectorPrefixBufferOffset, data, 16);
+                        ctx->sectorPrefixDdtMini[corrected_sector_address] =
+                            (uint16_t)(ctx->sectorPrefixBufferOffset / 16);
+                        ctx->sectorPrefixDdtMini[corrected_sector_address] |= SectorStatusErrored << 12;
+                        ctx->sectorPrefixBufferOffset += 16;
+
+                        // Grow prefix buffer if needed
+                        if(ctx->sectorPrefixBufferOffset >= ctx->sectorPrefixBufferLength)
+                        {
+                            ctx->sectorPrefixBufferLength *= 2;
+                            ctx->sectorPrefixBuffer = realloc(ctx->sectorPrefixBuffer, ctx->sectorPrefixBufferLength);
+
+                            if(ctx->sectorPrefixBuffer == NULL)
+                            {
+                                FATAL("Could not allocate memory for CD sector prefix buffer");
+
+                                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                            }
+                        }
+                    }
+
+                    const bool suffix_correct = aaruf_ecc_cd_is_suffix_correct(context, data);
+
+                    if(suffix_correct)
+                        ctx->sectorSuffixDdtMini[corrected_sector_address] = SectorStatusMode1Correct << 12;
+                    else
+                    {
+                        // Copy CD suffix from data buffer to suffix buffer
+                        memcpy(ctx->sectorSuffixBuffer + ctx->sectorSuffixBufferOffset, data + 2064, 288);
+                        ctx->sectorSuffixDdtMini[corrected_sector_address] =
+                            (uint16_t)(ctx->sectorSuffixBufferOffset / 288);
+                        ctx->sectorSuffixDdtMini[corrected_sector_address] |= SectorStatusErrored << 12;
+                        ctx->sectorSuffixBufferOffset += 288;
+
+                        // Grow suffix buffer if needed
+                        if(ctx->sectorSuffixBufferOffset >= ctx->sectorSuffixBufferLength)
+                        {
+                            ctx->sectorSuffixBufferLength *= 2;
+                            ctx->sectorSuffixBuffer = realloc(ctx->sectorSuffixBuffer, ctx->sectorSuffixBufferLength);
+
+                            if(ctx->sectorSuffixBuffer == NULL)
+                            {
+                                FATAL("Could not allocate memory for CD sector suffix buffer");
+
+                                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                            }
+                        }
+                    }
+
+                    return aaruf_write_sector(context, sector_address, negative, data + 16, SectorStatusMode1Correct,
+                                              2048);
+                case CdMode2Form1:
+                case CdMode2Form2:
+                case CdMode2Formless:
+                    // If we do not have a DDT V2 for sector prefix, create one
+                    if(ctx->sectorPrefixDdtMini == NULL)
+                    {
+                        ctx->sectorPrefixDdtMini =
+                            calloc(1, sizeof(uint16_t) * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
+                                                          ctx->userDataDdtHeader.overflow));
+
+                        if(ctx->sectorPrefixDdtMini == NULL)
+                        {
+                            FATAL("Could not allocate memory for CD sector prefix DDT");
+
+                            TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                        }
+                    }
+
+                    // If we do not have a DDT V2 for sector suffix, create one
+                    if(ctx->sectorSuffixDdtMini == NULL)
+                    {
+                        ctx->sectorSuffixDdtMini =
+                            calloc(1, sizeof(uint16_t) * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
+                                                          ctx->userDataDdtHeader.overflow));
+
+                        if(ctx->sectorSuffixDdtMini == NULL)
+                        {
+                            FATAL("Could not allocate memory for CD sector prefix DDT");
+
+                            TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                        }
+                    }
+
+                    if(ctx->sectorPrefixBuffer == NULL)
+                    {
+                        ctx->sectorPrefixBufferLength = 16 * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
+                                                              ctx->userDataDdtHeader.overflow);
+                        ctx->sectorPrefixBuffer       = malloc(ctx->sectorPrefixBufferLength);
+
+                        if(ctx->sectorPrefixBuffer == NULL)
+                        {
+                            FATAL("Could not allocate memory for CD sector prefix buffer");
+
+                            TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                        }
+                    }
+
+                    if(ctx->sectorSuffixBuffer == NULL)
+                    {
+                        ctx->sectorSuffixBufferLength =
+                            288 * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
+                                   ctx->userDataDdtHeader.overflow);
+                        ctx->sectorSuffixBuffer = malloc(ctx->sectorSuffixBufferLength);
+
+                        if(ctx->sectorSuffixBuffer == NULL)
+                        {
+                            FATAL("Could not allocate memory for CD sector suffix buffer");
+
+                            TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                        }
+                    }
+
+                    empty = true;
+
+                    for(int i = 0; i < length; i++)
+                        if(data[i] != 0)
+                        {
+                            empty = false;
+                            break;
+                        }
+
+                    if(empty)
+                    {
+                        ctx->sectorPrefixDdtMini[corrected_sector_address] = SectorStatusNotDumped;
+                        ctx->sectorSuffixDdtMini[corrected_sector_address] = SectorStatusNotDumped;
+                        return aaruf_write_sector(context, sector_address, negative, data + 16, SectorStatusNotDumped,
+                                                  2328);
+                    }
+
+                    const bool form2 = (data[18] & 0x20) == 0x20 || (data[22] & 0x20) == 0x20;
+
+                    prefix_correct = true;
+
+                    if(data[0x00] != 0x00 || data[0x01] != 0xFF || data[0x02] != 0xFF || data[0x03] != 0xFF ||
+                       data[0x04] != 0xFF || data[0x05] != 0xFF || data[0x06] != 0xFF || data[0x07] != 0xFF ||
+                       data[0x08] != 0xFF || data[0x09] != 0xFF || data[0x0A] != 0xFF || data[0x0B] != 0x00 ||
+                       data[0x0F] != 0x02)
+                        prefix_correct = false;
+
+                    if(prefix_correct)
+                    {
+                        const int minute     = (data[0x0C] >> 4) * 10 + (data[0x0C] & 0x0F);
+                        const int second     = (data[0x0D] >> 4) * 10 + (data[0x0D] & 0x0F);
+                        const int frame      = (data[0x0E] >> 4) * 10 + (data[0x0E] & 0x0F);
+                        const int stored_lba = minute * 60 * 75 + second * 75 + frame - 150;
+                        prefix_correct       = stored_lba == sector_address;
+                    }
+
+                    if(prefix_correct)
+                        ctx->sectorPrefixDdtMini[corrected_sector_address] =
+                            (form2 ? SectorStatusMode2Form2Ok : SectorStatusMode2Form1Ok) << 12;
+                    else
+                    {
+                        // Copy CD prefix from data buffer to prefix buffer
+                        memcpy(ctx->sectorPrefixBuffer + ctx->sectorPrefixBufferOffset, data, 16);
+                        ctx->sectorPrefixDdtMini[corrected_sector_address] =
+                            (uint16_t)(ctx->sectorPrefixBufferOffset / 16);
+                        ctx->sectorPrefixDdtMini[corrected_sector_address] |= SectorStatusErrored << 12;
+                        ctx->sectorPrefixBufferOffset += 16;
+
+                        // Grow prefix buffer if needed
+                        if(ctx->sectorPrefixBufferOffset >= ctx->sectorPrefixBufferLength)
+                        {
+                            ctx->sectorPrefixBufferLength *= 2;
+                            ctx->sectorPrefixBuffer = realloc(ctx->sectorPrefixBuffer, ctx->sectorPrefixBufferLength);
+
+                            if(ctx->sectorPrefixBuffer == NULL)
+                            {
+                                FATAL("Could not allocate memory for CD sector prefix buffer");
+
+                                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                            }
+                        }
+                    }
+
+                    if(ctx->mode2_subheaders == NULL)
+                    {
+                        ctx->mode2_subheaders =
+                            calloc(1, 8 * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
+                                           ctx->userDataDdtHeader.overflow));
+
+                        if(ctx->mode2_subheaders == NULL)
+                        {
+                            FATAL("Could not allocate memory for CD mode 2 subheader buffer");
+
+                            TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                        }
+                    }
+
+                    if(form2)
+                    {
+                        const uint32_t computed_edc = aaruf_edc_cd_compute(context, 0, data, 0x91C, 0x10);
+                        const uint32_t edc          = *(data + 0x92C);
+                        const bool     correct_edc  = computed_edc == edc;
+
+                        if(correct_edc)
+                            ctx->sectorSuffixDdtMini[corrected_sector_address] = SectorStatusMode2Form2Ok << 12;
+                        else if(edc == 0)
+                            ctx->sectorSuffixDdtMini[corrected_sector_address] = SectorStatusMode2Form2NoCrc << 12;
+                        else
+                        {
+                            // Copy CD suffix from data buffer to suffix buffer
+                            memcpy(ctx->sectorSuffixBuffer + ctx->sectorSuffixBufferOffset, data + 2348, 4);
+                            ctx->sectorSuffixDdtMini[corrected_sector_address] =
+                                (uint16_t)(ctx->sectorSuffixBufferOffset / 288);
+                            ctx->sectorSuffixDdtMini[corrected_sector_address] |= SectorStatusErrored << 12;
+                            ctx->sectorSuffixBufferOffset += 288;
+
+                            // Grow suffix buffer if needed
+                            if(ctx->sectorSuffixBufferOffset >= ctx->sectorSuffixBufferLength)
+                            {
+                                ctx->sectorSuffixBufferLength *= 2;
+                                ctx->sectorSuffixBuffer =
+                                    realloc(ctx->sectorSuffixBuffer, ctx->sectorSuffixBufferLength);
+
+                                if(ctx->sectorSuffixBuffer == NULL)
+                                {
+                                    FATAL("Could not allocate memory for CD sector suffix buffer");
+
+                                    TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                                    return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                                }
+                            }
+                        }
+
+                        // Copy subheader from data buffer to subheader buffer
+                        memcpy(ctx->mode2_subheaders + corrected_sector_address * 8, data + 0x10, 8);
+                        return aaruf_write_sector(context, sector_address, negative, data + 24,
+                                                  edc == 0      ? SectorStatusMode2Form2NoCrc
+                                                  : correct_edc ? SectorStatusMode2Form2Ok
+                                                                : SectorStatusErrored,
+                                                  2324);
+                    }
+
+                    const bool     correct_ecc  = aaruf_ecc_cd_is_suffix_correct_mode2(context, data);
+                    const uint32_t computed_edc = aaruf_edc_cd_compute(context, 0, data, 0x808, 0x10);
+                    const uint32_t edc          = *(data + 0x818);
+                    const bool     correct_edc  = computed_edc == edc;
+
+                    if(correct_ecc && correct_edc)
+                        ctx->sectorSuffixDdtMini[corrected_sector_address] = SectorStatusMode2Form1Ok << 12;
+                    else
+                    {
+                        // Copy CD suffix from data buffer to suffix buffer
+                        memcpy(ctx->sectorSuffixBuffer + ctx->sectorSuffixBufferOffset, data + 2072, 280);
+                        ctx->sectorSuffixDdtMini[corrected_sector_address] =
+                            (uint16_t)(ctx->sectorSuffixBufferOffset / 288);
+                        ctx->sectorSuffixDdtMini[corrected_sector_address] |= SectorStatusErrored << 12;
+                        ctx->sectorSuffixBufferOffset += 288;
+
+                        // Grow suffix buffer if needed
+                        if(ctx->sectorSuffixBufferOffset >= ctx->sectorSuffixBufferLength)
+                        {
+                            ctx->sectorSuffixBufferLength *= 2;
+                            ctx->sectorSuffixBuffer = realloc(ctx->sectorSuffixBuffer, ctx->sectorSuffixBufferLength);
+
+                            if(ctx->sectorSuffixBuffer == NULL)
+                            {
+                                FATAL("Could not allocate memory for CD sector suffix buffer");
+
+                                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                            }
+                        }
+                    }
+
+                    // Copy subheader from data buffer to subheader buffer
+                    memcpy(ctx->mode2_subheaders + corrected_sector_address * 8, data + 0x10, 8);
+                    return aaruf_write_sector(
+                        context, sector_address, negative, data + 24,
+                        correct_edc && correct_ecc ? SectorStatusMode2Form1Ok : SectorStatusErrored, 2048);
+            }
+
+            break;
+        case BlockMedia:
+            // TODO: Implement
+            break;
+        default:
+            TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+            return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+    }
+
+    // Fallback return when media type branch does not produce a value (satisfy non-void contract)
+    return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
 }
 
 int32_t aaruf_close_current_block(aaruformatContext *ctx)
