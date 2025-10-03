@@ -158,6 +158,10 @@
  * @note Resource Ownership (Clarification):
  *       - All dynamically allocated checksum buffers (e.g., SpamSum string) and cryptographic contexts are finalized
  *         or freed prior to context memory release
+ *
+ * @note Mode 2 Subheaders Block:
+ *       - If mode2_subheaders is present it is serialized as a DataBlock with type CompactDiscMode2Subheader, CRC64
+ *         protected and indexed similarly to other appended metadata blocks.
  */
 int aaruf_close(void *context)
 {
@@ -700,6 +704,53 @@ int aaruf_close(void *context)
                     tracks_index_entry.offset    = tracks_position;
                     utarray_push_back(ctx->indexEntries, &tracks_index_entry);
                     TRACE("Added tracks block index entry at offset %" PRIu64, tracks_position);
+                }
+            }
+        }
+
+        // Write MODE 2 subheader data block
+        if(ctx->mode2_subheaders != NULL)
+        {
+            fseek(ctx->imageStream, 0, SEEK_END);
+            long mode2_subheaders_position = ftell(ctx->imageStream);
+            // Align index position to block boundary if needed
+            alignment_mask                 = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+            if(mode2_subheaders_position & alignment_mask)
+            {
+                aligned_position = mode2_subheaders_position + alignment_mask & ~alignment_mask;
+                fseek(ctx->imageStream, aligned_position, SEEK_SET);
+                mode2_subheaders_position = aligned_position;
+            }
+
+            TRACE("Writing MODE 2 subheaders block at position %ld", mode2_subheaders_position);
+            BlockHeader subheaders_block = {0};
+            subheaders_block.identifier  = DataBlock;
+            subheaders_block.type        = CompactDiscMode2Subheader;
+            subheaders_block.compression = None;
+            subheaders_block.length =
+                (uint32_t)(ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow);
+            subheaders_block.cmpLength = subheaders_block.length;
+
+            // Calculate CRC64
+            subheaders_block.crc64    = aaruf_crc64_data(ctx->mode2_subheaders, subheaders_block.length);
+            subheaders_block.cmpCrc64 = subheaders_block.crc64;
+
+            // Write header
+            if(fwrite(&subheaders_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
+            {
+                // Write data
+                size_t written_bytes = fwrite(ctx->mode2_subheaders, subheaders_block.length, 1, ctx->imageStream);
+                if(written_bytes == 1)
+                {
+                    TRACE("Successfully wrote MODE 2 subheaders block (%" PRIu64 " bytes)", subheaders_block.length);
+                    // Add MODE 2 subheaders block to index
+                    TRACE("Adding MODE 2 subheaders block to index");
+                    IndexEntry mode2_subheaders_index_entry;
+                    mode2_subheaders_index_entry.blockType = DataBlock;
+                    mode2_subheaders_index_entry.dataType  = CompactDiscMode2Subheader;
+                    mode2_subheaders_index_entry.offset    = mode2_subheaders_position;
+                    utarray_push_back(ctx->indexEntries, &mode2_subheaders_index_entry);
+                    TRACE("Added MODE 2 subheaders block index entry at offset %" PRIu64, mode2_subheaders_position);
                 }
             }
         }
