@@ -32,7 +32,8 @@ Checks: >
   -readability-function-cognitive-complexity,
   -readability-identifier-length,
   -readability-isolate-declaration,
-  -readability-magic-numbers
+  -readability-magic-numbers,
+  -readability-math-missing-parentheses
 
 CheckOptions:
   - key: bugprone-reserved-identifier.AllowedIdentifiers
