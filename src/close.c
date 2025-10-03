@@ -874,8 +874,8 @@ int aaruf_close(void *context)
         ctx->indexEntries = NULL;
     }
 
-    free(ctx->sectorPrefix);
-    ctx->sectorPrefix = NULL;
+    free(ctx->sector_prefix);
+    ctx->sector_prefix = NULL;
     free(ctx->sectorPrefixCorrected);
     ctx->sectorPrefixCorrected = NULL;
     free(ctx->sectorSuffix);

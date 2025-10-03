@@ -304,7 +304,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
         case CdSectorPrefixCorrected:
             if(entry->dataType == CdSectorPrefixCorrected) { ctx->sectorPrefixCorrected = data; }
             else
-                ctx->sectorPrefix = data;
+                ctx->sector_prefix = data;
 
             ctx->readableSectorTags[CdSectorSync]   = true;
             ctx->readableSectorTags[CdSectorHeader] = true;

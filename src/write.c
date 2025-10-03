@@ -574,13 +574,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                         }
                     }
 
-                    if(ctx->sectorPrefixBuffer == NULL)
+                    if(ctx->sector_prefix == NULL)
                     {
-                        ctx->sectorPrefixBufferLength = 16 * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
-                                                              ctx->userDataDdtHeader.overflow);
-                        ctx->sectorPrefixBuffer       = malloc(ctx->sectorPrefixBufferLength);
+                        ctx->sector_prefix_length = 16 * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
+                                                          ctx->userDataDdtHeader.overflow);
+                        ctx->sector_prefix        = malloc(ctx->sector_prefix_length);
 
-                        if(ctx->sectorPrefixBuffer == NULL)
+                        if(ctx->sector_prefix == NULL)
                         {
                             FATAL("Could not allocate memory for CD sector prefix buffer");
 
@@ -644,19 +644,18 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     else
                     {
                         // Copy CD prefix from data buffer to prefix buffer
-                        memcpy(ctx->sectorPrefixBuffer + ctx->sectorPrefixBufferOffset, data, 16);
-                        ctx->sectorPrefixDdtMini[corrected_sector_address] =
-                            (uint16_t)(ctx->sectorPrefixBufferOffset / 16);
+                        memcpy(ctx->sector_prefix + ctx->sector_prefix_offset, data, 16);
+                        ctx->sectorPrefixDdtMini[corrected_sector_address] = (uint16_t)(ctx->sector_prefix_offset / 16);
                         ctx->sectorPrefixDdtMini[corrected_sector_address] |= SectorStatusErrored << 12;
-                        ctx->sectorPrefixBufferOffset += 16;
+                        ctx->sector_prefix_offset += 16;
 
                         // Grow prefix buffer if needed
-                        if(ctx->sectorPrefixBufferOffset >= ctx->sectorPrefixBufferLength)
+                        if(ctx->sector_prefix_offset >= ctx->sector_prefix_length)
                         {
-                            ctx->sectorPrefixBufferLength *= 2;
-                            ctx->sectorPrefixBuffer = realloc(ctx->sectorPrefixBuffer, ctx->sectorPrefixBufferLength);
+                            ctx->sector_prefix_length *= 2;
+                            ctx->sector_prefix = realloc(ctx->sector_prefix, ctx->sector_prefix_length);
 
-                            if(ctx->sectorPrefixBuffer == NULL)
+                            if(ctx->sector_prefix == NULL)
                             {
                                 FATAL("Could not allocate memory for CD sector prefix buffer");
 
@@ -732,13 +731,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                         }
                     }
 
-                    if(ctx->sectorPrefixBuffer == NULL)
+                    if(ctx->sector_prefix == NULL)
                     {
-                        ctx->sectorPrefixBufferLength = 16 * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
-                                                              ctx->userDataDdtHeader.overflow);
-                        ctx->sectorPrefixBuffer       = malloc(ctx->sectorPrefixBufferLength);
+                        ctx->sector_prefix_length = 16 * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
+                                                          ctx->userDataDdtHeader.overflow);
+                        ctx->sector_prefix        = malloc(ctx->sector_prefix_length);
 
-                        if(ctx->sectorPrefixBuffer == NULL)
+                        if(ctx->sector_prefix == NULL)
                         {
                             FATAL("Could not allocate memory for CD sector prefix buffer");
 
@@ -805,19 +804,18 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     else
                     {
                         // Copy CD prefix from data buffer to prefix buffer
-                        memcpy(ctx->sectorPrefixBuffer + ctx->sectorPrefixBufferOffset, data, 16);
-                        ctx->sectorPrefixDdtMini[corrected_sector_address] =
-                            (uint16_t)(ctx->sectorPrefixBufferOffset / 16);
+                        memcpy(ctx->sector_prefix + ctx->sector_prefix_offset, data, 16);
+                        ctx->sectorPrefixDdtMini[corrected_sector_address] = (uint16_t)(ctx->sector_prefix_offset / 16);
                         ctx->sectorPrefixDdtMini[corrected_sector_address] |= SectorStatusErrored << 12;
-                        ctx->sectorPrefixBufferOffset += 16;
+                        ctx->sector_prefix_offset += 16;
 
                         // Grow prefix buffer if needed
-                        if(ctx->sectorPrefixBufferOffset >= ctx->sectorPrefixBufferLength)
+                        if(ctx->sector_prefix_offset >= ctx->sector_prefix_length)
                         {
-                            ctx->sectorPrefixBufferLength *= 2;
-                            ctx->sectorPrefixBuffer = realloc(ctx->sectorPrefixBuffer, ctx->sectorPrefixBufferLength);
+                            ctx->sector_prefix_length *= 2;
+                            ctx->sector_prefix = realloc(ctx->sector_prefix, ctx->sector_prefix_length);
 
-                            if(ctx->sectorPrefixBuffer == NULL)
+                            if(ctx->sector_prefix == NULL)
                             {
                                 FATAL("Could not allocate memory for CD sector prefix buffer");
 

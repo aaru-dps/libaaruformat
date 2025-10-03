@@ -156,12 +156,12 @@ typedef struct aaruformatContext
     AaruHeaderV2 header;               ///< Parsed container header (v2).
 
     /* Optical auxiliary buffers (NULL if not present) */
-    uint8_t *sectorPrefix;           ///< Raw per-sector prefix (e.g., sync+header) uncorrected.
+    uint8_t *sector_prefix;          ///< Raw per-sector prefix (e.g., sync+header) uncorrected.
     uint8_t *sectorPrefixCorrected;  ///< Corrected variant (post error correction) if stored.
     uint8_t *sectorSuffix;           ///< Raw per-sector suffix (EDC/ECC) uncorrected.
     uint8_t *sectorSuffixCorrected;  ///< Corrected suffix if stored separately.
     uint8_t *sectorSubchannel;       ///< Raw 96-byte subchannel (if captured).
-    uint8_t *mode2_subheaders;        ///< MODE2 Form1/Form2 8-byte subheaders (concatenated).
+    uint8_t *mode2_subheaders;       ///< MODE2 Form1/Form2 8-byte subheaders (concatenated).
 
     uint8_t   shift;                ///< Legacy overall shift (deprecated by data_shift/table_shift).
     bool      inMemoryDdt;          ///< True if primary (and possibly secondary) DDT loaded.
@@ -232,11 +232,10 @@ typedef struct aaruformatContext
     uint8_t        currentTrackType;  ///< Current track type (when writing optical images with tracks, needed for block
                                       ///< compression type).
     bool           writingLong;       ///< True if writing long sectors
-    uint8_t       *sectorPrefixBuffer;        ///< Buffer for storing sector prefixes when writing optical images
     uint8_t       *sectorSuffixBuffer;        ///< Buffer for storing sector suffixes when writing optical images
-    size_t         sectorPrefixBufferLength;  ///< Length of sectorPrefixBuffer
+    size_t         sector_prefix_length;      ///< Length of sectorPrefixBuffer
     size_t         sectorSuffixBufferLength;  ///< Length of sectorSuffixBuffer
-    size_t         sectorPrefixBufferOffset;  ///< Current position in sectorPrefixBuffer
+    size_t         sector_prefix_offset;      ///< Current position in sectorPrefixBuffer
     size_t         sectorSuffixBufferOffset;  ///< Current position in sectorSuffixBuffer
 } aaruformatContext;
 

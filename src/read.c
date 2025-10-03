@@ -827,7 +827,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                 TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_BUFFER_TOO_SMALL");
                 return AARUF_ERROR_BUFFER_TOO_SMALL;
             }
-            if((ctx->sectorSuffix == NULL || ctx->sectorPrefix == NULL) &&
+            if((ctx->sectorSuffix == NULL || ctx->sector_prefix == NULL) &&
                (ctx->sectorSuffixCorrected == NULL || ctx->sectorPrefixCorrected == NULL))
                 return aaruf_read_sector(context, sector_address, negative, data, length);
 
@@ -882,8 +882,8 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                 case CdMode1:
                     memcpy(data + 16, bare_data, 2048);
 
-                    if(ctx->sectorPrefix != NULL)
-                        memcpy(data, ctx->sectorPrefix + corrected_sector_address * 16, 16);
+                    if(ctx->sector_prefix != NULL)
+                        memcpy(data, ctx->sector_prefix + corrected_sector_address * 16, 16);
                     else if(ctx->sectorPrefixDdt != NULL)
                     {
                         if((ctx->sectorPrefixDdt[corrected_sector_address] & CD_XFIX_MASK) == Correct)
@@ -934,8 +934,8 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                 case CdMode2Formless:
                 case CdMode2Form1:
                 case CdMode2Form2:
-                    if(ctx->sectorPrefix != NULL)
-                        memcpy(data, ctx->sectorPrefix + corrected_sector_address * 16, 16);
+                    if(ctx->sector_prefix != NULL)
+                        memcpy(data, ctx->sector_prefix + corrected_sector_address * 16, 16);
                     else if(ctx->sectorPrefixDdt != NULL)
                     {
                         if((ctx->sectorPrefixDdt[corrected_sector_address] & CD_XFIX_MASK) == Correct)

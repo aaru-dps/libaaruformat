@@ -65,7 +65,7 @@ int info(const char *path)
 
     // TODO: Traverse media tags
 
-    if(ctx->sectorPrefix != NULL) printf("Sector prefix array has been read.\n");
+    if(ctx->sector_prefix != NULL) printf("Sector prefix array has been read.\n");
 
     if(ctx->sectorPrefixCorrected != NULL) printf("Sector prefix corrected array has been read.\n");
 
