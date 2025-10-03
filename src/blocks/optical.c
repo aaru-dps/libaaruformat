@@ -184,29 +184,13 @@ void process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry)
  *
  * @since 1.0
  *
- * @code{.c}
- * aaruformatContext *ctx = open_image("disc.aaruf");
- * if(!ctx) { // handle error
- * }
- * size_t size = 0;              // Will receive required byte count
- * int32_t st = aaruf_get_tracks(ctx, NULL, &size);
- * if(st != AARUF_ERROR_BUFFER_TOO_SMALL) { // unexpected error
- *     // handle error
- * }
- * TrackEntry *tracks = (TrackEntry*)malloc(size);
- * if(!tracks) { // allocation failure
- *     // handle error
- * }
- * st = aaruf_get_tracks(ctx, (uint8_t*)tracks, &size);
- * if(st == AARUF_STATUS_OK) {
- *     size_t count = size / sizeof(TrackEntry);
- *     for(size_t i = 0; i < count; i++) {
- *         // process tracks[i]
- *     }
- * }
- * free(tracks);
- * close_image(ctx);
- * @endcode
+ * Usage example (conceptual):
+ * 1. Open an image obtaining a valid aaruformatContext pointer.
+ * 2. Invoke aaruf_get_tracks(ctx, NULL, &size) to query required buffer size (expect AARUF_ERROR_BUFFER_TOO_SMALL).
+ * 3. Allocate a buffer of "size" bytes.
+ * 4. Invoke aaruf_get_tracks(ctx, buffer, &size) again; on AARUF_STATUS_OK iterate over
+ *    (size / sizeof(TrackEntry)) entries.
+ * 5. Free the buffer and close the image when done.
  */
 int32_t aaruf_get_tracks(const void *context, uint8_t *buffer, size_t *length)
 {
