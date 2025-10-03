@@ -328,7 +328,16 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
     if(parsed_options.spamsum)
     {
         ctx->calculating_spamsum = true;
-        ctx->spamsum_context = aaruf_spamsum_init();
+        ctx->spamsum_context     = aaruf_spamsum_init();
+    }
+    if(parsed_options.blake3)
+    {
+        ctx->blake3_context = calloc(1, sizeof(blake3_hasher));
+        if(ctx->blake3_context != NULL)
+        {
+            ctx->calculating_blake3 = true;
+            blake3_hasher_init(ctx->blake3_context);
+        }
     }
 
     // Is writing

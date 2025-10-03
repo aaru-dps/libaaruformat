@@ -158,7 +158,8 @@ typedef enum
     Md5     = 1, ///< MD5 hash.
     Sha1    = 2, ///< SHA-1 hash.
     Sha256  = 3, ///< SHA-256 hash.
-    SpamSum = 4  ///< SpamSum (context-triggered piecewise hash).
+    SpamSum = 4, ///< SpamSum (context-triggered piecewise hash).
+    Blake3  = 5, ///< BLAKE3 hash.
 } ChecksumAlgorithm;
 
 /**
@@ -237,6 +238,31 @@ typedef enum
     SectorStatusEncrypted       = 0x9, ///< Content encrypted and stored encrypted in image.
     SectorStatusUnencrypted     = 0xA  ///< Content originally encrypted but stored decrypted in image.
 } SectorStatus;
+
+/**
+ * \enum FeaturesCompatible
+ * \brief Bit-mask of optional, backward-compatible features stored in an image.
+ *
+ * These flags advertise additional data structures or capabilities embedded in the
+ * image that older readers MAY safely ignore. An unknown bit MUST be treated as
+ * "feature unsupported" without failing to open the image. Writers set the bits for
+ * features they included; readers test them to enable extended behaviors.
+ *
+ * Usage example:
+ * \code{.c}
+ * uint64_t features = header->featuresCompatible; // value read from on-disk header
+ * if(features & AARU_FEATURE_RW_BLAKE3)
+ * {
+ *     // Image contains BLAKE3 checksums; enable BLAKE3 verification path.
+ * }
+ * \endcode
+ *
+ * Future compatible features SHALL use the next available bit (1ULL << n).
+ */
+typedef enum
+{
+    AARU_FEATURE_RW_BLAKE3 = 0x1,  ///< BLAKE3 checksum is present (read/write support for BLAKE3 hashes).
+} FeaturesCompatible;
 
 #ifndef _MSC_VER
 #pragma clang diagnostic pop

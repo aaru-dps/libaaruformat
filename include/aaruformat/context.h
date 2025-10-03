@@ -19,6 +19,7 @@
 #ifndef LIBAARUFORMAT_CONTEXT_H
 #define LIBAARUFORMAT_CONTEXT_H
 
+#include "blake3.h"
 #include "crc64.h"
 #include "hash_map.h"
 #include "lru.h"
@@ -100,10 +101,12 @@ typedef struct Checksums
     bool     hasMd5;                        ///< True if md5[] buffer populated.
     bool     hasSha1;                       ///< True if sha1[] buffer populated.
     bool     hasSha256;                     ///< True if sha256[] buffer populated.
+    bool     hasBlake3;                     ///< True if blake3[] buffer populated.
     bool     hasSpamSum;                    ///< True if spamsum pointer allocated and signature read.
     uint8_t  md5[MD5_DIGEST_LENGTH];        ///< MD5 digest (16 bytes).
     uint8_t  sha1[SHA1_DIGEST_LENGTH];      ///< SHA-1 digest (20 bytes).
     uint8_t  sha256[SHA256_DIGEST_LENGTH];  ///< SHA-256 digest (32 bytes).
+    uint8_t  blake3[BLAKE3_OUT_LEN];        ///< BLAKE3 digest (32 bytes).
     uint8_t *spamsum;                       ///< SpamSum fuzzy hash (ASCII), allocated length+1 with trailing 0.
 } Checksums;
 
@@ -214,16 +217,18 @@ typedef struct aaruformatContext
     hash_map_t *sectorHashMap;  ///< Deduplication hash map (fingerprint->entry mapping).
     bool        deduplicate;    ///< Storage deduplication active (duplicates coalesce).
 
-    bool         rewinded;             ///< True if stream has been rewound after open (write path).
-    uint64_t     last_written_block;   ///< Last written block number (write path).
-    bool         calculating_md5;      ///< True if whole-image MD5 being calculated on-the-fly.
-    md5_ctx      md5_context;          ///< Opaque MD5 context for streaming updates
-    bool         calculating_sha1;     ///< True if whole-image SHA-1 being calculated on-the-fly.
-    sha1_ctx     sha1_context;         ///< Opaque SHA-1 context for streaming updates
-    bool         calculating_sha256;   ///< True if whole-image SHA-256 being calculated on-the-fly.
-    sha256_ctx   sha256_context;       ///< Opaque SHA-256 context for streaming updates
-    bool         calculating_spamsum;  ///< True if whole-image SpamSum being calculated on-the-fly.
-    spamsum_ctx *spamsum_context;      ///< Opaque SpamSum context for streaming updates
+    bool           rewinded;             ///< True if stream has been rewound after open (write path).
+    uint64_t       last_written_block;   ///< Last written block number (write path).
+    bool           calculating_md5;      ///< True if whole-image MD5 being calculated on-the-fly.
+    md5_ctx        md5_context;          ///< Opaque MD5 context for streaming updates
+    bool           calculating_sha1;     ///< True if whole-image SHA-1 being calculated on-the-fly.
+    sha1_ctx       sha1_context;         ///< Opaque SHA-1 context for streaming updates
+    bool           calculating_sha256;   ///< True if whole-image SHA-256 being calculated on-the-fly.
+    sha256_ctx     sha256_context;       ///< Opaque SHA-256 context for streaming updates
+    bool           calculating_spamsum;  ///< True if whole-image SpamSum being calculated on-the-fly.
+    spamsum_ctx   *spamsum_context;      ///< Opaque SpamSum context for streaming updates
+    bool           calculating_blake3;   ///< True if whole-image BLAKE3 being calculated on-the-fly.
+    blake3_hasher *blake3_context;       ///< Opaque BLAKE3 context for streaming updates
 } aaruformatContext;
 
 /** \struct DumpHardwareEntriesWithData

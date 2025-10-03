@@ -523,10 +523,16 @@ int aaruf_close(void *context)
             aaruf_spamsum_final(ctx->spamsum_context, ctx->checksums.spamsum);
             aaruf_spamsum_free(ctx->spamsum_context);
         }
+        if(ctx->calculating_blake3)
+        {
+            ctx->checksums.hasBlake3 = true;
+            blake3_hasher_finalize(ctx->blake3_context, ctx->checksums.blake3, BLAKE3_OUT_LEN);
+            free(ctx->blake3_context);
+        }
 
         // Write the checksums block
-        bool has_checksums =
-            ctx->checksums.hasMd5 || ctx->checksums.hasSha1 || ctx->checksums.hasSha256 || ctx->checksums.hasSpamSum;
+        bool has_checksums = ctx->checksums.hasMd5 || ctx->checksums.hasSha1 || ctx->checksums.hasSha256 ||
+                             ctx->checksums.hasSpamSum || ctx->checksums.hasBlake3;
 
         if(has_checksums)
         {
@@ -590,9 +596,22 @@ int aaruf_close(void *context)
                 spamsum_entry.length        = strlen((const char *)ctx->checksums.spamsum);
                 spamsum_entry.type          = SpamSum;
                 fwrite(&spamsum_entry, sizeof(ChecksumEntry), 1, ctx->imageStream);
-                fwrite(&ctx->checksums.spamsum, spamsum_entry.length, 1, ctx->imageStream);
+                fwrite(ctx->checksums.spamsum, spamsum_entry.length, 1, ctx->imageStream);
                 checksum_header.length += sizeof(ChecksumEntry) + spamsum_entry.length;
                 checksum_header.entries++;
+            }
+
+            if(ctx->checksums.hasBlake3)
+            {
+                TRACE("Writing BLAKE3 checksum entry");
+                ChecksumEntry blake3_entry = {0};
+                blake3_entry.length        = BLAKE3_OUT_LEN;
+                blake3_entry.type          = Blake3;
+                fwrite(&blake3_entry, sizeof(ChecksumEntry), 1, ctx->imageStream);
+                fwrite(&ctx->checksums.blake3, BLAKE3_OUT_LEN, 1, ctx->imageStream);
+                checksum_header.length += sizeof(ChecksumEntry) + BLAKE3_OUT_LEN;
+                checksum_header.entries++;
+                ctx->header.featureCompatible |= AARU_FEATURE_RW_BLAKE3;
             }
 
             fseek(ctx->imageStream, checksum_position, SEEK_SET);
