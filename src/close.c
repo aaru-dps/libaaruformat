@@ -775,6 +775,84 @@ static void write_sector_prefix(aaruformatContext *ctx)
 }
 
 /**
+ * @brief Serialize the optional CD sector suffix block (EDC/ECC region capture).
+ *
+ * The sector suffix contains trailing integrity and redundancy bytes of a raw CD sector that
+ * follow the user data area. Depending on the mode this includes:
+ *   - Mode 1: 4-byte EDC, 8-byte reserved, 276 bytes (P/Q layers) ECC = 288 bytes total.
+ *   - Mode 2 Form 1: 4-byte EDC, 8 reserved, 276 ECC = 288 bytes.
+ *   - Mode 2 Form 2: 4-byte EDC only (no ECC) but when an error is detected the implementation
+ *     may still store a 288-byte suffix container for uniformity when capturing errored data.
+ *
+ * During writing, when an error or uncorrectable condition is detected for a sector's suffix,
+ * the 288-byte trailing portion (starting at offset 2064 for Mode 1 / Form 1 or 2348/2349 for
+ * other layouts) is copied into an in-memory expandable buffer pointed to by ctx->sector_suffix.
+ * The per-sector DDT entry encodes either an inlined status (OK / No CRC / etc.) or an index to
+ * the stored suffix (ctx->sector_suffix_offset / 288). This function serializes the accumulated
+ * suffix buffer as a DataBlock of type CdSectorSuffix if any suffix bytes were stored.
+ *
+ * Layout considerations:
+ *   - The block length is exactly the number of bytes copied (ctx->sector_suffix_offset).
+ *   - No compression is applied; CRC64 is calculated on the raw suffix stream for integrity.
+ *   - The write position is aligned to the DDT block alignment (2^blockAlignmentShift).
+ *
+ * Indexing: An IndexEntry is appended so later readers can locate the suffix collection. Absence
+ * of this block implies no per-sector suffix captures were required (all suffixes considered OK).
+ *
+ * Thread / reentrancy: This routine is called only once during finalization (aaruf_close) in a
+ * single-threaded context; no synchronization is performed.
+ *
+ * @param ctx Pointer to an initialized aaruformatContext in write mode. Must not be NULL.
+ * @internal
+ */
+static void write_sector_suffix(aaruformatContext *ctx)
+{
+    if(ctx->sector_suffix == NULL) return;
+
+    fseek(ctx->imageStream, 0, SEEK_END);
+    long     suffix_position = ftell(ctx->imageStream);
+    // Align index position to block boundary if needed
+    const uint64_t alignment_mask  = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    if(suffix_position & alignment_mask)
+    {
+        const uint64_t aligned_position = suffix_position + alignment_mask & ~alignment_mask;
+        fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        suffix_position = aligned_position;
+    }
+
+    TRACE("Writing sector suffix block at position %ld", suffix_position);
+    BlockHeader suffix_block = {0};
+    suffix_block.identifier  = DataBlock;
+    suffix_block.type        = CdSectorSuffix;
+    suffix_block.compression = None;
+    suffix_block.length      = (uint32_t)ctx->sector_suffix_offset;
+    suffix_block.cmpLength   = suffix_block.length;
+
+    // Calculate CRC64
+    suffix_block.crc64    = aaruf_crc64_data(ctx->sector_suffix, suffix_block.length);
+    suffix_block.cmpCrc64 = suffix_block.crc64;
+
+    // Write header
+    if(fwrite(&suffix_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
+    {
+        // Write data
+        const size_t written_bytes = fwrite(ctx->sector_suffix, suffix_block.length, 1, ctx->imageStream);
+        if(written_bytes == 1)
+        {
+            TRACE("Successfully wrote CD sector suffix block (%" PRIu64 " bytes)", suffix_block.length);
+            // Add suffix block to index
+            TRACE("Adding CD sector suffix block to index");
+            IndexEntry suffix_index_entry;
+            suffix_index_entry.blockType = DataBlock;
+            suffix_index_entry.dataType  = CdSectorSuffix;
+            suffix_index_entry.offset    = suffix_position;
+            utarray_push_back(ctx->indexEntries, &suffix_index_entry);
+            TRACE("Added CD sector suffix block index entry at offset %" PRIu64, suffix_position);
+        }
+    }
+}
+
+/**
  * @brief Serialize the accumulated index entries at the end of the image and back-patch the header.
  *
  * All previously written structural blocks push their IndexEntry into ctx->indexEntries. This
@@ -996,6 +1074,9 @@ int aaruf_close(void *context)
 
         // Write CD sector prefix data block
         write_sector_prefix(ctx);
+
+        // Write CD sector suffix data block (EDC/ECC captures)
+        write_sector_suffix(ctx);
 
         // Write the complete index at the end of the file
         res = write_index_block(ctx);
