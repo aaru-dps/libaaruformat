@@ -126,11 +126,11 @@ add_library(aaruformat SHARED include/aaruformat/consts.h include/aaruformat/enu
             include/log.h
             src/ddt/hash_map.c
             include/aaruformat/hash_map.h
-            src/md5.c
+            src/checksum/md5.c
             include/md5.h
-            src/sha1.c
+            src/checksum/sha1.c
             include/sha1.h
-            src/sha256.c
+            src/checksum/sha256.c
             include/sha256.h)
 
 include_directories(include include/aaruformat 3rdparty/uthash/include 3rdparty/uthash/src)
