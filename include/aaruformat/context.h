@@ -24,6 +24,7 @@
 #include "lru.h"
 #include "md5.h"
 #include "sha1.h"
+#include "sha256.h"
 #include "structs.h"
 #include "utarray.h"
 
@@ -212,12 +213,14 @@ typedef struct aaruformatContext
     hash_map_t *sectorHashMap;  ///< Deduplication hash map (fingerprint->entry mapping).
     bool        deduplicate;    ///< Storage deduplication active (duplicates coalesce).
 
-    bool     rewinded;            ///< True if stream has been rewound after open (write path).
-    uint64_t last_written_block;  ///< Last written block number (write path).
-    bool     calculating_md5;     ///< True if whole-image MD5 being calculated on-the-fly.
-    md5_ctx  md5_context;         ///< Opaque MD5 context for streaming updates
-    bool     calculating_sha1;    ///< True if whole-image SHA-1 being calculated on-the-fly.
-    sha1_ctx sha1_context;        ///< Opaque SHA-1 context for streaming updates
+    bool       rewinded;            ///< True if stream has been rewound after open (write path).
+    uint64_t   last_written_block;  ///< Last written block number (write path).
+    bool       calculating_md5;     ///< True if whole-image MD5 being calculated on-the-fly.
+    md5_ctx    md5_context;         ///< Opaque MD5 context for streaming updates
+    bool       calculating_sha1;    ///< True if whole-image SHA-1 being calculated on-the-fly.
+    sha1_ctx   sha1_context;        ///< Opaque SHA-1 context for streaming updates
+    bool       calculating_sha256;  ///< True if whole-image SHA-256 being calculated on-the-fly.
+    sha256_ctx sha256_context;      ///< Opaque SHA-256 context for streaming updates
 } aaruformatContext;
 
 /** \struct DumpHardwareEntriesWithData

@@ -511,6 +511,11 @@ int aaruf_close(void *context)
             ctx->checksums.hasSha1 = true;
             aaruf_sha1_final(&ctx->sha1_context, ctx->checksums.sha1);
         }
+        if(ctx->calculating_sha256)
+        {
+            ctx->checksums.hasSha256 = true;
+            aaruf_sha256_final(&ctx->sha256_context, ctx->checksums.sha256);
+        }
 
         // Write the checksums block
         bool has_checksums =
