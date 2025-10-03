@@ -939,6 +939,107 @@ static void write_sector_prefix_ddt(aaruformatContext *ctx)
 }
 
 /**
+ * @brief Serialize the per-sector CD suffix status / index DeDuplication Table (DDT v2, suffix variant).
+ *
+ * This routine emits the DDT v2 table that maps each logical sector (including negative pregap
+ * and overflow ranges) to (a) a 4-bit SectorStatus code and (b) a 12-bit index pointing into the
+ * captured suffix data block (CdSectorSuffix). The suffix bytes (typically the 288-byte EDC/ECC
+ * region for Mode 1 or Mode 2 Form 1, or shorter EDC-only for Form 2) are stored separately by
+ * write_sector_suffix(). When a sector's suffix was captured because it differed from the expected
+ * generated values (e.g., uncorrectable, intentionally preserved corruption, or variant layout),
+ * the in-memory mini entry records the index of its 16 * 18 (288) byte chunk. If no suffix bytes
+ * were explicitly stored for a sector the index field is zero and only the status applies.
+ *
+ * Encoding (mini 16-bit variant only, DDT v2 semantics):
+ *   Bits 15..12 : SectorStatus enumeration (already aligned for direct storage; no legacy masks used).
+ *   Bits 11..0  : 12-bit index (0..4095) referencing a suffix unit of size 288 bytes (2^dataShift granularity),
+ *                 or 0 when the sector uses an implicit / regenerated suffix (no external data captured).
+ *
+ * Characteristics & constraints:
+ *   - Only DDT v2 is supported here; no fallback or mixed-mode emission with v1 occurs.
+ *   - Only the compact "mini" (16-bit) table form is currently produced (sectorSuffixDdtMini filled during write).
+ *   - Table length = (negative + total Sectors + overflow) * sizeof(uint16_t).
+ *   - dataShift mirrors userDataDdtHeader.dataShift (expressing granularity for index referencing).
+ *   - Single-level table (levels = 1, tableLevel = 0, tableShift = 0).
+ *   - CRC64 protects the raw uncompressed table (crc64 == cmpCrc64 because compression = None).
+ *   - Alignment: The table is aligned to 2^(blockAlignmentShift) before writing to guarantee block boundary access.
+ *   - Idempotence: If sectorSuffixDdtMini is NULL the function is a no-op (indicating no suffix anomalies captured).
+ *
+ * Index integration:
+ *   On success an IndexEntry (blockType = DeDuplicationTable2, dataType = CdSectorSuffix, offset = file position)
+ *   is appended to ctx->indexEntries enabling later readers to locate and parse the suffix DDT.
+ *
+ * Error handling & assumptions:
+ *   - The function does not explicitly propagate write failures upward; partial write errors simply
+ *     omit the index entry (TRACE logs provide diagnostics). Higher level close logic determines
+ *     overall success.
+ *   - Executed in a single-threaded finalization path; no locking is performed or required.
+ *
+ * Preconditions:
+ *   - ctx must be a valid non-NULL pointer opened for writing.
+ *   - ctx->sectorSuffixDdtMini must point to a fully populated contiguous array of uint16_t entries.
+ *
+ * @param ctx Active aaruformatContext being finalized.
+ * @internal
+ */
+static void write_sector_suffix_ddt(aaruformatContext *ctx)
+{
+    if(ctx->sectorSuffixDdtMini == NULL) return;
+
+    fseek(ctx->imageStream, 0, SEEK_END);
+    long           suffix_ddt_position = ftell(ctx->imageStream);
+    // Align index position to block boundary if needed
+    const uint64_t alignment_mask      = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    if(suffix_ddt_position & alignment_mask)
+    {
+        const uint64_t aligned_position = suffix_ddt_position + alignment_mask & ~alignment_mask;
+        fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        suffix_ddt_position = aligned_position;
+    }
+
+    TRACE("Writing sector suffix DDT v2 at position %ld", suffix_ddt_position);
+    DdtHeader2 ddt_header2          = {0};
+    ddt_header2.identifier          = DeDuplicationTable2;
+    ddt_header2.type                = CdSectorSuffix;
+    ddt_header2.compression         = None;
+    ddt_header2.levels              = 1;
+    ddt_header2.tableLevel          = 0;
+    ddt_header2.negative            = ctx->userDataDdtHeader.negative;
+    ddt_header2.overflow            = ctx->userDataDdtHeader.overflow;
+    ddt_header2.blockAlignmentShift = ctx->userDataDdtHeader.blockAlignmentShift;
+    ddt_header2.dataShift           = ctx->userDataDdtHeader.dataShift;
+    ddt_header2.tableShift          = 0;  // Single-level DDT
+    ddt_header2.sizeType            = SmallDdtSizeType;
+    ddt_header2.entries   = ctx->imageInfo.Sectors + ctx->userDataDdtHeader.negative + ctx->userDataDdtHeader.overflow;
+    ddt_header2.blocks    = ctx->userDataDdtHeader.blocks;
+    ddt_header2.start     = 0;
+    ddt_header2.length    = ddt_header2.entries * sizeof(uint16_t);
+    ddt_header2.cmpLength = ddt_header2.length;
+    // Calculate CRC64
+    ddt_header2.crc64     = aaruf_crc64_data((uint8_t *)ctx->sectorSuffixDdtMini, (uint32_t)ddt_header2.length);
+    ddt_header2.cmpCrc64  = ddt_header2.crc64;
+
+    // Write header
+    if(fwrite(&ddt_header2, sizeof(DdtHeader2), 1, ctx->imageStream) == 1)
+    {
+        // Write data
+        const size_t written_bytes = fwrite(ctx->sectorSuffixDdtMini, ddt_header2.length, 1, ctx->imageStream);
+        if(written_bytes == 1)
+        {
+            TRACE("Successfully wrote sector suffix DDT v2 (%" PRIu64 " bytes)", ddt_header2.length);
+            // Add suffix block to index
+            TRACE("Adding sector suffix DDT v2 to index");
+            IndexEntry suffix_ddt_index_entry;
+            suffix_ddt_index_entry.blockType = DeDuplicationTable2;
+            suffix_ddt_index_entry.dataType  = CdSectorSuffix;
+            suffix_ddt_index_entry.offset    = suffix_ddt_position;
+            utarray_push_back(ctx->indexEntries, &suffix_ddt_index_entry);
+            TRACE("Added sector suffix DDT v2 index entry at offset %" PRIu64, suffix_ddt_position);
+        }
+    }
+}
+
+/**
  * @brief Serialize the accumulated index entries at the end of the image and back-patch the header.
  *
  * All previously written structural blocks push their IndexEntry into ctx->indexEntries. This
@@ -1166,6 +1267,9 @@ int aaruf_close(void *context)
 
         // Write CD sector suffix data block (EDC/ECC captures)
         write_sector_suffix(ctx);
+
+        // Write sector prefix DDT (EDC/ECC captures)
+        write_sector_suffix_ddt(ctx);
 
         // Write the complete index at the end of the file
         res = write_index_block(ctx);
