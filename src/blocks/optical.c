@@ -241,3 +241,128 @@ int32_t aaruf_get_tracks(const void *context, uint8_t *buffer, size_t *length)
     TRACE("Exiting aaruf_get_tracks(%p, %p, %zu) = AARUF_STATUS_OK", context, buffer, *length);
     return AARUF_STATUS_OK;
 }
+
+
+/**
+ * @brief Replace (or clear) the in-memory track table for an AaruFormat image context.
+ *
+ * Copies an array of caller-provided TrackEntry structures into the internal context, replacing any
+ * previously stored track metadata. A CRC64 is recomputed over the new table and stored in the
+ * associated TracksHeader. Passing a count of 0 clears existing track information.
+ *
+ * Typical usage:
+ *  - Prepare an array of TrackEntry structures describing each track (filled by the caller).
+ *  - Call aaruf_set_tracks() with the array and the track count to load them into the context.
+ *  - Subsequently the table can be retrieved with aaruf_get_tracks().
+ *
+ * Memory ownership:
+ *  - The function allocates (or frees when clearing) internal storage sized to (count * sizeof(TrackEntry)).
+ *  - The caller retains ownership of the input array (if any) and may free or reuse it after the call.
+ *
+ * Validation performed:
+ *  - @p context must be non-NULL and reference aaruformatContext with magic == AARU_MAGIC.
+ *  - @p tracks must be non-NULL when @p count > 0.
+ *  - @p count must be >= 0. (Negative values produce AARUF_ERROR_INVALID_TRACK_FORMAT.)
+ *  - (Implementation detail) count is truncated to uint16_t for header storage; values > UINT16_MAX
+ *    will silently wrap. Callers should ensure count <= 65535. This behavior may change in a future version.
+ *
+ * Concurrency & thread-safety:
+ *  - Not thread-safe. Mutates shared context state. External synchronization is required if multiple
+ *    threads access the same context.
+ *
+ * Side effects:
+ *  - Frees any existing internal track table before allocating the new one.
+ *  - Updates ctx->tracksHeader.identifier, entries, crc64.
+ *  - When clearing (count == 0) sets header to zero and frees internal table.
+ *
+ * Error handling & atomicity:
+ *  - On allocation failure the previous track table is already freed (non-atomic replace) and the
+ *    header is zeroed (no partial new state left). Caller must repopulate.
+ *  - No partial copies: either all tracks are stored or none.
+ *
+ * @param context  Opaque pointer that MUST point to a valid aaruformatContext returned by an open/create call.
+ * @param tracks   Pointer to an array of TrackEntry structures to copy. Must not be NULL if count > 0.
+ *                 Ignored (may be NULL) when count == 0.
+ * @param count    Number of TrackEntry elements in @p tracks. If 0, existing tracks are cleared.
+ *                 Must be >= 0 and (recommended) <= UINT16_MAX.
+ *
+ * @return int32_t API status code indicating success or the nature of the failure.
+ * @retval AARUF_STATUS_OK                 Success (tracks replaced or cleared).
+ * @retval AARUF_ERROR_NOT_AARUFORMAT      @p context is NULL or not a recognized libaaruformat context.
+ * @retval AARUF_ERROR_INVALID_TRACK_FORMAT Invalid input (tracks NULL with count > 0, or count < 0).
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY   Memory allocation failed while copying tracks.
+ *
+ * @warning Not thread-safe. Do not invoke concurrently with readers/writers of the same context.
+ * @warning Counts above 65535 will be truncated to 16-bit without error (potential data loss of extra entries).
+ * @note After success, aaruf_get_tracks() can be used to read back the stored table.
+ * @see aaruf_get_tracks()
+ *
+ * @since 1.0
+ *
+ * Usage example (conceptual):
+ * 1. Prepare an array of TrackEntry structures (N elements) and fill the fields.
+ * 2. Call aaruf_set_tracks(ctx, array, N) to store them; check for AARUF_STATUS_OK.
+ * 3. To clear all tracks later call aaruf_set_tracks(ctx, NULL, 0).
+ * 4. Use aaruf_get_tracks() afterwards to retrieve them if needed.
+ */
+int32_t aaruf_set_tracks(void *context, TrackEntry *tracks, const int count)
+{
+    TRACE("Entering aaruf_set_tracks(%p, %p, %d)", context, tracks, count);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_tracks() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_tracks() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Clearing existing tracks
+    if(count == 0)
+    {
+        memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
+        free(ctx->trackEntries);
+        ctx->trackEntries = NULL;
+
+        TRACE("Exiting aaruf_set_tracks() = AARUF_STATUS_OK");
+        return AARUF_STATUS_OK;
+    }
+
+    if(tracks == NULL || count < 0)
+    {
+        FATAL("Invalid tracks data");
+
+        TRACE("Exiting aaruf_set_tracks() = AARUF_ERROR_INVALID_TRACK_FORMAT");
+        return AARUF_ERROR_INVALID_TRACK_FORMAT;
+    }
+
+    ctx->tracksHeader.identifier = TracksBlock;
+    ctx->tracksHeader.entries    = (uint16_t)count;
+    free(ctx->trackEntries);
+    ctx->trackEntries = malloc(sizeof(TrackEntry) * count);
+    if(ctx->trackEntries == NULL)
+    {
+        memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
+        FATAL("Could not allocate memory for tracks");
+
+        TRACE("Exiting aaruf_set_tracks() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+    }
+    memcpy(ctx->trackEntries, tracks, sizeof(TrackEntry) * count);
+    ctx->tracksHeader.crc64 = aaruf_crc64_data((const uint8_t *)ctx->trackEntries, sizeof(TrackEntry) * count);
+
+    TRACE("Exiting aaruf_set_tracks() = AARUF_STATUS_OK");
+    return AARUF_STATUS_OK;
+}
