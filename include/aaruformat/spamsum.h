@@ -21,8 +21,6 @@
 
 #include <stdint.h>
 
-#include "decls.h"
-
 #define SPAMSUM_LENGTH   64
 #define NUM_BLOCKHASHES  31
 #define ROLLING_WINDOW   7

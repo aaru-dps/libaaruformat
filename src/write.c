@@ -158,6 +158,8 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
             if(ctx->calculating_sha1) ctx->calculating_sha1 = false;
             // Disable SHA256 calculation
             if(ctx->calculating_sha256) ctx->calculating_sha256 = false;
+            // Disable SpamSum calculation
+            if(ctx->calculating_spamsum) ctx->calculating_spamsum = false;
         }
         else
             ctx->last_written_block = sector_address;
@@ -172,6 +174,9 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
     // Calculate SHA256 on-the-fly if requested and sector is within user sectors (not negative or overflow)
     if(ctx->calculating_sha256 && !negative && sector_address <= ctx->imageInfo.Sectors)
         aaruf_sha256_update(&ctx->sha256_context, data, length);
+    // Calculate SpamSum on-the-fly if requested and sector is within user sectors (not negative or overflow)
+    if(ctx->calculating_sha256 && !negative && sector_address <= ctx->imageInfo.Sectors)
+        aaruf_spamsum_update(&ctx->spamsum_context, data, length);
 
     // TODO: If optical disc check track
 

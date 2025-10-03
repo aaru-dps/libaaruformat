@@ -516,6 +516,13 @@ int aaruf_close(void *context)
             ctx->checksums.hasSha256 = true;
             aaruf_sha256_final(&ctx->sha256_context, ctx->checksums.sha256);
         }
+        if(ctx->calculating_spamsum)
+        {
+            ctx->checksums.hasSpamSum = true;
+            ctx->checksums.spamsum    = calloc(1, FUZZY_MAX_RESULT);
+            aaruf_spamsum_final(ctx->spamsum_context, ctx->checksums.spamsum);
+            aaruf_spamsum_free(ctx->spamsum_context);
+        }
 
         // Write the checksums block
         bool has_checksums =

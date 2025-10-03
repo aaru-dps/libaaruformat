@@ -325,6 +325,11 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
         ctx->calculating_sha256 = true;
         aaruf_sha256_init(&ctx->sha256_context);
     }
+    if(parsed_options.spamsum)
+    {
+        ctx->calculating_spamsum = true;
+        ctx->spamsum_context = aaruf_spamsum_init();
+    }
 
     // Is writing
     ctx->isWriting = true;
