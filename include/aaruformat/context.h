@@ -132,7 +132,7 @@ typedef struct mediaTagEntry
  *
  *  Field grouping:
  *   - Core & header: magic, library*Version, imageStream, header.
- *   - Optical sector adjuncts: sectorPrefix/sectorSuffix/subchannel plus corrected variants & mode2Subheaders.
+ *   - Optical sector adjuncts: sectorPrefix/sectorSuffix/subchannel plus corrected variants & mode2_subheaders.
  *   - Deduplication: inMemoryDdt, userDataDdt*, userDataDdtHeader, mini/big/cached secondary arrays, version tags.
  *   - Metadata & geometry: geometryBlock, metadataBlockHeader+metadataBlock, cicmBlockHeader+cicmBlock, tracksHeader.
  *   - Tracks & hardware: trackEntries, dataTracks, dumpHardwareHeader, dumpHardwareEntriesWithData.
@@ -161,7 +161,7 @@ typedef struct aaruformatContext
     uint8_t *sectorSuffix;           ///< Raw per-sector suffix (EDC/ECC) uncorrected.
     uint8_t *sectorSuffixCorrected;  ///< Corrected suffix if stored separately.
     uint8_t *sectorSubchannel;       ///< Raw 96-byte subchannel (if captured).
-    uint8_t *mode2Subheaders;        ///< MODE2 Form1/Form2 8-byte subheaders (concatenated).
+    uint8_t *mode2_subheaders;        ///< MODE2 Form1/Form2 8-byte subheaders (concatenated).
 
     uint8_t   shift;                ///< Legacy overall shift (deprecated by data_shift/table_shift).
     bool      inMemoryDdt;          ///< True if primary (and possibly secondary) DDT loaded.
@@ -238,7 +238,6 @@ typedef struct aaruformatContext
     size_t         sectorSuffixBufferLength;  ///< Length of sectorSuffixBuffer
     size_t         sectorPrefixBufferOffset;  ///< Current position in sectorPrefixBuffer
     size_t         sectorSuffixBufferOffset;  ///< Current position in sectorSuffixBuffer
-    uint8_t       *mode2_subheaders;          ///< Buffer for storing MODE2 subheaders when writing MODE2 tracks
 } aaruformatContext;
 
 /** \struct DumpHardwareEntriesWithData

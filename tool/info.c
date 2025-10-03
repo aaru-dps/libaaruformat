@@ -75,7 +75,7 @@ int info(const char *path)
 
     if(ctx->sectorSubchannel != NULL) printf("Sector subchannel array has been read.\n");
 
-    if(ctx->mode2Subheaders != NULL) printf("Sector mode 2 subheaders array has been read.\n");
+    if(ctx->mode2_subheaders != NULL) printf("Sector mode 2 subheaders array has been read.\n");
 
     printf("Shift is %d (%d bytes).\n", ctx->shift, 1 << ctx->shift);
 

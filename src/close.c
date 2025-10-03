@@ -884,8 +884,8 @@ int aaruf_close(void *context)
     ctx->sectorSuffixCorrected = NULL;
     free(ctx->sectorSubchannel);
     ctx->sectorSubchannel = NULL;
-    free(ctx->mode2Subheaders);
-    ctx->mode2Subheaders = NULL;
+    free(ctx->mode2_subheaders);
+    ctx->mode2_subheaders = NULL;
 
     TRACE("Freeing media tags");
     if(ctx->mediaTags != NULL) HASH_ITER(hh, ctx->mediaTags, media_tag, tmp_media_tag)

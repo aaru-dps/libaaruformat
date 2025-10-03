@@ -334,7 +334,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
             ctx->readableSectorTags[AppleSectorTag] = true;
             break;
         case CompactDiscMode2Subheader:
-            ctx->mode2Subheaders = data;
+            ctx->mode2_subheaders = data;
             break;
         default:
             media_tag = (mediaTagEntry *)malloc(sizeof(mediaTagEntry));

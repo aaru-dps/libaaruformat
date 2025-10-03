@@ -959,9 +959,9 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
 
                     if(res != AARUF_STATUS_OK) return res;
 
-                    if(ctx->mode2Subheaders != NULL && ctx->sectorSuffixDdt != NULL)
+                    if(ctx->mode2_subheaders != NULL && ctx->sectorSuffixDdt != NULL)
                     {
-                        memcpy(data + 16, ctx->mode2Subheaders + corrected_sector_address * 8, 8);
+                        memcpy(data + 16, ctx->mode2_subheaders + corrected_sector_address * 8, 8);
 
                         if((ctx->sectorSuffixDdt[corrected_sector_address] & CD_XFIX_MASK) == Mode2Form1Ok)
                         {
@@ -981,9 +981,9 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                             // Mode 2 where ECC failed
                             memcpy(data + 24, bare_data, 2328);
                     }
-                    else if(ctx->mode2Subheaders != NULL)
+                    else if(ctx->mode2_subheaders != NULL)
                     {
-                        memcpy(data + 16, ctx->mode2Subheaders + corrected_sector_address * 8, 8);
+                        memcpy(data + 16, ctx->mode2_subheaders + corrected_sector_address * 8, 8);
                         memcpy(data + 24, bare_data, 2328);
                     }
                     else
