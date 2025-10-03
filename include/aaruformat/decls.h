@@ -83,6 +83,8 @@ AARU_EXPORT void AARU_CALL       aaruf_crc64_free(crc64_ctx *ctx);
 AARU_EXPORT void AARU_CALL       aaruf_crc64_slicing(uint64_t *previous_crc, const uint8_t *data, uint32_t len);
 AARU_EXPORT uint64_t AARU_CALL   aaruf_crc64_data(const uint8_t *data, uint32_t len);
 
+AARU_EXPORT int32_t AARU_CALL aaruf_get_tracks(const void *context, uint8_t *buffer, size_t *length);
+
 AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, uint64_t sector_address, bool negative, uint8_t *data,
                                                 uint32_t *length);
 AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, uint64_t sector_address, bool negative,

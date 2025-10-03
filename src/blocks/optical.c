@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "aaruformat.h"
 #include "log.h"
@@ -117,7 +118,10 @@ void process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry)
         if(ctx->trackEntries[j].sequence > 0 && ctx->trackEntries[j].sequence <= 99) ctx->numberOfDataTracks++;
     }
 
-    ctx->dataTracks = malloc(sizeof(TrackEntry) * ctx->numberOfDataTracks);
+    if(ctx->numberOfDataTracks > 0)
+        ctx->dataTracks = malloc(sizeof(TrackEntry) * ctx->numberOfDataTracks);
+    else
+        ctx->dataTracks = NULL;
 
     k = 0;
     for(j = 0; j < ctx->tracksHeader.entries; j++)
@@ -125,4 +129,131 @@ void process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry)
         if(ctx->trackEntries[j].sequence > 0 && ctx->trackEntries[j].sequence <= 99)
             memcpy(&ctx->dataTracks[k++], &ctx->trackEntries[j], sizeof(TrackEntry));
     }
+}
+
+/**
+ * @brief Retrieve the array of track descriptors contained in an opened AaruFormat image.
+ *
+ * Provides the caller with a contiguous array of all track entries found in the image. The function
+ * follows a two-step usage pattern allowing callers to query the required buffer size before
+ * performing the actual copy.
+ *
+ * Usage pattern:
+ *  - First call with buffer == NULL (or *length smaller than required). The function sets *length to the
+ *    required size and returns AARUF_ERROR_BUFFER_TOO_SMALL.
+ *  - Allocate a buffer of at least *length bytes and call again. On success, the function copies all
+ *    TrackEntry structures and returns AARUF_STATUS_OK with *length set to the bytes copied.
+ *
+ * The returned data is a raw copy of internal TrackEntry structures (host endianness). The caller does
+ * not assume ownership of internal memory; only the caller-provided buffer should be freed by the caller.
+ *
+ * Preconditions (@pre):
+ *  - @pre context is a valid pointer to an aaruformatContext previously returned by an open function.
+ *  - @pre context->magic == AARU_MAGIC.
+ *  - @pre process_tracks_block() has run (implicitly done during image open) populating trackEntries.
+ *
+ * Thread safety:
+ *  - Read-only access; safe for concurrent calls on different contexts.
+ *  - Concurrent calls on the same context are safe only if no other thread is modifying/destroying it.
+ *
+ * Buffer sizing logic:
+ *  - required_length = ctx->tracksHeader.entries * sizeof(TrackEntry)
+ *  - If buffer == NULL OR *length < required_length => *length updated, return AARUF_ERROR_BUFFER_TOO_SMALL.
+ *  - On success *length == required_length.
+ *
+ * Error strategy:
+ *  - Validation failures: return specific error codes and log through FATAL()/TRACE().
+ *  - No partial copies are performed.
+ *
+ * @param context Opaque pointer that MUST point to a valid aaruformatContext.
+ * @param buffer  Destination buffer for a copy of all TrackEntry structures, or NULL to query size.
+ * @param length  In/Out: On entry capacity of buffer (ignored if buffer == NULL). On return required or
+ *                copied size in bytes. Must not be NULL.
+ *
+ * @return int32_t API status code.
+ * @retval AARUF_STATUS_OK              Success; buffer filled.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT   context is NULL or not a valid libaaruformat context.
+ * @retval AARUF_ERROR_TRACK_NOT_FOUND  No tracks present (entries == 0 or internal array NULL).
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL Sizing query / provided buffer insufficient; *length updated.
+ *
+ * @warning Passing an invalid context yields an error; no data is written to buffer.
+ * @warning The function never performs partial copies.
+ *
+ * @note Order of TrackEntry elements matches on-disk order.
+ * @note Caller may further filter (e.g., data vs audio) after retrieval.
+ *
+ * @since 1.0
+ *
+ * @code{.c}
+ * aaruformatContext *ctx = open_image("disc.aaruf");
+ * if(!ctx) { // handle error
+ * }
+ * size_t size = 0;              // Will receive required byte count
+ * int32_t st = aaruf_get_tracks(ctx, NULL, &size);
+ * if(st != AARUF_ERROR_BUFFER_TOO_SMALL) { // unexpected error
+ *     // handle error
+ * }
+ * TrackEntry *tracks = (TrackEntry*)malloc(size);
+ * if(!tracks) { // allocation failure
+ *     // handle error
+ * }
+ * st = aaruf_get_tracks(ctx, (uint8_t*)tracks, &size);
+ * if(st == AARUF_STATUS_OK) {
+ *     size_t count = size / sizeof(TrackEntry);
+ *     for(size_t i = 0; i < count; i++) {
+ *         // process tracks[i]
+ *     }
+ * }
+ * free(tracks);
+ * close_image(ctx);
+ * @endcode
+ */
+int32_t aaruf_get_tracks(const void *context, uint8_t *buffer, size_t *length)
+{
+    TRACE("Entering aaruf_get_tracks(%p, %p, %zu)", context, buffer, (length ? *length : 0));
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_tracks() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_tracks() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->tracksHeader.entries == 0 || ctx->trackEntries == NULL)
+    {
+        FATAL("Image contains no tracks");
+
+        TRACE("Exiting aaruf_get_tracks() = AARUF_ERROR_TRACK_NOT_FOUND");
+        return AARUF_ERROR_TRACK_NOT_FOUND;
+    }
+
+    size_t required_length = ctx->tracksHeader.entries * sizeof(TrackEntry);
+
+    if(buffer == NULL || length == NULL || *length < required_length)
+    {
+        if(length) *length = required_length;
+        TRACE("Buffer too small for tracks, required %zu bytes", required_length);
+
+        TRACE("Exiting aaruf_get_tracks() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    memcpy(buffer, ctx->trackEntries, required_length);
+    *length = required_length;
+
+    TRACE("Exiting aaruf_get_tracks(%p, %p, %zu) = AARUF_STATUS_OK", context, buffer, *length);
+    return AARUF_STATUS_OK;
 }
