@@ -629,6 +629,44 @@ int aaruf_close(void *context)
             TRACE("Added checksum block index entry at offset %" PRIu64, checksum_position);
         }
 
+        // Write tracks block
+        if(ctx->tracksHeader.entries > 0 && ctx->trackEntries != NULL)
+        {
+            fseek(ctx->imageStream, 0, SEEK_END);
+            long tracks_position = ftell(ctx->imageStream);
+            // Align index position to block boundary if needed
+            alignment_mask       = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+            if(tracks_position & alignment_mask)
+            {
+                aligned_position = tracks_position + alignment_mask & ~alignment_mask;
+                fseek(ctx->imageStream, aligned_position, SEEK_SET);
+                tracks_position = aligned_position;
+            }
+
+            TRACE("Writing tracks block at position %ld", tracks_position);
+            // Write header
+            if(fwrite(&ctx->tracksHeader, sizeof(TracksHeader), 1, ctx->imageStream) == 1)
+            {
+                // Write entries
+                size_t written_entries =
+                    fwrite(ctx->trackEntries, sizeof(TrackEntry), ctx->tracksHeader.entries, ctx->imageStream);
+
+                if(written_entries == ctx->tracksHeader.entries)
+                {
+                    TRACE("Successfully wrote tracks block with %u entries", ctx->tracksHeader.entries);
+                    // Add tracks block to index
+                    TRACE("Adding tracks block to index");
+
+                    IndexEntry tracks_index_entry;
+                    tracks_index_entry.blockType = TracksBlock;
+                    tracks_index_entry.dataType  = 0;
+                    tracks_index_entry.offset    = tracks_position;
+                    utarray_push_back(ctx->indexEntries, &tracks_index_entry);
+                    TRACE("Added tracks block index entry at offset %" PRIu64, tracks_position);
+                }
+            }
+        }
+
         // Write the complete index at the end of the file
         TRACE("Writing index at the end of the file");
         fseek(ctx->imageStream, 0, SEEK_END);
