@@ -183,8 +183,6 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
     if(ctx->calculating_blake3 && !negative && sector_address <= ctx->imageInfo.Sectors)
         blake3_hasher_update(ctx->blake3_context, data, length);
 
-    // TODO: If optical disc check track
-
     // Close current block first
     if(ctx->writingBuffer != NULL &&
        // When sector size changes
@@ -254,7 +252,37 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
         ctx->currentBlockHeader.compression = None;  // TODO: Compression
         ctx->currentBlockHeader.sectorSize  = length;
 
-        // TODO: Optical discs
+        // We need to save the track type for later compression
+        if(ctx->imageInfo.XmlMediaType == OpticalDisc && ctx->trackEntries != NULL)
+        {
+            const TrackEntry *track = NULL;
+            for(int i = 0; i < ctx->tracksHeader.entries; i++)
+                if(sector_address >= ctx->trackEntries[i].start && sector_address <= ctx->trackEntries[i].end)
+                {
+                    track = &ctx->trackEntries[i];
+                    break;
+                }
+
+            if(track != NULL)
+            {
+                ctx->currentTrackType = track->type;
+
+                if(track->sequence == 0 && track->start == 0 && track->end == 0) ctx->currentTrackType = Data;
+            }
+            else
+                ctx->currentTrackType = Data;
+
+            if(ctx->currentTrackType == Audio &&
+               // JaguarCD stores data in audio tracks. FLAC is too inefficient, we need to use LZMA as data.
+               (ctx->imageInfo.MediaType == JaguarCD && track->session > 1 ||
+                // VideoNow stores video in audio tracks, and LZMA works better too.
+                ctx->imageInfo.MediaType == VideoNow || ctx->imageInfo.MediaType == VideoNowColor ||
+                ctx->imageInfo.MediaType == VideoNowXp))
+                ctx->currentTrackType = Data;
+        }
+        else
+            ctx->currentTrackType = Data;
+
         uint32_t max_buffer_size = (1 << ctx->userDataDdtHeader.dataShift) * ctx->currentBlockHeader.sectorSize;
         TRACE("Setting max buffer size to %u bytes", max_buffer_size);
 

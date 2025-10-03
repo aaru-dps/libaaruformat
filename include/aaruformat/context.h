@@ -229,6 +229,8 @@ typedef struct aaruformatContext
     spamsum_ctx   *spamsum_context;      ///< Opaque SpamSum context for streaming updates
     bool           calculating_blake3;   ///< True if whole-image BLAKE3 being calculated on-the-fly.
     blake3_hasher *blake3_context;       ///< Opaque BLAKE3 context for streaming updates
+    uint8_t        currentTrackType;  ///< Current track type (when writing optical images with tracks, needed for block
+                                      ///< compression type).
 } aaruformatContext;
 
 /** \struct DumpHardwareEntriesWithData
