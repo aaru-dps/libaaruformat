@@ -755,6 +755,52 @@ int aaruf_close(void *context)
             }
         }
 
+        if(ctx->sector_prefix != NULL)
+        {
+            fseek(ctx->imageStream, 0, SEEK_END);
+            long prefix_position = ftell(ctx->imageStream);
+            // Align index position to block boundary if needed
+            alignment_mask       = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+            if(prefix_position & alignment_mask)
+            {
+                aligned_position = prefix_position + alignment_mask & ~alignment_mask;
+                fseek(ctx->imageStream, aligned_position, SEEK_SET);
+                prefix_position = aligned_position;
+            }
+
+            TRACE("Writing sector prefix block at position %ld", prefix_position);
+            BlockHeader prefix_block = {0};
+            prefix_block.identifier  = DataBlock;
+            prefix_block.type        = CdSectorPrefix;
+            prefix_block.compression = None;
+            prefix_block.length      = (uint32_t)ctx->sector_prefix_offset;
+            prefix_block.cmpLength   = prefix_block.length;
+
+            // Calculate CRC64
+            prefix_block.crc64    = aaruf_crc64_data(ctx->sector_prefix, prefix_block.length);
+            prefix_block.cmpCrc64 = prefix_block.crc64;
+
+            // Write header
+            if(fwrite(&prefix_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
+            {
+                // Write data
+                size_t written_bytes = fwrite(ctx->sector_prefix, prefix_block.length, 1, ctx->imageStream);
+                if(written_bytes == 1)
+                {
+                    TRACE("Successfully wrote CD sector prefix subheaders block (%" PRIu64 " bytes)",
+                          prefix_block.length);
+                    // Add prefix block to index
+                    TRACE("Adding CD sector prefix block to index");
+                    IndexEntry prefix_index_entry;
+                    prefix_index_entry.blockType = DataBlock;
+                    prefix_index_entry.dataType  = CdSectorPrefix;
+                    prefix_index_entry.offset    = prefix_position;
+                    utarray_push_back(ctx->indexEntries, &prefix_index_entry);
+                    TRACE("Added MODE 2 subheaders block index entry at offset %" PRIu64, prefix_position);
+                }
+            }
+        }
+
         // Write the complete index at the end of the file
         TRACE("Writing index at the end of the file");
         fseek(ctx->imageStream, 0, SEEK_END);
