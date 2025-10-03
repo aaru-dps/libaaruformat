@@ -810,7 +810,7 @@ static void write_sector_suffix(aaruformatContext *ctx)
     if(ctx->sector_suffix == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
-    long     suffix_position = ftell(ctx->imageStream);
+    long           suffix_position = ftell(ctx->imageStream);
     // Align index position to block boundary if needed
     const uint64_t alignment_mask  = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
     if(suffix_position & alignment_mask)
@@ -848,6 +848,92 @@ static void write_sector_suffix(aaruformatContext *ctx)
             suffix_index_entry.offset    = suffix_position;
             utarray_push_back(ctx->indexEntries, &suffix_index_entry);
             TRACE("Added CD sector suffix block index entry at offset %" PRIu64, suffix_position);
+        }
+    }
+}
+
+/**
+ * @brief Serialize the per-sector CD prefix status / index DeDuplication Table (DDT v2, prefix variant).
+ *
+ * This DDT records for each logical sector (including negative and overflow ranges) an optional
+ * index into the stored 16‑byte prefix capture buffer plus a 4-bit status code. It is written only
+ * if at least one prefix status or captured prefix was recorded (i.e., the in-memory DDT array exists).
+ *
+ * Encoding (current implementation uses the "mini" 16-bit form):
+ *   Bits 15..12 : SectorStatus enum value (see enums.h, values already positioned for v2 mini layout).
+ *   Bits 11..0  : 12-bit index (0..4095) of the 16-byte prefix chunk inside the CdSectorPrefix data block,
+ *                 or 0 when no external prefix bytes were stored (status applies to a generated/implicit prefix).
+ *
+ * Notes:
+ *   - Unlike DDT v1, there are no CD_XFIX_MASK / CD_DFIX_MASK macros used here. The bit layout is compact
+ *     and directly encoded when writing (status values are pre-shifted where needed in write.c).
+ *   - Only the 16-bit mini variant is currently produced (sectorPrefixDdtMini). A 32-bit form is reserved
+ *     for future expansion (sectorPrefixDdt) but is not emitted unless populated.
+ *   - The table length equals (negative + Sectors + overflow) * entrySize.
+ *   - dataShift is set to 4 (2^4 = 16) expressing the granularity of referenced prefix units.
+ *   - No compression is applied; crc64/cmpCrc64 protect the raw table bytes.
+ *   - Idempotent: if an index entry of type DeDuplicationTable2 + CdSectorPrefixCorrected already exists
+ *     the function returns immediately.
+ *
+ * Alignment: The table is block-aligned using the same blockAlignmentShift as user data DDTs.
+ * Indexing: An IndexEntry is appended on success so readers can locate and parse the table.
+ *
+ * @param ctx Pointer to a valid aaruformatContext in write mode (must not be NULL).
+ * @internal
+ */
+static void write_sector_prefix_ddt(aaruformatContext *ctx)
+{
+    if(ctx->sectorPrefixDdtMini == NULL) return;
+
+    fseek(ctx->imageStream, 0, SEEK_END);
+    long           prefix_ddt_position = ftell(ctx->imageStream);
+    // Align index position to block boundary if needed
+    const uint64_t alignment_mask      = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    if(prefix_ddt_position & alignment_mask)
+    {
+        const uint64_t aligned_position = prefix_ddt_position + alignment_mask & ~alignment_mask;
+        fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        prefix_ddt_position = aligned_position;
+    }
+
+    TRACE("Writing sector prefix DDT v2 at position %ld", prefix_ddt_position);
+    DdtHeader2 ddt_header2          = {0};
+    ddt_header2.identifier          = DeDuplicationTable2;
+    ddt_header2.type                = CdSectorPrefix;
+    ddt_header2.compression         = None;
+    ddt_header2.levels              = 1;
+    ddt_header2.tableLevel          = 0;
+    ddt_header2.negative            = ctx->userDataDdtHeader.negative;
+    ddt_header2.overflow            = ctx->userDataDdtHeader.overflow;
+    ddt_header2.blockAlignmentShift = ctx->userDataDdtHeader.blockAlignmentShift;
+    ddt_header2.dataShift           = ctx->userDataDdtHeader.dataShift;
+    ddt_header2.tableShift          = 0;  // Single-level DDT
+    ddt_header2.sizeType            = SmallDdtSizeType;
+    ddt_header2.entries   = ctx->imageInfo.Sectors + ctx->userDataDdtHeader.negative + ctx->userDataDdtHeader.overflow;
+    ddt_header2.blocks    = ctx->userDataDdtHeader.blocks;
+    ddt_header2.start     = 0;
+    ddt_header2.length    = ddt_header2.entries * sizeof(uint16_t);
+    ddt_header2.cmpLength = ddt_header2.length;
+    // Calculate CRC64
+    ddt_header2.crc64     = aaruf_crc64_data((uint8_t *)ctx->sectorPrefixDdtMini, (uint32_t)ddt_header2.length);
+    ddt_header2.cmpCrc64  = ddt_header2.crc64;
+
+    // Write header
+    if(fwrite(&ddt_header2, sizeof(DdtHeader2), 1, ctx->imageStream) == 1)
+    {
+        // Write data
+        const size_t written_bytes = fwrite(ctx->sectorPrefixDdtMini, ddt_header2.length, 1, ctx->imageStream);
+        if(written_bytes == 1)
+        {
+            TRACE("Successfully wrote sector prefix DDT v2 (%" PRIu64 " bytes)", ddt_header2.length);
+            // Add prefix block to index
+            TRACE("Adding sector prefix DDT v2 to index");
+            IndexEntry prefix_ddt_index_entry;
+            prefix_ddt_index_entry.blockType = DeDuplicationTable2;
+            prefix_ddt_index_entry.dataType  = CdSectorPrefix;
+            prefix_ddt_index_entry.offset    = prefix_ddt_position;
+            utarray_push_back(ctx->indexEntries, &prefix_ddt_index_entry);
+            TRACE("Added sector prefix DDT v2 index entry at offset %" PRIu64, prefix_ddt_position);
         }
     }
 }
@@ -1075,6 +1161,9 @@ int aaruf_close(void *context)
         // Write CD sector prefix data block
         write_sector_prefix(ctx);
 
+        // Write sector prefix DDT (statuses + optional indexes)
+        write_sector_prefix_ddt(ctx);
+
         // Write CD sector suffix data block (EDC/ECC captures)
         write_sector_suffix(ctx);
 
@@ -1136,8 +1225,12 @@ int aaruf_close(void *context)
     }
 #endif
 
+    free(ctx->sectorPrefixDdtMini);
+    ctx->sectorPrefixDdtMini = NULL;
     free(ctx->sectorPrefixDdt);
     ctx->sectorPrefixDdt = NULL;
+    free(ctx->sectorSuffixDdtMini);
+    ctx->sectorSuffixDdtMini = NULL;
     free(ctx->sectorSuffixDdt);
     ctx->sectorSuffixDdt = NULL;
 
