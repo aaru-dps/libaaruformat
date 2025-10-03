@@ -315,6 +315,11 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
         ctx->calculating_md5 = true;
         aaruf_md5_init(&ctx->md5_context);
     }
+    if(parsed_options.sha1)
+    {
+        ctx->calculating_sha1 = true;
+        aaruf_sha1_init(&ctx->sha1_context);
+    }
 
     // Is writing
     ctx->isWriting = true;

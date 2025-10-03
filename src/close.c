@@ -506,6 +506,11 @@ int aaruf_close(void *context)
             ctx->checksums.hasMd5 = true;
             aaruf_md5_final(&ctx->md5_context, ctx->checksums.md5);
         }
+        if(ctx->calculating_sha1)
+        {
+            ctx->checksums.hasSha1 = true;
+            aaruf_sha1_final(&ctx->sha1_context, ctx->checksums.sha1);
+        }
 
         // Write the checksums block
         bool has_checksums =
@@ -562,7 +567,7 @@ int aaruf_close(void *context)
                 sha256_entry.type          = Sha256;
                 fwrite(&sha256_entry, sizeof(ChecksumEntry), 1, ctx->imageStream);
                 fwrite(&ctx->checksums.sha256, SHA256_DIGEST_LENGTH, 1, ctx->imageStream);
-                checksum_header.length += sizeof(ChecksumEntry) + SHA1_DIGEST_LENGTH;
+                checksum_header.length += sizeof(ChecksumEntry) + SHA256_DIGEST_LENGTH;
                 checksum_header.entries++;
             }
 

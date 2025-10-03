@@ -21,6 +21,7 @@
 
 #include "crc64.h"
 #include "md5.h"
+#include "sha1.h"
 #include "simd.h"
 #include "spamsum.h"
 #ifdef __cplusplus
@@ -162,6 +163,11 @@ AARU_EXPORT void AARU_CALL aaruf_md5_init(md5_ctx *ctx);
 AARU_EXPORT void AARU_CALL aaruf_md5_update(md5_ctx *ctx, const void *data, unsigned long size);
 AARU_EXPORT void AARU_CALL aaruf_md5_final(md5_ctx *ctx, unsigned char *result);
 AARU_EXPORT void AARU_CALL aaruf_md5_buffer(const void *data, unsigned long size, unsigned char *result);
+
+AARU_EXPORT void AARU_CALL aaruf_sha1_init(sha1_ctx *ctx);
+AARU_EXPORT void AARU_CALL aaruf_sha1_update(sha1_ctx *ctx, const void *data, unsigned long size);
+AARU_EXPORT void AARU_CALL aaruf_sha1_final(sha1_ctx *ctx, unsigned char *result);
+AARU_EXPORT void AARU_CALL aaruf_sha1_buffer(const void *data, unsigned long size, unsigned char *result);
 
 #if defined(__x86_64__) || defined(__amd64) || defined(_M_AMD64) || defined(_M_X64) || defined(__I386__) || \
     defined(__i386__) || defined(__THW_INTEL) || defined(_M_IX86)

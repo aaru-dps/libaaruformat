@@ -23,6 +23,7 @@
 #include "hash_map.h"
 #include "lru.h"
 #include "md5.h"
+#include "sha1.h"
 #include "structs.h"
 #include "utarray.h"
 
@@ -215,6 +216,8 @@ typedef struct aaruformatContext
     uint64_t last_written_block;  ///< Last written block number (write path).
     bool     calculating_md5;     ///< True if whole-image MD5 being calculated on-the-fly.
     md5_ctx  md5_context;         ///< Opaque MD5 context for streaming updates
+    bool     calculating_sha1;    ///< True if whole-image SHA-1 being calculated on-the-fly.
+    sha1_ctx sha1_context;        ///< Opaque SHA-1 context for streaming updates
 } aaruformatContext;
 
 /** \struct DumpHardwareEntriesWithData

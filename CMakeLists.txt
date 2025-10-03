@@ -127,7 +127,9 @@ add_library(aaruformat SHARED include/aaruformat/consts.h include/aaruformat/enu
             src/ddt/hash_map.c
             include/aaruformat/hash_map.h
             src/md5.c
-            include/md5.h)
+            include/md5.h
+            src/sha1.c
+            include/sha1.h)
 
 include_directories(include include/aaruformat 3rdparty/uthash/include 3rdparty/uthash/src)
 

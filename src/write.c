@@ -154,6 +154,8 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
 
             // Disable MD5 calculation
             if(ctx->calculating_md5) ctx->calculating_md5 = false;
+            // Disable SHA1 calculation
+            if(ctx->calculating_sha1) ctx->calculating_sha1 = false;
         }
         else
             ctx->last_written_block = sector_address;
@@ -162,6 +164,9 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
     // Calculate MD5 on-the-fly if requested and sector is within user sectors (not negative or overflow)
     if(ctx->calculating_md5 && !negative && sector_address <= ctx->imageInfo.Sectors)
         aaruf_md5_update(&ctx->md5_context, data, length);
+    // Calculate SHA1 on-the-fly if requested and sector is within user sectors (not negative or overflow)
+    if(ctx->calculating_sha1 && !negative && sector_address <= ctx->imageInfo.Sectors)
+        aaruf_sha1_update(&ctx->sha1_context, data, length);
 
     // TODO: If optical disc check track
 
