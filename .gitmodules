@@ -13,3 +13,6 @@
 [submodule "3rdparty/xxHash"]
 	path = 3rdparty/xxHash
 	url = https://github.com/Cyan4973/xxHash
+[submodule "3rdparty/BLAKE3"]
+	path = 3rdparty/BLAKE3
+	url = https://github.com/BLAKE3-team/BLAKE3

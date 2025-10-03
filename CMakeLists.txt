@@ -138,6 +138,10 @@ include_directories(include include/aaruformat 3rdparty/uthash/include 3rdparty/
 include(3rdparty/flac.cmake)
 include(3rdparty/lzma.cmake)
 include(3rdparty/xxhash.cmake)
+include(3rdparty/blake3.cmake)
+if(TARGET blake3)
+  target_link_libraries(aaruformat blake3)
+endif()
 
 macro(TARGET_LINK_LIBRARIES_WHOLE_ARCHIVE target)
   if(MSVC)
