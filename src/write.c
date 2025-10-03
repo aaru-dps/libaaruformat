@@ -589,14 +589,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                         }
                     }
 
-                    if(ctx->sectorSuffixBuffer == NULL)
+                    if(ctx->sector_suffix == NULL)
                     {
-                        ctx->sectorSuffixBufferLength =
-                            288 * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
-                                   ctx->userDataDdtHeader.overflow);
-                        ctx->sectorSuffixBuffer = malloc(ctx->sectorSuffixBufferLength);
+                        ctx->sector_suffix_length = 288 * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
+                                                           ctx->userDataDdtHeader.overflow);
+                        ctx->sector_suffix        = malloc(ctx->sector_suffix_length);
 
-                        if(ctx->sectorSuffixBuffer == NULL)
+                        if(ctx->sector_suffix == NULL)
                         {
                             FATAL("Could not allocate memory for CD sector suffix buffer");
 
@@ -672,19 +671,19 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     else
                     {
                         // Copy CD suffix from data buffer to suffix buffer
-                        memcpy(ctx->sectorSuffixBuffer + ctx->sectorSuffixBufferOffset, data + 2064, 288);
+                        memcpy(ctx->sector_suffix + ctx->sector_suffix_offset, data + 2064, 288);
                         ctx->sectorSuffixDdtMini[corrected_sector_address] =
-                            (uint16_t)(ctx->sectorSuffixBufferOffset / 288);
+                            (uint16_t)(ctx->sector_suffix_offset / 288);
                         ctx->sectorSuffixDdtMini[corrected_sector_address] |= SectorStatusErrored << 12;
-                        ctx->sectorSuffixBufferOffset += 288;
+                        ctx->sector_suffix_offset += 288;
 
                         // Grow suffix buffer if needed
-                        if(ctx->sectorSuffixBufferOffset >= ctx->sectorSuffixBufferLength)
+                        if(ctx->sector_suffix_offset >= ctx->sector_suffix_length)
                         {
-                            ctx->sectorSuffixBufferLength *= 2;
-                            ctx->sectorSuffixBuffer = realloc(ctx->sectorSuffixBuffer, ctx->sectorSuffixBufferLength);
+                            ctx->sector_suffix_length *= 2;
+                            ctx->sector_suffix = realloc(ctx->sector_suffix, ctx->sector_suffix_length);
 
-                            if(ctx->sectorSuffixBuffer == NULL)
+                            if(ctx->sector_suffix == NULL)
                             {
                                 FATAL("Could not allocate memory for CD sector suffix buffer");
 
@@ -746,14 +745,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                         }
                     }
 
-                    if(ctx->sectorSuffixBuffer == NULL)
+                    if(ctx->sector_suffix == NULL)
                     {
-                        ctx->sectorSuffixBufferLength =
-                            288 * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
-                                   ctx->userDataDdtHeader.overflow);
-                        ctx->sectorSuffixBuffer = malloc(ctx->sectorSuffixBufferLength);
+                        ctx->sector_suffix_length = 288 * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
+                                                           ctx->userDataDdtHeader.overflow);
+                        ctx->sector_suffix        = malloc(ctx->sector_suffix_length);
 
-                        if(ctx->sectorSuffixBuffer == NULL)
+                        if(ctx->sector_suffix == NULL)
                         {
                             FATAL("Could not allocate memory for CD sector suffix buffer");
 
@@ -853,20 +851,19 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                         else
                         {
                             // Copy CD suffix from data buffer to suffix buffer
-                            memcpy(ctx->sectorSuffixBuffer + ctx->sectorSuffixBufferOffset, data + 2348, 4);
+                            memcpy(ctx->sector_suffix + ctx->sector_suffix_offset, data + 2348, 4);
                             ctx->sectorSuffixDdtMini[corrected_sector_address] =
-                                (uint16_t)(ctx->sectorSuffixBufferOffset / 288);
+                                (uint16_t)(ctx->sector_suffix_offset / 288);
                             ctx->sectorSuffixDdtMini[corrected_sector_address] |= SectorStatusErrored << 12;
-                            ctx->sectorSuffixBufferOffset += 288;
+                            ctx->sector_suffix_offset += 288;
 
                             // Grow suffix buffer if needed
-                            if(ctx->sectorSuffixBufferOffset >= ctx->sectorSuffixBufferLength)
+                            if(ctx->sector_suffix_offset >= ctx->sector_suffix_length)
                             {
-                                ctx->sectorSuffixBufferLength *= 2;
-                                ctx->sectorSuffixBuffer =
-                                    realloc(ctx->sectorSuffixBuffer, ctx->sectorSuffixBufferLength);
+                                ctx->sector_suffix_length *= 2;
+                                ctx->sector_suffix = realloc(ctx->sector_suffix, ctx->sector_suffix_length);
 
-                                if(ctx->sectorSuffixBuffer == NULL)
+                                if(ctx->sector_suffix == NULL)
                                 {
                                     FATAL("Could not allocate memory for CD sector suffix buffer");
 
@@ -895,19 +892,19 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     else
                     {
                         // Copy CD suffix from data buffer to suffix buffer
-                        memcpy(ctx->sectorSuffixBuffer + ctx->sectorSuffixBufferOffset, data + 2072, 280);
+                        memcpy(ctx->sector_suffix + ctx->sector_suffix_offset, data + 2072, 280);
                         ctx->sectorSuffixDdtMini[corrected_sector_address] =
-                            (uint16_t)(ctx->sectorSuffixBufferOffset / 288);
+                            (uint16_t)(ctx->sector_suffix_offset / 288);
                         ctx->sectorSuffixDdtMini[corrected_sector_address] |= SectorStatusErrored << 12;
-                        ctx->sectorSuffixBufferOffset += 288;
+                        ctx->sector_suffix_offset += 288;
 
                         // Grow suffix buffer if needed
-                        if(ctx->sectorSuffixBufferOffset >= ctx->sectorSuffixBufferLength)
+                        if(ctx->sector_suffix_offset >= ctx->sector_suffix_length)
                         {
-                            ctx->sectorSuffixBufferLength *= 2;
-                            ctx->sectorSuffixBuffer = realloc(ctx->sectorSuffixBuffer, ctx->sectorSuffixBufferLength);
+                            ctx->sector_suffix_length *= 2;
+                            ctx->sector_suffix = realloc(ctx->sector_suffix, ctx->sector_suffix_length);
 
-                            if(ctx->sectorSuffixBuffer == NULL)
+                            if(ctx->sector_suffix == NULL)
                             {
                                 FATAL("Could not allocate memory for CD sector suffix buffer");
 

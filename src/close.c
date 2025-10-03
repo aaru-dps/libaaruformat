@@ -499,7 +499,7 @@ static void write_checksum_block(aaruformatContext *ctx)
     bool has_checksums = ctx->checksums.hasMd5 || ctx->checksums.hasSha1 || ctx->checksums.hasSha256 ||
                          ctx->checksums.hasSpamSum || ctx->checksums.hasBlake3;
 
-    if(!has_checksums) return ;
+    if(!has_checksums) return;
 
     ChecksumHeader checksum_header = {0};
     checksum_header.identifier     = ChecksumBlock;
@@ -607,7 +607,7 @@ static void write_checksum_block(aaruformatContext *ctx)
 static void write_tracks_block(aaruformatContext *ctx)
 {
     // Write tracks block
-    if(ctx->tracksHeader.entries <= 0 || ctx->trackEntries == NULL) return ;
+    if(ctx->tracksHeader.entries <= 0 || ctx->trackEntries == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
     long     tracks_position = ftell(ctx->imageStream);
@@ -659,7 +659,7 @@ static void write_tracks_block(aaruformatContext *ctx)
 static void write_mode2_subheaders_block(aaruformatContext *ctx)
 {
     // Write MODE 2 subheader data block
-    if(ctx->mode2_subheaders == NULL) return ;
+    if(ctx->mode2_subheaders == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
     long     mode2_subheaders_position = ftell(ctx->imageStream);
@@ -916,8 +916,10 @@ static int32_t write_index_block(aaruformatContext *ctx)
  * @param context Opaque pointer returned by earlier open/create calls (must be an aaruformatContext).
  * @return 0 on success; -1 or negative libaaruformat error code on failure.
  * @retval 0 All pending data flushed (if writing) and resources released successfully.
- * @retval -1 Invalid context pointer or initial header rewrite failure (errno = EINVAL or AARUF_ERROR_CANNOT_WRITE_HEADER).
- * @retval AARUF_ERROR_CANNOT_WRITE_HEADER A later write helper (e.g., index, DDT) failed and returned this code directly.
+ * @retval -1 Invalid context pointer or initial header rewrite failure (errno = EINVAL or
+ * AARUF_ERROR_CANNOT_WRITE_HEADER).
+ * @retval AARUF_ERROR_CANNOT_WRITE_HEADER A later write helper (e.g., index, DDT) failed and returned this code
+ * directly.
  * @retval <other negative libaaruformat code> Propagated from a write helper if future helpers add more error codes.
  * @note On success the context memory itself is freed; the caller must not reuse the pointer.
  */
@@ -1027,8 +1029,8 @@ int aaruf_close(void *context)
     ctx->sector_prefix = NULL;
     free(ctx->sectorPrefixCorrected);
     ctx->sectorPrefixCorrected = NULL;
-    free(ctx->sectorSuffix);
-    ctx->sectorSuffix = NULL;
+    free(ctx->sector_suffix);
+    ctx->sector_suffix = NULL;
     free(ctx->sectorSuffixCorrected);
     ctx->sectorSuffixCorrected = NULL;
     free(ctx->sectorSubchannel);

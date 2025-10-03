@@ -69,7 +69,7 @@ int info(const char *path)
 
     if(ctx->sectorPrefixCorrected != NULL) printf("Sector prefix corrected array has been read.\n");
 
-    if(ctx->sectorSuffix != NULL) printf("Sector suffix array has been read.\n");
+    if(ctx->sector_suffix != NULL) printf("Sector suffix array has been read.\n");
 
     if(ctx->sectorSuffixCorrected != NULL) printf("Sector suffix corrected array has been read.\n");
 

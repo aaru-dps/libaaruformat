@@ -827,7 +827,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                 TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_BUFFER_TOO_SMALL");
                 return AARUF_ERROR_BUFFER_TOO_SMALL;
             }
-            if((ctx->sectorSuffix == NULL || ctx->sector_prefix == NULL) &&
+            if((ctx->sector_suffix == NULL || ctx->sector_prefix == NULL) &&
                (ctx->sectorSuffixCorrected == NULL || ctx->sectorPrefixCorrected == NULL))
                 return aaruf_read_sector(context, sector_address, negative, data, length);
 
@@ -907,8 +907,8 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
 
                     if(res != AARUF_STATUS_OK) return res;
 
-                    if(ctx->sectorSuffix != NULL)
-                        memcpy(data + 2064, ctx->sectorSuffix + corrected_sector_address * 288, 288);
+                    if(ctx->sector_suffix != NULL)
+                        memcpy(data + 2064, ctx->sector_suffix + corrected_sector_address * 288, 288);
                     else if(ctx->sectorSuffixDdt != NULL)
                     {
                         if((ctx->sectorSuffixDdt[corrected_sector_address] & CD_XFIX_MASK) == Correct)

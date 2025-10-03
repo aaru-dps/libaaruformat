@@ -315,7 +315,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
             if(entry->dataType == CdSectorSuffixCorrected)
                 ctx->sectorSuffixCorrected = data;
             else
-                ctx->sectorSuffix = data;
+                ctx->sector_suffix = data;
 
             ctx->readableSectorTags[CdSectorSubHeader] = true;
             ctx->readableSectorTags[CdSectorEcc]       = true;
