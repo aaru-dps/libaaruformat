@@ -865,7 +865,13 @@ typedef enum
     CdTrackFlags           = 11,  ///< Track flags (audio/data, copy permitted, pre-emphasis)
     DvdCmi                 = 12,  ///< DVD Copyright Management Information (CSS)
     FloppyAddressMark      = 13,  ///< Raw address mark & sync preamble (format dependent)
-    MaxSectorTag           = FloppyAddressMark
+    DvdSectorTitleKey      = 14,  ///< DVD sector title key, 5 bytes
+    DvdTitleKeyDecrypted   = 15,  ///< Decrypted DVD sector title key, 5 bytes
+    DvdSectorInformation   = 16,  ///< DVD sector information, 1 bytes
+    DvdSectorNumber        = 17,  ///< DVD sector number, 3 bytes
+    DvdSectorIed           = 18,  ///< DVD sector ID error detection, 2 bytes
+    DvdSectorEdc           = 19,  ///< DVD sector EDC, 4 bytes
+    MaxSectorTag           = DvdSectorEdc
 } SectorTagType;
 
 /** @} */ /* end of SectorTags group */
