@@ -1040,6 +1040,137 @@ static void write_sector_suffix_ddt(aaruformatContext *ctx)
 }
 
 /**
+ * @brief Serialize the per-sector subchannel or tag data block.
+ *
+ * This routine writes out the accumulated subchannel or tag metadata that accompanies each logical
+ * sector (including negative pregap and overflow ranges). The exact interpretation and size depend
+ * on the media type:
+ *
+ * **Optical Disc (CD) subchannel:**
+ *   - Type: CdSectorSubchannel
+ *   - Contains the deinterleaved P through W subchannel data (96 bytes per sector).
+ *   - Covers: (negative + Sectors + overflow) sectors.
+ *   - The P channel marks pause boundaries; Q encodes track/index/time information (MCN, ISRC).
+ *   - R–W channels are typically used for CD+G graphics or CD-TEXT.
+ *
+ * **Apple block media tags:**
+ *   - **AppleProfile / AppleFileWare:** 20 bytes per sector (AppleProfileTag).
+ *   - **AppleSonyDS / AppleSonySS:** 12 bytes per sector (AppleSonyTag).
+ *   - **PriamDataTower:** 24 bytes per sector (PriamDataTowerTag).
+ *   - Tags encode filesystem metadata, allocation state, or device-specific control information.
+ *   - Only positive sectors (0 through Sectors-1) and overflow are included; no negative range.
+ *
+ * The block size is computed as (applicable_sector_count) × (bytes_per_sector_for_media_type).
+ * No compression is applied; the raw buffer is written verbatim after a DataBlock header with
+ * CRC64 integrity protection. The write position is aligned to the DDT block boundary
+ * (2^blockAlignmentShift) before serialization begins.
+ *
+ * **Media type validation:**
+ * The function only proceeds if XmlMediaType is OpticalDisc or BlockMedia and (for block media)
+ * the specific MediaType matches one of the supported Apple or Priam variants. Any other media
+ * type causes an immediate silent return (logged at TRACE level).
+ *
+ * **Alignment & indexing:**
+ * The block is aligned using the same alignment shift as the user data DDT. An IndexEntry
+ * (blockType = DataBlock, dataType = subchannel_block.type, offset = aligned file position) is
+ * appended to ctx->indexEntries on successful write, enabling readers to locate the subchannel
+ * or tag data.
+ *
+ * **Thread / reentrancy:**
+ * This function is invoked once during finalization (aaruf_close) in a single-threaded context.
+ * No synchronization is performed.
+ *
+ * **Error handling:**
+ * Write errors are logged but not explicitly propagated as return codes. If the write succeeds
+ * an index entry is added; if it fails no entry is added and diagnostics appear in TRACE logs.
+ * Higher level close logic determines overall success or failure.
+ *
+ * @param ctx Pointer to an initialized aaruformatContext in write mode. Must not be NULL.
+ *            ctx->sector_subchannel must point to a fully populated buffer sized appropriately
+ *            for the media type and sector count.
+ *
+ * @internal
+ */
+static void write_sector_subchannel(const aaruformatContext *ctx)
+{
+    if(ctx->sector_subchannel == NULL) return;
+
+    fseek(ctx->imageStream, 0, SEEK_END);
+    long           block_position = ftell(ctx->imageStream);
+    // Align index position to block boundary if needed
+    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    if(block_position & alignment_mask)
+    {
+        const uint64_t aligned_position = block_position + alignment_mask & ~alignment_mask;
+        fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        block_position = aligned_position;
+    }
+
+    TRACE("Writing sector subchannel block at position %ld", block_position);
+    BlockHeader subchannel_block = {0};
+    subchannel_block.identifier  = DataBlock;
+    subchannel_block.compression = None;
+
+    if(ctx->imageInfo.XmlMediaType == OpticalDisc)
+    {
+        subchannel_block.type = CdSectorSubchannel;
+        subchannel_block.length =
+            (uint32_t)(ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow) * 96;
+    }
+    else if(ctx->imageInfo.XmlMediaType == BlockMedia)
+        switch(ctx->imageInfo.MediaType)
+        {
+            case AppleProfile:
+            case AppleFileWare:
+                subchannel_block.type   = AppleProfileTag;
+                subchannel_block.length = (uint32_t)(ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow) * 20;
+                break;
+            case AppleSonyDS:
+            case AppleSonySS:
+                subchannel_block.type   = AppleSonyTag;
+                subchannel_block.length = (uint32_t)(ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow) * 12;
+                break;
+            case PriamDataTower:
+                subchannel_block.type   = PriamDataTowerTag;
+                subchannel_block.length = (uint32_t)(ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow) * 24;
+                break;
+            default:
+                TRACE("Incorrect media type, not writing sector subchannel block");
+                return;  // Incorrect media type
+        }
+    else
+    {
+        TRACE("Incorrect media type, not writing sector subchannel block");
+        return;  // Incorrect media type
+    }
+
+    subchannel_block.cmpLength = subchannel_block.length;
+
+    // Calculate CRC64
+    subchannel_block.crc64    = aaruf_crc64_data(ctx->sector_subchannel, subchannel_block.length);
+    subchannel_block.cmpCrc64 = subchannel_block.crc64;
+
+    // Write header
+    if(fwrite(&subchannel_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
+    {
+        // Write data
+        const size_t written_bytes = fwrite(ctx->sector_subchannel, subchannel_block.length, 1, ctx->imageStream);
+        if(written_bytes == 1)
+        {
+            TRACE("Successfully wrote sector subchannel block (%" PRIu64 " bytes)", subchannel_block.length);
+            // Add subchannel block to index
+            TRACE("Adding sector subchannel block to index");
+            IndexEntry subchannel_index_entry;
+            subchannel_index_entry.blockType = DataBlock;
+            subchannel_index_entry.dataType  = subchannel_block.type;
+            subchannel_index_entry.offset    = block_position;
+            utarray_push_back(ctx->indexEntries, &subchannel_index_entry);
+            TRACE("Added sector subchannel block index entry at offset %" PRIu64, block_position);
+        }
+    }
+}
+
+/**
  * @brief Serialize the accumulated index entries at the end of the image and back-patch the header.
  *
  * All previously written structural blocks push their IndexEntry into ctx->indexEntries. This
@@ -1270,6 +1401,9 @@ int aaruf_close(void *context)
 
         // Write sector prefix DDT (EDC/ECC captures)
         write_sector_suffix_ddt(ctx);
+
+        // Write sector subchannel data block
+        write_sector_subchannel(ctx);
 
         // Write the complete index at the end of the file
         res = write_index_block(ctx);
