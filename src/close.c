@@ -1294,6 +1294,99 @@ static void write_media_tags(const aaruformatContext *ctx)
 }
 
 /**
+ * @brief Serialize the geometry metadata block to the image file.
+ *
+ * This function writes a GeometryBlockHeader containing legacy CHS (Cylinder-Head-Sector) style
+ * logical geometry metadata to the Aaru image file. The geometry block records the physical/logical
+ * layout of media that can be addressed using classical CHS parameters (cylinders, heads, sectors
+ * per track) common to legacy hard disk drives and some optical media formats.
+ *
+ * The geometry information is optional; if no geometry metadata was previously set (detected by
+ * checking ctx->geometryBlock.identifier != GeometryBlock), the function returns immediately as a
+ * no-op. When present, the block is written at the end of the image file, aligned to the DDT block
+ * boundary specified by blockAlignmentShift, and an IndexEntry is appended to ctx->indexEntries so
+ * readers can locate it during image parsing.
+ *
+ * Block layout:
+ *   - GeometryBlockHeader (16 bytes):
+ *       - identifier (4 bytes): BlockType::GeometryBlock magic constant
+ *       - cylinders (4 bytes): Number of cylinders
+ *       - heads (4 bytes): Number of heads (tracks per cylinder)
+ *       - sectorsPerTrack (4 bytes): Number of sectors per track
+ *   - No additional payload follows the header in current format versions.
+ *
+ * Total logical sectors implied by the geometry: cylinders × heads × sectorsPerTrack.
+ * Sector size is not encoded in this block and must be derived from other metadata (e.g., from
+ * the media type or explicitly stored elsewhere in the image).
+ *
+ * Alignment strategy:
+ *   - The write position is obtained via fseek(SEEK_END) + ftell().
+ *   - If the position is not aligned to (1 << blockAlignmentShift), it is advanced to the next
+ *     aligned boundary by computing: (position + alignment_mask) & ~alignment_mask.
+ *   - This ensures the geometry block starts on a block-aligned offset for efficient access.
+ *
+ * Error handling:
+ *   - If fwrite() fails to write the GeometryBlockHeader, the function silently returns without
+ *     updating the index. This is consistent with other optional metadata writers in this module
+ *     that use opportunistic writes (failures logged via TRACE but not propagated as errors).
+ *   - The caller (aaruf_close) will continue finalizing other blocks even if geometry write fails.
+ *
+ * Indexing:
+ *   - On successful write, an IndexEntry with blockType = GeometryBlock, dataType = 0, and
+ *     offset = block_position is pushed to ctx->indexEntries.
+ *   - The index will be serialized later by write_index_block() and allows readers to quickly
+ *     locate the geometry metadata without scanning the entire file.
+ *
+ * Use cases:
+ *   - Preserving original CHS geometry for disk images from legacy systems (e.g., IDE/PATA drives,
+ *     floppy disks, early SCSI devices) where BIOS or firmware relied on CHS addressing.
+ *   - Documenting physical layout of optical media that may have track/sector organization.
+ *   - Supporting forensic/archival workflows that need complete metadata fidelity.
+ *
+ * Thread safety: This function is not thread-safe; it modifies shared ctx state (imageStream file
+ * position, indexEntries array) and must only be called during single-threaded finalization
+ * (within aaruf_close).
+ *
+ * @param ctx Pointer to an initialized aaruformatContext in write mode. Must not be NULL.
+ *            The geometryBlock field must be pre-populated if geometry metadata is desired.
+ *            The imageStream must be open and writable.
+ * @internal
+ * @see GeometryBlockHeader
+ * @see aaruf_set_geometry() for setting geometry values before closing.
+ */
+static void write_geometry_block(const aaruformatContext *ctx)
+{
+    if(ctx->geometryBlock.identifier != GeometryBlock) return;
+
+    fseek(ctx->imageStream, 0, SEEK_END);
+    long           block_position = ftell(ctx->imageStream);
+    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    if(block_position & alignment_mask)
+    {
+        const uint64_t aligned_position = block_position + alignment_mask & ~alignment_mask;
+        fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        block_position = aligned_position;
+    }
+
+    TRACE("Writing geometry block at position %ld", block_position);
+
+    // Write header
+    if(fwrite(&ctx->geometryBlock, sizeof(GeometryBlockHeader), 1, ctx->imageStream) == 1)
+    {
+        TRACE("Successfully wrote geometry block");
+
+        // Add geometry block to index
+        TRACE("Adding geometry block to index");
+        IndexEntry index_entry;
+        index_entry.blockType = GeometryBlock;
+        index_entry.dataType  = 0;
+        index_entry.offset    = block_position;
+        utarray_push_back(ctx->indexEntries, &index_entry);
+        TRACE("Added geometry block index entry at offset %" PRIu64, block_position);
+    }
+}
+
+/**
  * @brief Serialize the accumulated index entries at the end of the image and back-patch the header.
  *
  * All previously written structural blocks push their IndexEntry into ctx->indexEntries. This
@@ -1530,6 +1623,9 @@ int aaruf_close(void *context)
 
         // Write media tags data blocks
         write_media_tags(ctx);
+
+        // Write geometry block if any
+        write_geometry_block(ctx);
 
         // Write the complete index at the end of the file
         res = write_index_block(ctx);
