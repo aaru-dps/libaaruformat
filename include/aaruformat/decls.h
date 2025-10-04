@@ -142,6 +142,8 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_xml_mediatype(int32_t type);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_get_geometry(const void *context, uint32_t *cylinders, uint32_t *heads,
                                                  uint32_t *sectors_per_track);
+AARU_EXPORT int32_t AARU_CALL aaruf_set_geometry(void *context, uint32_t cylinders, uint32_t heads,
+                                                 uint32_t sectors_per_track);
 
 AARU_EXPORT spamsum_ctx *AARU_CALL aaruf_spamsum_init(void);
 AARU_EXPORT int AARU_CALL          aaruf_spamsum_update(spamsum_ctx *ctx, const uint8_t *data, uint32_t len);

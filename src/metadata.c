@@ -100,7 +100,7 @@ int32_t aaruf_get_geometry(const void *context, uint32_t *cylinders, uint32_t *h
     {
         FATAL("Invalid context");
 
-        TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_NOT_AARUFORMAT");
+        TRACE("Exiting aaruf_get_geometry() = AARUF_ERROR_NOT_AARUFORMAT");
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
@@ -111,7 +111,7 @@ int32_t aaruf_get_geometry(const void *context, uint32_t *cylinders, uint32_t *h
     {
         FATAL("Invalid context");
 
-        TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_NOT_AARUFORMAT");
+        TRACE("Exiting aaruf_get_geometry() = AARUF_ERROR_NOT_AARUFORMAT");
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
@@ -127,5 +127,147 @@ int32_t aaruf_get_geometry(const void *context, uint32_t *cylinders, uint32_t *h
     *heads             = ctx->geometryBlock.heads;
     *sectors_per_track = ctx->geometryBlock.sectorsPerTrack;
 
+    TRACE("Exiting aaruf_get_geometry(%p, %u, %u, %u) = AARUF_STATUS_OK", context, *cylinders, *heads,
+          *sectors_per_track);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Sets the logical CHS geometry for the AaruFormat image.
+ *
+ * Configures the Cylinder-Head-Sector (CHS) geometry information for the image being
+ * created or modified. This function populates both the geometry block (used for storage
+ * in the image file) and the image information structure (used for runtime calculations).
+ * The geometry block contains legacy-style logical addressing parameters that describe
+ * how the storage medium should be logically organized in terms of cylinders, heads
+ * (tracks per cylinder), and sectors per track. This information is crucial for creating
+ * images that will be used with software requiring CHS addressing or for accurately
+ * preserving the original medium's logical structure.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, write-enabled image context).
+ * @param cylinders The number of cylinders to set for the geometry.
+ * @param heads The number of heads (tracks per cylinder) to set for the geometry.
+ * @param sectors_per_track The number of sectors per track to set for the geometry.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully set geometry information. This is returned when:
+ *         - The context is valid and properly initialized
+ *         - The context is opened in write mode (ctx->isWriting is true)
+ *         - The geometry block identifier is set to GeometryBlock
+ *         - The geometry block fields (cylinders, heads, sectorsPerTrack) are updated
+ *         - The image info fields (Cylinders, Heads, SectorsPerTrack) are synchronized
+ *         - All parameters are stored for subsequent write operations
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
+ *         - The context was not properly initialized by aaruf_create()
+ *
+ * @retval AARUF_READ_ONLY (-13) The context is not opened for writing. This occurs when:
+ *         - The image was opened with aaruf_open() instead of aaruf_create()
+ *         - The context's isWriting flag is false
+ *         - Attempting to modify a read-only image
+ *
+ * @note Dual Storage:
+ *       - Geometry is stored in two locations within the context:
+ *         1. ctx->geometryBlock: Written to the image file as a GeometryBlock during close
+ *         2. ctx->imageInfo: Used for runtime calculations and metadata queries
+ *       - Both locations are kept synchronized by this function
+ *
+ * @note Geometry Calculation:
+ *       - Total logical sectors = cylinders × heads × sectors_per_track
+ *       - Ensure the product matches the actual sector count in the image
+ *       - Mismatched geometry may cause issues with legacy software or emulators
+ *       - Sector size is separate and should be set via other API calls
+ *
+ * @note CHS Addressing Requirements:
+ *       - Required for images intended for legacy BIOS or MBR partition schemes
+ *       - Essential for floppy disk images and older hard disk images
+ *       - May be optional or synthetic for modern large-capacity drives
+ *       - Some virtualization platforms require valid CHS geometry
+ *
+ * @note Parameter Constraints:
+ *       - No validation is performed on the geometry values
+ *       - Zero values are technically accepted but may cause issues
+ *       - Extremely large values may overflow in calculations (cylinders × heads × sectors_per_track)
+ *       - Common constraints for legacy systems:
+ *         * Cylinders: typically 1-1024 for BIOS, up to 65535 for modern systems
+ *         * Heads: typically 1-255 for most systems
+ *         * Sectors per track: typically 1-63 for BIOS, up to 255 for modern systems
+ *
+ * @note Write Mode Requirement:
+ *       - This function is intended for use during image creation
+ *       - Should be called after aaruf_create() and before writing sector data
+ *       - The geometry block is serialized during aaruf_close()
+ *       - Must be used with a write-enabled context
+ *
+ * @note Historical Context:
+ *       - CHS geometry was the original addressing scheme for disk drives
+ *       - Physical CHS reflected actual disk platters, heads, and sector layout
+ *       - Logical CHS often differs from physical due to zone-bit recording and translation
+ *       - Modern drives use LBA (Logical Block Addressing) internally
+ *
+ * @warning This function does not validate geometry consistency:
+ *          - Does not check if cylinders × heads × sectors_per_track equals image sector count
+ *          - Does not prevent overflow in the multiplication
+ *          - Caller must ensure geometry values are appropriate for the medium type
+ *          - Invalid geometry may cause boot failures or data access issues
+ *
+ * @warning The geometry block is only written to the image file during aaruf_close().
+ *          Changes made by this function are not immediately persisted.
+ *
+ * @warning Changing geometry after writing sector data may create inconsistencies.
+ *          Set geometry before beginning sector write operations for best results.
+ *
+ * @warning Some image formats and use cases don't require CHS geometry:
+ *          - Optical media (CD/DVD/BD) use different addressing schemes
+ *          - Modern GPT-partitioned disks don't rely on CHS
+ *          - Flash-based storage typically doesn't have meaningful CHS geometry
+ *          - Setting geometry for such media types is harmless but unnecessary
+ */
+int32_t aaruf_set_geometry(void *context, const uint32_t cylinders, const uint32_t heads,
+                           const uint32_t sectors_per_track)
+{
+    TRACE("Entering aaruf_set_geometry(%p, %u, %u, %u)", context, cylinders, heads, sectors_per_track);
+
+    aaruformatContext *ctx = NULL;
+
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_set_geometry() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_set_geometry() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->isWriting)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    ctx->geometryBlock.identifier      = GeometryBlock;
+    ctx->geometryBlock.cylinders       = cylinders;
+    ctx->geometryBlock.heads           = heads;
+    ctx->geometryBlock.sectorsPerTrack = sectors_per_track;
+    ctx->imageInfo.Cylinders           = cylinders;
+    ctx->imageInfo.Heads               = heads;
+    ctx->imageInfo.SectorsPerTrack     = sectors_per_track;
+
+    TRACE("Exiting aaruf_set_geometry(%p, %u, %u, %u) = AARUF_STATUS_OK", context, cylinders, heads, sectors_per_track);
     return AARUF_STATUS_OK;
 }
