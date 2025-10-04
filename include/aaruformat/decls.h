@@ -137,6 +137,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_track_sector(void *context, uint8_t *da
 
 AARU_LOCAL int32_t AARU_CALL aaruf_get_media_tag_type_for_datatype(int32_t type);
 
+AARU_LOCAL int32_t AARU_CALL aaruf_get_datatype_for_media_tag_type(int32_t tag_type);
+
 AARU_LOCAL int32_t AARU_CALL aaruf_get_xml_mediatype(int32_t type);
 
 AARU_EXPORT spamsum_ctx *AARU_CALL aaruf_spamsum_init(void);

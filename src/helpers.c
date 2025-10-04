@@ -28,7 +28,7 @@
  * @param type Image data type identifier.
  * @return Corresponding Aaru media tag type, or -1 if not found.
  */
-int32_t aaruf_get_media_tag_type_for_datatype(int32_t type)
+int32_t aaruf_get_media_tag_type_for_datatype(const int32_t type)
 {
     switch(type)
     {
@@ -177,8 +177,166 @@ int32_t aaruf_get_media_tag_type_for_datatype(int32_t type)
     }
 }
 
+/**
+ * @brief Converts an Aaru media tag type to an image data type.
+ *
+ * Maps the given Aaru media tag type to the corresponding image data type.
+ * This is the inverse function of aaruf_get_media_tag_type_for_datatype.
+ *
+ * @param tag_type Aaru media tag type identifier.
+ * @return Corresponding image data type, or -1 if not found.
+ */
+int32_t aaruf_get_datatype_for_media_tag_type(const int32_t tag_type)
+{
+    switch(tag_type)
+    {
+        case CD_TOC:
+            return CompactDiscPartialToc;
+        case CD_SessionInfo:
+            return CompactDiscSessionInfo;
+        case CD_FullTOC:
+            return CompactDiscToc;
+        case CD_PMA:
+            return CompactDiscPma;
+        case CD_ATIP:
+            return CompactDiscAtip;
+        case CD_TEXT:
+            return CompactDiscLeadInCdText;
+        case DVD_PFI:
+            return DvdPfi;
+        case DVD_CMI:
+            return DvdLeadInCmi;
+        case DVD_DiscKey:
+            return DvdDiscKey;
+        case DVD_BCA:
+            return DvdBca;
+        case DVD_DMI:
+            return DvdDmi;
+        case DVD_MediaIdentifier:
+            return DvdMediaIdentifier;
+        case DVD_MKB:
+            return DvdMediaKeyBlock;
+        case DVDRAM_DDS:
+            return DvdRamDds;
+        case DVDRAM_MediumStatus:
+            return DvdRamMediumStatus;
+        case DVDRAM_SpareArea:
+            return DvdRamSpareArea;
+        case DVDR_RMD:
+            return DvdRRmd;
+        case DVDR_PreRecordedInfo:
+            return DvdRPrerecordedInfo;
+        case DVDR_MediaIdentifier:
+            return DvdRMediaIdentifier;
+        case DVDR_PFI:
+            return DvdRPfi;
+        case DVD_ADIP:
+            return DvdAdip;
+        case HDDVD_CPI:
+            return HdDvdCpi;
+        case HDDVD_MediumStatus:
+            return HdDvdMediumStatus;
+        case DVDDL_LayerCapacity:
+            return DvdDlLayerCapacity;
+        case DVDDL_MiddleZoneAddress:
+            return DvdDlMiddleZoneAddress;
+        case DVDDL_JumpIntervalSize:
+            return DvdDlJumpIntervalSize;
+        case DVDDL_ManualLayerJumpLBA:
+            return DvdDlManualLayerJumpLba;
+        case BD_DI:
+            return BlurayDi;
+        case BD_BCA:
+            return BlurayBca;
+        case BD_DDS:
+            return BlurayDds;
+        case BD_CartridgeStatus:
+            return BlurayCartridgeStatus;
+        case BD_SpareArea:
+            return BluraySpareArea;
+        case AACS_VolumeIdentifier:
+            return AacsVolumeIdentifier;
+        case AACS_SerialNumber:
+            return AacsSerialNumber;
+        case AACS_MediaIdentifier:
+            return AacsMediaIdentifier;
+        case AACS_MKB:
+            return AacsMediaKeyBlock;
+        case AACS_DataKeys:
+            return AacsDataKeys;
+        case AACS_LBAExtents:
+            return AacsLbaExtents;
+        case AACS_CPRM_MKB:
+            return CprmMediaKeyBlock;
+        case Hybrid_RecognizedLayers:
+            return HybridRecognizedLayers;
+        case MMC_WriteProtection:
+            return ScsiMmcWriteProtection;
+        case MMC_DiscInformation:
+            return ScsiMmcDiscInformation;
+        case MMC_TrackResourcesInformation:
+            return ScsiMmcTrackResourcesInformation;
+        case MMC_POWResourcesInformation:
+            return ScsiMmcPowResourcesInformation;
+        case SCSI_INQUIRY:
+            return ScsiInquiry;
+        case SCSI_MODEPAGE_2A:
+            return ScsiModePage2A;
+        case ATA_IDENTIFY:
+            return AtaIdentify;
+        case ATAPI_IDENTIFY:
+            return AtapiIdentify;
+        case PCMCIA_CIS:
+            return PcmciaCis;
+        case SD_CID:
+            return SecureDigitalCid;
+        case SD_CSD:
+            return SecureDigitalCsd;
+        case SD_SCR:
+            return SecureDigitalScr;
+        case SD_OCR:
+            return SecureDigitalOcr;
+        case MMC_CID:
+            return MultiMediaCardCid;
+        case MMC_CSD:
+            return MultiMediaCardCsd;
+        case MMC_OCR:
+            return MultiMediaCardOcr;
+        case MMC_ExtendedCSD:
+            return MultiMediaCardExtendedCsd;
+        case Xbox_SecuritySector:
+            return XboxSecuritySector;
+        case Floppy_LeadOut:
+            return FloppyLeadOut;
+        case DCB:
+            return DvdDiscControlBlock;
+        case CD_FirstTrackPregap:
+            return CompactDiscFirstTrackPregap;
+        case CD_LeadOut:
+            return CompactDiscLeadOut;
+        case SCSI_MODESENSE_6:
+            return ScsiModeSense6;
+        case SCSI_MODESENSE_10:
+            return ScsiModeSense10;
+        case USB_Descriptors:
+            return UsbDescriptors;
+        case Xbox_DMI:
+            return XboxDmi;
+        case Xbox_PFI:
+            return XboxPfi;
+        case CD_MCN:
+            return CompactDiscMediaCatalogueNumber;
+        case CD_LeadIn:
+            return CompactDiscLeadIn;
+        case DVD_DiscKey_Decrypted:
+            return DvdDiscKeyDecrypted;
+        default:
+            return -1;
+    }
+}
+
 // Get the CICM XML media type from AARU media type
-int32_t aaruf_get_xml_mediatype(int32_t type)
+int32_t aaruf_get_xml_mediatype(const int32_t type)
 {
     switch(type)
     {
