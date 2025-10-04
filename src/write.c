@@ -310,108 +310,208 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
 }
 
 /**
- * @brief Writes a full ("long") raw sector (2352 bytes) from optical media, splitting and validating structure.
+ * @brief Writes a full ("long") raw sector from optical or block media, parsing structure and validating content.
  *
- * This function is specialized for raw CD sector ingestion when the caller provides the complete 2352-byte
- * (or derived) raw sector including synchronization pattern, header (prefix), user data area and suffix
- * (EDC/ECC / parity depending on the mode). It supports:
- *   - Audio (2352 bytes of PCM) and Data raw sectors which are simply forwarded to aaruf_write_sector().
- *   - CD Mode 1 sectors (sync + header + 2048 user bytes + EDC + ECC P + ECC Q).
- *   - CD Mode 2 (Form 1, Form 2 and Formless) sectors, handling sub-headers, EDC, and ECC as appropriate.
+ * This function processes complete raw sectors including structural metadata, error correction codes, and
+ * subchannel information. It is the primary entry point for ingesting raw sector data where the caller
+ * provides the complete sector including synchronization patterns, headers, user data, and error correction
+ * information. The function intelligently parses the sector structure based on media type and track
+ * information, validates correctness, and delegates user data writing to aaruf_write_sector().
  *
- * For each sector, the function:
- *   1. Locates the track definition covering the provided logical sector (LBA) and derives its type.
- *   2. Validates input length (must be exactly 2352 for optical raw sectors at present).
- *   3. Performs rewind detection: if sectors are written out of strictly increasing order, ongoing hash
- *      calculations (MD5, SHA1, SHA256, SpamSum, BLAKE3) are disabled to prevent incorrect streaming digests.
- *   4. Optionally updates hash digests if still enabled and the sector lies within the user range (i.e. not
- *      negative / overflow) – this is performed on the full raw content for long sectors.
- *   5. Splits the sector into prefix, user data, and suffix portions depending on mode and validates:
- *        - Prefix (sync + header) timing/address fields (MM:SS:FF → LBA) and mode byte.
- *        - For Mode 1: checks prefix conformity and ECC / EDC correctness via helper routines.
- *        - For Mode 2: distinguishes Form 1 vs Form 2 (bit flags), validates ECC (Form 1) and EDC (both forms),
- *          and extracts sub-header (8 bytes) for separate storage.
- *   6. Stores anomalous (non-conforming or errored) prefix/suffix fragments into dynamically growing buffers
- *      (sectorPrefixBuffer / sectorSuffixBuffer) and records miniature DDT entries (sectorPrefixDdtMini /
- *      sectorSuffixDdtMini) with offsets and status bits. Correct standard patterns are recorded without
- *      copying (status code only) to save space.
- *   7. Writes only the user data portion (2048 for Mode 1 & Mode 2 Form 1, 2324 for Mode 2 Form 2, 2352 for
- *      audio or for already treated Data) to the standard user data path by delegating to aaruf_write_sector(),
- *      passing an appropriate derived sector status (e.g. SectorStatusMode1Correct, SectorStatusMode2Form1Ok,
- *      SectorStatusErrored, etc.).
+ * Supported Media Types and Sector Formats:
  *
- * Deduplication: Long sector handling itself does not directly hash for deduplication; dedupe is applied when
- * aaruf_write_sector() is invoked for the extracted user data segment.
+ * **Optical Disc Media (2352-byte sectors):**
+ *   - **Audio tracks**: Raw PCM audio data (2352 bytes) passed directly to aaruf_write_sector()
+ *   - **Data tracks**: Raw data sectors passed directly to aaruf_write_sector()
+ *   - **CD Mode 1**: Sync(12) + Header(4) + UserData(2048) + EDC(4) + Reserved(8) + ECC_P(172) + ECC_Q(104)
+ *     * Validates sync pattern (00 FF FF FF FF FF FF FF FF FF FF 00), mode byte (01), and MSF timing
+ *     * Checks EDC/ECC correctness using aaruf_ecc_cd_is_suffix_correct()
+ *     * Stores anomalous prefixes/suffixes in separate buffers with mini-DDT indexing
+ *   - **CD Mode 2 Form 1**: Sync(12) + Header(4) + Subheader(8) + UserData(2048) + EDC(4) + ECC_P(172) + ECC_Q(104)
+ *     * Validates sync pattern, mode byte (02), and Form 1 identification in subheader
+ *     * Checks both EDC and ECC correctness for Form 1 sectors
+ *     * Extracts and stores 8-byte subheader separately in mode2_subheaders buffer
+ *   - **CD Mode 2 Form 2**: Sync(12) + Header(4) + Subheader(8) + UserData(2324) + EDC(4)
+ *     * Validates sync pattern, mode byte (02), and Form 2 identification in subheader
+ *     * Checks EDC correctness, handles missing EDC (zero) as valid state
+ *     * No ECC validation for Form 2 sectors (not present in format)
+ *   - **CD Mode 2 Formless**: Similar to Form 2 but without form determination from subheader
  *
- * Memory allocation strategy:
- *   - Mini DDT arrays (prefix/suffix) are lazily allocated on first need sized for the total addressable sector
- *     span (negative + user + overflow).
- *   - Prefix (16-byte units) and suffix buffers (288-byte units; or smaller copies for Form 2 EDC) grow by
- *     doubling when capacity would be exceeded.
- *   - Mode 2 sub-header storage (8 bytes per sector) is also lazily allocated.
+ * **Block Media (512+ byte sectors with tags):**
+ *   - **Apple Profile/FileWare**: 512-byte sectors + 20-byte Profile tags
+ *   - **Apple Sony SS/DS**: 512-byte sectors + 12-byte Sony tags
+ *   - **Apple Widget**: 512-byte sectors with tag conversion support
+ *   - **Priam DataTower**: 512-byte sectors + 24-byte Priam tags
+ *   - Supports automatic tag format conversion between Sony (12), Profile (20), and Priam (24) byte formats
+ *   - Tag data stored in sectorSubchannel buffer for preservation
  *
- * Address normalization: Internally a corrected index (corrected_sector_address) is computed by offsetting the
- * raw logical sector number with the negative-region size to provide a linear index across negative, user and
- * overflow regions.
+ * **Data Processing Pipeline:**
+ * 1. **Context and Parameter Validation**: Verifies context magic, write permissions, and sector bounds
+ * 2. **Track Resolution**: Locates track entry covering the sector address to determine track type
+ * 3. **Rewind Detection**: Detects out-of-order writing and disables hash calculations to maintain integrity
+ * 4. **Hash Updates**: Updates MD5, SHA1, SHA256, SpamSum, and BLAKE3 contexts for user-range sectors
+ * 5. **Structure Parsing**: Splits raw sector into prefix, user data, and suffix components
+ * 6. **Validation**: Checks sync patterns, timing fields, EDC/ECC correctness, and format compliance
+ * 7. **Metadata Storage**: Stores anomalous or non-standard components in dedicated buffers
+ * 8. **User Data Delegation**: Calls aaruf_write_sector() with extracted user data and derived status
  *
- * Sector status encoding (high nibble of 16-bit mini DDT entries):
- *   - SectorStatusMode1Correct / SectorStatusMode2Form1Ok / SectorStatusMode2Form2Ok / ... mark validated content.
- *   - SectorStatusErrored marks stored anomalous fragments whose data was copied into side buffers.
- *   - SectorStatusNotDumped marks all-zero (empty) raw sectors treated as not dumped.
- *   - Additional specific codes differentiate Mode 2 Form 2 without CRC vs with correct CRC, etc.
+ * **Memory Management Strategy:**
+ * - **Mini-DDT Arrays**: Lazily allocated 16-bit arrays sized for total addressable space (negative + user + overflow)
+ *   * sectorPrefixDdtMini: Tracks prefix status and buffer offsets (high 4 bits = status, low 12 bits = offset/16)
+ *   * sectorSuffixDdtMini: Tracks suffix status and buffer offsets (high 4 bits = status, low 12 bits = offset/288)
+ * - **Prefix Buffer**: Dynamically growing buffer storing non-standard 16-byte CD prefixes
+ * - **Suffix Buffer**: Dynamically growing buffer storing non-standard CD suffixes (288 bytes for Mode 1, 4 bytes for Mode 2 Form 2, 280 bytes for Mode 2 Form 1)
+ * - **Subheader Buffer**: Fixed-size buffer (8 bytes per sector) for Mode 2 subheaders
+ * - **Subchannel Buffer**: Fixed-size buffer for block media tag data
+ * - All buffers use doubling reallocation strategy when capacity exceeded
  *
- * Rewind side effects: Once a rewind is detected (writing an LBA <= previously written), all on-the-fly hash
- * computations are disabled permanently for the session in order to maintain integrity guarantees of the
- * produced digest values.
+ * **Address Space Management:**
+ * The function handles three logical address regions:
+ * - **Negative Region**: Pre-gap sectors (sector_address < negative region size, negative=true)
+ * - **User Region**: Main data sectors (0 ≤ sector_address < Sectors, negative=false)
+ * - **Overflow Region**: Post-data sectors (sector_address ≥ Sectors, negative=false)
+ * Internal corrected_sector_address provides linear indexing: corrected = address ± negative_size
  *
- * Limitations / TODO:
- *   - BlockMedia (non-optical) handling is currently unimplemented and returns AARUF_ERROR_INCORRECT_MEDIA_TYPE.
- *   - Only 2352-byte raw sectors are accepted; other raw lengths (e.g. 2448 with subchannel) are not handled here.
- *   - Compression for block writing is not yet implemented (mirrors limitations of aaruf_write_sector()).
+ * **Sector Status Classification:**
+ * Status codes stored in high nibble of mini-DDT entries:
+ * - **SectorStatusMode1Correct**: Valid Mode 1 sector with correct sync, timing, EDC, and ECC
+ * - **SectorStatusMode2Form1Ok**: Valid Mode 2 Form 1 with correct subheader, EDC, and ECC
+ * - **SectorStatusMode2Form2Ok**: Valid Mode 2 Form 2 with correct subheader and EDC
+ * - **SectorStatusMode2Form2NoCrc**: Mode 2 Form 2 with zero EDC (acceptable state)
+ * - **SectorStatusErrored**: Sector with validation errors, anomalous data stored in buffers
+ * - **SectorStatusNotDumped**: All-zero sectors treated as not dumped
  *
- * Thread safety: This function is not thread-safe. The context carries mutable shared buffers and state.
+ * **Deduplication Integration:**
+ * Long sector processing does not directly perform deduplication - this occurs in the delegated
+ * aaruf_write_sector() call for the extracted user data portion. The prefix/suffix/subheader
+ * metadata is stored separately and not subject to deduplication.
  *
- * Error handling model: On encountering an error (allocation failure, bounds, incorrect size, media type) the
- * function logs a fatal message via FATAL() and returns immediately with an appropriate negative error code.
- * Partial allocations made earlier in the same call are not rolled back beyond what standard free-on-close does.
+ * **Hash Calculation Behavior:**
+ * - Hashes computed on complete raw sector data (all 2352 bytes for optical, full tag+data for block)
+ * - Only performed for sectors in user address range (not negative or overflow regions)
+ * - Permanently disabled upon rewind detection to prevent corrupted streaming digests
+ * - Supports MD5, SHA1, SHA256, SpamSum, and BLAKE3 simultaneously when enabled
  *
- * Preconditions:
- *   - context is a valid aaruformatContext with magic == AARU_MAGIC.
- *   - Image opened for writing (isWriting == true).
- *   - sector_address within allowed negative / user / overflow ranges depending on 'negative'.
+ * **Error Recovery and Validation:**
+ * - Sync pattern validation for optical sectors (CD standard 12-byte sync)
+ * - MSF timing validation (Minutes:Seconds:Frames converted to LBA must match sector_address)
+ * - Mode byte validation (01 for Mode 1, 02 for Mode 2)
+ * - EDC validation using aaruf_edc_cd_compute() for computed vs stored comparison
+ * - ECC validation using aaruf_ecc_cd_is_suffix_correct() and aaruf_ecc_cd_is_suffix_correct_mode2()
+ * - Form determination from subheader flags (bit 5 of bytes 18 and 22)
+ * - Tag format validation and conversion for block media
  *
- * Postconditions on success:
- *   - User data DDT updated (indirectly via aaruf_write_sector()).
- *   - For Mode 1 / Mode 2 sectors: prefix/suffix / sub-header metadata structures updated accordingly.
- *   - User data portion appended (buffered) into current block (or new block created) via aaruf_write_sector().
- *   - Hash contexts updated unless rewind occurred.
+ * **Thread Safety and Concurrency:**
+ * This function is NOT thread-safe. The context contains mutable shared state including:
+ * - Buffer pointers and offsets
+ * - Hash computation contexts
+ * - Rewind detection state
+ * - DDT modification operations
+ * External synchronization required for concurrent access.
  *
- * @param context Pointer to the aaruformat context.
- * @param sector_address Logical Block Address (LBA) for the raw sector (0-based user LBA,
- *        can include negative region when 'negative' is true).
- * @param negative true if sector_address refers to the negative (pre-gap) region; false for user/overflow.
- * @param data Pointer to 2352-byte raw sector buffer (sync+header+userdata+EDC/ECC) or audio PCM.
- * @param sector_status Initial sector status hint provided by caller (may be overridden for derived writing call).
- * @param length Length in bytes of the provided raw buffer. Must be exactly 2352 for optical sectors.
+ * **Performance Considerations:**
+ * - Buffer allocation occurs lazily on first use
+ * - Buffer growth uses doubling strategy to amortize allocation cost
+ * - Validation operations are optimized for common cases (correct sectors)
+ * - Memory copying minimized for standard compliant sectors
+ * - Hash updates operate on full sector to maintain streaming performance
  *
- * @return One of:
- * @retval AARUF_STATUS_OK Sector processed and (user data portion) queued/written successfully.
- * @retval AARUF_ERROR_NOT_AARUFORMAT Invalid or NULL context / magic mismatch.
- * @retval AARUF_READ_ONLY Image opened read-only.
- * @retval AARUF_ERROR_SECTOR_OUT_OF_BOUNDS sector_address outside negative/user/overflow bounds.
- * @retval AARUF_ERROR_INCORRECT_DATA_SIZE length != 2352 for optical disc long sector ingestion.
- * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY Failed to allocate or grow any required buffer (mini DDT,
- *         prefix, suffix, sub-headers).
- * @retval AARUF_ERROR_INCORRECT_MEDIA_TYPE Media type unsupported for long sector writes (non OpticalDisc).
- * @retval AARUF_ERROR_CANNOT_SET_DDT_ENTRY Propagated from underlying aaruf_write_sector() when DDT update fails.
- * @retval AARUF_ERROR_CANNOT_WRITE_BLOCK_HEADER Propagated from block flush inside aaruf_write_sector().
- * @retval AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA Propagated from block flush inside aaruf_write_sector().
+ * @param context Pointer to a valid aaruformatContext with magic == AARU_MAGIC opened for writing.
+ * @param sector_address Logical Block Address (LBA) for the sector. For negative regions, this is
+ *        the negative-space address; for user/overflow regions, this is the standard 0-based LBA.
+ * @param negative true if sector_address refers to the negative (pre-gap) region;
+ *        false for user or overflow regions.
+ * @param data Pointer to the complete raw sector buffer. Must contain:
+ *        - For optical: exactly 2352 bytes of raw sector data
+ *        - For block media: 512 bytes + tag data (12, 20, or 24 bytes depending on format)
+ * @param sector_status Initial sector status hint from caller. May be overridden based on validation
+ *        results when delegating to aaruf_write_sector().
+ * @param length Length in bytes of the data buffer. Must be exactly 2352 for optical discs.
+ *        For block media: 512 (no tags), 524 (Sony), 532 (Profile), or 536 (Priam).
  *
- * @note The function returns immediately after delegating to aaruf_write_sector() for user data; any status
- *       described there may propagate. That function performs deduplication and block finalization.
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Sector successfully processed and user data written. This occurs when:
+ *         - Raw sector structure parsed and validated successfully
+ *         - Prefix/suffix/subheader metadata stored appropriately
+ *         - User data portion successfully delegated to aaruf_write_sector()
+ *         - All buffer allocations and DDT updates completed successfully
  *
- * @warning Do not mix calls to aaruf_write_sector() and aaruf_write_sector_long() with out-of-order addresses
- *          if you rely on calculated digests; rewind will disable digest updates irrevocably.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) Invalid context provided. This occurs when:
+ *         - context parameter is NULL
+ *         - Context magic number != AARU_MAGIC (wrong context type or corruption)
+ *
+ * @retval AARUF_READ_ONLY (-22) Attempting to write to read-only image. This occurs when:
+ *         - Context isWriting flag is false
+ *         - Image was opened without write permissions
+ *
+ * @retval AARUF_ERROR_SECTOR_OUT_OF_BOUNDS (-7) Sector address outside valid ranges. This occurs when:
+ *         - negative=true and sector_address >= negative region size
+ *         - negative=false and sector_address >= (Sectors + overflow region size)
+ *
+ * @retval AARUF_ERROR_INCORRECT_DATA_SIZE (-8) Invalid sector size for media type. This occurs when:
+ *         - length != 2352 for optical disc media
+ *         - length not in {512, 524, 532, 536} for supported block media types
+ *
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
+ *         - Failed to allocate mini-DDT arrays (sectorPrefixDdtMini, sectorSuffixDdtMini)
+ *         - Failed to allocate or grow prefix buffer (sector_prefix)
+ *         - Failed to allocate or grow suffix buffer (sector_suffix)
+ *         - Failed to allocate subheader buffer (mode2_subheaders)
+ *         - Failed to allocate subchannel buffer (sectorSubchannel)
+ *         - System out of memory during buffer reallocation
+ *
+ * @retval AARUF_ERROR_INCORRECT_MEDIA_TYPE (-26) Unsupported media type for long sectors. This occurs when:
+ *         - Media type is not OpticalDisc or supported BlockMedia variant
+ *         - Block media type does not support the provided tag format
+ *
+ * @retval AARUF_ERROR_CANNOT_SET_DDT_ENTRY (-25) DDT update failed. Propagated from aaruf_write_sector() when:
+ *         - User data DDT entry could not be updated
+ *         - DDT table corruption prevents entry modification
+ *
+ * @retval AARUF_ERROR_CANNOT_WRITE_BLOCK_HEADER (-23) Block header write failed. Propagated from aaruf_write_sector() when:
+ *         - Automatic block closure triggered by user data write fails
+ *         - File system error prevents header write
+ *
+ * @retval AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA (-24) Block data write failed. Propagated from aaruf_write_sector() when:
+ *         - User data portion write fails during block flush
+ *         - Insufficient disk space or I/O error occurs
+ *
+ * @note **Cross-References**: This function is the primary companion to aaruf_write_sector() for
+ *       raw sector ingestion. See also:
+ *       - aaruf_write_sector(): Handles user data portion writing and deduplication
+ *       - aaruf_ecc_cd_is_suffix_correct(): CD Mode 1 ECC validation
+ *       - aaruf_ecc_cd_is_suffix_correct_mode2(): CD Mode 2 Form 1 ECC validation
+ *       - aaruf_edc_cd_compute(): EDC calculation and validation for all CD modes
+ *       - aaruf_close(): Serializes prefix/suffix/subheader metadata to image file
+ *
+ * @note **Buffer Management**: All dynamically allocated buffers (prefix, suffix, subheader, subchannel)
+ *       are automatically freed during aaruf_close(). Applications should not attempt to access
+ *       these buffers directly or free them manually.
+ *
+ * @note **Metadata Persistence**: Prefix, suffix, and subheader data captured by this function
+ *       is serialized to the image file during aaruf_close() as separate metadata blocks with
+ *       corresponding mini-DDT tables for efficient access during reading.
+ *
+ * @note **Tag Format Conversion**: For block media, automatic conversion between Sony, Profile,
+ *       and Priam tag formats ensures compatibility regardless of source format. Conversion
+ *       preserves all semantic information while adapting to target media type requirements.
+ *
+ * @warning **Rewind Detection**: Writing sectors out of strictly increasing order triggers rewind
+ *          detection, permanently disabling hash calculations for the session. This prevents
+ *          corrupted streaming digests but means hash values will be unavailable if non-sequential
+ *          writing occurs. Plan sector writing order carefully if digest calculation is required.
+ *
+ * @warning **Memory Growth**: Prefix and suffix buffers grow dynamically and can consume significant
+ *          memory for images with many non-standard sectors. Monitor memory usage when processing
+ *          damaged or non-compliant optical media.
+ *
+ * @warning **Media Type Constraints**: This function only supports OpticalDisc and specific BlockMedia
+ *          types. Other media types will return AARUF_ERROR_INCORRECT_MEDIA_TYPE. Use aaruf_write_sector()
+ *          directly for unsupported media types.
+ *
+ * @see aaruf_write_sector() for user data writing and deduplication
+ * @see aaruf_read_sector_long() for corresponding long sector reading functionality
+ * @see aaruf_close() for metadata serialization and cleanup
  */
 int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool negative, const uint8_t *data,
                                 uint8_t sector_status, uint32_t length)
