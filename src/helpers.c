@@ -170,6 +170,8 @@ int32_t aaruf_get_media_tag_type_for_datatype(int32_t type)
             return CD_MCN;
         case CompactDiscLeadIn:
             return CD_LeadIn;
+        case DvdDiscKeyDecrypted:
+            return DVD_DiscKey_Decrypted;
         default:
             return -1;
     }
