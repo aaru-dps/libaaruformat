@@ -224,8 +224,8 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
                    ctx->metadataBlockHeader.driveSerialNumberLength);
     }
 
-    if(ctx->metadataBlockHeader.driveManufacturerLength > 0 &&
-       ctx->metadataBlockHeader.driveFirmwareRevisionOffset + ctx->metadataBlockHeader.driveManufacturerLength <=
+    if(ctx->metadataBlockHeader.driveFirmwareRevisionLength > 0 &&
+       ctx->metadataBlockHeader.driveFirmwareRevisionOffset + ctx->metadataBlockHeader.driveFirmwareRevisionLength <=
            ctx->metadataBlockHeader.blockSize)
     {
         ctx->imageInfo.DriveFirmwareRevision = (uint8_t *)malloc(ctx->metadataBlockHeader.driveFirmwareRevisionLength);
