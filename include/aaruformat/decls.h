@@ -96,6 +96,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
                                                  const uint8_t *data, uint8_t sector_status, uint32_t length);
 AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t sector_address, bool negative,
                                                       const uint8_t *data, uint8_t sector_status, uint32_t length);
+AARU_EXPORT int32_t AARU_CALL write_media_tag(void *context, const uint8_t *data, const int32_t type, const uint32_t length);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context);
 

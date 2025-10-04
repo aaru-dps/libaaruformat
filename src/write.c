@@ -1213,3 +1213,328 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
 
     return AARUF_STATUS_OK;
 }
+
+/**
+ * @brief Writes a media tag to the AaruFormat image, storing medium-specific metadata and descriptors.
+ *
+ * This function stores arbitrary media-specific metadata (media tags) in the AaruFormat image context
+ * for later serialization during image finalization. Media tags represent higher-level descriptors and
+ * metadata structures that characterize the storage medium beyond sector data, including disc information
+ * structures, lead-in/lead-out data, manufacturer identifiers, drive capabilities, and format-specific
+ * metadata. The function uses a hash table for efficient tag storage and retrieval, automatically
+ * replacing existing tags of the same type and managing memory for tag data.
+ *
+ * **Supported Media Tag Categories:**
+ *
+ * **Optical Disc Metadata (CD/DVD/BD/HD DVD):**
+ *   - **CD_TOC (0)**: Table of Contents from READ TOC/PMA/ATIP command (Format 0000b - Formatted TOC)
+ *     * Contains track entries, session boundaries, lead-in/lead-out addressing, and track types
+ *     * Essential for multi-session and mixed-mode CD structure representation
+ *   - **CD_FullTOC (1)**: Full TOC (Format 0010b) including session info and point/ADR/control fields
+ *     * Provides complete session structure with ADR field interpretation and sub-Q channel details
+ *   - **CD_SessionInfo (2)**: Session information (Format 0001b) for multi-session discs
+ *   - **CD_TEXT (3)**: CD-TEXT data from lead-in area (artist, title, performer, songwriter metadata)
+ *   - **CD_ATIP (4)**: Absolute Time In Pregroove (CD-R/RW timing calibration and media manufacturer data)
+ *   - **CD_PMA (5)**: Power Management Area (CD-R/RW recording session management metadata)
+ *   - **DVD_PFI (6)**: Physical Format Information (DVD layer characteristics, book type, linear density)
+ *   - **DVD_DMI (7)**: Disc Manufacturing Information (DVD unique identifier and replication metadata)
+ *   - **DVD_BCA (8)**: Burst Cutting Area (copy protection and regional management data for DVD-Video)
+ *   - **BD_DI (28)**: Disc Information (Blu-ray layer count, recording format, disc size, channel bit length)
+ *   - **BD_BCA (29)**: Blu-ray Burst Cutting Area (unique disc identifier and anti-counterfeiting data)
+ *
+ * **Recordable Media Structures:**
+ *   - **DVDR_RMD (17)**: Recorded Media Data (last border-out RMD for DVD-R/-RW finalization state)
+ *   - **DVDR_PreRecordedInfo (18)**: Pre-recorded information area from lead-in (DVD-R physical specs)
+ *   - **DVDR_MediaIdentifier (19)**: Writable media identifier (DVD-R/-RW unique ID from manufacturer)
+ *   - **BD_DDS (30)**: Disc Definition Structure (BD-R/RE recording management and spare area allocation)
+ *   - **BD_SpareArea (32)**: BD spare area allocation map (defect management for recordable Blu-ray)
+ *
+ * **Copy Protection and Security:**
+ *   - **AACS_VolumeIdentifier (33)**: AACS Volume Identifier (content identifier for AACS-protected media)
+ *   - **AACS_SerialNumber (34)**: Pre-recorded media serial number (unique per AACS disc pressing)
+ *   - **AACS_MediaIdentifier (35)**: AACS Media Identifier (cryptographic binding to physical medium)
+ *   - **AACS_MKB (36)**: AACS Media Key Block (encrypted title keys and revocation lists)
+ *   - **AACS_DataKeys (37)**: Extracted AACS title/volume keys (when decrypted, for archival purposes)
+ *   - **AACS_CPRM_MKB (39)**: CPRM Media Key Block (Content Protection for Recordable Media)
+ *
+ * **Device and Drive Information:**
+ *   - **SCSI_INQUIRY (45)**: SCSI INQUIRY standard data (device type, vendor, model, firmware revision)
+ *   - **SCSI_MODEPAGE_2A (46)**: SCSI Mode Page 2Ah (CD/DVD/BD capabilities and supported features)
+ *   - **ATA_IDENTIFY (47)**: ATA IDENTIFY DEVICE response (512 bytes of drive capabilities and geometry)
+ *   - **ATAPI_IDENTIFY (48)**: ATA PACKET IDENTIFY DEVICE (ATAPI drive identification and features)
+ *   - **MMC_WriteProtection (41)**: Write protection status from MMC GET CONFIGURATION command
+ *   - **MMC_DiscInformation (42)**: Disc Information (recordable status, erasable flag, last session)
+ *
+ * **Flash and Solid-State Media:**
+ *   - **SD_CID (50)**: SecureDigital Card ID register (manufacturer, OEM, product name, serial number)
+ *   - **SD_CSD (51)**: SecureDigital Card Specific Data (capacity, speed class, file format)
+ *   - **SD_SCR (52)**: SecureDigital Configuration Register (SD spec version, bus widths, security)
+ *   - **SD_OCR (53)**: SecureDigital Operation Conditions Register (voltage ranges, capacity type)
+ *   - **MMC_CID (54)**: MMC Card ID (similar to SD_CID for eMMC/MMC devices)
+ *   - **MMC_CSD (55)**: MMC Card Specific Data (MMC device parameters)
+ *   - **MMC_ExtendedCSD (57)**: MMC Extended CSD (512 bytes of extended MMC capabilities)
+ *
+ * **Gaming Console Media:**
+ *   - **Xbox_SecuritySector (58)**: Xbox/Xbox 360 Security Sector (SS.bin - anti-piracy signature data)
+ *   - **Xbox_DMI (66)**: Xbox Disc Manufacturing Info (manufacturing plant and batch metadata)
+ *   - **Xbox_PFI (67)**: Xbox Physical Format Information (Xbox-specific DVD layer configuration)
+ *
+ * **Specialized Structures:**
+ *   - **CD_FirstTrackPregap (61)**: First track pregap (index 0 contents, typically silent on audio CDs)
+ *   - **CD_LeadOut (62)**: Lead-out area contents (post-data region signaling disc end)
+ *   - **CD_LeadIn (68)**: Raw lead-in data (TOC frames and sub-Q channel from pre-data region)
+ *   - **Floppy_LeadOut (59)**: Manufacturer/duplication cylinder (floppy copy protection metadata)
+ *   - **PCMCIA_CIS (49)**: PCMCIA/CardBus Card Information Structure tuple chain
+ *   - **USB_Descriptors (65)**: Concatenated USB descriptors (device/config/interface for USB drives)
+ *
+ * **Data Processing Pipeline:**
+ * 1. **Context Validation**: Verifies context is valid AaruFormat context with write permissions
+ * 2. **Parameter Validation**: Checks data pointer is non-NULL and length is non-zero
+ * 3. **Memory Allocation**: Allocates new buffer for tag data and mediaTagEntry structure
+ * 4. **Data Copying**: Performs deep copy of tag data to ensure context owns the memory
+ * 5. **Hash Table Insertion**: Adds or replaces entry in mediaTags hash table using uthash HASH_REPLACE_INT
+ * 6. **Cleanup**: Frees old media tag entry and data if replacement occurred
+ * 7. **Return Success**: Returns AARUF_STATUS_OK on successful completion
+ *
+ * **Memory Management Strategy:**
+ * - **Deep Copy Semantics**: Function performs deep copy of input data; caller retains ownership of original buffer
+ * - **Automatic Replacement**: Existing tag of same type is automatically freed when replaced
+ * - **Hash Table Storage**: Media tags stored in uthash-based hash table for O(1) lookup by type
+ * - **Deferred Serialization**: Tag data remains in memory until aaruf_close() serializes to image file
+ * - **Cleanup on Close**: All media tag memory automatically freed during aaruf_close()
+ *
+ * **Tag Type Identification:**
+ * The type parameter accepts MediaTagType enumeration values (0-68) that identify the semantic
+ * meaning of the tag data. The library does not validate tag data structure or size against the
+ * type identifier - callers are responsible for providing correctly formatted tag data matching
+ * the declared type. Type values are preserved as-is and used during serialization to identify
+ * tag purpose during image reading.
+ *
+ * **Replacement Behavior:**
+ * When a media tag of the same type already exists in the context:
+ * - The old tag entry is removed from the hash table
+ * - The old tag's data buffer is freed
+ * - The old tag entry structure is freed
+ * - The new tag replaces the old tag in the hash table
+ * - No warning or error is generated for replacement
+ * This allows incremental updates to media tags during image creation.
+ *
+ * **Serialization and Persistence:**
+ * Media tags written via this function are not immediately written to the image file. Instead,
+ * they are accumulated in the context's mediaTags hash table and serialized during aaruf_close()
+ * as part of the image finalization process. The serialization creates a metadata block in the
+ * image file that preserves all media tags with their type identifiers and data lengths.
+ *
+ * **Thread Safety and Concurrency:**
+ * This function is NOT thread-safe. The context contains mutable shared state including:
+ * - mediaTags hash table modification
+ * - Memory allocation and deallocation
+ * - No internal locking or synchronization
+ * External synchronization required for concurrent access from multiple threads.
+ *
+ * **Performance Considerations:**
+ * - Hash table insertion is O(1) average case for new tags
+ * - Hash table replacement is O(1) for existing tags
+ * - Memory allocation overhead proportional to tag data size
+ * - No disk I/O occurs during this call (deferred to aaruf_close())
+ * - Suitable for frequent tag updates during image creation workflow
+ *
+ * **Typical Usage Scenarios:**
+ * - **Optical Disc Imaging**: Store TOC, PMA, ATIP, CD-TEXT from READ TOC family commands
+ * - **Copy Protection Preservation**: Store BCA, AACS structures, media identifiers for archival
+ * - **Drive Capabilities**: Store INQUIRY, Mode Page 2Ah, IDENTIFY data for forensic metadata
+ * - **Flash Card Imaging**: Store CID, CSD, SCR, OCR registers from SD/MMC cards
+ * - **Console Game Preservation**: Store Xbox security sectors and manufacturing metadata
+ * - **Recordable Media**: Store RMD, media identifiers, spare area maps for write-once media
+ *
+ * **Validation and Error Handling:**
+ * - Context validity checked via magic number comparison (AARU_MAGIC)
+ * - Write permission verified via isWriting flag
+ * - NULL data pointer triggers AARUF_ERROR_INCORRECT_DATA_SIZE
+ * - Zero length triggers AARUF_ERROR_INCORRECT_DATA_SIZE
+ * - Memory allocation failures return AARUF_ERROR_NOT_ENOUGH_MEMORY
+ * - No validation of tag data structure or size against type identifier
+ *
+ * **Data Format Requirements:**
+ * The function accepts arbitrary binary data without format validation. Callers must ensure:
+ * - Tag data matches the declared MediaTagType structure and size
+ * - Binary data is properly byte-ordered for the target platform
+ * - Variable-length tags include proper internal length fields if required
+ * - Tag data represents a complete, self-contained structure
+ *
+ * **Integration with Image Creation Workflow:**
+ * Media tags should typically be written after creating the image context (aaruf_create()) but
+ * before writing sector data. However, tags can be added or updated at any point during the
+ * writing process. Common workflow:
+ * 1. Create image context with aaruf_create()
+ * 2. Set tracks with aaruf_set_tracks() if applicable
+ * 3. Write media tags with write_media_tag() for all available metadata
+ * 4. Write sector data with aaruf_write_sector() or aaruf_write_sector_long()
+ * 5. Close image with aaruf_close() to finalize and serialize all metadata
+ *
+ * @param context Pointer to a valid aaruformatContext with magic == AARU_MAGIC opened for writing.
+ *        Must be created via aaruf_create() and not yet closed. The context's isWriting flag
+ *        must be true, indicating write mode is active.
+ * @param data Pointer to the media tag data buffer to write. Must be a valid non-NULL pointer
+ *        to a buffer containing the complete tag data. The function performs a deep copy of
+ *        this data, so the caller retains ownership and may free or modify the source buffer
+ *        after this call returns. The data format must match the structure expected for the
+ *        specified type parameter.
+ * @param type Integer identifier specifying the type of media tag (MediaTagType enumeration).
+ *        Values range from 0 (CD_TOC) to 68 (CD_LeadIn). The type identifies the semantic
+ *        meaning of the tag data and is preserved in the image file for interpretation during
+ *        reading. The library does not validate that the data structure matches the declared
+ *        type - caller responsibility to ensure correctness.
+ * @param length Length in bytes of the media tag data buffer. Must be greater than zero.
+ *        Specifies how many bytes to copy from the data buffer. No maximum length enforced,
+ *        but extremely large tags may cause memory allocation failures.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully wrote the media tag. This is returned when:
+ *         - Context is valid with correct magic number (AARU_MAGIC)
+ *         - Context is in writing mode (isWriting == true)
+ *         - Data pointer is non-NULL and length is non-zero
+ *         - Memory allocation succeeded for both tag data and entry structure
+ *         - Tag entry successfully inserted into mediaTags hash table
+ *         - If replacing existing tag, old tag successfully freed
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) Invalid context provided. This occurs when:
+ *         - context parameter is NULL (no context provided)
+ *         - Context magic number != AARU_MAGIC (wrong context type, corrupted context, or uninitialized)
+ *         - Context was not created by aaruf_create() or has been corrupted
+ *
+ * @retval AARUF_READ_ONLY (-22) Attempting to write to read-only image. This occurs when:
+ *         - Context isWriting flag is false
+ *         - Image was opened with aaruf_open() instead of aaruf_create()
+ *         - Context is in read-only mode and modifications are not permitted
+ *
+ * @retval AARUF_ERROR_INCORRECT_DATA_SIZE (-8) Invalid data or length parameters. This occurs when:
+ *         - data parameter is NULL (no tag data provided)
+ *         - length parameter is zero (no data to write)
+ *         - Parameters indicate invalid or empty tag data
+ *
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
+ *         - Failed to allocate buffer for tag data copy (malloc(length) failed)
+ *         - Failed to allocate mediaTagEntry structure (malloc(sizeof(mediaTagEntry)) failed)
+ *         - System is out of available memory for requested allocation size
+ *         - Memory allocation fails due to resource exhaustion or fragmentation
+ *
+ * @note **Cross-References**: This function is the write counterpart to aaruf_read_media_tag().
+ *       See also:
+ *       - aaruf_read_media_tag(): Reads media tag data from opened image
+ *       - aaruf_create(): Creates writable image context required for this function
+ *       - aaruf_close(): Serializes media tags to image file and frees tag memory
+ *       - MediaTagType enumeration in aaru.h: Defines valid type identifier values
+ *
+ * @note **Memory Ownership**: The function performs a deep copy of tag data. After successful
+ *       return, the context owns the copied tag data and the caller may free or modify the
+ *       original data buffer. On failure, no memory is retained by the context - caller
+ *       maintains full ownership of input buffer regardless of success or failure.
+ *
+ * @note **Tag Uniqueness**: Only one media tag of each type can exist in an image. Writing
+ *       a tag with a type that already exists will replace the previous tag, freeing its
+ *       memory and using the new tag data. No error or warning is generated for replacements.
+ *
+ * @note **Deferred Serialization**: Media tags are not written to disk until aaruf_close()
+ *       is called. All tags remain in memory throughout the image creation process. For
+ *       images with many or large media tags, memory usage may be significant.
+ *
+ * @note **No Type Validation**: The library does not validate that tag data matches the
+ *       declared type. Callers must ensure data structure correctness. Mismatched data
+ *       may cause reading applications to fail or misinterpret tag contents.
+ *
+ * @warning **Memory Growth**: Each media tag consumes memory equal to tag data size plus
+ *          mediaTagEntry structure overhead. Large tags or many tags can significantly
+ *          increase memory usage. Monitor memory consumption when writing extensive metadata.
+ *
+ * @warning **Type Correctness**: No validation occurs for tag data format against type identifier.
+ *          Providing incorrectly formatted data or mismatched type identifiers will create
+ *          a valid image file with invalid tag data that may cause failures when reading.
+ *          Ensure data format matches MediaTagType specification requirements.
+ *
+ * @warning **Replacement Silent**: Replacing an existing tag does not generate warnings or errors.
+ *          Applications expecting to detect duplicate tag writes must track this externally.
+ *          The most recent write_media_tag() call for each type determines the final tag value.
+ *
+ * @see aaruf_read_media_tag() for corresponding media tag reading functionality
+ * @see aaruf_create() for image context creation in write mode
+ * @see aaruf_close() for media tag serialization and memory cleanup
+ * @see MediaTagType enumeration for valid type identifier values and meanings
+ */
+int32_t write_media_tag(void *context, const uint8_t *data, const int32_t type, const uint32_t length)
+{
+    TRACE("Entering write_media_tag(%p, %p, %d, %d)", context, data, type, length);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->isWriting)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    if(data == NULL || length == 0)
+    {
+        FATAL("Invalid data or length");
+        return AARUF_ERROR_INCORRECT_DATA_SIZE;
+    }
+
+    uint8_t *new_data = malloc(length);
+
+    if(new_data == NULL)
+    {
+        FATAL("Could not allocate memory for media tag");
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+    }
+    memcpy(new_data, data, length);
+
+    mediaTagEntry *media_tag = malloc(sizeof(mediaTagEntry));
+    mediaTagEntry *old_media_tag = NULL;
+
+    if(media_tag == NULL)
+    {
+        TRACE("Cannot allocate memory for media tag entry.");
+        free(new_data);
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    memset(media_tag, 0, sizeof(mediaTagEntry));
+
+    media_tag->type   = type;
+    media_tag->data   = new_data;
+    media_tag->length = length;
+
+    HASH_REPLACE_INT(ctx->mediaTags, type, media_tag, old_media_tag);
+
+    if(old_media_tag != NULL)
+    {
+        TRACE("Replaced media tag with type %d", old_media_tag->type);
+        free(old_media_tag->data);
+        free(old_media_tag);
+        old_media_tag = NULL;
+    }
+
+    TRACE("Exiting write_media_tag() = AARUF_STATUS_OK");
+    return AARUF_STATUS_OK;
+}
