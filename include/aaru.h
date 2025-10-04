@@ -952,7 +952,12 @@ typedef enum
     USB_Descriptors               = 65,  ///< Concatenated USB descriptors (device/config/interface)
     Xbox_DMI                      = 66,  ///< Xbox Disc Manufacturing Info (DMI)
     Xbox_PFI                      = 67,  ///< Xbox Physical Format Information (PFI)
-    CD_LeadIn                     = 68   ///< Raw lead-in (TOC frames)
+    CD_LeadIn                     = 68,  ///< Raw lead-in (TOC frames)
+    MiniDiscType                  = 69,  ///< 8 bytes response that seems to define type of MiniDisc
+    MiniDiscD5                    = 70,  ///< 4 bytes response to vendor command D5h
+    MiniDiscUTOC = 71,  ///< User TOC, contains fragments, track names, and can be from 1 to 3 sectors of 2336 bytes
+    MiniDiscDTOC = 72,  ///< Not entirely clear kind of TOC that only appears on MD-DATA discs
+    DVD_DiscKey_Decrypted = 73  ///< Decrypted DVD disc key
 } MediaTagType;
 
 /** @} */ /* end of MediaTags group */
