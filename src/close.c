@@ -1171,6 +1171,129 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
 }
 
 /**
+ * @brief Serialize all accumulated media tags to the image file.
+ *
+ * Media tags represent arbitrary metadata or descriptor blobs associated with the entire medium
+ * (as opposed to per-sector or per-track metadata). Examples include proprietary drive firmware
+ * information, TOC descriptors, ATIP data, PMA/Lead-in content, or manufacturer-specific binary
+ * structures that do not fit the standard track or sector model. Each tag is identified by a
+ * numeric type field interpreted by upper layers or external tooling.
+ *
+ * This function traverses the ctx->mediaTags hash table (keyed by tag type) using HASH_ITER and
+ * writes each tag as an independent DataBlock. Each block is:
+ *   - Aligned to the DDT block boundary (controlled by ctx->userDataDdtHeader.blockAlignmentShift)
+ *   - Prefixed with a BlockHeader containing the identifier DataBlock and a data type derived
+ *     from the tag's type field via ::aaruf_get_datatype_for_media_tag_type()
+ *   - Uncompressed (compression = None); both length and cmpLength are set to the tag's byte count
+ *   - CRC64-protected: the checksum is computed over the raw tag data and stored in both crc64
+ *     and cmpCrc64 fields of the BlockHeader
+ *   - Followed immediately by the tag's data payload
+ *
+ * After successfully writing a tag's header and data, an IndexEntry is appended to
+ * ctx->indexEntries with:
+ *   - blockType = DataBlock
+ *   - dataType = the converted tag type (from aaruf_get_datatype_for_media_tag_type)
+ *   - offset = the aligned file position where the BlockHeader was written
+ *
+ * **Alignment and file positioning:**
+ * Before writing each tag, the file position is moved to EOF and then aligned forward to the next
+ * boundary satisfying (position & alignment_mask) == 0, where alignment_mask is derived from the
+ * blockAlignmentShift. This ensures that all structural blocks (including media tags) begin on
+ * properly aligned offsets for efficient I/O and compliance with the Aaru format specification.
+ *
+ * **Order of operations for each tag:**
+ * 1. Seek to end of file
+ * 2. Align file position to block boundary
+ * 3. Construct BlockHeader with identifier, type, length, CRC64
+ * 4. Write BlockHeader (sizeof(BlockHeader) bytes)
+ * 5. Write tag data (tag->length bytes)
+ * 6. On success, push IndexEntry to ctx->indexEntries
+ *
+ * **Error handling:**
+ * Write errors (fwrite returning < 1) are silently ignored for individual tags; no index entry is
+ * added if a write fails, but iteration continues. Diagnostic TRACE logs report success or
+ * failure for each tag. The function does not propagate error codes; higher-level close logic
+ * must validate overall integrity if needed.
+ *
+ * **Hash table iteration:**
+ * The function uses HASH_ITER(hh, ctx->mediaTags, media_tag, tmp_media_tag) from uthash to
+ * safely iterate all entries. The tmp_media_tag parameter provides deletion-safe traversal,
+ * though this function does not delete entries (cleanup is handled during context teardown).
+ *
+ * **No-op conditions:**
+ * If ctx->mediaTags is NULL (no tags were added during image creation), the function returns
+ * immediately without writing anything or modifying the index.
+ *
+ * @param ctx Pointer to an initialized aaruformatContext in write mode. Must not be NULL.
+ *            ctx->mediaTags contains the hash table of media tags to serialize (may be NULL
+ *            if no tags exist). ctx->imageStream must be open and writable. ctx->indexEntries
+ *            must be initialized (utarray) to accept new index entries.
+ *
+ * @note Media tags are format-agnostic at this layer. The tag type-to-datatype mapping is
+ *       delegated to ::aaruf_get_datatype_for_media_tag_type(), which consults internal
+ *       tables or enumerations defined elsewhere in the library.
+ *
+ * @see ::aaruf_write_media_tag() for adding tags to the context during image creation.
+ * @see ::aaruf_get_datatype_for_media_tag_type() for type conversion logic.
+ * @see mediaTagEntry for the hash table entry structure.
+ *
+ * @internal
+ */
+static void write_media_tags(const aaruformatContext *ctx)
+{
+    if(ctx->mediaTags == NULL) return;
+
+    mediaTagEntry *media_tag     = NULL;
+    mediaTagEntry *tmp_media_tag = NULL;
+
+    HASH_ITER(hh, ctx->mediaTags, media_tag, tmp_media_tag)
+    {
+        fseek(ctx->imageStream, 0, SEEK_END);
+        long           tag_position   = ftell(ctx->imageStream);
+        const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+        if(tag_position & alignment_mask)
+        {
+            const uint64_t aligned_position = tag_position + alignment_mask & ~alignment_mask;
+            fseek(ctx->imageStream, aligned_position, SEEK_SET);
+            tag_position = aligned_position;
+        }
+
+        TRACE("Writing media tag block type %d at position %ld", aaruf_get_datatype_for_media_tag_type(media_tag->type),
+              tag_position);
+        BlockHeader tag_block = {0};
+        tag_block.identifier  = DataBlock;
+        tag_block.type        = (uint16_t)aaruf_get_datatype_for_media_tag_type(media_tag->type);
+        tag_block.compression = None;
+        tag_block.length      = media_tag->length;
+        tag_block.cmpLength   = tag_block.length;
+
+        // Calculate CRC64
+        tag_block.crc64    = aaruf_crc64_data(media_tag->data, tag_block.length);
+        tag_block.cmpCrc64 = tag_block.crc64;
+
+        // Write header
+        if(fwrite(&tag_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
+        {
+            // Write data
+            const size_t written_bytes = fwrite(media_tag->data, tag_block.length, 1, ctx->imageStream);
+            if(written_bytes == 1)
+            {
+                TRACE("Successfully wrote media tag block type %d (%" PRIu64 " bytes)", tag_block.type,
+                      tag_block.length);
+                // Add media tag block to index
+                TRACE("Adding media tag type %d block to index", tag_block.type);
+                IndexEntry tag_index_entry;
+                tag_index_entry.blockType = DataBlock;
+                tag_index_entry.dataType  = tag_block.type;
+                tag_index_entry.offset    = tag_position;
+                utarray_push_back(ctx->indexEntries, &tag_index_entry);
+                TRACE("Added media tag block type %d index entry at offset %" PRIu64, tag_block.type, tag_position);
+            }
+        }
+    }
+}
+
+/**
  * @brief Serialize the accumulated index entries at the end of the image and back-patch the header.
  *
  * All previously written structural blocks push their IndexEntry into ctx->indexEntries. This
@@ -1404,6 +1527,9 @@ int aaruf_close(void *context)
 
         // Write sector subchannel data block
         write_sector_subchannel(ctx);
+
+        // Write media tags data blocks
+        write_media_tags(ctx);
 
         // Write the complete index at the end of the file
         res = write_index_block(ctx);
