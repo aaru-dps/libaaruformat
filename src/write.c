@@ -343,7 +343,7 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
  *   - **Apple Widget**: 512-byte sectors with tag conversion support
  *   - **Priam DataTower**: 512-byte sectors + 24-byte Priam tags
  *   - Supports automatic tag format conversion between Sony (12), Profile (20), and Priam (24) byte formats
- *   - Tag data stored in sectorSubchannel buffer for preservation
+ *   - Tag data stored in sector_subchannel buffer for preservation
  *
  * **Data Processing Pipeline:**
  * 1. **Context and Parameter Validation**: Verifies context magic, write permissions, and sector bounds
@@ -360,7 +360,8 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
  *   * sectorPrefixDdtMini: Tracks prefix status and buffer offsets (high 4 bits = status, low 12 bits = offset/16)
  *   * sectorSuffixDdtMini: Tracks suffix status and buffer offsets (high 4 bits = status, low 12 bits = offset/288)
  * - **Prefix Buffer**: Dynamically growing buffer storing non-standard 16-byte CD prefixes
- * - **Suffix Buffer**: Dynamically growing buffer storing non-standard CD suffixes (288 bytes for Mode 1, 4 bytes for Mode 2 Form 2, 280 bytes for Mode 2 Form 1)
+ * - **Suffix Buffer**: Dynamically growing buffer storing non-standard CD suffixes (288 bytes for Mode 1, 4 bytes for
+ * Mode 2 Form 2, 280 bytes for Mode 2 Form 1)
  * - **Subheader Buffer**: Fixed-size buffer (8 bytes per sector) for Mode 2 subheaders
  * - **Subchannel Buffer**: Fixed-size buffer for block media tag data
  * - All buffers use doubling reallocation strategy when capacity exceeded
@@ -457,7 +458,7 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
  *         - Failed to allocate or grow prefix buffer (sector_prefix)
  *         - Failed to allocate or grow suffix buffer (sector_suffix)
  *         - Failed to allocate subheader buffer (mode2_subheaders)
- *         - Failed to allocate subchannel buffer (sectorSubchannel)
+ *         - Failed to allocate subchannel buffer (sector_subchannel)
  *         - System out of memory during buffer reallocation
  *
  * @retval AARUF_ERROR_INCORRECT_MEDIA_TYPE (-26) Unsupported media type for long sectors. This occurs when:
@@ -468,7 +469,8 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
  *         - User data DDT entry could not be updated
  *         - DDT table corruption prevents entry modification
  *
- * @retval AARUF_ERROR_CANNOT_WRITE_BLOCK_HEADER (-23) Block header write failed. Propagated from aaruf_write_sector() when:
+ * @retval AARUF_ERROR_CANNOT_WRITE_BLOCK_HEADER (-23) Block header write failed. Propagated from aaruf_write_sector()
+ * when:
  *         - Automatic block closure triggered by user data write fails
  *         - File system error prevents header write
  *
@@ -1117,12 +1119,12 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     if(newTagSize == 0)
                         return aaruf_write_sector(context, sector_address, negative, data, sector_status, 512);
 
-                    if(ctx->sectorSubchannel == NULL)
+                    if(ctx->sector_subchannel == NULL)
                     {
-                        ctx->sectorSubchannel =
+                        ctx->sector_subchannel =
                             calloc(1, newTagSize * (ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow));
 
-                        if(ctx->sectorSubchannel == NULL)
+                        if(ctx->sector_subchannel == NULL)
                         {
                             FATAL("Could not allocate memory for sector subchannel DDT");
 
@@ -1133,7 +1135,7 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                         }
                     }
 
-                    memcpy(ctx->sectorSubchannel + sector_address * newTagSize, newTag, newTagSize);
+                    memcpy(ctx->sector_subchannel + sector_address * newTagSize, newTag, newTagSize);
                     free(newTag);
 
                     return aaruf_write_sector(context, sector_address, negative, data, sector_status, 512);

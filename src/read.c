@@ -1006,7 +1006,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                 case AppleSonyDS:
                 case AppleWidget:
                 case PriamDataTower:
-                    if(ctx->sectorSubchannel == NULL)
+                    if(ctx->sector_subchannel == NULL)
                         return aaruf_read_sector(context, sector_address, negative, data, length);
 
                     switch(ctx->imageInfo.MediaType)
@@ -1063,7 +1063,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                         return res;
                     }
 
-                    memcpy(data, ctx->sectorSubchannel + corrected_sector_address * tag_length, tag_length);
+                    memcpy(data, ctx->sector_subchannel + corrected_sector_address * tag_length, tag_length);
                     memcpy(data, bare_data, 512);
 
                     free(bare_data);

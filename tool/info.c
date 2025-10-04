@@ -73,7 +73,7 @@ int info(const char *path)
 
     if(ctx->sectorSuffixCorrected != NULL) printf("Sector suffix corrected array has been read.\n");
 
-    if(ctx->sectorSubchannel != NULL) printf("Sector subchannel array has been read.\n");
+    if(ctx->sector_subchannel != NULL) printf("Sector subchannel array has been read.\n");
 
     if(ctx->mode2_subheaders != NULL) printf("Sector mode 2 subheaders array has been read.\n");
 

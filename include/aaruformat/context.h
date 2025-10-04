@@ -160,7 +160,7 @@ typedef struct aaruformatContext
     uint8_t *sectorPrefixCorrected;  ///< Corrected variant (post error correction) if stored.
     uint8_t *sector_suffix;          ///< Raw per-sector suffix (EDC/ECC) uncorrected.
     uint8_t *sectorSuffixCorrected;  ///< Corrected suffix if stored separately.
-    uint8_t *sectorSubchannel;       ///< Raw 96-byte subchannel (if captured).
+    uint8_t *sector_subchannel;      ///< Raw 96-byte subchannel (if captured).
     uint8_t *mode2_subheaders;       ///< MODE2 Form1/Form2 8-byte subheaders (concatenated).
 
     uint8_t   shift;                ///< Legacy overall shift (deprecated by data_shift/table_shift).

@@ -1307,8 +1307,8 @@ int aaruf_close(void *context)
     ctx->sector_suffix = NULL;
     free(ctx->sectorSuffixCorrected);
     ctx->sectorSuffixCorrected = NULL;
-    free(ctx->sectorSubchannel);
-    ctx->sectorSubchannel = NULL;
+    free(ctx->sector_subchannel);
+    ctx->sector_subchannel = NULL;
     free(ctx->mode2_subheaders);
     ctx->mode2_subheaders = NULL;
 

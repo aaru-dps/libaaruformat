@@ -324,13 +324,13 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
             ctx->readableSectorTags[CdSectorEdc]       = true;
             break;
         case CdSectorSubchannel:
-            ctx->sectorSubchannel                       = data;
+            ctx->sector_subchannel                       = data;
             ctx->readableSectorTags[CdSectorSubchannel] = true;
             break;
         case AppleProfileTag:
         case AppleSonyTag:
         case PriamDataTowerTag:
-            ctx->sectorSubchannel                   = data;
+            ctx->sector_subchannel                   = data;
             ctx->readableSectorTags[AppleSectorTag] = true;
             break;
         case CompactDiscMode2Subheader:
