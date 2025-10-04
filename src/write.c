@@ -25,6 +25,7 @@
 #include "aaruformat.h"
 #include "internal.h"
 #include "log.h"
+#include "structs/lisa_tag.h"
 #include "xxhash.h"
 
 /**
@@ -923,8 +924,122 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
 
             break;
         case BlockMedia:
-            // TODO: Implement
-            break;
+            switch(ctx->imageInfo.MediaType)
+            {
+                case AppleFileWare:
+                case AppleProfile:
+                case AppleSonyDS:
+                case AppleSonySS:
+                case AppleWidget:
+                case PriamDataTower:
+                    uint8_t *newTag;
+                    int      newTagSize = 0;
+
+                    switch(length - 512)
+                    {
+                        // Sony tag
+                        case 12:
+                            const sony_tag decoded_sony_tag = bytes_to_sony_tag(data + 512);
+
+                            if(ctx->imageInfo.MediaType == AppleProfile || ctx->imageInfo.MediaType == AppleFileWare)
+                            {
+                                const profile_tag decoded_profile_tag = sony_tag_to_profile(decoded_sony_tag);
+                                newTag                                = profile_tag_to_bytes(decoded_profile_tag);
+                                newTagSize                            = 20;
+                            }
+                            else if(ctx->imageInfo.MediaType == PriamDataTower)
+                            {
+                                const priam_tag decoded_priam_tag = sony_tag_to_priam(decoded_sony_tag);
+                                newTag                            = priam_tag_to_bytes(decoded_priam_tag);
+                                newTagSize                        = 24;
+                            }
+                            else if(ctx->imageInfo.MediaType == AppleSonyDS || ctx->imageInfo.MediaType == AppleSonySS)
+                            {
+                                newTag = malloc(12);
+                                memcpy(newTag, data + 512, 12);
+                                newTagSize = 12;
+                            }
+                            break;
+                        // Profile tag
+                        case 20:
+                            const profile_tag decoded_profile_tag = bytes_to_profile_tag(data + 512);
+
+                            if(ctx->imageInfo.MediaType == AppleProfile || ctx->imageInfo.MediaType == AppleFileWare)
+                            {
+                                newTag = malloc(20);
+                                memcpy(newTag, data + 512, 20);
+                                newTagSize = 20;
+                            }
+                            else if(ctx->imageInfo.MediaType == PriamDataTower)
+                            {
+                                const priam_tag decoded_priam_tag = profile_tag_to_priam(decoded_profile_tag);
+                                newTag                            = priam_tag_to_bytes(decoded_priam_tag);
+                                newTagSize                        = 24;
+                            }
+                            else if(ctx->imageInfo.MediaType == AppleSonyDS || ctx->imageInfo.MediaType == AppleSonySS)
+                            {
+                                const sony_tag decoded_sony_tag = profile_tag_to_sony(decoded_profile_tag);
+                                newTag                          = sony_tag_to_bytes(decoded_sony_tag);
+                                newTagSize                      = 12;
+                            }
+                            break;
+                        // Priam tag
+                        case 24:
+                            const priam_tag decoded_priam_tag = bytes_to_priam_tag(data + 512);
+                            if(ctx->imageInfo.MediaType == AppleProfile || ctx->imageInfo.MediaType == AppleFileWare)
+                            {
+                                const profile_tag decoded_profile_tag = priam_tag_to_profile(decoded_priam_tag);
+                                newTag                                = profile_tag_to_bytes(decoded_profile_tag);
+                                newTagSize                            = 20;
+                            }
+                            else if(ctx->imageInfo.MediaType == PriamDataTower)
+                            {
+                                newTag = malloc(24);
+                                memcpy(newTag, data + 512, 24);
+                                newTagSize = 24;
+                            }
+                            else if(ctx->imageInfo.MediaType == AppleSonyDS || ctx->imageInfo.MediaType == AppleSonySS)
+                            {
+                                const sony_tag decoded_sony_tag = priam_tag_to_sony(decoded_priam_tag);
+                                newTag                          = sony_tag_to_bytes(decoded_sony_tag);
+                                newTagSize                      = 12;
+                            }
+                            break;
+                        case 0:
+                            newTagSize = 0;
+                            break;
+                        default:
+                            FATAL("Incorrect sector size");
+                            TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                            return AARUF_ERROR_INCORRECT_DATA_SIZE;
+                    }
+
+                    if(newTagSize == 0)
+                        return aaruf_write_sector(context, sector_address, negative, data, sector_status, 512);
+
+                    if(ctx->sectorSubchannel == NULL)
+                    {
+                        ctx->sectorSubchannel =
+                            calloc(1, newTagSize * (ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow));
+
+                        if(ctx->sectorSubchannel == NULL)
+                        {
+                            FATAL("Could not allocate memory for sector subchannel DDT");
+
+                            free(newTag);
+
+                            TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                        }
+                    }
+
+                    memcpy(ctx->sectorSubchannel + sector_address * newTagSize, newTag, newTagSize);
+                    free(newTag);
+
+                    return aaruf_write_sector(context, sector_address, negative, data, sector_status, 512);
+                default:
+                    return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
         default:
             TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
             return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
