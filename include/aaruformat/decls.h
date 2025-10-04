@@ -144,6 +144,19 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_geometry(const void *context, uint32_t *
                                                  uint32_t *sectors_per_track);
 AARU_EXPORT int32_t AARU_CALL aaruf_set_geometry(void *context, uint32_t cylinders, uint32_t heads,
                                                  uint32_t sectors_per_track);
+AARU_EXPORT int32_t AARU_CALL aaruf_set_media_sequence(void *context, int32_t sequence, int32_t last_sequence);
+AARU_EXPORT int32_t AARU_CALL aaruf_set_creator(void *context, const uint8_t *data, int32_t length);
+AARU_EXPORT int32_t AARU_CALL aaruf_set_comments(void *context, const uint8_t *data, int32_t length);
+AARU_EXPORT int32_t AARU_CALL aaruf_set_media_title(void *context, const uint8_t *data, int32_t length);
+AARU_EXPORT int32_t AARU_CALL aaruf_set_media_manufacturer(void *context, const uint8_t *data, int32_t length);
+AARU_EXPORT int32_t AARU_CALL aaruf_set_media_model(void *context, const uint8_t *data, int32_t length);
+AARU_EXPORT int32_t AARU_CALL aaruf_set_media_serial_number(void *context, const uint8_t *data, int32_t length);
+AARU_EXPORT int32_t AARU_CALL aaruf_set_media_barcode(void *context, const uint8_t *data, int32_t length);
+AARU_EXPORT int32_t AARU_CALL aaruf_set_media_part_number(void *context, const uint8_t *data, int32_t length);
+AARU_EXPORT int32_t AARU_CALL aaruf_set_drive_manufacturer(void *context, const uint8_t *data, int32_t length);
+AARU_EXPORT int32_t AARU_CALL aaruf_set_drive_model(void *context, const uint8_t *data, int32_t length);
+AARU_EXPORT int32_t AARU_CALL aaruf_set_drive_serial_number(void *context, const uint8_t *data, int32_t length);
+AARU_EXPORT int32_t AARU_CALL aaruf_set_drive_firmware_revision(void *context, const uint8_t *data, int32_t length);
 
 AARU_EXPORT spamsum_ctx *AARU_CALL aaruf_spamsum_init(void);
 AARU_EXPORT int AARU_CALL          aaruf_spamsum_update(spamsum_ctx *ctx, const uint8_t *data, uint32_t len);
