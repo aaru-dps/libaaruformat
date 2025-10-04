@@ -133,7 +133,8 @@ add_library(aaruformat SHARED include/aaruformat/consts.h include/aaruformat/enu
             src/checksum/sha256.c
             include/sha256.h
             src/lisa_tag.c
-            include/aaruformat/structs/lisa_tag.h)
+            include/aaruformat/structs/lisa_tag.h
+            src/metadata.c)
 
 include_directories(include include/aaruformat 3rdparty/uthash/include 3rdparty/uthash/src)
 

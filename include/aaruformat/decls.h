@@ -96,7 +96,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
                                                  const uint8_t *data, uint8_t sector_status, uint32_t length);
 AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t sector_address, bool negative,
                                                       const uint8_t *data, uint8_t sector_status, uint32_t length);
-AARU_EXPORT int32_t AARU_CALL write_media_tag(void *context, const uint8_t *data, const int32_t type, const uint32_t length);
+AARU_EXPORT int32_t AARU_CALL write_media_tag(void *context, const uint8_t *data, const int32_t type,
+                                              const uint32_t length);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context);
 
@@ -136,10 +137,11 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_track_sector(void *context, uint8_t *da
                                                       uint32_t *length, uint8_t track);
 
 AARU_LOCAL int32_t AARU_CALL aaruf_get_media_tag_type_for_datatype(int32_t type);
-
 AARU_LOCAL int32_t AARU_CALL aaruf_get_datatype_for_media_tag_type(int32_t tag_type);
-
 AARU_LOCAL int32_t AARU_CALL aaruf_get_xml_mediatype(int32_t type);
+
+AARU_EXPORT int32_t AARU_CALL aaruf_get_geometry(const void *context, uint32_t *cylinders, uint32_t *heads,
+                                                 uint32_t *sectors_per_track);
 
 AARU_EXPORT spamsum_ctx *AARU_CALL aaruf_spamsum_init(void);
 AARU_EXPORT int AARU_CALL          aaruf_spamsum_update(spamsum_ctx *ctx, const uint8_t *data, uint32_t len);
