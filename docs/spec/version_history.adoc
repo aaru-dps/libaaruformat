@@ -75,7 +75,7 @@ Define twin sector table.
 
 Add annex explaining the meaning and relationship between user, bitstream and flux data.
 
-| 31 July 2025
+| 5 October 2025
 | 2.0df
 | Draft
 | Natalia Portillo
@@ -96,4 +96,6 @@ Clarify deduplication table size type.
 Clarify deduplication table sector status.
 
 Add encrypted and decrypted sector status.
+
+Add Aaru Metadata JSON.
 |===

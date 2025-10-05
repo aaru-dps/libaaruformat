@@ -74,6 +74,10 @@ include::blocks/tracks.adoc[]
 
 <<<
 
+include::blocks/aaru_metadata.adoc[]
+
+<<<
+
 include::blocks/cicm.adoc[]
 
 <<<

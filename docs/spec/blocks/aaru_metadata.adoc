@@ -1,0 +1,25 @@
+=== Aaru Metadata JSON Block (`JSMD`)
+
+This block header signifies the inclusion of an embedded Aaru metadata JSON sidecar.
+The contents of the JSON are preserved in their original form and are not parsed, interpreted, or validated by the format implementation.
+
+==== Structure Definition
+
+[source,c]
+#define METADATA_JSON_MAGIC 0x444D534A
+/**Header for the Aaru Metadata JSON block */
+typedef struct AaruMetadataJsonBlock
+{
+    /**Identifier, <see cref="BlockType.AaruMetadataJsonBlock" /> */
+    uint32_t identifier;
+    uint32_t length;
+} AaruMetadataJsonBlock;
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type|Size|Name|Description
+|uint32|4 bytes|identifier|The Aaru metadata JSON identifier, always `JSMD`
+|uint32|4 bytes|length|The size in bytes of the embedded Aaru metadata JSON that follows this header.
+|===
