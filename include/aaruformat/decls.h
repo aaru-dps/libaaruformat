@@ -162,6 +162,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_aaru_json_metadata(const void *context, 
 AARU_EXPORT int32_t AARU_CALL aaruf_set_aaru_json_metadata(void *context, uint8_t *data, size_t length);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_get_dumphw(void* context, uint8_t *buffer, size_t *length);
+AARU_EXPORT int32_t AARU_CALL aaruf_set_dumphw(void *context, uint8_t *data, size_t length);
 
 AARU_EXPORT spamsum_ctx *AARU_CALL aaruf_spamsum_init(void);
 AARU_EXPORT int AARU_CALL          aaruf_spamsum_update(spamsum_ctx *ctx, const uint8_t *data, uint32_t len);

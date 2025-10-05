@@ -305,3 +305,415 @@ int32_t aaruf_get_dumphw(void *context, uint8_t *buffer, size_t *length)
     TRACE("Exiting aaruf_get_dumphw() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
 }
+
+/**
+ * @brief Sets the dump hardware block for the image during creation.
+ *
+ * Embeds dump hardware information into the image being created. The dump hardware block documents
+ * the hardware and software environments used to create the image, recording one or more "dump
+ * environments" – typically combinations of physical devices (drives, controllers, adapters) and
+ * the software stacks that performed the read operations. This metadata is essential for understanding
+ * the imaging context, validating acquisition integrity, reproducing imaging conditions, and supporting
+ * forensic or archival documentation requirements.
+ *
+ * Each environment entry includes hardware identification (manufacturer, model, revision, firmware,
+ * serial number), software identification (name, version, operating system), and optional extent ranges
+ * that specify which logical sectors or units were contributed by that particular environment. This
+ * structure supports complex imaging scenarios where multiple devices or software configurations were
+ * used to create a composite image.
+ *
+ * The function accepts a complete, pre-serialized DumpHardwareBlock in the on-disk binary format
+ * (as returned by aaruf_get_dumphw() or manually constructed). The block is validated for correct
+ * identifier, length consistency, and CRC64 integrity before being parsed and stored in the context.
+ * The function deserializes the binary block, extracts all entries with their variable-length UTF-8
+ * strings and extent arrays, and creates null-terminated in-memory copies for internal use.
+ *
+ * **Validation performed:**
+ * 1. Context validation (non-NULL, correct magic, write mode)
+ * 2. Data buffer validation (non-NULL, non-zero length)
+ * 3. Block identifier validation (must be DumpHardwareBlock)
+ * 4. Length consistency (buffer length must equal sizeof(DumpHardwareHeader) + header.length)
+ * 5. CRC64 integrity verification (calculated CRC64 must match header.crc64)
+ *
+ * **Parsing process:**
+ * 1. Read and validate the DumpHardwareHeader from the buffer
+ * 2. Allocate array for all dump hardware entries
+ * 3. For each entry:
+ *    - Read the DumpHardwareEntry structure (36 bytes)
+ *    - Allocate and copy each non-empty UTF-8 string with +1 byte for null terminator
+ *    - Allocate and copy the DumpExtent array if extents > 0
+ * 4. Free any previously set dump hardware data
+ * 5. Store the new parsed data in ctx->dumpHardwareEntriesWithData
+ * 6. Store the header in ctx->dumpHardwareHeader
+ *
+ * **Memory management:**
+ * If any memory allocation fails during parsing, all previously allocated memory for the new
+ * data is freed via the free_copy_and_error label, and AARUF_ERROR_NOT_ENOUGH_MEMORY is returned.
+ * Any existing dump hardware data in the context is freed before storing new data, ensuring no
+ * memory leaks when replacing dump hardware information.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, write-enabled image context).
+ * @param data Pointer to the dump hardware block data in on-disk binary format. Must contain a
+ *             complete DumpHardwareBlock starting with DumpHardwareHeader followed by all entries,
+ *             strings, and extent arrays. Must not be NULL.
+ * @param length Length of the dump hardware block data in bytes. Must equal
+ *               sizeof(DumpHardwareHeader) + header.length for validation to succeed.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully set dump hardware block. This is returned when:
+ *         - The context is valid and properly initialized
+ *         - The context is opened in write mode (ctx->isWriting is true)
+ *         - The data buffer contains a valid DumpHardwareBlock
+ *         - The block identifier is DumpHardwareBlock
+ *         - The length is consistent (buffer length == header size + payload length)
+ *         - The CRC64 checksum is valid
+ *         - All memory allocations succeeded
+ *         - All entries with strings and extents are parsed and stored
+ *         - Any previous dump hardware data is freed
+ *         - ctx->dumpHardwareEntriesWithData is populated with parsed entries
+ *         - ctx->dumpHardwareHeader is updated with the new header
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
+ *         - The context was not properly initialized by aaruf_create()
+ *
+ * @retval AARUF_READ_ONLY (-13) The context is not opened for writing. This occurs when:
+ *         - The image was opened with aaruf_open() instead of aaruf_create()
+ *         - The context's isWriting flag is false
+ *         - Attempting to modify a read-only image
+ *
+ * @retval AARUF_ERROR_CANNOT_READ_BLOCK (-6) Invalid block identifier. This occurs when:
+ *         - The identifier field in the DumpHardwareHeader doesn't equal DumpHardwareBlock
+ *         - The data buffer doesn't contain a valid dump hardware block
+ *         - The block type is incorrect or corrupted
+ *
+ * @retval AARUF_ERROR_INCORRECT_DATA_SIZE (-11) Invalid data or length. This occurs when:
+ *         - The data parameter is NULL
+ *         - The length parameter is 0 (empty block)
+ *         - The buffer length doesn't match sizeof(DumpHardwareHeader) + header.length
+ *         - Length inconsistency indicates corrupted or incomplete block data
+ *
+ * @retval AARUF_ERROR_INVALID_BLOCK_CRC (-10) CRC64 checksum mismatch. This occurs when:
+ *         - The calculated CRC64 over the payload doesn't match header.crc64
+ *         - Block data is corrupted or tampered with
+ *         - Block was not properly constructed or serialized
+ *
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-8) Memory allocation failed. This occurs when:
+ *         - calloc() or malloc() failed to allocate memory for entries array
+ *         - Failed to allocate memory for any string field (manufacturer, model, etc.)
+ *         - Failed to allocate memory for extent arrays
+ *         - System is out of memory or memory is severely fragmented
+ *         - All partially allocated memory is freed before returning
+ *
+ * @note Dump Hardware Block Format:
+ *       - The data buffer must contain a complete serialized DumpHardwareBlock
+ *       - Format: DumpHardwareHeader + repeated entries with strings and extents
+ *       - All strings are UTF-8 encoded and NOT null-terminated in the buffer
+ *       - The function adds null terminators when copying strings to internal storage
+ *       - String lengths are in bytes, not character counts
+ *
+ * @note Creating Block Data:
+ *       - Use aaruf_get_dumphw() to retrieve a block from an existing image
+ *       - Manually construct by serializing DumpHardwareHeader, entries, strings, and extents
+ *       - Calculate CRC64-ECMA over the payload (everything after the header)
+ *       - Ensure all length fields accurately reflect the data sizes
+ *       - Ensure total buffer size equals sizeof(DumpHardwareHeader) + payload length
+ *
+ * @note Hardware Identification Fields:
+ *       - manufacturer: Device manufacturer (e.g., "Plextor", "Sony", "Samsung")
+ *       - model: Device model number (e.g., "PX-716A", "DRU-820A")
+ *       - revision: Hardware revision identifier
+ *       - firmware: Firmware version (e.g., "1.11", "KY08")
+ *       - serial: Device serial number for unique identification
+ *
+ * @note Software Identification Fields:
+ *       - softwareName: Dumping software name (e.g., "Aaru", "ddrescue", "IsoBuster")
+ *       - softwareVersion: Software version (e.g., "5.3.0", "1.25")
+ *       - softwareOperatingSystem: Host OS (e.g., "Linux 5.10.0", "Windows 10", "macOS 12.0")
+ *
+ * @note Extent Arrays:
+ *       - Each DumpExtent specifies a [start, end] logical sector range
+ *       - Extents indicate which sectors this environment contributed
+ *       - Empty extent arrays (extents == 0) mean the environment dumped entire medium
+ *       - Extents are stored in the order provided in the input buffer
+ *       - TODO note in code indicates extents should be sorted (qsort) but not implemented
+ *
+ * @note Memory Ownership:
+ *       - The function creates internal copies of all data
+ *       - The caller retains ownership of the input data buffer
+ *       - The caller may free the input buffer immediately after this function returns
+ *       - Internal copies are freed during aaruf_close() or when replaced by another call
+ *
+ * @note Replacing Existing Data:
+ *       - Calling this function multiple times replaces previous dump hardware data
+ *       - All previous entries, strings, and extents are freed before storing new data
+ *       - No memory leaks occur when updating dump hardware information
+ *
+ * @warning The dump hardware block is only written to the image file during aaruf_close().
+ *          Changes made by this function are not immediately persisted to disk.
+ *
+ * @warning CRC64 validation protects against corrupted blocks, but construction errors in the
+ *          input buffer (incorrect lengths, misaligned data) may cause parsing to fail or
+ *          produce incorrect results even with a valid checksum.
+ *
+ * @warning The function assumes the input buffer is properly formatted and packed according
+ *          to the DumpHardwareBlock specification. Malformed input may cause crashes or
+ *          memory corruption.
+ *
+ * @see DumpHardwareHeader for the block header structure definition.
+ * @see DumpHardwareEntry for the per-environment entry structure definition.
+ * @see DumpExtent for the extent range structure definition.
+ * @see aaruf_get_dumphw() for retrieving dump hardware from opened images.
+ * @see write_dumphw_block() for the serialization process during image closing.
+ */
+int32_t aaruf_set_dumphw(void *context, uint8_t *data, size_t length)
+{
+    TRACE("Entering aaruf_set_dumphw(%p, %p, %d)", context, data, length);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_set_dumphw() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_set_dumphw() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->isWriting)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_set_dumphw() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    if(data == NULL || length == 0)
+    {
+        FATAL("Invalid data or length");
+        return AARUF_ERROR_INCORRECT_DATA_SIZE;
+    }
+
+    DumpHardwareHeader header;
+    memcpy(&header, data, sizeof(DumpHardwareHeader));
+    if(header.identifier != DumpHardwareBlock)
+    {
+        FATAL("Invalid dump hardware block identifier");
+
+        TRACE("Exiting aaruf_set_dumphw() = AARUF_ERROR_CANNOT_READ_BLOCK");
+        return AARUF_ERROR_CANNOT_READ_BLOCK;
+    }
+
+    if(length != sizeof(DumpHardwareHeader) + header.length)
+    {
+        FATAL("Invalid dump hardware block length");
+
+        TRACE("Exiting aaruf_set_dumphw() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+        return AARUF_ERROR_INCORRECT_DATA_SIZE;
+    }
+
+    uint64_t crc64 = aaruf_crc64_data(data + sizeof(DumpHardwareHeader), header.length);
+    if(header.crc64 != crc64)
+    {
+        FATAL("Invalid dump hardware block CRC64");
+
+        TRACE("Exiting aaruf_set_dumphw() = AARUF_ERROR_INVALID_BLOCK_CRC");
+        return AARUF_ERROR_INVALID_BLOCK_CRC;
+    }
+
+    // Allocate copy buffer
+    DumpHardwareEntriesWithData *copy = calloc(1, sizeof(DumpHardwareEntriesWithData) * header.entries);
+
+    if(copy == NULL)
+    {
+        TRACE("Could not allocate memory for dump hardware block...");
+        TRACE("Exiting aaruf_set_dumphw() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    TRACE("Processing %u dump hardware block entries", header.entries);
+
+    int pos = sizeof(DumpHardwareHeader);
+
+    for(int e = 0; e < ctx->dumpHardwareHeader.entries; e++)
+    {
+        memcpy(&copy[e].entry, data + pos, sizeof(DumpHardwareEntry));
+        pos += sizeof(DumpHardwareEntry);
+
+        if(copy[e].entry.manufacturerLength > 0)
+        {
+            copy[e].manufacturer = (uint8_t *)calloc(1, copy[e].entry.manufacturerLength + 1);
+
+            if(copy[e].manufacturer == NULL)
+            {
+                TRACE("Could not allocate memory for dump hardware block entry manufacturer");
+                goto free_copy_and_error;
+            }
+
+            memcpy(copy[e].manufacturer, data + pos, copy[e].entry.manufacturerLength);
+            pos += copy[e].entry.manufacturerLength;
+        }
+
+        if(copy[e].entry.modelLength > 0)
+        {
+            copy[e].model = (uint8_t *)calloc(1, copy[e].entry.modelLength + 1);
+
+            if(copy[e].model == NULL)
+            {
+                TRACE("Could not allocate memory for dump hardware block entry model");
+                goto free_copy_and_error;
+            }
+
+            memcpy(copy[e].manufacturer, data + pos, copy[e].entry.modelLength);
+            pos += copy[e].entry.modelLength;
+        }
+
+        if(copy[e].entry.revisionLength > 0)
+        {
+            copy[e].revision = (uint8_t *)calloc(1, copy[e].entry.revisionLength + 1);
+
+            if(copy[e].revision == NULL)
+            {
+                TRACE("Could not allocate memory for dump hardware block entry revision");
+                goto free_copy_and_error;
+            }
+
+            memcpy(copy[e].revision, data + pos, copy[e].entry.revisionLength);
+            pos += copy[e].entry.revisionLength;
+        }
+
+        if(copy[e].entry.firmwareLength > 0)
+        {
+            copy[e].firmware = (uint8_t *)calloc(1, copy[e].entry.firmwareLength + 1);
+
+            if(copy[e].firmware == NULL)
+            {
+                TRACE("Could not allocate memory for dump hardware block entry firmware");
+                goto free_copy_and_error;
+            }
+
+            memcpy(copy[e].firmware, data + pos, copy[e].entry.firmwareLength);
+            pos += copy[e].entry.firmwareLength;
+        }
+
+        if(copy[e].entry.serialLength > 0)
+        {
+            copy[e].serial = (uint8_t *)calloc(1, copy[e].entry.serialLength + 1);
+
+            if(copy[e].serial == NULL)
+            {
+                TRACE("Could not allocate memory for dump hardware block entry serial");
+                goto free_copy_and_error;
+            }
+
+            memcpy(copy[e].serial, data + pos, copy[e].entry.serialLength);
+            pos += copy[e].entry.serialLength;
+        }
+
+        if(copy[e].entry.softwareNameLength > 0)
+        {
+            copy[e].softwareName = (uint8_t *)calloc(1, copy[e].entry.softwareNameLength + 1);
+
+            if(copy[e].softwareName == NULL)
+            {
+                TRACE("Could not allocate memory for dump hardware block entry software name");
+                goto free_copy_and_error;
+            }
+
+            memcpy(copy[e].softwareName, data + pos, copy[e].entry.softwareNameLength);
+            pos += copy[e].entry.softwareNameLength;
+        }
+
+        if(copy[e].entry.softwareVersionLength > 0)
+        {
+            copy[e].softwareVersion = (uint8_t *)calloc(1, copy[e].entry.softwareVersionLength + 1);
+
+            if(copy[e].softwareVersion == NULL)
+            {
+                TRACE("Could not allocate memory for dump hardware block entry software version");
+                goto free_copy_and_error;
+            }
+
+            memcpy(copy[e].softwareVersion, data + pos, copy[e].entry.softwareVersionLength);
+            pos += copy[e].entry.softwareVersionLength;
+        }
+
+        if(copy[e].entry.softwareOperatingSystemLength > 0)
+        {
+            copy[e].softwareOperatingSystem = (uint8_t *)calloc(1, copy[e].entry.softwareOperatingSystemLength + 1);
+
+            if(copy[e].softwareOperatingSystem == NULL)
+            {
+                TRACE("Could not allocate memory for dump hardware block entry software operating system");
+                goto free_copy_and_error;
+            }
+
+            memcpy(copy[e].softwareOperatingSystem, data + pos, copy[e].entry.softwareOperatingSystemLength);
+            pos += copy[e].entry.softwareOperatingSystemLength;
+        }
+
+        copy[e].extents = (DumpExtent *)malloc(sizeof(DumpExtent) * ctx->dumpHardwareEntriesWithData->entry.extents);
+
+        if(copy[e].extents == NULL)
+        {
+            TRACE("Could not allocate memory for dump hardware block extents");
+            goto free_copy_and_error;
+        }
+
+        memcpy(copy[e].extents, data + pos, sizeof(DumpExtent) * ctx->dumpHardwareEntriesWithData->entry.extents);
+        pos += sizeof(DumpExtent) * ctx->dumpHardwareEntriesWithData->entry.extents;
+
+        // TODO: qsort()
+    }
+
+    // Free old data
+    for(int e = 0; e < ctx->dumpHardwareHeader.entries; e++)
+    {
+        free(ctx->dumpHardwareEntriesWithData[e].manufacturer);
+        free(ctx->dumpHardwareEntriesWithData[e].model);
+        free(ctx->dumpHardwareEntriesWithData[e].revision);
+        free(ctx->dumpHardwareEntriesWithData[e].firmware);
+        free(ctx->dumpHardwareEntriesWithData[e].serial);
+        free(ctx->dumpHardwareEntriesWithData[e].softwareName);
+        free(ctx->dumpHardwareEntriesWithData[e].softwareVersion);
+        free(ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem);
+        free(ctx->dumpHardwareEntriesWithData[e].extents);
+    }
+    free(ctx->dumpHardwareEntriesWithData);
+
+    ctx->dumpHardwareEntriesWithData = copy;
+    ctx->dumpHardwareHeader          = header;
+
+    TRACE("Exiting aaruf_set_dumphw() = AARUF_STATUS_OK");
+    return AARUF_STATUS_OK;
+
+    // Free copy and return not enough memory error
+free_copy_and_error:
+    for(int e = 0; e < header.entries; e++)
+    {
+        free(copy[e].manufacturer);
+        free(copy[e].model);
+        free(copy[e].revision);
+        free(copy[e].firmware);
+        free(copy[e].serial);
+        free(copy[e].softwareName);
+        free(copy[e].softwareVersion);
+        free(copy[e].softwareOperatingSystem);
+        free(copy[e].extents);
+    }
+    free(copy);
+    TRACE("Exiting aaruf_set_dumphw() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+    return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+}
