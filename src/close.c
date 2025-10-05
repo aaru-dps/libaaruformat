@@ -1387,6 +1387,250 @@ static void write_geometry_block(const aaruformatContext *ctx)
 }
 
 /**
+ * @brief Serialize the metadata block containing image and media descriptive information.
+ *
+ * This function writes a MetadataBlock containing human-readable and machine-readable metadata
+ * strings that describe the image creation context, the physical media being preserved, and the
+ * drive used for acquisition. The metadata block stores variable-length UTF-16LE strings for fields
+ * such as creator identification, user comments, media identification (title, manufacturer, model,
+ * serial number, barcode, part number), and drive identification (manufacturer, model, serial
+ * number, firmware revision). Each string is stored sequentially in a single contiguous buffer,
+ * with the MetadataBlockHeader recording both the offset (relative to the start of the buffer)
+ * and length of each field.
+ *
+ * The metadata block is optional; if no metadata fields have been populated (all string pointers
+ * are NULL and sequence numbers are zero), the function returns immediately without writing
+ * anything. This no-op behavior is detected by checking that the identifier has not been
+ * explicitly set to MetadataBlock and all relevant imageInfo string fields are NULL.
+ *
+ * **Block structure:**
+ * The serialized block consists of:
+ *   1. MetadataBlockHeader (fixed size, containing identifier, sequence numbers, field offsets
+ *      and lengths for all metadata strings)
+ *   2. Variable-length payload: concatenated UTF-16LE string data for all non-NULL fields
+ *
+ * The total blockSize is computed as sizeof(MetadataBlockHeader) plus the sum of all populated
+ * string lengths (creatorLength, commentsLength, mediaTitleLength, etc.). Note that lengths are
+ * in bytes, not character counts.
+ *
+ * **Field packing order:**
+ * Non-NULL strings from ctx->imageInfo are copied into the buffer in the following order:
+ *   1. Creator
+ *   2. Comments
+ *   3. MediaTitle
+ *   4. MediaManufacturer
+ *   5. MediaModel
+ *   6. MediaSerialNumber
+ *   7. MediaBarcode
+ *   8. MediaPartNumber
+ *   9. DriveManufacturer
+ *   10. DriveModel
+ *   11. DriveSerialNumber
+ *   12. DriveFirmwareRevision
+ *
+ * As each field is copied, its offset (relative to the buffer start, which begins after the
+ * header) is recorded in the corresponding offset field of ctx->metadataBlockHeader, and the
+ * position pointer is advanced by the field's length.
+ *
+ * **Alignment and file positioning:**
+ * Before writing the block, the file position is moved to EOF and then aligned forward to the
+ * next boundary satisfying (position & alignment_mask) == 0, where alignment_mask is derived
+ * from ctx->userDataDdtHeader.blockAlignmentShift. This ensures the metadata block begins on
+ * a properly aligned offset for efficient I/O and compliance with the Aaru format specification.
+ *
+ * **Index registration:**
+ * After successfully writing the metadata block, an IndexEntry is appended to ctx->indexEntries
+ * with:
+ *   - blockType = MetadataBlock
+ *   - dataType = 0 (metadata blocks have no subtype)
+ *   - offset = the aligned file position where the block was written
+ *
+ * **Memory management:**
+ * The function allocates a temporary buffer (via calloc) sized to hold the entire block payload.
+ * If allocation fails, the function returns immediately without writing anything. The buffer is
+ * freed before the function returns, regardless of write success or failure.
+ *
+ * **Error handling:**
+ * Write errors (fwrite returning < 1) are silently ignored; no index entry is added if the write
+ * fails, but the temporary buffer is still freed. Diagnostic TRACE logs report success or failure.
+ * The function does not propagate error codes; higher-level close logic must validate overall
+ * integrity if needed.
+ *
+ * **No-op conditions:**
+ * - ctx->metadataBlockHeader.identifier is not MetadataBlock AND
+ * - ctx->metadataBlockHeader.mediaSequence == 0 AND
+ * - ctx->metadataBlockHeader.lastMediaSequence == 0 AND
+ * - All ctx->imageInfo string fields (Creator, Comments, MediaTitle, etc.) are NULL
+ *
+ * @param ctx Pointer to an initialized aaruformatContext in write mode. Must not be NULL.
+ *            ctx->metadataBlockHeader contains the header template with pre-populated field
+ *            lengths and sequence numbers (if applicable). ctx->imageInfo contains pointers
+ *            to the actual UTF-16LE string data (may be NULL for unpopulated fields).
+ *            ctx->imageStream must be open and writable. ctx->indexEntries must be initialized
+ *            (utarray) to accept new index entries.
+ *
+ * @note UTF-16LE Encoding:
+ *       - All metadata strings use UTF-16LE encoding to support international characters
+ *       - Field lengths are in bytes, not character counts (UTF-16LE uses 2 or 4 bytes per character)
+ *       - The library treats string data as opaque and does not validate UTF-16LE encoding
+ *       - Ensure even byte lengths to maintain UTF-16LE character alignment
+ *
+ * @note Unlike data blocks (which include CRC64 checksums), the metadata block does not currently
+ *       include integrity checking beyond the implicit file-level checksums. The header itself
+ *       stores offsets/lengths but not CRCs for individual string fields.
+ *
+ * @note Media sequence numbers (mediaSequence, lastMediaSequence) support multi-volume image
+ *       sets (e.g., spanning multiple optical discs). Single-volume images typically set both
+ *       to 0 or leave them uninitialized.
+ *
+ * @see MetadataBlockHeader for the on-disk structure definition.
+ * @see ::aaruf_set_creator() for populating the creator field.
+ * @see ::aaruf_set_comments() for populating the comments field.
+ * @see ::aaruf_set_media_title() for populating the media title field.
+ *
+ * @internal
+ */
+static void write_metadata_block(aaruformatContext *ctx)
+{
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock && ctx->metadataBlockHeader.mediaSequence == 0 &&
+       ctx->metadataBlockHeader.lastMediaSequence == 0 && ctx->imageInfo.Creator == NULL &&
+       ctx->imageInfo.Comments == NULL && ctx->imageInfo.MediaTitle == NULL &&
+       ctx->imageInfo.MediaManufacturer == NULL && ctx->imageInfo.MediaModel == NULL &&
+       ctx->imageInfo.MediaSerialNumber == NULL && ctx->imageInfo.MediaBarcode == NULL &&
+       ctx->imageInfo.MediaPartNumber == NULL && ctx->imageInfo.DriveManufacturer == NULL &&
+       ctx->imageInfo.DriveModel == NULL && ctx->imageInfo.DriveSerialNumber == NULL &&
+       ctx->imageInfo.DriveFirmwareRevision == NULL)
+        return;
+
+    ctx->metadataBlockHeader.blockSize =
+        sizeof(MetadataBlockHeader) + ctx->metadataBlockHeader.creatorLength + ctx->metadataBlockHeader.commentsLength +
+        ctx->metadataBlockHeader.mediaTitleLength + ctx->metadataBlockHeader.mediaManufacturerLength +
+        ctx->metadataBlockHeader.mediaModelLength + ctx->metadataBlockHeader.mediaSerialNumberLength +
+        ctx->metadataBlockHeader.mediaBarcodeLength + ctx->metadataBlockHeader.mediaPartNumberLength +
+        ctx->metadataBlockHeader.driveManufacturerLength + ctx->metadataBlockHeader.driveModelLength +
+        ctx->metadataBlockHeader.driveSerialNumberLength + ctx->metadataBlockHeader.driveFirmwareRevisionLength;
+
+    ctx->metadataBlockHeader.identifier = MetadataBlock;
+
+    int pos = sizeof(MetadataBlockHeader);
+
+    uint8_t *buffer = calloc(1, ctx->metadataBlockHeader.blockSize);
+    if(buffer == NULL) return;
+
+    if(ctx->imageInfo.Creator != NULL && ctx->metadataBlockHeader.creatorLength > 0)
+    {
+        memcpy(buffer + pos, ctx->imageInfo.Creator, ctx->metadataBlockHeader.creatorLength);
+        ctx->metadataBlockHeader.creatorOffset = pos;
+        pos += ctx->metadataBlockHeader.creatorLength;
+    }
+
+    if(ctx->imageInfo.Comments != NULL && ctx->metadataBlockHeader.commentsLength > 0)
+    {
+        memcpy(buffer + pos, ctx->imageInfo.Comments, ctx->metadataBlockHeader.commentsLength);
+        ctx->metadataBlockHeader.commentsOffset = pos;
+        pos += ctx->metadataBlockHeader.commentsLength;
+    }
+
+    if(ctx->imageInfo.MediaTitle != NULL && ctx->metadataBlockHeader.mediaTitleLength > 0)
+    {
+        memcpy(buffer + pos, ctx->imageInfo.MediaTitle, ctx->metadataBlockHeader.mediaTitleLength);
+        ctx->metadataBlockHeader.mediaTitleOffset = pos;
+        pos += ctx->metadataBlockHeader.mediaTitleLength;
+    }
+
+    if(ctx->imageInfo.MediaManufacturer != NULL && ctx->metadataBlockHeader.mediaManufacturerLength > 0)
+    {
+        memcpy(buffer + pos, ctx->imageInfo.MediaManufacturer, ctx->metadataBlockHeader.mediaManufacturerLength);
+        ctx->metadataBlockHeader.mediaManufacturerOffset = pos;
+        pos += ctx->metadataBlockHeader.mediaManufacturerLength;
+    }
+
+    if(ctx->imageInfo.MediaModel != NULL && ctx->metadataBlockHeader.mediaModelLength > 0)
+    {
+        memcpy(buffer + pos, ctx->imageInfo.MediaModel, ctx->metadataBlockHeader.mediaModelLength);
+        ctx->metadataBlockHeader.mediaModelOffset = pos;
+        pos += ctx->metadataBlockHeader.mediaModelLength;
+    }
+
+    if(ctx->imageInfo.MediaSerialNumber != NULL && ctx->metadataBlockHeader.mediaSerialNumberLength > 0)
+    {
+        memcpy(buffer + pos, ctx->imageInfo.MediaSerialNumber, ctx->metadataBlockHeader.mediaSerialNumberLength);
+        ctx->metadataBlockHeader.mediaSerialNumberOffset = pos;
+        pos += ctx->metadataBlockHeader.mediaSerialNumberLength;
+    }
+
+    if(ctx->imageInfo.MediaBarcode != NULL && ctx->metadataBlockHeader.mediaBarcodeLength > 0)
+    {
+        memcpy(buffer + pos, ctx->imageInfo.MediaBarcode, ctx->metadataBlockHeader.mediaBarcodeLength);
+        ctx->metadataBlockHeader.mediaBarcodeOffset = pos;
+        pos += ctx->metadataBlockHeader.mediaBarcodeLength;
+    }
+
+    if(ctx->imageInfo.MediaPartNumber != NULL && ctx->metadataBlockHeader.mediaPartNumberLength > 0)
+    {
+        memcpy(buffer + pos, ctx->imageInfo.MediaPartNumber, ctx->metadataBlockHeader.mediaPartNumberLength);
+        ctx->metadataBlockHeader.mediaPartNumberOffset = pos;
+        pos += ctx->metadataBlockHeader.mediaPartNumberLength;
+    }
+
+    if(ctx->imageInfo.DriveManufacturer != NULL && ctx->metadataBlockHeader.driveManufacturerLength > 0)
+    {
+        memcpy(buffer + pos, ctx->imageInfo.DriveManufacturer, ctx->metadataBlockHeader.driveManufacturerLength);
+        ctx->metadataBlockHeader.driveManufacturerOffset = pos;
+        pos += ctx->metadataBlockHeader.driveManufacturerLength;
+    }
+
+    if(ctx->imageInfo.DriveModel != NULL && ctx->metadataBlockHeader.driveModelLength > 0)
+    {
+        memcpy(buffer + pos, ctx->imageInfo.DriveModel, ctx->metadataBlockHeader.driveModelLength);
+        ctx->metadataBlockHeader.driveModelOffset = pos;
+        pos += ctx->metadataBlockHeader.driveModelLength;
+    }
+
+    if(ctx->imageInfo.DriveSerialNumber != NULL && ctx->metadataBlockHeader.driveSerialNumberLength > 0)
+    {
+        memcpy(buffer + pos, ctx->imageInfo.DriveSerialNumber, ctx->metadataBlockHeader.driveSerialNumberLength);
+        ctx->metadataBlockHeader.driveSerialNumberOffset = pos;
+        pos += ctx->metadataBlockHeader.driveSerialNumberLength;
+    }
+
+    if(ctx->imageInfo.DriveFirmwareRevision != NULL && ctx->metadataBlockHeader.driveFirmwareRevisionLength > 0)
+    {
+        memcpy(buffer + pos, ctx->imageInfo.DriveFirmwareRevision,
+               ctx->metadataBlockHeader.driveFirmwareRevisionLength);
+        ctx->metadataBlockHeader.driveFirmwareRevisionOffset = pos;
+    }
+
+    fseek(ctx->imageStream, 0, SEEK_END);
+    long           block_position = ftell(ctx->imageStream);
+    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    if(block_position & alignment_mask)
+    {
+        const uint64_t aligned_position = block_position + alignment_mask & ~alignment_mask;
+        fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        block_position = aligned_position;
+    }
+
+    TRACE("Writing metadata block at position %ld", block_position);
+
+    if(fwrite(buffer, ctx->metadataBlockHeader.blockSize, 1, ctx->imageStream) == 1)
+    {
+        TRACE("Successfully wrote metadata block");
+
+        // Add metadata block to index
+        TRACE("Adding metadata block to index");
+        IndexEntry index_entry;
+        index_entry.blockType = MetadataBlock;
+        index_entry.dataType  = 0;
+        index_entry.offset    = block_position;
+        utarray_push_back(ctx->indexEntries, &index_entry);
+        TRACE("Added metadata block index entry at offset %" PRIu64, block_position);
+    }
+
+    free(buffer);
+}
+
+/**
  * @brief Serialize the accumulated index entries at the end of the image and back-patch the header.
  *
  * All previously written structural blocks push their IndexEntry into ctx->indexEntries. This
@@ -1626,6 +1870,9 @@ int aaruf_close(void *context)
 
         // Write geometry block if any
         write_geometry_block(ctx);
+
+        // Write metadata block
+        write_metadata_block(ctx);
 
         // Write the complete index at the end of the file
         res = write_index_block(ctx);
