@@ -1989,3 +1989,159 @@ int32_t aaruf_get_cicm_metadata(const void *context, uint8_t *buffer, size_t *le
     TRACE("Exiting aaruf_get_cicm_metadata(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
     return AARUF_STATUS_OK;
 }
+
+/**
+ * @brief Retrieves the embedded Aaru metadata JSON from the image.
+ *
+ * Aaru metadata JSON is a structured metadata format that provides machine-readable, comprehensive
+ * information about the image, media, imaging session details, hardware configuration, optical disc
+ * tracks and sessions, checksums, and preservation metadata. This function extracts the raw JSON
+ * payload that was embedded in the AaruFormat image during creation. The JSON data is preserved in
+ * its original form without parsing or interpretation by the library, allowing callers to process
+ * the structured metadata using standard JSON parsing libraries.
+ *
+ * This function supports a two-call pattern for buffer size determination:
+ * 1. First call with a buffer that may be too small returns AARUF_ERROR_BUFFER_TOO_SMALL
+ *    and sets *length to the required size
+ * 2. Second call with a properly sized buffer retrieves the actual data
+ *
+ * Alternatively, if the caller already knows the buffer is large enough, a single call
+ * will succeed and populate the buffer with the Aaru JSON data.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, opened image context).
+ * @param buffer Pointer to a buffer that will receive the Aaru metadata JSON. Must be large
+ *               enough to hold the entire JSON payload (at least *length bytes on input).
+ *               The buffer will contain raw UTF-8 encoded JSON data on success.
+ * @param length Pointer to a size_t that serves dual purpose:
+ *               - On input: size of the provided buffer in bytes
+ *               - On output: actual size of the Aaru metadata JSON in bytes
+ *               If the function returns AARUF_ERROR_BUFFER_TOO_SMALL, this will be updated
+ *               to contain the required buffer size for a subsequent successful call.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully retrieved Aaru metadata JSON. This is returned when:
+ *         - The context is valid and properly initialized
+ *         - The Aaru JSON block is present in the image (identifier == AaruMetadataJsonBlock)
+ *         - The provided buffer is large enough (>= required length)
+ *         - The Aaru JSON data is successfully copied to the buffer
+ *         - The *length parameter is set to the actual size of the JSON data
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
+ *         - The context was not properly initialized by aaruf_open() or aaruf_create()
+ *
+ * @retval AARUF_ERROR_CANNOT_READ_BLOCK (-6) The Aaru JSON block is not present. This occurs when:
+ *         - The image was created without Aaru metadata JSON
+ *         - ctx->jsonBlock is NULL (no data loaded)
+ *         - ctx->jsonBlockHeader.length is 0 (empty metadata)
+ *         - ctx->jsonBlockHeader.identifier doesn't equal AaruMetadataJsonBlock
+ *         - The Aaru JSON block was not found during image opening
+ *         - The *length output parameter is set to 0 to indicate no data available
+ *
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-12) The provided buffer is insufficient. This occurs when:
+ *         - The input *length is less than ctx->jsonBlockHeader.length
+ *         - The *length parameter is updated to contain the required buffer size
+ *         - No data is copied to the buffer
+ *         - The caller should allocate a larger buffer and call again
+ *
+ * @note Aaru JSON Format and Encoding:
+ *       - The JSON payload is stored in UTF-8 encoding
+ *       - The payload may or may not be null-terminated
+ *       - The library treats the JSON as opaque binary data
+ *       - No JSON parsing, interpretation, or validation is performed by libaaruformat
+ *       - JSON schema validation and parsing are the caller's responsibility
+ *
+ * @note Aaru Metadata JSON Purpose:
+ *       - Provides machine-readable structured metadata using modern JSON format
+ *       - Includes comprehensive information about media, sessions, tracks, and checksums
+ *       - Enables programmatic access to metadata without XML parsing overhead
+ *       - Documents imaging session details, hardware configuration, and preservation data
+ *       - Used by Aaru and compatible tools for metadata exchange and analysis
+ *       - Complements or serves as alternative to CICM XML metadata
+ *
+ * @note Buffer Size Handling:
+ *       - First call with insufficient buffer returns required size in *length
+ *       - Caller allocates properly sized buffer based on returned length
+ *       - Second call with adequate buffer retrieves the actual JSON data
+ *       - Single call succeeds if buffer is already large enough
+ *
+ * @note Data Availability:
+ *       - Aaru JSON blocks are optional in AaruFormat images
+ *       - Not all images will contain Aaru metadata JSON
+ *       - The presence of JSON data depends on how the image was created
+ *       - Check return value to handle missing metadata gracefully
+ *       - Images may contain CICM XML, Aaru JSON, both, or neither
+ *
+ * @note Distinction from CICM XML:
+ *       - CICM XML follows the Canary Islands Computer Museum schema (older format)
+ *       - Aaru JSON follows the Aaru-specific metadata schema (newer format)
+ *       - Both can coexist in the same image file
+ *       - Aaru JSON may provide more detailed or different metadata than CICM XML
+ *       - Different tools and workflows may prefer one format over the other
+ *
+ * @warning This function reads from the in-memory Aaru JSON block loaded during aaruf_open().
+ *          It does not perform file I/O operations. The entire JSON is kept in memory
+ *          for the lifetime of the context.
+ *
+ * @warning The buffer parameter must be valid and large enough to hold the JSON data.
+ *          Passing a buffer smaller than the required size will result in
+ *          AARUF_ERROR_BUFFER_TOO_SMALL with no partial data copied.
+ *
+ * @warning This function does not validate JSON syntax or schema. Corrupted JSON data will
+ *          be retrieved successfully and errors will only be detected when attempting to parse.
+ *
+ * @see AaruMetadataJsonBlockHeader for the on-disk structure definition.
+ * @see aaruf_get_cicm_metadata() for retrieving CICM XML metadata.
+ * @see process_aaru_metadata_json_block() for the loading process during image opening.
+ */
+int32_t aaruf_get_aaru_json_metadata(const void *context, uint8_t *buffer, size_t *length)
+{
+    TRACE("Entering aaruf_get_aaru_json_metadata(%p, %p, %d)", context, buffer, *length);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_aaru_json_metadata() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_aaru_json_metadata() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->jsonBlock == NULL || ctx->jsonBlockHeader.length == 0 ||
+       ctx->jsonBlockHeader.identifier != AaruMetadataJsonBlock)
+    {
+        TRACE("No Aaru metadata JSON present");
+        *length = 0;
+
+        TRACE("Exiting aaruf_get_aaru_json_metadata() = AARUF_ERROR_CANNOT_READ_BLOCK");
+        return AARUF_ERROR_CANNOT_READ_BLOCK;
+    }
+
+    if(*length < ctx->jsonBlockHeader.length)
+    {
+        TRACE("Buffer too small for Aaru metadata JSON, required %u bytes", ctx->jsonBlockHeader.length);
+        *length = ctx->jsonBlockHeader.length;
+
+        TRACE("Exiting aaruf_get_aaru_json_metadata() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    *length = ctx->jsonBlockHeader.length;
+    memcpy(buffer, ctx->jsonBlock, ctx->jsonBlockHeader.length);
+
+    TRACE("Aaru metadata JSON read successfully, length %u", *length);
+    TRACE("Exiting aaruf_get_aaru_json_metadata(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
+    return AARUF_STATUS_OK;
+}
