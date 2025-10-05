@@ -1631,6 +1631,133 @@ static void write_metadata_block(aaruformatContext *ctx)
 }
 
 /**
+ * @brief Serialize the CICM XML metadata block to the image file.
+ *
+ * This function writes a CicmBlock containing embedded CICM (Canary Islands Computer Museum) XML
+ * metadata to the Aaru image file. The CICM XML format is a standardized metadata schema used for
+ * documenting preservation and archival information about media and disk images. The XML payload
+ * is stored in its original form without parsing, interpretation, or validation by the library,
+ * preserving the exact structure and content provided during image creation.
+ *
+ * The CICM block is optional; if no CICM metadata has been populated (cicmBlock is NULL, length
+ * is zero, or identifier is not set to CicmBlock), the function returns immediately without
+ * writing anything. This no-op behavior allows the close operation to proceed gracefully whether
+ * or not CICM metadata was included during image creation.
+ *
+ * **Block structure:**
+ * The serialized block consists of:
+ *   1. CicmMetadataBlock header (8 bytes: identifier + length)
+ *   2. Variable-length XML payload: the raw UTF-8 encoded CICM XML data
+ *
+ * The header contains:
+ *   - identifier: Always set to CicmBlock (0x4D434943, "CICM" in ASCII)
+ *   - length: Size in bytes of the XML payload that immediately follows the header
+ *
+ * **Alignment and file positioning:**
+ * Before writing the block, the file position is moved to EOF and then aligned forward to the
+ * next boundary satisfying (position & alignment_mask) == 0, where alignment_mask is derived
+ * from ctx->userDataDdtHeader.blockAlignmentShift. This ensures the CICM block begins on a
+ * properly aligned offset for efficient I/O and compliance with the Aaru format specification.
+ *
+ * **Write sequence:**
+ * The function performs a two-stage write operation:
+ *   1. Write the CicmMetadataBlock header (sizeof(CicmMetadataBlock) bytes)
+ *   2. Write the XML payload (ctx->cicmBlockHeader.length bytes)
+ *
+ * Both writes must succeed for the block to be considered successfully written. If the header
+ * write fails, the payload write is skipped. Only if both writes succeed is an index entry added.
+ *
+ * **Index registration:**
+ * After successfully writing both the header and XML payload, an IndexEntry is appended to
+ * ctx->indexEntries with:
+ *   - blockType = CicmBlock
+ *   - dataType = 0 (CICM blocks have no subtype)
+ *   - offset = the aligned file position where the CicmMetadataBlock header was written
+ *
+ * **Error handling:**
+ * Write errors (fwrite returning < 1) are silently ignored; no index entry is added if either
+ * write fails. Diagnostic TRACE logs report success or failure. The function does not propagate
+ * error codes; higher-level close logic must validate overall integrity if needed.
+ *
+ * **No-op conditions:**
+ * - ctx->cicmBlock is NULL (no XML data loaded) OR
+ * - ctx->cicmBlockHeader.length == 0 (empty metadata) OR
+ * - ctx->cicmBlockHeader.identifier != CicmBlock (block not properly initialized)
+ *
+ * @param ctx Pointer to an initialized aaruformatContext in write mode. Must not be NULL.
+ *            ctx->cicmBlockHeader contains the header with identifier and length fields.
+ *            ctx->cicmBlock points to the actual UTF-8 encoded XML data (may be NULL if no
+ *            CICM metadata was provided). ctx->imageStream must be open and writable.
+ *            ctx->indexEntries must be initialized (utarray) to accept new index entries.
+ *
+ * @note XML Encoding and Format:
+ *       - The XML payload is stored in UTF-8 encoding
+ *       - The payload may or may not be null-terminated
+ *       - The library treats the XML as opaque binary data
+ *       - No XML parsing, interpretation, or validation is performed during write
+ *       - Schema compliance is the responsibility of the code that set the CICM metadata
+ *
+ * @note CICM Metadata Purpose:
+ *       - Developed by the Canary Islands Computer Museum for digital preservation
+ *       - Documents comprehensive preservation metadata following a standardized schema
+ *       - Includes checksums for data integrity verification
+ *       - Records detailed device and media information
+ *       - Supports archival and long-term preservation requirements
+ *       - Used by cultural heritage institutions and archives
+ *
+ * @note Memory Management:
+ *       - The function does not allocate or free any memory
+ *       - ctx->cicmBlock memory is managed by the caller (typically freed during aaruf_close)
+ *       - The XML data is written directly from the existing buffer
+ *
+ * @note Unlike data blocks (which may be compressed and include CRC64 checksums), the CICM
+ *       block is written without compression or explicit integrity checking. The XML payload
+ *       is written verbatim as provided, relying on file-level integrity mechanisms.
+ *
+ * @note Order in Close Sequence:
+ *       - CICM blocks are typically written after structural data blocks but before the index
+ *       - The exact position in the file depends on what other blocks precede it
+ *       - The index entry ensures the CICM block can be located during subsequent opens
+ *
+ * @see CicmMetadataBlock for the on-disk structure definition.
+ * @see aaruf_get_cicm_metadata() for retrieving CICM XML from opened images.
+ *
+ * @internal
+ */
+static void write_cicm_block(const aaruformatContext *ctx)
+{
+    if(ctx->cicmBlock == NULL || ctx->cicmBlockHeader.length == 0 || ctx->cicmBlockHeader.identifier != CicmBlock)
+        return;
+
+    fseek(ctx->imageStream, 0, SEEK_END);
+    long           block_position = ftell(ctx->imageStream);
+    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+
+    if(block_position & alignment_mask)
+    {
+        const uint64_t aligned_position = block_position + alignment_mask & ~alignment_mask;
+        fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        block_position = aligned_position;
+    }
+
+    TRACE("Writing CICM XML block at position %ld", block_position);
+    if(fwrite(&ctx->cicmBlockHeader, sizeof(CicmMetadataBlock), 1, ctx->imageStream) == 1)
+        if(fwrite(ctx->cicmBlock, ctx->cicmBlockHeader.length, 1, ctx->imageStream) == 1)
+        {
+            TRACE("Successfully wrote CICM XML block");
+
+            // Add CICM block to index
+            TRACE("Adding CICM XML block to index");
+            IndexEntry index_entry;
+            index_entry.blockType = CicmBlock;
+            index_entry.dataType  = 0;
+            index_entry.offset    = block_position;
+            utarray_push_back(ctx->indexEntries, &index_entry);
+            TRACE("Added CICM XML block index entry at offset %" PRIu64, block_position);
+        }
+}
+
+/**
  * @brief Serialize the accumulated index entries at the end of the image and back-patch the header.
  *
  * All previously written structural blocks push their IndexEntry into ctx->indexEntries. This
@@ -1873,6 +2000,9 @@ int aaruf_close(void *context)
 
         // Write metadata block
         write_metadata_block(ctx);
+
+        // Write CICM XML block if any
+        write_cicm_block(ctx);
 
         // Write the complete index at the end of the file
         res = write_index_block(ctx);
