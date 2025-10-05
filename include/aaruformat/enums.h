@@ -153,7 +153,8 @@ typedef enum
     SnapshotBlock                = 0x50414E53,  ///< Block containing a snapshot index (reserved / TODO).
     ParentBlock                  = 0x50524E54,  ///< Block describing how to locate the parent image (reserved / TODO).
     DumpHardwareBlock            = 0x2A504D44,  ///< Block containing an array of hardware used to create the image.
-    TapeFileBlock                = 0x454C4654   ///< Block containing list of files for a tape image (reserved / TODO).
+    TapeFileBlock                = 0x454C4654,  ///< Block containing list of files for a tape image (reserved / TODO).
+    AaruMetadataJsonBlock        = 0x444D534A   ///< Block containing JSON version of Aaru Metadata
 } BlockType;
 
 /**

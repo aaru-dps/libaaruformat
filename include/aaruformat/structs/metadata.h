@@ -110,6 +110,18 @@ typedef struct CicmMetadataBlock
     uint32_t length;      ///< Length in bytes of the CICM metadata payload that follows.
 } CicmMetadataBlock;
 
+/** \struct AaruMetadataJsonBlockHeader
+ *  \brief Header for an Aaru metadata JSON block (identifier == BlockType::AaruMetadataJsonBlock).
+ *
+ *  The following 'length' bytes immediately after the header contain the Aaru metadata JSON payload. Encoding is
+ *  typically UTF-8; the payload is not required to be null-terminated.
+ */
+typedef struct AaruMetadataJsonBlockHeader
+{
+    uint32_t identifier;  ///< Block identifier, must be BlockType::AaruMetadataJsonBlock.
+    uint32_t length;      ///< Length in bytes of the Aaru metadata JSON payload that follows.
+} AaruMetadataJsonBlockHeader;
+
 #pragma pack(pop)
 
 #endif  // LIBAARUFORMAT_METADATA_H

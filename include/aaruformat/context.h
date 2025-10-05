@@ -236,6 +236,9 @@ typedef struct aaruformatContext
     size_t         sector_suffix_length;  ///< Length of sector_suffix
     size_t         sector_prefix_offset;  ///< Current position in sector_prefix
     size_t         sector_suffix_offset;  ///< Current position in sector_suffix
+
+    AaruMetadataJsonBlockHeader jsonBlockHeader;  ///< JSON metadata block header (if present).
+    uint8_t                    *jsonBlock;        ///< JSON metadata block payload (UTF-8).
 } aaruformatContext;
 
 /** \struct DumpHardwareEntriesWithData

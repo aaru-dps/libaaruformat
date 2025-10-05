@@ -372,6 +372,10 @@ void *aaruf_open(const char *filepath)
                 process_cicm_block(ctx, entry);
 
                 break;
+            case AaruMetadataJsonBlock:
+                process_aaru_metadata_json_block(ctx, entry);
+
+                break;
             // Dump hardware block
             case DumpHardwareBlock:
                 process_dumphw_block(ctx, entry);

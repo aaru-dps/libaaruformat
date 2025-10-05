@@ -377,3 +377,166 @@ void process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry)
 
     TRACE("Exiting process_cicm_block()");
 }
+
+/**
+ * @brief Processes an Aaru metadata JSON block from the image stream during image opening.
+ *
+ * Reads an Aaru metadata JSON block from the image file and loads its contents into the context
+ * for subsequent retrieval. The Aaru metadata JSON format is a structured representation of
+ * comprehensive image metadata including media information, imaging session details, hardware
+ * configuration, optical disc tracks and sessions, checksums, and preservation metadata. The
+ * JSON payload is stored in its original form without parsing or interpretation by this function,
+ * allowing higher-level code to process the structured data as needed.
+ *
+ * This function is called during the image opening process (aaruf_open) when an index entry
+ * indicates the presence of an AaruMetadataJsonBlock. The function is non-critical; if reading
+ * fails or memory allocation fails, the error is logged but the image opening continues. This
+ * allows images without JSON metadata or with corrupted JSON blocks to still be opened for
+ * data access.
+ *
+ * **Processing sequence:**
+ * 1. Validate context and image stream
+ * 2. Seek to the block offset specified by the index entry
+ * 3. Read the AaruMetadataJsonBlockHeader (8 bytes: identifier + length)
+ * 4. Validate the block identifier matches AaruMetadataJsonBlock
+ * 5. Allocate memory for the JSON payload
+ * 6. Read the JSON data from the file stream
+ * 7. Store header and data pointer in the context for later retrieval
+ *
+ * **Memory allocation:**
+ * The function allocates memory (via malloc) sized to hold the entire JSON payload as specified
+ * by ctx->jsonBlockHeader.length. This memory remains allocated for the lifetime of the context
+ * and is freed during aaruf_close(). If allocation fails, the function returns gracefully without
+ * the JSON metadata, allowing the image to still be opened.
+ *
+ * **Image size tracking:**
+ * The function increments ctx->imageInfo.ImageSize by the length of the JSON payload to track
+ * the total size of metadata and structural blocks in the image.
+ *
+ * **Error handling:**
+ * All errors are non-fatal and handled gracefully:
+ * - Seek failures: logged and function returns early
+ * - Header read failures: header zeroed, function returns
+ * - Identifier mismatches: header zeroed, processing continues but data is not loaded
+ * - Memory allocation failures: header zeroed, function returns
+ * - Data read failures: header zeroed, allocated memory freed, function returns
+ *
+ * In all error cases, the ctx->jsonBlockHeader is zeroed (memset to 0) to indicate that no
+ * valid JSON metadata is available, and any allocated memory is properly freed.
+ *
+ * @param ctx Pointer to an initialized aaruformatContext being populated during image opening.
+ *            Must not be NULL. ctx->imageStream must be open and readable. On success,
+ *            ctx->jsonBlockHeader will contain the block header and ctx->jsonBlock will
+ *            point to the allocated JSON data.
+ * @param entry Pointer to the IndexEntry that specifies the file offset where the
+ *              AaruMetadataJsonBlock begins. Must not be NULL. entry->offset indicates
+ *              the position of the block header in the file.
+ *
+ * @note JSON Format and Encoding:
+ *       - The JSON payload is stored in UTF-8 encoding
+ *       - The payload may or may not be null-terminated
+ *       - This function treats the JSON as opaque binary data
+ *       - No JSON parsing, interpretation, or validation is performed during loading
+ *       - JSON schema validation is the responsibility of code that retrieves the metadata
+ *
+ * @note Aaru Metadata JSON Purpose:
+ *       - Provides machine-readable structured metadata about the image
+ *       - Includes comprehensive information about media, sessions, tracks, and checksums
+ *       - Enables programmatic access to metadata without XML parsing overhead
+ *       - Complements CICM XML with a more modern, structured format
+ *       - Used by Aaru and compatible tools for metadata exchange
+ *
+ * @note Non-Critical Nature:
+ *       - JSON metadata is optional and supplementary to core image data
+ *       - Failures reading this block do not prevent image opening
+ *       - The image remains fully functional for sector data access without JSON metadata
+ *       - Higher-level code should check if ctx->jsonBlock is non-NULL before use
+ *
+ * @note Distinction from CICM XML:
+ *       - Both CICM and Aaru JSON blocks can coexist in the same image
+ *       - CICM XML follows the Canary Islands Computer Museum schema
+ *       - Aaru JSON follows the Aaru-specific metadata schema
+ *       - Different tools may prefer one format over the other
+ *
+ * @warning Memory allocated for ctx->jsonBlock persists for the context lifetime and must be
+ *          freed during context cleanup (aaruf_close).
+ *
+ * @warning This function does not validate JSON syntax or schema. Corrupted JSON data will
+ *          be loaded successfully and errors will only be detected when attempting to parse.
+ *
+ * @see AaruMetadataJsonBlockHeader for the on-disk structure definition.
+ * @see process_cicm_block() for processing CICM XML metadata blocks.
+ * @see aaruf_open() for the overall image opening sequence.
+ *
+ * @internal
+ */
+void process_aaru_metadata_json_block(aaruformatContext *ctx, const IndexEntry *entry){
+    TRACE("Entering process_aaru_metadata_json_block(%p, %p)", ctx, entry);
+    int    pos        = 0;
+    size_t read_bytes = 0;
+
+    // Check if the context and image stream are valid
+    if(ctx == NULL || ctx->imageStream == NULL)
+    {
+        FATAL("Invalid context or image stream.");
+
+        TRACE("Exiting process_aaru_metadata_json_block()");
+        return;
+    }
+
+    // Seek to block
+    TRACE("Seeking to Aaru metadata JSON block at position %" PRIu64, entry->offset);
+    pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
+    if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
+    {
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
+
+        TRACE("Exiting process_aaru_metadata_json_block()");
+        return;
+    }
+
+    // Even if those two checks shall have been done before
+    TRACE("Reading Aaru metadata JSON block header at position %" PRIu64, entry->offset);
+    read_bytes = fread(&ctx->jsonBlockHeader, 1, sizeof(AaruMetadataJsonBlockHeader), ctx->imageStream);
+
+    if(read_bytes != sizeof(AaruMetadataJsonBlockHeader))
+    {
+        memset(&ctx->jsonBlockHeader, 0, sizeof(AaruMetadataJsonBlockHeader));
+        TRACE("Could not read Aaru metadata JSON header, continuing...");
+        return;
+    }
+
+    if(ctx->jsonBlockHeader.identifier != AaruMetadataJsonBlock)
+    {
+        memset(&ctx->jsonBlockHeader, 0, sizeof(AaruMetadataJsonBlockHeader));
+        TRACE("Incorrect identifier for data block at position %" PRIu64 "", entry->offset);
+    }
+
+    ctx->imageInfo.ImageSize += ctx->jsonBlockHeader.length;
+
+    ctx->jsonBlock = (uint8_t *)malloc(ctx->jsonBlockHeader.length);
+
+    if(ctx->jsonBlock == NULL)
+    {
+        memset(&ctx->jsonBlockHeader, 0, sizeof(AaruMetadataJsonBlockHeader));
+        TRACE("Could not allocate memory for Aaru metadata JSON block, continuing...");
+
+        TRACE("Exiting process_aaru_metadata_json_block()");
+        return;
+    }
+
+    TRACE("Reading Aaru metadata JSON block of size %u at position %" PRIu64, ctx->jsonBlockHeader.length,
+          entry->offset + sizeof(AaruMetadataJsonBlockHeader));
+    read_bytes = fread(ctx->jsonBlock, 1, ctx->jsonBlockHeader.length, ctx->imageStream);
+
+    if(read_bytes != ctx->jsonBlockHeader.length)
+    {
+        memset(&ctx->jsonBlockHeader, 0, sizeof(AaruMetadataJsonBlockHeader));
+        free(ctx->jsonBlock);
+        TRACE("Could not read Aaru metadata JSON block, continuing...");
+    }
+
+    TRACE("Found Aaru metadata JSON block %" PRIu64 ".", entry->offset);
+
+    TRACE("Exiting process_aaru_metadata_json_block()");
+}
