@@ -1758,6 +1758,144 @@ static void write_cicm_block(const aaruformatContext *ctx)
 }
 
 /**
+ * @brief Serialize the Aaru metadata JSON block to the image file.
+ *
+ * This function writes an AaruMetadataJsonBlock containing embedded Aaru metadata JSON to the
+ * Aaru image file. The Aaru metadata JSON format is a structured, machine-readable representation
+ * of comprehensive image metadata including media information, imaging session details, hardware
+ * configuration, optical disc tracks and sessions, checksums, and preservation metadata. The JSON
+ * payload is stored in its original form without parsing, interpretation, or validation by the
+ * library, preserving the exact structure and content provided during image creation.
+ *
+ * The Aaru JSON block is optional; if no Aaru JSON metadata has been populated (jsonBlock is NULL,
+ * length is zero, or identifier is not set to AaruMetadataJsonBlock), the function returns
+ * immediately without writing anything. This no-op behavior allows the close operation to proceed
+ * gracefully whether or not Aaru JSON metadata was included during image creation.
+ *
+ * **Block structure:**
+ * The serialized block consists of:
+ *   1. AaruMetadataJsonBlockHeader (8 bytes: identifier + length)
+ *   2. Variable-length JSON payload: the raw UTF-8 encoded Aaru metadata JSON data
+ *
+ * The header contains:
+ *   - identifier: Always set to AaruMetadataJsonBlock (0x444D534A, "JSMD" in ASCII)
+ *   - length: Size in bytes of the JSON payload that immediately follows the header
+ *
+ * **Alignment and file positioning:**
+ * Before writing the block, the file position is moved to EOF and then aligned forward to the
+ * next boundary satisfying (position & alignment_mask) == 0, where alignment_mask is derived
+ * from ctx->userDataDdtHeader.blockAlignmentShift. This ensures the Aaru JSON block begins on a
+ * properly aligned offset for efficient I/O and compliance with the Aaru format specification.
+ *
+ * **Write sequence:**
+ * The function performs a two-stage write operation:
+ *   1. Write the AaruMetadataJsonBlockHeader (sizeof(AaruMetadataJsonBlockHeader) bytes)
+ *   2. Write the JSON payload (ctx->jsonBlockHeader.length bytes)
+ *
+ * Both writes must succeed for the block to be considered successfully written. If the header
+ * write fails, the payload write is skipped. Only if both writes succeed is an index entry added.
+ *
+ * **Index registration:**
+ * After successfully writing both the header and JSON payload, an IndexEntry is appended to
+ * ctx->indexEntries with:
+ *   - blockType = AaruMetadataJsonBlock
+ *   - dataType = 0 (Aaru JSON blocks have no subtype)
+ *   - offset = the aligned file position where the AaruMetadataJsonBlockHeader was written
+ *
+ * **Error handling:**
+ * Write errors (fwrite returning < 1) are silently ignored; no index entry is added if either
+ * write fails. Diagnostic TRACE logs report success or failure. The function does not propagate
+ * error codes; higher-level close logic must validate overall integrity if needed.
+ *
+ * **No-op conditions:**
+ * - ctx->jsonBlock is NULL (no JSON data loaded) OR
+ * - ctx->jsonBlockHeader.length == 0 (empty metadata) OR
+ * - ctx->jsonBlockHeader.identifier != AaruMetadataJsonBlock (block not properly initialized)
+ *
+ * @param ctx Pointer to an initialized aaruformatContext in write mode. Must not be NULL.
+ *            ctx->jsonBlockHeader contains the header with identifier and length fields.
+ *            ctx->jsonBlock points to the actual UTF-8 encoded JSON data (may be NULL if no
+ *            Aaru JSON metadata was provided). ctx->imageStream must be open and writable.
+ *            ctx->indexEntries must be initialized (utarray) to accept new index entries.
+ *
+ * @note JSON Encoding and Format:
+ *       - The JSON payload is stored in UTF-8 encoding
+ *       - The payload may or may not be null-terminated
+ *       - The library treats the JSON as opaque binary data
+ *       - No JSON parsing, interpretation, or validation is performed during write
+ *       - Schema compliance is the responsibility of the code that set the Aaru JSON metadata
+ *
+ * @note Aaru Metadata JSON Purpose:
+ *       - Provides machine-readable structured metadata using modern JSON format
+ *       - Includes comprehensive information about media, sessions, tracks, and checksums
+ *       - Enables programmatic access to metadata without XML parsing overhead
+ *       - Documents imaging session details, hardware configuration, and preservation data
+ *       - Used by Aaru and compatible tools for metadata exchange and analysis
+ *       - Complements or serves as alternative to CICM XML metadata
+ *
+ * @note Memory Management:
+ *       - The function does not allocate or free any memory
+ *       - ctx->jsonBlock memory is managed by the caller (typically freed during aaruf_close)
+ *       - The JSON data is written directly from the existing buffer
+ *
+ * @note Unlike data blocks (which may be compressed and include CRC64 checksums), the Aaru JSON
+ *       block is written without compression or explicit integrity checking. The JSON payload
+ *       is written verbatim as provided, relying on file-level integrity mechanisms.
+ *
+ * @note Order in Close Sequence:
+ *       - Aaru JSON blocks are typically written after CICM blocks but before the index
+ *       - The exact position in the file depends on what other blocks precede it
+ *       - The index entry ensures the Aaru JSON block can be located during subsequent opens
+ *
+ * @note Distinction from CICM XML:
+ *       - Both CICM XML and Aaru JSON blocks can be written to the same image
+ *       - CICM XML follows the Canary Islands Computer Museum schema (older format)
+ *       - Aaru JSON follows the Aaru-specific metadata schema (newer format)
+ *       - They serve similar purposes but with different structures and consumers
+ *       - Including both provides maximum compatibility across different tools
+ *
+ * @see AaruMetadataJsonBlockHeader for the on-disk structure definition.
+ * @see aaruf_set_aaru_json_metadata() for setting Aaru JSON during image creation.
+ * @see aaruf_get_aaru_json_metadata() for retrieving Aaru JSON from opened images.
+ * @see write_cicm_block() for the similar function that writes CICM XML blocks.
+ *
+ * @internal
+ */
+static void write_aaru_json_block(const aaruformatContext *ctx)
+{
+    if(ctx->jsonBlock == NULL || ctx->jsonBlockHeader.length == 0 ||
+       ctx->jsonBlockHeader.identifier != AaruMetadataJsonBlock)
+        return;
+
+    fseek(ctx->imageStream, 0, SEEK_END);
+    long           block_position = ftell(ctx->imageStream);
+    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+
+    if(block_position & alignment_mask)
+    {
+        const uint64_t aligned_position = block_position + alignment_mask & ~alignment_mask;
+        fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        block_position = aligned_position;
+    }
+
+    TRACE("Writing Aaru metadata JSON block at position %ld", block_position);
+    if(fwrite(&ctx->jsonBlockHeader, sizeof(AaruMetadataJsonBlockHeader), 1, ctx->imageStream) == 1)
+        if(fwrite(ctx->jsonBlock, ctx->jsonBlockHeader.length, 1, ctx->imageStream) == 1)
+        {
+            TRACE("Successfully wrote Aaru metadata JSON block");
+
+            // Add Aaru metadata JSON block to index
+            TRACE("Adding Aaru metadata JSON block to index");
+            IndexEntry index_entry;
+            index_entry.blockType = AaruMetadataJsonBlock;
+            index_entry.dataType  = 0;
+            index_entry.offset    = block_position;
+            utarray_push_back(ctx->indexEntries, &index_entry);
+            TRACE("Added Aaru metadata JSON block index entry at offset %" PRIu64, block_position);
+        }
+}
+
+/**
  * @brief Serialize the accumulated index entries at the end of the image and back-patch the header.
  *
  * All previously written structural blocks push their IndexEntry into ctx->indexEntries. This
@@ -2003,6 +2141,9 @@ int aaruf_close(void *context)
 
         // Write CICM XML block if any
         write_cicm_block(ctx);
+
+        // Write Aaru metadata JSON block if any
+        write_aaru_json_block(ctx);
 
         // Write the complete index at the end of the file
         res = write_index_block(ctx);
