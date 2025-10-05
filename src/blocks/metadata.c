@@ -366,7 +366,7 @@ void process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry)
           entry->offset + sizeof(CicmMetadataBlock));
     read_bytes = fread(ctx->cicmBlock, 1, ctx->cicmBlockHeader.length, ctx->imageStream);
 
-    if(read_bytes != ctx->metadataBlockHeader.blockSize)
+    if(read_bytes != ctx->cicmBlockHeader.length)
     {
         memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
         free(ctx->cicmBlock);
