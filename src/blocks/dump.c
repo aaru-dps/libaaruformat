@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include "aaruformat.h"
+#include "internal.h"
 #include "log.h"
 
 /**
@@ -329,7 +330,13 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
             continue;
         }
 
-        // TODO: qsort()
+        // Sort extents by start sector for efficient lookup and validation
+        if(ctx->dumpHardwareEntriesWithData[e].entry.extents > 0 && ctx->dumpHardwareEntriesWithData[e].extents != NULL)
+        {
+            qsort(ctx->dumpHardwareEntriesWithData[e].extents, ctx->dumpHardwareEntriesWithData[e].entry.extents,
+                  sizeof(DumpExtent), compare_extents);
+            TRACE("Sorted %u extents for entry %u", ctx->dumpHardwareEntriesWithData[e].entry.extents, e);
+        }
     }
     TRACE("Exiting process_dumphw_block()");
 }

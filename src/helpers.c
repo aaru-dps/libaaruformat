@@ -436,3 +436,26 @@ int32_t aaruf_get_xml_mediatype(const int32_t type)
             return BlockMedia;
     }
 }
+
+/**
+ * @brief Comparison function for sorting DumpExtent arrays by start sector.
+ *
+ * This function is used by qsort() to order dump extents in ascending order based on their
+ * start sector values. Extents with lower start sectors will appear first in the sorted array.
+ * This ordering is important for efficient extent lookup and validation during image operations.
+ *
+ * @param a Pointer to the first DumpExtent to compare.
+ * @param b Pointer to the second DumpExtent to compare.
+ * @return Negative value if a->start < b->start, zero if equal, positive if a->start > b->start.
+ */
+int compare_extents(const void *a, const void *b)
+{
+    const DumpExtent *extent_a = a;
+    const DumpExtent *extent_b = b;
+
+    if(extent_a->start < extent_b->start)
+        return -1;
+    if(extent_a->start > extent_b->start)
+        return 1;
+    return 0;
+}

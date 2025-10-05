@@ -17,8 +17,10 @@
  */
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "aaruformat.h"
+#include "internal.h"
 #include "log.h"
 
 /**
@@ -675,7 +677,12 @@ int32_t aaruf_set_dumphw(void *context, uint8_t *data, size_t length)
         memcpy(copy[e].extents, data + pos, sizeof(DumpExtent) * ctx->dumpHardwareEntriesWithData->entry.extents);
         pos += sizeof(DumpExtent) * ctx->dumpHardwareEntriesWithData->entry.extents;
 
-        // TODO: qsort()
+        // Sort extents by start sector for efficient lookup and validation
+        if(copy[e].entry.extents > 0 && copy[e].extents != NULL)
+        {
+            qsort(copy[e].extents, copy[e].entry.extents, sizeof(DumpExtent), compare_extents);
+            TRACE("Sorted %u extents for entry %d", copy[e].entry.extents, e);
+        }
     }
 
     // Free old data
