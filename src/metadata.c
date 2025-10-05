@@ -1842,3 +1842,150 @@ int32_t aaruf_set_drive_firmware_revision(void *context, const uint8_t *data, co
     TRACE("Exiting aaruf_set_drive_firmware_revision(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
     return AARUF_STATUS_OK;
 }
+
+/**
+ * @brief Retrieves the embedded CICM XML metadata sidecar from the image.
+ *
+ * CICM (Canary Islands Computer Museum) XML is a standardized metadata format used for documenting
+ * preservation and archival information about media and disk images. This function extracts the
+ * raw CICM XML payload that was embedded in the AaruFormat image during creation. The XML data is
+ * preserved in its original form without parsing, interpretation, or validation by the library.
+ * The metadata typically includes detailed information about the physical media, imaging process,
+ * checksums, device information, and preservation metadata following the CICM schema.
+ *
+ * This function supports a two-call pattern for buffer size determination:
+ * 1. First call with a buffer that may be too small returns AARUF_ERROR_BUFFER_TOO_SMALL
+ *    and sets *length to the required size
+ * 2. Second call with a properly sized buffer retrieves the actual data
+ *
+ * Alternatively, if the caller already knows the buffer is large enough, a single call
+ * will succeed and populate the buffer with the CICM XML data.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, opened image context).
+ * @param buffer Pointer to a buffer that will receive the CICM XML metadata. Must be large
+ *               enough to hold the entire XML payload (at least *length bytes on input).
+ *               The buffer will contain raw UTF-8 encoded XML data on success.
+ * @param length Pointer to a size_t that serves dual purpose:
+ *               - On input: size of the provided buffer in bytes
+ *               - On output: actual size of the CICM XML metadata in bytes
+ *               If the function returns AARUF_ERROR_BUFFER_TOO_SMALL, this will be updated
+ *               to contain the required buffer size for a subsequent successful call.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully retrieved CICM XML metadata. This is returned when:
+ *         - The context is valid and properly initialized
+ *         - The CICM block is present in the image (identifier == CicmBlock)
+ *         - The provided buffer is large enough (>= required length)
+ *         - The CICM XML data is successfully copied to the buffer
+ *         - The *length parameter is set to the actual size of the XML data
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
+ *         - The context was not properly initialized by aaruf_open() or aaruf_create()
+ *
+ * @retval AARUF_ERROR_CANNOT_READ_BLOCK (-6) The CICM block is not present. This occurs when:
+ *         - The image was created without CICM XML metadata
+ *         - ctx->cicmBlock is NULL (no data loaded)
+ *         - ctx->cicmBlockHeader.length is 0 (empty metadata)
+ *         - ctx->cicmBlockHeader.identifier doesn't equal CicmBlock
+ *         - The CICM block was not found during image opening
+ *         - The *length output parameter is set to 0 to indicate no data available
+ *
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-12) The provided buffer is insufficient. This occurs when:
+ *         - The input *length is less than ctx->cicmBlockHeader.length
+ *         - The *length parameter is updated to contain the required buffer size
+ *         - No data is copied to the buffer
+ *         - The caller should allocate a larger buffer and call again
+ *
+ * @note CICM XML Format:
+ *       - The XML is stored in UTF-8 encoding
+ *       - The payload may or may not be null-terminated
+ *       - The library treats the XML as opaque binary data
+ *       - No XML parsing, interpretation, or validation is performed by libaaruformat
+ *       - Schema validation and XML processing are the caller's responsibility
+ *
+ * @note CICM Metadata Purpose:
+ *       - Developed by the Canary Islands Computer Museum for digital preservation
+ *       - Documents comprehensive preservation metadata
+ *       - Includes checksums for data integrity verification
+ *       - Records detailed device and media information
+ *       - Supports archival and long-term preservation requirements
+ *       - Provides standardized metadata for digital preservation workflows
+ *       - Used by cultural heritage institutions and archives
+ *
+ * @note Buffer Size Handling:
+ *       - First call with insufficient buffer returns required size in *length
+ *       - Caller allocates properly sized buffer based on returned length
+ *       - Second call with adequate buffer retrieves the actual XML data
+ *       - Single call succeeds if buffer is already large enough
+ *
+ * @note Data Availability:
+ *       - CICM blocks are optional in AaruFormat images
+ *       - Not all images will contain CICM metadata
+ *       - The presence of CICM data depends on how the image was created
+ *       - Check return value to handle missing metadata gracefully
+ *
+ * @warning The XML data may contain sensitive information about the imaging environment,
+ *          personnel, locations, or media content. Handle appropriately for your use case.
+ *
+ * @warning This function reads from the in-memory CICM block loaded during aaruf_open().
+ *          It does not perform file I/O operations. The entire CICM XML is kept in memory
+ *          for the lifetime of the context.
+ *
+ * @warning The buffer parameter must be valid and large enough to hold the XML data.
+ *          Passing a buffer smaller than the required size will result in
+ *          AARUF_ERROR_BUFFER_TOO_SMALL with no partial data copied.
+ *
+ * @see CicmMetadataBlock for the on-disk structure definition.
+ * @see aaruf_set_cicm_metadata() for embedding CICM XML during image creation.
+ */
+int32_t aaruf_get_cicm_metadata(const void *context, uint8_t *buffer, size_t *length)
+{
+    TRACE("Entering aaruf_get_cicm_metadata(%p, %p, %d)", context, buffer, *length);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_cicm_metadata() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_cicm_metadata() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->cicmBlock == NULL || ctx->cicmBlockHeader.length == 0 || ctx->cicmBlockHeader.identifier != CicmBlock)
+    {
+        TRACE("No CICM XML metadata present");
+        *length = 0;
+
+        TRACE("Exiting aaruf_get_cicm_metadata() = AARUF_ERROR_CANNOT_READ_BLOCK");
+        return AARUF_ERROR_CANNOT_READ_BLOCK;
+    }
+
+    if(*length < ctx->cicmBlockHeader.length)
+    {
+        TRACE("Buffer too small for CICM XML metadata, required %u bytes", ctx->cicmBlockHeader.length);
+        *length = ctx->cicmBlockHeader.length;
+
+        TRACE("Exiting aaruf_get_cicm_metadata() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    *length = ctx->cicmBlockHeader.length;
+    memcpy(buffer, ctx->cicmBlock, ctx->cicmBlockHeader.length);
+
+    TRACE("CICM XML metadata read successfully, length %u", *length);
+    TRACE("Exiting aaruf_get_cicm_metadata(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
+    return AARUF_STATUS_OK;
+}
