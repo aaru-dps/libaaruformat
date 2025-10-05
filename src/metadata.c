@@ -2145,3 +2145,163 @@ int32_t aaruf_get_aaru_json_metadata(const void *context, uint8_t *buffer, size_
     TRACE("Exiting aaruf_get_aaru_json_metadata(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
     return AARUF_STATUS_OK;
 }
+
+/**
+ * @brief Sets the Aaru metadata JSON for the image during creation.
+ *
+ * Embeds Aaru metadata JSON into the image being created. The Aaru metadata JSON format is a
+ * structured, machine-readable representation of comprehensive image metadata including media
+ * information, imaging session details, hardware configuration, optical disc tracks and sessions,
+ * checksums, and preservation metadata. This function stores the JSON payload in its original form
+ * without parsing or validation, allowing callers to provide pre-generated JSON conforming to the
+ * Aaru metadata schema. The JSON data will be written to the image file during aaruf_close() as
+ * an AaruMetadataJsonBlock.
+ *
+ * The function accepts raw UTF-8 encoded JSON data as an opaque byte array and creates an internal
+ * copy that persists for the lifetime of the context. If Aaru JSON metadata was previously set on
+ * this context, the old data is freed and replaced with the new JSON. The JSON is treated as opaque
+ * binary data by the library; no parsing, interpretation, or schema validation is performed during
+ * the set operation.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, write-enabled image context).
+ * @param data Pointer to the Aaru metadata JSON data in UTF-8 encoding (opaque byte array).
+ *             The JSON should conform to the Aaru metadata schema, though this is not validated.
+ *             Must not be NULL.
+ * @param length Length of the JSON data in bytes. The payload may or may not be null-terminated;
+ *               the length should reflect the actual JSON data size.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully set Aaru metadata JSON. This is returned when:
+ *         - The context is valid and properly initialized
+ *         - The context is opened in write mode (ctx->isWriting is true)
+ *         - Memory allocation for the JSON data succeeded
+ *         - The JSON data is copied to ctx->jsonBlock
+ *         - The jsonBlockHeader is initialized with identifier AaruMetadataJsonBlock
+ *         - The jsonBlockHeader.length field is set to the provided length
+ *         - Any previous Aaru JSON data is properly freed before replacement
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
+ *         - The context was not properly initialized by aaruf_create()
+ *
+ * @retval AARUF_READ_ONLY (-13) The context is not opened for writing. This occurs when:
+ *         - The image was opened with aaruf_open() instead of aaruf_create()
+ *         - The context's isWriting flag is false
+ *         - Attempting to modify a read-only image
+ *
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-8) Memory allocation failed. This occurs when:
+ *         - malloc() failed to allocate the required memory for the JSON data
+ *         - System is out of memory or memory is severely fragmented
+ *         - The requested allocation size is too large
+ *
+ * @note Aaru JSON Format and Encoding:
+ *       - The JSON payload must be valid UTF-8 encoded data
+ *       - The payload may or may not be null-terminated
+ *       - The library treats the JSON as opaque binary data
+ *       - No JSON parsing, interpretation, or validation is performed during set
+ *       - Schema compliance is the caller's responsibility
+ *       - Ensure the JSON conforms to the Aaru metadata schema for compatibility
+ *
+ * @note Aaru Metadata JSON Purpose:
+ *       - Provides machine-readable structured metadata using modern JSON format
+ *       - Includes comprehensive information about media, sessions, tracks, and checksums
+ *       - Enables programmatic access to metadata without XML parsing overhead
+ *       - Documents imaging session details, hardware configuration, and preservation data
+ *       - Used by Aaru and compatible tools for metadata exchange and analysis
+ *       - Complements or serves as alternative to CICM XML metadata
+ *
+ * @note JSON Content Examples:
+ *       - Media type and physical characteristics
+ *       - Track and session information for optical media
+ *       - Partition and filesystem metadata
+ *       - Checksums (MD5, SHA-1, SHA-256, etc.) for integrity verification
+ *       - Hardware information (drive manufacturer, model, firmware)
+ *       - Imaging software version and configuration
+ *       - Timestamps for image creation and modification
+ *
+ * @note Memory Management:
+ *       - The function creates an internal copy of the JSON data
+ *       - The caller retains ownership of the input data buffer
+ *       - The caller may free the input data immediately after this function returns
+ *       - The internal copy is freed automatically during aaruf_close()
+ *       - Calling this function multiple times replaces previous JSON data
+ *
+ * @note Relationship to CICM XML:
+ *       - Both CICM XML and Aaru JSON can be set on the same image
+ *       - CICM XML follows the Canary Islands Computer Museum schema (older format)
+ *       - Aaru JSON follows the Aaru-specific metadata schema (newer format)
+ *       - Setting one does not affect the other
+ *       - Different tools may prefer one format over the other
+ *       - Consider including both for maximum compatibility
+ *
+ * @warning The Aaru JSON block is only written to the image file during aaruf_close().
+ *          Changes made by this function are not immediately persisted to disk.
+ *
+ * @warning No validation is performed on the JSON data:
+ *          - Invalid JSON syntax will be stored and only detected during parsing
+ *          - Schema violations will not be caught by this function
+ *          - Ensure JSON is valid and schema-compliant before calling
+ *          - Use a JSON validation library before embedding if correctness is critical
+ *
+ * @warning The function accepts any length value:
+ *          - Ensure the length accurately reflects the JSON data size
+ *          - Incorrect length values may cause truncation or include garbage data
+ *          - For null-terminated JSON, length should not include the null terminator
+ *            unless it is intended to be part of the stored data
+ *
+ * @see AaruMetadataJsonBlockHeader for the on-disk structure definition.
+ * @see aaruf_get_aaru_json_metadata() for retrieving Aaru JSON from opened images.
+ * @see write_aaru_json_block() for the serialization process during image closing.
+ */
+int32_t aaruf_set_aaru_json_metadata(void *context, uint8_t *data, size_t length)
+{
+    TRACE("Entering aaruf_set_aaru_json_metadata(%p, %p, %d)", context, data, length);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_set_aaru_json_metadata() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_set_aaru_json_metadata() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->isWriting)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_set_aaru_json_metadata() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    // Reserve memory
+    uint8_t *copy = malloc(length);
+    if(copy == NULL)
+    {
+        FATAL("Could not allocate memory for Aaru metadata JSON");
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    // Copy opaque UTF-8 string
+    memcpy(copy, data, length);
+    if(ctx->jsonBlock != NULL) free(ctx->jsonBlock);
+    ctx->jsonBlock                  = copy;
+    ctx->jsonBlockHeader.identifier = AaruMetadataJsonBlock;
+    ctx->jsonBlockHeader.length     = length;
+
+    TRACE("Exiting aaruf_set_aaru_json_metadata(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
+    return AARUF_STATUS_OK;
+}
