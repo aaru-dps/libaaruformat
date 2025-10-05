@@ -169,7 +169,7 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
         if(ctx->imageInfo.MediaSerialNumber != NULL)
             memcpy(ctx->imageInfo.MediaSerialNumber,
                    ctx->metadataBlock + ctx->metadataBlockHeader.mediaSerialNumberOffset,
-                   ctx->metadataBlockHeader.mediaManufacturerLength);
+                   ctx->metadataBlockHeader.mediaSerialNumberLength);
     }
 
     if(ctx->metadataBlockHeader.mediaBarcodeLength > 0 &&
