@@ -1631,6 +1631,285 @@ static void write_metadata_block(aaruformatContext *ctx)
 }
 
 /**
+ * @brief Serialize the dump hardware block containing acquisition environment information.
+ *
+ * This function writes a DumpHardwareBlock to the image file, documenting the hardware and software
+ * environments used to create the image. A dump hardware block records one or more "dump environments" –
+ * typically combinations of physical devices (drives, controllers, adapters) and the software stacks
+ * that performed the read operations. This metadata is essential for understanding the imaging context,
+ * validating acquisition integrity, reproducing imaging conditions, and supporting forensic or archival
+ * documentation requirements.
+ *
+ * Each environment entry includes hardware identification (manufacturer, model, revision, firmware,
+ * serial number), software identification (name, version, operating system), and optional extent ranges
+ * that specify which logical sectors or units were contributed by that particular environment. This
+ * structure supports complex imaging scenarios where multiple devices or software configurations were
+ * used to create a composite image.
+ *
+ * The dump hardware block is optional; if no dump hardware information has been populated
+ * (dumpHardwareEntriesWithData is NULL, entries count is zero, or identifier is not set to
+ * DumpHardwareBlock), the function returns immediately without writing anything. This no-op behavior
+ * allows the close operation to proceed gracefully whether or not dump hardware metadata was included
+ * during image creation.
+ *
+ * **Block structure:**
+ * The serialized block consists of:
+ *   1. DumpHardwareHeader (16 bytes: identifier, entries count, payload length, CRC64)
+ *   2. For each dump hardware entry (variable size):
+ *      - DumpHardwareEntry (36 bytes: length fields for all strings and extent count)
+ *      - Variable-length UTF-8 strings in order: manufacturer, model, revision, firmware, serial,
+ *        software name, software version, software operating system
+ *      - Array of DumpExtent structures (16 bytes each) if extent count > 0
+ *
+ * All strings are UTF-8 encoded and NOT null-terminated in the serialized block. String lengths
+ * are measured in bytes, not character counts.
+ *
+ * **Serialization process:**
+ * 1. Allocate a temporary buffer sized to hold the complete block (header + all payload data)
+ * 2. Iterate through all dump hardware entries in ctx->dumpHardwareEntriesWithData
+ * 3. For each entry, copy the DumpHardwareEntry structure followed by each non-NULL string
+ *    (only if the corresponding length > 0), then copy the extent array (if extents > 0)
+ * 4. Calculate CRC64-ECMA over the payload (everything after the header)
+ * 5. Copy the DumpHardwareHeader with calculated CRC64 to the beginning of the buffer
+ * 6. Align file position to block boundary
+ * 7. Write the complete buffer to the image file
+ * 8. Add index entry on successful write
+ * 9. Free the temporary buffer
+ *
+ * **Alignment and file positioning:**
+ * Before writing the block, the file position is moved to EOF and then aligned forward to the
+ * next boundary satisfying (position & alignment_mask) == 0, where alignment_mask is derived
+ * from ctx->userDataDdtHeader.blockAlignmentShift. This ensures the dump hardware block begins
+ * on a properly aligned offset for efficient I/O and compliance with the Aaru format specification.
+ *
+ * **CRC64 calculation:**
+ * The function calculates CRC64-ECMA over the payload portion of the buffer (everything after
+ * the DumpHardwareHeader) and stores it in the header before writing. This checksum allows
+ * verification of dump hardware block integrity when reading the image.
+ *
+ * **Index registration:**
+ * After successfully writing the complete block, an IndexEntry is appended to ctx->indexEntries with:
+ *   - blockType = DumpHardwareBlock
+ *   - dataType = 0 (dump hardware blocks have no subtype)
+ *   - offset = the aligned file position where the block was written
+ *
+ * **Error handling:**
+ * Memory allocation failures (calloc returning NULL) cause immediate return without writing.
+ * Bounds checking is performed during serialization; if calculated entry sizes exceed the allocated
+ * buffer, the buffer is freed and the function returns without writing. Write errors (fwrite
+ * returning < 1) are silently ignored; no index entry is added if the write fails. Diagnostic
+ * TRACE logs report success or failure. The function does not propagate error codes; higher-level
+ * close logic must validate overall integrity if needed.
+ *
+ * **No-op conditions:**
+ * - ctx->dumpHardwareEntriesWithData is NULL (no hardware data loaded) OR
+ * - ctx->dumpHardwareHeader.entries == 0 (no entries to write) OR
+ * - ctx->dumpHardwareHeader.identifier != DumpHardwareBlock (block not properly initialized)
+ *
+ * @param ctx Pointer to an initialized aaruformatContext in write mode. Must not be NULL.
+ *            ctx->dumpHardwareHeader contains the header with identifier, entry count, and
+ *            total payload length. ctx->dumpHardwareEntriesWithData contains the array of
+ *            dump hardware entries with their associated string data and extents (may be NULL
+ *            if no dump hardware was added). ctx->imageStream must be open and writable.
+ *            ctx->indexEntries must be initialized (utarray) to accept new index entries.
+ *
+ * @note Dump Hardware Environments:
+ *       - Each entry represents one hardware/software combination used during imaging
+ *       - Multiple entries support scenarios where different devices contributed different sectors
+ *       - Extent arrays specify which logical sector ranges each environment contributed
+ *       - Empty extent arrays (extents == 0) indicate the environment dumped the entire medium
+ *       - Overlapping extents between entries may indicate verification passes or redundancy
+ *
+ * @note Hardware Identification Fields:
+ *       - manufacturer: Device manufacturer (e.g., "Plextor", "Sony", "Samsung")
+ *       - model: Device model number (e.g., "PX-716A", "DRU-820A")
+ *       - revision: Hardware revision identifier
+ *       - firmware: Firmware version (e.g., "1.11", "KY08")
+ *       - serial: Device serial number for unique identification
+ *
+ * @note Software Identification Fields:
+ *       - softwareName: Dumping software name (e.g., "Aaru", "ddrescue", "IsoBuster")
+ *       - softwareVersion: Software version (e.g., "5.3.0", "1.25")
+ *       - softwareOperatingSystem: Host OS (e.g., "Linux 5.10.0", "Windows 10", "macOS 12.0")
+ *
+ * @note String Encoding:
+ *       - All strings are UTF-8 encoded
+ *       - Strings are NOT null-terminated in the serialized block
+ *       - String lengths in DumpHardwareEntry are in bytes, not character counts
+ *       - The library maintains null-terminated strings in memory for convenience
+ *       - Only non-null-terminated data is written to the file
+ *
+ * @note Memory Management:
+ *       - The function allocates a temporary buffer to serialize the entire block
+ *       - The buffer is freed before the function returns, regardless of success or failure
+ *       - The source data in ctx->dumpHardwareEntriesWithData is not modified
+ *       - The source data is freed later during context cleanup (aaruf_close)
+ *
+ * @note Use Cases:
+ *       - Forensic documentation requiring complete equipment chain of custody
+ *       - Archival metadata for long-term preservation requirements
+ *       - Reproducing imaging conditions for verification or re-imaging
+ *       - Identifying firmware-specific issues or drive-specific behaviors
+ *       - Multi-device imaging scenario documentation
+ *       - Correlating imaging artifacts with specific hardware/software combinations
+ *
+ * @note Order in Close Sequence:
+ *       - Dump hardware blocks are typically written after sector data but before metadata blocks
+ *       - The exact position in the file depends on what other blocks precede it
+ *       - The index entry ensures the dump hardware block can be located during subsequent opens
+ *
+ * @warning The temporary buffer allocation may fail on systems with limited memory or when the
+ *          dump hardware block is extremely large (many entries with long strings and extents).
+ *          Allocation failures result in silent no-op; the image is created without dump hardware.
+ *
+ * @warning Bounds checking during serialization protects against buffer overruns. If calculated
+ *          entry sizes exceed the allocated buffer length (which should never occur if the
+ *          header's length field is correct), the function aborts without writing. This is a
+ *          sanity check against data corruption.
+ *
+ * @see DumpHardwareHeader for the block header structure definition.
+ * @see DumpHardwareEntry for the per-environment entry structure definition.
+ * @see DumpExtent for the extent range structure definition.
+ * @see aaruf_get_dumphw() for retrieving dump hardware from opened images.
+ * @see process_dumphw_block() for the loading process during image opening.
+ *
+ * @internal
+ */
+static void write_dumphw_block(aaruformatContext *ctx)
+{
+
+    if(ctx->dumpHardwareEntriesWithData == NULL || ctx->dumpHardwareHeader.entries == 0 ||
+       ctx->dumpHardwareHeader.identifier != DumpHardwareBlock)
+        return;
+
+    const size_t required_length = sizeof(DumpHardwareHeader) + ctx->dumpHardwareHeader.length;
+
+    uint8_t *buffer = calloc(1, required_length);
+
+    if(buffer == NULL) return;
+
+    // Start to iterate and copy the data
+    size_t offset = 0;
+    for(int i = 0; i < ctx->dumpHardwareHeader.entries; i++)
+    {
+        size_t entry_size = sizeof(DumpHardwareEntry) + ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength +
+                            ctx->dumpHardwareEntriesWithData[i].entry.modelLength +
+                            ctx->dumpHardwareEntriesWithData[i].entry.revisionLength +
+                            ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength +
+                            ctx->dumpHardwareEntriesWithData[i].entry.serialLength +
+                            ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength +
+                            ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength +
+                            ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength +
+                            ctx->dumpHardwareEntriesWithData[i].entry.extents * sizeof(DumpExtent);
+
+        if(offset + entry_size > required_length)
+        {
+            FATAL("Calculated size exceeds provided buffer length");
+            free(buffer);
+            return;
+        }
+
+        memcpy(buffer + offset, &ctx->dumpHardwareEntriesWithData[i].entry, sizeof(DumpHardwareEntry));
+        offset += sizeof(DumpHardwareEntry);
+        if(ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength > 0 &&
+           ctx->dumpHardwareEntriesWithData[i].manufacturer != NULL)
+        {
+            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].manufacturer,
+                   ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength);
+            offset += ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength;
+        }
+        if(ctx->dumpHardwareEntriesWithData[i].entry.modelLength > 0 &&
+           ctx->dumpHardwareEntriesWithData[i].model != NULL)
+        {
+            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].model,
+                   ctx->dumpHardwareEntriesWithData[i].entry.modelLength);
+            offset += ctx->dumpHardwareEntriesWithData[i].entry.modelLength;
+        }
+        if(ctx->dumpHardwareEntriesWithData[i].entry.revisionLength > 0 &&
+           ctx->dumpHardwareEntriesWithData[i].revision != NULL)
+        {
+            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].revision,
+                   ctx->dumpHardwareEntriesWithData[i].entry.revisionLength);
+            offset += ctx->dumpHardwareEntriesWithData[i].entry.revisionLength;
+        }
+        if(ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength > 0 &&
+           ctx->dumpHardwareEntriesWithData[i].firmware != NULL)
+        {
+            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].firmware,
+                   ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength);
+            offset += ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength;
+        }
+        if(ctx->dumpHardwareEntriesWithData[i].entry.serialLength > 0 &&
+           ctx->dumpHardwareEntriesWithData[i].serial != NULL)
+        {
+            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].serial,
+                   ctx->dumpHardwareEntriesWithData[i].entry.serialLength);
+            offset += ctx->dumpHardwareEntriesWithData[i].entry.serialLength;
+        }
+        if(ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength > 0 &&
+           ctx->dumpHardwareEntriesWithData[i].softwareName != NULL)
+        {
+            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].softwareName,
+                   ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength);
+            offset += ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength;
+        }
+        if(ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength > 0 &&
+           ctx->dumpHardwareEntriesWithData[i].softwareVersion != NULL)
+        {
+            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].softwareVersion,
+                   ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength);
+            offset += ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength;
+        }
+        if(ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength > 0 &&
+           ctx->dumpHardwareEntriesWithData[i].softwareOperatingSystem != NULL)
+        {
+            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].softwareOperatingSystem,
+                   ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength);
+            offset += ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength;
+        }
+        if(ctx->dumpHardwareEntriesWithData[i].entry.extents > 0 && ctx->dumpHardwareEntriesWithData[i].extents != NULL)
+        {
+            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].extents,
+                   ctx->dumpHardwareEntriesWithData[i].entry.extents * sizeof(DumpExtent));
+            offset += ctx->dumpHardwareEntriesWithData[i].entry.extents * sizeof(DumpExtent);
+        }
+    }
+
+    // Calculate CRC64
+    ctx->dumpHardwareHeader.crc64 =
+        aaruf_crc64_data(buffer + sizeof(DumpHardwareHeader), ctx->dumpHardwareHeader.length);
+
+    // Copy header
+    memcpy(buffer, &ctx->dumpHardwareHeader, sizeof(DumpHardwareHeader));
+
+    fseek(ctx->imageStream, 0, SEEK_END);
+    long           block_position = ftell(ctx->imageStream);
+    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    if(block_position & alignment_mask)
+    {
+        const uint64_t aligned_position = block_position + alignment_mask & ~alignment_mask;
+        fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        block_position = aligned_position;
+    }
+    TRACE("Writing dump hardware block at position %ld", block_position);
+    if(fwrite(buffer, required_length, 1, ctx->imageStream) == 1)
+    {
+        TRACE("Successfully wrote dump hardware block");
+
+        // Add dump hardware block to index
+        TRACE("Adding dump hardware block to index");
+        IndexEntry index_entry;
+        index_entry.blockType = DumpHardwareBlock;
+        index_entry.dataType  = 0;
+        index_entry.offset    = block_position;
+        utarray_push_back(ctx->indexEntries, &index_entry);
+        TRACE("Added dump hardware block index entry at offset %" PRIu64, block_position);
+    }
+
+    free(buffer);
+}
+
+/**
  * @brief Serialize the CICM XML metadata block to the image file.
  *
  * This function writes a CicmBlock containing embedded CICM (Canary Islands Computer Museum) XML
@@ -2138,6 +2417,9 @@ int aaruf_close(void *context)
 
         // Write metadata block
         write_metadata_block(ctx);
+
+        // Write dump hardware block if any
+        write_dumphw_block(ctx);
 
         // Write CICM XML block if any
         write_cicm_block(ctx);
