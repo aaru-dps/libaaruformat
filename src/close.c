@@ -757,7 +757,7 @@ static void write_mode2_subheaders_block(aaruformatContext *ctx)
  * fields. It is unrelated to subchannel (P–W) data, which is handled separately. If prefix data
  * was collected (ctx->sector_prefix != NULL), this writes a DataBlock of type CdSectorPrefix
  * containing exactly the bytes accumulated up to sector_prefix_offset. The block is CRC64
- * protected, uncompressed, aligned to the DDT block boundary and indexed.
+ * protected, compressed if enabled, aligned to the DDT block boundary and indexed.
  *
  * Typical raw Mode 1 / Mode 2 sector layout (2352 bytes total):
  *   12-byte sync pattern (00 FF FF FF FF FF FF FF FF FF FF 00)
@@ -790,22 +790,64 @@ static void write_sector_prefix(aaruformatContext *ctx)
     BlockHeader prefix_block = {0};
     prefix_block.identifier  = DataBlock;
     prefix_block.type        = CdSectorPrefix;
-    prefix_block.compression = None;
+    prefix_block.compression = ctx->compression_enabled ? Lzma : None;
     prefix_block.length      = (uint32_t)ctx->sector_prefix_offset;
-    prefix_block.cmpLength   = prefix_block.length;
 
     // Calculate CRC64
-    prefix_block.crc64    = aaruf_crc64_data(ctx->sector_prefix, prefix_block.length);
-    prefix_block.cmpCrc64 = prefix_block.crc64;
+    prefix_block.crc64 = aaruf_crc64_data(ctx->sector_prefix, prefix_block.length);
+
+    uint8_t *buffer                                  = NULL;
+    uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
+
+    if(prefix_block.compression == None)
+    {
+        buffer                = ctx->sector_prefix;
+        prefix_block.cmpCrc64 = prefix_block.crc64;
+    }
+    else
+    {
+        buffer = malloc((size_t)prefix_block.length * 2);  // Allocate double size for compression
+        if(buffer == NULL)
+        {
+            TRACE("Failed to allocate memory for CD sector prefix compression");
+            return;
+        }
+
+        size_t dst_size   = (size_t)prefix_block.length * 2 * 2;
+        size_t props_size = LZMA_PROPERTIES_LENGTH;
+        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_prefix, prefix_block.length, lzma_properties,
+                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+
+        prefix_block.cmpLength = (uint32_t)dst_size;
+
+        if(prefix_block.cmpLength >= prefix_block.length)
+        {
+            prefix_block.compression = None;
+            free(buffer);
+            buffer = ctx->sector_prefix;
+        }
+    }
+
+    if(prefix_block.compression == None)
+    {
+        prefix_block.cmpLength = prefix_block.length;
+        prefix_block.cmpCrc64  = prefix_block.crc64;
+    }
+    else
+        prefix_block.cmpCrc64 = aaruf_crc64_data(buffer, prefix_block.cmpLength);
+
+    if(prefix_block.compression == Lzma) prefix_block.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write header
     if(fwrite(&prefix_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
     {
+        if(prefix_block.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
+
         // Write data
-        size_t written_bytes = fwrite(ctx->sector_prefix, prefix_block.length, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, prefix_block.cmpLength, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
-            TRACE("Successfully wrote CD sector prefix block (%" PRIu64 " bytes)", prefix_block.length);
+            TRACE("Successfully wrote CD sector prefix block (%" PRIu64 " bytes)", prefix_block.cmpLength);
             // Add prefix block to index
             TRACE("Adding CD sector prefix block to index");
             IndexEntry prefix_index_entry;
@@ -816,6 +858,8 @@ static void write_sector_prefix(aaruformatContext *ctx)
             TRACE("Added CD sector prefix block index entry at offset %" PRIu64, prefix_position);
         }
     }
+
+    if(prefix_block.compression == Lzma) free(buffer);
 }
 
 /**
