@@ -324,17 +324,38 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
             ctx->readableSectorTags[CdSectorEdc]       = true;
             break;
         case CdSectorSubchannel:
-            ctx->sector_subchannel                       = data;
+            ctx->sector_subchannel                      = data;
             ctx->readableSectorTags[CdSectorSubchannel] = true;
             break;
         case AppleProfileTag:
         case AppleSonyTag:
         case PriamDataTowerTag:
-            ctx->sector_subchannel                   = data;
+            ctx->sector_subchannel                  = data;
             ctx->readableSectorTags[AppleSectorTag] = true;
             break;
         case CompactDiscMode2Subheader:
             ctx->mode2_subheaders = data;
+            break;
+        case DvdSectorId:
+            ctx->sector_id                                = data;
+            ctx->readableSectorTags[DvdSectorNumber]      = true;
+            ctx->readableSectorTags[DvdSectorInformation] = true;
+            break;
+        case DvdSectorIed:
+            ctx->sector_ied                           = data;
+            ctx->readableSectorTags[DvdSectorIedAaru] = true;
+            break;
+        case case DvdSectorCprMai:
+            ctx->sector_cpr_mai             = data;
+            ctx->readableSectorTags[DvdCmi] = true;
+            break;
+        case DvdSectorEdc:
+            ctx->sector_edc                           = data;
+            ctx->readableSectorTags[DvdSectorEdcAaru] = true;
+            break;
+        case DvdTitleKeyDecrypted:
+            ctx->sector_decrypted_title_key                     = data;
+            ctx->readableSectorTags[DvdSectorTitleKeyDecrypted] = true;
             break;
         default:
             media_tag = (mediaTagEntry *)malloc(sizeof(mediaTagEntry));
