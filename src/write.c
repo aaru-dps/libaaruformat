@@ -1498,16 +1498,16 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
  * @see aaruf_close() for media tag serialization and memory cleanup
  * @see MediaTagType enumeration for valid type identifier values and meanings
  */
-int32_t write_media_tag(void *context, const uint8_t *data, const int32_t type, const uint32_t length)
+int32_t aaruf_write_media_tag(void *context, const uint8_t *data, const int32_t type, const uint32_t length)
 {
-    TRACE("Entering write_media_tag(%p, %p, %d, %d)", context, data, type, length);
+    TRACE("Entering aaruf_write_media_tag(%p, %p, %d, %d)", context, data, type, length);
 
     // Check context is correct AaruFormat context
     if(context == NULL)
     {
         FATAL("Invalid context");
 
-        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_AARUFORMAT");
+        TRACE("Exiting aaruf_write_media_tag() = AARUF_ERROR_NOT_AARUFORMAT");
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
@@ -1518,7 +1518,7 @@ int32_t write_media_tag(void *context, const uint8_t *data, const int32_t type, 
     {
         FATAL("Invalid context");
 
-        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_AARUFORMAT");
+        TRACE("Exiting aaruf_write_media_tag() = AARUF_ERROR_NOT_AARUFORMAT");
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
@@ -1527,7 +1527,7 @@ int32_t write_media_tag(void *context, const uint8_t *data, const int32_t type, 
     {
         FATAL("Trying to write a read-only image");
 
-        TRACE("Exiting aaruf_write_sector() = AARUF_READ_ONLY");
+        TRACE("Exiting aaruf_write_media_tag() = AARUF_READ_ONLY");
         return AARUF_READ_ONLY;
     }
 
@@ -1572,6 +1572,6 @@ int32_t write_media_tag(void *context, const uint8_t *data, const int32_t type, 
         old_media_tag = NULL;
     }
 
-    TRACE("Exiting write_media_tag() = AARUF_STATUS_OK");
+    TRACE("Exiting aaruf_write_media_tag() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
 }
