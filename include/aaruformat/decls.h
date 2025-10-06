@@ -96,8 +96,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
                                                  const uint8_t *data, uint8_t sector_status, uint32_t length);
 AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t sector_address, bool negative,
                                                       const uint8_t *data, uint8_t sector_status, uint32_t length);
-AARU_EXPORT int32_t AARU_CALL aaruf_write_media_tag(void *context, const uint8_t *data, const int32_t type,
-                                              const uint32_t length);
+AARU_EXPORT int32_t AARU_CALL aaruf_write_media_tag(void *context, const uint8_t *data, int32_t type, uint32_t length);
+AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, uint64_t sector_address, bool negative,
+                                                     const uint8_t *data, size_t length, int32_t tag);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context);
 
@@ -161,7 +162,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_cicm_metadata(const void *context, uint8
 AARU_EXPORT int32_t AARU_CALL aaruf_get_aaru_json_metadata(const void *context, uint8_t *buffer, size_t *length);
 AARU_EXPORT int32_t AARU_CALL aaruf_set_aaru_json_metadata(void *context, uint8_t *data, size_t length);
 
-AARU_EXPORT int32_t AARU_CALL aaruf_get_dumphw(void* context, uint8_t *buffer, size_t *length);
+AARU_EXPORT int32_t AARU_CALL aaruf_get_dumphw(void *context, uint8_t *buffer, size_t *length);
 AARU_EXPORT int32_t AARU_CALL aaruf_set_dumphw(void *context, uint8_t *data, size_t length);
 
 AARU_EXPORT spamsum_ctx *AARU_CALL aaruf_spamsum_init(void);

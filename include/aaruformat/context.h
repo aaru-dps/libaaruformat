@@ -240,10 +240,11 @@ typedef struct aaruformatContext
     AaruMetadataJsonBlockHeader jsonBlockHeader;  ///< JSON metadata block header (if present).
     uint8_t                    *jsonBlock;        ///< JSON metadata block payload (UTF-8).
 
-    uint8_t *sector_id;       ///< DVD sector ID (4 bytes) if present.
-    uint8_t *sector_ied;      ///< DVD sector IED (2 bytes) if present.
-    uint8_t *sector_cpr_mai;  ///< DVD sector CPR_MAI (6 bytes) if present.
-    uint8_t *sector_edc;      ///< DVD sector EDC (4 bytes) if present.
+    uint8_t *sector_id;                   ///< DVD sector ID (4 bytes) if present.
+    uint8_t *sector_ied;                  ///< DVD sector IED (2 bytes) if present.
+    uint8_t *sector_cpr_mai;              ///< DVD sector CPR_MAI (6 bytes) if present.
+    uint8_t *sector_edc;                  ///< DVD sector EDC (4 bytes) if present.
+    uint8_t *sector_decrypted_title_key;  ///< DVD decrypted title key (5 bytes) if present.
 } aaruformatContext;
 
 /** \struct DumpHardwareEntriesWithData

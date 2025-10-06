@@ -63,6 +63,7 @@
 #define AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA   (-24)  ///< Failure writing block payload.
 #define AARUF_ERROR_CANNOT_SET_DDT_ENTRY      (-25)  ///< Failed to encode/store a DDT entry (overflow or IO).
 #define AARUF_ERROR_INCORRECT_DATA_SIZE       (-26)  ///< Data size does not match expected size.
+#define AARUF_ERROR_INVALID_TAG               (-27)  ///< Invalid or unsupported media or sector tag format.
 /** @} */
 
 /** \name Non-fatal sector status codes (non-negative)

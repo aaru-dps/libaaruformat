@@ -588,34 +588,23 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
             else
                 corrected_sector_address += ctx->userDataDdtHeader.negative;
 
-            uint64_t total_sectors = ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow;
+            uint64_t total_sectors =
+                ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow;
 
             // DVD long sector
-            if(length == 2064 && (
-                               ctx->imageInfo.MediaType == DVDROM ||
-                                                    ctx->imageInfo.MediaType == PS2DVD ||
-                                                    ctx->imageInfo.MediaType == SACD ||
-                                                    ctx->imageInfo.MediaType == PS3DVD ||
-                                                    ctx->imageInfo.MediaType == DVDR ||
-                                                    ctx->imageInfo.MediaType == DVDRW ||
-                                                    ctx->imageInfo.MediaType == DVDPR ||
-                                                    ctx->imageInfo.MediaType == DVDPRW ||
-                                                    ctx->imageInfo.MediaType == DVDPRWDL ||
-                                                    ctx->imageInfo.MediaType == DVDRDL ||
-                                                    ctx->imageInfo.MediaType == DVDPRDL ||
-                                                    ctx->imageInfo.MediaType == DVDRAM ||
-                                                    ctx->imageInfo.MediaType == DVDRWDL ||
-                                                    ctx->imageInfo.MediaType == DVDDownload ||
-                                                    ctx->imageInfo.MediaType == Nuon))
+            if(length == 2064 && (ctx->imageInfo.MediaType == DVDROM || ctx->imageInfo.MediaType == PS2DVD ||
+                                  ctx->imageInfo.MediaType == SACD || ctx->imageInfo.MediaType == PS3DVD ||
+                                  ctx->imageInfo.MediaType == DVDR || ctx->imageInfo.MediaType == DVDRW ||
+                                  ctx->imageInfo.MediaType == DVDPR || ctx->imageInfo.MediaType == DVDPRW ||
+                                  ctx->imageInfo.MediaType == DVDPRWDL || ctx->imageInfo.MediaType == DVDRDL ||
+                                  ctx->imageInfo.MediaType == DVDPRDL || ctx->imageInfo.MediaType == DVDRAM ||
+                                  ctx->imageInfo.MediaType == DVDRWDL || ctx->imageInfo.MediaType == DVDDownload ||
+                                  ctx->imageInfo.MediaType == Nuon))
             {
-                if(ctx->sector_id == NULL)
-                    ctx->sector_id = calloc(1, 4 * total_sectors);
-                if(ctx->sector_ied == NULL)
-                    ctx->sector_ied = calloc(1, 2 * total_sectors);
-                if(ctx->sector_cpr_mai == NULL)
-                    ctx->sector_cpr_mai = calloc(1, 6 * total_sectors);
-                if(ctx->sector_edc == NULL)
-                    ctx->sector_edc = calloc(1, 4 * total_sectors);
+                if(ctx->sector_id == NULL) ctx->sector_id = calloc(1, 4 * total_sectors);
+                if(ctx->sector_ied == NULL) ctx->sector_ied = calloc(1, 2 * total_sectors);
+                if(ctx->sector_cpr_mai == NULL) ctx->sector_cpr_mai = calloc(1, 6 * total_sectors);
+                if(ctx->sector_edc == NULL) ctx->sector_edc = calloc(1, 4 * total_sectors);
 
                 memcpy(ctx->sector_id + corrected_sector_address * 4, data, 4);
                 memcpy(ctx->sector_ied + corrected_sector_address * 2, data + 4, 2);
@@ -1546,7 +1535,7 @@ int32_t aaruf_write_media_tag(void *context, const uint8_t *data, const int32_t 
     }
     memcpy(new_data, data, length);
 
-    mediaTagEntry *media_tag = malloc(sizeof(mediaTagEntry));
+    mediaTagEntry *media_tag     = malloc(sizeof(mediaTagEntry));
     mediaTagEntry *old_media_tag = NULL;
 
     if(media_tag == NULL)
@@ -1574,4 +1563,600 @@ int32_t aaruf_write_media_tag(void *context, const uint8_t *data, const int32_t 
 
     TRACE("Exiting aaruf_write_media_tag() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Writes per-sector tag data (auxiliary metadata) for a specific sector.
+ *
+ * This function stores auxiliary metadata associated with individual sectors, such as CD subchannel
+ * data, DVD auxiliary fields, track metadata, or proprietary tag formats used by specific storage
+ * systems. Unlike media tags (which apply to the entire medium), sector tags are per-sector metadata
+ * that provide additional context, error correction, copy protection, or device-specific information
+ * for each individual sector.
+ *
+ * The function validates the tag type against the media type, verifies the data size matches the
+ * expected length for that tag type, allocates buffers as needed, and stores the tag data at the
+ * appropriate offset within the tag buffer. Some tags (like track flags and ISRC) update track
+ * metadata rather than per-sector buffers.
+ *
+ * **Supported tag types and their characteristics:**
+ *
+ * **Optical Disc (CD/DVD) Tags:**
+ * - **CdTrackFlags** (1 byte): Track control flags for CD tracks
+ *   - Updates track metadata in ctx->trackEntries for the track containing the sector
+ *   - Includes flags like copy permitted, data track, four-channel audio, etc.
+ *
+ * - **CdTrackIsrc** (12 bytes): International Standard Recording Code for CD tracks
+ *   - Updates track metadata in ctx->trackEntries for the track containing the sector
+ *   - Identifies the recording for copyright and royalty purposes
+ *
+ * - **CdSectorSubchannel** (96 bytes): CD subchannel data (P-W subchannels)
+ *   - Stored in ctx->sector_subchannel buffer
+ *   - Contains control information, track numbers, timecodes, and CD-TEXT data
+ *
+ * - **DvdSectorCprMai** (6 bytes): DVD Copyright Management Information
+ *   - Stored in ctx->sector_cpr_mai buffer
+ *   - Contains copy protection and media authentication information
+ *
+ * - **DvdSectorInformation** (1 byte): DVD sector information field
+ *   - Stored in first byte of ctx->sector_id buffer (4 bytes per sector)
+ *   - Contains sector type and layer information
+ *
+ * - **DvdSectorNumber** (3 bytes): DVD sector number field
+ *   - Stored in bytes 1-3 of ctx->sector_id buffer (4 bytes per sector)
+ *   - Physical sector address encoded in the sector header
+ *
+ * - **DvdSectorIed** (2 bytes): DVD ID Error Detection field
+ *   - Stored in ctx->sector_ied buffer
+ *   - Error detection code for the sector ID field
+ *
+ * - **DvdSectorEdc** (4 bytes): DVD Error Detection Code
+ *   - Stored in ctx->sector_edc buffer
+ *   - Error detection code for the entire sector
+ *
+ * - **DvdDiscKeyDecrypted** (5 bytes): Decrypted DVD title key
+ *   - Stored in ctx->sector_decrypted_title_key buffer
+ *   - Used for accessing encrypted DVD content
+ *
+ * **Block Media (Proprietary Format) Tags:**
+ * - **AppleSonyTag** (12 bytes): Apple II Sony 3.5" disk tag data
+ *   - Stored in ctx->sector_subchannel buffer
+ *   - Contains file system metadata used by Apple II systems
+ *
+ * - **AppleProfileTag** (20 bytes): Apple ProFile/FileWare hard drive tag data
+ *   - Stored in ctx->sector_subchannel buffer
+ *   - Contains file system and bad block metadata
+ *
+ * - **PriamDataTowerTag** (24 bytes): Priam Data Tower hard drive tag data
+ *   - Stored in ctx->sector_subchannel buffer
+ *   - Contains proprietary metadata used by Priam drives
+ *
+ * **Sector addressing:**
+ * The function supports both positive and negative sector addressing:
+ * - Negative sectors: Lead-in area before sector 0 (for optical media)
+ * - Positive sectors: Main data area and lead-out overflow area
+ * - Internal correction adjusts addresses to buffer offsets
+ *
+ * **Buffer allocation:**
+ * Tag buffers are allocated on-demand when the first tag of a given type is written. Buffers
+ * are sized to accommodate all sectors (negative + normal + overflow) and persist for the
+ * lifetime of the context. Memory is freed during aaruf_close().
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, write-enabled image context).
+ * @param sector_address The logical sector number to write the tag for. Must be within valid
+ *                       bounds for the image (0 to Sectors-1 for positive, 0 to negative-1
+ *                       when using negative addressing).
+ * @param negative If true, sector_address refers to a negative (lead-in) sector; if false,
+ *                 it refers to a positive sector (main data or overflow area).
+ * @param data Pointer to the tag data to write. Must not be NULL. The data size must exactly
+ *             match the expected size for the tag type.
+ * @param length Length of the tag data in bytes. Must match the required size for the tag type.
+ * @param tag Tag type identifier (from the tag enumeration). Determines which buffer to write to
+ *            and the expected data size.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully wrote sector tag. This is returned when:
+ *         - The context is valid and properly initialized
+ *         - The context is opened in write mode (ctx->isWriting is true)
+ *         - The sector address is within valid bounds
+ *         - The tag type is supported and appropriate for the media type
+ *         - The data length matches the required size for the tag type
+ *         - Memory allocation succeeded (if buffer needed to be created)
+ *         - Tag data was copied to the appropriate buffer or track metadata updated
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
+ *         - The context was not properly initialized by aaruf_create()
+ *
+ * @retval AARUF_READ_ONLY (-13) The context is not opened for writing. This occurs when:
+ *         - The image was opened with aaruf_open() instead of aaruf_create()
+ *         - The context's isWriting flag is false
+ *         - Attempting to modify a read-only image
+ *
+ * @retval AARUF_ERROR_SECTOR_OUT_OF_BOUNDS (-4) Sector address is invalid. This occurs when:
+ *         - negative is true and sector_address > negative-1
+ *         - negative is false and sector_address > Sectors+overflow-1
+ *         - Attempting to write beyond the image boundaries
+ *
+ * @retval AARUF_ERROR_INCORRECT_DATA_SIZE (-11) Invalid data or length. This occurs when:
+ *         - The data parameter is NULL
+ *         - The length parameter is 0
+ *         - The length doesn't match the required size for the tag type
+ *         - Tag size validation failed
+ *
+ * @retval AARUF_ERROR_INCORRECT_MEDIA_TYPE (-26) Invalid media type for tag. This occurs when:
+ *         - Attempting to write optical disc tags (CD/DVD) to block media
+ *         - Attempting to write block media tags to optical disc
+ *         - Tag type is incompatible with ctx->imageInfo.XmlMediaType
+ *
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-8) Memory allocation failed. This occurs when:
+ *         - calloc() failed to allocate buffer for tag data
+ *         - System is out of memory or memory is severely fragmented
+ *         - Buffer allocation is required but cannot be satisfied
+ *
+ * @retval AARUF_ERROR_TRACK_NOT_FOUND (-25) Track not found for sector. This occurs when:
+ *         - Writing CdTrackFlags or CdTrackIsrc tags
+ *         - The specified sector is not contained within any defined track
+ *         - Track metadata has not been initialized
+ *
+ * @retval AARUF_ERROR_INVALID_TAG (-27) Unsupported or unknown tag type. This occurs when:
+ *         - The tag parameter doesn't match any known tag type
+ *         - The tag type is not implemented
+ *         - Invalid tag identifier provided
+ *
+ * @note Tag Data Persistence:
+ *       - Tag data is stored in memory until aaruf_close() is called
+ *       - Tags are written as separate data blocks during image finalization
+ *       - CD subchannel and DVD auxiliary fields are written by dedicated block writers
+ *       - Track metadata (flags, ISRC) is written as part of the tracks block
+ *
+ * @note Buffer Reuse:
+ *       - Some tag types share the same buffer (ctx->sector_subchannel)
+ *       - CD subchannel uses 96 bytes per sector
+ *       - Apple Sony tag uses 12 bytes per sector
+ *       - Apple Profile tag uses 20 bytes per sector
+ *       - Priam Data Tower tag uses 24 bytes per sector
+ *       - Ensure consistent tag type usage within a single image
+ *
+ * @note DVD Sector ID Split:
+ *       - DVD sector ID is 4 bytes but written as two separate tags
+ *       - DvdSectorInformation writes byte 0 (sector info)
+ *       - DvdSectorNumber writes bytes 1-3 (sector number)
+ *       - Both tags share ctx->sector_id buffer
+ *
+ * @note Tag Size Validation:
+ *       - Each tag type has a fixed expected size
+ *       - Size mismatches are rejected with AARUF_ERROR_INCORRECT_DATA_SIZE
+ *       - This prevents partial writes and buffer corruption
+ *
+ * @note Media Type Validation:
+ *       - Optical disc tags require XmlMediaType == OpticalDisc
+ *       - Block media tags require XmlMediaType == BlockMedia
+ *       - This prevents incompatible tag types from being written
+ *
+ * @note Multiple Writes to Same Sector:
+ *       - Writing the same tag type to the same sector multiple times replaces the previous value
+ *       - No warning or error is generated for overwrites
+ *       - Last write wins
+ *
+ * @warning Tag data is not immediately written to disk. All tag data is buffered in memory
+ *          and written during aaruf_close(). Ensure sufficient memory is available for large
+ *          images with extensive tag data.
+ *
+ * @warning Mixing incompatible tag types that share buffers (e.g., CD subchannel and Apple tags)
+ *          will cause data corruption. Only use tag types appropriate for your media format.
+ *
+ * @warning For track-based tags (CdTrackFlags, CdTrackIsrc), tracks must be defined before
+ *          writing tags. Call aaruf_set_tracks() to initialize track metadata first.
+ *
+ * @see aaruf_write_media_tag() for writing whole-medium tags.
+ * @see aaruf_write_sector_long() for writing sectors with embedded tag data.
+ * @see write_sector_subchannel() for the serialization of CD subchannel data.
+ * @see write_dvd_long_sector_blocks() for the serialization of DVD auxiliary data.
+ */
+int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, const bool negative, const uint8_t *data,
+                               const size_t length, const int32_t tag)
+{
+    TRACE("Entering aaruf_write_sector_tag(%p, %" PRIu64 ", %d, %u, %p, %d)", context, sector_address, negative, data,
+          length, tag);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->isWriting)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    if(negative && sector_address > ctx->userDataDdtHeader.negative - 1)
+    {
+        FATAL("Sector address out of bounds");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+        return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
+    }
+
+    if(!negative && sector_address > ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow - 1)
+    {
+        FATAL("Sector address out of bounds");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+        return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
+    }
+
+    if(data == NULL || length == 0)
+    {
+        FATAL("Invalid data or length");
+        return AARUF_ERROR_INCORRECT_DATA_SIZE;
+    }
+
+    uint64_t corrected_sector_address = sector_address;
+
+    // Calculate positive or negative sector
+    if(negative)
+        corrected_sector_address -= ctx->userDataDdtHeader.negative;
+    else
+        corrected_sector_address += ctx->userDataDdtHeader.negative;
+
+    const uint64_t total_sectors =
+        ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow;
+
+    switch(tag)
+    {
+        case CdTrackFlags:
+            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(length != 1)
+            {
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            for(int i = 0; i < ctx->tracksHeader.entries; i++)
+                if(sector_address >= ctx->trackEntries[i].start && sector_address <= ctx->trackEntries[i].end)
+                {
+                    ctx->trackEntries[i].flags = data[0];
+                    TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK");
+                    return AARUF_STATUS_OK;
+                }
+
+            FATAL("Track not found");
+            return AARUF_ERROR_TRACK_NOT_FOUND;
+        case CdTrackIsrc:
+            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(length != 12)
+            {
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            for(int i = 0; i < ctx->tracksHeader.entries; i++)
+                if(sector_address >= ctx->trackEntries[i].start && sector_address <= ctx->trackEntries[i].end)
+                {
+                    memcpy(ctx->trackEntries[i].isrc, data, 12);
+                    TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK");
+                    return AARUF_STATUS_OK;
+                }
+
+            FATAL("Track not found");
+            return AARUF_ERROR_TRACK_NOT_FOUND;
+        case CdSectorSubchannel:
+            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(length != 96)
+            {
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_subchannel == NULL) ctx->sector_subchannel = calloc(1, 96 * total_sectors);
+
+            if(ctx->sector_subchannel == NULL)
+            {
+                FATAL("Could not allocate memory for sector subchannel");
+
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            memcpy(ctx->sector_subchannel + corrected_sector_address * 96, data, 96);
+            TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        case DvdSectorCprMai:
+            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(length != 6)
+            {
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_cpr_mai == NULL) ctx->sector_cpr_mai = calloc(1, 6 * total_sectors);
+
+            if(ctx->sector_cpr_mai == NULL)
+            {
+                FATAL("Could not allocate memory for sector CPR/MAI");
+
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            memcpy(ctx->sector_cpr_mai + corrected_sector_address * 6, data, 6);
+            TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        case DvdSectorInformation:
+            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(length != 1)
+            {
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_id == NULL) ctx->sector_id = calloc(1, 4 * total_sectors);
+
+            if(ctx->sector_id == NULL)
+            {
+                FATAL("Could not allocate memory for sector ID");
+
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            memcpy(ctx->sector_id + corrected_sector_address * 4, data, 1);
+            TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        case DvdSectorNumber:
+            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(length != 3)
+            {
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_id == NULL) ctx->sector_id = calloc(1, 4 * total_sectors);
+
+            if(ctx->sector_id == NULL)
+            {
+                FATAL("Could not allocate memory for sector ID");
+
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            memcpy(ctx->sector_id + corrected_sector_address * 4 + 1, data, 3);
+            TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        case DvdSectorIed:
+            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(length != 2)
+            {
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_ied == NULL) ctx->sector_ied = calloc(1, 2 * total_sectors);
+
+            if(ctx->sector_ied == NULL)
+            {
+                FATAL("Could not allocate memory for sector IED");
+
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            memcpy(ctx->sector_ied + corrected_sector_address * 2, data, 2);
+            TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        case DvdSectorEdc:
+            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(length != 4)
+            {
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_edc == NULL) ctx->sector_edc = calloc(1, 4 * total_sectors);
+
+            if(ctx->sector_edc == NULL)
+            {
+                FATAL("Could not allocate memory for sector EDC");
+
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            memcpy(ctx->sector_edc + corrected_sector_address * 4, data, 4);
+            TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        case DvdDiscKeyDecrypted:
+            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(length != 5)
+            {
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_decrypted_title_key == NULL) ctx->sector_decrypted_title_key = calloc(1, 4 * total_sectors);
+
+            if(ctx->sector_decrypted_title_key == NULL)
+            {
+                FATAL("Could not allocate memory for sector decrypted title key");
+
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            memcpy(ctx->sector_decrypted_title_key + corrected_sector_address * 5, data, 5);
+            TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        case AppleSonyTag:
+            if(ctx->imageInfo.XmlMediaType != BlockMedia)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(length != 12)
+            {
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_subchannel == NULL) ctx->sector_subchannel = calloc(1, 12 * total_sectors);
+
+            if(ctx->sector_subchannel == NULL)
+            {
+                FATAL("Could not allocate memory for Apple Sony tag");
+
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            memcpy(ctx->sector_subchannel + corrected_sector_address * 12, data, 12);
+            TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        case AppleProfileTag:
+            if(ctx->imageInfo.XmlMediaType != BlockMedia)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(length != 20)
+            {
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_subchannel == NULL) ctx->sector_subchannel = calloc(1, 20 * total_sectors);
+
+            if(ctx->sector_subchannel == NULL)
+            {
+                FATAL("Could not allocate memory for Apple Profile tag");
+
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            memcpy(ctx->sector_subchannel + corrected_sector_address * 20, data, 20);
+            TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        case PriamDataTowerTag:
+            if(ctx->imageInfo.XmlMediaType != BlockMedia)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(length != 24)
+            {
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_subchannel == NULL) ctx->sector_subchannel = calloc(1, 24 * total_sectors);
+
+            if(ctx->sector_subchannel == NULL)
+            {
+                FATAL("Could not allocate memory for Priam Data Tower tag");
+
+                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            memcpy(ctx->sector_subchannel + corrected_sector_address * 24, data, 24);
+            TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        default:
+            TRACE("Do not know how to write sector tag %d", tag);
+            return AARUF_ERROR_INVALID_TAG;
+    }
 }
