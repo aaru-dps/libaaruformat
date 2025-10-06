@@ -819,6 +819,62 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
     switch(ctx->imageInfo.XmlMediaType)
     {
         case OpticalDisc:
+            if(ctx->imageInfo.MediaType == DVDROM || ctx->imageInfo.MediaType == PS2DVD ||
+               ctx->imageInfo.MediaType == SACD || ctx->imageInfo.MediaType == PS3DVD ||
+               ctx->imageInfo.MediaType == DVDR || ctx->imageInfo.MediaType == DVDRW ||
+               ctx->imageInfo.MediaType == DVDPR || ctx->imageInfo.MediaType == DVDPRW ||
+               ctx->imageInfo.MediaType == DVDPRWDL || ctx->imageInfo.MediaType == DVDRDL ||
+               ctx->imageInfo.MediaType == DVDPRDL || ctx->imageInfo.MediaType == DVDRAM ||
+               ctx->imageInfo.MediaType == DVDRWDL || ctx->imageInfo.MediaType == DVDDownload ||
+               ctx->imageInfo.MediaType == Nuon)
+            {
+                if(ctx->sector_id == NULL || ctx->sector_ied == NULL || ctx->sector_cpr_mai == NULL ||
+                   ctx->sector_edc == NULL)
+                    return aaruf_read_sector(context, sector_address, negative, data, length);
+
+                if(*length < 2064 || data == NULL)
+                {
+                    *length = 2064;
+                    FATAL("Buffer too small for sector, required %u bytes", *length);
+
+                    TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_BUFFER_TOO_SMALL");
+                    return AARUF_ERROR_BUFFER_TOO_SMALL;
+                }
+
+                bare_length = 0;
+                aaruf_read_sector(context, sector_address, negative, NULL, &bare_length);
+
+                TRACE("Allocating memory for bare data");
+                bare_data = (uint8_t *)malloc(bare_length);
+
+                if(bare_data == NULL)
+                {
+                    FATAL("Could not allocate memory for bare data");
+
+                    TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                    return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                }
+
+                res = aaruf_read_sector(context, sector_address, negative, bare_data, &bare_length);
+
+                if(res < AARUF_STATUS_OK)
+                {
+                    free(bare_data);
+
+                    TRACE("Exiting aaruf_read_sector_long() = %d", res);
+                    return res;
+                }
+
+                memcpy(data, ctx->sector_id + corrected_sector_address * 4, 4);
+                memcpy(data + 4, ctx->sector_ied + corrected_sector_address * 2, 2);
+                memcpy(data + 6, ctx->sector_cpr_mai + corrected_sector_address * 6, 6);
+                memcpy(data + 12, bare_data, 2048);
+                memcpy(data + 2060, ctx->sector_edc + corrected_sector_address * 4, 4);
+
+                free(bare_data);
+                return AARUF_STATUS_OK;
+            }
+
             if(*length < 2352 || data == NULL)
             {
                 *length = 2352;
@@ -827,6 +883,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                 TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_BUFFER_TOO_SMALL");
                 return AARUF_ERROR_BUFFER_TOO_SMALL;
             }
+
             if((ctx->sector_suffix == NULL || ctx->sector_prefix == NULL) &&
                (ctx->sectorSuffixCorrected == NULL || ctx->sectorPrefixCorrected == NULL))
                 return aaruf_read_sector(context, sector_address, negative, data, length);
