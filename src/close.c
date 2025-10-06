@@ -649,7 +649,7 @@ static void write_tracks_block(aaruformatContext *ctx)
  *
  * When Compact Disc Mode 2 form sectors are present, optional 8-byte subheaders (one per logical
  * sector including negative / overflow ranges) are stored in an in-memory buffer. This function
- * writes that buffer as a DataBlock of type CompactDiscMode2Subheader with CRC64 (no compression)
+ * writes that buffer as a DataBlock of type CompactDiscMode2Subheader with CRC64 (compression enabled if configured)
  * and adds an IndexEntry.
  *
  * @param ctx Pointer to an initialized aaruformatContext in write mode; ctx->mode2_subheaders must
@@ -676,20 +676,62 @@ static void write_mode2_subheaders_block(aaruformatContext *ctx)
     BlockHeader subheaders_block = {0};
     subheaders_block.identifier  = DataBlock;
     subheaders_block.type        = CompactDiscMode2Subheader;
-    subheaders_block.compression = None;
+    subheaders_block.compression = ctx->compression_enabled ? Lzma : None;
     subheaders_block.length =
         (uint32_t)(ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow) * 8;
-    subheaders_block.cmpLength = subheaders_block.length;
 
     // Calculate CRC64
-    subheaders_block.crc64    = aaruf_crc64_data(ctx->mode2_subheaders, subheaders_block.length);
-    subheaders_block.cmpCrc64 = subheaders_block.crc64;
+    subheaders_block.crc64 = aaruf_crc64_data(ctx->mode2_subheaders, subheaders_block.length);
+
+    uint8_t *buffer                                  = NULL;
+    uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
+
+    if(subheaders_block.compression == None)
+    {
+        buffer                    = ctx->mode2_subheaders;
+        subheaders_block.cmpCrc64 = subheaders_block.crc64;
+    }
+    else
+    {
+        buffer = malloc((size_t)subheaders_block.length * 2);  // Allocate double size for compression
+        if(buffer == NULL)
+        {
+            TRACE("Failed to allocate memory for MODE 2 subheaders compression");
+            return;
+        }
+
+        size_t dst_size   = (size_t)subheaders_block.length * 2 * 2;
+        size_t props_size = LZMA_PROPERTIES_LENGTH;
+        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->writingBuffer, ctx->currentBlockHeader.length, lzma_properties,
+                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+
+        subheaders_block.cmpLength = (uint32_t)dst_size;
+
+        if(subheaders_block.cmpLength >= subheaders_block.length)
+        {
+            subheaders_block.compression = None;
+            free(buffer);
+            buffer = ctx->mode2_subheaders;
+        }
+    }
+
+    if(subheaders_block.compression == None)
+    {
+        subheaders_block.cmpLength = subheaders_block.length;
+        subheaders_block.cmpCrc64  = subheaders_block.crc64;
+    }
+    else
+        subheaders_block.cmpCrc64 = aaruf_crc64_data(buffer, subheaders_block.cmpLength);
+
+    if(subheaders_block.compression == Lzma) subheaders_block.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write header
     if(fwrite(&subheaders_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
     {
+        if(subheaders_block.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
+
         // Write data
-        size_t written_bytes = fwrite(ctx->mode2_subheaders, subheaders_block.length, 1, ctx->imageStream);
+        size_t written_bytes = fwrite(buffer, subheaders_block.length, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote MODE 2 subheaders block (%" PRIu64 " bytes)", subheaders_block.length);
@@ -703,6 +745,8 @@ static void write_mode2_subheaders_block(aaruformatContext *ctx)
             TRACE("Added MODE 2 subheaders block index entry at offset %" PRIu64, mode2_subheaders_position);
         }
     }
+
+    if(subheaders_block.compression == Lzma) free(buffer);
 }
 
 /**
