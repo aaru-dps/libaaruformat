@@ -1185,6 +1185,188 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
     return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
 }
 
+/**
+ * @brief Finalizes and writes the current data block to the AaruFormat image file.
+ *
+ * This function completes the current writing block by computing checksums, optionally compressing
+ * the buffered sector data, writing the block header and data to the image file, updating the index,
+ * and cleaning up resources. It is called automatically when a block is full (reaches maximum size
+ * determined by dataShift), when sector size changes, or when image finalization begins. The function
+ * supports multiple compression algorithms (FLAC for audio, LZMA for data) with automatic fallback
+ * to uncompressed storage if compression is ineffective.
+ *
+ * **Block Finalization Sequence:**
+ *
+ * 1. **Context Validation**: Verify context is valid and opened for writing
+ * 2. **Length Calculation**: Set block length = currentBlockOffset × sectorSize
+ * 3. **CRC64 Computation**: Calculate checksum of uncompressed block data
+ * 4. **Compression Processing** (if enabled):
+ *    - FLAC: For audio tracks, compress using Red Book audio encoding with configurable block size
+ *    - LZMA: For data tracks, compress using LZMA algorithm with dictionary size optimization
+ *    - Fallback: If compressed size ≥ uncompressed size, use uncompressed storage
+ * 5. **Compressed CRC64**: Calculate checksum of compressed data (if compression was applied)
+ * 6. **Index Registration**: Add IndexEntry to ctx->indexEntries for block lookup
+ * 7. **File Writing**: Write BlockHeader, optional LZMA properties, and block data to image stream
+ * 8. **Position Update**: Calculate next block position with alignment boundary adjustment
+ * 9. **Resource Cleanup**: Free buffers, reset counters, clear block header
+ *
+ * **Compression Handling:**
+ *
+ * - **None (CompressionType = 0)**: No compression applied
+ *   - cmpLength = length (uncompressed size)
+ *   - cmpCrc64 = crc64 (same checksum)
+ *   - Direct write of ctx->writingBuffer to file
+ *
+ * - **FLAC (CompressionType = 2)**: For CD audio tracks (Red Book format)
+ *   - Allocates 2× length buffer for compressed data
+ *   - Calculates optimal FLAC block size (MIN_FLAKE_BLOCK to MAX_FLAKE_BLOCK range)
+ *   - Pads incomplete blocks with zeros to meet FLAC block size requirements
+ *   - Encoding parameters: mid-side stereo, Hamming apodization, 12 max LPC order
+ *   - Falls back to None if compression ineffective (compressed ≥ uncompressed)
+ *
+ * - **LZMA (CompressionType = 1)**: For data tracks and non-audio content
+ *   - Allocates 2× length buffer for compressed data
+ *   - LZMA properties: level 9, dictionary size from ctx->lzma_dict_size
+ *   - Properties stored as 5-byte header: lc=4, lp=0, pb=2, fb=273, threads=8
+ *   - Falls back to None if compression ineffective (compressed ≥ uncompressed)
+ *   - Compressed length includes LZMA_PROPERTIES_LENGTH (5 bytes) overhead
+ *
+ * **Index Entry Creation:**
+ *
+ * Each closed block is registered in the index with:
+ * - blockType = DataBlock (0x4B4C4244)
+ * - dataType = UserData (1)
+ * - offset = ctx->nextBlockPosition (file position where block was written)
+ *
+ * This enables efficient block lookup during image reading via binary search on index entries.
+ *
+ * **File Layout:**
+ *
+ * Written to ctx->imageStream at ctx->nextBlockPosition:
+ * 1. BlockHeader (sizeof(BlockHeader) bytes)
+ * 2. LZMA properties (5 bytes, only if compression = Lzma)
+ * 3. Block data (cmpLength bytes - compressed or uncompressed depending on compression type)
+ *
+ * **Next Block Position Calculation:**
+ *
+ * After writing, nextBlockPosition is updated to the next aligned boundary:
+ * - block_total_size = sizeof(BlockHeader) + cmpLength
+ * - alignment_mask = (1 << blockAlignmentShift) - 1
+ * - nextBlockPosition = (currentPosition + block_total_size + alignment_mask) & ~alignment_mask
+ *
+ * This ensures all blocks begin on properly aligned file offsets for efficient I/O.
+ *
+ * **Resource Cleanup:**
+ *
+ * Before returning, the function:
+ * - Frees ctx->writingBuffer and sets pointer to NULL
+ * - Resets ctx->currentBlockOffset to 0
+ * - Clears ctx->currentBlockHeader (memset to 0)
+ * - Frees ctx->crc64Context
+ * - Resets ctx->writingBufferPosition to 0
+ *
+ * This prepares the context for the next block or signals that no block is currently open.
+ *
+ * @param ctx Pointer to an initialized aaruformatContext in write mode.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully finalized and wrote the block. This is returned when:
+ *         - The context is valid and properly initialized
+ *         - CRC64 computation completed successfully
+ *         - Compression (if applicable) succeeded or fell back appropriately
+ *         - Block header was successfully written to the image file
+ *         - Block data (compressed or uncompressed) was successfully written
+ *         - LZMA properties (if applicable) were successfully written
+ *         - Index entry was added to ctx->indexEntries
+ *         - Next block position was calculated and updated
+ *         - All resources were freed and context reset for next block
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
+ *
+ * @retval AARUF_READ_ONLY (-22) Attempting to finalize block on read-only image. This occurs when:
+ *         - The context's isWriting flag is false
+ *         - The image was opened in read-only mode with aaruf_open()
+ *
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
+ *         - Cannot allocate compression buffer (2× block length) for FLAC compression
+ *         - Cannot allocate compression buffer (2× block length) for LZMA compression
+ *         - System is out of memory or memory is severely fragmented
+ *
+ * @retval AARUF_ERROR_CANNOT_WRITE_BLOCK_HEADER (-23) Failed to write block header. This occurs when:
+ *         - fwrite() for BlockHeader returns != 1 (incomplete write or I/O error)
+ *         - Disk space is insufficient for header
+ *         - File system errors or permissions prevent writing
+ *         - Media errors on the destination storage device
+ *
+ * @retval AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA (-24) Failed to write block data. This occurs when:
+ *         - fwrite() for LZMA properties returns != 1 (when compression = Lzma)
+ *         - fwrite() for uncompressed data returns != 1 (when compression = None)
+ *         - fwrite() for compressed data returns != 1 (when compression = Flac/Lzma)
+ *         - Disk space is insufficient for block data
+ *         - File system errors or permissions prevent writing
+ *         - Invalid compression type (not None, Flac, or Lzma)
+ *
+ * @note Compression Algorithm Selection:
+ *       - Compression type is determined when block is created in aaruf_write_sector()
+ *       - Audio tracks (TrackType = Audio) use FLAC compression if enabled
+ *       - Data tracks use LZMA compression if enabled
+ *       - Special cases (JaguarCD data in audio, VideoNow) force LZMA even for audio tracks
+ *       - Compression can be disabled entirely via ctx->compression_enabled flag
+ *
+ * @note Compression Fallback Logic:
+ *       - If compressed size ≥ uncompressed size, compression is abandoned
+ *       - Compression buffer is freed and compression type set to None
+ *       - This prevents storage expansion from ineffective compression
+ *       - Fallback is transparent to caller; function still returns success
+ *
+ * @note FLAC Encoding Parameters:
+ *       - Encoding for Red Book audio (44.1kHz, 16-bit stereo)
+ *       - Block size: auto-selected between MIN_FLAKE_BLOCK and MAX_FLAKE_BLOCK samples
+ *       - Mid-side stereo enabled for better compression on correlated channels
+ *       - Hamming window apodization for LPC analysis
+ *       - Max LPC order: 12, QLP coefficient precision: 15 bits
+ *       - Application ID: "Aaru" with 4-byte signature
+ *
+ * @note LZMA Encoding Parameters:
+ *       - Compression level: 9 (maximum compression)
+ *       - Dictionary size: from ctx->lzma_dict_size (configurable per context)
+ *       - Literal context bits (lc): 4
+ *       - Literal position bits (lp): 0
+ *       - Position bits (pb): 2
+ *       - Fast bytes (fb): 273
+ *       - Threads: 8 (for multi-threaded compression)
+ *
+ * @note Index Management:
+ *       - Every closed block gets an index entry for efficient lookup
+ *       - Index entries are stored in ctx->indexEntries (dynamic array)
+ *       - Final index is serialized during aaruf_close() for image finalization
+ *       - Index enables O(log n) block lookup during image reading
+ *
+ * @note Alignment Requirements:
+ *       - Blocks must start on aligned boundaries per blockAlignmentShift
+ *       - Typical alignment: 512 bytes (shift=9) or 4096 bytes (shift=12)
+ *       - Alignment ensures efficient sector-aligned I/O on modern storage
+ *       - Gap between blocks is implicit; no padding data is written
+ *
+ * @warning This function assumes ctx->writingBuffer contains valid data for
+ *          ctx->currentBlockOffset sectors of ctx->currentBlockHeader.sectorSize bytes each.
+ *
+ * @warning Do not call this function when no block is open (ctx->writingBuffer == NULL).
+ *          This will result in undefined behavior or segmentation fault.
+ *
+ * @warning The function modifies ctx->nextBlockPosition, which affects where subsequent
+ *          blocks are written. Ensure file positioning is properly managed.
+ *
+ * @warning Memory allocated for compression buffers is freed before returning. Do not
+ *          retain pointers to compressed data after function completion.
+ *
+ * @warning CRC64 context (ctx->crc64Context) is freed during cleanup. Do not access
+ *          this pointer after calling this function.
+ *
+ * @internal
+ */
 int32_t aaruf_close_current_block(aaruformatContext *ctx)
 {
     // Not a libaaruformat context
@@ -1229,7 +1411,7 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
 
             ctx->currentBlockHeader.cmpLength = aaruf_flac_encode_redbook_buffer(
                 cmp_buffer, ctx->currentBlockHeader.length * 2, ctx->writingBuffer, ctx->currentBlockHeader.length,
-                flac_block_size, true, false, "hamming", 12, 15, true, false, 0, 8, "Aaru", 4096);
+                flac_block_size, true, false, "hamming", 12, 15, true, false, 0, 8, "Aaru", 4);
 
             if(ctx->currentBlockHeader.cmpLength >= ctx->currentBlockHeader.length)
             {
@@ -1296,7 +1478,10 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
     // Write block data
     if(ctx->currentBlockHeader.compression == Lzma &&
        fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream) != 1)
+    {
+        free(cmp_buffer);
         return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
+    }
 
     if(ctx->currentBlockHeader.compression == None)
     {
@@ -1306,7 +1491,12 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
     else
     {
         if(fwrite(cmp_buffer, ctx->currentBlockHeader.cmpLength, 1, ctx->imageStream) == 1)
+        {
+            free(cmp_buffer);
             return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
+        }
+
+        free(cmp_buffer);
     }
 
     // Update nextBlockPosition to point to the next available aligned position
