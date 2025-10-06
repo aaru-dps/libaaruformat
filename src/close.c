@@ -2068,10 +2068,10 @@ static void write_dvd_title_key_decrypted_block(const aaruformatContext *ctx)
  *   - Aligned to the DDT block boundary (controlled by ctx->userDataDdtHeader.blockAlignmentShift)
  *   - Prefixed with a BlockHeader containing the identifier DataBlock and a data type derived
  *     from the tag's type field via ::aaruf_get_datatype_for_media_tag_type()
- *   - Uncompressed (compression = None); both length and cmpLength are set to the tag's byte count
- *   - CRC64-protected: the checksum is computed over the raw tag data and stored in both crc64
- *     and cmpCrc64 fields of the BlockHeader
- *   - Followed immediately by the tag's data payload
+ *   - Compressed if enabled (compression = ctx->compression_enabled ? Lzma : None)
+ *   - CRC64-protected: the checksum is computed over the raw tag data and stored in crc64;
+ *     cmpCrc64 stores the checksum of compressed data or equals crc64 if uncompressed
+ *   - Followed immediately by the tag's data payload (compressed or uncompressed)
  *
  * After successfully writing a tag's header and data, an IndexEntry is appended to
  * ctx->indexEntries with:
@@ -2088,10 +2088,12 @@ static void write_dvd_title_key_decrypted_block(const aaruformatContext *ctx)
  * **Order of operations for each tag:**
  * 1. Seek to end of file
  * 2. Align file position to block boundary
- * 3. Construct BlockHeader with identifier, type, length, CRC64
- * 4. Write BlockHeader (sizeof(BlockHeader) bytes)
- * 5. Write tag data (tag->length bytes)
- * 6. On success, push IndexEntry to ctx->indexEntries
+ * 3. Construct BlockHeader with identifier, type, compression setting, length, CRC64
+ * 4. Compress tag data if enabled and compression is effective
+ * 5. Write BlockHeader (sizeof(BlockHeader) bytes)
+ * 6. Write LZMA properties if compressed (LZMA_PROPERTIES_LENGTH bytes)
+ * 7. Write tag data (compressed or uncompressed)
+ * 8. On success, push IndexEntry to ctx->indexEntries
  *
  * **Error handling:**
  * Write errors (fwrite returning < 1) are silently ignored for individual tags; no index entry is
@@ -2147,23 +2149,65 @@ static void write_media_tags(const aaruformatContext *ctx)
         BlockHeader tag_block = {0};
         tag_block.identifier  = DataBlock;
         tag_block.type        = (uint16_t)aaruf_get_datatype_for_media_tag_type(media_tag->type);
-        tag_block.compression = None;
+        tag_block.compression = ctx->compression_enabled ? Lzma : None;
         tag_block.length      = media_tag->length;
-        tag_block.cmpLength   = tag_block.length;
 
         // Calculate CRC64
-        tag_block.crc64    = aaruf_crc64_data(media_tag->data, tag_block.length);
-        tag_block.cmpCrc64 = tag_block.crc64;
+        tag_block.crc64 = aaruf_crc64_data(media_tag->data, tag_block.length);
+
+        uint8_t *buffer                                  = NULL;
+        uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
+
+        if(tag_block.compression == None)
+        {
+            buffer             = media_tag->data;
+            tag_block.cmpCrc64 = tag_block.crc64;
+        }
+        else
+        {
+            buffer = malloc((size_t)tag_block.length * 2);  // Allocate double size for compression
+            if(buffer == NULL)
+            {
+                TRACE("Failed to allocate memory for media tag compression");
+                return;
+            }
+
+            size_t dst_size   = (size_t)tag_block.length * 2 * 2;
+            size_t props_size = LZMA_PROPERTIES_LENGTH;
+            aaruf_lzma_encode_buffer(buffer, &dst_size, media_tag->data, tag_block.length, lzma_properties, &props_size,
+                                     9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+
+            tag_block.cmpLength = (uint32_t)dst_size;
+
+            if(tag_block.cmpLength >= tag_block.length)
+            {
+                tag_block.compression = None;
+                free(buffer);
+                buffer = media_tag->data;
+            }
+        }
+
+        if(tag_block.compression == None)
+        {
+            tag_block.cmpLength = tag_block.length;
+            tag_block.cmpCrc64  = tag_block.crc64;
+        }
+        else
+            tag_block.cmpCrc64 = aaruf_crc64_data(buffer, tag_block.cmpLength);
+
+        if(tag_block.compression == Lzma) tag_block.cmpLength += LZMA_PROPERTIES_LENGTH;
 
         // Write header
         if(fwrite(&tag_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
         {
-            // Write data
-            const size_t written_bytes = fwrite(media_tag->data, tag_block.length, 1, ctx->imageStream);
+            if(tag_block.compression == Lzma)
+                fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);  // Write data
+
+            const size_t written_bytes = fwrite(buffer, tag_block.cmpLength, 1, ctx->imageStream);
             if(written_bytes == 1)
             {
                 TRACE("Successfully wrote media tag block type %d (%" PRIu64 " bytes)", tag_block.type,
-                      tag_block.length);
+                      tag_block.cmpLength);
                 // Add media tag block to index
                 TRACE("Adding media tag type %d block to index", tag_block.type);
                 IndexEntry tag_index_entry;
@@ -2174,6 +2218,8 @@ static void write_media_tags(const aaruformatContext *ctx)
                 TRACE("Added media tag block type %d index entry at offset %" PRIu64, tag_block.type, tag_position);
             }
         }
+
+        if(tag_block.compression == Lzma) free(buffer);
     }
 }
 
