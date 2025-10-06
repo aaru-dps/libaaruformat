@@ -1470,6 +1470,147 @@ void write_dvd_long_sector_blocks(aaruformatContext *ctx)
 }
 
 /**
+ * @brief Serialize the DVD decrypted title key data block to the image file.
+ *
+ * This function writes a data block containing decrypted DVD title keys for all sectors
+ * in the image. DVD title keys are used in the Content Scrambling System (CSS) encryption
+ * scheme to decrypt sector data on encrypted DVDs. When imaging encrypted DVD media, if
+ * the decryption keys are available, they can be stored alongside the encrypted data to
+ * enable future decryption without requiring the original disc or authentication process.
+ *
+ * The function is only invoked if the decrypted title key buffer has been populated during
+ * image creation (ctx->sector_decrypted_title_key != NULL). If the buffer is NULL, the
+ * function returns immediately without writing anything, allowing DVD images without
+ * decrypted title keys to be created normally. This is typical for non-encrypted DVDs
+ * or when keys were not available during imaging.
+ *
+ * **Data block structure:**
+ *
+ * - **Block Type**: DataBlock with type DvdSectorTitleKeyDecrypted
+ * - **Size**: 5 bytes per sector (total_sectors × 5 bytes)
+ *   - total_sectors = negative sectors + user sectors + overflow sectors
+ * - **Compression**: None (stored uncompressed)
+ * - **CRC64**: Computed over the entire decrypted title key buffer
+ * - **Alignment**: Block-aligned according to ctx->userDataDdtHeader.blockAlignmentShift
+ *
+ * **Block write sequence:**
+ *
+ * 1. Check if ctx->sector_decrypted_title_key is NULL; return early if so
+ * 2. Seek to end of file to determine write position
+ * 3. Align file position forward to next block boundary (if needed)
+ * 4. Construct BlockHeader with:
+ *    - identifier = DataBlock
+ *    - type = DvdSectorTitleKeyDecrypted
+ *    - compression = None
+ *    - length = cmpLength = (negative + sectors + overflow) × 5
+ *    - crc64 = cmpCrc64 = CRC64 of entire key buffer
+ * 5. Write BlockHeader (sizeof(BlockHeader) bytes)
+ * 6. Write decrypted title key data buffer
+ * 7. Create and append IndexEntry to ctx->indexEntries:
+ *    - blockType = DataBlock
+ *    - dataType = DvdSectorTitleKeyDecrypted
+ *    - offset = aligned block position
+ *
+ * **Alignment and file positioning:**
+ *
+ * Before writing the block, the file position is moved to EOF and then aligned forward
+ * to the next boundary satisfying (position & alignment_mask) == 0, where alignment_mask
+ * is derived from the blockAlignmentShift. This ensures that all structural blocks begin
+ * on properly aligned offsets for efficient I/O and compliance with the Aaru format
+ * specification.
+ *
+ * **Index registration:**
+ *
+ * After successful write, an IndexEntry is created and added to ctx->indexEntries using
+ * utarray_push_back(). This allows the block to be located efficiently during image
+ * reading via the index lookup mechanism. The index stores the exact file offset where
+ * the BlockHeader was written.
+ *
+ * **Title Key Format:**
+ *
+ * Each sector's title key is exactly 5 bytes. The keys are stored sequentially in sector
+ * order (negative sectors first, then user sectors, then overflow sectors). The corrected
+ * sector addressing scheme is used to index into the buffer:
+ *   - Negative sector N: index = (N - negative)
+ *   - User sector U: index = (negative + U)
+ *   - Overflow sector O: index = (negative + Sectors + O)
+ *
+ * @param ctx Pointer to an initialized aaruformatContext in write mode.
+ *
+ * @note This is a static helper function called during image finalization (aaruf_close).
+ *       It is not part of the public API.
+ *
+ * @note The function performs no error handling beyond checking for NULL buffer.
+ *       Write failures are silently ignored, consistent with other optional metadata
+ *       serialization routines in the finalization sequence.
+ *
+ * @note Decrypted title keys are sensitive cryptographic material. Applications should
+ *       consider access control and security implications when storing and distributing
+ *       images containing decrypted keys.
+ *
+ * @note The function uses TRACE() macros for diagnostic logging of write progress,
+ *       file positions, and index entry creation.
+ *
+ * @warning This function assumes ctx->imageStream is open and writable. Calling it
+ *          with a read-only or closed stream will result in undefined behavior.
+ *
+ * @warning The function does not validate that ctx->sector_decrypted_title_key contains
+ *          exactly (negative + sectors + overflow) × 5 bytes. Buffer overruns may occur
+ *          if the buffer was improperly allocated.
+ *
+ * @warning Do not call this function directly. It is invoked automatically by aaruf_close()
+ *          as part of the image finalization sequence.
+ *
+ * @internal
+ */
+static void write_dvd_title_key_decrypted_block(const aaruformatContext *ctx)
+{
+    if(ctx->sector_decrypted_title_key == NULL) return;
+
+    fseek(ctx->imageStream, 0, SEEK_END);
+    long           block_position = ftell(ctx->imageStream);
+    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    if(block_position & alignment_mask)
+    {
+        const uint64_t aligned_position = block_position + alignment_mask & ~alignment_mask;
+        fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        block_position = aligned_position;
+    }
+    TRACE("Writing DVD decrypted title key block at position %ld", block_position);
+    BlockHeader decrypted_title_key_block = {0};
+    decrypted_title_key_block.identifier  = DataBlock;
+    decrypted_title_key_block.type        = DvdSectorTitleKeyDecrypted;
+    decrypted_title_key_block.compression = None;
+    decrypted_title_key_block.length =
+        (uint32_t)(ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow) * 5;
+    decrypted_title_key_block.cmpLength = decrypted_title_key_block.length;
+    // Calculate CRC64
+    decrypted_title_key_block.crc64 =
+        aaruf_crc64_data(ctx->sector_decrypted_title_key, decrypted_title_key_block.length);
+    decrypted_title_key_block.cmpCrc64 = decrypted_title_key_block.crc64;
+    // Write header
+    if(fwrite(&decrypted_title_key_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
+    {
+        // Write data
+        const size_t written_bytes =
+            fwrite(ctx->sector_decrypted_title_key, decrypted_title_key_block.length, 1, ctx->imageStream);
+        if(written_bytes == 1)
+        {
+            TRACE("Successfully wrote DVD decrypted title key block (%" PRIu64 " bytes)",
+                  decrypted_title_key_block.length);
+            // Add decrypted title key block to index
+            TRACE("Adding DVD decrypted title key block to index");
+            IndexEntry decrypted_title_key_index_entry;
+            decrypted_title_key_index_entry.blockType = DataBlock;
+            decrypted_title_key_index_entry.dataType  = DvdSectorTitleKeyDecrypted;
+            decrypted_title_key_index_entry.offset    = block_position;
+            utarray_push_back(ctx->indexEntries, &decrypted_title_key_index_entry);
+            TRACE("Added DVD decrypted title key block index entry at offset %" PRIu64, block_position);
+        }
+    }
+}
+
+/**
  * @brief Serialize all accumulated media tags to the image file.
  *
  * Media tags represent arbitrary metadata or descriptor blobs associated with the entire medium
@@ -2710,6 +2851,9 @@ int aaruf_close(void *context)
 
         // Write DVD long sector data blocks
         write_dvd_long_sector_blocks(ctx);
+
+        // Write DVD decrypted title keys
+        write_dvd_title_key_decrypted_block(ctx);
 
         // Write media tags data blocks
         write_media_tags(ctx);
