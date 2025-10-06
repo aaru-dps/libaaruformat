@@ -1171,6 +1171,305 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
 }
 
 /**
+ * @brief Serialize DVD long sector auxiliary data blocks to the image file.
+ *
+ * This function writes four separate data blocks containing DVD-specific auxiliary information
+ * extracted from "long" DVD sectors. DVD long sectors contain additional fields beyond the 2048
+ * bytes of user data, including sector identification, error detection, and copy protection
+ * information. When writing DVD images with long sector support, these auxiliary fields are
+ * stored separately from the main user data to optimize storage and enable selective access.
+ *
+ * The function is only invoked if all four auxiliary buffers have been populated during image
+ * creation (sector_id, sector_ied, sector_cpr_mai, sector_edc). If any buffer is NULL, the
+ * function returns immediately without writing anything, allowing DVD images without long sector
+ * data to be created normally.
+ *
+ * **Four auxiliary data blocks written:**
+ *
+ * 1. **DVD Sector ID Block (DvdSectorId)**: 4 bytes per sector
+ *    - Contains the sector ID field from DVD long sectors
+ *    - Used for sector identification and addressing validation
+ *
+ * 2. **DVD Sector IED Block (DvdSectorIed)**: 2 bytes per sector
+ *    - Contains the IED (ID Error Detection) field from DVD long sectors
+ *    - Used for detecting errors in the sector ID field
+ *
+ * 3. **DVD Sector CPR/MAI Block (DvdSectorCprMai)**: 6 bytes per sector
+ *    - Contains the CPR_MAI (Copyright Management Information) field
+ *    - Used for copy protection and media authentication information
+ *
+ * 4. **DVD Sector EDC Block (DvdSectorEdc)**: 4 bytes per sector
+ *    - Contains the EDC (Error Detection Code) field from DVD long sectors
+ *    - Used for detecting errors in the sector data
+ *
+ * **Block structure for each auxiliary block:**
+ * Each block consists of:
+ *   1. BlockHeader containing identifier (DataBlock), type (DvdSectorId/IED/CprMai/Edc),
+ *      compression (None), lengths, and CRC64 checksums
+ *   2. Raw auxiliary data: concatenated fields from all sectors (including negative, normal,
+ *      and overflow sectors)
+ *
+ * The total number of sectors includes negative sectors (for lead-in), normal image sectors,
+ * and overflow sectors (for lead-out), calculated as:
+ * total_sectors = negative + Sectors + overflow
+ *
+ * **Write sequence for each block:**
+ * 1. Seek to end of file
+ * 2. Align file position to block boundary (using blockAlignmentShift)
+ * 3. Construct BlockHeader with appropriate type and calculated length
+ * 4. Calculate CRC64 over the auxiliary data buffer
+ * 5. Write BlockHeader (sizeof(BlockHeader) bytes)
+ * 6. Write auxiliary data buffer (length bytes)
+ * 7. On success, add IndexEntry to ctx->indexEntries
+ *
+ * **Alignment and file positioning:**
+ * Before writing each block, the file position is moved to EOF and then aligned forward to the
+ * next boundary satisfying (position & alignment_mask) == 0, where alignment_mask is derived
+ * from ctx->userDataDdtHeader.blockAlignmentShift. This ensures all blocks begin on properly
+ * aligned offsets for efficient I/O and compliance with the Aaru format specification.
+ *
+ * **Index registration:**
+ * After successfully writing each block's header and data, an IndexEntry is appended to
+ * ctx->indexEntries with:
+ *   - blockType = DataBlock
+ *   - dataType = DvdSectorId, DvdSectorIed, DvdSectorCprMai, or DvdSectorEdc
+ *   - offset = the aligned file position where the BlockHeader was written
+ *
+ * **Error handling:**
+ * Write errors (fwrite returning < 1) are silently ignored for individual blocks; no index entry
+ * is added if a write fails, but iteration continues to attempt writing remaining blocks.
+ * Diagnostic TRACE logs report success or failure for each block. The function does not propagate
+ * error codes; higher-level close logic must validate overall integrity if needed.
+ *
+ * **No-op conditions:**
+ * - ctx->sector_id is NULL OR
+ * - ctx->sector_ied is NULL OR
+ * - ctx->sector_cpr_mai is NULL OR
+ * - ctx->sector_edc is NULL
+ *
+ * @param ctx Pointer to an initialized aaruformatContext in write mode. Must not be NULL.
+ *            ctx->sector_id contains the ID fields from all DVD long sectors (may be NULL).
+ *            ctx->sector_ied contains the IED fields from all DVD long sectors (may be NULL).
+ *            ctx->sector_cpr_mai contains the CPR/MAI fields from all DVD long sectors (may be NULL).
+ *            ctx->sector_edc contains the EDC fields from all DVD long sectors (may be NULL).
+ *            ctx->imageStream must be open and writable. ctx->indexEntries must be initialized
+ *            (utarray) to accept new index entries.
+ *
+ * @note DVD Long Sector Format:
+ *       - Standard DVD sectors contain 2048 bytes of user data
+ *       - Long DVD sectors include additional fields for error detection and copy protection
+ *       - Total long sector size varies by DVD format (typically 2064-2076 bytes)
+ *       - These auxiliary fields are critical for forensic imaging and copy-protected media
+ *
+ * @note Sector Coverage:
+ *       - Negative sectors: Lead-in area before sector 0 (if present)
+ *       - Normal sectors: Main data area (sectors 0 to Sectors-1)
+ *       - Overflow sectors: Lead-out area after the main data (if present)
+ *       - All three areas are included in the auxiliary data blocks
+ *
+ * @note Field Sizes:
+ *       - ID field: 4 bytes per sector (sector identification)
+ *       - IED field: 2 bytes per sector (ID error detection)
+ *       - CPR/MAI field: 6 bytes per sector (copyright management)
+ *       - EDC field: 4 bytes per sector (error detection code)
+ *       - Total auxiliary data: 16 bytes per sector across all four blocks
+ *
+ * @note Memory Management:
+ *       - The function does not allocate or free any memory
+ *       - Auxiliary data buffers are managed by the caller
+ *       - Buffers are written directly without modification
+ *       - Memory is freed later during context cleanup (aaruf_close)
+ *
+ * @note Use Cases:
+ *       - Forensic imaging of DVD media requiring complete sector data
+ *       - Preservation of copy-protected DVD content
+ *       - Analysis of DVD error detection and correction information
+ *       - Validation of DVD sector structure and integrity
+ *       - Research into DVD copy protection mechanisms
+ *
+ * @note Order in Close Sequence:
+ *       - DVD long sector blocks are typically written after user data but before metadata
+ *       - The exact position in the file depends on what other blocks precede them
+ *       - Index entries ensure blocks can be located during subsequent opens
+ *       - All four blocks are written consecutively if present
+ *
+ * @warning The auxiliary data buffers must contain data for ALL sectors (negative + normal +
+ *          overflow). Partial buffers or mismatched sizes will cause incorrect data to be
+ *          written or buffer overruns.
+ *
+ * @warning No compression is applied to DVD auxiliary data blocks. They are stored as raw
+ *          binary data, which may result in larger image files for DVD media.
+ *
+ * @warning If any of the four auxiliary buffers is NULL, the entire function is skipped.
+ *          This is an all-or-nothing operation - either all four blocks are written or none.
+ *
+ * @see aaruf_write_sector_long() for writing individual DVD long sectors that populate these buffers.
+ * @see BlockHeader for the block header structure definition.
+ *
+ * @internal
+ */
+void write_dvd_long_sector_blocks(aaruformatContext *ctx)
+{
+    if(ctx->sector_id == NULL || ctx->sector_ied == NULL || ctx->sector_cpr_mai == NULL || ctx->sector_edc == NULL)
+        return;
+
+    uint64_t total_sectors = ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow;
+
+    // Write DVD sector ID block
+    fseek(ctx->imageStream, 0, SEEK_END);
+    long           id_position    = ftell(ctx->imageStream);
+    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    if(id_position & alignment_mask)
+    {
+        const uint64_t aligned_position = id_position + alignment_mask & ~alignment_mask;
+        fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        id_position = aligned_position;
+    }
+    TRACE("Writing DVD sector ID block at position %ld", id_position);
+    BlockHeader id_block = {0};
+    id_block.identifier  = DataBlock;
+    id_block.type        = DvdSectorId;
+    id_block.compression = None;
+    id_block.length      = (uint32_t)total_sectors * 4;
+    id_block.cmpLength   = id_block.length;
+    // Calculate CRC64
+    id_block.crc64       = aaruf_crc64_data(ctx->sector_id, id_block.length);
+    id_block.cmpCrc64    = id_block.crc64;
+    // Write header
+    if(fwrite(&id_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
+    {
+        // Write data
+        const size_t written_bytes = fwrite(ctx->sector_id, id_block.length, 1, ctx->imageStream);
+        if(written_bytes == 1)
+        {
+            TRACE("Successfully wrote DVD sector ID block (%" PRIu64 " bytes)", id_block.length);
+            // Add ID block to index
+            TRACE("Adding DVD sector ID block to index");
+            IndexEntry id_index_entry;
+            id_index_entry.blockType = DataBlock;
+            id_index_entry.dataType  = DvdSectorId;
+            id_index_entry.offset    = id_position;
+            utarray_push_back(ctx->indexEntries, &id_index_entry);
+            TRACE("Added DVD sector ID block index entry at offset %" PRIu64, id_position);
+        }
+    }
+
+    // Write DVD sector IED block
+    fseek(ctx->imageStream, 0, SEEK_END);
+    long ied_position = ftell(ctx->imageStream);
+    if(ied_position & alignment_mask)
+    {
+        const uint64_t aligned_position = ied_position + alignment_mask & ~alignment_mask;
+        fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        ied_position = aligned_position;
+    }
+    TRACE("Writing DVD sector IED block at position %ld", ied_position);
+    BlockHeader ied_block = {0};
+    ied_block.identifier  = DataBlock;
+    ied_block.type        = DvdSectorIed;
+    ied_block.compression = None;
+    ied_block.length      = (uint32_t)total_sectors * 2;
+    ied_block.cmpLength   = ied_block.length;
+    // Calculate CRC64
+    ied_block.crc64       = aaruf_crc64_data(ctx->sector_ied, ied_block.length);
+    ied_block.cmpCrc64    = ied_block.crc64;
+    // Write header
+    if(fwrite(&ied_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
+    {
+        // Write data
+        const size_t written_bytes = fwrite(ctx->sector_ied, ied_block.length, 1, ctx->imageStream);
+        if(written_bytes == 1)
+        {
+            TRACE("Successfully wrote DVD sector IED block (%" PRIu64 " bytes)", ied_block.length);
+            // Add IED block to index
+            TRACE("Adding DVD sector IED block to index");
+            IndexEntry ied_index_entry;
+            ied_index_entry.blockType = DataBlock;
+            ied_index_entry.dataType  = DvdSectorIed;
+            ied_index_entry.offset    = ied_position;
+            utarray_push_back(ctx->indexEntries, &ied_index_entry);
+            TRACE("Added DVD sector IED block index entry at offset %" PRIu64, ied_position);
+        }
+    }
+
+    // Write DVD sector CPR/MAI block
+    fseek(ctx->imageStream, 0, SEEK_END);
+    long cpr_mai_position = ftell(ctx->imageStream);
+    if(cpr_mai_position & alignment_mask)
+    {
+        const uint64_t aligned_position = cpr_mai_position + alignment_mask & ~alignment_mask;
+        fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        cpr_mai_position = aligned_position;
+    }
+    TRACE("Writing DVD sector CPR/MAI block at position %ld", cpr_mai_position);
+    BlockHeader cpr_mai_block = {0};
+    cpr_mai_block.identifier  = DataBlock;
+    cpr_mai_block.type        = DvdSectorCprMai;
+    cpr_mai_block.compression = None;
+    cpr_mai_block.length      = (uint32_t)total_sectors * 6;
+    cpr_mai_block.cmpLength   = cpr_mai_block.length;
+    // Calculate CRC64
+    cpr_mai_block.crc64       = aaruf_crc64_data(ctx->sector_cpr_mai, cpr_mai_block.length);
+    cpr_mai_block.cmpCrc64    = cpr_mai_block.crc64;
+    // Write header
+    if(fwrite(&cpr_mai_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
+    {
+        // Write data
+        const size_t written_bytes = fwrite(ctx->sector_cpr_mai, cpr_mai_block.length, 1, ctx->imageStream);
+        if(written_bytes == 1)
+        {
+            TRACE("Successfully wrote DVD sector CPR/MAI block (%" PRIu64 " bytes)", cpr_mai_block.length);
+            // Add CPR/MAI block to index
+            TRACE("Adding DVD sector CPR/MAI block to index");
+            IndexEntry cpr_mai_index_entry;
+            cpr_mai_index_entry.blockType = DataBlock;
+            cpr_mai_index_entry.dataType  = DvdSectorCprMai;
+            cpr_mai_index_entry.offset    = cpr_mai_position;
+            utarray_push_back(ctx->indexEntries, &cpr_mai_index_entry);
+            TRACE("Added DVD sector CPR/MAI block index entry at offset %" PRIu64, cpr_mai_position);
+        }
+    }
+
+    // Write DVD sector EDC block
+    fseek(ctx->imageStream, 0, SEEK_END);
+    long edc_position = ftell(ctx->imageStream);
+    if(edc_position & alignment_mask)
+    {
+        const uint64_t aligned_position = edc_position + alignment_mask & ~alignment_mask;
+        fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        edc_position = aligned_position;
+    }
+    TRACE("Writing DVD sector EDC block at position %ld", edc_position);
+    BlockHeader edc_block = {0};
+    edc_block.identifier  = DataBlock;
+    edc_block.type        = DvdSectorEdc;
+    edc_block.compression = None;
+    edc_block.length      = (uint32_t)total_sectors * 4;
+    edc_block.cmpLength   = edc_block.length;
+    // Calculate CRC64
+    edc_block.crc64       = aaruf_crc64_data(ctx->sector_edc, edc_block.length);
+    edc_block.cmpCrc64    = edc_block.crc64;
+    // Write header
+    if(fwrite(&edc_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
+    {
+        // Write data
+        const size_t written_bytes = fwrite(ctx->sector_edc, edc_block.length, 1, ctx->imageStream);
+        if(written_bytes == 1)
+        {
+            TRACE("Successfully wrote DVD sector EDC block (%" PRIu64 " bytes)", edc_block.length);
+            // Add EDC block to index
+            TRACE("Adding DVD sector EDC block to index");
+            IndexEntry edc_index_entry;
+            edc_index_entry.blockType = DataBlock;
+            edc_index_entry.dataType  = DvdSectorEdc;
+            edc_index_entry.offset    = edc_position;
+            utarray_push_back(ctx->indexEntries, &edc_index_entry);
+            TRACE("Added DVD sector EDC block index entry at offset %" PRIu64, edc_position);
+        }
+    }
+}
+
+/**
  * @brief Serialize all accumulated media tags to the image file.
  *
  * Media tags represent arbitrary metadata or descriptor blobs associated with the entire medium
@@ -2409,6 +2708,9 @@ int aaruf_close(void *context)
         // Write sector subchannel data block
         write_sector_subchannel(ctx);
 
+        // Write DVD long sector data blocks
+        write_dvd_long_sector_blocks(ctx);
+
         // Write media tags data blocks
         write_media_tags(ctx);
 
@@ -2535,6 +2837,11 @@ int aaruf_close(void *context)
 
     free(ctx->checksums.spamsum);
     ctx->checksums.spamsum = NULL;
+
+    free(ctx->sector_id);
+    free(ctx->sector_ied);
+    free(ctx->sector_cpr_mai);
+    free(ctx->sector_edc);
 
     // TODO: Free caches
 
