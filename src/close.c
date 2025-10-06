@@ -881,7 +881,7 @@ static void write_sector_prefix(aaruformatContext *ctx)
  *
  * Layout considerations:
  *   - The block length is exactly the number of bytes copied (ctx->sector_suffix_offset).
- *   - No compression is applied; CRC64 is calculated on the raw suffix stream for integrity.
+ *   - Compression is applied if enabled; CRC64 is calculated on the raw suffix stream for integrity.
  *   - The write position is aligned to the DDT block alignment (2^blockAlignmentShift).
  *
  * Indexing: An IndexEntry is appended so later readers can locate the suffix collection. Absence
@@ -912,22 +912,64 @@ static void write_sector_suffix(aaruformatContext *ctx)
     BlockHeader suffix_block = {0};
     suffix_block.identifier  = DataBlock;
     suffix_block.type        = CdSectorSuffix;
-    suffix_block.compression = None;
+    suffix_block.compression = ctx->compression_enabled ? Lzma : None;
     suffix_block.length      = (uint32_t)ctx->sector_suffix_offset;
-    suffix_block.cmpLength   = suffix_block.length;
 
     // Calculate CRC64
-    suffix_block.crc64    = aaruf_crc64_data(ctx->sector_suffix, suffix_block.length);
-    suffix_block.cmpCrc64 = suffix_block.crc64;
+    suffix_block.crc64 = aaruf_crc64_data(ctx->sector_suffix, suffix_block.length);
+
+    uint8_t *buffer                                  = NULL;
+    uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
+
+    if(suffix_block.compression == None)
+    {
+        buffer                = ctx->sector_suffix;
+        suffix_block.cmpCrc64 = suffix_block.crc64;
+    }
+    else
+    {
+        buffer = malloc((size_t)suffix_block.length * 2);  // Allocate double size for compression
+        if(buffer == NULL)
+        {
+            TRACE("Failed to allocate memory for CD sector suffix compression");
+            return;
+        }
+
+        size_t dst_size   = (size_t)suffix_block.length * 2 * 2;
+        size_t props_size = LZMA_PROPERTIES_LENGTH;
+        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_suffix, suffix_block.length, lzma_properties,
+                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+
+        suffix_block.cmpLength = (uint32_t)dst_size;
+
+        if(suffix_block.cmpLength >= suffix_block.length)
+        {
+            suffix_block.compression = None;
+            free(buffer);
+            buffer = ctx->sector_suffix;
+        }
+    }
+
+    if(suffix_block.compression == None)
+    {
+        suffix_block.cmpLength = suffix_block.length;
+        suffix_block.cmpCrc64  = suffix_block.crc64;
+    }
+    else
+        suffix_block.cmpCrc64 = aaruf_crc64_data(buffer, suffix_block.cmpLength);
+
+    if(suffix_block.compression == Lzma) suffix_block.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write header
     if(fwrite(&suffix_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
     {
+        if(suffix_block.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
+
         // Write data
-        const size_t written_bytes = fwrite(ctx->sector_suffix, suffix_block.length, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, suffix_block.cmpLength, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
-            TRACE("Successfully wrote CD sector suffix block (%" PRIu64 " bytes)", suffix_block.length);
+            TRACE("Successfully wrote CD sector suffix block (%" PRIu64 " bytes)", suffix_block.cmpLength);
             // Add suffix block to index
             TRACE("Adding CD sector suffix block to index");
             IndexEntry suffix_index_entry;
@@ -938,6 +980,8 @@ static void write_sector_suffix(aaruformatContext *ctx)
             TRACE("Added CD sector suffix block index entry at offset %" PRIu64, suffix_position);
         }
     }
+
+    if(suffix_block.compression == Lzma) free(buffer);
 }
 
 /**
