@@ -1041,19 +1041,19 @@ static void write_sector_prefix_ddt(aaruformatContext *ctx)
     ddt_header2.dataShift           = ctx->userDataDdtHeader.dataShift;
     ddt_header2.tableShift          = 0;  // Single-level DDT
     ddt_header2.sizeType            = SmallDdtSizeType;
-    ddt_header2.entries   = ctx->imageInfo.Sectors + ctx->userDataDdtHeader.negative + ctx->userDataDdtHeader.overflow;
-    ddt_header2.blocks    = ctx->userDataDdtHeader.blocks;
-    ddt_header2.start     = 0;
-    ddt_header2.length    = ddt_header2.entries * sizeof(uint16_t);
+    ddt_header2.entries = ctx->imageInfo.Sectors + ctx->userDataDdtHeader.negative + ctx->userDataDdtHeader.overflow;
+    ddt_header2.blocks  = ctx->userDataDdtHeader.blocks;
+    ddt_header2.start   = 0;
+    ddt_header2.length  = ddt_header2.entries * sizeof(uint16_t);
     // Calculate CRC64
-    ddt_header2.crc64     = aaruf_crc64_data((uint8_t *)ctx->sectorPrefixDdtMini, (uint32_t)ddt_header2.length);
+    ddt_header2.crc64   = aaruf_crc64_data((uint8_t *)ctx->sectorPrefixDdtMini, (uint32_t)ddt_header2.length);
 
     uint8_t *buffer                                  = NULL;
     uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
 
     if(ddt_header2.compression == None)
     {
-        buffer                = (uint8_t *)ctx->sectorPrefixDdtMini;
+        buffer               = (uint8_t *)ctx->sectorPrefixDdtMini;
         ddt_header2.cmpCrc64 = ddt_header2.crc64;
     }
     else
@@ -1067,8 +1067,8 @@ static void write_sector_prefix_ddt(aaruformatContext *ctx)
 
         size_t dst_size   = (size_t)ddt_header2.length * 2 * 2;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(buffer, &dst_size, (uint8_t *)ctx->sectorPrefixDdtMini, ddt_header2.length, lzma_properties,
-                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+        aaruf_lzma_encode_buffer(buffer, &dst_size, (uint8_t *)ctx->sectorPrefixDdtMini, ddt_header2.length,
+                                 lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
 
         ddt_header2.cmpLength = (uint32_t)dst_size;
 
@@ -1137,7 +1137,7 @@ static void write_sector_prefix_ddt(aaruformatContext *ctx)
  *   - Table length = (negative + total Sectors + overflow) * sizeof(uint16_t).
  *   - dataShift mirrors userDataDdtHeader.dataShift (expressing granularity for index referencing).
  *   - Single-level table (levels = 1, tableLevel = 0, tableShift = 0).
- *   - CRC64 protects the raw uncompressed table (crc64 == cmpCrc64 because compression = None).
+ *   - Compression is applied if enabled; CRC64 protects the table bytes.
  *   - Alignment: The table is aligned to 2^(blockAlignmentShift) before writing to guarantee block boundary access.
  *   - Idempotence: If sectorSuffixDdtMini is NULL the function is a no-op (indicating no suffix anomalies captured).
  *
@@ -1177,7 +1177,7 @@ static void write_sector_suffix_ddt(aaruformatContext *ctx)
     DdtHeader2 ddt_header2          = {0};
     ddt_header2.identifier          = DeDuplicationTable2;
     ddt_header2.type                = CdSectorSuffix;
-    ddt_header2.compression         = None;
+    ddt_header2.compression         = ctx->compression_enabled ? Lzma : None;
     ddt_header2.levels              = 1;
     ddt_header2.tableLevel          = 0;
     ddt_header2.negative            = ctx->userDataDdtHeader.negative;
@@ -1186,23 +1186,65 @@ static void write_sector_suffix_ddt(aaruformatContext *ctx)
     ddt_header2.dataShift           = ctx->userDataDdtHeader.dataShift;
     ddt_header2.tableShift          = 0;  // Single-level DDT
     ddt_header2.sizeType            = SmallDdtSizeType;
-    ddt_header2.entries   = ctx->imageInfo.Sectors + ctx->userDataDdtHeader.negative + ctx->userDataDdtHeader.overflow;
-    ddt_header2.blocks    = ctx->userDataDdtHeader.blocks;
-    ddt_header2.start     = 0;
-    ddt_header2.length    = ddt_header2.entries * sizeof(uint16_t);
-    ddt_header2.cmpLength = ddt_header2.length;
+    ddt_header2.entries = ctx->imageInfo.Sectors + ctx->userDataDdtHeader.negative + ctx->userDataDdtHeader.overflow;
+    ddt_header2.blocks  = ctx->userDataDdtHeader.blocks;
+    ddt_header2.start   = 0;
+    ddt_header2.length  = ddt_header2.entries * sizeof(uint16_t);
     // Calculate CRC64
-    ddt_header2.crc64     = aaruf_crc64_data((uint8_t *)ctx->sectorSuffixDdtMini, (uint32_t)ddt_header2.length);
-    ddt_header2.cmpCrc64  = ddt_header2.crc64;
+    ddt_header2.crc64   = aaruf_crc64_data((uint8_t *)ctx->sectorSuffixDdtMini, (uint32_t)ddt_header2.length);
+
+    uint8_t *buffer                                  = NULL;
+    uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
+
+    if(ddt_header2.compression == None)
+    {
+        buffer               = (uint8_t *)ctx->sectorSuffixDdtMini;
+        ddt_header2.cmpCrc64 = ddt_header2.crc64;
+    }
+    else
+    {
+        buffer = malloc((size_t)ddt_header2.length * 2);  // Allocate double size for compression
+        if(buffer == NULL)
+        {
+            TRACE("Failed to allocate memory for sector suffix DDT v2 compression");
+            return;
+        }
+
+        size_t dst_size   = (size_t)ddt_header2.length * 2 * 2;
+        size_t props_size = LZMA_PROPERTIES_LENGTH;
+        aaruf_lzma_encode_buffer(buffer, &dst_size, (uint8_t *)ctx->sectorSuffixDdtMini, ddt_header2.length,
+                                 lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+
+        ddt_header2.cmpLength = (uint32_t)dst_size;
+
+        if(ddt_header2.cmpLength >= ddt_header2.length)
+        {
+            ddt_header2.compression = None;
+            free(buffer);
+            buffer = (uint8_t *)ctx->sectorSuffixDdtMini;
+        }
+    }
+
+    if(ddt_header2.compression == None)
+    {
+        ddt_header2.cmpLength = ddt_header2.length;
+        ddt_header2.cmpCrc64  = ddt_header2.crc64;
+    }
+    else
+        ddt_header2.cmpCrc64 = aaruf_crc64_data(buffer, (uint32_t)ddt_header2.cmpLength);
+
+    if(ddt_header2.compression == Lzma) ddt_header2.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write header
     if(fwrite(&ddt_header2, sizeof(DdtHeader2), 1, ctx->imageStream) == 1)
     {
+        if(ddt_header2.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
+
         // Write data
-        const size_t written_bytes = fwrite(ctx->sectorSuffixDdtMini, ddt_header2.length, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, ddt_header2.cmpLength, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
-            TRACE("Successfully wrote sector suffix DDT v2 (%" PRIu64 " bytes)", ddt_header2.length);
+            TRACE("Successfully wrote sector suffix DDT v2 (%" PRIu64 " bytes)", ddt_header2.cmpLength);
             // Add suffix block to index
             TRACE("Adding sector suffix DDT v2 to index");
             IndexEntry suffix_ddt_index_entry;
@@ -1213,6 +1255,8 @@ static void write_sector_suffix_ddt(aaruformatContext *ctx)
             TRACE("Added sector suffix DDT v2 index entry at offset %" PRIu64, suffix_ddt_position);
         }
     }
+
+    if(ddt_header2.compression == Lzma) free(buffer);
 }
 
 /**
