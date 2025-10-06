@@ -1903,7 +1903,7 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
             memcpy(ctx->sector_subchannel + corrected_sector_address * 96, data, 96);
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case DvdSectorCprMai:
+        case DvdCmi:
             if(ctx->imageInfo.XmlMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
@@ -1911,7 +1911,7 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
                 return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
             }
 
-            if(length != 6)
+            if(length != 1)
             {
                 FATAL("Incorrect tag size");
                 TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_INCORRECT_DATA_SIZE");
@@ -1928,7 +1928,7 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
 
-            memcpy(ctx->sector_cpr_mai + corrected_sector_address * 6, data, 6);
+            memcpy(ctx->sector_cpr_mai + corrected_sector_address * 6, data, 1);
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdSectorInformation:
