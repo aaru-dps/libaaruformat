@@ -186,10 +186,9 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
 
     // Close current block first
     if(ctx->writingBuffer != NULL &&
-       // When sector size changes
-       (ctx->currentBlockHeader.sectorSize != length || ctx->currentBlockOffset == 1 << ctx->userDataDdtHeader.dataShift
-        // TODO: Implement compression
-        ))
+       // When sector size changes or block reaches maximum size
+       (ctx->currentBlockHeader.sectorSize != length ||
+        ctx->currentBlockOffset == 1 << ctx->userDataDdtHeader.dataShift))
     {
         TRACE("Closing current block before writing new data");
         int error = aaruf_close_current_block(ctx);
@@ -248,10 +247,9 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
     if(ctx->writingBufferPosition == 0)
     {
         TRACE("Creating new writing block");
-        ctx->currentBlockHeader.identifier  = DataBlock;
-        ctx->currentBlockHeader.type        = UserData;
-        ctx->currentBlockHeader.compression = None;  // TODO: Compression
-        ctx->currentBlockHeader.sectorSize  = length;
+        ctx->currentBlockHeader.identifier = DataBlock;
+        ctx->currentBlockHeader.type       = UserData;
+        ctx->currentBlockHeader.sectorSize = length;
 
         // We need to save the track type for later compression
         if(ctx->imageInfo.XmlMediaType == OpticalDisc && ctx->trackEntries != NULL)
@@ -280,6 +278,16 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
                 ctx->imageInfo.MediaType == VideoNow || ctx->imageInfo.MediaType == VideoNowColor ||
                 ctx->imageInfo.MediaType == VideoNowXp))
                 ctx->currentTrackType = Data;
+
+            if(ctx->compression_enabled)
+            {
+                if(ctx->currentTrackType == Audio)
+                    ctx->currentBlockHeader.compression = Flac;
+                else
+                    ctx->currentBlockHeader.compression = Lzma;
+            }
+            else
+                ctx->currentBlockHeader.compression = None;
         }
         else
             ctx->currentTrackType = Data;
@@ -1193,12 +1201,78 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
     aaruf_crc64_update(ctx->crc64Context, ctx->writingBuffer, ctx->currentBlockHeader.length);
     aaruf_crc64_final(ctx->crc64Context, &ctx->currentBlockHeader.crc64);
 
+    uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
+    uint8_t *cmp_buffer                              = NULL;
+
     switch(ctx->currentBlockHeader.compression)
     {
         case None:
-            ctx->currentBlockHeader.cmpCrc64  = ctx->currentBlockHeader.crc64;
-            ctx->currentBlockHeader.cmpLength = ctx->currentBlockHeader.length;
+            break;
+        case Flac:
+            cmp_buffer = malloc(ctx->currentBlockHeader.length * 2);
+            if(cmp_buffer == NULL)
+            {
+                FATAL("Could not allocate buffer for compressed data");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+            const uint32_t current_samples = ctx->currentBlockOffset * SAMPLES_PER_SECTOR;
+            uint32_t       flac_block_size = ctx->currentBlockOffset * SAMPLES_PER_SECTOR;
+
+            if(flac_block_size > MAX_FLAKE_BLOCK) flac_block_size = MAX_FLAKE_BLOCK;
+            if(flac_block_size < MIN_FLAKE_BLOCK) flac_block_size = MAX_FLAKE_BLOCK;
+
+            const long remaining = current_samples % flac_block_size;
+
+            // Fill FLAC block
+            if(remaining != 0)
+                for(int r = 0; r < remaining * 4; r++) ctx->writingBuffer[ctx->writingBufferPosition + r] = 0;
+
+            ctx->currentBlockHeader.cmpLength = aaruf_flac_encode_redbook_buffer(
+                cmp_buffer, ctx->currentBlockHeader.length * 2, ctx->writingBuffer, ctx->currentBlockHeader.length,
+                flac_block_size, true, false, "hamming", 12, 15, true, false, 0, 8, "Aaru", 4096);
+
+            if(ctx->currentBlockHeader.cmpLength >= ctx->currentBlockHeader.length)
+            {
+                ctx->currentBlockHeader.compression = None;
+                free(cmp_buffer);
+            }
+
+            break;
+        case Lzma:
+            cmp_buffer = malloc(ctx->currentBlockHeader.length * 2);
+            if(cmp_buffer == NULL)
+            {
+                FATAL("Could not allocate buffer for compressed data");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            size_t dst_size   = ctx->currentBlockHeader.length * 2;
+            size_t props_size = LZMA_PROPERTIES_LENGTH;
+            ctx->currentBlockHeader.cmpLength =
+                aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, ctx->writingBuffer, ctx->currentBlockHeader.length,
+                                         lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+
+            if(ctx->currentBlockHeader.cmpLength >= ctx->currentBlockHeader.length)
+            {
+                ctx->currentBlockHeader.compression = None;
+                free(cmp_buffer);
+            }
+
+            break;
+        default:
+            FATAL("Invalid compression type");
+            return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
     }
+
+    if(ctx->currentBlockHeader.compression == None)
+    {
+        ctx->currentBlockHeader.cmpCrc64  = ctx->currentBlockHeader.crc64;
+        ctx->currentBlockHeader.cmpLength = ctx->currentBlockHeader.length;
+    }
+    else
+        ctx->currentBlockHeader.cmpCrc64 = aaruf_crc64_data(cmp_buffer, ctx->currentBlockHeader.cmpLength);
+
+    if(ctx->currentBlockHeader.compression == Lzma) ctx->currentBlockHeader.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Add to index
     TRACE("Adding block to index");
@@ -1220,13 +1294,25 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
         return AARUF_ERROR_CANNOT_WRITE_BLOCK_HEADER;
 
     // Write block data
-    if(fwrite(ctx->writingBuffer, ctx->currentBlockHeader.length, 1, ctx->imageStream) != 1)
+    if(ctx->currentBlockHeader.compression == Lzma &&
+       fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream) != 1)
         return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
 
+    if(ctx->currentBlockHeader.compression == None)
+    {
+        if(fwrite(ctx->writingBuffer, ctx->currentBlockHeader.length, 1, ctx->imageStream) != 1)
+            return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
+    }
+    else
+    {
+        if(fwrite(cmp_buffer, ctx->currentBlockHeader.cmpLength, 1, ctx->imageStream) == 1)
+            return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
+    }
+
     // Update nextBlockPosition to point to the next available aligned position
-    uint64_t block_total_size = sizeof(BlockHeader) + ctx->currentBlockHeader.cmpLength;
-    uint64_t alignment_mask   = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
-    ctx->nextBlockPosition    = ctx->nextBlockPosition + block_total_size + alignment_mask & ~alignment_mask;
+    const uint64_t block_total_size = sizeof(BlockHeader) + ctx->currentBlockHeader.cmpLength;
+    const uint64_t alignment_mask   = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    ctx->nextBlockPosition          = ctx->nextBlockPosition + block_total_size + alignment_mask & ~alignment_mask;
     TRACE("Updated nextBlockPosition to %" PRIu64, ctx->nextBlockPosition);
 
     // Clear values

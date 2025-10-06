@@ -245,6 +245,9 @@ typedef struct aaruformatContext
     uint8_t *sector_cpr_mai;              ///< DVD sector CPR_MAI (6 bytes) if present.
     uint8_t *sector_edc;                  ///< DVD sector EDC (4 bytes) if present.
     uint8_t *sector_decrypted_title_key;  ///< DVD decrypted title key (5 bytes) if present.
+
+    bool     compression_enabled;  ///< True if block compression enabled (writing path).
+    uint32_t lzma_dict_size;       ///< LZMA dictionary size (writing path).
 } aaruformatContext;
 
 /** \struct DumpHardwareEntriesWithData

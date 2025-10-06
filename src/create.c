@@ -303,7 +303,9 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
         return NULL;
     }
 
-    ctx->deduplicate = parsed_options.deduplicate;
+    ctx->compression_enabled = parsed_options.compress;
+    ctx->lzma_dict_size      = parsed_options.dictionary;
+    ctx->deduplicate         = parsed_options.deduplicate;
     if(ctx->deduplicate)
         ctx->sectorHashMap = create_map(ctx->userDataDdtHeader.blocks * 25 / 100);  // 25% of total sectors
 
