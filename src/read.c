@@ -1464,7 +1464,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             memcpy(buffer, ctx->sector_edc + corrected_sector_address * 4, 4);
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case DvdDiscKeyDecrypted:
+        case DvdTitleKeyDecrypted:
             if(ctx->imageInfo.XmlMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
