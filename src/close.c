@@ -59,8 +59,8 @@
  * index is updated by removing any previous index entry for the same secondary table offset
  * and inserting a new one for the freshly written table.
  *
- * CRC64 is computed for the serialized table contents and stored in both crc64 and cmpCrc64
- * fields of the written DdtHeader2 (no compression is applied).
+ * CRC64 is computed for the serialized table contents and stored in crc64; cmpCrc64 stores
+ * the checksum of compressed data or equals crc64 if compression is not applied or not effective.
  *
  * On return the cached secondary table buffers and bookkeeping fields (cachedSecondaryDdtSmall,
  * cachedSecondaryDdtBig, cachedDdtOffset) are cleared.
@@ -109,7 +109,7 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
     DdtHeader2 ddt_header          = {0};
     ddt_header.identifier          = DeDuplicationTable2;
     ddt_header.type                = UserData;
-    ddt_header.compression         = None;
+    ddt_header.compression         = ctx->compression_enabled ? Lzma : None;
     ddt_header.levels              = ctx->userDataDdtHeader.levels;
     ddt_header.tableLevel          = ctx->userDataDdtHeader.tableLevel + 1;
     ddt_header.previousLevelOffset = ctx->primaryDdtOffset;
@@ -131,37 +131,79 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
     else
         ddt_header.length = items_per_ddt_entry * sizeof(uint32_t);
 
-    ddt_header.cmpLength = ddt_header.length;
-
     // Calculate CRC64 of the data
     crc64_ctx *crc64_context = aaruf_crc64_init();
     if(crc64_context != NULL)
     {
         if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-            aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cachedSecondaryDdtSmall, ddt_header.length);
+            aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cachedSecondaryDdtSmall, (uint32_t)ddt_header.length);
         else
-            aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cachedSecondaryDdtBig, ddt_header.length);
+            aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cachedSecondaryDdtBig, (uint32_t)ddt_header.length);
 
         uint64_t crc64;
         aaruf_crc64_final(crc64_context, &crc64);
-        ddt_header.crc64    = crc64;
-        ddt_header.cmpCrc64 = crc64;
+        ddt_header.crc64 = crc64;
     }
+
+    uint8_t *buffer                                  = NULL;
+    uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
+
+    if(ddt_header.compression == None)
+    {
+        if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+            buffer = (uint8_t *)ctx->cachedSecondaryDdtSmall;
+        else
+            buffer = (uint8_t *)ctx->cachedSecondaryDdtBig;
+        ddt_header.cmpCrc64 = ddt_header.crc64;
+    }
+    else
+    {
+        buffer = malloc((size_t)ddt_header.length * 2);  // Allocate double size for compression
+        if(buffer == NULL)
+        {
+            TRACE("Failed to allocate memory for secondary DDT v2 compression");
+            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        }
+
+        size_t dst_size   = (size_t)ddt_header.length * 2 * 2;
+        size_t props_size = LZMA_PROPERTIES_LENGTH;
+        aaruf_lzma_encode_buffer(
+            buffer, &dst_size,
+            ctx->userDataDdtHeader.sizeType == SmallDdtSizeType ? (uint8_t *)ctx->cachedSecondaryDdtSmall
+                                                                : (uint8_t *)ctx->cachedSecondaryDdtBig,
+            ddt_header.length, lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+
+        ddt_header.cmpLength = (uint32_t)dst_size;
+
+        if(ddt_header.cmpLength >= ddt_header.length)
+        {
+            ddt_header.compression = None;
+            free(buffer);
+            if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+                buffer = (uint8_t *)ctx->cachedSecondaryDdtSmall;
+            else
+                buffer = (uint8_t *)ctx->cachedSecondaryDdtBig;
+        }
+    }
+
+    if(ddt_header.compression == None)
+    {
+        ddt_header.cmpLength = ddt_header.length;
+        ddt_header.cmpCrc64  = ddt_header.crc64;
+    }
+    else
+        ddt_header.cmpCrc64 = aaruf_crc64_data(buffer, ddt_header.cmpLength);
+
+    if(ddt_header.compression == Lzma) ddt_header.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write header
     if(fwrite(&ddt_header, sizeof(DdtHeader2), 1, ctx->imageStream) == 1)
     {
         // Write data
-        size_t written_bytes = 0;
-        if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-            written_bytes = fwrite(ctx->cachedSecondaryDdtSmall, ddt_header.length, 1, ctx->imageStream);
-        else
-            written_bytes = fwrite(ctx->cachedSecondaryDdtBig, ddt_header.length, 1, ctx->imageStream);
-
-        if(written_bytes == 1)
+        if(fwrite(buffer, ddt_header.cmpLength, 1, ctx->imageStream) == 1)
         {
             // Update primary table entry to point to new location
-            uint64_t new_secondary_table_block_offset = end_of_file >> ctx->userDataDdtHeader.blockAlignmentShift;
+            const uint64_t new_secondary_table_block_offset = end_of_file >> ctx->userDataDdtHeader.blockAlignmentShift;
 
             if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
                 ctx->userDataDdtMini[ctx->cachedDdtPosition] = (uint16_t)new_secondary_table_block_offset;
@@ -175,7 +217,7 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
             if(ctx->cachedDdtOffset != 0)
             {
                 TRACE("Removing old index entry for DDT at offset %" PRIu64, ctx->cachedDdtOffset);
-                IndexEntry *entry = NULL;
+                const IndexEntry *entry = NULL;
 
                 // Find and remove the old index entry
                 for(unsigned int k = 0; k < utarray_len(ctx->indexEntries); k++)
@@ -242,6 +284,8 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
 
     // Set position
     fseek(ctx->imageStream, 0, SEEK_END);
+
+    if(ddt_header.compression == Lzma) free(buffer);
 
     return AARUF_STATUS_OK;
 }
