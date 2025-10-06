@@ -290,7 +290,13 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
                 ctx->currentBlockHeader.compression = None;
         }
         else
+        {
             ctx->currentTrackType = Data;
+            if(ctx->compression_enabled)
+                ctx->currentBlockHeader.compression = Lzma;
+            else
+                ctx->currentBlockHeader.compression = None;
+        }
 
         uint32_t max_buffer_size = (1 << ctx->userDataDdtHeader.dataShift) * ctx->currentBlockHeader.sectorSize;
         TRACE("Setting max buffer size to %u bytes", max_buffer_size);
@@ -1430,9 +1436,10 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
 
             size_t dst_size   = ctx->currentBlockHeader.length * 2;
             size_t props_size = LZMA_PROPERTIES_LENGTH;
-            ctx->currentBlockHeader.cmpLength =
-                aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, ctx->writingBuffer, ctx->currentBlockHeader.length,
-                                         lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+            aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, ctx->writingBuffer, ctx->currentBlockHeader.length,
+                                     lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+
+            ctx->currentBlockHeader.cmpLength = (uint32_t)dst_size;
 
             if(ctx->currentBlockHeader.cmpLength >= ctx->currentBlockHeader.length)
             {
@@ -1490,7 +1497,7 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
     }
     else
     {
-        if(fwrite(cmp_buffer, ctx->currentBlockHeader.cmpLength, 1, ctx->imageStream) == 1)
+        if(fwrite(cmp_buffer, ctx->currentBlockHeader.cmpLength, 1, ctx->imageStream) != 1)
         {
             free(cmp_buffer);
             return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
