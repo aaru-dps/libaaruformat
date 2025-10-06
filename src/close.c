@@ -448,7 +448,16 @@ static int32_t write_single_level_ddt(aaruformatContext *ctx)
     }
 
     // Write the DDT header first
-    fseek(ctx->imageStream, ctx->primaryDdtOffset, SEEK_SET);
+    fseek(ctx->imageStream, 0, SEEK_END);
+    long           ddt_position   = ftell(ctx->imageStream);
+    // Align index position to block boundary if needed
+    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    if(ddt_position & alignment_mask)
+    {
+        const uint64_t aligned_position = ddt_position + alignment_mask & ~alignment_mask;
+        fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        ddt_position = aligned_position;
+    }
 
     size_t header_written = fwrite(&ctx->userDataDdtHeader, sizeof(DdtHeader2), 1, ctx->imageStream);
     if(header_written != 1)
@@ -479,10 +488,10 @@ static int32_t write_single_level_ddt(aaruformatContext *ctx)
         IndexEntry single_ddt_entry;
         single_ddt_entry.blockType = DeDuplicationTable2;
         single_ddt_entry.dataType  = UserData;
-        single_ddt_entry.offset    = ctx->primaryDdtOffset;
+        single_ddt_entry.offset    = ddt_position;
 
         utarray_push_back(ctx->indexEntries, &single_ddt_entry);
-        TRACE("Added single-level DDT index entry at offset %" PRIu64, ctx->primaryDdtOffset);
+        TRACE("Added single-level DDT index entry at offset %" PRIu64, ddt_position);
     }
     else
         TRACE("Failed to write single-level DDT table data to file");

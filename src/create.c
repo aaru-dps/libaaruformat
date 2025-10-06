@@ -269,8 +269,13 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
                                           : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
 
     // Calculate where data blocks can start (after primary DDT + header)
-    const uint64_t dataStartPosition = ctx->primaryDdtOffset + sizeof(DdtHeader2) + primaryTableSize;
-    ctx->nextBlockPosition           = dataStartPosition + alignmentMask & ~alignmentMask;
+    if(ctx->userDataDdtHeader.tableShift > 0)
+    {
+        const uint64_t dataStartPosition = ctx->primaryDdtOffset + sizeof(DdtHeader2) + primaryTableSize;
+        ctx->nextBlockPosition = dataStartPosition + alignmentMask & ~alignmentMask;
+    }
+    else
+        ctx->nextBlockPosition = ctx->primaryDdtOffset;  // Single-level DDT can start anywhere
 
     TRACE("Data blocks will start at position %" PRIu64, ctx->nextBlockPosition);
 
