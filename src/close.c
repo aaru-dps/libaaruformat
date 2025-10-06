@@ -1003,7 +1003,7 @@ static void write_sector_suffix(aaruformatContext *ctx)
  *     for future expansion (sectorPrefixDdt) but is not emitted unless populated.
  *   - The table length equals (negative + Sectors + overflow) * entrySize.
  *   - dataShift is set to 4 (2^4 = 16) expressing the granularity of referenced prefix units.
- *   - No compression is applied; crc64/cmpCrc64 protect the raw table bytes.
+ *   - Compression is applied if enabled; crc64/cmpCrc64 protect the raw table bytes.
  *   - Idempotent: if an index entry of type DeDuplicationTable2 + CdSectorPrefixCorrected already exists
  *     the function returns immediately.
  *
@@ -1032,7 +1032,7 @@ static void write_sector_prefix_ddt(aaruformatContext *ctx)
     DdtHeader2 ddt_header2          = {0};
     ddt_header2.identifier          = DeDuplicationTable2;
     ddt_header2.type                = CdSectorPrefix;
-    ddt_header2.compression         = None;
+    ddt_header2.compression         = ctx->compression_enabled ? Lzma : None;
     ddt_header2.levels              = 1;
     ddt_header2.tableLevel          = 0;
     ddt_header2.negative            = ctx->userDataDdtHeader.negative;
@@ -1045,19 +1045,61 @@ static void write_sector_prefix_ddt(aaruformatContext *ctx)
     ddt_header2.blocks    = ctx->userDataDdtHeader.blocks;
     ddt_header2.start     = 0;
     ddt_header2.length    = ddt_header2.entries * sizeof(uint16_t);
-    ddt_header2.cmpLength = ddt_header2.length;
     // Calculate CRC64
     ddt_header2.crc64     = aaruf_crc64_data((uint8_t *)ctx->sectorPrefixDdtMini, (uint32_t)ddt_header2.length);
-    ddt_header2.cmpCrc64  = ddt_header2.crc64;
+
+    uint8_t *buffer                                  = NULL;
+    uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
+
+    if(ddt_header2.compression == None)
+    {
+        buffer                = (uint8_t *)ctx->sectorPrefixDdtMini;
+        ddt_header2.cmpCrc64 = ddt_header2.crc64;
+    }
+    else
+    {
+        buffer = malloc((size_t)ddt_header2.length * 2);  // Allocate double size for compression
+        if(buffer == NULL)
+        {
+            TRACE("Failed to allocate memory for sector prefix DDT v2 compression");
+            return;
+        }
+
+        size_t dst_size   = (size_t)ddt_header2.length * 2 * 2;
+        size_t props_size = LZMA_PROPERTIES_LENGTH;
+        aaruf_lzma_encode_buffer(buffer, &dst_size, (uint8_t *)ctx->sectorPrefixDdtMini, ddt_header2.length, lzma_properties,
+                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+
+        ddt_header2.cmpLength = (uint32_t)dst_size;
+
+        if(ddt_header2.cmpLength >= ddt_header2.length)
+        {
+            ddt_header2.compression = None;
+            free(buffer);
+            buffer = (uint8_t *)ctx->sectorPrefixDdtMini;
+        }
+    }
+
+    if(ddt_header2.compression == None)
+    {
+        ddt_header2.cmpLength = ddt_header2.length;
+        ddt_header2.cmpCrc64  = ddt_header2.crc64;
+    }
+    else
+        ddt_header2.cmpCrc64 = aaruf_crc64_data(buffer, (uint32_t)ddt_header2.cmpLength);
+
+    if(ddt_header2.compression == Lzma) ddt_header2.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write header
     if(fwrite(&ddt_header2, sizeof(DdtHeader2), 1, ctx->imageStream) == 1)
     {
+        if(ddt_header2.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
+
         // Write data
-        const size_t written_bytes = fwrite(ctx->sectorPrefixDdtMini, ddt_header2.length, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, ddt_header2.cmpLength, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
-            TRACE("Successfully wrote sector prefix DDT v2 (%" PRIu64 " bytes)", ddt_header2.length);
+            TRACE("Successfully wrote sector prefix DDT v2 (%" PRIu64 " bytes)", ddt_header2.cmpLength);
             // Add prefix block to index
             TRACE("Adding sector prefix DDT v2 to index");
             IndexEntry prefix_ddt_index_entry;
@@ -1068,6 +1110,8 @@ static void write_sector_prefix_ddt(aaruformatContext *ctx)
             TRACE("Added sector prefix DDT v2 index entry at offset %" PRIu64, prefix_ddt_position);
         }
     }
+
+    if(ddt_header2.compression == Lzma) free(buffer);
 }
 
 /**
