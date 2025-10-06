@@ -345,7 +345,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
             ctx->sector_ied                           = data;
             ctx->readableSectorTags[DvdSectorIedAaru] = true;
             break;
-        case case DvdSectorCprMai:
+        case DvdSectorCprMai:
             ctx->sector_cpr_mai             = data;
             ctx->readableSectorTags[DvdCmi] = true;
             break;
