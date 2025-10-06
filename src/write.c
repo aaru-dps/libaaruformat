@@ -580,6 +580,51 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
 
             if(track.sequence == 0 && track.start == 0 && track.end == 0) track.type = Data;
 
+            uint64_t corrected_sector_address = sector_address;
+
+            // Calculate positive or negative sector
+            if(negative)
+                corrected_sector_address -= ctx->userDataDdtHeader.negative;
+            else
+                corrected_sector_address += ctx->userDataDdtHeader.negative;
+
+            uint64_t total_sectors = ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow;
+
+            // DVD long sector
+            if(length == 2064 && (
+                               ctx->imageInfo.MediaType == DVDROM ||
+                                                    ctx->imageInfo.MediaType == PS2DVD ||
+                                                    ctx->imageInfo.MediaType == SACD ||
+                                                    ctx->imageInfo.MediaType == PS3DVD ||
+                                                    ctx->imageInfo.MediaType == DVDR ||
+                                                    ctx->imageInfo.MediaType == DVDRW ||
+                                                    ctx->imageInfo.MediaType == DVDPR ||
+                                                    ctx->imageInfo.MediaType == DVDPRW ||
+                                                    ctx->imageInfo.MediaType == DVDPRWDL ||
+                                                    ctx->imageInfo.MediaType == DVDRDL ||
+                                                    ctx->imageInfo.MediaType == DVDPRDL ||
+                                                    ctx->imageInfo.MediaType == DVDRAM ||
+                                                    ctx->imageInfo.MediaType == DVDRWDL ||
+                                                    ctx->imageInfo.MediaType == DVDDownload ||
+                                                    ctx->imageInfo.MediaType == Nuon))
+            {
+                if(ctx->sector_id == NULL)
+                    ctx->sector_id = calloc(1, 4 * total_sectors);
+                if(ctx->sector_ied == NULL)
+                    ctx->sector_ied = calloc(1, 2 * total_sectors);
+                if(ctx->sector_cpr_mai == NULL)
+                    ctx->sector_cpr_mai = calloc(1, 6 * total_sectors);
+                if(ctx->sector_edc == NULL)
+                    ctx->sector_edc = calloc(1, 4 * total_sectors);
+
+                memcpy(ctx->sector_id + corrected_sector_address * 4, data, 4);
+                memcpy(ctx->sector_ied + corrected_sector_address * 2, data + 4, 2);
+                memcpy(ctx->sector_cpr_mai + corrected_sector_address * 6, data + 6, 6);
+                memcpy(ctx->sector_edc + corrected_sector_address * 4, data + 2060, 4);
+
+                return aaruf_write_sector(context, sector_address, negative, data + 12, sector_status, 2048);
+            }
+
             if(length != 2352)
             {
                 FATAL("Incorrect sector size");
@@ -628,14 +673,6 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                 blake3_hasher_update(ctx->blake3_context, data, length);
 
             bool prefix_correct;
-
-            uint64_t corrected_sector_address = sector_address;
-
-            // Calculate positive or negative sector
-            if(negative)
-                corrected_sector_address -= ctx->userDataDdtHeader.negative;
-            else
-                corrected_sector_address += ctx->userDataDdtHeader.negative;
 
             // Split raw cd sector data in prefix (sync, header), user data and suffix (edc, ecc p, ecc q)
             switch(track.type)
