@@ -1083,3 +1083,493 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
             return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
     }
 }
+
+/**
+ * @brief Reads a specific sector tag from the AaruFormat image.
+ *
+ * Reads sector-level metadata tags such as subchannel data, track information,
+ * DVD sector metadata, or Apple/Priam proprietary tags from the specified sector.
+ * Sector tags are ancillary data stored separately from the main user data and
+ * provide format-specific metadata like track flags, ISRC codes, DVD encryption
+ * information, or ECC/EDC data. This function validates tag type against media
+ * type and ensures the tag data is present in the image before returning it.
+ *
+ * @param context Pointer to the aaruformat context.
+ * @param sector_address The logical sector address to read the tag from.
+ * @param negative Indicates if the sector address is negative (pre-track area).
+ * @param buffer Pointer to buffer where tag data will be stored. Can be NULL to query tag length.
+ * @param length Pointer to variable containing buffer size on input, actual tag length on output.
+ * @param tag Tag identifier specifying which sector tag to read (see SectorTagType enum).
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully read the sector tag. This is returned when:
+ *         - The context is valid and properly initialized
+ *         - The requested tag type exists and is applicable to the media type
+ *         - The tag data is present in the image for the specified sector
+ *         - The provided buffer is large enough to contain the tag data
+ *         - The tag data is successfully copied to the output buffer
+ *         - The length parameter is updated with the actual tag data length
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
+ *
+ * @retval AARUF_ERROR_SECTOR_OUT_OF_BOUNDS (-5) The sector address exceeds image bounds. This occurs when:
+ *         - negative is true and sector_address > ctx->userDataDdtHeader.negative - 1
+ *         - negative is false and sector_address > ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow - 1
+ *         - Attempting to read beyond the logical extent of the imaged medium
+ *
+ * @retval AARUF_ERROR_INCORRECT_MEDIA_TYPE (-12) Tag type incompatible with media type. This occurs when:
+ *         - Optical disc tags (CdTrackFlags, CdTrackIsrc, CdSectorSubchannel, DvdSector*) requested from BlockMedia
+ *         - Block media tags (AppleSonyTag, AppleProfileTag, PriamDataTowerTag) requested from OpticalDisc
+ *         - Tag type is specific to a media format not present in the current image
+ *
+ * @retval AARUF_ERROR_INCORRECT_DATA_SIZE (-26) The provided buffer has incorrect size. This occurs when:
+ *         - The buffer parameter is NULL (used for length querying - NOT an error, updates length and returns this)
+ *         - The buffer length (*length) doesn't match the required tag data length
+ *         - The length parameter is updated with the required exact size for retry
+ *
+ * @retval AARUF_ERROR_SECTOR_TAG_NOT_PRESENT (-16) The requested tag is not stored in the image. This occurs when:
+ *         - The tag data was not captured during the imaging process
+ *         - The storage pointer for the tag is NULL (e.g., ctx->sector_subchannel is NULL)
+ *         - The imaging hardware/software did not support reading this tag type
+ *         - The tag is optional and was not available on the source medium
+ *
+ * @retval AARUF_ERROR_TRACK_NOT_FOUND (-13) Track information not found for the sector. This occurs when:
+ *         - Requesting CdTrackFlags or CdTrackIsrc for a sector not within any track boundaries
+ *         - The sector address doesn't fall within any track's start/end range in ctx->trackEntries[]
+ *         - Track metadata was not properly initialized or is corrupted
+ *
+ * @retval AARUF_ERROR_INVALID_TAG (-27) The tag identifier is not recognized or supported. This occurs when:
+ *         - The tag parameter value doesn't match any known SectorTagType enum value
+ *         - Future/unsupported tag types not implemented in this library version
+ *
+ * @note Supported Tag Types and Sizes:
+ *       Optical Disc Tags (OpticalDisc media only):
+ *       - CdTrackFlags (11): 1 byte - Track control flags (audio/data, copy permitted, pre-emphasis)
+ *       - CdTrackIsrc (9): 12 bytes - International Standard Recording Code (no null terminator)
+ *       - CdSectorSubchannel (71): 96 bytes - Raw P-W subchannel data
+ *       - DvdSectorCprMai (81): 6 bytes - DVD Copyright Management Information (CPR_MAI)
+ *       - DvdSectorInformation (16): 1 byte - DVD sector information byte from ID field
+ *       - DvdSectorNumber (17): 3 bytes - DVD sector number from ID field
+ *       - DvdSectorIed (84): 2 bytes - DVD ID Error Detection code
+ *       - DvdSectorEdc (85): 4 bytes - DVD Error Detection Code
+ *       - DvdDiscKeyDecrypted (80): 5 bytes - Decrypted DVD title key for the sector
+ *
+ *       Block Media Tags (BlockMedia only):
+ *       - AppleSonyTag (73): 12 bytes - Apple Sony format 12-byte sector tag
+ *       - AppleProfileTag (72): 20 bytes - Apple Profile format 20-byte sector tag
+ *       - PriamDataTowerTag (74): 24 bytes - Priam DataTower format 24-byte sector tag
+ *
+ * @note Sector Address Correction:
+ *       - The function automatically adjusts sector addresses based on the negative parameter
+ *       - Negative sectors are adjusted: corrected = sector_address - ctx->userDataDdtHeader.negative
+ *       - Positive sectors are adjusted: corrected = sector_address + ctx->userDataDdtHeader.negative
+ *       - Corrected addresses are used for indexing into tag data arrays
+ *
+ * @note Track-Based Tags (CdTrackFlags, CdTrackIsrc):
+ *       - These tags are per-track, not per-sector
+ *       - Function searches ctx->trackEntries[] for track containing the sector
+ *       - All sectors within a track return the same track-level metadata
+ *       - Returns AARUF_ERROR_TRACK_NOT_FOUND if sector is outside all tracks
+ *
+ * @note DVD Sector Tags:
+ *       - DVD sector tags are extracted from the DVD ID field or associated metadata
+ *       - DvdSectorInformation and DvdSectorNumber are derived from ctx->sector_id array
+ *       - Multiple tags may share the same underlying storage (e.g., ID field breakdown)
+ *       - Presence depends on the DVD reading capabilities during imaging
+ *
+ * @note Buffer Size Querying:
+ *       - Pass buffer as NULL to query the required buffer size without reading data
+ *       - The length parameter will be updated with the exact required size
+ *       - Returns AARUF_ERROR_INCORRECT_DATA_SIZE (not a fatal error in this context)
+ *       - Allows proper buffer allocation before the actual read operation
+ *
+ * @note Tag Data Storage:
+ *       - Tag data is stored in dedicated context arrays (ctx->sector_subchannel, ctx->sector_cpr_mai, etc.)
+ *       - Each tag type has a specific array with fixed-size entries per sector
+ *       - NULL storage pointer indicates tag was not captured/available
+ *       - Tag data is indexed using the corrected sector address
+ *
+ * @warning The buffer must be exactly the required size for each tag type.
+ *          Unlike aaruf_read_sector(), this function enforces strict size matching.
+ *
+ * @warning Tag availability is hardware and media dependent. Always check for
+ *          AARUF_ERROR_SECTOR_TAG_NOT_PRESENT and handle gracefully.
+ *
+ * @warning Track-based tags (CdTrackFlags, CdTrackIsrc) return the same value
+ *          for all sectors within a track. Do not assume per-sector uniqueness.
+ *
+ * @warning Some tags contain binary data without string termination (e.g., ISRC).
+ *          Do not treat tag buffers as null-terminated strings without validation.
+ */
+int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address, const bool negative, uint8_t *buffer,
+                              uint32_t *length, const int32_t tag)
+{
+    TRACE("Entering aaruf_read_sector_tag(%p, %" PRIu64 ", %d, %p, %u, %d)", context, sector_address, negative, buffer,
+          *length, tag);
+
+    const aaruformatContext *ctx = NULL;
+
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(negative && sector_address > ctx->userDataDdtHeader.negative - 1)
+    {
+        FATAL("Sector address out of bounds");
+
+        TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+        return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
+    }
+
+    if(!negative && sector_address > ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow - 1)
+    {
+        FATAL("Sector address out of bounds");
+
+        TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+        return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
+    }
+
+    uint64_t corrected_sector_address = sector_address;
+
+    // Calculate positive or negative sector
+    if(negative)
+        corrected_sector_address -= ctx->userDataDdtHeader.negative;
+    else
+        corrected_sector_address += ctx->userDataDdtHeader.negative;
+
+    switch(tag)
+    {
+        case CdTrackFlags:
+            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(*length != 1 || buffer == NULL)
+            {
+                *length = 1;
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            for(int i = 0; i < ctx->tracksHeader.entries; i++)
+                if(sector_address >= ctx->trackEntries[i].start && sector_address <= ctx->trackEntries[i].end)
+                {
+                    buffer[0] = ctx->trackEntries[i].flags;
+                    TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
+                    return AARUF_STATUS_OK;
+                }
+
+            FATAL("Track not found");
+            return AARUF_ERROR_TRACK_NOT_FOUND;
+        case CdTrackIsrc:
+            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(*length != 12 || buffer == NULL)
+            {
+                *length = 12;
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            for(int i = 0; i < ctx->tracksHeader.entries; i++)
+                if(sector_address >= ctx->trackEntries[i].start && sector_address <= ctx->trackEntries[i].end)
+                {
+                    memcpy(buffer, ctx->trackEntries[i].isrc, 12);
+                    TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
+                    return AARUF_STATUS_OK;
+                }
+
+            FATAL("Track not found");
+            return AARUF_ERROR_TRACK_NOT_FOUND;
+        case CdSectorSubchannel:
+            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(*length != 96 || buffer == NULL)
+            {
+                *length = 96;
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_subchannel == NULL)
+            {
+                FATAL("Sector tag not found");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_SECTOR_TAG_NOT_PRESENT");
+                return AARUF_ERROR_SECTOR_TAG_NOT_PRESENT;
+            }
+
+            memcpy(buffer, ctx->sector_subchannel + corrected_sector_address * 96, 96);
+            TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        case DvdSectorCprMai:
+            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(*length != 6 || buffer == NULL)
+            {
+                *length = 6;
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_cpr_mai == NULL)
+            {
+                FATAL("Sector tag not found");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_SECTOR_TAG_NOT_PRESENT");
+                return AARUF_ERROR_SECTOR_TAG_NOT_PRESENT;
+            }
+
+            memcpy(buffer, ctx->sector_cpr_mai + corrected_sector_address * 6, 6);
+            TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        case DvdSectorInformation:
+            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(*length != 1 || buffer == NULL)
+            {
+                *length = 1;
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_id == NULL)
+            {
+                FATAL("Sector tag not found");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_SECTOR_TAG_NOT_PRESENT");
+                return AARUF_ERROR_SECTOR_TAG_NOT_PRESENT;
+            }
+
+            memcpy(buffer, ctx->sector_id + corrected_sector_address * 4, 1);
+            TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        case DvdSectorNumber:
+            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(*length != 3 || buffer == NULL)
+            {
+                *length = 3;
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_id == NULL)
+            {
+                FATAL("Sector tag not found");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_SECTOR_TAG_NOT_PRESENT");
+                return AARUF_ERROR_SECTOR_TAG_NOT_PRESENT;
+            }
+
+            memcpy(buffer, ctx->sector_id + corrected_sector_address * 4 + 1, 3);
+            TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        case DvdSectorIed:
+            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(*length != 2 || buffer == NULL)
+            {
+                *length = 2;
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_ied == NULL)
+            {
+                FATAL("Sector tag not found");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_SECTOR_TAG_NOT_PRESENT");
+                return AARUF_ERROR_SECTOR_TAG_NOT_PRESENT;
+            }
+
+            memcpy(buffer, ctx->sector_ied + corrected_sector_address * 2, 2);
+            TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        case DvdSectorEdc:
+            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(*length != 4 || buffer == NULL)
+            {
+                *length = 4;
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_edc == NULL)
+            {
+                FATAL("Sector tag not found");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_SECTOR_TAG_NOT_PRESENT");
+                return AARUF_ERROR_SECTOR_TAG_NOT_PRESENT;
+            }
+
+            memcpy(buffer, ctx->sector_edc + corrected_sector_address * 4, 4);
+            TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        case DvdDiscKeyDecrypted:
+            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(*length != 5 || buffer == NULL)
+            {
+                *length = 5;
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_decrypted_title_key == NULL)
+            {
+                FATAL("Sector tag not found");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_SECTOR_TAG_NOT_PRESENT");
+                return AARUF_ERROR_SECTOR_TAG_NOT_PRESENT;
+            }
+
+            memcpy(buffer, ctx->sector_decrypted_title_key + corrected_sector_address * 5, 5);
+            TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        case AppleSonyTag:
+            if(ctx->imageInfo.XmlMediaType != BlockMedia)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(*length != 12 || buffer == NULL)
+            {
+                *length = 12;
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_subchannel == NULL)
+            {
+                FATAL("Sector tag not found");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_SECTOR_TAG_NOT_PRESENT");
+                return AARUF_ERROR_SECTOR_TAG_NOT_PRESENT;
+            }
+
+            memcpy(buffer, ctx->sector_subchannel + corrected_sector_address * 12, 12);
+            TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        case AppleProfileTag:
+            if(ctx->imageInfo.XmlMediaType != BlockMedia)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(*length != 20 || buffer == NULL)
+            {
+                *length = 20;
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_subchannel == NULL)
+            {
+                FATAL("Sector tag not found");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_SECTOR_TAG_NOT_PRESENT");
+                return AARUF_ERROR_SECTOR_TAG_NOT_PRESENT;
+            }
+
+            memcpy(buffer, ctx->sector_subchannel + corrected_sector_address * 20, 20);
+            TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        case PriamDataTowerTag:
+            if(ctx->imageInfo.XmlMediaType != BlockMedia)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(*length != 24 || buffer == NULL)
+            {
+                *length = 24;
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_subchannel == NULL)
+            {
+                FATAL("Sector tag not found");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_SECTOR_TAG_NOT_PRESENT");
+                return AARUF_ERROR_SECTOR_TAG_NOT_PRESENT;
+            }
+
+            memcpy(buffer, ctx->sector_subchannel + corrected_sector_address * 24, 24);
+            TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        default:
+            TRACE("Do not know how to read sector tag %d", tag);
+            return AARUF_ERROR_INVALID_TAG;
+    }
+}
