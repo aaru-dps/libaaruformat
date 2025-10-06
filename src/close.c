@@ -702,7 +702,7 @@ static void write_mode2_subheaders_block(aaruformatContext *ctx)
 
         size_t dst_size   = (size_t)subheaders_block.length * 2 * 2;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->writingBuffer, ctx->currentBlockHeader.length, lzma_properties,
+        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->mode2_subheaders, subheaders_block.length, lzma_properties,
                                  &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
 
         subheaders_block.cmpLength = (uint32_t)dst_size;
@@ -731,10 +731,10 @@ static void write_mode2_subheaders_block(aaruformatContext *ctx)
         if(subheaders_block.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
 
         // Write data
-        size_t written_bytes = fwrite(buffer, subheaders_block.length, 1, ctx->imageStream);
+        size_t written_bytes = fwrite(buffer, subheaders_block.cmpLength, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
-            TRACE("Successfully wrote MODE 2 subheaders block (%" PRIu64 " bytes)", subheaders_block.length);
+            TRACE("Successfully wrote MODE 2 subheaders block (%" PRIu64 " bytes)", subheaders_block.cmpLength);
             // Add MODE 2 subheaders block to index
             TRACE("Adding MODE 2 subheaders block to index");
             IndexEntry mode2_subheaders_index_entry;
