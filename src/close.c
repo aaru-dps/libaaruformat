@@ -1462,10 +1462,8 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
  * error codes; higher-level close logic must validate overall integrity if needed.
  *
  * **No-op conditions:**
- * - ctx->sector_id is NULL OR
- * - ctx->sector_ied is NULL OR
- * - ctx->sector_cpr_mai is NULL OR
- * - ctx->sector_edc is NULL
+ * If any of the four auxiliary buffers is NULL, the function returns immediately without writing
+ * anything. This is an all-or-nothing operation - either all four blocks are written or none.
  *
  * @param ctx Pointer to an initialized aaruformatContext in write mode. Must not be NULL.
  *            ctx->sector_id contains the ID fields from all DVD long sectors (may be NULL).
@@ -1495,10 +1493,10 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
  *       - Total auxiliary data: 16 bytes per sector across all four blocks
  *
  * @note Memory Management:
- *       - The function does not allocate or free any memory
+ *       - The function allocates temporary buffers for compression when enabled
  *       - Auxiliary data buffers are managed by the caller
- *       - Buffers are written directly without modification
- *       - Memory is freed later during context cleanup (aaruf_close)
+ *       - Compression buffers are freed after each block is written
+ *       - Source data memory is freed later during context cleanup (aaruf_close)
  *
  * @note Use Cases:
  *       - Forensic imaging of DVD media requiring complete sector data
@@ -1517,8 +1515,8 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
  *          overflow). Partial buffers or mismatched sizes will cause incorrect data to be
  *          written or buffer overruns.
  *
- * @warning No compression is applied to DVD auxiliary data blocks. They are stored as raw
- *          binary data, which may result in larger image files for DVD media.
+ * @warning Compression is applied if enabled. The blocks may be stored compressed or uncompressed
+ *          depending on the compression_enabled setting and compression effectiveness.
  *
  * @warning If any of the four auxiliary buffers is NULL, the entire function is skipped.
  *          This is an all-or-nothing operation - either all four blocks are written or none.
@@ -1549,20 +1547,64 @@ void write_dvd_long_sector_blocks(aaruformatContext *ctx)
     BlockHeader id_block = {0};
     id_block.identifier  = DataBlock;
     id_block.type        = DvdSectorId;
-    id_block.compression = None;
+    id_block.compression = ctx->compression_enabled ? Lzma : None;
     id_block.length      = (uint32_t)total_sectors * 4;
-    id_block.cmpLength   = id_block.length;
+
     // Calculate CRC64
-    id_block.crc64       = aaruf_crc64_data(ctx->sector_id, id_block.length);
-    id_block.cmpCrc64    = id_block.crc64;
+    id_block.crc64 = aaruf_crc64_data(ctx->sector_id, id_block.length);
+
+    uint8_t *buffer                                  = NULL;
+    uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
+
+    if(id_block.compression == None)
+    {
+        buffer            = ctx->sector_id;
+        id_block.cmpCrc64 = id_block.crc64;
+    }
+    else
+    {
+        buffer = malloc((size_t)id_block.length * 2);  // Allocate double size for compression
+        if(buffer == NULL)
+        {
+            TRACE("Failed to allocate memory for DVD sector ID compression");
+            return;
+        }
+
+        size_t dst_size   = (size_t)id_block.length * 2 * 2;
+        size_t props_size = LZMA_PROPERTIES_LENGTH;
+        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_id, id_block.length, lzma_properties, &props_size, 9,
+                                 ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+
+        id_block.cmpLength = (uint32_t)dst_size;
+
+        if(id_block.cmpLength >= id_block.length)
+        {
+            id_block.compression = None;
+            free(buffer);
+            buffer = ctx->sector_id;
+        }
+    }
+
+    if(id_block.compression == None)
+    {
+        id_block.cmpLength = id_block.length;
+        id_block.cmpCrc64  = id_block.crc64;
+    }
+    else
+        id_block.cmpCrc64 = aaruf_crc64_data(buffer, id_block.cmpLength);
+
+    if(id_block.compression == Lzma) id_block.cmpLength += LZMA_PROPERTIES_LENGTH;
+
     // Write header
     if(fwrite(&id_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
     {
+        if(id_block.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
+
         // Write data
-        const size_t written_bytes = fwrite(ctx->sector_id, id_block.length, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, id_block.cmpLength, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
-            TRACE("Successfully wrote DVD sector ID block (%" PRIu64 " bytes)", id_block.length);
+            TRACE("Successfully wrote DVD sector ID block (%" PRIu64 " bytes)", id_block.cmpLength);
             // Add ID block to index
             TRACE("Adding DVD sector ID block to index");
             IndexEntry id_index_entry;
@@ -1573,6 +1615,8 @@ void write_dvd_long_sector_blocks(aaruformatContext *ctx)
             TRACE("Added DVD sector ID block index entry at offset %" PRIu64, id_position);
         }
     }
+
+    if(id_block.compression == Lzma) free(buffer);
 
     // Write DVD sector IED block
     fseek(ctx->imageStream, 0, SEEK_END);
@@ -1587,20 +1631,62 @@ void write_dvd_long_sector_blocks(aaruformatContext *ctx)
     BlockHeader ied_block = {0};
     ied_block.identifier  = DataBlock;
     ied_block.type        = DvdSectorIed;
-    ied_block.compression = None;
+    ied_block.compression = ctx->compression_enabled ? Lzma : None;
     ied_block.length      = (uint32_t)total_sectors * 2;
-    ied_block.cmpLength   = ied_block.length;
     // Calculate CRC64
     ied_block.crc64       = aaruf_crc64_data(ctx->sector_ied, ied_block.length);
-    ied_block.cmpCrc64    = ied_block.crc64;
+
+    buffer = NULL;
+
+    if(ied_block.compression == None)
+    {
+        buffer             = ctx->sector_ied;
+        ied_block.cmpCrc64 = ied_block.crc64;
+    }
+    else
+    {
+        buffer = malloc((size_t)ied_block.length * 2);  // Allocate double size for compression
+        if(buffer == NULL)
+        {
+            TRACE("Failed to allocate memory for DVD sector IED compression");
+            return;
+        }
+
+        size_t dst_size   = (size_t)ied_block.length * 2 * 2;
+        size_t props_size = LZMA_PROPERTIES_LENGTH;
+        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_ied, ied_block.length, lzma_properties, &props_size, 9,
+                                 ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+
+        ied_block.cmpLength = (uint32_t)dst_size;
+
+        if(ied_block.cmpLength >= ied_block.length)
+        {
+            ied_block.compression = None;
+            free(buffer);
+            buffer = ctx->sector_ied;
+        }
+    }
+
+    if(ied_block.compression == None)
+    {
+        ied_block.cmpLength = ied_block.length;
+        ied_block.cmpCrc64  = ied_block.crc64;
+    }
+    else
+        ied_block.cmpCrc64 = aaruf_crc64_data(buffer, ied_block.cmpLength);
+
+    if(ied_block.compression == Lzma) ied_block.cmpLength += LZMA_PROPERTIES_LENGTH;
+
     // Write header
     if(fwrite(&ied_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
     {
+        if(ied_block.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
+
         // Write data
-        const size_t written_bytes = fwrite(ctx->sector_ied, ied_block.length, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, ied_block.cmpLength, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
-            TRACE("Successfully wrote DVD sector IED block (%" PRIu64 " bytes)", ied_block.length);
+            TRACE("Successfully wrote DVD sector IED block (%" PRIu64 " bytes)", ied_block.cmpLength);
             // Add IED block to index
             TRACE("Adding DVD sector IED block to index");
             IndexEntry ied_index_entry;
@@ -1611,6 +1697,8 @@ void write_dvd_long_sector_blocks(aaruformatContext *ctx)
             TRACE("Added DVD sector IED block index entry at offset %" PRIu64, ied_position);
         }
     }
+
+    if(ied_block.compression == Lzma) free(buffer);
 
     // Write DVD sector CPR/MAI block
     fseek(ctx->imageStream, 0, SEEK_END);
@@ -1625,20 +1713,62 @@ void write_dvd_long_sector_blocks(aaruformatContext *ctx)
     BlockHeader cpr_mai_block = {0};
     cpr_mai_block.identifier  = DataBlock;
     cpr_mai_block.type        = DvdSectorCprMai;
-    cpr_mai_block.compression = None;
+    cpr_mai_block.compression = ctx->compression_enabled ? Lzma : None;
     cpr_mai_block.length      = (uint32_t)total_sectors * 6;
-    cpr_mai_block.cmpLength   = cpr_mai_block.length;
     // Calculate CRC64
     cpr_mai_block.crc64       = aaruf_crc64_data(ctx->sector_cpr_mai, cpr_mai_block.length);
-    cpr_mai_block.cmpCrc64    = cpr_mai_block.crc64;
+
+    buffer = NULL;
+
+    if(cpr_mai_block.compression == None)
+    {
+        buffer                 = ctx->sector_cpr_mai;
+        cpr_mai_block.cmpCrc64 = cpr_mai_block.crc64;
+    }
+    else
+    {
+        buffer = malloc((size_t)cpr_mai_block.length * 2);  // Allocate double size for compression
+        if(buffer == NULL)
+        {
+            TRACE("Failed to allocate memory for DVD sector CPR/MAI compression");
+            return;
+        }
+
+        size_t dst_size   = (size_t)cpr_mai_block.length * 2 * 2;
+        size_t props_size = LZMA_PROPERTIES_LENGTH;
+        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_cpr_mai, cpr_mai_block.length, lzma_properties,
+                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+
+        cpr_mai_block.cmpLength = (uint32_t)dst_size;
+
+        if(cpr_mai_block.cmpLength >= cpr_mai_block.length)
+        {
+            cpr_mai_block.compression = None;
+            free(buffer);
+            buffer = ctx->sector_cpr_mai;
+        }
+    }
+
+    if(cpr_mai_block.compression == None)
+    {
+        cpr_mai_block.cmpLength = cpr_mai_block.length;
+        cpr_mai_block.cmpCrc64  = cpr_mai_block.crc64;
+    }
+    else
+        cpr_mai_block.cmpCrc64 = aaruf_crc64_data(buffer, cpr_mai_block.cmpLength);
+
+    if(cpr_mai_block.compression == Lzma) cpr_mai_block.cmpLength += LZMA_PROPERTIES_LENGTH;
+
     // Write header
     if(fwrite(&cpr_mai_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
     {
+        if(cpr_mai_block.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
+
         // Write data
-        const size_t written_bytes = fwrite(ctx->sector_cpr_mai, cpr_mai_block.length, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, cpr_mai_block.cmpLength, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
-            TRACE("Successfully wrote DVD sector CPR/MAI block (%" PRIu64 " bytes)", cpr_mai_block.length);
+            TRACE("Successfully wrote DVD sector CPR/MAI block (%" PRIu64 " bytes)", cpr_mai_block.cmpLength);
             // Add CPR/MAI block to index
             TRACE("Adding DVD sector CPR/MAI block to index");
             IndexEntry cpr_mai_index_entry;
@@ -1649,6 +1779,8 @@ void write_dvd_long_sector_blocks(aaruformatContext *ctx)
             TRACE("Added DVD sector CPR/MAI block index entry at offset %" PRIu64, cpr_mai_position);
         }
     }
+
+    if(cpr_mai_block.compression == Lzma) free(buffer);
 
     // Write DVD sector EDC block
     fseek(ctx->imageStream, 0, SEEK_END);
@@ -1663,20 +1795,62 @@ void write_dvd_long_sector_blocks(aaruformatContext *ctx)
     BlockHeader edc_block = {0};
     edc_block.identifier  = DataBlock;
     edc_block.type        = DvdSectorEdc;
-    edc_block.compression = None;
+    edc_block.compression = ctx->compression_enabled ? Lzma : None;
     edc_block.length      = (uint32_t)total_sectors * 4;
-    edc_block.cmpLength   = edc_block.length;
     // Calculate CRC64
     edc_block.crc64       = aaruf_crc64_data(ctx->sector_edc, edc_block.length);
-    edc_block.cmpCrc64    = edc_block.crc64;
+
+    buffer = NULL;
+
+    if(edc_block.compression == None)
+    {
+        buffer             = ctx->sector_edc;
+        edc_block.cmpCrc64 = edc_block.crc64;
+    }
+    else
+    {
+        buffer = malloc((size_t)edc_block.length * 2);  // Allocate double size for compression
+        if(buffer == NULL)
+        {
+            TRACE("Failed to allocate memory for DVD sector EDC compression");
+            return;
+        }
+
+        size_t dst_size   = (size_t)edc_block.length * 2 * 2;
+        size_t props_size = LZMA_PROPERTIES_LENGTH;
+        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_edc, edc_block.length, lzma_properties, &props_size, 9,
+                                 ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+
+        edc_block.cmpLength = (uint32_t)dst_size;
+
+        if(edc_block.cmpLength >= edc_block.length)
+        {
+            edc_block.compression = None;
+            free(buffer);
+            buffer = ctx->sector_edc;
+        }
+    }
+
+    if(edc_block.compression == None)
+    {
+        edc_block.cmpLength = edc_block.length;
+        edc_block.cmpCrc64  = edc_block.crc64;
+    }
+    else
+        edc_block.cmpCrc64 = aaruf_crc64_data(buffer, edc_block.cmpLength);
+
+    if(edc_block.compression == Lzma) edc_block.cmpLength += LZMA_PROPERTIES_LENGTH;
+
     // Write header
     if(fwrite(&edc_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
     {
+        if(edc_block.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
+
         // Write data
-        const size_t written_bytes = fwrite(ctx->sector_edc, edc_block.length, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, edc_block.cmpLength, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
-            TRACE("Successfully wrote DVD sector EDC block (%" PRIu64 " bytes)", edc_block.length);
+            TRACE("Successfully wrote DVD sector EDC block (%" PRIu64 " bytes)", edc_block.cmpLength);
             // Add EDC block to index
             TRACE("Adding DVD sector EDC block to index");
             IndexEntry edc_index_entry;
@@ -1687,6 +1861,8 @@ void write_dvd_long_sector_blocks(aaruformatContext *ctx)
             TRACE("Added DVD sector EDC block index entry at offset %" PRIu64, edc_position);
         }
     }
+
+    if(edc_block.compression == Lzma) free(buffer);
 }
 
 /**
