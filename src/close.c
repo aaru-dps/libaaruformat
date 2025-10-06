@@ -199,6 +199,8 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
     // Write header
     if(fwrite(&ddt_header, sizeof(DdtHeader2), 1, ctx->imageStream) == 1)
     {
+        if(ddt_header.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
+
         // Write data
         if(fwrite(buffer, ddt_header.cmpLength, 1, ctx->imageStream) == 1)
         {
