@@ -1885,8 +1885,8 @@ void write_dvd_long_sector_blocks(aaruformatContext *ctx)
  * - **Block Type**: DataBlock with type DvdSectorTitleKeyDecrypted
  * - **Size**: 5 bytes per sector (total_sectors × 5 bytes)
  *   - total_sectors = negative sectors + user sectors + overflow sectors
- * - **Compression**: None (stored uncompressed)
- * - **CRC64**: Computed over the entire decrypted title key buffer
+ * - **Compression**: Applied if enabled (LZMA compression)
+ * - **CRC64**: Computed over the decrypted title key buffer
  * - **Alignment**: Block-aligned according to ctx->userDataDdtHeader.blockAlignmentShift
  *
  * **Block write sequence:**
@@ -1897,12 +1897,15 @@ void write_dvd_long_sector_blocks(aaruformatContext *ctx)
  * 4. Construct BlockHeader with:
  *    - identifier = DataBlock
  *    - type = DvdSectorTitleKeyDecrypted
- *    - compression = None
- *    - length = cmpLength = (negative + sectors + overflow) × 5
- *    - crc64 = cmpCrc64 = CRC64 of entire key buffer
+ *    - compression = ctx->compression_enabled ? Lzma : None
+ *    - length = (negative + sectors + overflow) × 5
+ *    - cmpLength = compressed size or original size if compression not effective
+ *    - crc64 = CRC64 of original key buffer
+ *    - cmpCrc64 = CRC64 of compressed data or same as crc64 if uncompressed
  * 5. Write BlockHeader (sizeof(BlockHeader) bytes)
- * 6. Write decrypted title key data buffer
- * 7. Create and append IndexEntry to ctx->indexEntries:
+ * 6. Write LZMA properties if compressed (LZMA_PROPERTIES_LENGTH bytes)
+ * 7. Write decrypted title key data buffer (compressed or uncompressed)
+ * 8. Create and append IndexEntry to ctx->indexEntries:
  *    - blockType = DataBlock
  *    - dataType = DvdSectorTitleKeyDecrypted
  *    - offset = aligned block position
@@ -1976,24 +1979,67 @@ static void write_dvd_title_key_decrypted_block(const aaruformatContext *ctx)
     BlockHeader decrypted_title_key_block = {0};
     decrypted_title_key_block.identifier  = DataBlock;
     decrypted_title_key_block.type        = DvdSectorTitleKeyDecrypted;
-    decrypted_title_key_block.compression = None;
+    decrypted_title_key_block.compression = ctx->compression_enabled ? Lzma : None;
     decrypted_title_key_block.length =
         (uint32_t)(ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow) * 5;
-    decrypted_title_key_block.cmpLength = decrypted_title_key_block.length;
     // Calculate CRC64
     decrypted_title_key_block.crc64 =
         aaruf_crc64_data(ctx->sector_decrypted_title_key, decrypted_title_key_block.length);
-    decrypted_title_key_block.cmpCrc64 = decrypted_title_key_block.crc64;
+
+    uint8_t *buffer                                  = NULL;
+    uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
+
+    if(decrypted_title_key_block.compression == None)
+    {
+        buffer                             = ctx->sector_decrypted_title_key;
+        decrypted_title_key_block.cmpCrc64 = decrypted_title_key_block.crc64;
+    }
+    else
+    {
+        buffer = malloc((size_t)decrypted_title_key_block.length * 2);  // Allocate double size for compression
+        if(buffer == NULL)
+        {
+            TRACE("Failed to allocate memory for DVD decrypted title key compression");
+            return;
+        }
+
+        size_t dst_size   = (size_t)decrypted_title_key_block.length * 2 * 2;
+        size_t props_size = LZMA_PROPERTIES_LENGTH;
+        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_decrypted_title_key, decrypted_title_key_block.length,
+                                 lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+
+        decrypted_title_key_block.cmpLength = (uint32_t)dst_size;
+
+        if(decrypted_title_key_block.cmpLength >= decrypted_title_key_block.length)
+        {
+            decrypted_title_key_block.compression = None;
+            free(buffer);
+            buffer = ctx->sector_decrypted_title_key;
+        }
+    }
+
+    if(decrypted_title_key_block.compression == None)
+    {
+        decrypted_title_key_block.cmpLength = decrypted_title_key_block.length;
+        decrypted_title_key_block.cmpCrc64  = decrypted_title_key_block.crc64;
+    }
+    else
+        decrypted_title_key_block.cmpCrc64 = aaruf_crc64_data(buffer, decrypted_title_key_block.cmpLength);
+
+    if(decrypted_title_key_block.compression == Lzma) decrypted_title_key_block.cmpLength += LZMA_PROPERTIES_LENGTH;
+
     // Write header
     if(fwrite(&decrypted_title_key_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
     {
+        if(decrypted_title_key_block.compression == Lzma)
+            fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
+
         // Write data
-        const size_t written_bytes =
-            fwrite(ctx->sector_decrypted_title_key, decrypted_title_key_block.length, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, decrypted_title_key_block.cmpLength, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote DVD decrypted title key block (%" PRIu64 " bytes)",
-                  decrypted_title_key_block.length);
+                  decrypted_title_key_block.cmpLength);
             // Add decrypted title key block to index
             TRACE("Adding DVD decrypted title key block to index");
             IndexEntry decrypted_title_key_index_entry;
@@ -2004,6 +2050,8 @@ static void write_dvd_title_key_decrypted_block(const aaruformatContext *ctx)
             TRACE("Added DVD decrypted title key block index entry at offset %" PRIu64, block_position);
         }
     }
+
+    if(decrypted_title_key_block.compression == Lzma) free(buffer);
 }
 
 /**
