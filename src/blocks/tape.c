@@ -209,11 +209,228 @@ void process_tape_files_block(aaruformatContext *ctx, const IndexEntry *entry)
         // Free old entry if it was replaced
         if(old_entry != NULL)
         {
-            TRACE("Replaced existing tape file entry for partition %u, file %u", entries[i].Partition,
-                  entries[i].File);            free(old_entry);
+            TRACE("Replaced existing tape file entry for partition %u, file %u", entries[i].Partition, entries[i].File);
+            free(old_entry);
         }
         else
             TRACE("Added new tape file entry for partition %u, file %u", entries[i].Partition, entries[i].File);
+    }
+
+    free(buffer);
+}
+
+/**
+ * @brief Processes a tape partition metadata block from the image stream.
+ *
+ * Reads and parses a TapePartitionBlock from the Aaru image, validates its integrity,
+ * and populates the context's tape partition hash table with partition layout information.
+ * Each tape partition entry defines a physical division of the tape medium by specifying
+ * its partition number and block range (FirstBlock to LastBlock inclusive).
+ *
+ * The function performs the following operations:
+ * 1. Seeks to the block position indicated by the index entry
+ * 2. Reads and validates the TapePartitionHeader structure
+ * 3. Allocates and reads the array of TapePartitionEntry structures
+ * 4. Validates data integrity using CRC64-ECMA checksum
+ * 5. Inserts each partition entry into the context's UTHASH table with partition number as key
+ * 6. Updates image size statistics
+ *
+ * **Partition Identification:**
+ * Each tape partition is uniquely identified by its partition number (0-255).
+ * This number serves as the hash table key for fast lookup operations. Most tapes
+ * have a single partition (partition 0), but multi-partition formats like LTO, DLT,
+ * and AIT support multiple partitions with independent block address spaces.
+ *
+ * **Hash Table Management:**
+ * The function uses HASH_REPLACE to insert entries, which automatically:
+ * - Adds new entries if the partition number doesn't exist
+ * - Replaces existing entries if the partition number is found (freeing the old entry)
+ * This ensures that duplicate partition definitions are properly handled by keeping
+ * only the most recent definition.
+ *
+ * **Error Handling:**
+ * The function treats most errors as non-fatal and continues processing:
+ * - Invalid context or stream: Returns immediately (FATAL log)
+ * - Seek failures: Returns immediately (FATAL log)
+ * - Header read failures: Returns early (TRACE log)
+ * - Incorrect block identifier: Logs warning but continues
+ * - Memory allocation failures: Logs error and returns
+ * - Entry read failures: Frees buffer and returns
+ * - CRC64 mismatch: Logs warning, frees buffer, and returns
+ * - Per-entry allocation failures: Logs error and skips that entry
+ *
+ * **Block Structure:**
+ * The tape partition block consists of:
+ * ```
+ * +-----------------------------+
+ * | TapePartitionHeader (24 B)  | <- identifier, entries, length, crc64
+ * +-----------------------------+
+ * | TapePartitionEntry 0 (17 B) | <- Number, FirstBlock, LastBlock
+ * | TapePartitionEntry 1 (17 B) |
+ * | ...                         |
+ * | TapePartitionEntry (n-1)    |
+ * +-----------------------------+
+ * ```
+ *
+ * **CRC64 Validation:**
+ * The CRC64 checksum in the header is computed over the entire array of
+ * TapePartitionEntry structures (excluding the header itself). This provides
+ * integrity verification to detect corruption in the partition table.
+ *
+ * **Partition Block Ranges:**
+ * Each partition defines a block address space:
+ * - FirstBlock: Starting block address (often 0, but format-dependent)
+ * - LastBlock: Ending block address (inclusive)
+ * - Block count: (LastBlock - FirstBlock + 1)
+ *
+ * Block addresses are local to each partition. Different partitions may have
+ * overlapping logical block numbers (e.g., both partition 0 and partition 1
+ * can have blocks numbered 0-1000).
+ *
+ * **Memory Management:**
+ * - Allocates a temporary buffer to read all partition entries
+ * - Allocates individual hash table entries for each partition
+ * - Frees the temporary buffer before returning
+ * - Frees replaced hash entries automatically
+ * - Hash table entries remain in context until cleanup
+ *
+ * @param ctx Pointer to the aaruformat context. Must not be NULL.
+ *            The context must have a valid imageStream open for reading.
+ *            The ctx->tapePartitions hash table will be populated with partition entries.
+ *            The ctx->imageInfo.ImageSize will be updated with the block size.
+ *
+ * @param entry Pointer to the index entry describing the tape partition block.
+ *              Must not be NULL. The entry->offset field indicates the file
+ *              position where the TapePartitionHeader begins.
+ *
+ * @note This function does not return a status code. All errors are handled
+ *       internally with appropriate logging and the function returns early
+ *       on fatal errors.
+ *
+ * @note The tape partition hash table (ctx->tapePartitions) must be initialized to NULL
+ *       before the first call to this function. UTHASH will manage the table
+ *       automatically as entries are added.
+ *
+ * @note Partitions are ordered in the hash table by their partition number, not
+ *       by insertion order. To iterate partitions in numerical order, use HASH_SORT
+ *       with an appropriate comparison function.
+ *
+ * @note The function updates ctx->imageInfo.ImageSize by adding the size of
+ *       all partition entries (entries × sizeof(TapePartitionEntry)). This contributes
+ *       to the total reported image size but does not include the header size.
+ *
+ * @note The partition metadata is essential for correctly interpreting tape file
+ *       locations, as files reference partition numbers in their definitions.
+ *       Without partition metadata, tape file block ranges may be ambiguous.
+ *
+ * @warning The context and imageStream must be valid. Passing NULL pointers
+ *          will result in immediate return with a FATAL log message.
+ *
+ * @warning If the CRC64 checksum validation fails, all entries in the block
+ *          are discarded. The function does not attempt partial recovery.
+ *
+ * @warning If memory allocation fails for a hash entry, that specific partition
+ *          entry is skipped but processing continues with remaining entries.
+ *
+ * @warning If multiple partition entries have the same Number field, only the
+ *          last occurrence is retained. This should not occur in valid images.
+ *
+ * @see TapePartitionHeader for the block header structure
+ * @see TapePartitionEntry for individual partition entry structure
+ * @see TapePartitionHashEntry for the hash table entry structure
+ * @see process_tape_files_block() for tape file metadata processing
+ */
+void process_tape_partitions_block(aaruformatContext *ctx, const IndexEntry *entry)
+{
+    long                pos                   = 0;
+    size_t              read_bytes            = 0;
+    TapePartitionHeader tape_partition_header = {0};
+
+    // Check if the context and image stream are valid
+    if(ctx == NULL || ctx->imageStream == NULL)
+    {
+        FATAL("Invalid context or image stream.");
+        return;
+    }
+
+    // Seek to block
+    pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
+    if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
+    {
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
+
+        return;
+    }
+
+    // Even if those two checks shall have been done before
+    read_bytes = fread(&tape_partition_header, 1, sizeof(TapePartitionHeader), ctx->imageStream);
+
+    if(read_bytes != sizeof(TapePartitionHeader))
+    {
+        TRACE("Could not read tape partitions header, continuing...");
+        return;
+    }
+
+    if(tape_partition_header.identifier != TapePartitionBlock)
+        TRACE("Incorrect identifier for data block at position %" PRIu64 "\n", entry->offset);
+
+    ctx->imageInfo.ImageSize += sizeof(TapePartitionEntry) * tape_partition_header.entries;
+
+    uint8_t *buffer = malloc(sizeof(TapePartitionEntry) * tape_partition_header.entries);
+    if(buffer == NULL)
+    {
+        FATAL("Could not allocate memory for tape partitions block, continuing...");
+        return;
+    }
+    read_bytes = fread(buffer, sizeof(TapePartitionEntry), tape_partition_header.entries, ctx->imageStream);
+    if(read_bytes != tape_partition_header.entries)
+    {
+        free(buffer);
+        FATAL("Could not read tape partitions block, continuing...");
+        return;
+    }
+    // Check CRC64
+    uint64_t crc64 = aaruf_crc64_data(buffer, sizeof(TapePartitionEntry) * tape_partition_header.entries);
+
+    if(crc64 != tape_partition_header.crc64)
+    {
+        TRACE("Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64 ", continuing...", crc64,
+              tape_partition_header.crc64);
+        free(buffer);
+        return;
+    }
+
+    // Insert entries into UTHASH array indexed by partition
+    const TapePartitionEntry *entries = (TapePartitionEntry *)buffer;
+
+    for(uint32_t i = 0; i < tape_partition_header.entries; i++)
+    {
+        // Create hash table entry
+        TapePartitionHashEntry *hash_entry = malloc(sizeof(TapePartitionHashEntry));
+        if(hash_entry == NULL)
+        {
+            FATAL("Could not allocate memory for tape partition hash entry");
+            continue;
+        }
+
+        // Create key: partition
+        hash_entry->key = entries[i].Number;
+
+        // Copy the tape partition entry data
+        hash_entry->partitionEntry = entries[i];
+
+        // Replace if exists, add if new
+        TapePartitionHashEntry *old_entry = NULL;
+        HASH_REPLACE(hh, ctx->tapePartitions, key, sizeof(uint8_t), hash_entry, old_entry);
+
+        // Free old entry if it was replaced
+        if(old_entry != NULL)
+        {
+            TRACE("Replaced existing tape partition entry for partition %u", entries[i].Number);
+            free(old_entry);
+        }
+        else
+            TRACE("Added new tape partition entry for partition %u", entries[i].Number);
     }
 
     free(buffer);

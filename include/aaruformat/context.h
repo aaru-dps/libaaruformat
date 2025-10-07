@@ -130,6 +130,13 @@ typedef struct TapeFileHashEntry
     UT_hash_handle hh;         ///< UTHASH handle
 } tapeFileHashEntry;
 
+typedef struct TapePartitionHashEntry
+{
+    uint8_t            key;             ///< Key: partition
+    TapePartitionEntry partitionEntry;  ///< The actual tape partition data
+    UT_hash_handle     hh;              ///< UTHASH handle
+} TapePartitionHashEntry;
+
 /** \struct aaruformatContext
  *  \brief Master context representing an open or in‑creation Aaru image.
  *
@@ -256,7 +263,8 @@ typedef struct aaruformatContext
     bool     compression_enabled;  ///< True if block compression enabled (writing path).
     uint32_t lzma_dict_size;       ///< LZMA dictionary size (writing path).
 
-    tapeFileHashEntry *tapeFiles;  ///< Hash table root for tape files
+    tapeFileHashEntry      *tapeFiles;       ///< Hash table root for tape files
+    TapePartitionHashEntry *tapePartitions;  ///< Hash table root for tape partitions
 } aaruformatContext;
 
 /** \struct DumpHardwareEntriesWithData
