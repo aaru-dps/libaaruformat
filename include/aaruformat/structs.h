@@ -38,6 +38,7 @@
 #include "structs/metadata.h"
 #include "structs/optical.h"
 #include "structs/options.h"
+#include "structs/tape.h"
 
 #endif  // LIBAARUFORMAT_STRUCTS_H
 
