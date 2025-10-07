@@ -388,3 +388,232 @@ int32_t aaruf_get_tape_file(const void *context, const uint8_t partition, const 
           *starting_block, *ending_block);
     return AARUF_STATUS_OK;
 }
+
+/**
+ * @brief Sets or updates the block range for a specific tape file in an Aaru tape image.
+ *
+ * Creates or modifies a tape file entry in the context's hash table, defining the logical
+ * file's extent on the tape medium by its partition number, file number, and block range.
+ * This function is the write-mode counterpart to aaruf_get_tape_file() and is used when
+ * creating or modifying tape images to establish the file structure metadata.
+ *
+ * **Tape File Registration:**
+ * When writing a tape image, this function should be called for each logical file to
+ * register its location. Each file is uniquely identified by:
+ * - **Partition number** (8-bit): The tape partition containing the file
+ * - **File number** (32-bit): The sequential file number within that partition
+ *
+ * These values are combined into a 64-bit composite key:
+ *   key = (partition << 32) | file_number
+ *
+ * The file entry (including the block range) is then stored in the context's tapeFiles
+ * hash table and will be written to the image's TapeFileBlock during finalization.
+ *
+ * **Block Range Definition:**
+ * The block range [starting_block, ending_block] defines the file's extent:
+ * - starting_block: The first block address where the file begins (inclusive)
+ * - ending_block: The final block address where the file ends (inclusive)
+ * - Block count: (ending_block - starting_block + 1)
+ *
+ * Block addresses must be absolute positions within the tape image's logical
+ * block space. The caller is responsible for ensuring:
+ * - starting_block <= ending_block (no validation is performed)
+ * - Block ranges don't conflict with other files (no validation is performed)
+ * - All blocks in the range have been or will be written to the image
+ *
+ * **Typical Usage Flow:**
+ * 1. Open or create an Aaru tape image with write access
+ * 2. Write the file's data blocks to the image
+ * 3. Call aaruf_set_tape_file() to register the file's block range
+ * 4. Repeat for all files on the tape
+ * 5. Close the image (TapeFileBlock will be written during finalization)
+ *
+ * **Update/Replace Behavior:**
+ * If a file entry with the same partition/file combination already exists:
+ * - The old entry is automatically freed
+ * - The new entry replaces it in the hash table
+ * - A TRACE message indicates the replacement
+ *
+ * This allows updating file metadata or correcting errors without manual deletion.
+ *
+ * **Error Handling:**
+ * The function performs validation in the following order:
+ * 1. Context pointer validation (NULL check)
+ * 2. Magic number verification (ensures valid aaruformat context)
+ * 3. Write mode verification (ensures image is opened for writing)
+ * 4. Memory allocation for the hash entry
+ *
+ * If any validation fails, an appropriate error code is returned and no
+ * modifications are made to the context's tape file table.
+ *
+ * **Thread Safety:**
+ * This function modifies the shared context's hash table and is NOT thread-safe.
+ * Concurrent calls to aaruf_set_tape_file() or other functions that modify
+ * ctx->tapeFiles may result in data corruption or memory leaks. The caller must
+ * ensure exclusive access through external synchronization if needed.
+ *
+ * **Memory Management:**
+ * - Allocates a new hash table entry (tapeFileHashEntry) for each call
+ * - HASH_REPLACE automatically frees replaced entries
+ * - All hash entries are freed when the context is closed
+ * - On allocation failure, no entry is added and an error is returned
+ *
+ * **Performance Characteristics:**
+ * - Hash table insertion/replacement: O(1) average case
+ * - No I/O operations performed (metadata written during image close)
+ * - Minimal stack usage
+ * - Suitable for bulk file registration operations
+ *
+ * @param context Pointer to an initialized aaruformat context. Must not be NULL.
+ *                The context must have been opened with write access (isWriting=true).
+ *                The context's tapeFiles hash table will be updated with the new entry.
+ *
+ * @param partition The partition number (0-255) where the file is located.
+ *                  For single-partition tapes, this is typically 0. Multi-partition
+ *                  tapes can have files in different partitions with potentially
+ *                  overlapping file numbers.
+ *
+ * @param file The file number within the specified partition. File numbers are
+ *             typically sequential (0, 1, 2, ...) but gaps are allowed. The same
+ *             file number can exist in different partitions without conflict.
+ *
+ * @param starting_block The first block address of the file (inclusive). This should
+ *                       be the absolute block number in the image where the file's
+ *                       first byte begins. Must be <= ending_block (not validated).
+ *
+ * @param ending_block The last block address of the file (inclusive). This should
+ *                     be the absolute block number in the image where the file's
+ *                     last byte ends. Must be >= starting_block (not validated).
+ *
+ * @retval AARUF_STATUS_OK (0) Successfully set tape file information. The hash table
+ *         has been updated with the file entry. If an entry with the same partition/file
+ *         combination existed, it has been replaced. The metadata will be written to
+ *         the TapeFileBlock when the image is closed.
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) Invalid context or context validation failed.
+ *         This is returned when:
+ *         - The context pointer is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (corrupted or wrong type)
+ *         No modifications are made to the context.
+ *
+ * @retval AARUF_READ_ONLY (-22) The context is not opened for writing. This is returned
+ *         when ctx->isWriting is false, indicating the image was opened in read-only mode.
+ *         Tape file metadata cannot be modified in read-only mode. No modifications are
+ *         made to the context.
+ *
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. The system could
+ *         not allocate memory for the hash table entry (tapeFileHashEntry). This is a
+ *         critical error indicating low memory conditions. No modifications are made to
+ *         the context.
+ *
+ * @note The function logs entry and exit points via TRACE macros when tracing is
+ *       enabled, including parameter values and return codes for debugging.
+ *
+ * @note The tape file metadata is not immediately written to disk. It remains in the
+ *       context's hash table until the image is closed, at which point all entries
+ *       are serialized and written to a TapeFileBlock.
+ *
+ * @note No validation is performed on the block range values. The caller is responsible
+ *       for ensuring that starting_block <= ending_block and that the range is valid
+ *       for the image being created.
+ *
+ * @note No validation is performed to detect overlapping file ranges. Multiple files
+ *       can reference the same or overlapping block ranges, which may be intentional
+ *       (e.g., for multi-track or multi-partition scenarios).
+ *
+ * @note If the same partition/file combination is set multiple times, only the last
+ *       values are retained. This can be used to update file metadata but also means
+ *       accidental duplicate calls will silently overwrite previous values.
+ *
+ * @warning This function is NOT thread-safe. Concurrent modifications to the tape file
+ *          table may result in undefined behavior, memory corruption, or memory leaks.
+ *
+ * @warning The caller must ensure the image is opened with write access before calling
+ *          this function. Attempting to modify read-only images will fail with
+ *          AARUF_READ_ONLY.
+ *
+ * @warning Parameter validation is minimal. Invalid block ranges (starting_block >
+ *          ending_block) are accepted and will be written to the image, potentially
+ *          causing problems when reading the image later.
+ *
+ * @warning If memory allocation fails (AARUF_ERROR_NOT_ENOUGH_MEMORY), the file entry
+ *          is not added. The caller should handle this error appropriately, potentially
+ *          by freeing memory and retrying or aborting the write operation.
+ *
+ * @see aaruf_get_tape_file() for retrieving tape file information from images
+ * @see process_tape_files_block() for tape file table initialization during read
+ * @see TapeFileEntry for the structure defining file block ranges
+ * @see tapeFileHashEntry for the hash table entry structure
+ */
+int32_t aaruf_set_tape_file(void *context, const uint8_t partition, const uint32_t file, const uint64_t starting_block,
+                            const uint64_t ending_block)
+{
+    TRACE("Entering aaruf_set_tape_file(%p, %d, %d, %llu, %llu)", context, partition, file, starting_block,
+          ending_block);
+
+    aaruformatContext *ctx = NULL;
+
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_set_tape_file() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_set_tape_file() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->isWriting)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_set_tape_file() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    // Create hash table entry
+    tapeFileHashEntry *hash_entry = malloc(sizeof(tapeFileHashEntry));
+    if(hash_entry == NULL)
+    {
+        FATAL("Could not allocate memory for tape file hash entry");
+
+        TRACE("Exiting aaruf_set_tape_file() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    // Create composite key: partition << 32 | file number
+    hash_entry->key = (uint64_t)partition << 32 | file;
+
+    // Copy the tape file entry data
+    hash_entry->fileEntry.File       = file;
+    hash_entry->fileEntry.Partition  = partition;
+    hash_entry->fileEntry.FirstBlock = starting_block;
+    hash_entry->fileEntry.LastBlock  = ending_block;
+
+    // Replace if exists, add if new
+    tapeFileHashEntry *old_entry = NULL;
+    HASH_REPLACE(hh, ctx->tapeFiles, key, sizeof(uint64_t), hash_entry, old_entry);
+
+    // Free old entry if it was replaced
+    if(old_entry != NULL)
+    {
+        TRACE("Replaced existing tape file entry for partition %u, file %u", partition, file);
+        free(old_entry);
+    }
+    else
+        TRACE("Added new tape file entry for partition %u, file %u", partition, file);
+
+    TRACE("Exiting aaruf_set_tape_file(%p, %d, %d, %llu, %llu) = AARUF_STATUS_OK", context, partition, file,
+          starting_block, ending_block);
+    return AARUF_STATUS_OK;
+}
