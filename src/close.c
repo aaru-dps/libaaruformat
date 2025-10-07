@@ -2316,6 +2316,232 @@ static void write_media_tags(const aaruformatContext *ctx)
 }
 
 /**
+ * @brief Serialize the tape file metadata block to the image file.
+ *
+ * This function writes a TapeFileBlock containing the complete tape file structure metadata
+ * to the Aaru image file. The tape file block documents all logical files present on the tape
+ * medium, recording each file's partition number, file number, and block range (first and last
+ * block addresses). This metadata enables random access to specific files within the tape image
+ * and preserves the original tape's logical organization for archival purposes.
+ *
+ * The tape file block is optional; if no tape file metadata has been populated (ctx->tapeFiles
+ * hash table is NULL or empty), the function returns immediately without writing anything. This
+ * no-op behavior allows the close operation to proceed gracefully whether or not tape file
+ * structure metadata was included during image creation.
+ *
+ * **Block Structure:**
+ * The serialized block consists of:
+ * ```
+ * +-------------------------+
+ * | TapeFileHeader (24 B)   | <- identifier, entries, length, crc64
+ * +-------------------------+
+ * | TapeFileEntry 0 (21 B)  | <- File, Partition, FirstBlock, LastBlock
+ * | TapeFileEntry 1 (21 B)  |
+ * | ...                     |
+ * | TapeFileEntry (n-1)     |
+ * +-------------------------+
+ * ```
+ *
+ * **Processing Flow:**
+ * 1. **Entry Enumeration:** Iterate through ctx->tapeFiles hash table to count entries
+ * 2. **Buffer Allocation:** Allocate temporary buffer for all TapeFileEntry structures
+ * 3. **Data Copying:** Copy each file entry from hash table to buffer sequentially
+ * 4. **Header Construction:** Build TapeFileHeader with entry count and CRC64 checksum
+ * 5. **Alignment:** Seek to EOF and align to block boundary (blockAlignmentShift)
+ * 6. **Write Operations:** Write header followed by entry array to image stream
+ * 7. **Indexing:** Add IndexEntry pointing to this block for fast location during reads
+ * 8. **Cleanup:** Free temporary buffer
+ *
+ * **Hash Table Iteration:**
+ * The function uses UTHASH's HASH_ITER macro to safely traverse ctx->tapeFiles:
+ * - First pass: Count total entries in the hash table
+ * - Second pass: Copy each TapeFileEntry to the output buffer
+ * - The iteration order depends on hash table internals, not insertion order
+ * - For deterministic output, entries could be sorted before writing (not currently done)
+ *
+ * **CRC64 Integrity Protection:**
+ * A CRC64-ECMA checksum is computed over the complete array of TapeFileEntry structures
+ * using aaruf_crc64_data(). This checksum is stored in the TapeFileHeader and verified
+ * during image opening by process_tape_files_block() to detect corruption in the file
+ * table. The checksum covers only the entry data, not the header itself.
+ *
+ * **Alignment Strategy:**
+ * Before writing, the file position is:
+ * 1. Moved to EOF using fseek(SEEK_END)
+ * 2. Aligned forward to next boundary: (position + alignment_mask) & ~alignment_mask
+ * 3. Where alignment_mask = (1 << blockAlignmentShift) - 1
+ * This ensures the tape file block starts on a properly aligned offset for efficient
+ * I/O and compliance with the Aaru format specification.
+ *
+ * **Write Sequence:**
+ * The function performs a two-stage write operation:
+ * 1. Write TapeFileHeader (sizeof(TapeFileHeader) = 24 bytes)
+ * 2. Write TapeFileEntry array (tape_file_block.length bytes)
+ *
+ * Both writes must succeed for the index entry to be added. If either write fails,
+ * the block is incomplete but the function continues (no error propagation).
+ *
+ * **Indexing:**
+ * On successful write, an IndexEntry is created and pushed to ctx->indexEntries:
+ * - blockType = TapeFileBlock (identifies this as tape file metadata)
+ * - dataType = 0 (tape file blocks have no subtype)
+ * - offset = file position where TapeFileHeader was written
+ *
+ * This index entry enables process_tape_files_block() to quickly locate the tape
+ * file metadata during subsequent image opens without scanning the entire file.
+ *
+ * **Entry Order:**
+ * The current implementation writes entries in hash table iteration order, which is
+ * non-deterministic and depends on the hash function and insertion sequence. For
+ * better compatibility and reproducibility, entries should ideally be sorted by:
+ * 1. Partition number (ascending)
+ * 2. File number within partition (ascending)
+ * However, the current implementation does not enforce this ordering.
+ *
+ * **Error Handling:**
+ * The function handles errors gracefully without propagating them:
+ * - NULL hash table: Return immediately (no tape files to write)
+ * - Memory allocation failure: Log via TRACE and return (block not written)
+ * - Write failures: Silent (index entry not added, block incomplete)
+ *
+ * This opportunistic approach ensures that tape file metadata write failures do not
+ * prevent the image from being created, though the resulting image will lack file
+ * structure metadata.
+ *
+ * **Memory Management:**
+ * - Allocates temporary buffer sized to hold all TapeFileEntry structures
+ * - Buffer is zero-initialized with memset for consistent padding bytes
+ * - Buffer is always freed before the function returns, even on write failure
+ * - Source data in ctx->tapeFiles is not modified and is freed later during cleanup
+ *
+ * **Thread Safety:**
+ * This function is NOT thread-safe. It modifies shared ctx state (imageStream file
+ * position, indexEntries array) and must only be called during single-threaded
+ * finalization (within aaruf_close).
+ *
+ * **Use Cases:**
+ * - Preserving tape file structure for archival and forensic purposes
+ * - Enabling random access to specific files within tape images
+ * - Documenting multi-file tape organization for analysis tools
+ * - Supporting tape formats with complex file/partition layouts
+ * - Facilitating tape image validation and structure verification
+ *
+ * **Relationship to Other Functions:**
+ * - File entries are added via aaruf_set_tape_file() during image creation
+ * - Entries are stored in ctx->tapeFiles hash table until image close
+ * - This function serializes the hash table to disk during aaruf_close()
+ * - process_tape_files_block() reads and reconstructs the hash table during aaruf_open()
+ *
+ * @param ctx Pointer to an initialized aaruformatContext in write mode. Must not be NULL.
+ *            The tapeFiles hash table should be populated if tape file metadata exists.
+ *            The imageStream must be open and writable.
+ *            The indexEntries array must be initialized for adding the index entry.
+ *
+ * @note The tape file block is written near the end of the image file, after sector data
+ *       and before the final index block. The exact position depends on what other metadata
+ *       blocks are present in the image.
+ *
+ * @note If ctx->tapeFiles is NULL or empty, the function returns immediately without
+ *       writing anything. This is not an error condition - it simply means the image
+ *       contains no tape file structure metadata.
+ *
+ * @note Memory allocation failure during buffer creation results in no tape file block
+ *       being written, but does not prevent the image from being successfully created.
+ *       The image will simply lack tape file metadata.
+ *
+ * @note The TapeFileHeader.entries field is intentionally set to tape_file_count, not
+ *       stored separately. The count is derived dynamically from the hash table size.
+ *
+ * @note Entry ordering is not guaranteed to match insertion order or logical order.
+ *       Reading applications should sort entries by partition/file number if ordered
+ *       access is required.
+ *
+ * @warning Write failures (fwrite returns != 1) are silently ignored. The function does
+ *          not return an error code or set errno. Partial writes may leave the block
+ *          incomplete, which will be detected during subsequent reads via CRC mismatch.
+ *
+ * @warning The temporary buffer allocation may fail on systems with limited memory or when
+ *          the tape has an extremely large number of files. Allocation failures result in
+ *          silent no-op; the image is created without tape file metadata.
+ *
+ * @warning Bounds checking during iteration protects against buffer overruns. If index
+ *          exceeds tape_file_count (which should never occur), the loop breaks early as
+ *          a sanity check.
+ *
+ * @see TapeFileHeader for the block header structure definition
+ * @see TapeFileEntry for individual file entry structure definition
+ * @see tapeFileHashEntry for the hash table entry structure
+ * @see aaruf_set_tape_file() for adding tape files during image creation
+ * @see process_tape_files_block() for the loading process during image opening
+ * @see aaruf_get_tape_file() for retrieving tape file information from opened images
+ *
+ * @internal
+ */
+static void write_tape_file_block(const aaruformatContext *ctx)
+{
+    if(ctx->tapeFiles == NULL) return;
+
+    // Iterate the uthash and count how many entries do we have
+    const tapeFileHashEntry *tape_file       = NULL;
+    const tapeFileHashEntry *tmp_tape_file   = NULL;
+    size_t                   tape_file_count = 0;
+    HASH_ITER(hh, ctx->tapeFiles, tape_file, tmp_tape_file) tape_file_count++;
+
+    // Create a memory buffer to copy all the file entries
+    const size_t   buffer_size = tape_file_count * sizeof(TapeFileEntry);
+    TapeFileEntry *buffer      = malloc(buffer_size);
+    if(buffer == NULL)
+    {
+        TRACE("Failed to allocate memory for tape file entries");
+        return;
+    }
+    memset(buffer, 0, buffer_size);
+    size_t index = 0;
+    HASH_ITER(hh, ctx->tapeFiles, tape_file, tmp_tape_file)
+    {
+        if(index >= tape_file_count) break;
+        memcpy(&buffer[index], &tape_file->fileEntry, sizeof(TapeFileEntry));
+        index++;
+    }
+
+    // Create the tape file block in memory
+    TapeFileHeader tape_file_block = {0};
+    tape_file_block.identifier     = TapeFileBlock;
+    tape_file_block.length         = (uint32_t)buffer_size;
+    tape_file_block.crc64          = aaruf_crc64_data((uint8_t *)buffer, (uint32_t)tape_file_block.length);
+
+    // Write tape file block to file, block aligned
+    fseek(ctx->imageStream, 0, SEEK_END);
+    long           block_position = ftell(ctx->imageStream);
+    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    if(block_position & alignment_mask)
+    {
+        const uint64_t aligned_position = block_position + alignment_mask & ~alignment_mask;
+        fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        block_position = aligned_position;
+    }
+    TRACE("Writing tape file block at position %ld", block_position);
+    if(fwrite(&tape_file_block, sizeof(TapeFileHeader), 1, ctx->imageStream) == 1)
+    {
+        const size_t written_bytes = fwrite(buffer, tape_file_block.length, 1, ctx->imageStream);
+        if(written_bytes == 1)
+        {
+            TRACE("Successfully wrote tape file block (%" PRIu64 " bytes)", tape_file_block.length);
+            // Add tape file block to index
+            TRACE("Adding tape file block to index");
+            IndexEntry index_entry;
+            index_entry.blockType = TapeFileBlock;
+            index_entry.dataType  = 0;
+            index_entry.offset    = block_position;
+            utarray_push_back(ctx->indexEntries, &index_entry);
+            TRACE("Added tape file block index entry at offset %" PRIu64, block_position);
+        }
+    }
+
+    free(buffer);
+}
+
+/**
  * @brief Serialize the geometry metadata block to the image file.
  *
  * This function writes a GeometryBlockHeader containing legacy CHS (Cylinder-Head-Sector) style
@@ -3439,6 +3665,9 @@ int aaruf_close(void *context)
 
         // Write media tags data blocks
         write_media_tags(ctx);
+
+        // Write tape files
+        write_tape_file_block(ctx);
 
         // Write geometry block if any
         write_geometry_block(ctx);
