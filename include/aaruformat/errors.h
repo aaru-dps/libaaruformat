@@ -65,6 +65,7 @@
 #define AARUF_ERROR_INCORRECT_DATA_SIZE       (-26)  ///< Data size does not match expected size.
 #define AARUF_ERROR_INVALID_TAG               (-27)  ///< Invalid or unsupported media or sector tag format.
 #define AARUF_ERROR_TAPE_FILE_NOT_FOUND       (-28)  ///< Requested tape file number not present in image.
+#define AARUF_ERROR_TAPE_PARTITION_NOT_FOUND  (-29)  ///< Requested tape partition not present in image.
 /** @} */
 
 /** \name Non-fatal sector status codes (non-negative)

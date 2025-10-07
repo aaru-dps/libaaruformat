@@ -833,3 +833,186 @@ int32_t aaruf_set_tape_file(void *context, const uint8_t partition, const uint32
           starting_block, ending_block);
     return AARUF_STATUS_OK;
 }
+
+/**
+ * @brief Retrieves the block range for a specific tape partition from an Aaru tape image.
+ *
+ * Queries the tape partition hash table to locate a partition by its partition number,
+ * returning the first and last block addresses that define the partition's extent on the
+ * tape medium. This function provides the core lookup mechanism for accessing partition
+ * layout information in tape images.
+ *
+ * **Tape Partition Identification:**
+ * Each tape partition is uniquely identified by its partition number (0-255). Most tapes
+ * have a single partition (partition 0), but multi-partition formats like LTO, DLT, and
+ * AIT support multiple partitions with independent block address spaces.
+ *
+ * The partition number is used as the hash table key to perform a lookup in the context's
+ * tapePartitions table, which was previously populated by process_tape_partitions_block()
+ * during image initialization.
+ *
+ * **Block Range Semantics:**
+ * The returned block range [FirstBlock, LastBlock] is inclusive on both ends:
+ * - FirstBlock: The first block address in the partition (often 0, but format-dependent)
+ * - LastBlock: The final block address in the partition (inclusive)
+ * - Block count: (LastBlock - FirstBlock + 1)
+ *
+ * Block addresses are local to each partition. Different partitions may have overlapping
+ * logical block numbers (e.g., both partition 0 and partition 1 can have blocks 0-1000).
+ * When accessing blocks, both the partition number and block number are required for
+ * unique identification.
+ *
+ * **Typical Usage Flow:**
+ * 1. Open an Aaru tape image with aaruf_open()
+ * 2. Call aaruf_get_tape_partition() to get the block range for a specific partition
+ * 3. Use the returned block range to understand partition boundaries
+ * 4. Access files within the partition using aaruf_get_tape_file()
+ * 5. Repeat for other partitions as needed
+ *
+ * **Error Handling:**
+ * The function performs validation in the following order:
+ * 1. Context pointer validation (NULL check)
+ * 2. Magic number verification (ensures valid aaruformat context)
+ * 3. Hash table lookup for the specified partition number
+ *
+ * If any validation fails, an appropriate error code is returned and the
+ * output parameters (starting_block, ending_block) are left unmodified.
+ *
+ * **Thread Safety:**
+ * This function performs read-only operations on the context and is safe
+ * to call from multiple threads concurrently, provided the context is not
+ * being modified by other operations (e.g., during image opening/closing).
+ *
+ * **Performance Characteristics:**
+ * - Hash table lookup: O(1) average case
+ * - No I/O operations performed
+ * - Minimal stack usage
+ * - Suitable for high-frequency queries
+ *
+ * **Partition Layout Information:**
+ * The partition metadata is essential for:
+ * - Understanding the physical organization of the tape
+ * - Determining partition boundaries for file access
+ * - Validating that file block ranges fall within partition limits
+ * - Supporting multi-partition tape formats correctly
+ * - Preserving original tape partitioning schemes
+ *
+ * @param context Pointer to an initialized aaruformat context. Must not be NULL.
+ *                The context must have been successfully opened with aaruf_open()
+ *                and contain a valid tape partition hash table. The context is treated
+ *                as const and is not modified by this operation.
+ *
+ * @param partition The partition number (0-255) to query. For single-partition tapes,
+ *                  this is typically 0. Multi-partition tapes may have multiple
+ *                  partitions numbered sequentially from 0.
+ *
+ * @param[out] starting_block Pointer to receive the first block address of the partition.
+ *                            Must not be NULL. Only modified on success.
+ *                            The value written represents the inclusive start of the
+ *                            partition's block range (often 0, but format-dependent).
+ *
+ * @param[out] ending_block Pointer to receive the last block address of the partition.
+ *                          Must not be NULL. Only modified on success.
+ *                          The value written represents the inclusive end of the
+ *                          partition's block range.
+ *
+ * @retval AARUF_STATUS_OK (0) Successfully retrieved tape partition information. Both
+ *         output parameters have been populated with valid block addresses. The
+ *         requested partition exists in the image's partition table.
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) Invalid context or context validation failed.
+ *         This is returned when:
+ *         - The context pointer is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (corrupted or wrong type)
+ *         The output parameters are not modified.
+ *
+ * @retval AARUF_ERROR_TAPE_PARTITION_NOT_FOUND (-29) The requested partition number
+ *         does not exist in the image's tape partition table. This is returned when:
+ *         - The specified partition number was not defined in the TapePartitionBlock
+ *         - The tape partition block was not present or failed to load during image open
+ *         - The partition number is out of range for this tape
+ *         The output parameters are not modified.
+ *
+ * @note The function logs entry and exit points via TRACE macros when tracing is
+ *       enabled, including parameter values and return codes for debugging.
+ *
+ * @note The tape partition hash table (ctx->tapePartitions) must have been populated
+ *       during image initialization. If the image doesn't contain a TapePartitionBlock,
+ *       or if that block failed to load, all queries will return
+ *       AARUF_ERROR_TAPE_PARTITION_NOT_FOUND.
+ *
+ * @note For images without tape partition metadata, the entire tape may be treated
+ *       as a single implicit partition, and applications should handle the absence
+ *       of partition information gracefully.
+ *
+ * @note The returned block addresses are logical block numbers within the partition's
+ *       address space. To read actual data, these must be combined with the partition
+ *       number and translated through the appropriate read functions.
+ *
+ * @note Partition metadata is primarily informational and used for validation. File
+ *       access is primarily driven by file metadata (TapeFileBlock), which references
+ *       partition numbers to establish context.
+ *
+ * @warning The output parameter pointers must be valid. Passing NULL for either
+ *          starting_block or ending_block will cause undefined behavior (likely
+ *          a crash when the function attempts to dereference them on success).
+ *
+ * @warning If the same partition number appears multiple times in the TapePartitionBlock,
+ *          only the last occurrence is retained (due to HASH_REPLACE behavior in
+ *          process_tape_partitions_block). This should not occur in valid images but
+ *          may happen with corrupted or malformed partition metadata.
+ *
+ * @warning Single-partition tapes may not include a TapePartitionBlock at all, in which
+ *          case this function will always return AARUF_ERROR_TAPE_PARTITION_NOT_FOUND.
+ *          Applications should handle this case and assume a default partition 0
+ *          spanning the entire tape.
+ *
+ * @see process_tape_partitions_block() for partition table initialization
+ * @see TapePartitionEntry for the structure defining partition block ranges
+ * @see TapePartitionHashEntry for the hash table entry structure
+ * @see aaruf_get_tape_file() for file-level queries within partitions
+ * @see aaruf_set_tape_partition() for setting partition information during write
+ */
+int32_t aaruf_get_tape_partition(const void *context, const uint8_t partition, uint64_t *starting_block,
+                                 uint64_t *ending_block)
+{
+    TRACE("Entering aaruf_get_tape_partition(%p, %d, %llu, %llu)", context, partition, *starting_block, *ending_block);
+
+    const aaruformatContext *ctx = NULL;
+
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_tape_partition() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_tape_partition() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    uint8_t                 key   = partition;
+    TapePartitionHashEntry *entry = NULL;
+    HASH_FIND(hh, ctx->tapePartitions, &key, sizeof(uint8_t), entry);
+
+    if(entry == NULL)
+    {
+        TRACE("Tape partition not found");
+        return AARUF_ERROR_TAPE_PARTITION_NOT_FOUND;
+    }
+
+    *starting_block = entry->partitionEntry.FirstBlock;
+    *ending_block   = entry->partitionEntry.LastBlock;
+
+    TRACE("Exiting aaruf_get_tape_partition(%p, %d, %llu, %llu) = AARUF_STATUS_OK", context, partition, *starting_block,
+          *ending_block);
+    return AARUF_STATUS_OK;
+}
