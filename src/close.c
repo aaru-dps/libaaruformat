@@ -4003,17 +4003,27 @@ int aaruf_close(void *context)
             if(error != AARUF_STATUS_OK) return error;
         }
 
-        // Write cached secondary DDT table if any
-        int32_t res = write_cached_secondary_ddt(ctx);
-        if(res != AARUF_STATUS_OK) return res;
+        int32_t res;
+        if(ctx->is_tape)
+        {
+            // Write tape DDT
+            res = write_tape_ddt(ctx);
+            if(res != AARUF_STATUS_OK) return res;
+        }
+        else
+        {
+            // Write cached secondary DDT table if any
+            res = write_cached_secondary_ddt(ctx);
+            if(res != AARUF_STATUS_OK) return res;
 
-        // Write primary DDT table (multi-level) if applicable
-        res = write_primary_ddt(ctx);
-        if(res != AARUF_STATUS_OK) return res;
+            // Write primary DDT table (multi-level) if applicable
+            res = write_primary_ddt(ctx);
+            if(res != AARUF_STATUS_OK) return res;
 
-        // Write single-level DDT table if applicable
-        res = write_single_level_ddt(ctx);
-        if(res != AARUF_STATUS_OK) return res;
+            // Write single-level DDT table if applicable
+            res = write_single_level_ddt(ctx);
+            if(res != AARUF_STATUS_OK) return res;
+        }
 
         // Finalize checksums and write checksum block
         write_checksum_block(ctx);
