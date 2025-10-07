@@ -1016,3 +1016,244 @@ int32_t aaruf_get_tape_partition(const void *context, const uint8_t partition, u
           *ending_block);
     return AARUF_STATUS_OK;
 }
+
+/**
+ * @brief Sets or updates the block range for a specific tape partition in an Aaru tape image.
+ *
+ * Creates or modifies a tape partition entry in the context's hash table, defining the
+ * physical partition's extent on the tape medium by its partition number and block range.
+ * This function is the write-mode counterpart to aaruf_get_tape_partition() and is used
+ * when creating or modifying tape images to establish the partition structure metadata.
+ *
+ * **Tape Partition Registration:**
+ * When writing a tape image, this function should be called for each physical partition
+ * to register its block range. Each partition is uniquely identified by its partition
+ * number (0-255), and most tapes have a single partition (partition 0), though formats
+ * like LTO, DLT, and AIT support multiple partitions.
+ *
+ * The partition entry (including the block range) is stored in the context's tapePartitions
+ * hash table and will be written to the image's TapePartitionBlock during finalization.
+ *
+ * **Block Range Definition:**
+ * The block range [starting_block, ending_block] defines the partition's extent:
+ * - starting_block: The first block address in the partition (often 0, but format-dependent)
+ * - ending_block: The final block address in the partition (inclusive)
+ * - Block count: (ending_block - starting_block + 1)
+ *
+ * Block addresses are local to each partition. The caller is responsible for ensuring:
+ * - starting_block <= ending_block (no validation is performed)
+ * - Partition ranges don't overlap (no validation is performed)
+ * - All blocks in the range have been or will be written to the image
+ * - Files referencing this partition have block addresses within this range
+ *
+ * **Typical Usage Flow:**
+ * 1. Open or create an Aaru tape image with write access
+ * 2. Define partition layout by calling aaruf_set_tape_partition() for each partition
+ * 3. Write data blocks to the image within the defined partition ranges
+ * 4. Register files within partitions using aaruf_set_tape_file()
+ * 5. Close the image (TapePartitionBlock will be written during finalization)
+ *
+ * **Update/Replace Behavior:**
+ * If a partition entry with the same partition number already exists:
+ * - The old entry is automatically freed
+ * - The new entry replaces it in the hash table
+ * - A TRACE message indicates the replacement
+ *
+ * This allows updating partition metadata or correcting errors without manual deletion.
+ *
+ * **Error Handling:**
+ * The function performs validation in the following order:
+ * 1. Context pointer validation (NULL check)
+ * 2. Magic number verification (ensures valid aaruformat context)
+ * 3. Write mode verification (ensures image is opened for writing)
+ * 4. Memory allocation for the hash entry
+ *
+ * If any validation fails, an appropriate error code is returned and no
+ * modifications are made to the context's tape partition table.
+ *
+ * **Thread Safety:**
+ * This function modifies the shared context's hash table and is NOT thread-safe.
+ * Concurrent calls to aaruf_set_tape_partition() or other functions that modify
+ * ctx->tapePartitions may result in data corruption or memory leaks. The caller must
+ * ensure exclusive access through external synchronization if needed.
+ *
+ * **Memory Management:**
+ * - Allocates a new hash table entry (TapePartitionHashEntry) for each call
+ * - HASH_REPLACE automatically frees replaced entries
+ * - All hash entries are freed when the context is closed
+ * - On allocation failure, no entry is added and an error is returned
+ *
+ * **Performance Characteristics:**
+ * - Hash table insertion/replacement: O(1) average case
+ * - No I/O operations performed (metadata written during image close)
+ * - Minimal stack usage
+ * - Suitable for bulk partition registration operations
+ *
+ * **Partition Organization:**
+ * Proper partition metadata is essential for:
+ * - Documenting the physical layout of multi-partition tapes
+ * - Validating file block ranges against partition boundaries
+ * - Preserving the original tape's partitioning scheme for archival purposes
+ * - Supporting tape formats that require specific partition structures
+ * - Enabling applications to understand and navigate complex tape layouts
+ *
+ * @param context Pointer to an initialized aaruformat context. Must not be NULL.
+ *                The context must have been opened with write access (isWriting=true).
+ *                The context's tapePartitions hash table will be updated with the new entry.
+ *
+ * @param partition The partition number (0-255) to set. For single-partition tapes,
+ *                  this is typically 0. Multi-partition tapes use sequential numbers
+ *                  (0, 1, 2, ...) though the numbering scheme is format-specific.
+ *
+ * @param starting_block The first block address of the partition (inclusive). This
+ *                       defines where the partition begins in the tape's block address
+ *                       space. Often 0 for the first partition, but format-dependent.
+ *                       Must be <= ending_block (not validated).
+ *
+ * @param ending_block The last block address of the partition (inclusive). This defines
+ *                     where the partition ends in the tape's block address space.
+ *                     Must be >= starting_block (not validated).
+ *
+ * @retval AARUF_STATUS_OK (0) Successfully set tape partition information. The hash table
+ *         has been updated with the partition entry. If an entry with the same partition
+ *         number existed, it has been replaced. The metadata will be written to the
+ *         TapePartitionBlock when the image is closed.
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) Invalid context or context validation failed.
+ *         This is returned when:
+ *         - The context pointer is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (corrupted or wrong type)
+ *         No modifications are made to the context.
+ *
+ * @retval AARUF_READ_ONLY (-22) The context is not opened for writing. This is returned
+ *         when ctx->isWriting is false, indicating the image was opened in read-only mode.
+ *         Tape partition metadata cannot be modified in read-only mode. No modifications
+ *         are made to the context.
+ *
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. The system could
+ *         not allocate memory for the hash table entry (TapePartitionHashEntry). This is
+ *         a critical error indicating low memory conditions. No modifications are made to
+ *         the context.
+ *
+ * @note The function logs entry and exit points via TRACE macros when tracing is
+ *       enabled, including parameter values and return codes for debugging.
+ *
+ * @note The tape partition metadata is not immediately written to disk. It remains in the
+ *       context's hash table until the image is closed, at which point all entries
+ *       are serialized and written to a TapePartitionBlock.
+ *
+ * @note No validation is performed on the block range values. The caller is responsible
+ *       for ensuring that starting_block <= ending_block and that the range is valid
+ *       for the image being created.
+ *
+ * @note No validation is performed to detect overlapping partition ranges. Partitions
+ *       with overlapping block addresses may be accepted but will likely cause problems
+ *       when reading the image or accessing files.
+ *
+ * @note If the same partition number is set multiple times, only the last values are
+ *       retained. This can be used to update partition metadata but also means
+ *       accidental duplicate calls will silently overwrite previous values.
+ *
+ * @note For single-partition tapes, it may be acceptable to omit the TapePartitionBlock
+ *       entirely. Applications reading such images should assume a default partition 0
+ *       spanning the entire tape if no partition metadata is present.
+ *
+ * @note Block addresses are local to each partition. Files within a partition reference
+ *       blocks relative to that partition's address space, not the global tape address
+ *       space (though in practice, many formats use absolute addressing).
+ *
+ * @warning This function is NOT thread-safe. Concurrent modifications to the tape partition
+ *          table may result in undefined behavior, memory corruption, or memory leaks.
+ *
+ * @warning The caller must ensure the image is opened with write access before calling
+ *          this function. Attempting to modify read-only images will fail with
+ *          AARUF_READ_ONLY.
+ *
+ * @warning Parameter validation is minimal. Invalid block ranges (starting_block >
+ *          ending_block) are accepted and will be written to the image, potentially
+ *          causing problems when reading the image later.
+ *
+ * @warning If memory allocation fails (AARUF_ERROR_NOT_ENOUGH_MEMORY), the partition entry
+ *          is not added. The caller should handle this error appropriately, potentially
+ *          by freeing memory and retrying or aborting the write operation.
+ *
+ * @warning Partition metadata should be consistent with file metadata. Files should only
+ *          reference partitions that have been defined, and their block ranges should
+ *          fall within the partition boundaries. No automatic validation is performed.
+ *
+ * @see aaruf_get_tape_partition() for retrieving tape partition information from images
+ * @see process_tape_partitions_block() for partition table initialization during read
+ * @see TapePartitionEntry for the structure defining partition block ranges
+ * @see TapePartitionHashEntry for the hash table entry structure
+ * @see aaruf_set_tape_file() for setting file metadata within partitions
+ */
+int32_t aaruf_set_tape_partition(void *context, const uint8_t partition, const uint64_t starting_block,
+                                 const uint64_t ending_block)
+{
+    TRACE("Entering aaruf_set_tape_partition(%p, %d, %llu, %llu)", context, partition, starting_block, ending_block);
+
+    aaruformatContext *ctx = NULL;
+
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_set_tape_partition() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_set_tape_partition() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->isWriting)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_set_tape_partition() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    // Create hash table entry
+    TapePartitionHashEntry *hash_entry = malloc(sizeof(TapePartitionHashEntry));
+    if(hash_entry == NULL)
+    {
+        FATAL("Could not allocate memory for tape partition hash entry");
+
+        TRACE("Exiting aaruf_set_tape_partition() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    // Create key: partition
+    hash_entry->key = partition;
+
+    // Copy the tape partition entry data
+    hash_entry->partitionEntry.Number     = partition;
+    hash_entry->partitionEntry.FirstBlock = starting_block;
+    hash_entry->partitionEntry.LastBlock  = ending_block;
+
+    // Replace if exists, add if new
+    TapePartitionHashEntry *old_entry = NULL;
+    HASH_REPLACE(hh, ctx->tapePartitions, key, sizeof(uint8_t), hash_entry, old_entry);
+
+    // Free old entry if it was replaced
+    if(old_entry != NULL)
+    {
+        TRACE("Replaced existing tape partition entry for partition %u", partition);
+        free(old_entry);
+    }
+    else
+        TRACE("Added new tape partition entry for partition %u", partition);
+
+    TRACE("Exiting aaruf_set_tape_partition(%p, %d, %llu, %llu) = AARUF_STATUS_OK", context, partition, starting_block,
+          ending_block);
+    return AARUF_STATUS_OK;
+}
