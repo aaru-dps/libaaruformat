@@ -136,7 +136,8 @@ add_library(aaruformat SHARED include/aaruformat/consts.h include/aaruformat/enu
             include/aaruformat/structs/lisa_tag.h
             src/metadata.c
             src/dump.c
-            include/aaruformat/structs/tape.h)
+            include/aaruformat/structs/tape.h
+            src/blocks/tape.c)
 
 include_directories(include include/aaruformat 3rdparty/uthash/include 3rdparty/uthash/src)
 

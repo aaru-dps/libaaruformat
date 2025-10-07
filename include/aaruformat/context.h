@@ -123,6 +123,13 @@ typedef struct mediaTagEntry
     UT_hash_handle hh;      ///< uthash linkage.
 } mediaTagEntry;
 
+typedef struct TapeFileHashEntry
+{
+    uint64_t       key;        ///< Composite key: partition << 32 | file
+    TapeFileEntry  fileEntry;  ///< The actual tape file data
+    UT_hash_handle hh;         ///< UTHASH handle
+} tapeFileHashEntry;
+
 /** \struct aaruformatContext
  *  \brief Master context representing an open or in‑creation Aaru image.
  *
@@ -248,6 +255,8 @@ typedef struct aaruformatContext
 
     bool     compression_enabled;  ///< True if block compression enabled (writing path).
     uint32_t lzma_dict_size;       ///< LZMA dictionary size (writing path).
+
+    tapeFileHashEntry *tapeFiles;  ///< Hash table root for tape files
 } aaruformatContext;
 
 /** \struct DumpHardwareEntriesWithData

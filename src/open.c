@@ -385,6 +385,9 @@ void *aaruf_open(const char *filepath)
                 process_checksum_block(ctx, entry);
 
                 break;
+            case TapeFileBlock:
+                process_tape_files_block(ctx, entry);
+
             default:
                 TRACE("Unhandled block type %4.4s with data type %d is indexed to be at %" PRIu64 "",
                       (char *)&entry->blockType, entry->dataType, entry->offset);
