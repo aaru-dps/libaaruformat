@@ -164,6 +164,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_cicm_metadata(const void *context, uint8
 AARU_EXPORT int32_t AARU_CALL aaruf_get_aaru_json_metadata(const void *context, uint8_t *buffer, size_t *length);
 AARU_EXPORT int32_t AARU_CALL aaruf_set_aaru_json_metadata(void *context, uint8_t *data, size_t length);
 
+AARU_EXPORT int32_t AARU_CALL aaruf_get_tape_file(const void *context, uint8_t partition, uint32_t file,
+                                                  uint64_t *starting_block, uint64_t *ending_block);
+
 AARU_EXPORT int32_t AARU_CALL aaruf_get_dumphw(void *context, uint8_t *buffer, size_t *length);
 AARU_EXPORT int32_t AARU_CALL aaruf_set_dumphw(void *context, uint8_t *data, size_t length);
 
