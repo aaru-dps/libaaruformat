@@ -140,7 +140,7 @@ void process_tape_files_block(aaruformatContext *ctx, const IndexEntry *entry)
     pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
     if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
     {
-        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
+        FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
 
         return;
     }
@@ -150,7 +150,7 @@ void process_tape_files_block(aaruformatContext *ctx, const IndexEntry *entry)
 
     if(read_bytes != sizeof(TapeFileHeader))
     {
-        TRACE("Could not read tape files header, continuing...\n");
+        TRACE("Could not read tape files header, continuing...");
         return;
     }
 
@@ -162,14 +162,14 @@ void process_tape_files_block(aaruformatContext *ctx, const IndexEntry *entry)
     uint8_t *buffer = malloc(sizeof(TapeFileEntry) * tape_file_header.entries);
     if(buffer == NULL)
     {
-        FATAL("Could not allocate memory for tape files block, continuing...\n");
+        FATAL("Could not allocate memory for tape files block, continuing...");
         return;
     }
     read_bytes = fread(buffer, sizeof(TapeFileEntry), tape_file_header.entries, ctx->imageStream);
     if(read_bytes != tape_file_header.entries)
     {
         free(buffer);
-        FATAL("Could not read tape files block, continuing...\n");
+        FATAL("Could not read tape files block, continuing...");
         return;
     }
     // Check CRC64
@@ -177,7 +177,7 @@ void process_tape_files_block(aaruformatContext *ctx, const IndexEntry *entry)
 
     if(crc64 != tape_file_header.crc64)
     {
-        TRACE("Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64 ", continuing...\n", crc64,
+        TRACE("Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64 ", continuing...", crc64,
               tape_file_header.crc64);
         free(buffer);
         return;
@@ -192,7 +192,7 @@ void process_tape_files_block(aaruformatContext *ctx, const IndexEntry *entry)
         tapeFileHashEntry *hash_entry = malloc(sizeof(tapeFileHashEntry));
         if(hash_entry == NULL)
         {
-            FATAL("Could not allocate memory for tape file hash entry\n");
+            FATAL("Could not allocate memory for tape file hash entry");
             continue;
         }
 
@@ -209,12 +209,11 @@ void process_tape_files_block(aaruformatContext *ctx, const IndexEntry *entry)
         // Free old entry if it was replaced
         if(old_entry != NULL)
         {
-            TRACE("Replaced existing tape file entry for partition %u, file %u\n", entries[i].Partition,
-                  entries[i].File);
-            free(old_entry);
+            TRACE("Replaced existing tape file entry for partition %u, file %u", entries[i].Partition,
+                  entries[i].File);            free(old_entry);
         }
         else
-            TRACE("Added new tape file entry for partition %u, file %u\n", entries[i].Partition, entries[i].File);
+            TRACE("Added new tape file entry for partition %u, file %u", entries[i].Partition, entries[i].File);
     }
 
     free(buffer);
