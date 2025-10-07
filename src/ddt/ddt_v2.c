@@ -1510,7 +1510,7 @@ bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
         memset(&ddt_header, 0, sizeof(DdtHeader2));
         ddt_header.identifier          = DeDuplicationTable2;
         ddt_header.type                = UserData;
-        ddt_header.compression         = None;  // Use no compression for simplicity
+        ddt_header.compression         = ctx->compression_enabled ? Lzma : None;
         ddt_header.levels              = ctx->userDataDdtHeader.levels;
         ddt_header.tableLevel          = ctx->userDataDdtHeader.tableLevel + 1;
         ddt_header.previousLevelOffset = ctx->primaryDdtOffset;  // Set to primary DDT table location
@@ -1530,8 +1530,6 @@ bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
         else
             ddt_header.length = items_per_ddt_entry * sizeof(uint32_t);
 
-        ddt_header.cmpLength = ddt_header.length;
-
         // Calculate CRC64 of the data
         crc64_context = aaruf_crc64_init();
         if(crc64_context == NULL)
@@ -1547,10 +1545,62 @@ bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
             aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cachedSecondaryDdtBig, ddt_header.length);
 
         aaruf_crc64_final(crc64_context, &crc64);
-        ddt_header.crc64    = crc64;
-        ddt_header.cmpCrc64 = crc64;
+        ddt_header.crc64 = crc64;
+
+        uint8_t *cmp_buffer                              = NULL;
+        uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
+
+        if(ddt_header.compression == None)
+        {
+            if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+                cmp_buffer = (uint8_t *)ctx->cachedSecondaryDdtSmall;
+            else
+                cmp_buffer = (uint8_t *)ctx->cachedSecondaryDdtBig;
+            ddt_header.cmpCrc64 = ddt_header.crc64;
+        }
+        else
+        {
+            cmp_buffer = malloc((size_t)ddt_header.length * 2);  // Allocate double size for compression
+            if(cmp_buffer == NULL)
+            {
+                TRACE("Failed to allocate memory for secondary DDT v2 compression");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            size_t dst_size   = (size_t)ddt_header.length * 2 * 2;
+            size_t props_size = LZMA_PROPERTIES_LENGTH;
+            aaruf_lzma_encode_buffer(
+                cmp_buffer, &dst_size,
+                ctx->userDataDdtHeader.sizeType == SmallDdtSizeType ? (uint8_t *)ctx->cachedSecondaryDdtSmall
+                                                                    : (uint8_t *)ctx->cachedSecondaryDdtBig,
+                ddt_header.length, lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+
+            ddt_header.cmpLength = (uint32_t)dst_size;
+
+            if(ddt_header.cmpLength >= ddt_header.length)
+            {
+                ddt_header.compression = None;
+                free(cmp_buffer);
+                if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+                    cmp_buffer = (uint8_t *)ctx->cachedSecondaryDdtSmall;
+                else
+                    cmp_buffer = (uint8_t *)ctx->cachedSecondaryDdtBig;
+            }
+        }
+
+        if(ddt_header.compression == None)
+        {
+            ddt_header.cmpLength = ddt_header.length;
+            ddt_header.cmpCrc64  = ddt_header.crc64;
+        }
+        else
+            ddt_header.cmpCrc64 = aaruf_crc64_data(cmp_buffer, (uint32_t)ddt_header.cmpLength);
+
+        if(ddt_header.compression == Lzma) ddt_header.cmpLength += LZMA_PROPERTIES_LENGTH;
 
         // Write header
+        if(ddt_header.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
+
         written_bytes = fwrite(&ddt_header, sizeof(DdtHeader2), 1, ctx->imageStream);
         if(written_bytes != 1)
         {
@@ -1560,10 +1610,7 @@ bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
         }
 
         // Write data
-        if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-            written_bytes = fwrite(ctx->cachedSecondaryDdtSmall, ddt_header.length, 1, ctx->imageStream);
-        else
-            written_bytes = fwrite(ctx->cachedSecondaryDdtBig, ddt_header.length, 1, ctx->imageStream);
+        written_bytes = fwrite(cmp_buffer, ddt_header.cmpLength, 1, ctx->imageStream);
 
         if(written_bytes != 1)
         {
@@ -1571,6 +1618,8 @@ bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
             TRACE("Exiting set_ddt_multi_level_v2() = false");
             return false;
         }
+
+        if(ddt_header.compression == Lzma) free(cmp_buffer);
 
         // Update index: remove old entry and add new one for the evicted secondary DDT
         TRACE("Updating index for evicted secondary DDT");
