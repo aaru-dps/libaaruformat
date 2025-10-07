@@ -32,28 +32,119 @@
  * Allocates and initializes a new aaruformat context and image file with the specified parameters.
  * This function sets up all necessary data structures including headers, DDT (deduplication table),
  * caches, and index entries for writing a new AaruFormat image. It also handles file creation,
- * memory allocation, and proper initialization of the writing context.
+ * memory allocation, and proper initialization of the writing context. The function supports both
+ * block-based media (disks, optical media) and sequential tape media with different initialization
+ * strategies optimized for each media type.
  *
- * @param filepath Path to the image file to create.
- * @param media_type Media type identifier.
- * @param sector_size Size of each sector in bytes.
- * @param user_sectors Number of user data sectors.
- * @param negative_sectors Number of negative sectors.
- * @param overflow_sectors Number of overflow sectors.
- * @param options String with creation options (parsed for alignment and shift parameters).
- * @param application_name Pointer to the application name string.
- * @param application_name_length Length of the application name string (must be ≤ AARU_HEADER_APP_NAME_LEN).
- * @param application_major_version Major version of the application.
- * @param application_minor_version Minor version of the application.
+ * **Media Type Handling:**
+ * The function creates different internal structures based on the `is_tape` parameter:
+ *
+ * **Block Media (is_tape = false):**
+ * - Initializes full DDT (Deduplication Table) version 2 for sector-level deduplication
+ * - Allocates primary DDT table (userDataDdtMini or userDataDdtBig) as a preallocated array
+ * - Configures multi-level DDT support for large images (> 138,412,552 sectors)
+ * - Enables optional deduplication hash map for detecting duplicate sectors
+ * - Reserves space for DDT at the beginning of the file (after header, block-aligned)
+ * - Data blocks start after DDT table to maintain sequential layout
+ * - DDT size is fixed and known upfront based on sector count
+ *
+ * **Tape Media (is_tape = true):**
+ * - Initializes DDT for sector-level deduplication using a different strategy
+ * - Uses a growing hash table (tapeDdt) instead of a preallocated array
+ * - Sets ctx->is_tape flag and initializes ctx->tapeDdt to NULL (populated on first write)
+ * - Data blocks start immediately after the header (block-aligned)
+ * - Hash table grows dynamically as blocks are written
+ * - Optimized for sequential write patterns typical of tape media
+ * - Tape file/partition metadata is managed separately via additional hash tables
+ * - More memory-efficient for tapes with unknown final size
+ *
+ * **Initialization Flow:**
+ * 1. Parse creation options (compression, alignment, deduplication, checksums)
+ * 2. Allocate and zero-initialize context structure
+ * 3. Create/open image file in binary write mode
+ * 4. Initialize AaruFormat header with application and version information
+ * 5. Set up image metadata and sector size information
+ * 6. Initialize block and header caches for performance
+ * 7. Initialize ECC context for Compact Disc support
+ * 8. Branch based on media type:
+ *    - Block media: Configure DDT structures and calculate offsets with preallocated array
+ *    - Tape media: Set tape flags and initialize for dynamic hash table DDT
+ * 9. Initialize index entries array for tracking all blocks
+ * 10. Configure compression, checksums, and deduplication based on options
+ * 11. Position file pointer at calculated data start position
+ *
+ * **DDT Configuration (Block Media Only):**
+ * The function automatically selects optimal DDT parameters:
+ * - Single-level DDT (tableShift=0): For images < 138,412,552 sectors
+ * - Multi-level DDT (tableShift=22): For images ≥ 138,412,552 sectors
+ * - Small entries (16-bit): Default, supports most image sizes efficiently
+ * - Big entries (32-bit): Reserved for future use with very large images
+ *
+ * The DDT offset calculation ensures proper alignment:
+ * - Primary DDT placed immediately after header (block-aligned)
+ * - Data blocks positioned after DDT table (block-aligned)
+ * - Alignment controlled by blockAlignmentShift from options
+ *
+ * @param filepath Path to the image file to create. The file will be created if it doesn't exist,
+ *                 or overwritten if it does. Must be a valid writable path.
+ *
+ * @param media_type Media type identifier (e.g., CompactDisc, DVD, HardDisk, Tape formats).
+ *                   This affects how the image is structured and which features are enabled.
+ *
+ * @param sector_size Size of each sector/block in bytes. Common values:
+ *                    - 512 bytes: Hard disks, floppy disks
+ *                    - 2048 bytes: CD-ROM, DVD
+ *                    - Variable: Tape media (block size varies by format)
+ *
+ * @param user_sectors Number of user data sectors/blocks in the image. This is the main
+ *                     data area excluding negative (lead-in) and overflow (lead-out) regions.
+ *                     For tape media, this may be an estimate as the final size is often unknown.
+ *
+ * @param negative_sectors Number of negative sectors (typically lead-in area for optical media).
+ *                         Set to 0 for media types without lead-in areas. Not used for tape media.
+ *
+ * @param overflow_sectors Number of overflow sectors (typically lead-out area for optical media).
+ *                         Set to 0 for media types without lead-out areas. Not used for tape media.
+ *
+ * @param options String with creation options in key=value format, semicolon-separated.
+ *                Supported options:
+ *                - "compress=true|false": Enable/disable LZMA compression
+ *                - "deduplicate=true|false": Enable/disable sector deduplication (all media types)
+ *                - "md5=true|false": Calculate MD5 checksum during write
+ *                - "sha1=true|false": Calculate SHA-1 checksum during write
+ *                - "sha256=true|false": Calculate SHA-256 checksum during write
+ *                - "spamsum=true|false": Calculate SpamSum fuzzy hash during write
+ *                - "blake3=true|false": Calculate BLAKE3 checksum during write
+ *                - "block_alignment=N": Block alignment shift value (default varies)
+ *                - "data_shift=N": Data shift value for DDT granularity
+ *                - "table_shift=N": Table shift for multi-level DDT (-1 for auto, block media only)
+ *                - "dictionary=N": LZMA dictionary size in bytes
+ *                Example: "compress=true;deduplicate=true;md5=true;sha1=true"
+ *
+ * @param application_name Pointer to the application name string (UTF-16LE raw bytes).
+ *                        This identifies the software that created the image.
+ *
+ * @param application_name_length Length of the application name string in bytes.
+ *                                Must be ≤ AARU_HEADER_APP_NAME_LEN (64 bytes).
+ *
+ * @param application_major_version Major version of the creating application (0-255).
+ *
+ * @param application_minor_version Minor version of the creating application (0-255).
+ *
+ * @param is_tape Boolean flag indicating tape media type:
+ *                - true: Initialize for tape media (sequential, dynamic hash table DDT, file/partition metadata)
+ *                - false: Initialize for block media (random access, preallocated array DDT)
  *
  * @return Returns one of the following:
  * @retval aaruformatContext* Successfully created and initialized context. The returned pointer contains:
  *         - Properly initialized AaruFormat headers and metadata
- *         - Allocated and configured DDT structures for deduplication
+ *         - For block media: Allocated and configured DDT structures with preallocated arrays
+ *         - For tape media: Tape flags set, DDT initialized as NULL (grows on demand)
  *         - Initialized block and header caches for performance
  *         - Open file stream ready for writing operations
  *         - Index entries array ready for block tracking
  *         - ECC context initialized for Compact Disc support
+ *         - Checksum contexts initialized based on options
  *
  * @retval NULL Creation failed. The specific error can be determined by checking errno, which will be set to:
  *         - AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) when memory allocation fails for:
@@ -61,19 +152,19 @@
  *           * Readable sector tags array allocation
  *           * Application version string allocation
  *           * Image version string allocation
- *           * DDT table allocation (userDataDdtMini or userDataDdtBig)
+ *           * DDT table allocation (userDataDdtMini or userDataDdtBig, block media only)
  *           * Index entries array allocation
  *         - AARUF_ERROR_CANNOT_CREATE_FILE (-19) when file operations fail:
  *           * Unable to open the specified filepath for writing
  *           * File seek operations fail during initialization
  *           * File system errors or permission issues
  *         - AARUF_ERROR_INVALID_APP_NAME_LENGTH (-20) when:
- *           * application_name_length exceeds AARU_HEADER_APP_NAME_LEN
+ *           * application_name_length exceeds AARU_HEADER_APP_NAME_LEN (64 bytes)
  *
  * @note Memory Management:
  *       - The function performs extensive memory allocation for various context structures
  *       - On failure, all previously allocated memory is properly cleaned up
- *       - The returned context must be freed using appropriate cleanup functions
+ *       - The returned context must be freed using aaruf_close() when finished
  *
  * @note File Operations:
  *       - Creates a new file at the specified path (overwrites existing files)
@@ -81,32 +172,63 @@
  *       - Positions the file pointer at the calculated data start position
  *       - File alignment is handled based on parsed options
  *
- * @note DDT Initialization:
+ * @note DDT Initialization (Block Media Only):
  *       - Uses DDT version 2 format with configurable compression and alignment
  *       - Supports both small (16-bit) and big (32-bit) DDT entry sizes
  *       - Calculates optimal table sizes based on sector counts and shift parameters
  *       - All DDT entries are initialized to zero (indicating unallocated sectors)
+ *       - Multi-level DDT is used for images with ≥ 138,412,552 total sectors
+ *       - Single-level DDT is used for smaller images for efficiency
+ *       - DDT is a fixed-size preallocated array written to file at known offset
+ *
+ * @note Tape Media Initialization:
+ *       - Tape images use a dynamic hash table DDT for sector-level deduplication
+ *       - File and partition metadata is managed via separate hash tables
+ *       - ctx->is_tape is set to 1 to indicate tape mode throughout the library
+ *       - ctx->tapeDdt is initialized to NULL and grows dynamically as blocks are written
+ *       - Data blocks can start immediately after header for optimal sequential access
+ *       - The hash table DDT allows for efficient deduplication without knowing final size
+ *       - More memory-efficient for tapes with unpredictable or very large sizes
+ *       - Deduplication hash map may still be used alongside tapeDdt if enabled in options
  *
  * @note Options Parsing:
  *       - The options string is parsed to extract block_alignment, data_shift, and table_shift
  *       - These parameters affect memory usage, performance, and file organization
  *       - Invalid options may result in suboptimal performance but won't cause failure
+ *       - Compression and checksums can be enabled independently via options
+ *
+ * @note Checksum Initialization:
+ *       - MD5, SHA-1, SHA-256, SpamSum, and BLAKE3 can be calculated during write
+ *       - Checksum contexts are initialized only if requested in options
+ *       - Checksums are computed incrementally as sectors/blocks are written
+ *       - Final checksums are stored in checksum block during image finalization
  *
  * @warning The created context is in writing mode and expects proper finalization
  *          before closing to ensure index and metadata are written correctly.
  *
  * @warning Application name length validation is strict - exceeding the limit will
  *          cause creation failure with AARUF_ERROR_INVALID_APP_NAME_LENGTH.
+ *
+ * @warning For tape media, the DDT structure is fundamentally different (hash table vs array).
+ *          The is_tape flag must accurately reflect the media type being created.
+ *
+ * @warning The negative_sectors and overflow_sectors parameters are used only for
+ *          block media. For tape media, these parameters are ignored.
+ *
+ * @see aaruf_close() for proper context cleanup and image finalization
+ * @see aaruf_write_sector() for writing sectors to block media images
+ * @see aaruf_set_tape_file() for defining tape file metadata
+ * @see aaruf_set_tape_partition() for defining tape partition metadata
  */
 void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32_t sector_size,
                    const uint64_t user_sectors, const uint64_t negative_sectors, const uint64_t overflow_sectors,
                    const char *options, const uint8_t *application_name, const uint8_t application_name_length,
-                   const uint8_t application_major_version, const uint8_t application_minor_version)
+                   const uint8_t application_major_version, const uint8_t application_minor_version, const bool is_tape)
 {
-    TRACE("Entering aaruf_create(%s, %u, %u, %llu, %llu, %llu, %s, %s, %u, %u, %u)", filepath, media_type, sector_size,
-          user_sectors, negative_sectors, overflow_sectors, options,
+    TRACE("Entering aaruf_create(%s, %u, %u, %llu, %llu, %llu, %s, %s, %u, %u, %u, %d)", filepath, media_type,
+          sector_size, user_sectors, negative_sectors, overflow_sectors, options,
           application_name ? (const char *)application_name : "NULL", application_name_length,
-          application_major_version, application_minor_version);
+          application_major_version, application_minor_version, is_tape);
 
     // Parse the options
     TRACE("Parsing options");
@@ -216,71 +338,95 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
     ctx->libraryMajorVersion = LIBAARUFORMAT_MAJOR_VERSION;
     ctx->libraryMinorVersion = LIBAARUFORMAT_MINOR_VERSION;
 
-    // Initialize DDT2
-    TRACE("Initializing DDT2");
-    ctx->inMemoryDdt                           = true;
-    ctx->userDataDdtHeader.identifier          = DeDuplicationTable2;
-    ctx->userDataDdtHeader.type                = UserData;
-    ctx->userDataDdtHeader.compression         = None;
-    ctx->userDataDdtHeader.levels              = 2;
-    ctx->userDataDdtHeader.tableLevel          = 0;
-    ctx->userDataDdtHeader.previousLevelOffset = 0;
-    ctx->userDataDdtHeader.negative            = negative_sectors;
-    ctx->userDataDdtHeader.blocks              = user_sectors + overflow_sectors + negative_sectors;
-    ctx->userDataDdtHeader.overflow            = overflow_sectors;
-    ctx->userDataDdtHeader.start               = 0;
-    ctx->userDataDdtHeader.blockAlignmentShift = parsed_options.block_alignment;
-    ctx->userDataDdtHeader.dataShift           = parsed_options.data_shift;
-    ctx->userDataDdtHeader.sizeType            = 1;
-    ctx->userDataDdtHeader.entries = ctx->userDataDdtHeader.blocks / (1 << ctx->userDataDdtHeader.tableShift);
+    if(!is_tape)
+    {  // Initialize DDT2
+        TRACE("Initializing DDT2");
+        ctx->inMemoryDdt                           = true;
+        ctx->userDataDdtHeader.identifier          = DeDuplicationTable2;
+        ctx->userDataDdtHeader.type                = UserData;
+        ctx->userDataDdtHeader.compression         = None;
+        ctx->userDataDdtHeader.tableLevel          = 0;
+        ctx->userDataDdtHeader.previousLevelOffset = 0;
+        ctx->userDataDdtHeader.negative            = negative_sectors;
+        ctx->userDataDdtHeader.blocks              = user_sectors + overflow_sectors + negative_sectors;
+        ctx->userDataDdtHeader.overflow            = overflow_sectors;
+        ctx->userDataDdtHeader.start               = 0;
+        ctx->userDataDdtHeader.blockAlignmentShift = parsed_options.block_alignment;
+        ctx->userDataDdtHeader.dataShift           = parsed_options.data_shift;
+        ctx->userDataDdtHeader.sizeType            = 1;
+        ctx->userDataDdtHeader.entries = ctx->userDataDdtHeader.blocks / (1 << ctx->userDataDdtHeader.tableShift);
 
-    if(parsed_options.table_shift == -1)
-    {
-        uint64_t total_sectors = user_sectors + overflow_sectors + negative_sectors;
+        if(parsed_options.table_shift == -1)
+        {
+            const uint64_t total_sectors = user_sectors + overflow_sectors + negative_sectors;
 
-        if(total_sectors < 0x8388608ULL)
-            ctx->userDataDdtHeader.tableShift = 0;
+            if(total_sectors < 0x8388608ULL)
+            {
+                ctx->userDataDdtHeader.levels     = 1;
+                ctx->userDataDdtHeader.tableShift = 0;
+            }
+            else
+            {
+                ctx->userDataDdtHeader.levels     = 2;
+                ctx->userDataDdtHeader.tableShift = 22;
+            }
+        }
         else
-            ctx->userDataDdtHeader.tableShift = 22;
+        {
+            ctx->userDataDdtHeader.levels     = parsed_options.table_shift > 0 ? 2 : 1;
+            ctx->userDataDdtHeader.tableShift = parsed_options.table_shift;
+        }
+
+        if(ctx->userDataDdtHeader.blocks % (1 << ctx->userDataDdtHeader.tableShift) != 0)
+            ctx->userDataDdtHeader.entries++;
+
+        TRACE("Initializing primary/single DDT");
+        if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+            ctx->userDataDdtMini =
+                (uint16_t *)calloc(ctx->userDataDdtHeader.entries, sizeof(uint16_t));  // All entries to zero
+        else if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
+            ctx->userDataDdtBig =
+                (uint32_t *)calloc(ctx->userDataDdtHeader.entries, sizeof(uint32_t));  // All entries to zero
+
+        // Set the primary DDT offset (just after the header, block aligned)
+        ctx->primaryDdtOffset        = sizeof(AaruHeaderV2);  // Start just after the header
+        const uint64_t alignmentMask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+        ctx->primaryDdtOffset        = ctx->primaryDdtOffset + alignmentMask & ~alignmentMask;
+
+        TRACE("Primary DDT will be placed at offset %" PRIu64, ctx->primaryDdtOffset);
+
+        // Calculate size of primary DDT table
+        const uint64_t primaryTableSize = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
+                                              ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
+                                              : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+
+        // Calculate where data blocks can start (after primary DDT + header)
+        if(ctx->userDataDdtHeader.tableShift > 0)
+        {
+            const uint64_t dataStartPosition = ctx->primaryDdtOffset + sizeof(DdtHeader2) + primaryTableSize;
+            ctx->nextBlockPosition           = dataStartPosition + alignmentMask & ~alignmentMask;
+        }
+        else
+            ctx->nextBlockPosition = ctx->primaryDdtOffset;  // Single-level DDT can start anywhere
     }
     else
-        ctx->userDataDdtHeader.tableShift = parsed_options.table_shift;
-
-    if(ctx->userDataDdtHeader.blocks % (1 << ctx->userDataDdtHeader.tableShift) != 0) ctx->userDataDdtHeader.entries++;
-
-    TRACE("Initializing primary/single DDT");
-    if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-        ctx->userDataDdtMini =
-            (uint16_t *)calloc(ctx->userDataDdtHeader.entries, sizeof(uint16_t));  // All entries to zero
-    else if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
-        ctx->userDataDdtBig =
-            (uint32_t *)calloc(ctx->userDataDdtHeader.entries, sizeof(uint32_t));  // All entries to zero
-
-    // Set the primary DDT offset (just after the header, block aligned)
-    ctx->primaryDdtOffset        = sizeof(AaruHeaderV2);  // Start just after the header
-    const uint64_t alignmentMask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
-    ctx->primaryDdtOffset        = ctx->primaryDdtOffset + alignmentMask & ~alignmentMask;
-
-    TRACE("Primary DDT will be placed at offset %" PRIu64, ctx->primaryDdtOffset);
-
-    // Calculate size of primary DDT table
-    const uint64_t primaryTableSize = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
-                                          ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
-                                          : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
-
-    // Calculate where data blocks can start (after primary DDT + header)
-    if(ctx->userDataDdtHeader.tableShift > 0)
     {
-        const uint64_t dataStartPosition = ctx->primaryDdtOffset + sizeof(DdtHeader2) + primaryTableSize;
-        ctx->nextBlockPosition = dataStartPosition + alignmentMask & ~alignmentMask;
+        // Fill needed values
+        ctx->userDataDdtHeader.blockAlignmentShift = parsed_options.block_alignment;
+        ctx->userDataDdtHeader.dataShift           = parsed_options.data_shift;
+
+        // Calculate aligned next block position
+        const uint64_t alignmentMask = (1ULL << parsed_options.block_alignment) - 1;
+        ctx->nextBlockPosition       = sizeof(AaruHeaderV2);  // Start just after the header
+        ctx->nextBlockPosition       = ctx->nextBlockPosition + alignmentMask & ~alignmentMask;
+        ctx->is_tape                 = 1;
+        ctx->tapeDdt                 = NULL;
     }
-    else
-        ctx->nextBlockPosition = ctx->primaryDdtOffset;  // Single-level DDT can start anywhere
 
     TRACE("Data blocks will start at position %" PRIu64, ctx->nextBlockPosition);
 
     // Position file pointer at the data start position
-    if(fseek(ctx->imageStream, (long)ctx->nextBlockPosition, SEEK_SET) != 0)
+    if(fseek(ctx->imageStream, ctx->nextBlockPosition, SEEK_SET) != 0)
     {
         FATAL("Could not seek to data start position");
         free(ctx->readableSectorTags);

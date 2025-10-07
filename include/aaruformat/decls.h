@@ -71,7 +71,7 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, uint32_t media_ty
                                          uint64_t user_sectors, uint64_t negative_sectors, uint64_t overflow_sectors,
                                          const char *options, const uint8_t *application_name,
                                          uint8_t application_name_length, uint8_t application_major_version,
-                                         uint8_t application_minor_version);
+                                         uint8_t application_minor_version, bool is_tape);
 
 AARU_EXPORT int AARU_CALL aaruf_close(void *context);
 

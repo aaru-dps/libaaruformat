@@ -1796,3 +1796,180 @@ bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
     TRACE("Exiting set_ddt_multi_level_v2() = true");
     return true;
 }
+
+/**
+ * @brief Sets a DDT entry for tape media using a hash-based lookup table.
+ *
+ * This function is specifically designed for tape media images where sectors are accessed
+ * non-sequentially and the traditional DDT array structure is inefficient. Instead of using
+ * a large contiguous array, it uses a hash table (UTHASH) to store only the sectors that
+ * have been written, providing sparse storage for tape media.
+ *
+ * The function performs the following operations:
+ * 1. Validates the context and verifies it's a tape image
+ * 2. Constructs a DDT entry encoding offset, block alignment, and sector status
+ * 3. Creates a hash table entry with the sector address as the key
+ * 4. Inserts or replaces the entry in the tape DDT hash table
+ *
+ * **DDT Entry Format:**
+ * The DDT entry is a 64-bit value with the following bit layout:
+ * ```
+ * Bits 0-(dataShift-1):    Sector offset within block (masked by dataShift)
+ * Bits dataShift-27:       Block index (block_offset >> blockAlignmentShift)
+ * Bits 28-31:              Sector status (4 bits for status flags)
+ * Bits 32-63:              Unused (reserved for future use)
+ * ```
+ *
+ * **Hash Table Management:**
+ * Uses HASH_REPLACE macro from UTHASH library which:
+ * - Adds new entries if the key (sector_address) doesn't exist
+ * - Replaces existing entries if the key is found (automatically frees old entry)
+ * - Maintains O(1) average lookup time for sector address resolution
+ *
+ * **Overflow Detection:**
+ * The function checks if the constructed DDT entry exceeds 28 bits (0xFFFFFFF).
+ * This limit ensures the sector status can fit in the upper 4 bits while leaving
+ * room for future extensions in the upper 32 bits.
+ *
+ * @param ctx Pointer to the aaruformat context. Must not be NULL.
+ *            The context must have a valid imageStream and is_tape must be true.
+ *            The ctx->tapeDdt hash table will be updated with the new entry.
+ *            The ctx->userDataDdtHeader contains alignment and shift parameters.
+ *
+ * @param sector_address Logical sector address on the tape to set. This serves as
+ *                       the unique key in the hash table. Multiple calls with the
+ *                       same sector_address will replace the previous entry.
+ *
+ * @param offset Byte offset within the aligned block where the sector data begins.
+ *               This value is masked by (1 << dataShift) - 1 to extract only the
+ *               lower bits representing the offset within the block.
+ *
+ * @param block_offset Absolute byte offset in the image file where the data block starts.
+ *                     This is right-shifted by blockAlignmentShift to get the block index,
+ *                     which is stored in the DDT entry's middle bits.
+ *
+ * @param sector_status Status flags for the sector (4 bits). Common values include:
+ *                      - 0x0 (SectorStatusNotDumped): Sector not yet acquired during image dumping
+ *                      - 0x1 (SectorStatusDumped): Sector successfully dumped without error
+ *                      - 0x2 (SectorStatusErrored): Error during dumping; data may be incomplete or corrupt
+ *                      - 0x3 (SectorStatusMode1Correct): Valid MODE 1 data with regenerable suffix/prefix
+ *                      - 0x4 (SectorStatusMode2Form1Ok): Suffix verified/regenerable for MODE 2 Form 1
+ *                      - 0x5 (SectorStatusMode2Form2Ok): Suffix matches MODE 2 Form 2 with valid CRC
+ *                      - 0x6 (SectorStatusMode2Form2NoCrc): Suffix matches MODE 2 Form 2 but CRC empty/missing
+ *                      - 0x7 (SectorStatusTwin): Pointer references a twin sector table
+ *                      - 0x8 (SectorStatusUnrecorded): Sector physically unrecorded; repeated reads non-deterministic
+ *                      - 0x9 (SectorStatusEncrypted): Content encrypted and stored encrypted in image
+ *                      - 0xA (SectorStatusUnencrypted): Content originally encrypted but stored decrypted in image
+ *                      See SectorStatus enum for complete list of defined values
+ *
+ * @param ddt_entry Pointer to a 64-bit value that will receive the constructed DDT entry.
+ *                  - If *ddt_entry is 0: A new entry is constructed from the provided parameters
+ *                  - If *ddt_entry is non-zero: The existing value is used directly
+ *                  The constructed or provided value is stored in the hash table.
+ *
+ * @return Returns one of the following status codes:
+ * @retval true Successfully created and inserted the DDT entry. This occurs when:
+ *         - The context and image stream are valid
+ *         - The image is confirmed to be a tape image (is_tape == true)
+ *         - The DDT entry fits within the 28-bit limit (< 0xFFFFFFF)
+ *         - Memory allocation for the hash entry succeeds
+ *         - The entry is successfully inserted or replaced in the hash table
+ *
+ * @retval false Failed to set the DDT entry. This can happen when:
+ *         - ctx is NULL or ctx->imageStream is NULL (invalid context)
+ *         - ctx->is_tape is false (wrong function called for non-tape media)
+ *         - The DDT entry exceeds 0xFFFFFFF (media too large for big DDT)
+ *         - Memory allocation fails for the new hash table entry (out of memory)
+ *
+ * @note This function is only for tape images. For disk images, use set_ddt_single_level_v2()
+ *       or set_ddt_multi_level_v2() instead, which use array-based DDT structures.
+ *
+ * @note Memory Management:
+ *       - Allocates a new TapeDdtHashEntry for each sector
+ *       - HASH_REPLACE automatically frees replaced entries
+ *       - All hash entries remain in context until cleanup
+ *       - The tapeDdt hash table must be freed during context destruction
+ *
+ * @note Tape Media Characteristics:
+ *       - Tape sectors are typically accessed sequentially during streaming
+ *       - File marks and partition boundaries create sparse address spaces
+ *       - Hash table provides efficient storage for sparse sector maps
+ *       - Supports variable block sizes common in tape formats
+ *
+ * @note Error Handling:
+ *       - All errors are logged with FATAL level messages
+ *       - Function returns false immediately on any error condition
+ *       - TRACE logging marks entry/exit points for debugging
+ *       - No partial state changes occur on failure
+ *
+ * @warning The DDT entry overflow check at 0xFFFFFFF (28 bits) is critical. Exceeding
+ *          this limit indicates the media is too large to fit in the current DDT format,
+ *          and continuing would cause data corruption.
+ *
+ * @warning This function modifies the shared tapeDdt hash table. In multi-threaded
+ *          environments, external synchronization is required to prevent race conditions.
+ *
+ * @see TapeDdtHashEntry for the hash table entry structure
+ * @see set_ddt_entry_v2() for the main DDT entry point that dispatches to this function
+ * @see get_ddt_tape() for retrieving tape DDT entries from the hash table
+ */
+bool set_ddt_tape(aaruformatContext *ctx, uint64_t sector_address, const uint64_t offset, const uint64_t block_offset,
+                  const uint8_t sector_status, uint64_t *ddt_entry)
+{
+    TRACE("Entering set_ddt_tape(%p, %" PRIu64 ", %llu, %llu, %d)", ctx, sector_address, offset, block_offset,
+          sector_status);
+
+    // Check if the context and image stream are valid
+    if(ctx == NULL || ctx->imageStream == NULL)
+    {
+        FATAL("Invalid context or image stream.");
+        TRACE("Exiting set_ddt_tape() = false");
+        return false;
+    }
+
+    // Should not really be here
+    if(!ctx->is_tape)
+    {
+        FATAL("Image is not tape, wrong function called.");
+        TRACE("Exiting set_ddt_tape() = false");
+        return false;
+    }
+
+    if(*ddt_entry == 0)
+    {
+        const uint64_t block_index = block_offset >> ctx->userDataDdtHeader.blockAlignmentShift;
+        *ddt_entry                 = offset & (1ULL << ctx->userDataDdtHeader.dataShift) - 1 | block_index
+                                                                                   << ctx->userDataDdtHeader.dataShift;
+        // Overflow detection for DDT entry
+        if(*ddt_entry > 0xFFFFFFF)
+        {
+            FATAL("DDT overflow: media does not fit in big DDT");
+            TRACE("Exiting set_ddt_tape() = false");
+            return false;
+        }
+
+        *ddt_entry |= (uint64_t)sector_status << 28;
+    }
+
+    // Create DDT hash entry
+    TapeDdtHashEntry *new_entry = calloc(1, sizeof(TapeDdtHashEntry));
+    TapeDdtHashEntry *old_entry = NULL;
+    if(new_entry == NULL)
+    {
+        FATAL("Cannot allocate memory for new tape DDT hash entry.");
+        TRACE("Exiting set_ddt_tape() = false");
+        return false;
+    }
+
+    TRACE("Setting tape DDT entry %d to %u", sector_address, (uint32_t)*ddt_entry);
+
+    new_entry->key   = sector_address;
+    new_entry->value = *ddt_entry;
+
+    // Insert entry into tape DDT
+    HASH_REPLACE(hh, ctx->tapeDdt, key, sizeof(uint64_t), new_entry, old_entry);
+    if(old_entry) free(old_entry);
+
+    TRACE("Exiting set_ddt_tape() = true");
+    return true;
+}

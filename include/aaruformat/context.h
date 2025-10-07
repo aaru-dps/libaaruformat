@@ -137,6 +137,13 @@ typedef struct TapePartitionHashEntry
     UT_hash_handle     hh;              ///< UTHASH handle
 } TapePartitionHashEntry;
 
+typedef struct TapeDdtHashEntry
+{
+    uint64_t       key;    ///< Key: sector address
+    uint32_t       value;  ///< Value: DDT entry
+    UT_hash_handle hh;     ///< UTHASH handle
+} TapeDdtHashEntry;
+
 /** \struct aaruformatContext
  *  \brief Master context representing an open or in‑creation Aaru image.
  *
@@ -265,6 +272,8 @@ typedef struct aaruformatContext
 
     tapeFileHashEntry      *tapeFiles;       ///< Hash table root for tape files
     TapePartitionHashEntry *tapePartitions;  ///< Hash table root for tape partitions
+    bool                    is_tape;         ///< True if the image is a tape image
+    TapeDdtHashEntry       *tapeDdt;         ///< Hash table root for tape DDT entries
 } aaruformatContext;
 
 /** \struct DumpHardwareEntriesWithData

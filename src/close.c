@@ -537,6 +537,156 @@ static int32_t write_single_level_ddt(aaruformatContext *ctx)
 }
 
 /**
+ * @brief Converts tape DDT hash table to array format and writes it as a single-level DDT.
+ *
+ * This function is specifically designed for tape media images where sectors have been tracked
+ * using a sparse hash table (UTHASH) during write operations. It converts the hash-based tape
+ * DDT into a traditional array-based DDT structure suitable for serialization to disk. The
+ * function performs a complete transformation from the sparse hash representation to a dense
+ * array representation, then delegates the actual write operation to write_single_level_ddt().
+ *
+ * The conversion process involves:
+ * 1. Validating the context is for tape media
+ * 2. Scanning the hash table to determine the maximum sector address (key)
+ * 3. Allocating a contiguous array large enough to hold all entries up to max_key
+ * 4. Populating the array by copying hash table entries to their corresponding indices
+ * 5. Initializing a DDT v2 header with appropriate metadata
+ * 6. Calling write_single_level_ddt() to serialize the DDT to disk
+ *
+ * **Hash Table to Array Conversion:**
+ * The tape DDT hash table uses sector addresses as keys and DDT entries as values. This function
+ * creates a zero-initialized array of size (max_key + 1) and copies each hash entry to
+ * array[entry->key] = entry->value. Sectors not present in the hash table remain as zero entries
+ * in the array, which indicates SectorStatusNotDumped in the DDT format.
+ *
+ * **Memory Allocation:**
+ * The function always uses BigDdtSizeType (32-bit entries) for tape DDTs, allocating
+ * (max_key + 1) * sizeof(uint32_t) bytes. This provides sufficient capacity for the 28-bit
+ * data + 4-bit status encoding used in tape DDT entries.
+ *
+ * **DDT Header Configuration:**
+ * The userDataDdtHeader is configured for a single-level DDT v2 structure:
+ * - identifier: DeDuplicationTable2
+ * - type: UserData
+ * - compression: Determined by ctx->compression_enabled (Lzma or None)
+ * - levels: 1 (single-level structure)
+ * - tableLevel: 0 (top-level table)
+ * - tableShift: 0 (no multi-level indirection)
+ * - sizeType: BigDdtSizeType (32-bit entries)
+ * - entries/blocks: max_key + 1
+ * - negative/overflow: 0 (not used for tape)
+ *
+ * @param ctx Pointer to the aaruformat context. Must not be NULL and must be in write mode.
+ *            The context must have is_tape set to true and tapeDdt hash table populated.
+ *            The ctx->userDataDdtBig array will be allocated and populated by this function.
+ *            The ctx->userDataDdtHeader will be initialized with DDT metadata.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully converted and wrote the tape DDT. This occurs when:
+ *         - The context is valid and is_tape is true
+ *         - Memory allocation for the DDT array succeeds
+ *         - The hash table entries are successfully copied to the array
+ *         - write_single_level_ddt() completes successfully
+ *         - The DDT is written to disk and indexed
+ *
+ * @retval AARUF_STATUS_INVALID_CONTEXT (-2) The context is not for tape media. This occurs when:
+ *         - ctx->is_tape is false
+ *         - This function was called for a disk/optical image instead of tape
+ *
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-6) Memory allocation failed. This occurs when:
+ *         - calloc() fails to allocate the userDataDdtBig array
+ *         - Insufficient system memory for (max_key + 1) * 4 bytes
+ *
+ * @retval AARUF_ERROR_CANNOT_WRITE_HEADER (-8) Writing the DDT failed. This can occur when:
+ *         - write_single_level_ddt() fails to write the DDT header
+ *         - File I/O errors prevent writing the DDT data
+ *         - Disk full or other storage errors
+ *         - This error is propagated from write_single_level_ddt()
+ *
+ * @note This function is only called during image finalization (aaruf_close) for tape images.
+ *       It should not be called for disk or optical media images.
+ *
+ * @note Hash Table Iteration:
+ *       - Uses HASH_ITER macro from UTHASH to safely traverse all entries
+ *       - Finds maximum key in first pass to determine array size
+ *       - Copies entries in second pass to populate the array
+ *       - Empty (zero) array slots represent sectors not written to tape
+ *
+ * @note Memory Ownership:
+ *       - Allocates ctx->userDataDdtBig which becomes owned by the context
+ *       - The allocated array is freed during context cleanup (not in this function)
+ *       - The original hash table (ctx->tapeDdt) is freed separately during cleanup
+ *
+ * @note Single-Level DDT Choice:
+ *       - Tape DDTs always use single-level structure (tableShift = 0)
+ *       - Multi-level DDTs are not used because tape access patterns are typically sparse
+ *       - The hash table already provides efficient sparse storage during write
+ *       - Conversion to dense array only happens once at close time
+ *
+ * @note Compression:
+ *       - The actual compression is handled by write_single_level_ddt()
+ *       - Compression type is determined by ctx->compression_enabled flag
+ *       - If enabled, LZMA compression is applied to the DDT array
+ *       - Compression may be disabled if it doesn't reduce size
+ *
+ * @warning The function assumes tapeDdt hash table is properly populated. An empty hash table
+ *          will result in a DDT with a single zero entry (max_key = 0, entries = 1).
+ *
+ * @warning This function modifies ctx->userDataDdtHeader and ctx->userDataDdtBig. These must
+ *          not be modified by other code during the close operation.
+ *
+ * @warning The allocated array size is (max_key + 1), which could be very large if tape sectors
+ *          have high addresses with sparse distribution. Memory usage should be considered.
+ *
+ * @see set_ddt_tape() for how entries are added to the hash table during write operations
+ * @see write_single_level_ddt() for the actual DDT serialization logic
+ * @see TapeDdtHashEntry for the hash table entry structure
+ * @internal
+ */
+static int32_t write_tape_ddt(aaruformatContext *ctx)
+{
+    if(!ctx->is_tape) return AARUF_STATUS_INVALID_CONTEXT;
+
+    // Traverse the tape DDT uthash and find the biggest key
+    uint64_t          max_key = 0;
+    TapeDdtHashEntry *entry, *tmp;
+    HASH_ITER(hh, ctx->tapeDdt, entry, tmp)
+    if(entry->key > max_key) max_key = entry->key;
+
+    // Initialize context user data DDT header
+    ctx->userDataDdtHeader.identifier          = DeDuplicationTable2;
+    ctx->userDataDdtHeader.type                = UserData;
+    ctx->userDataDdtHeader.compression         = ctx->compression_enabled ? Lzma : None;
+    ctx->userDataDdtHeader.levels              = 1;  // Single level
+    ctx->userDataDdtHeader.tableLevel          = 0;  // Top level
+    ctx->userDataDdtHeader.previousLevelOffset = 0;  // No previous level for single-level DDT
+    ctx->userDataDdtHeader.negative            = 0;
+    ctx->userDataDdtHeader.overflow            = 0;
+    ctx->userDataDdtHeader.tableShift          = 0;  // Single level
+    ctx->userDataDdtHeader.sizeType            = BigDdtSizeType;
+    ctx->userDataDdtHeader.entries             = max_key + 1;
+    ctx->userDataDdtHeader.blocks              = max_key + 1;
+    ctx->userDataDdtHeader.start               = 0;
+    ctx->userDataDdtHeader.length              = ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+    ctx->userDataDdtHeader.cmpLength           = ctx->userDataDdtHeader.length;
+
+    // Initialize memory for user data DDT
+    ctx->userDataDdtBig = calloc(ctx->userDataDdtHeader.entries, sizeof(uint32_t));
+    if(ctx->userDataDdtBig == NULL)
+    {
+        TRACE("Failed to allocate memory for tape DDT table");
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    // Populate user data DDT from tape DDT uthash
+    HASH_ITER(hh, ctx->tapeDdt, entry, tmp)
+    if(entry->key < ctx->userDataDdtHeader.blocks) ctx->userDataDdtBig[entry->key] = entry->value;
+
+    // Do not repeat code
+    return write_single_level_ddt(ctx);
+}
+
+/**
  * @brief Finalize any active checksum calculations and append a checksum block.
  *
  * This routine completes pending hash contexts (MD5, SHA-1, SHA-256, SpamSum, BLAKE3), marks the
