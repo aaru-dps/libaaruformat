@@ -1523,9 +1523,14 @@ static void write_sector_suffix_ddt(aaruformatContext *ctx)
  *   - Only positive sectors (0 through Sectors-1) and overflow are included; no negative range.
  *
  * The block size is computed as (applicable_sector_count) × (bytes_per_sector_for_media_type).
- * No compression is applied; the raw buffer is written verbatim after a DataBlock header with
- * CRC64 integrity protection. The write position is aligned to the DDT block boundary
- * (2^blockAlignmentShift) before serialization begins.
+ * Compression is conditionally applied based on media type and compression settings:
+ *   - **Optical Disc:** When compression is enabled, applies Claunia Subchannel Transform (CST)
+ *     followed by LZMA compression (LzmaClauniaSubchannelTransform). If the compressed size is
+ *     not smaller than the original, falls back to uncompressed storage.
+ *   - **Block Media:** Always attempts LZMA compression for tag data. If the compressed size is
+ *     not smaller than the original, falls back to uncompressed storage.
+ * The data is written after a DataBlock header with CRC64 integrity protection. The write position
+ * is aligned to the DDT block boundary (2^blockAlignmentShift) before serialization begins.
  *
  * **Media type validation:**
  * The function only proceeds if XmlMediaType is OpticalDisc or BlockMedia and (for block media)
@@ -1573,13 +1578,59 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
     subchannel_block.identifier  = DataBlock;
     subchannel_block.compression = None;
 
+    uint8_t *buffer                                  = ctx->sector_subchannel;
+    uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
+
     if(ctx->imageInfo.XmlMediaType == OpticalDisc)
     {
         subchannel_block.type = CdSectorSubchannel;
         subchannel_block.length =
             (uint32_t)(ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow) * 96;
+
+        if(ctx->compression_enabled)
+        {
+            subchannel_block.compression = LzmaClauniaSubchannelTransform;
+            uint8_t *cst_buffer          = malloc(subchannel_block.length);
+
+            if(cst_buffer == NULL)
+            {
+                TRACE("Failed to allocate memory for Claunia Subchannel Transform output");
+                return;
+            }
+
+            uint8_t *dst_buffer = malloc(subchannel_block.length);
+
+            if(dst_buffer == NULL)
+            {
+                TRACE("Failed to allocate memory for LZMA output");
+                free(cst_buffer);
+                return;
+            }
+
+            aaruf_cst_transform(ctx->sector_subchannel, cst_buffer, subchannel_block.length);
+            size_t dst_size   = subchannel_block.length;
+            size_t props_size = LZMA_PROPERTIES_LENGTH;
+
+            aaruf_lzma_encode_buffer(buffer, &dst_size, cst_buffer, subchannel_block.length, lzma_properties,
+                                     &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+
+            subchannel_block.cmpLength = (uint32_t)dst_size;
+            free(cst_buffer);
+            buffer                 = dst_buffer;
+            subchannel_block.crc64 = aaruf_crc64_data(buffer, subchannel_block.cmpLength);
+
+            if(subchannel_block.cmpLength >= subchannel_block.length)
+            {
+                subchannel_block.compression = None;
+                subchannel_block.cmpLength   = subchannel_block.length;
+                subchannel_block.cmpCrc64    = subchannel_block.crc64;
+                free(dst_buffer);
+                buffer = ctx->sector_subchannel;
+            }
+        }
     }
     else if(ctx->imageInfo.XmlMediaType == BlockMedia)
+    {
         switch(ctx->imageInfo.MediaType)
         {
             case AppleProfile:
@@ -1600,26 +1651,54 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
                 TRACE("Incorrect media type, not writing sector subchannel block");
                 return;  // Incorrect media type
         }
+        subchannel_block.compression = Lzma;
+
+        uint8_t *dst_buffer = malloc(subchannel_block.length);
+
+        if(dst_buffer == NULL)
+        {
+            TRACE("Failed to allocate memory for LZMA output");
+            return;
+        }
+
+        size_t dst_size   = subchannel_block.length;
+        size_t props_size = LZMA_PROPERTIES_LENGTH;
+
+        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_subchannel, subchannel_block.length, lzma_properties,
+                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+
+        subchannel_block.cmpLength = (uint32_t)dst_size;
+        buffer                     = dst_buffer;
+        subchannel_block.crc64     = aaruf_crc64_data(buffer, subchannel_block.cmpLength);
+
+        if(subchannel_block.cmpLength >= subchannel_block.length)
+        {
+            subchannel_block.compression = None;
+            subchannel_block.cmpLength   = subchannel_block.length;
+            subchannel_block.cmpCrc64    = subchannel_block.crc64;
+            free(dst_buffer);
+            buffer = ctx->sector_subchannel;
+        }
+    }
     else
     {
         TRACE("Incorrect media type, not writing sector subchannel block");
         return;  // Incorrect media type
     }
 
-    subchannel_block.cmpLength = subchannel_block.length;
-
     // Calculate CRC64
-    subchannel_block.crc64    = aaruf_crc64_data(ctx->sector_subchannel, subchannel_block.length);
-    subchannel_block.cmpCrc64 = subchannel_block.crc64;
+    subchannel_block.crc64 = aaruf_crc64_data(ctx->sector_subchannel, subchannel_block.length);
 
     // Write header
     if(fwrite(&subchannel_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
     {
+        if(subchannel_block.compression != None) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
+
         // Write data
-        const size_t written_bytes = fwrite(ctx->sector_subchannel, subchannel_block.length, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, subchannel_block.cmpLength, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
-            TRACE("Successfully wrote sector subchannel block (%" PRIu64 " bytes)", subchannel_block.length);
+            TRACE("Successfully wrote sector subchannel block (%" PRIu64 " bytes)", subchannel_block.cmpLength);
             // Add subchannel block to index
             TRACE("Adding sector subchannel block to index");
             IndexEntry subchannel_index_entry;
@@ -1630,6 +1709,8 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
             TRACE("Added sector subchannel block index entry at offset %" PRIu64, block_position);
         }
     }
+
+    if(subchannel_block.compression != None) free(buffer);
 }
 
 /**
@@ -3850,7 +3931,7 @@ static int32_t write_index_block(aaruformatContext *ctx)
     if(index_crc64_context != NULL && index_header.entries > 0)
     {
         size_t index_data_size = index_header.entries * sizeof(IndexEntry);
-        aaruf_crc64_update(index_crc64_context, (uint8_t *)utarray_front(ctx->indexEntries), index_data_size);
+        aaruf_crc64_update(index_crc64_context, utarray_front(ctx->indexEntries), index_data_size);
         aaruf_crc64_final(index_crc64_context, &index_header.crc64);
         TRACE("Calculated index CRC64: 0x%16lX", index_header.crc64);
     }
