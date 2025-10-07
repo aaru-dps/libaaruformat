@@ -415,37 +415,79 @@ static int32_t write_single_level_ddt(aaruformatContext *ctx)
     TRACE("Writing single-level DDT table to file");
 
     // Calculate CRC64 of the primary DDT table data
-    crc64_ctx *crc64_context = aaruf_crc64_init();
-    if(crc64_context != NULL)
+    const size_t primary_table_size = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
+                                          ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
+                                          : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+
+    // Properly populate all header fields
+    ctx->userDataDdtHeader.identifier          = DeDuplicationTable2;
+    ctx->userDataDdtHeader.type                = UserData;
+    ctx->userDataDdtHeader.compression         = ctx->compression_enabled ? Lzma : None;
+    ctx->userDataDdtHeader.levels              = 1;  // Single level
+    ctx->userDataDdtHeader.tableLevel          = 0;  // Top level
+    ctx->userDataDdtHeader.previousLevelOffset = 0;  // No previous level for single-level DDT
+    // negative and overflow are already set during creation
+    // blockAlignmentShift, dataShift, tableShift, sizeType, entries, blocks, start are already set
+    ctx->userDataDdtHeader.length              = primary_table_size;
+    ctx->userDataDdtHeader.cmpLength           = primary_table_size;
+
+    if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+        ctx->userDataDdtHeader.crc64 = aaruf_crc64_data((uint8_t *)ctx->userDataDdtMini, primary_table_size);
+    else
+        ctx->userDataDdtHeader.crc64 = aaruf_crc64_data((uint8_t *)ctx->userDataDdtBig, primary_table_size);
+
+    TRACE("Calculated CRC64 for single-level DDT: 0x%16lX", ctx->userDataDdtHeader.crc64);
+
+    uint8_t *cmp_buffer                              = NULL;
+    uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
+
+    if(ctx->userDataDdtHeader.compression == None)
     {
-        size_t primary_table_size = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
-                                        ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
-                                        : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
-
         if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-            aaruf_crc64_update(crc64_context, (uint8_t *)ctx->userDataDdtMini, primary_table_size);
+            cmp_buffer = (uint8_t *)ctx->userDataDdtMini;
         else
-            aaruf_crc64_update(crc64_context, (uint8_t *)ctx->userDataDdtBig, primary_table_size);
-
-        uint64_t crc64;
-        aaruf_crc64_final(crc64_context, &crc64);
-
-        // Properly populate all header fields
-        ctx->userDataDdtHeader.identifier          = DeDuplicationTable2;
-        ctx->userDataDdtHeader.type                = UserData;
-        ctx->userDataDdtHeader.compression         = None;
-        ctx->userDataDdtHeader.levels              = 1;  // Single level
-        ctx->userDataDdtHeader.tableLevel          = 0;  // Top level
-        ctx->userDataDdtHeader.previousLevelOffset = 0;  // No previous level for single-level DDT
-        // negative and overflow are already set during creation
-        // blockAlignmentShift, dataShift, tableShift, sizeType, entries, blocks, start are already set
-        ctx->userDataDdtHeader.crc64               = crc64;
-        ctx->userDataDdtHeader.cmpCrc64            = crc64;
-        ctx->userDataDdtHeader.length              = primary_table_size;
-        ctx->userDataDdtHeader.cmpLength           = primary_table_size;
-
-        TRACE("Calculated CRC64 for single-level DDT: 0x%16lX", crc64);
+            cmp_buffer = (uint8_t *)ctx->userDataDdtBig;
+        ctx->userDataDdtHeader.cmpCrc64 = ctx->userDataDdtHeader.crc64;
     }
+    else
+    {
+        cmp_buffer = malloc((size_t)ctx->userDataDdtHeader.length * 2);  // Allocate double size for compression
+        if(cmp_buffer == NULL)
+        {
+            TRACE("Failed to allocate memory for secondary DDT v2 compression");
+            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        }
+
+        size_t dst_size   = (size_t)ctx->userDataDdtHeader.length * 2 * 2;
+        size_t props_size = LZMA_PROPERTIES_LENGTH;
+        aaruf_lzma_encode_buffer(cmp_buffer, &dst_size,
+                                 ctx->userDataDdtHeader.sizeType == SmallDdtSizeType ? (uint8_t *)ctx->userDataDdtMini
+                                                                                     : (uint8_t *)ctx->userDataDdtBig,
+                                 ctx->userDataDdtHeader.length, lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4,
+                                 0, 2, 273, 8);
+
+        ctx->userDataDdtHeader.cmpLength = (uint32_t)dst_size;
+
+        if(ctx->userDataDdtHeader.cmpLength >= ctx->userDataDdtHeader.length)
+        {
+            ctx->userDataDdtHeader.compression = None;
+            free(cmp_buffer);
+            if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+                cmp_buffer = (uint8_t *)ctx->userDataDdtMini;
+            else
+                cmp_buffer = (uint8_t *)ctx->userDataDdtBig;
+        }
+    }
+
+    if(ctx->userDataDdtHeader.compression == None)
+    {
+        ctx->userDataDdtHeader.cmpLength = ctx->userDataDdtHeader.length;
+        ctx->userDataDdtHeader.cmpCrc64  = ctx->userDataDdtHeader.crc64;
+    }
+    else
+        ctx->userDataDdtHeader.cmpCrc64 = aaruf_crc64_data(cmp_buffer, (uint32_t)ctx->userDataDdtHeader.cmpLength);
+
+    if(ctx->userDataDdtHeader.compression == Lzma) ctx->userDataDdtHeader.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write the DDT header first
     fseek(ctx->imageStream, 0, SEEK_END);
@@ -459,29 +501,24 @@ static int32_t write_single_level_ddt(aaruformatContext *ctx)
         ddt_position = aligned_position;
     }
 
-    size_t header_written = fwrite(&ctx->userDataDdtHeader, sizeof(DdtHeader2), 1, ctx->imageStream);
+    const size_t header_written = fwrite(&ctx->userDataDdtHeader, sizeof(DdtHeader2), 1, ctx->imageStream);
     if(header_written != 1)
     {
         TRACE("Failed to write single-level DDT header to file");
         return AARUF_ERROR_CANNOT_WRITE_HEADER;
     }
 
-    // Then write the table data (position is already after the header)
-    size_t primary_table_size = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
-                                    ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
-                                    : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
-
     // Write the primary table data
     size_t written_bytes = 0;
-    if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-        written_bytes = fwrite(ctx->userDataDdtMini, primary_table_size, 1, ctx->imageStream);
-    else
-        written_bytes = fwrite(ctx->userDataDdtBig, primary_table_size, 1, ctx->imageStream);
+    if(ctx->userDataDdtHeader.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
+
+    written_bytes = fwrite(cmp_buffer, ctx->userDataDdtHeader.cmpLength, 1, ctx->imageStream);
 
     if(written_bytes == 1)
     {
-        TRACE("Successfully wrote single-level DDT header and table to file (%" PRIu64 " entries, %zu bytes)",
-              ctx->userDataDdtHeader.entries, primary_table_size);
+        TRACE("Successfully wrote single-level DDT header and table to file (%" PRIu64
+              " entries, %zu bytes, %zu compressed bytes)",
+              ctx->userDataDdtHeader.entries, ctx->userDataDdtHeader.length, ctx->userDataDdtHeader.cmpLength);
 
         // Add single-level DDT to index
         TRACE("Adding single-level DDT to index");
