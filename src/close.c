@@ -2542,6 +2542,238 @@ static void write_tape_file_block(const aaruformatContext *ctx)
 }
 
 /**
+ * @brief Serialize the tape partition metadata block to the image file.
+ *
+ * This function writes a TapePartitionBlock containing the complete tape partition structure
+ * metadata to the Aaru image file. The tape partition block documents all physical partitions
+ * present on the tape medium, recording each partition's partition number and block range (first
+ * and last block addresses). This metadata enables proper interpretation of tape file locations,
+ * validation of partition boundaries, and preservation of the original tape's physical organization
+ * for archival purposes.
+ *
+ * The tape partition block is optional; if no tape partition metadata has been populated
+ * (ctx->tapePartitions hash table is NULL or empty), the function returns immediately without
+ * writing anything. This no-op behavior allows the close operation to proceed gracefully whether
+ * or not tape partition structure metadata was included during image creation.
+ *
+ * **Block Structure:**
+ * The serialized block consists of:
+ * ```
+ * +-----------------------------+
+ * | TapePartitionHeader (24 B)  | <- identifier, entries, length, crc64
+ * +-----------------------------+
+ * | TapePartitionEntry 0 (17 B) | <- Number, FirstBlock, LastBlock
+ * | TapePartitionEntry 1 (17 B) |
+ * | ...                         |
+ * | TapePartitionEntry (n-1)    |
+ * +-----------------------------+
+ * ```
+ *
+ * **Processing Flow:**
+ * 1. **Entry Enumeration:** Iterate through ctx->tapePartitions hash table to count entries
+ * 2. **Buffer Allocation:** Allocate temporary buffer for all TapePartitionEntry structures
+ * 3. **Data Copying:** Copy each partition entry from hash table to buffer sequentially
+ * 4. **Header Construction:** Build TapePartitionHeader with entry count and CRC64 checksum
+ * 5. **Alignment:** Seek to EOF and align to block boundary (blockAlignmentShift)
+ * 6. **Write Operations:** Write header followed by entry array to image stream
+ * 7. **Indexing:** Add IndexEntry pointing to this block for fast location during reads
+ * 8. **Cleanup:** Free temporary buffer
+ *
+ * **Hash Table Iteration:**
+ * The function uses UTHASH's HASH_ITER macro to safely traverse ctx->tapePartitions:
+ * - First pass: Count total entries in the hash table
+ * - Second pass: Copy each TapePartitionEntry to the output buffer
+ * - The iteration order depends on hash table internals, not insertion order
+ * - For deterministic output, entries could be sorted by partition number (not currently done)
+ *
+ * **CRC64 Integrity Protection:**
+ * A CRC64-ECMA checksum is computed over the complete array of TapePartitionEntry structures
+ * using aaruf_crc64_data(). This checksum is stored in the TapePartitionHeader and verified
+ * during image opening by process_tape_partitions_block() to detect corruption in the partition
+ * table. The checksum covers only the entry data, not the header itself.
+ *
+ * **Alignment Strategy:**
+ * Before writing, the file position is:
+ * 1. Moved to EOF using fseek(SEEK_END)
+ * 2. Aligned forward to next boundary: (position + alignment_mask) & ~alignment_mask
+ * 3. Where alignment_mask = (1 << blockAlignmentShift) - 1
+ * This ensures the tape partition block starts on a properly aligned offset for efficient
+ * I/O and compliance with the Aaru format specification.
+ *
+ * **Write Sequence:**
+ * The function performs a two-stage write operation:
+ * 1. Write TapePartitionHeader (sizeof(TapePartitionHeader) = 24 bytes)
+ * 2. Write TapePartitionEntry array (tape_partition_block.length bytes)
+ *
+ * Both writes must succeed for the index entry to be added. If either write fails,
+ * the block is incomplete but the function continues (no error propagation).
+ *
+ * **Indexing:**
+ * On successful write, an IndexEntry is created and pushed to ctx->indexEntries:
+ * - blockType = TapePartitionBlock (identifies this as tape partition metadata)
+ * - dataType = 0 (tape partition blocks have no subtype)
+ * - offset = file position where TapePartitionHeader was written
+ *
+ * This index entry enables process_tape_partitions_block() to quickly locate the tape
+ * partition metadata during subsequent image opens without scanning the entire file.
+ *
+ * **Entry Order:**
+ * The current implementation writes entries in hash table iteration order, which is
+ * non-deterministic and depends on the hash function and insertion sequence. For
+ * better compatibility and reproducibility, entries should ideally be sorted by
+ * partition number (ascending). However, the current implementation does not enforce
+ * this ordering.
+ *
+ * **Partition Block Ranges:**
+ * Each partition entry defines an independent block address space:
+ * - FirstBlock: Starting block address (often 0, but format-dependent)
+ * - LastBlock: Ending block address (inclusive)
+ * - Block count: (LastBlock - FirstBlock + 1)
+ *
+ * Different partitions may have overlapping logical block numbers (e.g., partition 0
+ * and partition 1 can both have blocks 0-1000). The partition metadata is essential
+ * for correctly interpreting tape file locations, as files reference partition numbers
+ * in their definitions.
+ *
+ * **Error Handling:**
+ * The function handles errors gracefully without propagating them:
+ * - NULL hash table: Return immediately (no tape partitions to write)
+ * - Memory allocation failure: Log via TRACE and return (block not written)
+ * - Write failures: Silent (index entry not added, block incomplete)
+ *
+ * This opportunistic approach ensures that tape partition metadata write failures do not
+ * prevent the image from being created, though the resulting image will lack partition
+ * structure metadata.
+ *
+ * **Memory Management:**
+ * - Allocates temporary buffer sized to hold all TapePartitionEntry structures
+ * - Buffer is zero-initialized with memset for consistent padding bytes
+ * - Buffer is always freed before the function returns, even on write failure
+ * - Source data in ctx->tapePartitions is not modified and is freed later during cleanup
+ *
+ * **Thread Safety:**
+ * This function is NOT thread-safe. It modifies shared ctx state (imageStream file
+ * position, indexEntries array) and must only be called during single-threaded
+ * finalization (within aaruf_close).
+ *
+ * **Use Cases:**
+ * - Preserving tape partition structure for archival and forensic purposes
+ * - Documenting multi-partition tape layouts (LTO, DLT, AIT formats)
+ * - Enabling validation of file block ranges against partition boundaries
+ * - Supporting tape formats with complex partition organizations
+ * - Facilitating tape image validation and structure verification
+ *
+ * **Relationship to Other Functions:**
+ * - Partition entries are added via aaruf_set_tape_partition() during image creation
+ * - Entries are stored in ctx->tapePartitions hash table until image close
+ * - This function serializes the hash table to disk during aaruf_close()
+ * - process_tape_partitions_block() reads and reconstructs the hash table during aaruf_open()
+ * - Tape files (written by write_tape_file_block) reference these partitions
+ *
+ * **Format Considerations:**
+ * - Single-partition tapes: May omit TapePartitionBlock entirely (partition 0 implied)
+ * - Multi-partition tapes: Should include complete partition layout for proper file access
+ * - Block addresses are local to each partition in most tape formats
+ * - Partition metadata is primarily informational and used for validation
+ *
+ * @param ctx Pointer to an initialized aaruformatContext in write mode. Must not be NULL.
+ *            The tapePartitions hash table should be populated if tape partition metadata exists.
+ *            The imageStream must be open and writable.
+ *            The indexEntries array must be initialized for adding the index entry.
+ *
+ * @note The tape partition block is written near the end of the image file, after sector data
+ *       and before the final index block. The exact position depends on what other metadata
+ *       blocks are present in the image.
+ *
+ * @note If ctx->tapePartitions is NULL or empty, the function returns immediately without
+ *       writing anything. This is not an error condition - it simply means the image
+ *       contains no tape partition structure metadata (typical for single-partition tapes).
+ *
+ * @note Memory allocation failure during buffer creation results in no tape partition block
+ *       being written, but does not prevent the image from being successfully created.
+ *       The image will simply lack tape partition metadata.
+ *
+ * @note The partition metadata should be consistent with file metadata. Files should only
+ *       reference partitions that have been defined, and their block ranges should fall
+ *       within the partition boundaries, though no automatic validation is performed.
+ *
+ * @warning Write failures are not propagated as errors. If the write operation fails,
+ *          the index entry is not added, but aaruf_close() continues with other finalization
+ *          tasks. The resulting image may be incomplete or missing partition metadata.
+ *
+ * @see write_tape_file_block() for writing tape file metadata (which references partitions)
+ * @see process_tape_partitions_block() for reading partition metadata during image open
+ * @see aaruf_set_tape_partition() for adding partition entries during image creation
+ * @see TapePartitionHeader for the block header structure
+ * @see TapePartitionEntry for individual partition entry structure
+ *
+ * @internal
+ */
+static void write_tape_partition_block(const aaruformatContext *ctx)
+{
+    if(ctx->tapePartitions == NULL) return;
+
+    // Iterate the uthash and count how many entries do we have
+    const TapePartitionHashEntry *tape_partition       = NULL;
+    const TapePartitionHashEntry *tmp_tape_partition   = NULL;
+    size_t                        tape_partition_count = 0;
+    HASH_ITER(hh, ctx->tapePartitions, tape_partition, tmp_tape_partition) tape_partition_count++;
+
+    // Create a memory buffer to copy all the partition entries
+    const size_t        buffer_size = tape_partition_count * sizeof(TapePartitionEntry);
+    TapePartitionEntry *buffer      = malloc(buffer_size);
+    if(buffer == NULL)
+    {
+        TRACE("Failed to allocate memory for tape partition entries");
+        return;
+    }
+    memset(buffer, 0, buffer_size);
+    size_t index = 0;
+    HASH_ITER(hh, ctx->tapePartitions, tape_partition, tmp_tape_partition)
+    {
+        if(index >= tape_partition_count) break;
+        memcpy(&buffer[index], &tape_partition->partitionEntry, sizeof(TapePartitionEntry));
+        index++;
+    }
+
+    // Create the tape partition block in memory
+    TapePartitionHeader tape_partition_block = {0};
+    tape_partition_block.identifier          = TapePartitionBlock;
+    tape_partition_block.length              = (uint32_t)buffer_size;
+    tape_partition_block.crc64 = aaruf_crc64_data((uint8_t *)buffer, (uint32_t)tape_partition_block.length);
+
+    // Write tape partition block to partition, block aligned
+    fseek(ctx->imageStream, 0, SEEK_END);
+    long           block_position = ftell(ctx->imageStream);
+    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    if(block_position & alignment_mask)
+    {
+        const uint64_t aligned_position = block_position + alignment_mask & ~alignment_mask;
+        fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        block_position = aligned_position;
+    }
+    TRACE("Writing tape partition block at position %ld", block_position);
+    if(fwrite(&tape_partition_block, sizeof(TapePartitionHeader), 1, ctx->imageStream) == 1)
+    {
+        const size_t written_bytes = fwrite(buffer, tape_partition_block.length, 1, ctx->imageStream);
+        if(written_bytes == 1)
+        {
+            TRACE("Successfully wrote tape partition block (%" PRIu64 " bytes)", tape_partition_block.length);
+            // Add tape partition block to index
+            TRACE("Adding tape partition block to index");
+            IndexEntry index_entry;
+            index_entry.blockType = TapePartitionBlock;
+            index_entry.dataType  = 0;
+            index_entry.offset    = block_position;
+            utarray_push_back(ctx->indexEntries, &index_entry);
+            TRACE("Added tape partition block index entry at offset %" PRIu64, block_position);
+        }
+    }
+
+    free(buffer);
+}
+
+/**
  * @brief Serialize the geometry metadata block to the image file.
  *
  * This function writes a GeometryBlockHeader containing legacy CHS (Cylinder-Head-Sector) style
@@ -3668,6 +3900,9 @@ int aaruf_close(void *context)
 
         // Write tape files
         write_tape_file_block(ctx);
+
+        // Write tape partitions
+        write_tape_partition_block(ctx);
 
         // Write geometry block if any
         write_geometry_block(ctx);
