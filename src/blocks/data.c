@@ -82,8 +82,8 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
     uint8_t       *data          = NULL;
     uint8_t        lzma_properties[LZMA_PROPERTIES_LENGTH];
 
-    // Check if the context and image stream are valid
-    if(ctx == NULL || ctx->imageStream == NULL)
+    // Check if the context, index entry, and image stream are valid
+    if(ctx == NULL || entry == NULL || ctx->imageStream == NULL)
     {
         FATAL("Invalid context or image stream.");
         return AARUF_ERROR_NOT_AARUFORMAT;
@@ -101,9 +101,12 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
     // Even if those two checks shall have been done before
 
     // NOP block, skip
-    TRACE("NoData block found, exiting");
-    TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
-    if(entry->dataType == NoData) return AARUF_STATUS_OK;
+    if(entry->dataType == NoData)
+    {
+        TRACE("NoData block found, skipping");
+        TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
+        return AARUF_STATUS_OK;
+    }
 
     TRACE("Reading block header at position %" PRIu64, entry->offset);
     read_bytes = fread(&block_header, 1, sizeof(BlockHeader), ctx->imageStream);
@@ -162,10 +165,18 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
             return AARUF_STATUS_OK;
         }
 
+        if(block_header.cmpLength < LZMA_PROPERTIES_LENGTH)
+        {
+            TRACE("Compressed block length %" PRIu32 " too small for LZMA properties, continuing...",
+                  block_header.cmpLength);
+            TRACE("Exiting process_data_block() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+            return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+        }
+
         lzma_size = block_header.cmpLength - LZMA_PROPERTIES_LENGTH;
 
-        cmp_data = (uint8_t *)malloc(lzma_size);
-        if(cmp_data == NULL)
+        cmp_data = (lzma_size == 0) ? NULL : (uint8_t *)malloc(lzma_size);
+        if(lzma_size != 0 && cmp_data == NULL)
         {
             TRACE("Cannot allocate memory for block, continuing...");
 
@@ -173,15 +184,20 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
             return AARUF_STATUS_OK;
         }
 
-        data = (uint8_t *)malloc(block_header.length);
-        if(data == NULL)
+        if(block_header.length != 0)
         {
-            TRACE("Cannot allocate memory for block, continuing...");
-            free(cmp_data);
+            data = (uint8_t *)malloc(block_header.length);
+            if(data == NULL)
+            {
+                TRACE("Cannot allocate memory for block, continuing...");
+                free(cmp_data);
 
-            TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
-            return AARUF_STATUS_OK;
+                TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
+                return AARUF_STATUS_OK;
+            }
         }
+        else
+            data = NULL;
 
         read_bytes = fread(lzma_properties, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
         if(read_bytes != LZMA_PROPERTIES_LENGTH)
@@ -194,44 +210,59 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
             return AARUF_STATUS_OK;
         }
 
-        read_bytes = fread(cmp_data, 1, lzma_size, ctx->imageStream);
-        if(read_bytes != lzma_size)
+        if(lzma_size != 0)
         {
-            TRACE("Could not read compressed block, continuing...");
-            free(cmp_data);
-            free(data);
+            read_bytes = fread(cmp_data, 1, lzma_size, ctx->imageStream);
+            if(read_bytes != lzma_size)
+            {
+                TRACE("Could not read compressed block, continuing...");
+                free(cmp_data);
+                free(data);
 
-            TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
-            return AARUF_STATUS_OK;
+                TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
+                return AARUF_STATUS_OK;
+            }
         }
 
-        read_bytes = block_header.length;
-        error_no =
-            aaruf_lzma_decode_buffer(data, &read_bytes, cmp_data, &lzma_size, lzma_properties, LZMA_PROPERTIES_LENGTH);
-
-        if(error_no != 0)
+        if(block_header.length != 0)
         {
-            TRACE("Got error %d from LZMA, continuing...", error_no);
+            read_bytes = block_header.length;
+            error_no   = aaruf_lzma_decode_buffer(data, &read_bytes, cmp_data, &lzma_size, lzma_properties,
+                                                  LZMA_PROPERTIES_LENGTH);
+
+            if(error_no != 0)
+            {
+                TRACE("Got error %d from LZMA, continuing...", error_no);
+                free(cmp_data);
+                free(data);
+
+                TRACE("Exiting process_data_block() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+            }
+
+            if(read_bytes != block_header.length)
+            {
+                TRACE("Error decompressing block, expected %" PRIu32 " bytes but got %zu bytes, continuing...",
+                      block_header.length, read_bytes);
+                free(cmp_data);
+                free(data);
+
+                TRACE("Exiting process_data_block() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+            }
+        }
+        else if(lzma_size != 0)
+        {
+            TRACE("Compressed payload present for zero-length block, continuing...");
             free(cmp_data);
-            free(data);
 
             TRACE("Exiting process_data_block() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
             return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
         }
 
-        if(read_bytes != block_header.length)
+        if(block_header.compression == LzmaClauniaSubchannelTransform && block_header.length != 0)
         {
-            TRACE("Error decompressing block, should be {0} bytes but got {1} bytes., continuing...");
-            free(cmp_data);
-            free(data);
-
-            TRACE("Exiting process_data_block() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
-            return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
-        }
-
-        if(block_header.compression == LzmaClauniaSubchannelTransform)
-        {
-            cst_data = malloc(block_header.length);
+            cst_data = (uint8_t *)malloc(block_header.length);
             if(cst_data == NULL)
             {
                 TRACE("Cannot allocate memory for block, continuing...");
@@ -252,18 +283,23 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
     }
     else if(block_header.compression == None)
     {
-        data = (uint8_t *)malloc(block_header.length);
-        if(data == NULL)
+        if(block_header.length != 0)
         {
-            fprintf(stderr, "Cannot allocate memory for block, continuing...");
+            data = (uint8_t *)malloc(block_header.length);
+            if(data == NULL)
+            {
+                TRACE("Cannot allocate memory for block, continuing...");
 
-            TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
-            return AARUF_STATUS_OK;
+                TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
+                return AARUF_STATUS_OK;
+            }
         }
+        else
+            data = NULL;
 
-        read_bytes = fread(data, 1, block_header.length, ctx->imageStream);
+        read_bytes = (block_header.length == 0) ? 0 : fread(data, 1, block_header.length, ctx->imageStream);
 
-        if(read_bytes != block_header.length)
+        if(block_header.length != 0 && read_bytes != block_header.length)
         {
             free(data);
             TRACE("Could not read block, continuing...");
@@ -291,6 +327,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
         {
             TRACE("Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64 ", continuing...", crc64,
                   block_header.crc64);
+            free(data);
 
             TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
@@ -363,6 +400,8 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
             if(media_tag == NULL)
             {
                 TRACE("Cannot allocate memory for media tag entry.");
+                free(data);
+                data = NULL;
                 break;
             }
             memset(media_tag, 0, sizeof(mediaTagEntry));
