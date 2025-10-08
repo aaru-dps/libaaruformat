@@ -93,7 +93,7 @@
  */
 int32_t aaruf_get_geometry(const void *context, uint32_t *cylinders, uint32_t *heads, uint32_t *sectors_per_track)
 {
-    TRACE("Entering aaruf_get_geometry(%p, %u, %u, %u)", context, *cylinders, *heads, *sectors_per_track);
+    TRACE("Entering aaruf_get_geometry(%p, %p, %p, %p)", context, cylinders, heads, sectors_per_track);
 
     const aaruformatContext *ctx = NULL;
 
@@ -1943,7 +1943,7 @@ int32_t aaruf_set_drive_firmware_revision(void *context, const uint8_t *data, co
  */
 int32_t aaruf_get_cicm_metadata(const void *context, uint8_t *buffer, size_t *length)
 {
-    TRACE("Entering aaruf_get_cicm_metadata(%p, %p, %d)", context, buffer, *length);
+    TRACE("Entering aaruf_get_cicm_metadata(%p, %p, %p)", context, buffer, length);
 
     // Check context is correct AaruFormat context
     if(context == NULL)
@@ -2098,7 +2098,7 @@ int32_t aaruf_get_cicm_metadata(const void *context, uint8_t *buffer, size_t *le
  */
 int32_t aaruf_get_aaru_json_metadata(const void *context, uint8_t *buffer, size_t *length)
 {
-    TRACE("Entering aaruf_get_aaru_json_metadata(%p, %p, %d)", context, buffer, *length);
+    TRACE("Entering aaruf_get_aaru_json_metadata(%p, %p, %p)", context, buffer, length);
 
     // Check context is correct AaruFormat context
     if(context == NULL)
@@ -2336,7 +2336,7 @@ int32_t aaruf_set_aaru_json_metadata(void *context, uint8_t *data, size_t length
  */
 int32_t aaruf_get_media_sequence(const void *context, int32_t *sequence, int32_t *last_sequence)
 {
-    TRACE("Entering aaruf_get_media_sequence(%p, %d, %d)", context, *sequence, *last_sequence);
+    TRACE("Entering aaruf_get_media_sequence(%p, %p, %p)", context, sequence, last_sequence);
 
     // Check context is correct AaruFormat context
     if(context == NULL)
@@ -2403,7 +2403,7 @@ int32_t aaruf_get_media_sequence(const void *context, int32_t *sequence, int32_t
  */
 int32_t aaruf_get_creator(const void *context, uint8_t *buffer, int32_t *length)
 {
-    TRACE("Entering aaruf_get_creator(%p, %p, %d)", context, buffer, *length);
+    TRACE("Entering aaruf_get_creator(%p, %p, %p)", context, buffer, length);
 
     // Check context is correct AaruFormat context
     if(context == NULL)
@@ -2475,7 +2475,7 @@ int32_t aaruf_get_creator(const void *context, uint8_t *buffer, int32_t *length)
  */
 int32_t aaruf_get_comments(const void *context, uint8_t *buffer, int32_t *length)
 {
-    TRACE("Entering aaruf_get_comments(%p, %p, %d)", context, buffer, *length);
+    TRACE("Entering aaruf_get_comments(%p, %p, %p)", context, buffer, length);
 
     // Check context is correct AaruFormat context
     if(context == NULL)
@@ -2545,7 +2545,7 @@ int32_t aaruf_get_comments(const void *context, uint8_t *buffer, int32_t *length
  */
 int32_t aaruf_get_media_title(const void *context, uint8_t *buffer, int32_t *length)
 {
-    TRACE("Entering aaruf_get_media_title(%p, %p, %d)", context, buffer, *length);
+    TRACE("Entering aaruf_get_media_title(%p, %p, %p)", context, buffer, length);
 
     // Check context is correct AaruFormat context
     if(context == NULL)
@@ -2615,7 +2615,7 @@ int32_t aaruf_get_media_title(const void *context, uint8_t *buffer, int32_t *len
  */
 int32_t aaruf_get_media_manufacturer(const void *context, uint8_t *buffer, int32_t *length)
 {
-    TRACE("Entering aaruf_get_media_manufacturer(%p, %p, %d)", context, buffer, *length);
+    TRACE("Entering aaruf_get_media_manufacturer(%p, %p, %p)", context, buffer, length);
 
     // Check context is correct AaruFormat context
     if(context == NULL)
@@ -2685,7 +2685,7 @@ int32_t aaruf_get_media_manufacturer(const void *context, uint8_t *buffer, int32
  */
 int32_t aaruf_get_media_model(const void *context, uint8_t *buffer, int32_t *length)
 {
-    TRACE("Entering aaruf_get_media_model(%p, %p, %d)", context, buffer, *length);
+    TRACE("Entering aaruf_get_media_model(%p, %p, %p)", context, buffer, length);
 
     // Check context is correct AaruFormat context
     if(context == NULL)
@@ -2755,7 +2755,7 @@ int32_t aaruf_get_media_model(const void *context, uint8_t *buffer, int32_t *len
  */
 int32_t aaruf_get_media_serial_number(const void *context, uint8_t *buffer, int32_t *length)
 {
-    TRACE("Entering aaruf_get_media_serial_number(%p, %p, %d)", context, buffer, *length);
+    TRACE("Entering aaruf_get_media_serial_number(%p, %p, %p)", context, buffer, length);
 
     // Check context is correct AaruFormat context
     if(context == NULL)
@@ -2824,7 +2824,7 @@ int32_t aaruf_get_media_serial_number(const void *context, uint8_t *buffer, int3
  */
 int32_t aaruf_get_media_barcode(const void *context, uint8_t *buffer, int32_t *length)
 {
-    TRACE("Entering aaruf_get_media_barcode(%p, %p, %d)", context, buffer, *length);
+    TRACE("Entering aaruf_get_media_barcode(%p, %p, %p)", context, buffer, length);
 
     // Check context is correct AaruFormat context
     if(context == NULL)
@@ -2895,7 +2895,7 @@ int32_t aaruf_get_media_barcode(const void *context, uint8_t *buffer, int32_t *l
  */
 int32_t aaruf_get_media_part_number(const void *context, uint8_t *buffer, int32_t *length)
 {
-    TRACE("Entering aaruf_get_media_part_number(%p, %p, %d)", context, buffer, *length);
+    TRACE("Entering aaruf_get_media_part_number(%p, %p, %p)", context, buffer, length);
 
     // Check context is correct AaruFormat context
     if(context == NULL)
@@ -2967,7 +2967,7 @@ int32_t aaruf_get_media_part_number(const void *context, uint8_t *buffer, int32_
  */
 int32_t aaruf_get_drive_manufacturer(const void *context, uint8_t *buffer, int32_t *length)
 {
-    TRACE("Entering aaruf_get_drive_manufacturer(%p, %p, %d)", context, buffer, *length);
+    TRACE("Entering aaruf_get_drive_manufacturer(%p, %p, %p)", context, buffer, length);
 
     // Check context is correct AaruFormat context
     if(context == NULL)
@@ -3037,7 +3037,7 @@ int32_t aaruf_get_drive_manufacturer(const void *context, uint8_t *buffer, int32
  */
 int32_t aaruf_get_drive_model(const void *context, uint8_t *buffer, int32_t *length)
 {
-    TRACE("Entering aaruf_get_drive_model(%p, %p, %d)", context, buffer, *length);
+    TRACE("Entering aaruf_get_drive_model(%p, %p, %p)", context, buffer, length);
 
     // Check context is correct AaruFormat context
     if(context == NULL)
@@ -3107,7 +3107,7 @@ int32_t aaruf_get_drive_model(const void *context, uint8_t *buffer, int32_t *len
  */
 int32_t aaruf_get_drive_serial_number(const void *context, uint8_t *buffer, int32_t *length)
 {
-    TRACE("Entering aaruf_get_drive_serial_number(%p, %p, %d)", context, buffer, *length);
+    TRACE("Entering aaruf_get_drive_serial_number(%p, %p, %p)", context, buffer, length);
 
     // Check context is correct AaruFormat context
     if(context == NULL)
@@ -3177,7 +3177,7 @@ int32_t aaruf_get_drive_serial_number(const void *context, uint8_t *buffer, int3
  */
 int32_t aaruf_get_drive_firmware_revision(const void *context, uint8_t *buffer, int32_t *length)
 {
-    TRACE("Entering aaruf_get_drive_firmware_revision(%p, %p, %d)", context, buffer, *length);
+    TRACE("Entering aaruf_get_drive_firmware_revision(%p, %p, %p)", context, buffer, length);
 
     // Check context is correct AaruFormat context
     if(context == NULL)

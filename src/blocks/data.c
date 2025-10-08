@@ -155,7 +155,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
         int error_no = 0;
         if(block_header.compression == LzmaClauniaSubchannelTransform && block_header.type != CdSectorSubchannel)
         {
-            TRACE("Invalid compression type %d for block with data type %d, continuing...", block_header.compression,
+            TRACE("Invalid compression type %u for block with data type %u, continuing...", block_header.compression,
                   block_header.type);
 
             TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
@@ -266,7 +266,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
         if(read_bytes != block_header.length)
         {
             free(data);
-            fprintf(stderr, "Could not read block, continuing...");
+            TRACE("Could not read block, continuing...");
 
             TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;

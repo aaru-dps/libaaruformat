@@ -471,7 +471,7 @@ int32_t aaruf_get_dumphw(void *context, uint8_t *buffer, size_t *length)
  */
 int32_t aaruf_set_dumphw(void *context, uint8_t *data, size_t length)
 {
-    TRACE("Entering aaruf_set_dumphw(%p, %p, %d)", context, data, length);
+    TRACE("Entering aaruf_set_dumphw(%p, %p, %zu)", context, data, length);
 
     // Check context is correct AaruFormat context
     if(context == NULL)

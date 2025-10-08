@@ -2043,7 +2043,7 @@ int32_t aaruf_write_media_tag(void *context, const uint8_t *data, const int32_t 
 int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, const bool negative, const uint8_t *data,
                                const size_t length, const int32_t tag)
 {
-    TRACE("Entering aaruf_write_sector_tag(%p, %" PRIu64 ", %d, %u, %p, %d)", context, sector_address, negative, data,
+    TRACE("Entering aaruf_write_sector_tag(%p, %" PRIu64 ", %d, %p, %zu, %d)", context, sector_address, negative, data,
           length, tag);
 
     // Check context is correct AaruFormat context
