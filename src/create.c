@@ -26,6 +26,79 @@
 #include "internal.h"
 #include "log.h"
 
+static void cleanup_failed_create(aaruformatContext *ctx)
+{
+    if(ctx == NULL) return;
+
+    if(ctx->sectorHashMap != NULL)
+    {
+        free_map(ctx->sectorHashMap);
+        ctx->sectorHashMap = NULL;
+    }
+
+    if(ctx->indexEntries != NULL)
+    {
+        utarray_free(ctx->indexEntries);
+        ctx->indexEntries = NULL;
+    }
+
+    if(ctx->userDataDdtMini != NULL)
+    {
+        free(ctx->userDataDdtMini);
+        ctx->userDataDdtMini = NULL;
+    }
+
+    if(ctx->userDataDdtBig != NULL)
+    {
+        free(ctx->userDataDdtBig);
+        ctx->userDataDdtBig = NULL;
+    }
+
+    if(ctx->spamsum_context != NULL)
+    {
+        aaruf_spamsum_free(ctx->spamsum_context);
+        ctx->spamsum_context = NULL;
+    }
+
+    if(ctx->blake3_context != NULL)
+    {
+        free(ctx->blake3_context);
+        ctx->blake3_context = NULL;
+    }
+
+    if(ctx->eccCdContext != NULL)
+    {
+        free(ctx->eccCdContext);
+        ctx->eccCdContext = NULL;
+    }
+
+    if(ctx->readableSectorTags != NULL)
+    {
+        free(ctx->readableSectorTags);
+        ctx->readableSectorTags = NULL;
+    }
+
+    if(ctx->imageInfo.ApplicationVersion != NULL)
+    {
+        free(ctx->imageInfo.ApplicationVersion);
+        ctx->imageInfo.ApplicationVersion = NULL;
+    }
+
+    if(ctx->imageInfo.Version != NULL)
+    {
+        free(ctx->imageInfo.Version);
+        ctx->imageInfo.Version = NULL;
+    }
+
+    if(ctx->imageStream != NULL)
+    {
+        fclose(ctx->imageStream);
+        ctx->imageStream = NULL;
+    }
+
+    free(ctx);
+}
+
 /**
  * @brief Creates a new AaruFormat image file.
  *
@@ -254,11 +327,10 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
     if(ctx->imageStream == NULL)
     {
         FATAL("Error %d opening file %s for writing", errno, filepath);
-        free(ctx);
         errno = AARUF_ERROR_CANNOT_CREATE_FILE;
 
         TRACE("Exiting aaruf_create() = NULL");
-
+        cleanup_failed_create(ctx);
         return NULL;
     }
 
@@ -266,10 +338,10 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
     {
         FATAL("Application name too long (%u bytes, maximum %u bytes)", application_name_length,
               AARU_HEADER_APP_NAME_LEN);
-        free(ctx);
         errno = AARUF_ERROR_INVALID_APP_NAME_LENGTH;
 
         TRACE("Exiting aaruf_create() = NULL");
+        cleanup_failed_create(ctx);
         return NULL;
     }
 
@@ -290,9 +362,10 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
 
     if(ctx->readableSectorTags == NULL)
     {
-        free(ctx);
         errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
 
+        TRACE("Exiting aaruf_create() = NULL");
+        cleanup_failed_create(ctx);
         return NULL;
     }
 
@@ -429,12 +502,9 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
     if(fseek(ctx->imageStream, ctx->nextBlockPosition, SEEK_SET) != 0)
     {
         FATAL("Could not seek to data start position");
-        free(ctx->readableSectorTags);
-        if(ctx->userDataDdtMini) free(ctx->userDataDdtMini);
-        if(ctx->userDataDdtBig) free(ctx->userDataDdtBig);
-        utarray_free(ctx->indexEntries);
-        free(ctx);
         errno = AARUF_ERROR_CANNOT_CREATE_FILE;
+        TRACE("Exiting aaruf_create() = NULL");
+        cleanup_failed_create(ctx);
         return NULL;
     }
 
@@ -446,11 +516,10 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
     if(ctx->indexEntries == NULL)
     {
         FATAL("Not enough memory to create index entries array");
-        free(ctx->readableSectorTags);
-        free(ctx);
         errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
 
         TRACE("Exiting aaruf_create() = NULL");
+        cleanup_failed_create(ctx);
         return NULL;
     }
 
