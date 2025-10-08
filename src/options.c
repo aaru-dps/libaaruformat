@@ -15,14 +15,14 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
+#include <errno.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "aaruformat.h"
-#include "internal.h"
 #include "structs/options.h"
 
 #include "log.h"
@@ -37,7 +37,8 @@
  */
 aaru_options parse_options(const char *options)
 {
-    TRACE("Entering parse_options(%s)", options);
+    const char *options_str = options != NULL ? options : "(null)";
+    TRACE("Entering parse_options(%s)", options_str);
 
     aaru_options parsed = {.compress        = true,
                            .deduplicate     = true,
@@ -53,7 +54,7 @@ aaru_options parse_options(const char *options)
 
     if(options == NULL)
     {
-        TRACE("Exiting aaruf_open() = {compress: %d, deduplicate: %d, dictionary: %u, table_shift: %u, "
+        TRACE("Exiting parse_options() = {compress: %d, deduplicate: %d, dictionary: %u, table_shift: %d, "
               "data_shift: %u, block_alignment: %u, md5: %d, sha1: %d, sha256: %d, blake3: %d, spamsum: %d}",
               parsed.compress, parsed.deduplicate, parsed.dictionary, parsed.table_shift, parsed.data_shift,
               parsed.block_alignment, parsed.md5, parsed.sha1, parsed.sha256, parsed.blake3, parsed.spamsum);
@@ -64,7 +65,8 @@ aaru_options parse_options(const char *options)
     strncpy(buffer, options, sizeof(buffer));
     buffer[sizeof(buffer) - 1] = '\0';
 
-    const char *token = strtok(buffer, ";");
+    char *saveptr = NULL;
+    char *token   = strtok_r(buffer, ";", &saveptr);
     while(token != NULL)
     {
         char *equal = strchr(token, '=');
@@ -87,18 +89,40 @@ aaru_options parse_options(const char *options)
             }
             else if(strncmp(key, "table_shift", 11) == 0)
             {
-                parsed.table_shift = (uint8_t)atoi(value);
-                if(parsed.table_shift == 0) parsed.table_shift = 9;
+                errno              = 0;
+                char *endptr       = NULL;
+                long  parsed_value = strtol(value, &endptr, 10);
+                if(errno == 0 && endptr != value)
+                {
+                    if(parsed_value < INT8_MIN) parsed_value = INT8_MIN;
+                    if(parsed_value > INT8_MAX) parsed_value = INT8_MAX;
+                    parsed.table_shift = (int8_t)parsed_value;
+                    if(parsed.table_shift == 0) parsed.table_shift = 9;
+                }
             }
             else if(strncmp(key, "data_shift", 10) == 0)
             {
-                parsed.data_shift = (uint8_t)atoi(value);
-                if(parsed.data_shift == 0) parsed.data_shift = 12;
+                errno              = 0;
+                char *endptr       = NULL;
+                long  parsed_value = strtol(value, &endptr, 10);
+                if(errno == 0 && endptr != value && parsed_value >= 0)
+                {
+                    if(parsed_value > UINT8_MAX) parsed_value = UINT8_MAX;
+                    parsed.data_shift = (uint8_t)parsed_value;
+                    if(parsed.data_shift == 0) parsed.data_shift = 12;
+                }
             }
             else if(strncmp(key, "block_alignment", 15) == 0)
             {
-                parsed.block_alignment = (uint8_t)atoi(value);
-                if(parsed.block_alignment == 0) parsed.block_alignment = 9;
+                errno              = 0;
+                char *endptr       = NULL;
+                long  parsed_value = strtol(value, &endptr, 10);
+                if(errno == 0 && endptr != value && parsed_value >= 0)
+                {
+                    if(parsed_value > UINT8_MAX) parsed_value = UINT8_MAX;
+                    parsed.block_alignment = (uint8_t)parsed_value;
+                    if(parsed.block_alignment == 0) parsed.block_alignment = 9;
+                }
             }
             else if(strncmp(key, "md5", 3) == 0)
                 parsed.md5 = bval;
@@ -111,10 +135,10 @@ aaru_options parse_options(const char *options)
             else if(strncmp(key, "spamsum", 7) == 0)
                 parsed.spamsum = bval;
         }
-        token = strtok(NULL, ";");
+        token = strtok_r(NULL, ";", &saveptr);
     }
 
-    TRACE("Exiting aaruf_open() = {compress: %d, deduplicate: %d, dictionary: %u, table_shift: %u, "
+    TRACE("Exiting parse_options() = {compress: %d, deduplicate: %d, dictionary: %u, table_shift: %d, "
           "data_shift: %u, block_alignment: %u, md5: %d, sha1: %d, sha256: %d, blake3: %d, spamsum: %d}",
           parsed.compress, parsed.deduplicate, parsed.dictionary, parsed.table_shift, parsed.data_shift,
           parsed.block_alignment, parsed.md5, parsed.sha1, parsed.sha256, parsed.blake3, parsed.spamsum);
