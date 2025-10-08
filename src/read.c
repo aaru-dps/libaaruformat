@@ -297,7 +297,7 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
     {
         FATAL("Sector address out of bounds");
 
-        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+        TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
         return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
     }
 
@@ -305,7 +305,7 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
     {
         FATAL("Sector address out of bounds");
 
-        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+        TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
         return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
     }
 
@@ -837,7 +837,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
     {
         FATAL("Sector address out of bounds");
 
-        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+        TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
         return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
     }
 
@@ -845,7 +845,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
     {
         FATAL("Sector address out of bounds");
 
-        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+        TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
         return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
     }
 
