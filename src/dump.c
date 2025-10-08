@@ -23,6 +23,26 @@
 #include "internal.h"
 #include "log.h"
 
+static void free_dump_hardware_entries(DumpHardwareEntriesWithData *entries, uint32_t count)
+{
+    if(entries == NULL) return;
+
+    for(uint32_t e = 0; e < count; e++)
+    {
+        free(entries[e].manufacturer);
+        free(entries[e].model);
+        free(entries[e].revision);
+        free(entries[e].firmware);
+        free(entries[e].serial);
+        free(entries[e].softwareName);
+        free(entries[e].softwareVersion);
+        free(entries[e].softwareOperatingSystem);
+        free(entries[e].extents);
+    }
+
+    free(entries);
+}
+
 /**
  * @brief Retrieves the dump hardware block containing acquisition environment information.
  *
@@ -165,7 +185,10 @@
  */
 int32_t aaruf_get_dumphw(void *context, uint8_t *buffer, size_t *length)
 {
-    TRACE("Entering aaruf_get_dumphw(%p,  %p, %u)", context, buffer, *length);
+    size_t length_value = 0;
+    if(length != NULL) length_value = *length;
+
+    TRACE("Entering aaruf_get_dumphw(%p, %p, %zu)", context, buffer, length_value);
 
     aaruformatContext *ctx = NULL;
 
@@ -175,6 +198,14 @@ int32_t aaruf_get_dumphw(void *context, uint8_t *buffer, size_t *length)
 
         TRACE("Exiting aaruf_get_dumphw() = AARUF_ERROR_NOT_AARUFORMAT");
         return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(length == NULL)
+    {
+        FATAL("Invalid length pointer");
+
+        TRACE("Exiting aaruf_get_dumphw() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+        return AARUF_ERROR_INCORRECT_DATA_SIZE;
     }
 
     ctx = context;
@@ -197,7 +228,14 @@ int32_t aaruf_get_dumphw(void *context, uint8_t *buffer, size_t *length)
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
-    size_t required_length = sizeof(DumpHardwareHeader) + ctx->dumpHardwareHeader.length;
+    size_t required_length = sizeof(DumpHardwareHeader) + (size_t)ctx->dumpHardwareHeader.length;
+    if(required_length < sizeof(DumpHardwareHeader))
+    {
+        FATAL("Dump hardware payload length overflow");
+
+        TRACE("Exiting aaruf_get_dumphw() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+        return AARUF_ERROR_INCORRECT_DATA_SIZE;
+    }
 
     if(buffer == NULL || *length < required_length)
     {
@@ -212,17 +250,40 @@ int32_t aaruf_get_dumphw(void *context, uint8_t *buffer, size_t *length)
 
     // Start to iterate and copy the data
     size_t offset = 0;
-    for(int i = 0; i < ctx->dumpHardwareHeader.entries; i++)
+    for(uint32_t i = 0; i < ctx->dumpHardwareHeader.entries; i++)
     {
-        size_t entry_size = sizeof(DumpHardwareEntry) + ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength +
-                            ctx->dumpHardwareEntriesWithData[i].entry.modelLength +
-                            ctx->dumpHardwareEntriesWithData[i].entry.revisionLength +
-                            ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength +
-                            ctx->dumpHardwareEntriesWithData[i].entry.serialLength +
-                            ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength +
-                            ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength +
-                            ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength +
-                            ctx->dumpHardwareEntriesWithData[i].entry.extents * sizeof(DumpExtent);
+        size_t entry_size = sizeof(DumpHardwareEntry);
+
+        const DumpHardwareEntry *entry = &ctx->dumpHardwareEntriesWithData[i].entry;
+
+        const size_t extent_bytes = (size_t)entry->extents * sizeof(DumpExtent);
+        if(entry->extents != 0 && extent_bytes / sizeof(DumpExtent) != entry->extents)
+        {
+            FATAL("Dump hardware extent size overflow");
+            TRACE("Exiting aaruf_get_dumphw() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+            return AARUF_ERROR_INCORRECT_DATA_SIZE;
+        }
+
+        const size_t additive_lengths[] = {entry->manufacturerLength,
+                                           entry->modelLength,
+                                           entry->revisionLength,
+                                           entry->firmwareLength,
+                                           entry->serialLength,
+                                           entry->softwareNameLength,
+                                           entry->softwareVersionLength,
+                                           entry->softwareOperatingSystemLength,
+                                           extent_bytes};
+
+        for(size_t j = 0; j < sizeof(additive_lengths) / sizeof(additive_lengths[0]); j++)
+        {
+            if(additive_lengths[j] > SIZE_MAX - entry_size)
+            {
+                FATAL("Dump hardware entry size overflow");
+                TRACE("Exiting aaruf_get_dumphw() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+            entry_size += additive_lengths[j];
+        }
 
         if(offset + entry_size > *length)
         {
@@ -289,11 +350,10 @@ int32_t aaruf_get_dumphw(void *context, uint8_t *buffer, size_t *length)
                    ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength);
             offset += ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength;
         }
-        if(ctx->dumpHardwareEntriesWithData[i].entry.extents > 0 && ctx->dumpHardwareEntriesWithData[i].extents != NULL)
+        if(entry->extents > 0 && ctx->dumpHardwareEntriesWithData[i].extents != NULL)
         {
-            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].extents,
-                   ctx->dumpHardwareEntriesWithData[i].entry.extents * sizeof(DumpExtent));
-            offset += ctx->dumpHardwareEntriesWithData[i].entry.extents * sizeof(DumpExtent);
+            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].extents, extent_bytes);
+            offset += extent_bytes;
         }
     }
 
@@ -439,7 +499,6 @@ int32_t aaruf_get_dumphw(void *context, uint8_t *buffer, size_t *length)
  *       - Extents indicate which sectors this environment contributed
  *       - Empty extent arrays (extents == 0) mean the environment dumped entire medium
  *       - Extents are stored in the order provided in the input buffer
- *       - TODO note in code indicates extents should be sorted (qsort) but not implemented
  *
  * @note Memory Ownership:
  *       - The function creates internal copies of all data
@@ -505,6 +564,16 @@ int32_t aaruf_set_dumphw(void *context, uint8_t *data, size_t length)
     if(data == NULL || length == 0)
     {
         FATAL("Invalid data or length");
+
+        TRACE("Exiting aaruf_set_dumphw() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+        return AARUF_ERROR_INCORRECT_DATA_SIZE;
+    }
+
+    if(length < sizeof(DumpHardwareHeader))
+    {
+        FATAL("Dump hardware block shorter than header");
+
+        TRACE("Exiting aaruf_set_dumphw() = AARUF_ERROR_INCORRECT_DATA_SIZE");
         return AARUF_ERROR_INCORRECT_DATA_SIZE;
     }
 
@@ -535,192 +604,91 @@ int32_t aaruf_set_dumphw(void *context, uint8_t *data, size_t length)
         return AARUF_ERROR_INVALID_BLOCK_CRC;
     }
 
-    // Allocate copy buffer
-    DumpHardwareEntriesWithData *copy = calloc(1, sizeof(DumpHardwareEntriesWithData) * header.entries);
-
-    if(copy == NULL)
+    DumpHardwareEntriesWithData *copy = NULL;
+    if(header.entries > 0)
     {
-        TRACE("Could not allocate memory for dump hardware block...");
-        TRACE("Exiting aaruf_set_dumphw() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
-        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        copy = calloc(header.entries, sizeof(DumpHardwareEntriesWithData));
+        if(copy == NULL)
+        {
+            TRACE("Could not allocate memory for dump hardware block entries");
+            TRACE("Exiting aaruf_set_dumphw() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        }
     }
 
     TRACE("Processing %u dump hardware block entries", header.entries);
 
-    int pos = sizeof(DumpHardwareHeader);
+    size_t pos = sizeof(DumpHardwareHeader);
 
-    for(int e = 0; e < ctx->dumpHardwareHeader.entries; e++)
+#define COPY_STRING_FIELD(field)                                      \
+    do {                                                              \
+        const size_t field##_length = copy[e].entry.field##Length;    \
+        if(field##_length > 0)                                        \
+        {                                                             \
+            if(field##_length > length - pos) goto invalid_data;      \
+            copy[e].field = (uint8_t *)calloc(1, field##_length + 1); \
+            if(copy[e].field == NULL) goto free_copy_and_error;       \
+            memcpy(copy[e].field, data + pos, field##_length);        \
+            pos += field##_length;                                    \
+        }                                                             \
+    } while(0)
+
+    for(uint32_t e = 0; e < header.entries; e++)
     {
+        if(length - pos < sizeof(DumpHardwareEntry)) goto invalid_data;
+
         memcpy(&copy[e].entry, data + pos, sizeof(DumpHardwareEntry));
         pos += sizeof(DumpHardwareEntry);
 
-        if(copy[e].entry.manufacturerLength > 0)
+        COPY_STRING_FIELD(manufacturer);
+        COPY_STRING_FIELD(model);
+        COPY_STRING_FIELD(revision);
+        COPY_STRING_FIELD(firmware);
+        COPY_STRING_FIELD(serial);
+        COPY_STRING_FIELD(softwareName);
+        COPY_STRING_FIELD(softwareVersion);
+        COPY_STRING_FIELD(softwareOperatingSystem);
+
+        const uint32_t extent_count = copy[e].entry.extents;
+        if(extent_count > 0)
         {
-            copy[e].manufacturer = (uint8_t *)calloc(1, copy[e].entry.manufacturerLength + 1);
+            const size_t extent_bytes = (size_t)extent_count * sizeof(DumpExtent);
+            if(extent_bytes / sizeof(DumpExtent) != extent_count || extent_bytes > length - pos) goto invalid_data;
 
-            if(copy[e].manufacturer == NULL)
-            {
-                TRACE("Could not allocate memory for dump hardware block entry manufacturer");
-                goto free_copy_and_error;
-            }
+            copy[e].extents = (DumpExtent *)malloc(extent_bytes);
+            if(copy[e].extents == NULL) goto free_copy_and_error;
 
-            memcpy(copy[e].manufacturer, data + pos, copy[e].entry.manufacturerLength);
-            pos += copy[e].entry.manufacturerLength;
-        }
+            memcpy(copy[e].extents, data + pos, extent_bytes);
+            pos += extent_bytes;
 
-        if(copy[e].entry.modelLength > 0)
-        {
-            copy[e].model = (uint8_t *)calloc(1, copy[e].entry.modelLength + 1);
-
-            if(copy[e].model == NULL)
-            {
-                TRACE("Could not allocate memory for dump hardware block entry model");
-                goto free_copy_and_error;
-            }
-
-            memcpy(copy[e].manufacturer, data + pos, copy[e].entry.modelLength);
-            pos += copy[e].entry.modelLength;
-        }
-
-        if(copy[e].entry.revisionLength > 0)
-        {
-            copy[e].revision = (uint8_t *)calloc(1, copy[e].entry.revisionLength + 1);
-
-            if(copy[e].revision == NULL)
-            {
-                TRACE("Could not allocate memory for dump hardware block entry revision");
-                goto free_copy_and_error;
-            }
-
-            memcpy(copy[e].revision, data + pos, copy[e].entry.revisionLength);
-            pos += copy[e].entry.revisionLength;
-        }
-
-        if(copy[e].entry.firmwareLength > 0)
-        {
-            copy[e].firmware = (uint8_t *)calloc(1, copy[e].entry.firmwareLength + 1);
-
-            if(copy[e].firmware == NULL)
-            {
-                TRACE("Could not allocate memory for dump hardware block entry firmware");
-                goto free_copy_and_error;
-            }
-
-            memcpy(copy[e].firmware, data + pos, copy[e].entry.firmwareLength);
-            pos += copy[e].entry.firmwareLength;
-        }
-
-        if(copy[e].entry.serialLength > 0)
-        {
-            copy[e].serial = (uint8_t *)calloc(1, copy[e].entry.serialLength + 1);
-
-            if(copy[e].serial == NULL)
-            {
-                TRACE("Could not allocate memory for dump hardware block entry serial");
-                goto free_copy_and_error;
-            }
-
-            memcpy(copy[e].serial, data + pos, copy[e].entry.serialLength);
-            pos += copy[e].entry.serialLength;
-        }
-
-        if(copy[e].entry.softwareNameLength > 0)
-        {
-            copy[e].softwareName = (uint8_t *)calloc(1, copy[e].entry.softwareNameLength + 1);
-
-            if(copy[e].softwareName == NULL)
-            {
-                TRACE("Could not allocate memory for dump hardware block entry software name");
-                goto free_copy_and_error;
-            }
-
-            memcpy(copy[e].softwareName, data + pos, copy[e].entry.softwareNameLength);
-            pos += copy[e].entry.softwareNameLength;
-        }
-
-        if(copy[e].entry.softwareVersionLength > 0)
-        {
-            copy[e].softwareVersion = (uint8_t *)calloc(1, copy[e].entry.softwareVersionLength + 1);
-
-            if(copy[e].softwareVersion == NULL)
-            {
-                TRACE("Could not allocate memory for dump hardware block entry software version");
-                goto free_copy_and_error;
-            }
-
-            memcpy(copy[e].softwareVersion, data + pos, copy[e].entry.softwareVersionLength);
-            pos += copy[e].entry.softwareVersionLength;
-        }
-
-        if(copy[e].entry.softwareOperatingSystemLength > 0)
-        {
-            copy[e].softwareOperatingSystem = (uint8_t *)calloc(1, copy[e].entry.softwareOperatingSystemLength + 1);
-
-            if(copy[e].softwareOperatingSystem == NULL)
-            {
-                TRACE("Could not allocate memory for dump hardware block entry software operating system");
-                goto free_copy_and_error;
-            }
-
-            memcpy(copy[e].softwareOperatingSystem, data + pos, copy[e].entry.softwareOperatingSystemLength);
-            pos += copy[e].entry.softwareOperatingSystemLength;
-        }
-
-        copy[e].extents = (DumpExtent *)malloc(sizeof(DumpExtent) * ctx->dumpHardwareEntriesWithData->entry.extents);
-
-        if(copy[e].extents == NULL)
-        {
-            TRACE("Could not allocate memory for dump hardware block extents");
-            goto free_copy_and_error;
-        }
-
-        memcpy(copy[e].extents, data + pos, sizeof(DumpExtent) * ctx->dumpHardwareEntriesWithData->entry.extents);
-        pos += sizeof(DumpExtent) * ctx->dumpHardwareEntriesWithData->entry.extents;
-
-        // Sort extents by start sector for efficient lookup and validation
-        if(copy[e].entry.extents > 0 && copy[e].extents != NULL)
-        {
-            qsort(copy[e].extents, copy[e].entry.extents, sizeof(DumpExtent), compare_extents);
-            TRACE("Sorted %u extents for entry %d", copy[e].entry.extents, e);
+            qsort(copy[e].extents, extent_count, sizeof(DumpExtent), compare_extents);
+            TRACE("Sorted %u extents for entry %u", extent_count, e);
         }
     }
 
-    // Free old data
-    for(int e = 0; e < ctx->dumpHardwareHeader.entries; e++)
+#undef COPY_STRING_FIELD
+
+    if(pos != length)
     {
-        free(ctx->dumpHardwareEntriesWithData[e].manufacturer);
-        free(ctx->dumpHardwareEntriesWithData[e].model);
-        free(ctx->dumpHardwareEntriesWithData[e].revision);
-        free(ctx->dumpHardwareEntriesWithData[e].firmware);
-        free(ctx->dumpHardwareEntriesWithData[e].serial);
-        free(ctx->dumpHardwareEntriesWithData[e].softwareName);
-        free(ctx->dumpHardwareEntriesWithData[e].softwareVersion);
-        free(ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem);
-        free(ctx->dumpHardwareEntriesWithData[e].extents);
+        FATAL("Dump hardware block contains trailing data");
+        goto invalid_data;
     }
-    free(ctx->dumpHardwareEntriesWithData);
 
+    free_dump_hardware_entries(ctx->dumpHardwareEntriesWithData, ctx->dumpHardwareHeader.entries);
     ctx->dumpHardwareEntriesWithData = copy;
     ctx->dumpHardwareHeader          = header;
 
     TRACE("Exiting aaruf_set_dumphw() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
 
-    // Free copy and return not enough memory error
+invalid_data:
+    TRACE("Dump hardware block truncated or malformed");
+    free_dump_hardware_entries(copy, header.entries);
+    TRACE("Exiting aaruf_set_dumphw() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+    return AARUF_ERROR_INCORRECT_DATA_SIZE;
+
 free_copy_and_error:
-    for(int e = 0; e < header.entries; e++)
-    {
-        free(copy[e].manufacturer);
-        free(copy[e].model);
-        free(copy[e].revision);
-        free(copy[e].firmware);
-        free(copy[e].serial);
-        free(copy[e].softwareName);
-        free(copy[e].softwareVersion);
-        free(copy[e].softwareOperatingSystem);
-        free(copy[e].extents);
-    }
-    free(copy);
+    free_dump_hardware_entries(copy, header.entries);
     TRACE("Exiting aaruf_set_dumphw() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
     return AARUF_ERROR_NOT_ENOUGH_MEMORY;
 }
