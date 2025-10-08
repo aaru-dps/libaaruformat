@@ -396,8 +396,9 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
 
     // Initialize caches
     TRACE("Initializing caches");
-    ctx->blockHeaderCache.cache     = NULL;
-    ctx->blockHeaderCache.max_items = MAX_CACHE_SIZE / (ctx->imageInfo.SectorSize * (1 << ctx->shift));
+    ctx->blockHeaderCache.cache = NULL;
+    const uint64_t cache_divisor    = (uint64_t)ctx->imageInfo.SectorSize * (1ULL << ctx->shift);
+    ctx->blockHeaderCache.max_items = cache_divisor == 0 ? 0 : MAX_CACHE_SIZE / cache_divisor;
     ctx->blockCache.cache           = NULL;
     ctx->blockCache.max_items       = ctx->blockHeaderCache.max_items;
 
