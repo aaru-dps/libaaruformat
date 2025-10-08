@@ -178,7 +178,7 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
     if(ctx->calculating_sha256 && !negative && sector_address <= ctx->imageInfo.Sectors && !ctx->writingLong)
         aaruf_sha256_update(&ctx->sha256_context, data, length);
     // Calculate SpamSum on-the-fly if requested and sector is within user sectors (not negative or overflow)
-    if(ctx->calculating_sha256 && !negative && sector_address <= ctx->imageInfo.Sectors && !ctx->writingLong)
+    if(ctx->calculating_spamsum && !negative && sector_address <= ctx->imageInfo.Sectors && !ctx->writingLong)
         aaruf_spamsum_update(ctx->spamsum_context, data, length);
     // Calculate BLAKE3 on-the-fly if requested and sector is within user sectors (not negative or overflow)
     if(ctx->calculating_blake3 && !negative && sector_address <= ctx->imageInfo.Sectors && !ctx->writingLong)
@@ -669,7 +669,7 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
             if(ctx->calculating_sha256 && !negative && sector_address <= ctx->imageInfo.Sectors)
                 aaruf_sha256_update(&ctx->sha256_context, data, length);
             // Calculate SpamSum on-the-fly if requested and sector is within user sectors (not negative or overflow)
-            if(ctx->calculating_sha256 && !negative && sector_address <= ctx->imageInfo.Sectors)
+            if(ctx->calculating_spamsum && !negative && sector_address <= ctx->imageInfo.Sectors)
                 aaruf_spamsum_update(ctx->spamsum_context, data, length);
             // Calculate BLAKE3 on-the-fly if requested and sector is within user sectors (not negative or overflow)
             if(ctx->calculating_blake3 && !negative && sector_address <= ctx->imageInfo.Sectors)
