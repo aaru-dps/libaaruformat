@@ -357,7 +357,15 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
         }
 
         TRACE("Reading block header");
-        fseek(ctx->imageStream, block_offset, SEEK_SET);
+        if(fseek(ctx->imageStream, block_offset, SEEK_SET) != 0)
+        {
+            FATAL("Could not seek to block header");
+            free(block_header);
+
+            TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_READ_HEADER");
+            return AARUF_ERROR_CANNOT_READ_HEADER;
+        }
+
         read_bytes = fread(block_header, 1, sizeof(BlockHeader), ctx->imageStream);
 
         if(read_bytes != sizeof(BlockHeader))
@@ -371,8 +379,13 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
         TRACE("Adding block header to cache");
         add_to_cache_uint64(&ctx->blockHeaderCache, block_offset, block_header);
     }
-    else
-        fseek(ctx->imageStream, block_offset + sizeof(BlockHeader), SEEK_SET);  // Advance as if reading the header
+    else if(fseek(ctx->imageStream, block_offset + sizeof(BlockHeader), SEEK_SET) != 0)
+    {
+        FATAL("Could not seek past cached block header");
+
+        TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_READ_HEADER");
+        return AARUF_ERROR_CANNOT_READ_HEADER;
+    }
 
     if(data == NULL || *length < block_header->sectorSize)
     {
