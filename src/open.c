@@ -28,6 +28,28 @@
 #include "log.h"
 #include "utarray.h"
 
+static void cleanup_open_failure(aaruformatContext *ctx)
+{
+    if(ctx == NULL) return;
+
+    if(ctx->imageStream != NULL)
+    {
+        fclose(ctx->imageStream);
+        ctx->imageStream = NULL;
+    }
+
+    free(ctx->readableSectorTags);
+    ctx->readableSectorTags = NULL;
+
+    free(ctx->imageInfo.ApplicationVersion);
+    ctx->imageInfo.ApplicationVersion = NULL;
+
+    free(ctx->imageInfo.Version);
+    ctx->imageInfo.Version = NULL;
+
+    free(ctx);
+}
+
 /**
  * @brief Opens an existing AaruFormat image file.
  *
@@ -146,7 +168,7 @@ void *aaruf_open(const char *filepath)
     {
         FATAL("Error %d opening file %s for reading", errno, filepath);
         error_no = errno;
-        free(ctx);
+        cleanup_open_failure(ctx);
         errno = error_no;
 
         TRACE("Exiting aaruf_open() = NULL");
@@ -160,7 +182,7 @@ void *aaruf_open(const char *filepath)
     if(read_bytes != sizeof(AaruHeader))
     {
         FATAL("Could not read header");
-        free(ctx);
+        cleanup_open_failure(ctx);
         errno = AARUF_ERROR_FILE_TOO_SMALL;
 
         TRACE("Exiting aaruf_open() = NULL");
@@ -170,7 +192,7 @@ void *aaruf_open(const char *filepath)
     if(ctx->header.identifier != DIC_MAGIC && ctx->header.identifier != AARU_MAGIC)
     {
         FATAL("Incorrect identifier for AaruFormat file: %8.8s", (char *)&ctx->header.identifier);
-        free(ctx);
+        cleanup_open_failure(ctx);
         errno = AARUF_ERROR_NOT_AARUFORMAT;
 
         TRACE("Exiting aaruf_open() = NULL");
@@ -186,7 +208,7 @@ void *aaruf_open(const char *filepath)
 
         if(read_bytes != sizeof(AaruHeaderV2))
         {
-            free(ctx);
+            cleanup_open_failure(ctx);
             errno = AARUF_ERROR_FILE_TOO_SMALL;
 
             return NULL;
@@ -197,7 +219,7 @@ void *aaruf_open(const char *filepath)
     {
         FATAL("Incompatible AaruFormat version %d.%d found, maximum supported is %d.%d", ctx->header.imageMajorVersion,
               ctx->header.imageMinorVersion, AARUF_VERSION_V2, 0);
-        free(ctx);
+        cleanup_open_failure(ctx);
         errno = AARUF_ERROR_INCOMPATIBLE_VERSION;
 
         TRACE("Exiting aaruf_open() = NULL");
@@ -212,7 +234,7 @@ void *aaruf_open(const char *filepath)
     if(ctx->readableSectorTags == NULL)
     {
         FATAL("Could not allocate memory for readable sector tags bitmap");
-        free(ctx);
+        cleanup_open_failure(ctx);
         errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
 
         TRACE("Exiting aaruf_open() = NULL");
@@ -243,7 +265,7 @@ void *aaruf_open(const char *filepath)
     pos = fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET);
     if(pos < 0)
     {
-        free(ctx);
+        cleanup_open_failure(ctx);
         errno = AARUF_ERROR_CANNOT_READ_INDEX;
 
         return NULL;
@@ -252,7 +274,7 @@ void *aaruf_open(const char *filepath)
     pos = ftell(ctx->imageStream);
     if(pos != ctx->header.indexOffset)
     {
-        free(ctx);
+        cleanup_open_failure(ctx);
         errno = AARUF_ERROR_CANNOT_READ_INDEX;
 
         return NULL;
@@ -264,7 +286,7 @@ void *aaruf_open(const char *filepath)
        (signature != IndexBlock && signature != IndexBlock2 && signature != IndexBlock3))
     {
         FATAL("Could not read index header or incorrect identifier %4.4s", (char *)&signature);
-        free(ctx);
+        cleanup_open_failure(ctx);
         errno = AARUF_ERROR_CANNOT_READ_INDEX;
 
         TRACE("Exiting aaruf_open() = NULL");
@@ -282,7 +304,7 @@ void *aaruf_open(const char *filepath)
     {
         FATAL("Could not process index.");
         utarray_free(index_entries);
-        free(ctx);
+        cleanup_open_failure(ctx);
         errno = AARUF_ERROR_CANNOT_READ_INDEX;
 
         TRACE("Exiting aaruf_open() = NULL");
@@ -322,7 +344,7 @@ void *aaruf_open(const char *filepath)
                 if(error_no != AARUF_STATUS_OK)
                 {
                     utarray_free(index_entries);
-                    free(ctx);
+                    cleanup_open_failure(ctx);
                     errno = error_no;
 
                     return NULL;
@@ -336,7 +358,7 @@ void *aaruf_open(const char *filepath)
                 if(error_no != AARUF_STATUS_OK)
                 {
                     utarray_free(index_entries);
-                    free(ctx);
+                    cleanup_open_failure(ctx);
                     errno = error_no;
 
                     return NULL;
@@ -349,7 +371,7 @@ void *aaruf_open(const char *filepath)
                 if(error_no != AARUF_STATUS_OK)
                 {
                     utarray_free(index_entries);
-                    free(ctx);
+                    cleanup_open_failure(ctx);
                     errno = error_no;
 
                     return NULL;
