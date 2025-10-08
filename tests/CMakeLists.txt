@@ -4,7 +4,21 @@ cmake_minimum_required(VERSION 3.13)
 project(tests)
 
 # 'lib' is the folder with Google Test sources
+set(_aaru_saved_warn_deprecated __aaru_warn_not_set__)
+if(DEFINED CMAKE_WARN_DEPRECATED)
+	set(_aaru_saved_warn_deprecated ${CMAKE_WARN_DEPRECATED})
+endif()
+set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
+
 add_subdirectory(lib)
+
+if(_aaru_saved_warn_deprecated STREQUAL __aaru_warn_not_set__)
+	unset(CMAKE_WARN_DEPRECATED CACHE)
+	unset(CMAKE_WARN_DEPRECATED)
+else()
+	set(CMAKE_WARN_DEPRECATED ${_aaru_saved_warn_deprecated} CACHE BOOL "" FORCE)
+endif()
+unset(_aaru_saved_warn_deprecated)
 include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR} ../include ../3rdparty/uthash/include ../3rdparty/uthash/src)
 
 # Copy test data files into build tree
