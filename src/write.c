@@ -1409,7 +1409,7 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
             uint32_t       flac_block_size = ctx->currentBlockOffset * SAMPLES_PER_SECTOR;
 
             if(flac_block_size > MAX_FLAKE_BLOCK) flac_block_size = MAX_FLAKE_BLOCK;
-            if(flac_block_size < MIN_FLAKE_BLOCK) flac_block_size = MAX_FLAKE_BLOCK;
+            if(flac_block_size < MIN_FLAKE_BLOCK) flac_block_size = MIN_FLAKE_BLOCK;
 
             const long remaining = current_samples % flac_block_size;
 
