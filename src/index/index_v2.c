@@ -16,6 +16,7 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -91,11 +92,32 @@ UT_array *process_index_v2(aaruformatContext *ctx)
 
     utarray_new(index_entries, &index_entry_icd);
 
+    if(index_entries == NULL)
+    {
+        FATAL("Could not allocate memory for index entries array.");
+        TRACE("Exiting process_index_v2() = NULL");
+        return NULL;
+    }
+
     // Read the index header
     TRACE("Reading index header at position %llu", ctx->header.indexOffset);
-    fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET);
+    if(fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET) != 0)
+    {
+        FATAL("Could not seek to index header at %llu.", ctx->header.indexOffset);
+        utarray_free(index_entries);
+
+        TRACE("Exiting process_index_v2() = NULL");
+        return NULL;
+    }
     IndexHeader2 idx_header;
-    fread(&idx_header, sizeof(IndexHeader2), 1, ctx->imageStream);
+    if(fread(&idx_header, sizeof(IndexHeader2), 1, ctx->imageStream) != 1)
+    {
+        FATAL("Could not read index header at %llu.", ctx->header.indexOffset);
+        utarray_free(index_entries);
+
+        TRACE("Exiting process_index_v2() = NULL");
+        return NULL;
+    }
 
     // Check if the index header is valid
     if(idx_header.identifier != IndexBlock2)
@@ -107,13 +129,22 @@ UT_array *process_index_v2(aaruformatContext *ctx)
         return NULL;
     }
 
-    for(int i = 0; i < idx_header.entries; i++)
+    for(uint64_t i = 0; i < idx_header.entries; i++)
     {
-        fread(&entry, sizeof(IndexEntry), 1, ctx->imageStream);
+        if(fread(&entry, sizeof(IndexEntry), 1, ctx->imageStream) != 1)
+        {
+            FATAL("Could not read index entry %llu at %llu.", (unsigned long long)i, ctx->header.indexOffset);
+            utarray_free(index_entries);
+
+            TRACE("Exiting process_index_v2() = NULL");
+            return NULL;
+        }
+
         utarray_push_back(index_entries, &entry);
     }
 
-    TRACE("Read %d index entries from index block at position %llu", idx_header.entries, ctx->header.indexOffset);
+    TRACE("Read %llu index entries from index block at position %llu", (unsigned long long)idx_header.entries,
+          ctx->header.indexOffset);
     return index_entries;
 }
 
@@ -212,7 +243,13 @@ int32_t verify_index_v2(aaruformatContext *ctx)
 
     // This will traverse all blocks and check their CRC64 without uncompressing them
     TRACE("Checking index integrity at %llu.", ctx->header.indexOffset);
-    fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET);
+    if(fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET) != 0)
+    {
+        FATAL("Could not seek to index header at %llu.", ctx->header.indexOffset);
+
+        TRACE("Exiting verify_index_v2() = AARUF_ERROR_CANNOT_READ_HEADER");
+        return AARUF_ERROR_CANNOT_READ_HEADER;
+    }
 
     // Read the index header
     TRACE("Reading index header at position %llu", ctx->header.indexOffset);
@@ -234,30 +271,88 @@ int32_t verify_index_v2(aaruformatContext *ctx)
         return AARUF_ERROR_CANNOT_READ_INDEX;
     }
 
-    TRACE("Index at %llu contains %d entries.", ctx->header.indexOffset, index_header.entries);
+    TRACE("Index at %llu contains %llu entries.", ctx->header.indexOffset, (unsigned long long)index_header.entries);
 
-    index_entries = malloc(sizeof(IndexEntry) * index_header.entries);
-
-    if(index_entries == NULL)
+    if(index_header.entries != 0 && index_header.entries > SIZE_MAX / sizeof(IndexEntry))
     {
-        FATAL("Cannot allocate memory for index entries.");
+        FATAL("Index entry count %llu is too large to process.", (unsigned long long)index_header.entries);
 
         TRACE("Exiting verify_index_v2() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
         return AARUF_ERROR_NOT_ENOUGH_MEMORY;
     }
 
-    read_bytes = fread(index_entries, 1, sizeof(IndexEntry) * index_header.entries, ctx->imageStream);
+    const size_t entries_size = (size_t)index_header.entries * sizeof(IndexEntry);
 
-    if(read_bytes != sizeof(IndexEntry) * index_header.entries)
+    if(entries_size > 0)
     {
-        FATAL("Could not read index entries.");
+        index_entries = malloc(entries_size);
+
+        if(index_entries == NULL)
+        {
+            FATAL("Cannot allocate memory for index entries.");
+
+            TRACE("Exiting verify_index_v2() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        }
+
+        read_bytes = fread(index_entries, 1, entries_size, ctx->imageStream);
+
+        if(read_bytes != entries_size)
+        {
+            FATAL("Could not read index entries.");
+            free(index_entries);
+
+            TRACE("Exiting verify_index_v2() = AARUF_ERROR_CANNOT_READ_INDEX");
+            return AARUF_ERROR_CANNOT_READ_INDEX;
+        }
+    }
+
+    crc64_ctx *crc_ctx = aaruf_crc64_init();
+
+    if(crc_ctx == NULL)
+    {
+        FATAL("Cannot initialize CRC64 context.");
+        free(index_entries);
+
+        TRACE("Exiting verify_index_v2() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    if(entries_size > 0)
+    {
+        const uint8_t *cursor    = (const uint8_t *)index_entries;
+        size_t         remaining = entries_size;
+
+        while(remaining > 0)
+        {
+            const uint32_t chunk = remaining > UINT32_MAX ? UINT32_MAX : (uint32_t)remaining;
+
+            if(aaruf_crc64_update(crc_ctx, cursor, chunk) != 0)
+            {
+                FATAL("Failed to update index CRC.");
+                aaruf_crc64_free(crc_ctx);
+                free(index_entries);
+
+                TRACE("Exiting verify_index_v2() = AARUF_ERROR_CANNOT_READ_INDEX");
+                return AARUF_ERROR_CANNOT_READ_INDEX;
+            }
+
+            cursor += chunk;
+            remaining -= chunk;
+        }
+    }
+
+    if(aaruf_crc64_final(crc_ctx, &crc64) != 0)
+    {
+        FATAL("Failed to finalize index CRC.");
+        aaruf_crc64_free(crc_ctx);
         free(index_entries);
 
         TRACE("Exiting verify_index_v2() = AARUF_ERROR_CANNOT_READ_INDEX");
         return AARUF_ERROR_CANNOT_READ_INDEX;
     }
 
-    crc64 = aaruf_crc64_data((const uint8_t *)index_entries, sizeof(IndexEntry) * index_header.entries);
+    aaruf_crc64_free(crc_ctx);
 
     // Due to how C# wrote it, it is effectively reversed
     if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
@@ -270,6 +365,8 @@ int32_t verify_index_v2(aaruformatContext *ctx)
         TRACE("Exiting verify_index_v2() = AARUF_ERROR_INVALID_BLOCK_CRC");
         return AARUF_ERROR_INVALID_BLOCK_CRC;
     }
+
+    free(index_entries);
 
     TRACE("Exiting verify_index_v2() = AARUF_OK");
     return AARUF_STATUS_OK;
