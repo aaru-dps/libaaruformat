@@ -447,10 +447,20 @@ void *aaruf_open(const char *filepath)  // NOLINT(readability-function-size)
 
     // Initialize caches
     TRACE("Initializing caches");
-    ctx->blockHeaderCache.cache     = NULL;
-    ctx->blockHeaderCache.max_items = MAX_CACHE_SIZE / (ctx->imageInfo.SectorSize * (1 << ctx->shift));
-    ctx->blockCache.cache           = NULL;
-    ctx->blockCache.max_items       = ctx->blockHeaderCache.max_items;
+    ctx->blockHeaderCache.cache = NULL;
+    ctx->blockCache.cache       = NULL;
+
+    const uint64_t cache_divisor = (uint64_t)ctx->imageInfo.SectorSize * (1ULL << ctx->shift);
+    if(cache_divisor == 0)
+    {
+        ctx->blockHeaderCache.max_items = 0;
+        ctx->blockCache.max_items       = 0;
+    }
+    else
+    {
+        ctx->blockHeaderCache.max_items = MAX_CACHE_SIZE / cache_divisor;
+        ctx->blockCache.max_items       = ctx->blockHeaderCache.max_items;
+    }
 
     // TODO: Cache tracks and sessions?
 
