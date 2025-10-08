@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "errors.h"
 
 #ifdef __linux__
 #include <sys/mman.h>
@@ -141,6 +142,12 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
         {
             // TODO: Check CRC
             case Lzma:
+                if(ddt_header.cmpLength <= LZMA_PROPERTIES_LENGTH)
+                {
+                    FATAL("Compressed DDT payload too small (%" PRIu64 ") for LZMA properties.", ddt_header.cmpLength);
+                    return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                }
+
                 lzma_size = ddt_header.cmpLength - LZMA_PROPERTIES_LENGTH;
 
                 cmp_data = (uint8_t *)malloc(lzma_size);
@@ -201,6 +208,9 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
+                free(cmp_data);
+                cmp_data = NULL;
+
                 ctx->inMemoryDdt     = true;
                 *found_user_data_ddt = true;
 
@@ -239,6 +249,12 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
         {
             // TODO: Check CRC
             case Lzma:
+                if(ddt_header.cmpLength <= LZMA_PROPERTIES_LENGTH)
+                {
+                    FATAL("Compressed DDT payload too small (%" PRIu64 ") for LZMA properties.", ddt_header.cmpLength);
+                    return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                }
+
                 lzma_size = ddt_header.cmpLength - LZMA_PROPERTIES_LENGTH;
 
                 cmp_data = (uint8_t *)malloc(lzma_size);
@@ -294,6 +310,9 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
                     free(cd_ddt);
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
+
+                free(cmp_data);
+                cmp_data = NULL;
 
                 if(entry->dataType == CdSectorPrefixCorrected)
                     ctx->sectorPrefixDdt = cd_ddt;
@@ -397,10 +416,24 @@ int32_t decode_ddt_entry_v1(aaruformatContext *ctx, const uint64_t sector_addres
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    const uint64_t ddt_entry   = ctx->userDataDdt[sector_address];
-    const uint32_t offset_mask = (uint32_t)((1 << ctx->shift) - 1);
-    *offset                    = ddt_entry & offset_mask;
-    *block_offset              = ddt_entry >> ctx->shift;
+    if(ctx->userDataDdt == NULL)
+    {
+        FATAL("User data DDT not loaded.");
+        TRACE("Exiting decode_ddt_entry_v1() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->shift >= 64)
+    {
+        FATAL("Invalid DDT shift value %u", ctx->shift);
+        TRACE("Exiting decode_ddt_entry_v1() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+        return AARUF_ERROR_INCORRECT_DATA_SIZE;
+    }
+
+    const uint64_t ddt_entry     = ctx->userDataDdt[sector_address];
+    const uint64_t offset_mask64 = (UINT64_C(1) << ctx->shift) - UINT64_C(1);
+    *offset                      = ddt_entry & offset_mask64;
+    *block_offset                = ddt_entry >> ctx->shift;
 
     // Partially written image... as we can't know the real sector size just assume it's common :/
     if(ddt_entry == 0)

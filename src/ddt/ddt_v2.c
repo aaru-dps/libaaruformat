@@ -158,7 +158,14 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
         switch(ddt_header.compression)
         {
             case Lzma:
-                lzma_size = ddt_header.cmpLength - LZMA_PROPERTIES_LENGTH;
+                if(ddt_header.cmpLength <= LZMA_PROPERTIES_LENGTH)
+                {
+                    FATAL("Compressed DDT payload too small (%" PRIu64 ") for LZMA properties.", ddt_header.cmpLength);
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                    return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                }
+
+                lzma_size = (size_t)(ddt_header.cmpLength - LZMA_PROPERTIES_LENGTH);
 
                 cmp_data = (uint8_t *)malloc(lzma_size);
                 if(cmp_data == NULL)
@@ -309,7 +316,14 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
         switch(ddt_header.compression)
         {
             case Lzma:
-                lzma_size = ddt_header.cmpLength - LZMA_PROPERTIES_LENGTH;
+                if(ddt_header.cmpLength <= LZMA_PROPERTIES_LENGTH)
+                {
+                    FATAL("Compressed DDT payload too small (%" PRIu64 ") for LZMA properties.", ddt_header.cmpLength);
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                    return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                }
+
+                lzma_size = (size_t)(ddt_header.cmpLength - LZMA_PROPERTIES_LENGTH);
 
                 cmp_data = (uint8_t *)malloc(lzma_size);
                 if(cmp_data == NULL)
@@ -366,6 +380,9 @@ int32_t process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
                     TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
+
+                free(cmp_data);
+                cmp_data = NULL;
 
                 crc64_context = aaruf_crc64_init();
 
@@ -825,14 +842,14 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_addres
 
         if(read_bytes != sizeof(DdtHeader2))
         {
-            FATAL("Could not read block header at %" PRIu64 "", secondaryDdtOffset);
+            FATAL("Could not read block header at %" PRIu64 "", secondary_ddt_offset);
             TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
             return AARUF_ERROR_CANNOT_READ_BLOCK;
         }
 
         if(ddt_header.identifier != DeDuplicationTable2 || ddt_header.type != UserData)
         {
-            FATAL("Invalid block header at %" PRIu64 "", secondaryDdtOffset);
+            FATAL("Invalid block header at %" PRIu64 "", secondary_ddt_offset);
             TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
             return AARUF_ERROR_CANNOT_READ_BLOCK;
         }
@@ -841,7 +858,14 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_addres
         switch(ddt_header.compression)
         {
             case Lzma:
-                lzma_size = ddt_header.cmpLength - LZMA_PROPERTIES_LENGTH;
+                if(ddt_header.cmpLength <= LZMA_PROPERTIES_LENGTH)
+                {
+                    FATAL("Compressed DDT payload too small (%" PRIu64 ") for LZMA properties.", ddt_header.cmpLength);
+                    TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                    return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                }
+
+                lzma_size = (size_t)(ddt_header.cmpLength - LZMA_PROPERTIES_LENGTH);
 
                 cmp_data = (uint8_t *)malloc(lzma_size);
                 if(cmp_data == NULL)
@@ -919,7 +943,7 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_addres
 
                 if(crc64 != ddt_header.crc64)
                 {
-                    FATAL("Expected DDT CRC 0x%16lX but got 0x%16lX.", ddtHeader.crc64, crc64);
+                    FATAL("Expected DDT CRC 0x%16lX but got 0x%16lX.", ddt_header.crc64, crc64);
                     free(buffer);
                     TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_INVALID_BLOCK_CRC");
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
@@ -968,7 +992,7 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_addres
 
                 if(crc64 != ddt_header.crc64)
                 {
-                    FATAL("Expected DDT CRC 0x%16lX but got 0x%16lX.", ddtHeader.crc64, crc64);
+                    FATAL("Expected DDT CRC 0x%16lX but got 0x%16lX.", ddt_header.crc64, crc64);
                     free(buffer);
                     TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_INVALID_BLOCK_CRC");
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
@@ -983,7 +1007,7 @@ int32_t decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_addres
 
                 break;
             default:
-                FATAL("Found unknown compression type %d, stopping...", ddtHeader.compression);
+                FATAL("Found unknown compression type %d, stopping...", ddt_header.compression);
                 TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
                 return AARUF_ERROR_CANNOT_READ_BLOCK;
         }
@@ -1719,7 +1743,7 @@ bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
         if(read_bytes != sizeof(DdtHeader2) || ddt_header.identifier != DeDuplicationTable2 ||
            ddt_header.type != UserData)
         {
-            FATAL("Invalid secondary DDT header at %" PRIu64, secondaryDdtOffset);
+            FATAL("Invalid secondary DDT header at %" PRIu64, secondary_ddt_offset);
             TRACE("Exiting set_ddt_multi_level_v2() = false");
             return false;
         }
@@ -1757,7 +1781,7 @@ bool set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, boo
 
         if(crc64 != ddt_header.crc64)
         {
-            FATAL("Secondary DDT CRC mismatch. Expected 0x%16lX but got 0x%16lX.", ddtHeader.crc64, crc64);
+            FATAL("Secondary DDT CRC mismatch. Expected 0x%16lX but got 0x%16lX.", ddt_header.crc64, crc64);
             free(buffer);
             TRACE("Exiting set_ddt_multi_level_v2() = false");
             return false;
