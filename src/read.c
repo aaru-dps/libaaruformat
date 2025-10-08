@@ -97,6 +97,13 @@ int32_t aaruf_read_media_tag(void *context, uint8_t *data, const int32_t tag, ui
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
+    if(length == NULL)
+    {
+        FATAL("Invalid length pointer");
+        TRACE("Exiting aaruf_read_media_tag() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+        return AARUF_ERROR_INCORRECT_DATA_SIZE;
+    }
+
     const aaruformatContext *ctx = context;
 
     // Not a libaaruformat context
@@ -268,6 +275,14 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
     }
 
     ctx = context;
+
+    if(length == NULL)
+    {
+        FATAL("Invalid length pointer");
+
+        TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+        return AARUF_ERROR_INCORRECT_DATA_SIZE;
+    }
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -640,6 +655,14 @@ int32_t aaruf_read_track_sector(void *context, uint8_t *data, const uint64_t sec
 
     aaruformatContext *ctx = context;
 
+    if(length == NULL)
+    {
+        FATAL("Invalid length pointer");
+
+        TRACE("Exiting aaruf_read_track_sector() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+        return AARUF_ERROR_INCORRECT_DATA_SIZE;
+    }
+
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
     {
@@ -792,6 +815,14 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
     }
 
     ctx = context;
+
+    if(length == NULL)
+    {
+        FATAL("Invalid length pointer");
+
+        TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+        return AARUF_ERROR_INCORRECT_DATA_SIZE;
+    }
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -1289,6 +1320,14 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
     }
 
     ctx = context;
+
+    if(length == NULL)
+    {
+        FATAL("Invalid length pointer");
+
+        TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+        return AARUF_ERROR_INCORRECT_DATA_SIZE;
+    }
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
