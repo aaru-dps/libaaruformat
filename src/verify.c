@@ -18,12 +18,42 @@
 
 #include <aaruformat.h>
 #include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "internal.h"
 #include "log.h"
 #include "utarray.h"
 
 #define VERIFY_SIZE 1048576
+
+static int32_t update_crc64_from_stream(FILE *stream, const uint64_t total_length, void *buffer, size_t buffer_size,
+                                        crc64_ctx *crc_ctx, const char *label)
+{
+    uint64_t processed = 0;
+
+    while(processed < total_length)
+    {
+        size_t   chunk     = buffer_size;
+        uint64_t remaining = total_length - processed;
+
+        if(remaining < chunk) chunk = (size_t)remaining;
+
+        if(chunk == 0) break;
+
+        size_t read_bytes = fread(buffer, 1, chunk, stream);
+        if(read_bytes != chunk)
+        {
+            FATAL("Could not read %s chunk (expected %zu bytes, got %zu)", label, chunk, read_bytes);
+            return AARUF_ERROR_CANNOT_READ_BLOCK;
+        }
+
+        aaruf_crc64_update(crc_ctx, buffer, read_bytes);
+        processed += read_bytes;
+    }
+
+    return AARUF_STATUS_OK;
+}
 
 /**
  * @brief Verifies the integrity of an AaruFormat image file.
@@ -107,303 +137,307 @@ int32_t aaruf_verify_image(void *context)
     void              *buffer        = NULL;
     crc64_ctx         *crc64_context = NULL;
     BlockHeader        block_header;
-    uint64_t           verified_bytes = 0;
     DdtHeader          ddt_header;
     DdtHeader2         ddt2_header;
     TracksHeader       tracks_header;
     uint32_t           signature     = 0;
     UT_array          *index_entries = NULL;
-    int32_t            err           = 0;
+    int32_t            status        = AARUF_STATUS_OK;
 
     if(context == NULL)
     {
         FATAL("Invalid context");
-
-        TRACE("Exiting aaruf_verify_image() = AARUF_ERROR_NOT_AARUFORMAT");
-        return AARUF_ERROR_NOT_AARUFORMAT;
+        status = AARUF_ERROR_NOT_AARUFORMAT;
+        goto cleanup;
     }
 
     ctx = context;
 
-    // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
     {
         FATAL("Invalid context");
-
-        TRACE("Exiting aaruf_verify_image() = AARUF_ERROR_NOT_AARUFORMAT");
-        return AARUF_ERROR_NOT_AARUFORMAT;
+        status = AARUF_ERROR_NOT_AARUFORMAT;
+        goto cleanup;
     }
 
-    fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET);
-
-    TRACE("Reading index signature at position %llu", ctx->header.indexOffset);
-    read_bytes = fread(&signature, 1, sizeof(uint32_t), ctx->imageStream);
-    if(read_bytes != sizeof(uint32_t))
+    if(ctx->imageStream == NULL)
     {
-        FATAL("Could not read index signature.");
+        FATAL("Image stream is not available");
+        status = AARUF_ERROR_NOT_AARUFORMAT;
+        goto cleanup;
+    }
 
-        TRACE("Exiting aaruf_verify_image() = AARUF_ERROR_CANNOT_READ_HEADER");
-        return AARUF_ERROR_CANNOT_READ_HEADER;
+    if(fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET) != 0)
+    {
+        FATAL("Could not seek to index offset %" PRIu64, ctx->header.indexOffset);
+        status = AARUF_ERROR_CANNOT_READ_HEADER;
+        goto cleanup;
+    }
+
+    TRACE("Reading index signature at position %" PRIu64, ctx->header.indexOffset);
+    read_bytes = fread(&signature, 1, sizeof(signature), ctx->imageStream);
+    if(read_bytes != sizeof(signature))
+    {
+        FATAL("Could not read index signature");
+        status = AARUF_ERROR_CANNOT_READ_HEADER;
+        goto cleanup;
     }
 
     if(signature != IndexBlock && signature != IndexBlock2 && signature != IndexBlock3)
     {
         FATAL("Incorrect index signature %4.4s", (char *)&signature);
-
-        TRACE("Exiting aaruf_verify_image() = AARUF_ERROR_CANNOT_READ_INDEX");
-        return AARUF_ERROR_CANNOT_READ_INDEX;
+        status = AARUF_ERROR_CANNOT_READ_INDEX;
+        goto cleanup;
     }
 
-    // Check if the index is correct
     if(signature == IndexBlock)
-        err = verify_index_v1(ctx);
+        status = verify_index_v1(ctx);
     else if(signature == IndexBlock2)
-        err = verify_index_v2(ctx);
-    else if(signature == IndexBlock3)
-        err = verify_index_v3(ctx);
+        status = verify_index_v2(ctx);
+    else
+        status = verify_index_v3(ctx);
 
-    if(err != AARUF_STATUS_OK)
+    if(status != AARUF_STATUS_OK)
     {
-        FATAL("Index verification failed with error code %d.", err);
-
-        TRACE("Exiting aaruf_verify_image() = %d", err);
-        return err;
+        FATAL("Index verification failed with error code %d", status);
+        goto cleanup;
     }
 
-    // Process the index
     if(signature == IndexBlock)
         index_entries = process_index_v1(ctx);
     else if(signature == IndexBlock2)
         index_entries = process_index_v2(ctx);
-    else if(signature == IndexBlock3)
+    else
         index_entries = process_index_v3(ctx);
 
     if(index_entries == NULL)
     {
-        FATAL("Could not process index.");
-
-        TRACE("Exiting aaruf_verify_image() = AARUF_ERROR_CANNOT_READ_INDEX");
-        return AARUF_ERROR_CANNOT_READ_INDEX;
+        FATAL("Could not process index");
+        status = AARUF_ERROR_CANNOT_READ_INDEX;
+        goto cleanup;
     }
 
     buffer = malloc(VERIFY_SIZE);
-
     if(buffer == NULL)
     {
-        FATAL("Cannot allocate memory for buffer.");
-        utarray_free(index_entries);
-
-        TRACE("Exiting aaruf_verify_image() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
-        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        FATAL("Cannot allocate memory for verification buffer");
+        status = AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        goto cleanup;
     }
 
-    for(int i = 0; i < utarray_len(index_entries); i++)
     {
-        IndexEntry *entry = utarray_eltptr(index_entries, i);
-        TRACE("Checking block with type %4.4s at position %" PRIu64 "", (char *)&entry->blockType, entry->offset);
+        const unsigned int entry_count = utarray_len(index_entries);
 
-        fseek(ctx->imageStream, entry->offset, SEEK_SET);
-
-        switch(entry->blockType)
+        for(unsigned int i = 0; i < entry_count; i++)
         {
-            case DataBlock:
-                TRACE("Reading block header");
-                read_bytes = fread(&block_header, 1, sizeof(BlockHeader), ctx->imageStream);
-                if(read_bytes != sizeof(BlockHeader))
+            IndexEntry *entry = utarray_eltptr(index_entries, i);
+            TRACE("Checking block with type %4.4s at position %" PRIu64, (char *)&entry->blockType, entry->offset);
+
+            if(fseek(ctx->imageStream, entry->offset, SEEK_SET) != 0)
+            {
+                FATAL("Could not seek to block at offset %" PRIu64, entry->offset);
+                status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                goto cleanup;
+            }
+
+            switch(entry->blockType)
+            {
+                case DataBlock:
+                    read_bytes = fread(&block_header, 1, sizeof(BlockHeader), ctx->imageStream);
+                    if(read_bytes != sizeof(BlockHeader))
+                    {
+                        FATAL("Could not read block header");
+                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                        goto cleanup;
+                    }
+
+                    crc64_context = aaruf_crc64_init();
+                    if(crc64_context == NULL)
+                    {
+                        FATAL("Could not initialize CRC64 context");
+                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                        goto cleanup;
+                    }
+
+                    status = update_crc64_from_stream(ctx->imageStream, block_header.cmpLength, buffer, VERIFY_SIZE,
+                                                      crc64_context, "data block");
+                    if(status != AARUF_STATUS_OK) goto cleanup;
+
+                    if(aaruf_crc64_final(crc64_context, &crc64) != 0)
+                    {
+                        FATAL("Could not finalize CRC64 for data block");
+                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                        goto cleanup;
+                    }
+
+                    if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
+
+                    if(crc64 != block_header.cmpCrc64)
+                    {
+                        FATAL("Expected block CRC 0x%16llX but got 0x%16llX", block_header.cmpCrc64, crc64);
+                        status = AARUF_ERROR_INVALID_BLOCK_CRC;
+                        goto cleanup;
+                    }
+
+                    aaruf_crc64_free(crc64_context);
+                    crc64_context = NULL;
+                    break;
+                case DeDuplicationTable:
+                    read_bytes = fread(&ddt_header, 1, sizeof(DdtHeader), ctx->imageStream);
+                    if(read_bytes != sizeof(DdtHeader))
+                    {
+                        FATAL("Could not read DDT header");
+                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                        goto cleanup;
+                    }
+
+                    crc64_context = aaruf_crc64_init();
+                    if(crc64_context == NULL)
+                    {
+                        FATAL("Could not initialize CRC64 context");
+                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                        goto cleanup;
+                    }
+
+                    status = update_crc64_from_stream(ctx->imageStream, ddt_header.cmpLength, buffer, VERIFY_SIZE,
+                                                      crc64_context, "DDT block");
+                    if(status != AARUF_STATUS_OK) goto cleanup;
+
+                    if(aaruf_crc64_final(crc64_context, &crc64) != 0)
+                    {
+                        FATAL("Could not finalize CRC64 for DDT block");
+                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                        goto cleanup;
+                    }
+
+                    if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
+
+                    if(crc64 != ddt_header.cmpCrc64)
+                    {
+                        FATAL("Expected DDT CRC 0x%16llX but got 0x%16llX", ddt_header.cmpCrc64, crc64);
+                        status = AARUF_ERROR_INVALID_BLOCK_CRC;
+                        goto cleanup;
+                    }
+
+                    aaruf_crc64_free(crc64_context);
+                    crc64_context = NULL;
+                    break;
+                case DeDuplicationTable2:
+                    read_bytes = fread(&ddt2_header, 1, sizeof(DdtHeader2), ctx->imageStream);
+                    if(read_bytes != sizeof(DdtHeader2))
+                    {
+                        FATAL("Could not read DDT2 header");
+                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                        goto cleanup;
+                    }
+
+                    crc64_context = aaruf_crc64_init();
+                    if(crc64_context == NULL)
+                    {
+                        FATAL("Could not initialize CRC64 context");
+                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                        goto cleanup;
+                    }
+
+                    status = update_crc64_from_stream(ctx->imageStream, ddt2_header.cmpLength, buffer, VERIFY_SIZE,
+                                                      crc64_context, "DDT2 block");
+                    if(status != AARUF_STATUS_OK) goto cleanup;
+
+                    if(aaruf_crc64_final(crc64_context, &crc64) != 0)
+                    {
+                        FATAL("Could not finalize CRC64 for DDT2 block");
+                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                        goto cleanup;
+                    }
+
+                    if(crc64 != ddt2_header.cmpCrc64)
+                    {
+                        FATAL("Expected DDT2 CRC 0x%16llX but got 0x%16llX", ddt2_header.cmpCrc64, crc64);
+                        status = AARUF_ERROR_INVALID_BLOCK_CRC;
+                        goto cleanup;
+                    }
+
+                    aaruf_crc64_free(crc64_context);
+                    crc64_context = NULL;
+                    break;
+                case TracksBlock:
                 {
-                    FATAL("Could not read block header.");
-                    utarray_free(index_entries);
+                    read_bytes = fread(&tracks_header, 1, sizeof(TracksHeader), ctx->imageStream);
+                    if(read_bytes != sizeof(TracksHeader))
+                    {
+                        FATAL("Could not read tracks header");
+                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                        goto cleanup;
+                    }
 
-                    TRACE("Exiting aaruf_verify_image() = AARUF_ERROR_CANNOT_READ_BLOCK");
-                    return AARUF_ERROR_CANNOT_READ_BLOCK;
+                    const uint64_t tracks_bytes = (uint64_t)tracks_header.entries * sizeof(TrackEntry);
+                    if(tracks_header.entries != 0 && tracks_bytes / sizeof(TrackEntry) != tracks_header.entries)
+                    {
+                        FATAL("Tracks header length overflow (entries=%u)", tracks_header.entries);
+                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                        goto cleanup;
+                    }
+
+                    crc64_context = aaruf_crc64_init();
+                    if(crc64_context == NULL)
+                    {
+                        FATAL("Could not initialize CRC64 context");
+                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                        goto cleanup;
+                    }
+
+                    status = update_crc64_from_stream(ctx->imageStream, tracks_bytes, buffer, VERIFY_SIZE,
+                                                      crc64_context, "tracks block");
+                    if(status != AARUF_STATUS_OK) goto cleanup;
+
+                    if(aaruf_crc64_final(crc64_context, &crc64) != 0)
+                    {
+                        FATAL("Could not finalize CRC64 for tracks block");
+                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                        goto cleanup;
+                    }
+
+                    if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
+
+                    if(crc64 != tracks_header.crc64)
+                    {
+                        FATAL("Expected tracks CRC 0x%16llX but got 0x%16llX", tracks_header.crc64, crc64);
+                        status = AARUF_ERROR_INVALID_BLOCK_CRC;
+                        goto cleanup;
+                    }
+
+                    aaruf_crc64_free(crc64_context);
+                    crc64_context = NULL;
+                    break;
                 }
-
-                crc64_context = aaruf_crc64_init();
-
-                if(crc64_context == NULL)
-                {
-                    FATAL("Could not initialize CRC64.");
-                    utarray_free(index_entries);
-
-                    TRACE("Exiting aaruf_verify_image() = AARUF_ERROR_CANNOT_READ_BLOCK");
-                    return AARUF_ERROR_CANNOT_READ_BLOCK;
-                }
-
-                verified_bytes = 0;
-
-                TRACE("Calculating CRC64...");
-                while(verified_bytes + VERIFY_SIZE < block_header.cmpLength)
-                {
-                    read_bytes = fread(buffer, 1, VERIFY_SIZE, ctx->imageStream);
-                    aaruf_crc64_update(crc64_context, buffer, read_bytes);
-                    verified_bytes += read_bytes;
-                }
-
-                read_bytes = fread(buffer, 1, block_header.cmpLength - verified_bytes, ctx->imageStream);
-                aaruf_crc64_update(crc64_context, buffer, read_bytes);
-
-                aaruf_crc64_final(crc64_context, &crc64);
-
-                // Due to how C# wrote it, it is effectively reversed
-                if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
-
-                if(crc64 != block_header.cmpCrc64)
-                {
-                    FATAL("Expected block CRC 0x%16llX but got 0x%16llX.", block_header.cmpCrc64, crc64);
-                    utarray_free(index_entries);
-
-                    TRACE("Exiting aaruf_verify_image() = AARUF_ERROR_INVALID_BLOCK_CRC");
-                    return AARUF_ERROR_INVALID_BLOCK_CRC;
-                }
-
-                break;
-            case DeDuplicationTable:
-                TRACE("Reading DDT header");
-                read_bytes = fread(&ddt_header, 1, sizeof(DdtHeader), ctx->imageStream);
-                if(read_bytes != sizeof(DdtHeader))
-                {
-                    FATAL("Could not read DDT header.");
-                    utarray_free(index_entries);
-
-                    TRACE("Exiting aaruf_verify_image() = AARUF_ERROR_CANNOT_READ_BLOCK");
-                    return AARUF_ERROR_CANNOT_READ_BLOCK;
-                }
-
-                crc64_context = aaruf_crc64_init();
-
-                if(crc64_context == NULL)
-                {
-                    FATAL("Could not initialize CRC64.");
-                    utarray_free(index_entries);
-
-                    TRACE("Exiting aaruf_verify_image() = AARUF_ERROR_CANNOT_READ_BLOCK");
-                    return AARUF_ERROR_CANNOT_READ_BLOCK;
-                }
-
-                verified_bytes = 0;
-
-                TRACE("Calculating DDT CRC64...");
-                while(verified_bytes + VERIFY_SIZE < ddt_header.cmpLength)
-                {
-                    read_bytes = fread(buffer, 1, VERIFY_SIZE, ctx->imageStream);
-                    aaruf_crc64_update(crc64_context, buffer, read_bytes);
-                    verified_bytes += read_bytes;
-                }
-
-                read_bytes = fread(buffer, 1, ddt_header.cmpLength - verified_bytes, ctx->imageStream);
-                aaruf_crc64_update(crc64_context, buffer, read_bytes);
-
-                aaruf_crc64_final(crc64_context, &crc64);
-
-                // Due to how C# wrote it, it is effectively reversed
-                if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
-
-                if(crc64 != ddt_header.cmpCrc64)
-                {
-                    FATAL("Expected DDT CRC 0x%16llX but got 0x%16llX.", ddt_header.cmpCrc64, crc64);
-                    utarray_free(index_entries);
-
-                    TRACE("Exiting aaruf_verify_image() = AARUF_ERROR_INVALID_BLOCK_CRC");
-                    return AARUF_ERROR_INVALID_BLOCK_CRC;
-                }
-
-                break;
-            case DeDuplicationTable2:
-                TRACE("Reading DDT2 header");
-                read_bytes = fread(&ddt2_header, 1, sizeof(DdtHeader2), ctx->imageStream);
-                if(read_bytes != sizeof(DdtHeader2))
-                {
-                    FATAL("Could not read DDT header.");
-                    utarray_free(index_entries);
-
-                    TRACE("Exiting aaruf_verify_image() = AARUF_ERROR_CANNOT_READ_BLOCK");
-                    return AARUF_ERROR_CANNOT_READ_BLOCK;
-                }
-
-                crc64_context = aaruf_crc64_init();
-
-                if(crc64_context == NULL)
-                {
-                    FATAL("Could not initialize CRC64.");
-                    utarray_free(index_entries);
-
-                    TRACE("Exiting aaruf_verify_image() = AARUF_ERROR_CANNOT_READ_BLOCK");
-                    return AARUF_ERROR_CANNOT_READ_BLOCK;
-                }
-
-                verified_bytes = 0;
-
-                TRACE("Calculating DDT2 CRC64...");
-                while(verified_bytes + VERIFY_SIZE < ddt2_header.cmpLength)
-                {
-                    read_bytes = fread(buffer, 1, VERIFY_SIZE, ctx->imageStream);
-                    aaruf_crc64_update(crc64_context, buffer, read_bytes);
-                    verified_bytes += read_bytes;
-                }
-
-                read_bytes = fread(buffer, 1, ddt2_header.cmpLength - verified_bytes, ctx->imageStream);
-                aaruf_crc64_update(crc64_context, buffer, read_bytes);
-
-                aaruf_crc64_final(crc64_context, &crc64);
-
-                if(crc64 != ddt2_header.cmpCrc64)
-                {
-                    FATAL("Expected DDT CRC 0x%16llX but got 0x%16llX.", ddt2_header.cmpCrc64, crc64);
-                    utarray_free(index_entries);
-
-                    TRACE("Exiting aaruf_verify_image() = AARUF_ERROR_INVALID_BLOCK_CRC");
-                    return AARUF_ERROR_INVALID_BLOCK_CRC;
-                }
-
-                break;
-            case TracksBlock:
-                TRACE("Reading tracks header");
-                read_bytes = fread(&tracks_header, 1, sizeof(TracksHeader), ctx->imageStream);
-                if(read_bytes != sizeof(TracksHeader))
-                {
-                    FATAL("Could not read tracks header.");
-                    utarray_free(index_entries);
-
-                    TRACE("Exiting aaruf_verify_image() = AARUF_ERROR_CANNOT_READ_BLOCK");
-                    return AARUF_ERROR_CANNOT_READ_BLOCK;
-                }
-
-                crc64_context = aaruf_crc64_init();
-
-                if(crc64_context == NULL)
-                {
-                    FATAL("Could not initialize CRC64.");
-                    utarray_free(index_entries);
-
-                    TRACE("Exiting aaruf_verify_image() = AARUF_ERROR_CANNOT_READ_BLOCK");
-                    return AARUF_ERROR_CANNOT_READ_BLOCK;
-                }
-
-                TRACE("Calculating tracks CRC64...");
-                read_bytes = fread(buffer, 1, tracks_header.entries * sizeof(TrackEntry), ctx->imageStream);
-                aaruf_crc64_update(crc64_context, buffer, read_bytes);
-
-                aaruf_crc64_final(crc64_context, &crc64);
-
-                // Due to how C# wrote it, it is effectively reversed
-                if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
-
-                if(crc64 != tracks_header.crc64)
-                {
-                    FATAL("Expected DDT CRC 0x%16llX but got 0x%16llX.", tracks_header.crc64, crc64);
-                    utarray_free(index_entries);
-
-                    TRACE("Exiting aaruf_verify_image() = AARUF_ERROR_INVALID_BLOCK_CRC");
-                    return AARUF_ERROR_INVALID_BLOCK_CRC;
-                }
-
-                break;
-            default:
-                TRACE("Ignoring block type %4.4s.", (char *)&entry->blockType);
-                break;
+                default:
+                    TRACE("Ignoring block type %4.4s", (char *)&entry->blockType);
+                    break;
+            }
         }
     }
 
-    TRACE("Exiting aaruf_verify_image() = AARUF_STATUS_OK");
-    return AARUF_STATUS_OK;
+    status = AARUF_STATUS_OK;
+
+cleanup:
+    if(crc64_context != NULL)
+    {
+        aaruf_crc64_free(crc64_context);
+        crc64_context = NULL;
+    }
+
+    if(buffer != NULL)
+    {
+        free(buffer);
+        buffer = NULL;
+    }
+
+    if(index_entries != NULL)
+    {
+        utarray_free(index_entries);
+        index_entries = NULL;
+    }
+
+    TRACE("Exiting aaruf_verify_image() = %d", status);
+    return status;
 }
