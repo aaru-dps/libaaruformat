@@ -438,6 +438,15 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
 
             break;
         case Lzma:
+            if(block_header->cmpLength <= LZMA_PROPERTIES_LENGTH || block_header->length == 0)
+            {
+                FATAL("Invalid LZMA block lengths (cmpLength=%u, length=%u)", block_header->cmpLength,
+                      block_header->length);
+
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+            }
+
             lzma_size = block_header->cmpLength - LZMA_PROPERTIES_LENGTH;
             TRACE("Allocating memory for compressed data of size %zu bytes", lzma_size);
             cmp_data = malloc(lzma_size);
@@ -815,6 +824,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
     uint32_t                 tag_length  = 0;
     uint8_t                 *bare_data   = NULL;
     int32_t                  res         = 0;
+    int32_t                  query_status;
     TrackEntry               trk;
     int                      i         = 0;
     bool                     trk_found = false;
@@ -895,8 +905,22 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                     return AARUF_ERROR_BUFFER_TOO_SMALL;
                 }
 
-                bare_length = 0;
-                aaruf_read_sector(context, sector_address, negative, NULL, &bare_length);
+                bare_length  = 0;
+                query_status = aaruf_read_sector(context, sector_address, negative, NULL, &bare_length);
+
+                if(query_status != AARUF_ERROR_BUFFER_TOO_SMALL && query_status != AARUF_STATUS_OK)
+                {
+                    TRACE("Exiting aaruf_read_sector_long() = %d", query_status);
+                    return query_status;
+                }
+
+                if(bare_length == 0)
+                {
+                    FATAL("Invalid bare sector length (0)");
+
+                    TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                    return AARUF_ERROR_INCORRECT_DATA_SIZE;
+                }
 
                 TRACE("Allocating memory for bare data");
                 bare_data = (uint8_t *)malloc(bare_length);
@@ -942,8 +966,22 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                (ctx->sectorSuffixCorrected == NULL || ctx->sectorPrefixCorrected == NULL))
                 return aaruf_read_sector(context, sector_address, negative, data, length);
 
-            bare_length = 0;
-            aaruf_read_sector(context, sector_address, negative, NULL, &bare_length);
+            bare_length  = 0;
+            query_status = aaruf_read_sector(context, sector_address, negative, NULL, &bare_length);
+
+            if(query_status != AARUF_ERROR_BUFFER_TOO_SMALL && query_status != AARUF_STATUS_OK)
+            {
+                TRACE("Exiting aaruf_read_sector_long() = %d", query_status);
+                return query_status;
+            }
+
+            if(bare_length == 0)
+            {
+                FATAL("Invalid bare sector length (0)");
+
+                TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
 
             TRACE("Allocating memory for bare data");
             bare_data = (uint8_t *)malloc(bare_length);
