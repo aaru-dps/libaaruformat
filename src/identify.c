@@ -83,6 +83,8 @@
  */
 int aaruf_identify(const char *filename)
 {
+    if(filename == NULL) return EINVAL;
+
     FILE *stream = NULL;
 
     stream = fopen(filename, "rb");
@@ -160,7 +162,9 @@ int aaruf_identify(const char *filename)
  */
 int aaruf_identify_stream(FILE *image_stream)
 {
-    fseek(image_stream, 0, SEEK_SET);
+    if(image_stream == NULL) return 0;
+
+    if(fseek(image_stream, 0, SEEK_SET) != 0) return 0;
 
     AaruHeader header;
 
