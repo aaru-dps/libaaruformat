@@ -155,7 +155,10 @@ void process_tape_files_block(aaruformatContext *ctx, const IndexEntry *entry)
     }
 
     if(tape_file_header.identifier != TapeFileBlock)
+    {
         TRACE("Incorrect identifier for data block at position %" PRIu64 "\n", entry->offset);
+        return;
+    }
 
     ctx->imageInfo.ImageSize += sizeof(TapeFileEntry) * tape_file_header.entries;
 
@@ -372,7 +375,10 @@ void process_tape_partitions_block(aaruformatContext *ctx, const IndexEntry *ent
     }
 
     if(tape_partition_header.identifier != TapePartitionBlock)
+    {
         TRACE("Incorrect identifier for data block at position %" PRIu64 "\n", entry->offset);
+        return;
+    }
 
     ctx->imageInfo.ImageSize += sizeof(TapePartitionEntry) * tape_partition_header.entries;
 
