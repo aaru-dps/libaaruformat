@@ -16,6 +16,17 @@ cmake_minimum_required(VERSION 3.13)
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, see <http://www.gnu.org/licenses/>.
 
+# Integrate vcpkg toolchain if available but not explicitly provided.
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+  if(DEFINED ENV{VCPKG_ROOT} AND EXISTS "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+    set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file" FORCE)
+  endif()
+endif()
+
+if(DEFINED CMAKE_TOOLCHAIN_FILE AND EXISTS "${CMAKE_TOOLCHAIN_FILE}")
+  include("${CMAKE_TOOLCHAIN_FILE}")
+endif()
+
 IF(APPLE)
   IF("${CMAKE_OSX_ARCHITECTURES}" STREQUAL "")
     SET(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "Build architectures for Mac OS X" FORCE)
