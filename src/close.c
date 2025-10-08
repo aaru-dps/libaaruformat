@@ -1579,7 +1579,10 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
     subchannel_block.compression = None;
 
     uint8_t *buffer                                  = ctx->sector_subchannel;
+    bool     owns_buffer                             = false;
     uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
+
+    subchannel_block.cmpLength = subchannel_block.length;
 
     if(ctx->imageInfo.XmlMediaType == OpticalDisc)
     {
@@ -1589,8 +1592,7 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
 
         if(ctx->compression_enabled)
         {
-            subchannel_block.compression = LzmaClauniaSubchannelTransform;
-            uint8_t *cst_buffer          = malloc(subchannel_block.length);
+            uint8_t *cst_buffer = malloc(subchannel_block.length);
 
             if(cst_buffer == NULL)
             {
@@ -1611,21 +1613,23 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
             size_t dst_size   = subchannel_block.length;
             size_t props_size = LZMA_PROPERTIES_LENGTH;
 
-            aaruf_lzma_encode_buffer(buffer, &dst_size, cst_buffer, subchannel_block.length, lzma_properties,
+            aaruf_lzma_encode_buffer(dst_buffer, &dst_size, cst_buffer, subchannel_block.length, lzma_properties,
                                      &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
 
-            subchannel_block.cmpLength = (uint32_t)dst_size;
             free(cst_buffer);
-            buffer                 = dst_buffer;
-            subchannel_block.crc64 = aaruf_crc64_data(buffer, subchannel_block.cmpLength);
 
-            if(subchannel_block.cmpLength >= subchannel_block.length)
+            if(dst_size < subchannel_block.length)
+            {
+                subchannel_block.compression = LzmaClauniaSubchannelTransform;
+                subchannel_block.cmpLength   = (uint32_t)dst_size;
+                buffer                       = dst_buffer;
+                owns_buffer                  = true;
+            }
+            else
             {
                 subchannel_block.compression = None;
-                subchannel_block.cmpLength   = subchannel_block.length;
-                subchannel_block.cmpCrc64    = subchannel_block.crc64;
                 free(dst_buffer);
-                buffer = ctx->sector_subchannel;
+                subchannel_block.cmpLength = subchannel_block.length;
             }
         }
     }
@@ -1664,20 +1668,20 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
         size_t dst_size   = subchannel_block.length;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
 
-        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_subchannel, subchannel_block.length, lzma_properties,
-                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+        aaruf_lzma_encode_buffer(dst_buffer, &dst_size, ctx->sector_subchannel, subchannel_block.length,
+                                 lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
 
-        subchannel_block.cmpLength = (uint32_t)dst_size;
-        buffer                     = dst_buffer;
-        subchannel_block.crc64     = aaruf_crc64_data(buffer, subchannel_block.cmpLength);
-
-        if(subchannel_block.cmpLength >= subchannel_block.length)
+        if(dst_size < subchannel_block.length)
+        {
+            subchannel_block.cmpLength = (uint32_t)dst_size;
+            buffer                     = dst_buffer;
+            owns_buffer                = true;
+        }
+        else
         {
             subchannel_block.compression = None;
-            subchannel_block.cmpLength   = subchannel_block.length;
-            subchannel_block.cmpCrc64    = subchannel_block.crc64;
             free(dst_buffer);
-            buffer = ctx->sector_subchannel;
+            subchannel_block.cmpLength = subchannel_block.length;
         }
     }
     else
@@ -1686,8 +1690,12 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
         return;  // Incorrect media type
     }
 
-    // Calculate CRC64
+    // Calculate CRC64 for raw subchannel data and compressed payload when present
     subchannel_block.crc64 = aaruf_crc64_data(ctx->sector_subchannel, subchannel_block.length);
+    if(subchannel_block.compression == None)
+        subchannel_block.cmpCrc64 = subchannel_block.crc64;
+    else
+        subchannel_block.cmpCrc64 = aaruf_crc64_data(buffer, subchannel_block.cmpLength);
 
     // Write header
     if(fwrite(&subchannel_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
@@ -1710,7 +1718,7 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
         }
     }
 
-    if(subchannel_block.compression != None) free(buffer);
+    if(owns_buffer) free(buffer);
 }
 
 /**
