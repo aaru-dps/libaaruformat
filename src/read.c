@@ -936,8 +936,9 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
 
                 res = aaruf_read_sector(context, sector_address, negative, bare_data, &bare_length);
 
-                if(res < AARUF_STATUS_OK)
+                if(res != AARUF_STATUS_OK)
                 {
+                    *length = 2064;
                     free(bare_data);
 
                     TRACE("Exiting aaruf_read_sector_long() = %d", res);
@@ -949,6 +950,8 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                 memcpy(data + 6, ctx->sector_cpr_mai + corrected_sector_address * 6, 6);
                 memcpy(data + 12, bare_data, 2048);
                 memcpy(data + 2060, ctx->sector_edc + corrected_sector_address * 4, 4);
+
+                *length = 2064;
 
                 free(bare_data);
                 return AARUF_STATUS_OK;
@@ -997,7 +1000,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
 
             res = aaruf_read_sector(context, sector_address, negative, bare_data, &bare_length);
 
-            if(res < AARUF_STATUS_OK)
+            if(res != AARUF_STATUS_OK)
             {
                 free(bare_data);
 
@@ -1029,6 +1032,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                 case Audio:
                 case Data:
                     memcpy(data, bare_data, bare_length);
+                    *length = bare_length;
                     free(bare_data);
                     return res;
                 case CdMode1:
@@ -1058,8 +1062,12 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                         return AARUF_ERROR_REACHED_UNREACHABLE_CODE;
                     }
 
-                    if(res != AARUF_STATUS_OK) return res;
+                    if(res != AARUF_STATUS_OK)
+                    {
+                        *length = 2352;
                         free(bare_data);
+                        return res;
+                    }
 
                     if(ctx->sector_suffix != NULL)
                         memcpy(data + 2064, ctx->sector_suffix + corrected_sector_address * 288, 288);
@@ -1085,6 +1093,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                         return AARUF_ERROR_REACHED_UNREACHABLE_CODE;
                     }
 
+                    *length = 2352;
                     free(bare_data);
                     return res;
                 case CdMode2Formless:
@@ -1114,8 +1123,12 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                         return AARUF_ERROR_REACHED_UNREACHABLE_CODE;
                     }
 
-                    if(res != AARUF_STATUS_OK) return res;
+                    if(res != AARUF_STATUS_OK)
+                    {
+                        *length = 2352;
                         free(bare_data);
+                        return res;
+                    }
 
                     if(ctx->mode2_subheaders != NULL && ctx->sectorSuffixDdt != NULL)
                     {
@@ -1147,6 +1160,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                     else
                         memcpy(data + 16, bare_data, 2336);
 
+                    *length = 2352;
                     free(bare_data);
                     return res;
                 default:
@@ -1213,7 +1227,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
 
                     res = aaruf_read_sector(context, sector_address, negative, bare_data, &bare_length);
 
-                    if(bare_length != 512)
+                    if(res != AARUF_STATUS_OK)
                     {
                         free(bare_data);
 
@@ -1221,15 +1235,24 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                         return res;
                     }
 
-                    memcpy(data, ctx->sector_subchannel + corrected_sector_address * tag_length, tag_length);
-                    memcpy(data, bare_data, 512);
-
-                    free(bare_data);
+                    if(bare_length != 512)
+                    {
+                        FATAL("Bare data length is %u, expected 512", bare_length);
                         free(bare_data);
 
-                    TRACE("Exiting aaruf_read_sector_long() = %d", res);
-                    return res;
+                        TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                        return AARUF_ERROR_INCORRECT_DATA_SIZE;
+                    }
+
+                    memcpy(data + bare_length, ctx->sector_subchannel + corrected_sector_address * tag_length,
+                           tag_length);
+                    memcpy(data, bare_data, bare_length);
+                    *length = tag_length + bare_length;
+
                     free(bare_data);
+
+                    TRACE("Exiting aaruf_read_sector_long() = AARUF_STATUS_OK");
+                    return AARUF_STATUS_OK;
                 default:
                     FATAL("Incorrect media type %d for long sector reading", ctx->imageInfo.MediaType);
 
