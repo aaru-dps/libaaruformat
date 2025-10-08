@@ -59,7 +59,8 @@ int convert(const char *input_path, const char *output_path)
                               (const uint8_t *)"aaruformattool",
                               14,  // application name length
                               1,   // major version
-                              0    // minor version
+                              0,    // minor version
+                              false
     );
 
     if(output_ctx == NULL)
