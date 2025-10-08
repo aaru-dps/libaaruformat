@@ -58,7 +58,7 @@ int info(const char *path)
 
     printf("\tApplication version: %d.%d\n", ctx->header.applicationMajorVersion, ctx->header.applicationMinorVersion);
     printf("\tImage format version: %d.%d\n", ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
-    printf("\tMedia type: %u\n", ctx->header.mediaType);
+    printf("\tMedia type: %u (%s)\n", ctx->header.mediaType, media_type_to_string(ctx->header.mediaType));
     printf("\tIndex offset: %llu\n", ctx->header.indexOffset);
     printf("\tCreation time: %lld\n", ctx->header.creationTime);
     printf("\tLast written time: %lld\n", ctx->header.lastWrittenTime);
@@ -427,7 +427,7 @@ int info(const char *path)
         printf("\tMedia serial number: %s\n", ctx->imageInfo.MediaSerialNumber);
     if(ctx->imageInfo.MediaBarcode != NULL) printf("\tMedia barcode: %s\n", ctx->imageInfo.MediaBarcode);
     if(ctx->imageInfo.MediaPartNumber != NULL) printf("\tMedia part number: %s\n", ctx->imageInfo.MediaPartNumber);
-    printf("\tMedia type: %u\n", ctx->imageInfo.MediaType);
+    printf("\tMedia type: %u (%s)\n", ctx->imageInfo.MediaType, media_type_to_string(ctx->imageInfo.MediaType));
 
     if(ctx->imageInfo.MediaSequence > 0 || ctx->imageInfo.LastMediaSequence > 0)
         printf("\tMedia is number %d in a set of %d media\n", ctx->imageInfo.MediaSequence,
