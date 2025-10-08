@@ -63,6 +63,10 @@
 
 #include <stdlib.h>
 
+#define SONY_BLOCK_NUMBER_MASK  0x07FFU
+#define SONY_BLOCK_VALID_FLAG   0x8000U
+#define SONY_BLOCK_ALLOWED_MASK (SONY_BLOCK_VALID_FLAG | SONY_BLOCK_NUMBER_MASK)  ///< Preserve valid bit + 11-bit index
+
 /**
  * @brief Parse a 12-byte Sony tag record into a ::sony_tag structure.
  *
@@ -79,14 +83,17 @@ sony_tag bytes_to_sony_tag(const uint8_t *bytes)
 {
     sony_tag tag = {0};
 
-    tag.version    = (uint16_t)(bytes[0] << 8 | bytes[1]);
-    tag.kind       = (bytes[2] & 0xC0) >> 6;
-    tag.reserved   = bytes[2] & 0x3F;
-    tag.volume     = bytes[3];
-    tag.file_id    = (int16_t)(bytes[4] << 8 | bytes[5]);
-    tag.rel_page   = (uint16_t)(bytes[6] << 8 | bytes[7]);
-    tag.next_block = (uint16_t)(bytes[8] << 8 | bytes[9]) & 0x7FF;
-    tag.prev_block = (uint16_t)(bytes[10] << 8 | bytes[11]) & 0x7FF;
+    tag.version             = (uint16_t)(bytes[0] << 8 | bytes[1]);
+    tag.kind                = (bytes[2] & 0xC0) >> 6;
+    tag.reserved            = bytes[2] & 0x3F;
+    tag.volume              = bytes[3];
+    tag.file_id             = (int16_t)(bytes[4] << 8 | bytes[5]);
+    tag.rel_page            = (uint16_t)(bytes[6] << 8 | bytes[7]);
+    const uint16_t next_raw = (uint16_t)((uint16_t)bytes[8] << 8 | bytes[9]);
+    const uint16_t prev_raw = (uint16_t)((uint16_t)bytes[10] << 8 | bytes[11]);
+
+    tag.next_block = next_raw & SONY_BLOCK_ALLOWED_MASK;
+    tag.prev_block = prev_raw & SONY_BLOCK_ALLOWED_MASK;
 
     return tag;
 }
@@ -167,10 +174,14 @@ profile_tag sony_tag_to_profile(const sony_tag tag)
 {
     profile_tag profile = {0};
 
+    const uint16_t next_number = tag.next_block & SONY_BLOCK_NUMBER_MASK;
+    const uint16_t prev_number = tag.prev_block & SONY_BLOCK_NUMBER_MASK;
+
     profile.file_id    = tag.file_id;
     profile.kind       = tag.kind;
-    profile.next_block = tag.next_block == 0x7FF ? 0xFFFFFF : tag.next_block;
-    profile.prev_block = tag.prev_block == 0x7FF ? 0xFFFFFF : tag.prev_block;
+    profile.reserved   = tag.reserved;
+    profile.next_block = next_number == SONY_BLOCK_NUMBER_MASK ? 0xFFFFFFU : next_number;
+    profile.prev_block = prev_number == SONY_BLOCK_NUMBER_MASK ? 0xFFFFFFU : prev_number;
     profile.rel_page   = tag.rel_page;
     profile.version    = tag.version;
     profile.volume     = tag.volume;
@@ -191,10 +202,14 @@ priam_tag sony_tag_to_priam(const sony_tag tag)
 {
     priam_tag priam = {0};
 
+    const uint16_t next_number = tag.next_block & SONY_BLOCK_NUMBER_MASK;
+    const uint16_t prev_number = tag.prev_block & SONY_BLOCK_NUMBER_MASK;
+
     priam.file_id    = tag.file_id;
     priam.kind       = tag.kind;
-    priam.next_block = tag.next_block == 0x7FF ? 0xFFFFFF : tag.next_block;
-    priam.prev_block = tag.prev_block == 0x7FF ? 0xFFFFFF : tag.prev_block;
+    priam.reserved   = tag.reserved;
+    priam.next_block = next_number == SONY_BLOCK_NUMBER_MASK ? 0xFFFFFFU : next_number;
+    priam.prev_block = prev_number == SONY_BLOCK_NUMBER_MASK ? 0xFFFFFFU : prev_number;
     priam.rel_page   = tag.rel_page;
     priam.version    = tag.version;
     priam.volume     = tag.volume;
@@ -218,6 +233,7 @@ priam_tag profile_tag_to_priam(const profile_tag tag)
     priam.checksum   = tag.checksum;
     priam.file_id    = tag.file_id;
     priam.kind       = tag.kind;
+    priam.reserved   = tag.reserved;
     priam.next_block = tag.next_block;
     priam.prev_block = tag.prev_block;
     priam.rel_page   = tag.rel_page;
@@ -242,10 +258,20 @@ sony_tag profile_tag_to_sony(const profile_tag tag)
 {
     sony_tag sony = {0};
 
+    const uint32_t next_number = tag.next_block & 0xFFFFFFU;
+    const uint32_t prev_number = tag.prev_block & 0xFFFFFFU;
+
+    uint16_t sony_next = (uint16_t)(next_number & SONY_BLOCK_NUMBER_MASK);
+    uint16_t sony_prev = (uint16_t)(prev_number & SONY_BLOCK_NUMBER_MASK);
+
+    if(next_number == 0xFFFFFFU) sony_next = SONY_BLOCK_NUMBER_MASK;
+    if(prev_number == 0xFFFFFFU) sony_prev = SONY_BLOCK_NUMBER_MASK;
+
     sony.file_id    = tag.file_id;
     sony.kind       = tag.kind;
-    sony.next_block = tag.next_block == 0xFFFFFF ? 0x7FF : (uint16_t)tag.next_block & 0x7FF;
-    sony.prev_block = tag.prev_block == 0xFFFFFF ? 0x7FF : (uint16_t)tag.prev_block & 0x7FF;
+    sony.reserved   = tag.reserved;
+    sony.next_block = sony_next;
+    sony.prev_block = sony_prev;
     sony.rel_page   = tag.rel_page;
     sony.version    = tag.version;
     sony.volume     = tag.volume;
@@ -266,10 +292,20 @@ sony_tag priam_tag_to_sony(const priam_tag tag)
 {
     sony_tag sony = {0};
 
+    const uint32_t next_number = tag.next_block & 0xFFFFFFU;
+    const uint32_t prev_number = tag.prev_block & 0xFFFFFFU;
+
+    uint16_t sony_next = (uint16_t)(next_number & SONY_BLOCK_NUMBER_MASK);
+    uint16_t sony_prev = (uint16_t)(prev_number & SONY_BLOCK_NUMBER_MASK);
+
+    if(next_number == 0xFFFFFFU) sony_next = SONY_BLOCK_NUMBER_MASK;
+    if(prev_number == 0xFFFFFFU) sony_prev = SONY_BLOCK_NUMBER_MASK;
+
     sony.file_id    = tag.file_id;
     sony.kind       = tag.kind;
-    sony.next_block = tag.next_block == 0xFFFFFF ? 0x7FF : (uint16_t)tag.next_block & 0x7FF;
-    sony.prev_block = tag.prev_block == 0xFFFFFF ? 0x7FF : (uint16_t)tag.prev_block & 0x7FF;
+    sony.reserved   = tag.reserved;
+    sony.next_block = sony_next;
+    sony.prev_block = sony_prev;
     sony.rel_page   = tag.rel_page;
     sony.version    = tag.version;
     sony.volume     = tag.volume;
@@ -294,6 +330,7 @@ profile_tag priam_tag_to_profile(const priam_tag tag)
     profile.checksum   = tag.checksum;
     profile.file_id    = tag.file_id;
     profile.kind       = tag.kind;
+    profile.reserved   = tag.reserved;
     profile.next_block = tag.next_block;
     profile.prev_block = tag.prev_block;
     profile.rel_page   = tag.rel_page;
@@ -322,27 +359,38 @@ uint8_t *profile_tag_to_bytes(const profile_tag tag)
     uint8_t *bytes = calloc(1, 20);
     if(!bytes) return NULL;
 
-    bytes[0] = tag.version >> 8 & 0xFF;
-    bytes[1] = tag.version & 0xFF;
-    bytes[2] = (uint8_t)(tag.kind << 6);
-    bytes[3] = tag.volume;
-    bytes[4] = tag.file_id >> 8 & 0xFF;
-    bytes[5] = tag.file_id & 0xFF;
-    bytes[6] = tag.used_bytes >> 8 & 0x7F;
-    if(tag.valid_chk) bytes[6] += 0x80;
-    bytes[7]  = tag.used_bytes & 0xFF;
-    bytes[8]  = tag.abs_page >> 16 & 0xFF;
-    bytes[9]  = tag.abs_page >> 8 & 0xFF;
-    bytes[10] = tag.abs_page & 0xFF;
+    const uint16_t version    = tag.version;
+    const uint8_t  volume     = tag.volume;
+    const int16_t  file_id    = tag.file_id;
+    const uint16_t rel_page   = tag.rel_page;
+    const uint32_t abs_page   = tag.abs_page & 0xFFFFFFU;
+    const uint32_t next_block = tag.next_block & 0xFFFFFFU;
+    const uint32_t prev_block = tag.prev_block & 0xFFFFFFU;
+    const uint16_t used_bytes = (uint16_t)(tag.used_bytes & 0x7FFFU);
+    const uint8_t  kind_bits  = (uint8_t)(tag.kind & 0x3U);
+    const uint8_t  reserved   = (uint8_t)(tag.reserved & 0x3FU);
+
+    bytes[0] = (uint8_t)((version >> 8) & 0xFF);
+    bytes[1] = (uint8_t)(version & 0xFF);
+    bytes[2] = (uint8_t)((kind_bits << 6) | reserved);
+    bytes[3] = volume;
+    bytes[4] = (uint8_t)((file_id >> 8) & 0xFF);
+    bytes[5] = (uint8_t)(file_id & 0xFF);
+    bytes[6] = (uint8_t)((used_bytes >> 8) & 0x7F);
+    if(tag.valid_chk) bytes[6] |= 0x80U;
+    bytes[7]  = (uint8_t)(used_bytes & 0xFF);
+    bytes[8]  = (uint8_t)((abs_page >> 16) & 0xFF);
+    bytes[9]  = (uint8_t)((abs_page >> 8) & 0xFF);
+    bytes[10] = (uint8_t)(abs_page & 0xFF);
     bytes[11] = tag.checksum;
-    bytes[12] = tag.rel_page >> 8 & 0xFF;
-    bytes[13] = tag.rel_page & 0xFF;
-    bytes[14] = tag.next_block >> 16 & 0xFF;
-    bytes[15] = tag.next_block >> 8 & 0xFF;
-    bytes[16] = tag.next_block & 0xFF;
-    bytes[17] = tag.prev_block >> 16 & 0xFF;
-    bytes[18] = tag.prev_block >> 8 & 0xFF;
-    bytes[19] = tag.prev_block & 0xFF;
+    bytes[12] = (uint8_t)((rel_page >> 8) & 0xFF);
+    bytes[13] = (uint8_t)(rel_page & 0xFF);
+    bytes[14] = (uint8_t)((next_block >> 16) & 0xFF);
+    bytes[15] = (uint8_t)((next_block >> 8) & 0xFF);
+    bytes[16] = (uint8_t)(next_block & 0xFF);
+    bytes[17] = (uint8_t)((prev_block >> 16) & 0xFF);
+    bytes[18] = (uint8_t)((prev_block >> 8) & 0xFF);
+    bytes[19] = (uint8_t)(prev_block & 0xFF);
 
     return bytes;
 }
@@ -363,31 +411,43 @@ uint8_t *priam_tag_to_bytes(const priam_tag tag)
     uint8_t *bytes = calloc(1, 24);
     if(!bytes) return NULL;
 
-    bytes[0] = tag.version >> 8 & 0xFF;
-    bytes[1] = tag.version & 0xFF;
-    bytes[2] = (uint8_t)(tag.kind << 6);
-    bytes[3] = tag.volume;
-    bytes[4] = tag.file_id >> 8 & 0xFF;
-    bytes[5] = tag.file_id & 0xFF;
-    bytes[6] = tag.used_bytes >> 8 & 0x7F;
-    if(tag.valid_chk) bytes[6] += 0x80;
-    bytes[7]  = tag.used_bytes & 0xFF;
-    bytes[8]  = tag.abs_page >> 16 & 0xFF;
-    bytes[9]  = tag.abs_page >> 8 & 0xFF;
-    bytes[10] = tag.abs_page & 0xFF;
+    const uint16_t version    = tag.version;
+    const uint8_t  volume     = tag.volume;
+    const int16_t  file_id    = tag.file_id;
+    const uint16_t rel_page   = tag.rel_page;
+    const uint32_t abs_page   = tag.abs_page & 0xFFFFFFU;
+    const uint32_t next_block = tag.next_block & 0xFFFFFFU;
+    const uint32_t prev_block = tag.prev_block & 0xFFFFFFU;
+    const uint32_t disk_size  = tag.disk_size;
+    const uint16_t used_bytes = (uint16_t)(tag.used_bytes & 0x7FFFU);
+    const uint8_t  kind_bits  = (uint8_t)(tag.kind & 0x3U);
+    const uint8_t  reserved   = (uint8_t)(tag.reserved & 0x3FU);
+
+    bytes[0] = (uint8_t)((version >> 8) & 0xFF);
+    bytes[1] = (uint8_t)(version & 0xFF);
+    bytes[2] = (uint8_t)((kind_bits << 6) | reserved);
+    bytes[3] = volume;
+    bytes[4] = (uint8_t)((file_id >> 8) & 0xFF);
+    bytes[5] = (uint8_t)(file_id & 0xFF);
+    bytes[6] = (uint8_t)((used_bytes >> 8) & 0x7F);
+    if(tag.valid_chk) bytes[6] |= 0x80U;
+    bytes[7]  = (uint8_t)(used_bytes & 0xFF);
+    bytes[8]  = (uint8_t)((abs_page >> 16) & 0xFF);
+    bytes[9]  = (uint8_t)((abs_page >> 8) & 0xFF);
+    bytes[10] = (uint8_t)(abs_page & 0xFF);
     bytes[11] = tag.checksum;
-    bytes[12] = tag.rel_page >> 8 & 0xFF;
-    bytes[13] = tag.rel_page & 0xFF;
-    bytes[14] = tag.next_block >> 16 & 0xFF;
-    bytes[15] = tag.next_block >> 8 & 0xFF;
-    bytes[16] = tag.next_block & 0xFF;
-    bytes[17] = tag.prev_block >> 16 & 0xFF;
-    bytes[18] = tag.prev_block >> 8 & 0xFF;
-    bytes[19] = tag.prev_block & 0xFF;
-    bytes[20] = tag.disk_size >> 24 & 0xFF;
-    bytes[21] = tag.disk_size >> 16 & 0xFF;
-    bytes[22] = tag.disk_size >> 8 & 0xFF;
-    bytes[23] = tag.disk_size & 0xFF;
+    bytes[12] = (uint8_t)((rel_page >> 8) & 0xFF);
+    bytes[13] = (uint8_t)(rel_page & 0xFF);
+    bytes[14] = (uint8_t)((next_block >> 16) & 0xFF);
+    bytes[15] = (uint8_t)((next_block >> 8) & 0xFF);
+    bytes[16] = (uint8_t)(next_block & 0xFF);
+    bytes[17] = (uint8_t)((prev_block >> 16) & 0xFF);
+    bytes[18] = (uint8_t)((prev_block >> 8) & 0xFF);
+    bytes[19] = (uint8_t)(prev_block & 0xFF);
+    bytes[20] = (uint8_t)((disk_size >> 24) & 0xFF);
+    bytes[21] = (uint8_t)((disk_size >> 16) & 0xFF);
+    bytes[22] = (uint8_t)((disk_size >> 8) & 0xFF);
+    bytes[23] = (uint8_t)(disk_size & 0xFF);
 
     return bytes;
 }
@@ -408,18 +468,27 @@ uint8_t *sony_tag_to_bytes(sony_tag tag)
     uint8_t *bytes = calloc(1, 12);
     if(!bytes) return NULL;
 
-    bytes[0]  = tag.version >> 8 & 0xFF;
-    bytes[1]  = tag.version & 0xFF;
-    bytes[2]  = (uint8_t)(tag.kind << 6);
-    bytes[3]  = tag.volume;
-    bytes[4]  = tag.file_id >> 8 & 0xFF;
-    bytes[5]  = tag.file_id & 0xFF;
-    bytes[6]  = tag.rel_page >> 8 & 0xFF;
-    bytes[7]  = tag.rel_page & 0xFF;
-    bytes[8]  = (uint8_t)((tag.next_block & 0x7FF) >> 8);
-    bytes[9]  = (uint8_t)(tag.next_block & 0xFF);
-    bytes[10] = (uint8_t)((tag.prev_block & 0x7FF) >> 8);
-    bytes[11] = (uint8_t)(tag.prev_block & 0xFF);
+    const uint16_t version    = tag.version;
+    const uint8_t  volume     = tag.volume;
+    const int16_t  file_id    = tag.file_id;
+    const uint16_t rel_page   = tag.rel_page;
+    const uint16_t next_block = tag.next_block & SONY_BLOCK_ALLOWED_MASK;
+    const uint16_t prev_block = tag.prev_block & SONY_BLOCK_ALLOWED_MASK;
+    const uint8_t  kind_bits  = (uint8_t)(tag.kind & 0x3U);
+    const uint8_t  reserved   = (uint8_t)(tag.reserved & 0x3FU);
+
+    bytes[0]  = (uint8_t)((version >> 8) & 0xFF);
+    bytes[1]  = (uint8_t)(version & 0xFF);
+    bytes[2]  = (uint8_t)((kind_bits << 6) | reserved);
+    bytes[3]  = volume;
+    bytes[4]  = (uint8_t)((file_id >> 8) & 0xFF);
+    bytes[5]  = (uint8_t)(file_id & 0xFF);
+    bytes[6]  = (uint8_t)((rel_page >> 8) & 0xFF);
+    bytes[7]  = (uint8_t)(rel_page & 0xFF);
+    bytes[8]  = (uint8_t)((next_block >> 8) & 0xFF);
+    bytes[9]  = (uint8_t)(next_block & 0xFF);
+    bytes[10] = (uint8_t)((prev_block >> 8) & 0xFF);
+    bytes[11] = (uint8_t)(prev_block & 0xFF);
 
     return bytes;
 }
