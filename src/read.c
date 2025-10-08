@@ -84,7 +84,9 @@
  */
 int32_t aaruf_read_media_tag(void *context, uint8_t *data, const int32_t tag, uint32_t *length)
 {
-    TRACE("Entering aaruf_read_media_tag(%p, %p, %d, %u)", context, data, tag, *length);
+    const uint32_t initial_length = length == NULL ? 0U : *length;
+
+    TRACE("Entering aaruf_read_media_tag(%p, %p, %d, %u)", context, data, tag, initial_length);
 
     mediaTagEntry *item;
 
@@ -240,7 +242,10 @@ int32_t aaruf_read_media_tag(void *context, uint8_t *data, const int32_t tag, ui
  */
 int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool negative, uint8_t *data, uint32_t *length)
 {
-    TRACE("Entering aaruf_read_sector(%p, %" PRIu64 ", %d, %p, %u)", context, sector_address, negative, data, *length);
+    const uint32_t initial_length = length == NULL ? 0U : *length;
+
+    TRACE("Entering aaruf_read_sector(%p, %" PRIu64 ", %d, %p, %u)", context, sector_address, negative, data,
+          initial_length);
 
     aaruformatContext *ctx          = NULL;
     uint64_t           offset       = 0;
@@ -620,8 +625,10 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
 int32_t aaruf_read_track_sector(void *context, uint8_t *data, const uint64_t sector_address, uint32_t *length,
                                 const uint8_t track)
 {
-    TRACE("Entering aaruf_read_track_sector(%p, %p, %" PRIu64 ", %u, %d)", context, data, sector_address, *length,
-          track);
+    const uint32_t initial_length = length == NULL ? 0U : *length;
+
+    TRACE("Entering aaruf_read_track_sector(%p, %p, %" PRIu64 ", %u, %d)", context, data, sector_address,
+          initial_length, track);
 
     if(context == NULL)
     {
@@ -762,7 +769,10 @@ int32_t aaruf_read_track_sector(void *context, uint8_t *data, const uint64_t sec
 int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, bool negative, uint8_t *data,
                                uint32_t *length)
 {
-    TRACE("Entering aaruf_read_sector_long(%p, %" PRIu64 ", %d, %p, %u)", context, sector_address, data, *length);
+    const uint32_t initial_length = length == NULL ? 0U : *length;
+
+    TRACE("Entering aaruf_read_sector_long(%p, %" PRIu64 ", %d, %p, %u)", context, sector_address, data,
+          initial_length);
 
     const aaruformatContext *ctx         = NULL;
     uint32_t                 bare_length = 0;
@@ -1263,8 +1273,10 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
 int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address, const bool negative, uint8_t *buffer,
                               uint32_t *length, const int32_t tag)
 {
+    const uint32_t initial_length = length == NULL ? 0U : *length;
+
     TRACE("Entering aaruf_read_sector_tag(%p, %" PRIu64 ", %d, %p, %u, %d)", context, sector_address, negative, buffer,
-          *length, tag);
+          initial_length, tag);
 
     const aaruformatContext *ctx = NULL;
 
