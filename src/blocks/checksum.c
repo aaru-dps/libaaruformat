@@ -20,8 +20,12 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-#include "aaruformat.h"
+#include "aaruformat/context.h"
+#include "aaruformat/enums.h"
+#include "aaruformat/structs/checksum.h"
+#include "aaruformat/structs/index.h"
 #include "log.h"
 
 /**
@@ -36,12 +40,13 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
     TRACE("Entering process_checksum_block(%p, %p)", ctx, entry);
 
-    int                  pos        = 0;
-    size_t               read_bytes = 0;
+    int                  seek_result = 0;
+    size_t               read_bytes  = 0;
     ChecksumHeader       checksum_header;
     ChecksumEntry const *checksum_entry = NULL;
     uint8_t             *data           = NULL;
     int                  j              = 0;
+    size_t               payload_pos    = 0;
 
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
@@ -51,8 +56,8 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
     }
 
     // Seek to block
-    pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
-    if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
+    seek_result = fseek(ctx->imageStream, entry->offset, SEEK_SET);
+    if(seek_result < 0 || ftell(ctx->imageStream) != entry->offset)
     {
         FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
 
@@ -74,6 +79,7 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
     {
         memset(&checksum_header, 0, sizeof(ChecksumHeader));
         FATAL("Incorrect identifier for checksum block at position %" PRIu64 "\n", entry->offset);
+        return;
     }
 
     TRACE("Allocating %u bytes for checksum block", checksum_header.length);
@@ -97,46 +103,83 @@ void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
         return;
     }
 
-    pos = 0;
+    payload_pos = 0;
     TRACE("Processing %u checksum entries", checksum_header.entries);
     for(j = 0; j < checksum_header.entries; j++)
     {
-        checksum_entry = (ChecksumEntry *)&data[pos];
-        pos += sizeof(ChecksumEntry);
-
-        if(checksum_entry->type == Md5)
+        if(payload_pos + sizeof(ChecksumEntry) > checksum_header.length)
         {
-            TRACE("Found MD5 checksum");
-            memcpy(ctx->checksums.md5, &data[pos], MD5_DIGEST_LENGTH);
-            ctx->checksums.hasMd5 = true;
-        }
-        else if(checksum_entry->type == Sha1)
-        {
-            TRACE("Found SHA1 checksum");
-            memcpy(ctx->checksums.sha1, &data[pos], SHA1_DIGEST_LENGTH);
-            ctx->checksums.hasSha1 = true;
-        }
-        else if(checksum_entry->type == Sha256)
-        {
-            TRACE("Found SHA256 checksum");
-            memcpy(ctx->checksums.sha256, &data[pos], SHA256_DIGEST_LENGTH);
-            ctx->checksums.hasSha256 = true;
-        }
-        else if(checksum_entry->type == SpamSum)
-        {
-            TRACE("Found SpamSum checksum of size %u", checksum_entry->length);
-            ctx->checksums.spamsum = malloc(checksum_entry->length + 1);
-
-            if(ctx->checksums.spamsum != NULL)
-            {
-                memcpy(ctx->checksums.spamsum, &data[pos], checksum_entry->length);
-                ctx->checksums.hasSpamSum = true;
-            }
-
-            ctx->checksums.spamsum[checksum_entry->length] = 0;
+            FATAL("Checksum entry %d exceeds block payload size", j);
+            break;
         }
 
-        pos += checksum_entry->length;
+        checksum_entry = (const ChecksumEntry *)&data[payload_pos];
+        payload_pos += sizeof(ChecksumEntry);
+
+        if(payload_pos + checksum_entry->length > checksum_header.length)
+        {
+            FATAL("Checksum payload for entry %d exceeds block payload size", j);
+            break;
+        }
+
+        switch(checksum_entry->type)
+        {
+            case Md5:
+                if(checksum_entry->length != MD5_DIGEST_LENGTH)
+                {
+                    FATAL("MD5 checksum entry has invalid length %u", checksum_entry->length);
+                    break;
+                }
+
+                TRACE("Found MD5 checksum");
+                memcpy(ctx->checksums.md5, &data[payload_pos], MD5_DIGEST_LENGTH);
+                ctx->checksums.hasMd5 = true;
+                break;
+            case Sha1:
+                if(checksum_entry->length != SHA1_DIGEST_LENGTH)
+                {
+                    FATAL("SHA1 checksum entry has invalid length %u", checksum_entry->length);
+                    break;
+                }
+
+                TRACE("Found SHA1 checksum");
+                memcpy(ctx->checksums.sha1, &data[payload_pos], SHA1_DIGEST_LENGTH);
+                ctx->checksums.hasSha1 = true;
+                break;
+            case Sha256:
+                if(checksum_entry->length != SHA256_DIGEST_LENGTH)
+                {
+                    FATAL("SHA256 checksum entry has invalid length %u", checksum_entry->length);
+                    break;
+                }
+
+                TRACE("Found SHA256 checksum");
+                memcpy(ctx->checksums.sha256, &data[payload_pos], SHA256_DIGEST_LENGTH);
+                ctx->checksums.hasSha256 = true;
+                break;
+            case SpamSum:
+                TRACE("Found SpamSum checksum of size %u", checksum_entry->length);
+                free(ctx->checksums.spamsum);
+                ctx->checksums.spamsum = NULL;
+
+                ctx->checksums.spamsum = malloc(checksum_entry->length + 1);
+
+                if(ctx->checksums.spamsum == NULL)
+                {
+                    FATAL("Could not allocate memory for SpamSum digest");
+                    break;
+                }
+
+                memcpy(ctx->checksums.spamsum, &data[payload_pos], checksum_entry->length);
+                ctx->checksums.spamsum[checksum_entry->length] = '\0';
+                ctx->checksums.hasSpamSum                      = true;
+                break;
+            default:
+                TRACE("Unknown checksum type %u, skipping", checksum_entry->type);
+                break;
+        }
+
+        payload_pos += checksum_entry->length;
     }
 
     checksum_entry = NULL;
