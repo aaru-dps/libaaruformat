@@ -16,6 +16,7 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "aaruformat.h"
@@ -1892,7 +1893,7 @@ int32_t aaruf_set_drive_firmware_revision(void *context, const uint8_t *data, co
  *         - The CICM block was not found during image opening
  *         - The *length output parameter is set to 0 to indicate no data available
  *
- * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-12) The provided buffer is insufficient. This occurs when:
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-10) The provided buffer is insufficient. This occurs when:
  *         - The input *length is less than ctx->cicmBlockHeader.length
  *         - The *length parameter is updated to contain the required buffer size
  *         - No data is copied to the buffer
@@ -2039,7 +2040,7 @@ int32_t aaruf_get_cicm_metadata(const void *context, uint8_t *buffer, size_t *le
  *         - The Aaru JSON block was not found during image opening
  *         - The *length output parameter is set to 0 to indicate no data available
  *
- * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-12) The provided buffer is insufficient. This occurs when:
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-10) The provided buffer is insufficient. This occurs when:
  *         - The input *length is less than ctx->jsonBlockHeader.length
  *         - The *length parameter is updated to contain the required buffer size
  *         - No data is copied to the buffer
@@ -2300,8 +2301,925 @@ int32_t aaruf_set_aaru_json_metadata(void *context, uint8_t *data, size_t length
     if(ctx->jsonBlock != NULL) free(ctx->jsonBlock);
     ctx->jsonBlock                  = copy;
     ctx->jsonBlockHeader.identifier = AaruMetadataJsonBlock;
-    ctx->jsonBlockHeader.length     = length;
+    ctx->jsonBlockHeader.length     = (uint32_t)length;
 
     TRACE("Exiting aaruf_set_aaru_json_metadata(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Retrieves the media sequence metadata for multi-volume image sets.
+ *
+ * Reads the media sequence fields stored in the MetadataBlock header and returns the current media
+ * number together with the final media number for the complete set. This information indicates the
+ * position of the imaged medium within a multi-volume collection (for example, "disc 2 of 5"). The
+ * function operates entirely on in-memory structures populated during aaruf_open(); no additional
+ * disk I/O is performed.
+ *
+ * @param context Pointer to an initialized aaruformat context opened for reading or writing.
+ * @param sequence Pointer that receives the current media sequence number (typically 1-based).
+ * @param last_sequence Pointer that receives the total number of media in the set.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Metadata was present and the output parameters were populated.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The provided context pointer is NULL or not an
+ *         aaruformat context (magic mismatch).
+ * @retval AARUF_ERROR_METADATA_NOT_PRESENT (-30) The MetadataBlock was not present in the image,
+ *         making sequence data unavailable.
+ *
+ * @note For standalone media, both sequence and last_sequence are commonly set to 1. Some creators
+ *       may also set them to 0 to indicate the absence of sequence semantics; callers should handle
+ *       either pattern gracefully.
+ *
+ * @note The function does not validate logical consistency (e.g., whether sequence <= last_sequence);
+ *       it simply returns the values stored in the image header.
+ */
+int32_t aaruf_get_media_sequence(const void *context, int32_t *sequence, int32_t *last_sequence)
+{
+    TRACE("Entering aaruf_get_media_sequence(%p, %d, %d)", context, *sequence, *last_sequence);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_set_media_sequence() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_set_media_sequence() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock)
+    {
+        FATAL("No metadata block present");
+
+        TRACE("Exiting aaruf_set_media_sequence() = AARUF_ERROR_METADATA_NOT_PRESENT");
+        return AARUF_ERROR_METADATA_NOT_PRESENT;
+    }
+
+    *sequence      = ctx->metadataBlockHeader.mediaSequence;
+    *last_sequence = ctx->metadataBlockHeader.lastMediaSequence;
+
+    TRACE("Exiting aaruf_set_media_sequence(%p, %d, %d) = AARUF_STATUS_OK", context, *sequence, *last_sequence);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Retrieves the recorded creator (operator) name from the MetadataBlock.
+ *
+ * Copies the UTF-16LE encoded creator string that identifies the person or operator who created the
+ * image. The function supports the common two-call pattern: the caller first determines the required
+ * buffer size by passing a buffer that may be NULL or too small, then allocates sufficient memory and
+ * calls again to obtain the actual data. On success the buffer contains an opaque UTF-16LE string of
+ * length *length bytes (not null-terminated).
+ *
+ * @param context Pointer to a valid aaruformat context opened for reading or writing.
+ * @param buffer Pointer to the destination buffer that will receive the creator string. May be NULL
+ *               to query the required size.
+ * @param length Pointer to an int32_t that on input specifies the size of @p buffer in bytes and on
+ *               output receives the actual length of the creator metadata.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) The creator string was copied successfully.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is NULL or not an aaruformat context.
+ * @retval AARUF_ERROR_METADATA_NOT_PRESENT (-30) Creator metadata has not been recorded in the image.
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-10) The provided buffer was insufficient; *length contains
+ *         the required size and no data was copied.
+ *
+ * @note The returned data is UTF-16LE encoded and may contain embedded null characters. Callers
+ *       should treat it as an opaque byte array unless they explicitly handle UTF-16LE strings.
+ *
+ * @note The function does not allocate memory. Callers are responsible for ensuring @p buffer is
+ *       large enough before requesting the data.
+ */
+int32_t aaruf_get_creator(const void *context, uint8_t *buffer, int32_t *length)
+{
+    TRACE("Entering aaruf_get_creator(%p, %p, %d)", context, buffer, *length);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_creator() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_creator() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.Creator == NULL ||
+       ctx->metadataBlockHeader.creatorLength == 0)
+    {
+        FATAL("No metadata block present");
+
+        TRACE("Exiting aaruf_get_creator() = AARUF_ERROR_METADATA_NOT_PRESENT");
+        return AARUF_ERROR_METADATA_NOT_PRESENT;
+    }
+
+    if(buffer == NULL || *length < ctx->metadataBlockHeader.creatorLength)
+    {
+        *length = ctx->metadataBlockHeader.creatorLength;
+
+        TRACE("Exiting aaruf_get_creator() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    // Copy opaque UTF-16LE string
+    memcpy(buffer, ctx->imageInfo.Creator, ctx->metadataBlockHeader.creatorLength);
+    *length = ctx->metadataBlockHeader.creatorLength;
+
+    TRACE("Exiting aaruf_get_creator(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Retrieves the user comments or notes stored in the MetadataBlock.
+ *
+ * Provides access to the UTF-16LE encoded comments associated with the image. Comments are often
+ * used for provenance notes, imaging details, or curator remarks. The function follows the same
+ * two-call buffer sizing pattern used by other metadata retrieval APIs: the caller may probe the
+ * required size before allocating memory.
+ *
+ * @param context Pointer to a valid aaruformat context opened with aaruf_open() or aaruf_create().
+ * @param buffer Destination buffer that receives the comments data. May be NULL when probing size.
+ * @param length Pointer to an int32_t. On input it contains the size of @p buffer in bytes; on output
+ *               it is updated with the actual comments length.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Comments were available and copied successfully.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context pointer is invalid or not a libaaruformat context.
+ * @retval AARUF_ERROR_METADATA_NOT_PRESENT (-30) No comments metadata exists in the image.
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-10) The supplied buffer was too small. *length is updated with
+ *         the required size and no data is copied.
+ *
+ * @note Comments are stored exactly as provided during image creation and may include multi-line text
+ *       or other control characters. No validation or normalization is applied by the library.
+ */
+int32_t aaruf_get_comments(const void *context, uint8_t *buffer, int32_t *length)
+{
+    TRACE("Entering aaruf_get_comments(%p, %p, %d)", context, buffer, *length);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_comments() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_comments() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.Comments == NULL ||
+       ctx->metadataBlockHeader.commentsLength == 0)
+    {
+        FATAL("No metadata block present");
+
+        TRACE("Exiting aaruf_get_comments() = AARUF_ERROR_METADATA_NOT_PRESENT");
+        return AARUF_ERROR_METADATA_NOT_PRESENT;
+    }
+
+    if(buffer == NULL || *length < ctx->metadataBlockHeader.commentsLength)
+    {
+        *length = ctx->metadataBlockHeader.commentsLength;
+
+        TRACE("Exiting aaruf_get_comments() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    // Copy opaque UTF-16LE string
+    memcpy(buffer, ctx->imageInfo.Comments, ctx->metadataBlockHeader.commentsLength);
+    *length = ctx->metadataBlockHeader.commentsLength;
+
+    TRACE("Exiting aaruf_get_comments(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Retrieves the media title or label captured during image creation.
+ *
+ * Returns the UTF-16LE encoded media title string, representing markings or labels present on the
+ * original physical media. This function allows applications to present or archive the media title
+ * alongside the image, preserving contextual information from the physical artifact.
+ *
+ * @param context Pointer to a valid aaruformat context.
+ * @param buffer Destination buffer for the UTF-16LE title string. May be NULL when querying size.
+ * @param length Pointer to an int32_t that on input holds the buffer capacity in bytes and on output
+ *               receives the actual title length.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) The media title was available and copied to @p buffer.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context pointer is invalid.
+ * @retval AARUF_ERROR_METADATA_NOT_PRESENT (-30) No media title metadata exists.
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-10) The supplied buffer was insufficient.
+ *
+ * @note Titles may contain international characters, control codes, or mixed casing. The library does
+ *       not attempt to sanitize or interpret the string.
+ */
+int32_t aaruf_get_media_title(const void *context, uint8_t *buffer, int32_t *length)
+{
+    TRACE("Entering aaruf_get_media_title(%p, %p, %d)", context, buffer, *length);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_media_title() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_media_title() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.MediaTitle == NULL ||
+       ctx->metadataBlockHeader.mediaTitleLength == 0)
+    {
+        FATAL("No metadata block present");
+
+        TRACE("Exiting aaruf_get_media_title() = AARUF_ERROR_METADATA_NOT_PRESENT");
+        return AARUF_ERROR_METADATA_NOT_PRESENT;
+    }
+
+    if(buffer == NULL || *length < ctx->metadataBlockHeader.mediaTitleLength)
+    {
+        *length = ctx->metadataBlockHeader.mediaTitleLength;
+
+        TRACE("Exiting aaruf_get_media_title() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    // Copy opaque UTF-16LE string
+    memcpy(buffer, ctx->imageInfo.MediaTitle, ctx->metadataBlockHeader.mediaTitleLength);
+    *length = ctx->metadataBlockHeader.mediaTitleLength;
+
+    TRACE("Exiting aaruf_get_media_title(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Retrieves the recorded media manufacturer name.
+ *
+ * Provides access to the UTF-16LE encoded manufacturer metadata that identifies the company which
+ * produced the physical medium. This information is taken from the MetadataBlock and mirrors the
+ * value previously stored via aaruf_set_media_manufacturer().
+ *
+ * @param context Pointer to a valid aaruformat context.
+ * @param buffer Buffer that receives the manufacturer string. May be NULL when probing size.
+ * @param length Pointer to an int32_t specifying the buffer size on input and receiving the actual
+ *               manufacturer string length on output.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Manufacturer metadata was available and copied.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context pointer is invalid.
+ * @retval AARUF_ERROR_METADATA_NOT_PRESENT (-30) The image lacks manufacturer metadata.
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-10) The provided buffer was too small; *length indicates size.
+ *
+ * @note Values may include trailing spaces or vendor-specific capitalization. Treat the returned data
+ *       as authoritative and avoid trimming unless required by the consuming application.
+ */
+int32_t aaruf_get_media_manufacturer(const void *context, uint8_t *buffer, int32_t *length)
+{
+    TRACE("Entering aaruf_get_media_manufacturer(%p, %p, %d)", context, buffer, *length);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_media_manufacturer() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_media_manufacturer() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.MediaManufacturer == NULL ||
+       ctx->metadataBlockHeader.mediaManufacturerLength == 0)
+    {
+        FATAL("No metadata block present");
+
+        TRACE("Exiting aaruf_get_media_manufacturer() = AARUF_ERROR_METADATA_NOT_PRESENT");
+        return AARUF_ERROR_METADATA_NOT_PRESENT;
+    }
+
+    if(buffer == NULL || *length < ctx->metadataBlockHeader.mediaManufacturerLength)
+    {
+        *length = ctx->metadataBlockHeader.mediaManufacturerLength;
+
+        TRACE("Exiting aaruf_get_media_manufacturer() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    // Copy opaque UTF-16LE string
+    memcpy(buffer, ctx->imageInfo.MediaManufacturer, ctx->metadataBlockHeader.mediaManufacturerLength);
+    *length = ctx->metadataBlockHeader.mediaManufacturerLength;
+
+    TRACE("Exiting aaruf_get_media_manufacturer(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Retrieves the media model or product designation metadata.
+ *
+ * Returns the UTF-16LE encoded model name that specifies the exact product variant of the physical
+ * medium. The function mirrors the set counterpart and is useful for accurately documenting media
+ * specifications during preservation workflows.
+ *
+ * @param context Pointer to a valid aaruformat context.
+ * @param buffer Destination buffer for the model string; may be NULL when querying required size.
+ * @param length Pointer to an int32_t that on input contains the buffer capacity in bytes and on
+ *               output is updated with the actual metadata length.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Model metadata was successfully copied.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context pointer is invalid.
+ * @retval AARUF_ERROR_METADATA_NOT_PRESENT (-30) No media model metadata is present in the image.
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-10) The caller-provided buffer is too small.
+ *
+ * @note Model strings often contain performance ratings (e.g., "16x", "LTO-7"). The data is opaque and
+ *       should be handled without modification unless necessary.
+ */
+int32_t aaruf_get_media_model(const void *context, uint8_t *buffer, int32_t *length)
+{
+    TRACE("Entering aaruf_get_media_model(%p, %p, %d)", context, buffer, *length);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_media_model() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_media_model() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.MediaModel == NULL ||
+       ctx->metadataBlockHeader.mediaModelLength == 0)
+    {
+        FATAL("No metadata block present");
+
+        TRACE("Exiting aaruf_get_media_model() = AARUF_ERROR_METADATA_NOT_PRESENT");
+        return AARUF_ERROR_METADATA_NOT_PRESENT;
+    }
+
+    if(buffer == NULL || *length < ctx->metadataBlockHeader.mediaModelLength)
+    {
+        *length = ctx->metadataBlockHeader.mediaModelLength;
+
+        TRACE("Exiting aaruf_get_media_model() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    // Copy opaque UTF-16LE string
+    memcpy(buffer, ctx->imageInfo.MediaModel, ctx->metadataBlockHeader.mediaModelLength);
+    *length = ctx->metadataBlockHeader.mediaModelLength;
+
+    TRACE("Exiting aaruf_get_media_model(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Retrieves the media serial number recorded in the image metadata.
+ *
+ * Copies the UTF-16LE encoded serial number identifying the specific physical medium. Serial numbers
+ * are particularly important for forensic tracking and archival provenance, enabling correlation
+ * between the physical item and its digital representation.
+ *
+ * @param context Pointer to a valid aaruformat context.
+ * @param buffer Destination buffer for the serial number. May be NULL to determine required size.
+ * @param length Pointer to an int32_t that on input holds the buffer size and on output receives the
+ *               actual serial number length.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Serial number metadata was copied into @p buffer.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context pointer is invalid.
+ * @retval AARUF_ERROR_METADATA_NOT_PRESENT (-30) No serial number metadata was stored in the image.
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-10) The provided buffer was too small.
+ *
+ * @note Serial numbers may contain spaces, hyphens, or alphanumeric characters. The library does not
+ *       normalize or validate these strings.
+ */
+int32_t aaruf_get_media_serial_number(const void *context, uint8_t *buffer, int32_t *length)
+{
+    TRACE("Entering aaruf_get_media_serial_number(%p, %p, %d)", context, buffer, *length);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_media_serial_number() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_media_serial_number() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.MediaSerialNumber == NULL ||
+       ctx->metadataBlockHeader.mediaSerialNumberLength == 0)
+    {
+        FATAL("No metadata block present");
+
+        TRACE("Exiting aaruf_get_media_serial_number() = AARUF_ERROR_METADATA_NOT_PRESENT");
+        return AARUF_ERROR_METADATA_NOT_PRESENT;
+    }
+
+    if(buffer == NULL || *length < ctx->metadataBlockHeader.mediaSerialNumberLength)
+    {
+        *length = ctx->metadataBlockHeader.mediaSerialNumberLength;
+
+        TRACE("Exiting aaruf_get_media_serial_number() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    // Copy opaque UTF-16LE string
+    memcpy(buffer, ctx->imageInfo.MediaSerialNumber, ctx->metadataBlockHeader.mediaSerialNumberLength);
+    *length = ctx->metadataBlockHeader.mediaSerialNumberLength;
+
+    TRACE("Exiting aaruf_get_media_serial_number(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Retrieves the barcode assigned to the physical media or its packaging.
+ *
+ * Returns the UTF-16LE encoded barcode string that was captured when the image was created. Barcodes
+ * are commonly used in institutional workflows for inventory tracking and automated retrieval.
+ *
+ * @param context Pointer to a valid aaruformat context.
+ * @param buffer Buffer that receives the barcode string; may be NULL when probing size requirements.
+ * @param length Pointer to an int32_t specifying the buffer size on input and receiving the actual
+ *               barcode length on output.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Barcode metadata was present and copied successfully.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context pointer is invalid.
+ * @retval AARUF_ERROR_METADATA_NOT_PRESENT (-30) No barcode metadata exists in the image.
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-10) The supplied buffer was too small.
+ *
+ * @note Barcode values can be strict alphanumeric codes (e.g., LTO cartridge IDs) or full strings from
+ *       custom labeling systems. Preserve the returned string exactly for catalog interoperability.
+ */
+int32_t aaruf_get_media_barcode(const void *context, uint8_t *buffer, int32_t *length)
+{
+    TRACE("Entering aaruf_get_media_barcode(%p, %p, %d)", context, buffer, *length);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_media_barcode() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_media_barcode() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.MediaBarcode == NULL ||
+       ctx->metadataBlockHeader.mediaBarcodeLength == 0)
+    {
+        FATAL("No metadata block present");
+
+        TRACE("Exiting aaruf_get_media_barcode() = AARUF_ERROR_METADATA_NOT_PRESENT");
+        return AARUF_ERROR_METADATA_NOT_PRESENT;
+    }
+
+    if(buffer == NULL || *length < ctx->metadataBlockHeader.mediaBarcodeLength)
+    {
+        *length = ctx->metadataBlockHeader.mediaBarcodeLength;
+
+        TRACE("Exiting aaruf_get_media_barcode() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    // Copy opaque UTF-16LE string
+    memcpy(buffer, ctx->imageInfo.MediaBarcode, ctx->metadataBlockHeader.mediaBarcodeLength);
+    *length = ctx->metadataBlockHeader.mediaBarcodeLength;
+
+    TRACE("Exiting aaruf_get_media_barcode(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Retrieves the media part number recorded in the MetadataBlock.
+ *
+ * Provides access to the UTF-16LE encoded part number identifying the precise catalog or ordering
+ * code for the physical medium. Part numbers help archivists procure exact replacements and document
+ * specific media variants used during acquisition.
+ *
+ * @param context Pointer to a valid aaruformat context.
+ * @param buffer Destination buffer for the part number string. May be NULL while querying size.
+ * @param length Pointer to an int32_t that supplies the buffer size on input and is updated with the
+ *               actual part number length on output.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Part number metadata was returned successfully.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context pointer is invalid.
+ * @retval AARUF_ERROR_METADATA_NOT_PRESENT (-30) No part number metadata exists.
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-10) The provided buffer was insufficient; *length contains the
+ *         required size.
+ *
+ * @note Part numbers may include manufacturer-specific formatting such as hyphens or suffix letters.
+ *       The library stores and returns the data verbatim.
+ */
+int32_t aaruf_get_media_part_number(const void *context, uint8_t *buffer, int32_t *length)
+{
+    TRACE("Entering aaruf_get_media_part_number(%p, %p, %d)", context, buffer, *length);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_media_part_number() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_media_part_number() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.MediaPartNumber == NULL ||
+       ctx->metadataBlockHeader.mediaPartNumberLength == 0)
+    {
+        FATAL("No metadata block present");
+
+        TRACE("Exiting aaruf_get_media_part_number() = AARUF_ERROR_METADATA_NOT_PRESENT");
+        return AARUF_ERROR_METADATA_NOT_PRESENT;
+    }
+
+    if(buffer == NULL || *length < ctx->metadataBlockHeader.mediaPartNumberLength)
+    {
+        *length = ctx->metadataBlockHeader.mediaPartNumberLength;
+
+        TRACE("Exiting aaruf_get_media_part_number() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    // Copy opaque UTF-16LE string
+    memcpy(buffer, ctx->imageInfo.MediaPartNumber, ctx->metadataBlockHeader.mediaPartNumberLength);
+    *length = ctx->metadataBlockHeader.mediaPartNumberLength;
+
+    TRACE("Exiting aaruf_get_media_part_number(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Retrieves the drive manufacturer metadata captured during imaging.
+ *
+ * Copies the UTF-16LE encoded manufacturer name of the device used to read or write the medium. This
+ * information documents the hardware involved in the imaging process, which is crucial for forensic
+ * reporting and reproducibility studies.
+ *
+ * @param context Pointer to a valid aaruformat context.
+ * @param buffer Destination buffer for the manufacturer string. May be NULL when querying required
+ *               length.
+ * @param length Pointer to an int32_t specifying the buffer size on input and receiving the actual
+ *               metadata length on output.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Drive manufacturer metadata was copied successfully.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context pointer is invalid.
+ * @retval AARUF_ERROR_METADATA_NOT_PRESENT (-30) The image lacks drive manufacturer metadata.
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-10) The provided buffer is too small; *length holds the
+ *         required size for a subsequent call.
+ *
+ * @note The returned manufacturer string corresponds to the value recorded by aaruf_set_drive_manufacturer()
+ *       and may include branding or OEM designations.
+ */
+int32_t aaruf_get_drive_manufacturer(const void *context, uint8_t *buffer, int32_t *length)
+{
+    TRACE("Entering aaruf_get_drive_manufacturer(%p, %p, %d)", context, buffer, *length);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_drive_manufacturer() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_drive_manufacturer() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.DriveManufacturer == NULL ||
+       ctx->metadataBlockHeader.driveManufacturerLength == 0)
+    {
+        FATAL("No metadata block present");
+
+        TRACE("Exiting aaruf_get_drive_manufacturer() = AARUF_ERROR_METADATA_NOT_PRESENT");
+        return AARUF_ERROR_METADATA_NOT_PRESENT;
+    }
+
+    if(buffer == NULL || *length < ctx->metadataBlockHeader.driveManufacturerLength)
+    {
+        *length = ctx->metadataBlockHeader.driveManufacturerLength;
+
+        TRACE("Exiting aaruf_get_drive_manufacturer() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    // Copy opaque UTF-16LE string
+    memcpy(buffer, ctx->imageInfo.DriveManufacturer, ctx->metadataBlockHeader.driveManufacturerLength);
+    *length = ctx->metadataBlockHeader.driveManufacturerLength;
+
+    TRACE("Exiting aaruf_get_drive_manufacturer(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Retrieves the device model information for the imaging drive.
+ *
+ * Returns the UTF-16LE encoded model identifier for the drive used during acquisition. The model
+ * metadata provides finer granularity than the manufacturer name, enabling detailed documentation of
+ * imaging hardware capabilities and behavior.
+ *
+ * @param context Pointer to a valid aaruformat context.
+ * @param buffer Buffer that receives the model string; may be NULL while probing required capacity.
+ * @param length Pointer to an int32_t indicating buffer size on input and receiving the metadata length
+ *               on output.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Drive model metadata was available and copied.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context pointer is invalid.
+ * @retval AARUF_ERROR_METADATA_NOT_PRESENT (-30) No drive model metadata exists in the image.
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-10) The supplied buffer was insufficient; *length is updated.
+ *
+ * @note Model strings can include firmware suffixes, interface hints, or OEM variations. Consume the
+ *       data verbatim to maintain accurate provenance records.
+ */
+int32_t aaruf_get_drive_model(const void *context, uint8_t *buffer, int32_t *length)
+{
+    TRACE("Entering aaruf_get_drive_model(%p, %p, %d)", context, buffer, *length);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_drive_model() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_drive_model() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.DriveModel == NULL ||
+       ctx->metadataBlockHeader.driveModelLength == 0)
+    {
+        FATAL("No metadata block present");
+
+        TRACE("Exiting aaruf_get_drive_model() = AARUF_ERROR_METADATA_NOT_PRESENT");
+        return AARUF_ERROR_METADATA_NOT_PRESENT;
+    }
+
+    if(buffer == NULL || *length < ctx->metadataBlockHeader.driveModelLength)
+    {
+        *length = ctx->metadataBlockHeader.driveModelLength;
+
+        TRACE("Exiting aaruf_get_drive_model() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    // Copy opaque UTF-16LE string
+    memcpy(buffer, ctx->imageInfo.DriveModel, ctx->metadataBlockHeader.driveModelLength);
+    *length = ctx->metadataBlockHeader.driveModelLength;
+
+    TRACE("Exiting aaruf_get_drive_model(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Retrieves the imaging drive's serial number metadata.
+ *
+ * Copies the UTF-16LE encoded serial number reported for the drive used during the imaging session.
+ * This metadata enables correlation between images and specific hardware units for forensic chain of
+ * custody or quality assurance workflows.
+ *
+ * @param context Pointer to a valid aaruformat context.
+ * @param buffer Destination buffer for the serial number; may be NULL when querying size.
+ * @param length Pointer to an int32_t carrying the buffer size on input and receiving the actual
+ *               serial number length on output.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Drive serial number metadata was copied to @p buffer.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context pointer is invalid.
+ * @retval AARUF_ERROR_METADATA_NOT_PRESENT (-30) No drive serial number metadata is available.
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-10) The provided buffer was insufficient.
+ *
+ * @note Serial numbers are stored exactly as returned by the imaging hardware and may include leading
+ *       zeros or spacing that should be preserved.
+ */
+int32_t aaruf_get_drive_serial_number(const void *context, uint8_t *buffer, int32_t *length)
+{
+    TRACE("Entering aaruf_get_drive_serial_number(%p, %p, %d)", context, buffer, *length);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_drive_serial_number() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_drive_serial_number() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.DriveSerialNumber == NULL ||
+       ctx->metadataBlockHeader.driveSerialNumberLength == 0)
+    {
+        FATAL("No metadata block present");
+
+        TRACE("Exiting aaruf_get_drive_serial_number() = AARUF_ERROR_METADATA_NOT_PRESENT");
+        return AARUF_ERROR_METADATA_NOT_PRESENT;
+    }
+
+    if(buffer == NULL || *length < ctx->metadataBlockHeader.driveSerialNumberLength)
+    {
+        *length = ctx->metadataBlockHeader.driveSerialNumberLength;
+
+        TRACE("Exiting aaruf_get_drive_serial_number() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    // Copy opaque UTF-16LE string
+    memcpy(buffer, ctx->imageInfo.DriveSerialNumber, ctx->metadataBlockHeader.driveSerialNumberLength);
+    *length = ctx->metadataBlockHeader.driveSerialNumberLength;
+
+    TRACE("Exiting aaruf_get_drive_serial_number(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Retrieves the firmware revision metadata for the imaging drive.
+ *
+ * Returns the UTF-16LE encoded firmware revision string that was captured when the image was created.
+ * Firmware information is critical for reproducing imaging environments and diagnosing drive-specific
+ * behavior or bugs.
+ *
+ * @param context Pointer to a valid aaruformat context.
+ * @param buffer Destination buffer for the firmware revision string. May be NULL when probing size.
+ * @param length Pointer to an int32_t that specifies the buffer capacity in bytes on input and is
+ *               updated with the actual metadata length on output.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Firmware revision metadata was present and copied successfully.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context pointer is invalid.
+ * @retval AARUF_ERROR_METADATA_NOT_PRESENT (-30) No firmware metadata exists in the image.
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-10) The supplied buffer was too small; *length is updated.
+ *
+ * @note Firmware revision formats vary between manufacturers (e.g., numeric, alphanumeric, dot-separated).
+ *       The library stores the data verbatim without attempting normalization.
+ */
+int32_t aaruf_get_drive_firmware_revision(const void *context, uint8_t *buffer, int32_t *length)
+{
+    TRACE("Entering aaruf_get_drive_firmware_revision(%p, %p, %d)", context, buffer, *length);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_drive_firmware_revision() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformatContext *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_drive_firmware_revision() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.DriveFirmwareRevision == NULL ||
+       ctx->metadataBlockHeader.driveFirmwareRevisionLength == 0)
+    {
+        FATAL("No metadata block present");
+
+        TRACE("Exiting aaruf_get_drive_firmware_revision() = AARUF_ERROR_METADATA_NOT_PRESENT");
+        return AARUF_ERROR_METADATA_NOT_PRESENT;
+    }
+
+    if(buffer == NULL || *length < ctx->metadataBlockHeader.driveFirmwareRevisionLength)
+    {
+        *length = ctx->metadataBlockHeader.driveFirmwareRevisionLength;
+
+        TRACE("Exiting aaruf_get_drive_firmware_revision() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    // Copy opaque UTF-16LE string
+    memcpy(buffer, ctx->imageInfo.DriveFirmwareRevision, ctx->metadataBlockHeader.driveFirmwareRevisionLength);
+    *length = ctx->metadataBlockHeader.driveFirmwareRevisionLength;
+
+    TRACE("Exiting aaruf_get_drive_firmware_revision(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
     return AARUF_STATUS_OK;
 }
