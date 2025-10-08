@@ -16,6 +16,8 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <limits.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,6 +26,8 @@
 #include "internal.h"
 #include "log.h"
 #include "utarray.h"
+
+static bool add_subindex_entries(aaruformatContext *ctx, UT_array *index_entries, const IndexEntry *subindex_entry);
 
 /**
  * @brief Processes an index block (version 3) from the image stream.
@@ -105,11 +109,32 @@ UT_array *process_index_v3(aaruformatContext *ctx)
 
     utarray_new(index_entries, &index_entry_icd);
 
+    if(index_entries == NULL)
+    {
+        FATAL("Could not allocate memory for index entries array.");
+        TRACE("Exiting process_index_v3() = NULL");
+        return NULL;
+    }
+
     // Read the index header
     TRACE("Reading index header at position %llu", ctx->header.indexOffset);
-    fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET);
+    if(fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET) != 0)
+    {
+        FATAL("Could not seek to index header at %llu.", ctx->header.indexOffset);
+        utarray_free(index_entries);
+
+        TRACE("Exiting process_index_v3() = NULL");
+        return NULL;
+    }
     IndexHeader3 idx_header;
-    fread(&idx_header, sizeof(IndexHeader3), 1, ctx->imageStream);
+    if(fread(&idx_header, sizeof(IndexHeader3), 1, ctx->imageStream) != 1)
+    {
+        FATAL("Could not read index header at %llu.", ctx->header.indexOffset);
+        utarray_free(index_entries);
+
+        TRACE("Exiting process_index_v3() = NULL");
+        return NULL;
+    }
 
     // Check if the index header is valid
     if(idx_header.identifier != IndexBlock3)
@@ -121,19 +146,34 @@ UT_array *process_index_v3(aaruformatContext *ctx)
         return NULL;
     }
 
-    for(int i = 0; i < idx_header.entries; i++)
+    for(uint64_t i = 0; i < idx_header.entries; i++)
     {
-        fread(&entry, sizeof(IndexEntry), 1, ctx->imageStream);
+        if(fread(&entry, sizeof(IndexEntry), 1, ctx->imageStream) != 1)
+        {
+            FATAL("Could not read index entry %llu at %llu.", (unsigned long long)i, ctx->header.indexOffset);
+            utarray_free(index_entries);
+
+            TRACE("Exiting process_index_v3() = NULL");
+            return NULL;
+        }
+
         if(entry.blockType == IndexBlock3)
         {
             // If the entry is a subindex, we need to read its entries
-            add_subindex_entries(ctx, index_entries, &entry);
+            if(!add_subindex_entries(ctx, index_entries, &entry))
+            {
+                utarray_free(index_entries);
+
+                TRACE("Exiting process_index_v3() = NULL");
+                return NULL;
+            }
             continue;
         }
         utarray_push_back(index_entries, &entry);
     }
 
-    TRACE("Read %d index entries from index block at position %llu", idx_header.entries, ctx->header.indexOffset);
+    TRACE("Read %llu index entries from index block at position %llu", (unsigned long long)idx_header.entries,
+          ctx->header.indexOffset);
     return index_entries;
 }
 
@@ -150,12 +190,13 @@ UT_array *process_index_v3(aaruformatContext *ctx)
  * @param index_entries Pointer to the UT_array of main index entries to append to.
  * @param subindex_entry Pointer to the IndexEntry describing the subindex location and metadata.
  *
+ * @return Returns true when entries are appended successfully, false when an error occurs.
+ *
  * @note Function Behavior:
- * @retval No return value (void function) The function operates through side effects on the index_entries array:
- *         - Successfully appends subindex entries when all parameters are valid and file I/O succeeds
- *         - Recursively processes nested subindexes when entries have blockType == IndexBlock3
- *         - Silently returns without modification when validation fails or errors occur
- *         - Does not perform error reporting beyond logging (errors are handled gracefully)
+ *       - Successfully appends subindex entries when all parameters are valid and file I/O succeeds
+ *       - Recursively processes nested subindexes when entries have blockType == IndexBlock3
+ *       - Returns false without modifying the array when validation fails or errors occur
+ *       - Does not perform error reporting beyond logging (errors are handled gracefully)
  *
  * @note Success Conditions - Entries are added when:
  *         - All input parameters (ctx, index_entries, subindex_entry) are non-NULL
@@ -166,7 +207,7 @@ UT_array *process_index_v3(aaruformatContext *ctx)
  *         - All entries in the subindex are successfully read and processed
  *         - Recursive calls for nested subindexes complete successfully
  *
- * @note Failure Conditions - Function returns silently when:
+ * @note Failure Conditions - Function returns false when:
  *         - Any input parameter is NULL (ctx, index_entries, or subindex_entry)
  *         - The image stream (ctx->imageStream) is NULL or invalid
  *         - File I/O errors prevent reading the subindex header or entries
@@ -203,44 +244,77 @@ UT_array *process_index_v3(aaruformatContext *ctx)
  * @warning No validation is performed on individual IndexEntry contents - only
  *          structural validation of subindex headers is done.
  */
-void add_subindex_entries(aaruformatContext *ctx, UT_array *index_entries, IndexEntry *subindex_entry)
+static bool add_subindex_entries(aaruformatContext *ctx, UT_array *index_entries, const IndexEntry *subindex_entry)
 {
     TRACE("Entering add_subindex_entries(%p, %p, %p)", ctx, index_entries, subindex_entry);
 
     IndexHeader3 subindex_header;
     IndexEntry   entry;
 
-    if(ctx == NULL || ctx->imageStream == NULL || index_entries == NULL || subindex_entry == NULL) return;
+    if(ctx == NULL || ctx->imageStream == NULL || index_entries == NULL || subindex_entry == NULL)
+    {
+        TRACE("Exiting add_subindex_entries() = false (invalid parameters)");
+        return false;
+    }
 
     // Seek to the subindex
-    fseek(ctx->imageStream, subindex_entry->offset, SEEK_SET);
+    if(fseek(ctx->imageStream, subindex_entry->offset, SEEK_SET) != 0)
+    {
+        FATAL("Could not seek to subindex header at %llu.", (unsigned long long)subindex_entry->offset);
+        TRACE("Exiting add_subindex_entries() = false (seek failed)");
+        return false;
+    }
 
     // Read the subindex header
-    fread(&subindex_header, sizeof(IndexHeader3), 1, ctx->imageStream);
+    if(fread(&subindex_header, sizeof(IndexHeader3), 1, ctx->imageStream) != 1)
+    {
+        FATAL("Could not read subindex header at %llu.", (unsigned long long)subindex_entry->offset);
+        TRACE("Exiting add_subindex_entries() = false (header read failed)");
+        return false;
+    }
 
     // Check if the subindex header is valid
     if(subindex_header.identifier != IndexBlock3)
     {
         FATAL("Incorrect subindex identifier.");
 
-        TRACE("Exiting add_subindex_entries() without adding entries");
-        return;
+        TRACE("Exiting add_subindex_entries() = false (invalid identifier)");
+        return false;
+    }
+
+    if(subindex_header.entries != 0 && subindex_header.entries > SIZE_MAX / sizeof(IndexEntry))
+    {
+        FATAL("Subindex entry count %llu is too large to process.", (unsigned long long)subindex_header.entries);
+        TRACE("Exiting add_subindex_entries() = false (entry count overflow)");
+        return false;
     }
 
     // Read each entry in the subindex and add it to the main index entries array
-    for(int i = 0; i < subindex_header.entries; i++)
+    for(uint64_t i = 0; i < subindex_header.entries; i++)
     {
-        fread(&entry, sizeof(IndexEntry), 1, ctx->imageStream);
+        if(fread(&entry, sizeof(IndexEntry), 1, ctx->imageStream) != 1)
+        {
+            FATAL("Could not read subindex entry %llu at %llu.", (unsigned long long)i,
+                  (unsigned long long)subindex_entry->offset);
+            TRACE("Exiting add_subindex_entries() = false (entry read failed)");
+            return false;
+        }
         if(entry.blockType == IndexBlock3)
         {
             // If the entry is a subindex, we need to read its entries
-            add_subindex_entries(ctx, index_entries, &entry);
+            if(!add_subindex_entries(ctx, index_entries, &entry))
+            {
+                TRACE("Exiting add_subindex_entries() = false (nested subindex failed)");
+                return false;
+            }
             continue;
         }
         utarray_push_back(index_entries, &entry);
     }
 
-    TRACE("Exiting add_subindex_entries() after adding %d entries", subindex_header.entries);
+    TRACE("Exiting add_subindex_entries() = true after appending %llu entries",
+          (unsigned long long)subindex_header.entries);
+    return true;
 }
 
 /**
@@ -344,13 +418,19 @@ int32_t verify_index_v3(aaruformatContext *ctx)
     {
         FATAL("Invalid context or image stream.");
 
-        TRACE("Exiting verify_index_v2() = AARUF_ERROR_NOT_AARUFORMAT");
+        TRACE("Exiting verify_index_v3() = AARUF_ERROR_NOT_AARUFORMAT");
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
     // This will traverse all blocks and check their CRC64 without uncompressing them
     TRACE("Checking index integrity at %llu.", ctx->header.indexOffset);
-    fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET);
+    if(fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET) != 0)
+    {
+        FATAL("Could not seek to index header at %llu.", ctx->header.indexOffset);
+
+        TRACE("Exiting verify_index_v3() = AARUF_ERROR_CANNOT_READ_HEADER");
+        return AARUF_ERROR_CANNOT_READ_HEADER;
+    }
 
     // Read the index header
     TRACE("Reading index header at position %llu", ctx->header.indexOffset);
@@ -372,30 +452,88 @@ int32_t verify_index_v3(aaruformatContext *ctx)
         return AARUF_ERROR_CANNOT_READ_INDEX;
     }
 
-    TRACE("Index at %llu contains %d entries.", ctx->header.indexOffset, index_header.entries);
+    TRACE("Index at %llu contains %llu entries.", ctx->header.indexOffset, (unsigned long long)index_header.entries);
 
-    index_entries = malloc(sizeof(IndexEntry) * index_header.entries);
-
-    if(index_entries == NULL)
+    if(index_header.entries != 0 && index_header.entries > SIZE_MAX / sizeof(IndexEntry))
     {
-        FATAL("Cannot allocate memory for index entries.");
+        FATAL("Index entry count %llu is too large to process.", (unsigned long long)index_header.entries);
 
         TRACE("Exiting verify_index_v3() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
         return AARUF_ERROR_NOT_ENOUGH_MEMORY;
     }
 
-    read_bytes = fread(index_entries, 1, sizeof(IndexEntry) * index_header.entries, ctx->imageStream);
+    const size_t entries_size = (size_t)index_header.entries * sizeof(IndexEntry);
 
-    if(read_bytes != sizeof(IndexEntry) * index_header.entries)
+    if(entries_size > 0)
     {
-        FATAL("Could not read index entries.");
+        index_entries = malloc(entries_size);
+
+        if(index_entries == NULL)
+        {
+            FATAL("Cannot allocate memory for index entries.");
+
+            TRACE("Exiting verify_index_v3() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        }
+
+        read_bytes = fread(index_entries, 1, entries_size, ctx->imageStream);
+
+        if(read_bytes != entries_size)
+        {
+            FATAL("Could not read index entries.");
+            free(index_entries);
+
+            TRACE("Exiting verify_index_v3() = AARUF_ERROR_CANNOT_READ_INDEX");
+            return AARUF_ERROR_CANNOT_READ_INDEX;
+        }
+    }
+
+    crc64_ctx *crc_ctx = aaruf_crc64_init();
+
+    if(crc_ctx == NULL)
+    {
+        FATAL("Cannot initialize CRC64 context.");
+        free(index_entries);
+
+        TRACE("Exiting verify_index_v3() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    if(entries_size > 0)
+    {
+        const uint8_t *cursor    = (const uint8_t *)index_entries;
+        size_t         remaining = entries_size;
+
+        while(remaining > 0)
+        {
+            const uint32_t chunk = remaining > UINT32_MAX ? UINT32_MAX : (uint32_t)remaining;
+
+            if(aaruf_crc64_update(crc_ctx, cursor, chunk) != 0)
+            {
+                FATAL("Failed to update index CRC.");
+                aaruf_crc64_free(crc_ctx);
+                free(index_entries);
+
+                TRACE("Exiting verify_index_v3() = AARUF_ERROR_CANNOT_READ_INDEX");
+                return AARUF_ERROR_CANNOT_READ_INDEX;
+            }
+
+            cursor += chunk;
+            remaining -= chunk;
+        }
+    }
+
+    if(aaruf_crc64_final(crc_ctx, &crc64) != 0)
+    {
+        FATAL("Failed to finalize index CRC.");
+        aaruf_crc64_free(crc_ctx);
         free(index_entries);
 
         TRACE("Exiting verify_index_v3() = AARUF_ERROR_CANNOT_READ_INDEX");
         return AARUF_ERROR_CANNOT_READ_INDEX;
     }
 
-    crc64 = aaruf_crc64_data((const uint8_t *)index_entries, sizeof(IndexEntry) * index_header.entries);
+    aaruf_crc64_free(crc_ctx);
 
     // Due to how C# wrote it, it is effectively reversed
     if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
@@ -408,6 +546,8 @@ int32_t verify_index_v3(aaruformatContext *ctx)
         TRACE("Exiting verify_index_v3() = AARUF_ERROR_INVALID_BLOCK_CRC");
         return AARUF_ERROR_INVALID_BLOCK_CRC;
     }
+
+    free(index_entries);
 
     TRACE("Exiting verify_index_v3() = AARUF_OK");
     return AARUF_STATUS_OK;
