@@ -19,6 +19,7 @@
 
 #include <errno.h>
 #include <locale.h>
+#include <time.h>
 #include <unicode/ucnv.h>
 #include <unicode/ustring.h>
 
@@ -26,6 +27,45 @@
 #include <sys/types.h>
 
 #include "aaruformattool.h"
+
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#endif
+
+// Converts Windows FILETIME (100ns intervals since 1601-01-01) to time_t (seconds since 1970-01-01)
+static const char *format_filetime(uint64_t filetime)
+{
+    static char    buf[64];
+    const uint64_t EPOCH_DIFF = 116444736000000000ULL;
+#if defined(_WIN32) || defined(_WIN64)
+    FILETIME   ft;
+    SYSTEMTIME st;
+    ft.dwLowDateTime  = (DWORD)(filetime & 0xFFFFFFFF);
+    ft.dwHighDateTime = (DWORD)(filetime >> 32);
+    if(FileTimeToSystemTime(&ft, &st))
+    {
+        // Format: YYYY-MM-DD HH:MM:SS
+        snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute,
+                 st.wSecond);
+    }
+    else { snprintf(buf, sizeof(buf), "%llu", filetime); }
+    return buf;
+#else
+    time_t    t;
+    struct tm tm_info;
+    if(filetime < EPOCH_DIFF)
+    {
+        snprintf(buf, sizeof(buf), "%llu", filetime);
+        return buf;
+    }
+    t = (time_t)((filetime - EPOCH_DIFF) / 10000000ULL);
+    if(localtime_r(&t, &tm_info))
+        strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tm_info);
+    else
+        snprintf(buf, sizeof(buf), "%llu", filetime);
+    return buf;
+#endif
+}
 
 int info(const char *path)
 {
@@ -60,8 +100,8 @@ int info(const char *path)
     printf("\tImage format version: %d.%d\n", ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
     printf("\tMedia type: %u (%s)\n", ctx->header.mediaType, media_type_to_string(ctx->header.mediaType));
     printf("\tIndex offset: %llu\n", ctx->header.indexOffset);
-    printf("\tCreation time: %lld\n", ctx->header.creationTime);
-    printf("\tLast written time: %lld\n", ctx->header.lastWrittenTime);
+    printf("\tCreation time: %s\n", format_filetime(ctx->header.creationTime));
+    printf("\tLast written time: %s\n", format_filetime(ctx->header.lastWrittenTime));
 
     // TODO: Traverse media tags
 
@@ -418,8 +458,8 @@ int info(const char *path)
     if(ctx->imageInfo.ApplicationVersion != NULL)
         printf("\tApplication version: %s\n", ctx->imageInfo.ApplicationVersion);
     if(ctx->imageInfo.Creator != NULL) printf("\tCreator: %s\n", ctx->imageInfo.Creator);
-    printf("\tCreation time: %lld\n", ctx->imageInfo.CreationTime);
-    printf("\tLast written time: %lld\n", ctx->imageInfo.LastModificationTime);
+    printf("\tCreation time: %s\n", format_filetime(ctx->imageInfo.CreationTime));
+    printf("\tLast written time: %s\n", format_filetime(ctx->imageInfo.LastModificationTime));
     if(ctx->imageInfo.Comments != NULL) printf("\tComments: %s\n", ctx->imageInfo.Comments);
     if(ctx->imageInfo.MediaTitle != NULL) printf("\tMedia title: %s\n", ctx->imageInfo.MediaTitle);
     if(ctx->imageInfo.MediaManufacturer != NULL) printf("\tMedia manufacturer: %s\n", ctx->imageInfo.MediaManufacturer);
