@@ -150,7 +150,6 @@ void *aaruf_open(const char *filepath)  // NOLINT(readability-function-size)
 
     TRACE("Allocating memory for context");
     ctx = (aaruformatContext *)malloc(sizeof(aaruformatContext));
-    memset(ctx, 0, sizeof(aaruformatContext));
 
     if(ctx == NULL)
     {
@@ -160,6 +159,8 @@ void *aaruf_open(const char *filepath)  // NOLINT(readability-function-size)
         TRACE("Exiting aaruf_open() = NULL");
         return NULL;
     }
+
+    memset(ctx, 0, sizeof(aaruformatContext));
 
     TRACE("Opening file %s", filepath);
     ctx->imageStream = fopen(filepath, "rb");
