@@ -90,11 +90,33 @@ UT_array *process_index_v1(aaruformatContext *ctx)
 
     utarray_new(index_entries, &index_entry_icd);
 
+    if(index_entries == NULL)
+    {
+        FATAL("Could not allocate memory for index entries array.");
+        TRACE("Exiting process_index_v1() = NULL");
+        return NULL;
+    }
+
     // Read the index header
     TRACE("Reading index header at position %llu", ctx->header.indexOffset);
-    fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET);
+    if(fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET) != 0)
+    {
+        FATAL("Could not seek to index header at %llu.", ctx->header.indexOffset);
+        utarray_free(index_entries);
+
+        TRACE("Exiting process_index_v1() = NULL");
+        return NULL;
+    }
+
     IndexHeader idx_header;
-    fread(&idx_header, sizeof(IndexHeader), 1, ctx->imageStream);
+    if(fread(&idx_header, sizeof(IndexHeader), 1, ctx->imageStream) != 1)
+    {
+        FATAL("Could not read index header at %llu.", ctx->header.indexOffset);
+        utarray_free(index_entries);
+
+        TRACE("Exiting process_index_v1() = NULL");
+        return NULL;
+    }
 
     // Check if the index header is valid
     if(idx_header.identifier != IndexBlock)
@@ -108,7 +130,15 @@ UT_array *process_index_v1(aaruformatContext *ctx)
 
     for(int i = 0; i < idx_header.entries; i++)
     {
-        fread(&entry, sizeof(IndexEntry), 1, ctx->imageStream);
+        if(fread(&entry, sizeof(IndexEntry), 1, ctx->imageStream) != 1)
+        {
+            FATAL("Could not read index entry %d at %llu.", i, ctx->header.indexOffset);
+            utarray_free(index_entries);
+
+            TRACE("Exiting process_index_v1() = NULL");
+            return NULL;
+        }
+
         utarray_push_back(index_entries, &entry);
     }
 
@@ -211,7 +241,13 @@ int32_t verify_index_v1(aaruformatContext *ctx)
 
     // This will traverse all blocks and check their CRC64 without uncompressing them
     TRACE("Checking index integrity at %llu.", ctx->header.indexOffset);
-    fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET);
+    if(fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET) != 0)
+    {
+        FATAL("Could not seek to index header at %llu.", ctx->header.indexOffset);
+
+        TRACE("Exiting verify_index_v1() = AARUF_ERROR_CANNOT_READ_HEADER");
+        return AARUF_ERROR_CANNOT_READ_HEADER;
+    }
 
     // Read the index header
     TRACE("Reading index header at position %llu", ctx->header.indexOffset);
@@ -268,6 +304,8 @@ int32_t verify_index_v1(aaruformatContext *ctx)
         TRACE("Exiting verify_index_v1() = AARUF_ERROR_INVALID_BLOCK_CRC");
         return AARUF_ERROR_INVALID_BLOCK_CRC;
     }
+
+    free(index_entries);
 
     TRACE("Exiting verify_index_v1() = AARUF_OK");
     return AARUF_STATUS_OK;
