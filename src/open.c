@@ -411,9 +411,11 @@ void *aaruf_open(const char *filepath)  // NOLINT(readability-function-size)
             case TapeFileBlock:
                 process_tape_files_block(ctx, entry);
 
+                break;
             case TapePartitionBlock:
                 process_tape_partitions_block(ctx, entry);
 
+                break;
             default:
                 TRACE("Unhandled block type %4.4s with data type %d is indexed to be at %" PRIu64 "",
                       (char *)&entry->blockType, entry->dataType, entry->offset);
