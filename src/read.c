@@ -371,6 +371,7 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
         if(read_bytes != sizeof(BlockHeader))
         {
             FATAL("Error reading block header");
+            free(block_header);
 
             TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_READ_HEADER");
             return AARUF_ERROR_CANNOT_READ_HEADER;
@@ -1017,6 +1018,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
             if(!trk_found)
             {
                 FATAL("Track not found");
+                free(bare_data);
 
                 TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_TRACK_NOT_FOUND");
                 return AARUF_ERROR_TRACK_NOT_FOUND;
@@ -1027,6 +1029,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                 case Audio:
                 case Data:
                     memcpy(data, bare_data, bare_length);
+                    free(bare_data);
                     return res;
                 case CdMode1:
                     memcpy(data + 16, bare_data, 2048);
@@ -1051,10 +1054,12 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                     else
                     {
                         TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_REACHED_UNREACHABLE_CODE");
+                        free(bare_data);
                         return AARUF_ERROR_REACHED_UNREACHABLE_CODE;
                     }
 
                     if(res != AARUF_STATUS_OK) return res;
+                        free(bare_data);
 
                     if(ctx->sector_suffix != NULL)
                         memcpy(data + 2064, ctx->sector_suffix + corrected_sector_address * 288, 288);
@@ -1076,9 +1081,11 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                     else
                     {
                         TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_REACHED_UNREACHABLE_CODE");
+                        free(bare_data);
                         return AARUF_ERROR_REACHED_UNREACHABLE_CODE;
                     }
 
+                    free(bare_data);
                     return res;
                 case CdMode2Formless:
                 case CdMode2Form1:
@@ -1103,10 +1110,12 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                     else
                     {
                         TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_REACHED_UNREACHABLE_CODE");
+                        free(bare_data);
                         return AARUF_ERROR_REACHED_UNREACHABLE_CODE;
                     }
 
                     if(res != AARUF_STATUS_OK) return res;
+                        free(bare_data);
 
                     if(ctx->mode2_subheaders != NULL && ctx->sectorSuffixDdt != NULL)
                     {
@@ -1138,6 +1147,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                     else
                         memcpy(data + 16, bare_data, 2336);
 
+                    free(bare_data);
                     return res;
                 default:
                     FATAL("Invalid track type %d", trk.type);
@@ -1205,7 +1215,6 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
 
                     if(bare_length != 512)
                     {
-                        FATAL("Bare data length is %u, expected 512", bareLength);
                         free(bare_data);
 
                         TRACE("Exiting aaruf_read_sector_long() = %d", res);
@@ -1216,9 +1225,11 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                     memcpy(data, bare_data, 512);
 
                     free(bare_data);
+                        free(bare_data);
 
                     TRACE("Exiting aaruf_read_sector_long() = %d", res);
                     return res;
+                    free(bare_data);
                 default:
                     FATAL("Incorrect media type %d for long sector reading", ctx->imageInfo.MediaType);
 
