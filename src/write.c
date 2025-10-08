@@ -2343,7 +2343,7 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
                 return AARUF_ERROR_INCORRECT_DATA_SIZE;
             }
 
-            if(ctx->sector_decrypted_title_key == NULL) ctx->sector_decrypted_title_key = calloc(1, 4 * total_sectors);
+            if(ctx->sector_decrypted_title_key == NULL) ctx->sector_decrypted_title_key = calloc(1, 5 * total_sectors);
 
             if(ctx->sector_decrypted_title_key == NULL)
             {
