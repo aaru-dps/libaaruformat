@@ -155,7 +155,7 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
        ctx->metadataBlockHeader.mediaModelOffset + ctx->metadataBlockHeader.mediaModelLength <=
            ctx->metadataBlockHeader.blockSize)
     {
-        ctx->imageInfo.MediaModel = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaModelOffset);
+        ctx->imageInfo.MediaModel = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaModelLength);
         if(ctx->imageInfo.MediaModel != NULL)
             memcpy(ctx->imageInfo.MediaModel, ctx->metadataBlock + ctx->metadataBlockHeader.mediaModelOffset,
                    ctx->metadataBlockHeader.mediaModelLength);
@@ -231,7 +231,7 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
         ctx->imageInfo.DriveFirmwareRevision = (uint8_t *)malloc(ctx->metadataBlockHeader.driveFirmwareRevisionLength);
         if(ctx->imageInfo.DriveFirmwareRevision != NULL)
             memcpy(ctx->imageInfo.DriveFirmwareRevision,
-                   ctx->metadataBlock + ctx->metadataBlockHeader.driveFirmwareRevisionLength,
+                   ctx->metadataBlock + ctx->metadataBlockHeader.driveFirmwareRevisionOffset,
                    ctx->metadataBlockHeader.driveFirmwareRevisionLength);
     }
 
@@ -470,7 +470,8 @@ void process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry)
  *
  * @internal
  */
-void process_aaru_metadata_json_block(aaruformatContext *ctx, const IndexEntry *entry){
+void process_aaru_metadata_json_block(aaruformatContext *ctx, const IndexEntry *entry)
+{
     TRACE("Entering process_aaru_metadata_json_block(%p, %p)", ctx, entry);
     int    pos        = 0;
     size_t read_bytes = 0;
