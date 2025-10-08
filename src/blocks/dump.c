@@ -17,13 +17,85 @@
  */
 
 #include <inttypes.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-#include "aaruformat.h"
+#include "aaruformat/consts.h"
+#include "aaruformat/context.h"
+#include "aaruformat/decls.h"
+#include "aaruformat/endian.h"
+#include "aaruformat/enums.h"
+#include "aaruformat/structs/dump.h"
+#include "aaruformat/structs/index.h"
 #include "internal.h"
 #include "log.h"
+
+static void free_dump_hardware_entries_array(DumpHardwareEntriesWithData *entries, uint16_t count)
+{
+    if(entries == NULL) return;
+
+    for(uint16_t e = 0; e < count; e++)
+    {
+        free(entries[e].manufacturer);
+        free(entries[e].model);
+        free(entries[e].revision);
+        free(entries[e].firmware);
+        free(entries[e].serial);
+        free(entries[e].softwareName);
+        free(entries[e].softwareVersion);
+        free(entries[e].softwareOperatingSystem);
+        free(entries[e].extents);
+    }
+}
+
+static void reset_dump_hardware_context(aaruformatContext *ctx)
+{
+    if(ctx == NULL) return;
+
+    free_dump_hardware_entries_array(ctx->dumpHardwareEntriesWithData, ctx->dumpHardwareHeader.entries);
+    free(ctx->dumpHardwareEntriesWithData);
+    ctx->dumpHardwareEntriesWithData = NULL;
+    memset(&ctx->dumpHardwareHeader, 0, sizeof(ctx->dumpHardwareHeader));
+}
+
+static bool read_dump_string(FILE *stream, const char *field_name, uint32_t length, uint32_t *remaining,
+                             uint8_t **destination)
+{
+    if(length == 0) return true;
+
+    if(remaining == NULL || *remaining < length)
+    {
+        TRACE("Dump hardware %s length %u exceeds remaining payload %u", field_name, length,
+              remaining == NULL ? 0 : *remaining);
+        return false;
+    }
+
+    uint8_t *buffer = (uint8_t *)malloc((size_t)length + 1);
+
+    if(buffer == NULL)
+    {
+        TRACE("Could not allocate %s buffer of length %u", field_name, length);
+        return false;
+    }
+
+    size_t bytes_read = fread(buffer, 1, length, stream);
+
+    if(bytes_read != length)
+    {
+        TRACE("Could not read %s field, expected %u bytes got %zu", field_name, length, bytes_read);
+        free(buffer);
+        return false;
+    }
+
+    buffer[length] = 0;
+    *remaining -= length;
+    *destination = buffer;
+
+    return true;
+}
 
 /**
  * @brief Processes a dump hardware block from the image stream.
@@ -36,307 +108,248 @@
 void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
 {
     TRACE("Entering process_dumphw_block(%p, %p)", ctx, entry);
-    int      pos        = 0;
-    size_t   read_bytes = 0;
-    uint16_t e          = 0;
-    uint8_t *data       = NULL;
+    size_t read_bytes = 0;
 
-    // Check if the context and image stream are valid
-    if(ctx == NULL || ctx->imageStream == NULL)
+    if(ctx == NULL || ctx->imageStream == NULL || entry == NULL)
     {
-        FATAL("Invalid context or image stream.");
+        FATAL("Invalid context, image stream, or index entry pointer.");
+        TRACE("Exiting process_dumphw_block()");
+        if(ctx != NULL) reset_dump_hardware_context(ctx);
+        return;
+    }
 
+    if(entry->blockType != DumpHardwareBlock)
+    {
+        TRACE("Index entry block type %u is not DumpHardwareBlock, skipping.", entry->blockType);
         TRACE("Exiting process_dumphw_block()");
         return;
     }
 
-    // Seek to block
-    pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
-    if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
+    if(fseek(ctx->imageStream, (long)entry->offset, SEEK_SET) < 0 || ftell(ctx->imageStream) != entry->offset)
     {
         FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
-
+        reset_dump_hardware_context(ctx);
         TRACE("Exiting process_dumphw_block()");
         return;
     }
 
-    // Even if those two checks shall have been done before
     TRACE("Reading dump hardware block header at position %" PRIu64, entry->offset);
-    read_bytes = fread(&ctx->dumpHardwareHeader, 1, sizeof(DumpHardwareHeader), ctx->imageStream);
+    DumpHardwareHeader header;
+    read_bytes = fread(&header, 1, sizeof(header), ctx->imageStream);
 
-    if(read_bytes != sizeof(DumpHardwareHeader))
+    if(read_bytes != sizeof(header))
     {
-        memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
-        TRACE("Could not read dump hardware block header, continuing...");
+        TRACE("Could not read dump hardware block header (read %zu bytes)", read_bytes);
+        reset_dump_hardware_context(ctx);
         TRACE("Exiting process_dumphw_block()");
         return;
     }
 
-    if(ctx->dumpHardwareHeader.identifier != DumpHardwareBlock)
+    if(header.identifier != DumpHardwareBlock)
     {
-        memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
-        TRACE("Incorrect identifier for data block at position %" PRIu64, entry->offset);
-    }
-
-    TRACE("Allocating memory for dump hardware block of length %u", ctx->dumpHardwareHeader.length);
-    data = (uint8_t *)malloc(ctx->dumpHardwareHeader.length);
-
-    if(data == NULL)
-    {
-        memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
-        TRACE("Could not allocate memory for dump hardware block, continuing...");
+        TRACE("Incorrect identifier 0x%08" PRIx32 " for dump hardware block at position %" PRIu64, header.identifier,
+              entry->offset);
+        reset_dump_hardware_context(ctx);
         TRACE("Exiting process_dumphw_block()");
         return;
     }
 
-    read_bytes = fread(data, 1, ctx->dumpHardwareHeader.length, ctx->imageStream);
-
-    if(read_bytes == ctx->dumpHardwareHeader.length)
+    if(header.entries > 0 && header.length == 0)
     {
-        uint64_t crc64 = aaruf_crc64_data(data, ctx->dumpHardwareHeader.length);
+        TRACE("Dump hardware header indicates %u entries but zero payload length", header.entries);
+        reset_dump_hardware_context(ctx);
+        TRACE("Exiting process_dumphw_block()");
+        return;
+    }
 
-        // Due to how C# wrote it, it is effectively reversed
+    const uint32_t payload_length = header.length;
+
+    if(payload_length > 0)
+    {
+        uint8_t *payload = (uint8_t *)malloc(payload_length);
+
+        if(payload == NULL)
+        {
+            TRACE("Could not allocate %u bytes for dump hardware payload", payload_length);
+            reset_dump_hardware_context(ctx);
+            TRACE("Exiting process_dumphw_block()");
+            return;
+        }
+
+        read_bytes = fread(payload, 1, payload_length, ctx->imageStream);
+
+        if(read_bytes != payload_length)
+        {
+            TRACE("Could not read dump hardware payload, expected %u bytes got %zu", payload_length, read_bytes);
+            free(payload);
+            reset_dump_hardware_context(ctx);
+            TRACE("Exiting process_dumphw_block()");
+            return;
+        }
+
+        uint64_t crc64 = aaruf_crc64_data(payload, payload_length);
+
         if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
 
-        if(crc64 != ctx->dumpHardwareHeader.crc64)
+        if(crc64 != header.crc64)
         {
-            free(data);
-            TRACE("Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64 ", continuing...", crc64,
-                  ctx->dumpHardwareHeader.crc64);
+            TRACE("Dump hardware block CRC mismatch: computed 0x%" PRIx64 " expected 0x%" PRIx64, crc64, header.crc64);
+            free(payload);
+            reset_dump_hardware_context(ctx);
+            TRACE("Exiting process_dumphw_block()");
+            return;
+        }
+
+        free(payload);
+
+        if(fseek(ctx->imageStream, -(long)payload_length, SEEK_CUR) != 0)
+        {
+            TRACE("Could not rewind after CRC verification");
+            reset_dump_hardware_context(ctx);
             TRACE("Exiting process_dumphw_block()");
             return;
         }
     }
 
-    free(data);
-    fseek(ctx->imageStream, -(long)read_bytes, SEEK_CUR);
-
-    ctx->dumpHardwareEntriesWithData =
-        (DumpHardwareEntriesWithData *)malloc(sizeof(DumpHardwareEntriesWithData) * ctx->dumpHardwareHeader.entries);
-
-    if(ctx->dumpHardwareEntriesWithData == NULL)
+    if(header.entries == 0)
     {
-        memset(&ctx->dumpHardwareHeader, 0, sizeof(DumpHardwareHeader));
-        TRACE("Could not allocate memory for dump hardware block, continuing...");
+        reset_dump_hardware_context(ctx);
+        ctx->dumpHardwareHeader = header;
+        TRACE("Dump hardware block contains no entries. Clearing existing metadata.");
         TRACE("Exiting process_dumphw_block()");
         return;
     }
 
-    memset(ctx->dumpHardwareEntriesWithData, 0, sizeof(DumpHardwareEntriesWithData) * ctx->dumpHardwareHeader.entries);
+    const size_t allocation_size = (size_t)header.entries * sizeof(DumpHardwareEntriesWithData);
 
-    TRACE("Processing %u dump hardware block entries", ctx->dumpHardwareHeader.entries);
-    for(e = 0; e < ctx->dumpHardwareHeader.entries; e++)
+    if(allocation_size / sizeof(DumpHardwareEntriesWithData) != header.entries)
     {
-        read_bytes = fread(&ctx->dumpHardwareEntriesWithData[e].entry, 1, sizeof(DumpHardwareEntry), ctx->imageStream);
+        TRACE("Dump hardware entries multiplication overflow (%u entries)", header.entries);
+        reset_dump_hardware_context(ctx);
+        TRACE("Exiting process_dumphw_block()");
+        return;
+    }
+
+    DumpHardwareEntriesWithData *entries =
+        (DumpHardwareEntriesWithData *)calloc(header.entries, sizeof(DumpHardwareEntriesWithData));
+
+    if(entries == NULL)
+    {
+        TRACE("Could not allocate %zu bytes for dump hardware entries", allocation_size);
+        reset_dump_hardware_context(ctx);
+        TRACE("Exiting process_dumphw_block()");
+        return;
+    }
+
+    uint32_t remaining_payload = payload_length;
+    uint16_t processed_entry   = 0;
+
+    TRACE("Processing %u dump hardware block entries", header.entries);
+
+    for(uint16_t e = 0; e < header.entries; e++)
+    {
+        processed_entry                      = e;
+        DumpHardwareEntriesWithData *current = &entries[e];
+
+        if(remaining_payload < sizeof(DumpHardwareEntry))
+        {
+            TRACE("Remaining payload %u too small for dump hardware entry %u", remaining_payload, e);
+            goto parse_failure;
+        }
+
+        read_bytes = fread(&current->entry, 1, sizeof(DumpHardwareEntry), ctx->imageStream);
 
         if(read_bytes != sizeof(DumpHardwareEntry))
         {
-            ctx->dumpHardwareHeader.entries = e;
-            TRACE("Could not read dump hardware block entry, continuing...");
-            break;
+            TRACE("Could not read dump hardware entry %u header (read %zu bytes)", e, read_bytes);
+            goto parse_failure;
         }
 
-        if(ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength > 0)
+        remaining_payload -= sizeof(DumpHardwareEntry);
+
+        if(!read_dump_string(ctx->imageStream, "manufacturer", current->entry.manufacturerLength, &remaining_payload,
+                             &current->manufacturer))
+            goto parse_failure;
+
+        if(!read_dump_string(ctx->imageStream, "model", current->entry.modelLength, &remaining_payload,
+                             &current->model))
+            goto parse_failure;
+
+        if(!read_dump_string(ctx->imageStream, "revision", current->entry.revisionLength, &remaining_payload,
+                             &current->revision))
+            goto parse_failure;
+
+        if(!read_dump_string(ctx->imageStream, "firmware", current->entry.firmwareLength, &remaining_payload,
+                             &current->firmware))
+            goto parse_failure;
+
+        if(!read_dump_string(ctx->imageStream, "serial", current->entry.serialLength, &remaining_payload,
+                             &current->serial))
+            goto parse_failure;
+
+        if(!read_dump_string(ctx->imageStream, "software name", current->entry.softwareNameLength, &remaining_payload,
+                             &current->softwareName))
+            goto parse_failure;
+
+        if(!read_dump_string(ctx->imageStream, "software version", current->entry.softwareVersionLength,
+                             &remaining_payload, &current->softwareVersion))
+            goto parse_failure;
+
+        if(!read_dump_string(ctx->imageStream, "software operating system",
+                             current->entry.softwareOperatingSystemLength, &remaining_payload,
+                             &current->softwareOperatingSystem))
+            goto parse_failure;
+
+        const uint32_t extent_count = current->entry.extents;
+
+        if(extent_count == 0) continue;
+
+        const size_t extent_bytes = (size_t)extent_count * sizeof(DumpExtent);
+
+        if(extent_bytes / sizeof(DumpExtent) != extent_count || extent_bytes > remaining_payload)
         {
-            ctx->dumpHardwareEntriesWithData[e].manufacturer =
-                (uint8_t *)malloc(ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength + 1);
-
-            if(ctx->dumpHardwareEntriesWithData[e].manufacturer != NULL)
-            {
-                ctx->dumpHardwareEntriesWithData[e]
-                    .manufacturer[ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength] = 0;
-                read_bytes = fread(ctx->dumpHardwareEntriesWithData[e].manufacturer, 1,
-                                   ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength, ctx->imageStream);
-
-                if(read_bytes != ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength)
-                {
-                    free(ctx->dumpHardwareEntriesWithData[e].manufacturer);
-                    ctx->dumpHardwareEntriesWithData[e].entry.manufacturerLength = 0;
-                    TRACE("Could not read dump hardware block entry manufacturer, "
-                          "continuing...");
-                }
-            }
+            TRACE("Extent array for entry %u exceeds remaining payload (%zu bytes requested, %u left)", e, extent_bytes,
+                  remaining_payload);
+            goto parse_failure;
         }
 
-        if(ctx->dumpHardwareEntriesWithData[e].entry.modelLength > 0)
+        current->extents = (DumpExtent *)malloc(extent_bytes);
+
+        if(current->extents == NULL)
         {
-            ctx->dumpHardwareEntriesWithData[e].model =
-                (uint8_t *)malloc(ctx->dumpHardwareEntriesWithData[e].entry.modelLength + 1);
-
-            if(ctx->dumpHardwareEntriesWithData[e].model != NULL)
-            {
-                ctx->dumpHardwareEntriesWithData[e].model[ctx->dumpHardwareEntriesWithData[e].entry.modelLength] = 0;
-                read_bytes = fread(ctx->dumpHardwareEntriesWithData[e].model, 1,
-                                   ctx->dumpHardwareEntriesWithData[e].entry.modelLength, ctx->imageStream);
-
-                if(read_bytes != ctx->dumpHardwareEntriesWithData[e].entry.modelLength)
-                {
-                    free(ctx->dumpHardwareEntriesWithData[e].model);
-                    ctx->dumpHardwareEntriesWithData[e].entry.modelLength = 0;
-                    TRACE("Could not read dump hardware block entry model, continuing...");
-                }
-            }
+            TRACE("Could not allocate %zu bytes for dump hardware entry %u extents", extent_bytes, e);
+            goto parse_failure;
         }
 
-        if(ctx->dumpHardwareEntriesWithData[e].entry.revisionLength > 0)
+        const size_t extents_read = fread(current->extents, sizeof(DumpExtent), extent_count, ctx->imageStream);
+
+        if(extents_read != extent_count)
         {
-            ctx->dumpHardwareEntriesWithData[e].revision =
-                (uint8_t *)malloc(ctx->dumpHardwareEntriesWithData[e].entry.revisionLength + 1);
-
-            if(ctx->dumpHardwareEntriesWithData[e].revision != NULL)
-            {
-                ctx->dumpHardwareEntriesWithData[e].revision[ctx->dumpHardwareEntriesWithData[e].entry.revisionLength] =
-                    0;
-                read_bytes = fread(ctx->dumpHardwareEntriesWithData[e].revision, 1,
-                                   ctx->dumpHardwareEntriesWithData[e].entry.revisionLength, ctx->imageStream);
-
-                if(read_bytes != ctx->dumpHardwareEntriesWithData[e].entry.revisionLength)
-                {
-                    free(ctx->dumpHardwareEntriesWithData[e].revision);
-                    ctx->dumpHardwareEntriesWithData[e].entry.revisionLength = 0;
-                    TRACE("Could not read dump hardware block entry revision, "
-                          "continuing...");
-                }
-            }
+            TRACE("Could not read %u dump hardware extents for entry %u (read %zu)", extent_count, e, extents_read);
+            goto parse_failure;
         }
 
-        if(ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength > 0)
-        {
-            ctx->dumpHardwareEntriesWithData[e].firmware =
-                (uint8_t *)malloc(ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength + 1);
+        remaining_payload -= (uint32_t)extent_bytes;
 
-            if(ctx->dumpHardwareEntriesWithData[e].firmware != NULL)
-            {
-                ctx->dumpHardwareEntriesWithData[e].firmware[ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength] =
-                    0;
-                read_bytes = fread(ctx->dumpHardwareEntriesWithData[e].firmware, 1,
-                                   ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength, ctx->imageStream);
-
-                if(read_bytes != ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength)
-                {
-                    free(ctx->dumpHardwareEntriesWithData[e].firmware);
-                    ctx->dumpHardwareEntriesWithData[e].entry.firmwareLength = 0;
-                    TRACE("Could not read dump hardware block entry firmware, "
-                          "continuing...");
-                }
-            }
-        }
-
-        if(ctx->dumpHardwareEntriesWithData[e].entry.serialLength > 0)
-        {
-            ctx->dumpHardwareEntriesWithData[e].serial =
-                (uint8_t *)malloc(ctx->dumpHardwareEntriesWithData[e].entry.serialLength + 1);
-
-            if(ctx->dumpHardwareEntriesWithData[e].serial != NULL)
-            {
-                ctx->dumpHardwareEntriesWithData[e].serial[ctx->dumpHardwareEntriesWithData[e].entry.serialLength] = 0;
-                read_bytes = fread(ctx->dumpHardwareEntriesWithData[e].serial, 1,
-                                   ctx->dumpHardwareEntriesWithData[e].entry.serialLength, ctx->imageStream);
-
-                if(read_bytes != ctx->dumpHardwareEntriesWithData[e].entry.serialLength)
-                {
-                    free(ctx->dumpHardwareEntriesWithData[e].serial);
-                    ctx->dumpHardwareEntriesWithData[e].entry.serialLength = 0;
-                    TRACE("Could not read dump hardware block entry serial, continuing...");
-                }
-            }
-        }
-
-        if(ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength > 0)
-        {
-            ctx->dumpHardwareEntriesWithData[e].softwareName =
-                (uint8_t *)malloc(ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength + 1);
-
-            if(ctx->dumpHardwareEntriesWithData[e].softwareName != NULL)
-            {
-                ctx->dumpHardwareEntriesWithData[e]
-                    .softwareName[ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength] = 0;
-                read_bytes = fread(ctx->dumpHardwareEntriesWithData[e].softwareName, 1,
-                                   ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength, ctx->imageStream);
-
-                if(read_bytes != ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength)
-                {
-                    free(ctx->dumpHardwareEntriesWithData[e].softwareName);
-                    ctx->dumpHardwareEntriesWithData[e].entry.softwareNameLength = 0;
-                    TRACE("Could not read dump hardware block entry software name, "
-                          "continuing...");
-                }
-            }
-        }
-
-        if(ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength > 0)
-        {
-            ctx->dumpHardwareEntriesWithData[e].softwareVersion =
-                (uint8_t *)malloc(ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength + 1);
-
-            if(ctx->dumpHardwareEntriesWithData[e].softwareVersion != NULL)
-            {
-                ctx->dumpHardwareEntriesWithData[e]
-                    .softwareVersion[ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength] = 0;
-                read_bytes = fread(ctx->dumpHardwareEntriesWithData[e].softwareVersion, 1,
-                                   ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength, ctx->imageStream);
-
-                if(read_bytes != ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength)
-                {
-                    free(ctx->dumpHardwareEntriesWithData[e].softwareVersion);
-                    ctx->dumpHardwareEntriesWithData[e].entry.softwareVersionLength = 0;
-                    TRACE("Could not read dump hardware block entry software version, "
-                          "continuing...");
-                }
-            }
-        }
-
-        if(ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength > 0)
-        {
-            ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem =
-                (uint8_t *)malloc(ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength + 1);
-
-            if(ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem != NULL)
-            {
-                ctx->dumpHardwareEntriesWithData[e]
-                    .softwareOperatingSystem[ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength] =
-                    0;
-                read_bytes =
-                    fread(ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem, 1,
-                          ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength, ctx->imageStream);
-
-                if(read_bytes != ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength)
-                {
-                    free(ctx->dumpHardwareEntriesWithData[e].softwareOperatingSystem);
-                    ctx->dumpHardwareEntriesWithData[e].entry.softwareOperatingSystemLength = 0;
-                    TRACE("Could not read dump hardware block entry manufacturer, "
-                          "continuing...");
-                }
-            }
-        }
-
-        ctx->dumpHardwareEntriesWithData[e].extents =
-            (DumpExtent *)malloc(sizeof(DumpExtent) * ctx->dumpHardwareEntriesWithData->entry.extents);
-
-        if(ctx->dumpHardwareEntriesWithData[e].extents == NULL)
-        {
-            TRACE("Could not allocate memory for dump hardware block extents, "
-                  "continuing...");
-            continue;
-        }
-
-        read_bytes = fread(ctx->dumpHardwareEntriesWithData[e].extents, sizeof(DumpExtent),
-                           ctx->dumpHardwareEntriesWithData[e].entry.extents, ctx->imageStream);
-
-        if(read_bytes != ctx->dumpHardwareEntriesWithData->entry.extents)
-        {
-            free(ctx->dumpHardwareEntriesWithData[e].extents);
-            TRACE("Could not read dump hardware block extents, continuing...");
-            continue;
-        }
-
-        // Sort extents by start sector for efficient lookup and validation
-        if(ctx->dumpHardwareEntriesWithData[e].entry.extents > 0 && ctx->dumpHardwareEntriesWithData[e].extents != NULL)
-        {
-            qsort(ctx->dumpHardwareEntriesWithData[e].extents, ctx->dumpHardwareEntriesWithData[e].entry.extents,
-                  sizeof(DumpExtent), compare_extents);
-            TRACE("Sorted %u extents for entry %u", ctx->dumpHardwareEntriesWithData[e].entry.extents, e);
-        }
+        qsort(current->extents, extent_count, sizeof(DumpExtent), compare_extents);
+        TRACE("Sorted %u extents for entry %u", extent_count, e);
     }
+
+    reset_dump_hardware_context(ctx);
+    ctx->dumpHardwareEntriesWithData = entries;
+    ctx->dumpHardwareHeader          = header;
+
+    if(remaining_payload != 0)
+    {
+        TRACE("Dump hardware block parsing completed with %u trailing payload bytes", remaining_payload);
+    }
+
+    TRACE("Exiting process_dumphw_block()");
+    return;
+
+parse_failure:
+    free_dump_hardware_entries_array(entries, processed_entry + 1);
+    free(entries);
+    reset_dump_hardware_context(ctx);
     TRACE("Exiting process_dumphw_block()");
 }
