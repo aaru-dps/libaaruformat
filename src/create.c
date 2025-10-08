@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "aaruformat.h"
+#include "enums.h"
 #include "internal.h"
 #include "log.h"
 
@@ -427,58 +428,81 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
         ctx->userDataDdtHeader.start               = 0;
         ctx->userDataDdtHeader.blockAlignmentShift = parsed_options.block_alignment;
         ctx->userDataDdtHeader.dataShift           = parsed_options.data_shift;
-        ctx->userDataDdtHeader.sizeType            = 1;
-        ctx->userDataDdtHeader.entries = ctx->userDataDdtHeader.blocks / (1 << ctx->userDataDdtHeader.tableShift);
+        ctx->userDataDdtHeader.sizeType            = BigDdtSizeType;
 
         if(parsed_options.table_shift == -1)
         {
             const uint64_t total_sectors = user_sectors + overflow_sectors + negative_sectors;
 
             if(total_sectors < 0x8388608ULL)
-            {
-                ctx->userDataDdtHeader.levels     = 1;
                 ctx->userDataDdtHeader.tableShift = 0;
-            }
             else
-            {
-                ctx->userDataDdtHeader.levels     = 2;
                 ctx->userDataDdtHeader.tableShift = 22;
-            }
         }
         else
+            ctx->userDataDdtHeader.tableShift =
+                parsed_options.table_shift > 0 ? (uint8_t)parsed_options.table_shift : 0;
+
+        ctx->userDataDdtHeader.levels = ctx->userDataDdtHeader.tableShift > 0 ? 2 : 1;
+
+        uint8_t effective_table_shift = ctx->userDataDdtHeader.tableShift;
+        if(effective_table_shift >= 63)
         {
-            ctx->userDataDdtHeader.levels     = parsed_options.table_shift > 0 ? 2 : 1;
-            ctx->userDataDdtHeader.tableShift = parsed_options.table_shift;
+            TRACE("Clamping table shift from %u to 62 to avoid overflow", effective_table_shift);
+            effective_table_shift             = 62;
+            ctx->userDataDdtHeader.tableShift = effective_table_shift;
         }
 
-        if(ctx->userDataDdtHeader.blocks % (1 << ctx->userDataDdtHeader.tableShift) != 0)
+        const uint64_t sectors_per_entry = 1ULL << effective_table_shift;
+        ctx->userDataDdtHeader.entries   = ctx->userDataDdtHeader.blocks / sectors_per_entry;
+        if(ctx->userDataDdtHeader.blocks % sectors_per_entry != 0 || ctx->userDataDdtHeader.entries == 0)
             ctx->userDataDdtHeader.entries++;
 
         TRACE("Initializing primary/single DDT");
         if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
+        {
             ctx->userDataDdtMini =
                 (uint16_t *)calloc(ctx->userDataDdtHeader.entries, sizeof(uint16_t));  // All entries to zero
+            if(ctx->userDataDdtMini == NULL)
+            {
+                FATAL("Not enough memory to allocate primary DDT (mini)");
+                errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                TRACE("Exiting aaruf_create() = NULL");
+                cleanup_failed_create(ctx);
+                return NULL;
+            }
+        }
         else if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
+        {
             ctx->userDataDdtBig =
                 (uint32_t *)calloc(ctx->userDataDdtHeader.entries, sizeof(uint32_t));  // All entries to zero
+            if(ctx->userDataDdtBig == NULL)
+            {
+                FATAL("Not enough memory to allocate primary DDT (big)");
+                errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                TRACE("Exiting aaruf_create() = NULL");
+                cleanup_failed_create(ctx);
+                return NULL;
+            }
+        }
 
         // Set the primary DDT offset (just after the header, block aligned)
         ctx->primaryDdtOffset        = sizeof(AaruHeaderV2);  // Start just after the header
-        const uint64_t alignmentMask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
-        ctx->primaryDdtOffset        = ctx->primaryDdtOffset + alignmentMask & ~alignmentMask;
+        const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+        ctx->primaryDdtOffset        = ctx->primaryDdtOffset + alignment_mask & ~alignment_mask;
 
         TRACE("Primary DDT will be placed at offset %" PRIu64, ctx->primaryDdtOffset);
 
         // Calculate size of primary DDT table
-        const uint64_t primaryTableSize = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
-                                              ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
-                                              : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+        const uint64_t primary_table_size = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
+                                                ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
+                                                : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
 
         // Calculate where data blocks can start (after primary DDT + header)
         if(ctx->userDataDdtHeader.tableShift > 0)
         {
-            const uint64_t dataStartPosition = ctx->primaryDdtOffset + sizeof(DdtHeader2) + primaryTableSize;
-            ctx->nextBlockPosition           = dataStartPosition + alignmentMask & ~alignmentMask;
+            const uint64_t data_start_position = ctx->primaryDdtOffset + sizeof(DdtHeader2) + primary_table_size;
+            ctx->nextBlockPosition             = data_start_position + alignment_mask & ~alignment_mask;
         }
         else
             ctx->nextBlockPosition = ctx->primaryDdtOffset;  // Single-level DDT can start anywhere
@@ -490,9 +514,9 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
         ctx->userDataDdtHeader.dataShift           = parsed_options.data_shift;
 
         // Calculate aligned next block position
-        const uint64_t alignmentMask = (1ULL << parsed_options.block_alignment) - 1;
+    const uint64_t alignment_mask = (1ULL << parsed_options.block_alignment) - 1;
         ctx->nextBlockPosition       = sizeof(AaruHeaderV2);  // Start just after the header
-        ctx->nextBlockPosition       = ctx->nextBlockPosition + alignmentMask & ~alignmentMask;
+    ctx->nextBlockPosition       = ctx->nextBlockPosition + alignment_mask & ~alignment_mask;
         ctx->is_tape                 = 1;
         ctx->tapeDdt                 = NULL;
     }
