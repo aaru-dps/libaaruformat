@@ -129,159 +129,294 @@ int info(const char *path)
 
     if(ctx->sectorPrefixDdt != NULL) printf("Sector suffix DDT has been read to memory.\n");
 
-    if(ctx->geometryBlock.identifier == GeometryBlock)
-        printf("Media has %d cylinders, %d heads and %d sectors per track.\n", ctx->geometryBlock.cylinders,
-               ctx->geometryBlock.heads, ctx->geometryBlock.sectorsPerTrack);
+    uint32_t cylinders       = 0;
+    uint32_t heads           = 0;
+    uint32_t sectorsPerTrack = 0;
+    if(aaruf_get_geometry(ctx, &cylinders, &heads, &sectorsPerTrack) == AARUF_STATUS_OK)
+        printf("Media has %d cylinders, %d heads and %d sectors per track.\n", cylinders, heads, sectorsPerTrack);
 
-    if(ctx->metadataBlockHeader.identifier == MetadataBlock)
+    int32_t sequence     = 0;
+    int32_t lastSequence = 0;
+
+    if(aaruf_get_media_sequence(ctx, &sequence, &lastSequence) == AARUF_STATUS_OK && sequence > 0)
     {
         printf("Metadata block:\n");
-        if(ctx->metadataBlockHeader.mediaSequence > 0)
-            printf("\tMedia is no. %d in a set of %d media\n", ctx->metadataBlockHeader.mediaSequence,
-                   ctx->metadataBlockHeader.lastMediaSequence);
+        printf("\tMedia is no. %d in a set of %d media\n", sequence, lastSequence);
 
-        if(ctx->metadataBlockHeader.creatorLength > 0)
+        int32_t length = 0;
+        if(aaruf_get_creator(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
         {
-            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
-            strBuffer    = malloc(ctx->metadataBlockHeader.creatorLength + 1);
-            memset(strBuffer, 0, ctx->metadataBlockHeader.creatorLength + 1);
-            ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.creatorLength,
-                         (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.creatorOffset),
-                         (int)ctx->metadataBlockHeader.creatorLength, &u_error_code);
-            printf("\tCreator: %s\n", strBuffer);
-            free(strBuffer);
+            uint8_t *utf16Buffer = malloc(length);
+            if(utf16Buffer != NULL)
+            {
+                if(aaruf_get_creator(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                {
+                    strBuffer = malloc(length + 1);
+                    if(strBuffer != NULL)
+                    {
+                        memset(strBuffer, 0, length + 1);
+                        u_error_code = U_ZERO_ERROR;
+                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
+                                     &u_error_code);
+                        if(u_error_code == U_ZERO_ERROR) printf("\tCreator: %s\n", strBuffer);
+                        free(strBuffer);
+                    }
+                }
+                free(utf16Buffer);
+            }
         }
 
-        if(ctx->metadataBlockHeader.commentsLength > 0)
+        length = 0;
+        if(aaruf_get_comments(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
         {
-            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
-            strBuffer    = malloc(ctx->metadataBlockHeader.commentsLength + 1);
-            memset(strBuffer, 0, ctx->metadataBlockHeader.commentsLength + 1);
-            ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.commentsLength,
-                         (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.commentsOffset),
-                         (int)ctx->metadataBlockHeader.commentsLength, &u_error_code);
-            printf("\tCreator: %s\n", strBuffer);
-            free(strBuffer);
+            uint8_t *utf16Buffer = malloc(length);
+            if(utf16Buffer != NULL)
+            {
+                if(aaruf_get_comments(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                {
+                    strBuffer = malloc(length + 1);
+                    if(strBuffer != NULL)
+                    {
+                        memset(strBuffer, 0, length + 1);
+                        u_error_code = U_ZERO_ERROR;
+                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
+                                     &u_error_code);
+                        if(u_error_code == U_ZERO_ERROR) printf("\tComments: %s\n", strBuffer);
+                        free(strBuffer);
+                    }
+                }
+                free(utf16Buffer);
+            }
         }
 
-        if(ctx->metadataBlockHeader.mediaTitleLength > 0)
+        length = 0;
+        if(aaruf_get_media_title(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
         {
-            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
-            strBuffer    = malloc(ctx->metadataBlockHeader.mediaTitleLength + 1);
-            memset(strBuffer, 0, ctx->metadataBlockHeader.mediaTitleLength + 1);
-            ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.mediaTitleLength,
-                         (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.mediaTitleOffset),
-                         (int)ctx->metadataBlockHeader.mediaTitleLength, &u_error_code);
-            printf("\tCreator: %s\n", strBuffer);
-            free(strBuffer);
+            uint8_t *utf16Buffer = malloc(length);
+            if(utf16Buffer != NULL)
+            {
+                if(aaruf_get_media_title(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                {
+                    strBuffer = malloc(length + 1);
+                    if(strBuffer != NULL)
+                    {
+                        memset(strBuffer, 0, length + 1);
+                        u_error_code = U_ZERO_ERROR;
+                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
+                                     &u_error_code);
+                        if(u_error_code == U_ZERO_ERROR) printf("\tMedia title: %s\n", strBuffer);
+                        free(strBuffer);
+                    }
+                }
+                free(utf16Buffer);
+            }
         }
 
-        if(ctx->metadataBlockHeader.mediaManufacturerLength > 0)
+        length = 0;
+        if(aaruf_get_media_manufacturer(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
         {
-            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
-            strBuffer    = malloc(ctx->metadataBlockHeader.mediaManufacturerLength + 1);
-            memset(strBuffer, 0, ctx->metadataBlockHeader.mediaManufacturerLength + 1);
-            ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.mediaManufacturerLength,
-                         (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.mediaManufacturerOffset),
-                         (int)ctx->metadataBlockHeader.mediaManufacturerLength, &u_error_code);
-            printf("\tCreator: %s\n", strBuffer);
-            free(strBuffer);
+            uint8_t *utf16Buffer = malloc(length);
+            if(utf16Buffer != NULL)
+            {
+                if(aaruf_get_media_manufacturer(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                {
+                    strBuffer = malloc(length + 1);
+                    if(strBuffer != NULL)
+                    {
+                        memset(strBuffer, 0, length + 1);
+                        u_error_code = U_ZERO_ERROR;
+                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
+                                     &u_error_code);
+                        if(u_error_code == U_ZERO_ERROR) printf("\tMedia manufacturer: %s\n", strBuffer);
+                        free(strBuffer);
+                    }
+                }
+                free(utf16Buffer);
+            }
         }
 
-        if(ctx->metadataBlockHeader.mediaModelLength > 0)
+        length = 0;
+        if(aaruf_get_media_model(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
         {
-            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
-            strBuffer    = malloc(ctx->metadataBlockHeader.mediaModelLength + 1);
-            memset(strBuffer, 0, ctx->metadataBlockHeader.mediaModelLength + 1);
-            ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.mediaModelLength,
-                         (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.mediaModelOffset),
-                         (int)ctx->metadataBlockHeader.mediaModelLength, &u_error_code);
-            printf("\tCreator: %s\n", strBuffer);
-            free(strBuffer);
+            uint8_t *utf16Buffer = malloc(length);
+            if(utf16Buffer != NULL)
+            {
+                if(aaruf_get_media_model(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                {
+                    strBuffer = malloc(length + 1);
+                    if(strBuffer != NULL)
+                    {
+                        memset(strBuffer, 0, length + 1);
+                        u_error_code = U_ZERO_ERROR;
+                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
+                                     &u_error_code);
+                        if(u_error_code == U_ZERO_ERROR) printf("\tMedia model: %s\n", strBuffer);
+                        free(strBuffer);
+                    }
+                }
+                free(utf16Buffer);
+            }
         }
 
-        if(ctx->metadataBlockHeader.mediaSerialNumberLength > 0)
+        length = 0;
+        if(aaruf_get_media_serial_number(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
         {
-            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
-            strBuffer    = malloc(ctx->metadataBlockHeader.mediaSerialNumberLength + 1);
-            memset(strBuffer, 0, ctx->metadataBlockHeader.mediaSerialNumberLength + 1);
-            ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.mediaSerialNumberLength,
-                         (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.mediaSerialNumberOffset),
-                         (int)ctx->metadataBlockHeader.mediaSerialNumberLength, &u_error_code);
-            printf("\tCreator: %s\n", strBuffer);
-            free(strBuffer);
+            uint8_t *utf16Buffer = malloc(length);
+            if(utf16Buffer != NULL)
+            {
+                if(aaruf_get_media_serial_number(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                {
+                    strBuffer = malloc(length + 1);
+                    if(strBuffer != NULL)
+                    {
+                        memset(strBuffer, 0, length + 1);
+                        u_error_code = U_ZERO_ERROR;
+                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
+                                     &u_error_code);
+                        if(u_error_code == U_ZERO_ERROR) printf("\tMedia serial number: %s\n", strBuffer);
+                        free(strBuffer);
+                    }
+                }
+                free(utf16Buffer);
+            }
         }
 
-        if(ctx->metadataBlockHeader.mediaBarcodeLength > 0)
+        length = 0;
+        if(aaruf_get_media_barcode(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
         {
-            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
-            strBuffer    = malloc(ctx->metadataBlockHeader.mediaBarcodeLength + 1);
-            memset(strBuffer, 0, ctx->metadataBlockHeader.mediaBarcodeLength + 1);
-            ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.mediaBarcodeLength,
-                         (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.mediaBarcodeOffset),
-                         (int)ctx->metadataBlockHeader.mediaBarcodeLength, &u_error_code);
-            printf("\tCreator: %s\n", strBuffer);
-            free(strBuffer);
+            uint8_t *utf16Buffer = malloc(length);
+            if(utf16Buffer != NULL)
+            {
+                if(aaruf_get_media_barcode(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                {
+                    strBuffer = malloc(length + 1);
+                    if(strBuffer != NULL)
+                    {
+                        memset(strBuffer, 0, length + 1);
+                        u_error_code = U_ZERO_ERROR;
+                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
+                                     &u_error_code);
+                        if(u_error_code == U_ZERO_ERROR) printf("\tMedia barcode: %s\n", strBuffer);
+                        free(strBuffer);
+                    }
+                }
+                free(utf16Buffer);
+            }
         }
 
-        if(ctx->metadataBlockHeader.mediaPartNumberLength > 0)
+        length = 0;
+        if(aaruf_get_media_part_number(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
         {
-            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
-            strBuffer    = malloc(ctx->metadataBlockHeader.mediaPartNumberLength + 1);
-            memset(strBuffer, 0, ctx->metadataBlockHeader.mediaPartNumberLength + 1);
-            ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.mediaPartNumberLength,
-                         (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.mediaPartNumberOffset),
-                         (int)ctx->metadataBlockHeader.mediaPartNumberLength, &u_error_code);
-            printf("\tCreator: %s\n", strBuffer);
-            free(strBuffer);
+            uint8_t *utf16Buffer = malloc(length);
+            if(utf16Buffer != NULL)
+            {
+                if(aaruf_get_media_part_number(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                {
+                    strBuffer = malloc(length + 1);
+                    if(strBuffer != NULL)
+                    {
+                        memset(strBuffer, 0, length + 1);
+                        u_error_code = U_ZERO_ERROR;
+                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
+                                     &u_error_code);
+                        if(u_error_code == U_ZERO_ERROR) printf("\tMedia part number: %s\n", strBuffer);
+                        free(strBuffer);
+                    }
+                }
+                free(utf16Buffer);
+            }
         }
 
-        if(ctx->metadataBlockHeader.driveManufacturerLength > 0)
+        length = 0;
+        if(aaruf_get_drive_manufacturer(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
         {
-            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
-            strBuffer    = malloc(ctx->metadataBlockHeader.driveManufacturerLength + 1);
-            memset(strBuffer, 0, ctx->metadataBlockHeader.driveManufacturerLength + 1);
-            ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.driveManufacturerLength,
-                         (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.driveManufacturerOffset),
-                         (int)ctx->metadataBlockHeader.driveManufacturerLength, &u_error_code);
-            printf("\tCreator: %s\n", strBuffer);
-            free(strBuffer);
+            uint8_t *utf16Buffer = malloc(length);
+            if(utf16Buffer != NULL)
+            {
+                if(aaruf_get_drive_manufacturer(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                {
+                    strBuffer = malloc(length + 1);
+                    if(strBuffer != NULL)
+                    {
+                        memset(strBuffer, 0, length + 1);
+                        u_error_code = U_ZERO_ERROR;
+                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
+                                     &u_error_code);
+                        if(u_error_code == U_ZERO_ERROR) printf("\tDrive manufacturer: %s\n", strBuffer);
+                        free(strBuffer);
+                    }
+                }
+                free(utf16Buffer);
+            }
         }
 
-        if(ctx->metadataBlockHeader.driveModelLength > 0)
+        length = 0;
+        if(aaruf_get_drive_model(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
         {
-            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
-            strBuffer    = malloc(ctx->metadataBlockHeader.driveModelLength + 1);
-            memset(strBuffer, 0, ctx->metadataBlockHeader.driveModelLength + 1);
-            ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.driveModelLength,
-                         (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.driveModelOffset),
-                         (int)ctx->metadataBlockHeader.driveModelLength, &u_error_code);
-            printf("\tCreator: %s\n", strBuffer);
-            free(strBuffer);
+            uint8_t *utf16Buffer = malloc(length);
+            if(utf16Buffer != NULL)
+            {
+                if(aaruf_get_drive_model(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                {
+                    strBuffer = malloc(length + 1);
+                    if(strBuffer != NULL)
+                    {
+                        memset(strBuffer, 0, length + 1);
+                        u_error_code = U_ZERO_ERROR;
+                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
+                                     &u_error_code);
+                        if(u_error_code == U_ZERO_ERROR) printf("\tDrive model: %s\n", strBuffer);
+                        free(strBuffer);
+                    }
+                }
+                free(utf16Buffer);
+            }
         }
 
-        if(ctx->metadataBlockHeader.driveSerialNumberLength > 0)
+        length = 0;
+        if(aaruf_get_drive_serial_number(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
         {
-            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
-            strBuffer    = malloc(ctx->metadataBlockHeader.driveSerialNumberLength + 1);
-            memset(strBuffer, 0, ctx->metadataBlockHeader.driveSerialNumberLength + 1);
-            ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.driveSerialNumberLength,
-                         (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.driveSerialNumberOffset),
-                         (int)ctx->metadataBlockHeader.driveSerialNumberLength, &u_error_code);
-            printf("\tCreator: %s\n", strBuffer);
-            free(strBuffer);
+            uint8_t *utf16Buffer = malloc(length);
+            if(utf16Buffer != NULL)
+            {
+                if(aaruf_get_drive_serial_number(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                {
+                    strBuffer = malloc(length + 1);
+                    if(strBuffer != NULL)
+                    {
+                        memset(strBuffer, 0, length + 1);
+                        u_error_code = U_ZERO_ERROR;
+                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
+                                     &u_error_code);
+                        if(u_error_code == U_ZERO_ERROR) printf("\tDrive serial number: %s\n", strBuffer);
+                        free(strBuffer);
+                    }
+                }
+                free(utf16Buffer);
+            }
         }
 
-        if(ctx->metadataBlockHeader.driveFirmwareRevisionLength > 0)
+        length = 0;
+        if(aaruf_get_drive_firmware_revision(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
         {
-            u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
-            strBuffer    = malloc(ctx->metadataBlockHeader.driveFirmwareRevisionLength + 1);
-            memset(strBuffer, 0, ctx->metadataBlockHeader.driveFirmwareRevisionLength + 1);
-            ucnv_convert(NULL, "UTF-16LE", strBuffer, (int)ctx->metadataBlockHeader.driveFirmwareRevisionLength,
-                         (char *)(ctx->metadataBlock + ctx->metadataBlockHeader.driveFirmwareRevisionOffset),
-                         (int)ctx->metadataBlockHeader.driveFirmwareRevisionLength, &u_error_code);
-            printf("\tCreator: %s\n", strBuffer);
-            free(strBuffer);
+            uint8_t *utf16Buffer = malloc(length);
+            if(utf16Buffer != NULL)
+            {
+                if(aaruf_get_drive_firmware_revision(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                {
+                    strBuffer = malloc(length + 1);
+                    if(strBuffer != NULL)
+                    {
+                        memset(strBuffer, 0, length + 1);
+                        u_error_code = U_ZERO_ERROR;
+                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
+                                     &u_error_code);
+                        if(u_error_code == U_ZERO_ERROR) printf("\tDrive firmware revision: %s\n", strBuffer);
+                        free(strBuffer);
+                    }
+                }
+                free(utf16Buffer);
+            }
         }
     }
 
@@ -457,32 +592,10 @@ int info(const char *path)
 
     if(ctx->imageInfo.ApplicationVersion != NULL)
         printf("\tApplication version: %s\n", ctx->imageInfo.ApplicationVersion);
-    if(ctx->imageInfo.Creator != NULL) printf("\tCreator: %s\n", ctx->imageInfo.Creator);
     printf("\tCreation time: %s\n", format_filetime(ctx->imageInfo.CreationTime));
     printf("\tLast written time: %s\n", format_filetime(ctx->imageInfo.LastModificationTime));
-    if(ctx->imageInfo.Comments != NULL) printf("\tComments: %s\n", ctx->imageInfo.Comments);
-    if(ctx->imageInfo.MediaTitle != NULL) printf("\tMedia title: %s\n", ctx->imageInfo.MediaTitle);
-    if(ctx->imageInfo.MediaManufacturer != NULL) printf("\tMedia manufacturer: %s\n", ctx->imageInfo.MediaManufacturer);
-    if(ctx->imageInfo.MediaSerialNumber != NULL)
-        printf("\tMedia serial number: %s\n", ctx->imageInfo.MediaSerialNumber);
-    if(ctx->imageInfo.MediaBarcode != NULL) printf("\tMedia barcode: %s\n", ctx->imageInfo.MediaBarcode);
-    if(ctx->imageInfo.MediaPartNumber != NULL) printf("\tMedia part number: %s\n", ctx->imageInfo.MediaPartNumber);
     printf("\tMedia type: %u (%s)\n", ctx->imageInfo.MediaType, media_type_to_string(ctx->imageInfo.MediaType));
-
-    if(ctx->imageInfo.MediaSequence > 0 || ctx->imageInfo.LastMediaSequence > 0)
-        printf("\tMedia is number %d in a set of %d media\n", ctx->imageInfo.MediaSequence,
-               ctx->imageInfo.LastMediaSequence);
-
-    if(ctx->imageInfo.DriveManufacturer != NULL) printf("\tDrive manufacturer: %s\n", ctx->imageInfo.DriveManufacturer);
-    if(ctx->imageInfo.DriveModel != NULL) printf("\tDrive model: %s\n", ctx->imageInfo.DriveModel);
-    if(ctx->imageInfo.DriveSerialNumber != NULL)
-        printf("\tDrive serial number: %s\n", ctx->imageInfo.DriveSerialNumber);
-    if(ctx->imageInfo.DriveFirmwareRevision != NULL)
-        printf("\tDrive firmware revision: %s\n", ctx->imageInfo.DriveFirmwareRevision);
     printf("\tXML media type: %d\n", ctx->imageInfo.XmlMediaType);
-    if(ctx->imageInfo.Cylinders > 0 || ctx->imageInfo.Heads > 0 || ctx->imageInfo.SectorsPerTrack > 0)
-        printf("\tMedia has %d cylinders, %d heads and %d sectors per track\n", ctx->imageInfo.Cylinders,
-               ctx->imageInfo.Heads, ctx->imageInfo.SectorsPerTrack);
 
     if(ctx->checksums.hasMd5)
     {
