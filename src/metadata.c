@@ -95,7 +95,7 @@ int32_t aaruf_get_geometry(const void *context, uint32_t *cylinders, uint32_t *h
 {
     TRACE("Entering aaruf_get_geometry(%p, %p, %p, %p)", context, cylinders, heads, sectors_per_track);
 
-    const aaruformatContext *ctx = NULL;
+    const aaruformat_context *ctx = NULL;
 
     if(context == NULL)
     {
@@ -116,7 +116,7 @@ int32_t aaruf_get_geometry(const void *context, uint32_t *cylinders, uint32_t *h
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->geometryBlock.identifier != GeometryBlock)
+    if(ctx->geometry_block.identifier != GeometryBlock)
     {
         FATAL("No geometry block present");
 
@@ -124,9 +124,9 @@ int32_t aaruf_get_geometry(const void *context, uint32_t *cylinders, uint32_t *h
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
-    *cylinders         = ctx->geometryBlock.cylinders;
-    *heads             = ctx->geometryBlock.heads;
-    *sectors_per_track = ctx->geometryBlock.sectorsPerTrack;
+    *cylinders         = ctx->geometry_block.cylinders;
+    *heads             = ctx->geometry_block.heads;
+    *sectors_per_track = ctx->geometry_block.sectorsPerTrack;
 
     TRACE("Exiting aaruf_get_geometry(%p, %u, %u, %u) = AARUF_STATUS_OK", context, *cylinders, *heads,
           *sectors_per_track);
@@ -231,7 +231,7 @@ int32_t aaruf_set_geometry(void *context, const uint32_t cylinders, const uint32
 {
     TRACE("Entering aaruf_set_geometry(%p, %u, %u, %u)", context, cylinders, heads, sectors_per_track);
 
-    aaruformatContext *ctx = NULL;
+    aaruformat_context *ctx = NULL;
 
     if(context == NULL)
     {
@@ -253,7 +253,7 @@ int32_t aaruf_set_geometry(void *context, const uint32_t cylinders, const uint32
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -261,13 +261,13 @@ int32_t aaruf_set_geometry(void *context, const uint32_t cylinders, const uint32
         return AARUF_READ_ONLY;
     }
 
-    ctx->geometryBlock.identifier      = GeometryBlock;
-    ctx->geometryBlock.cylinders       = cylinders;
-    ctx->geometryBlock.heads           = heads;
-    ctx->geometryBlock.sectorsPerTrack = sectors_per_track;
-    ctx->Cylinders           = cylinders;
-    ctx->Heads               = heads;
-    ctx->SectorsPerTrack     = sectors_per_track;
+    ctx->geometry_block.identifier      = GeometryBlock;
+    ctx->geometry_block.cylinders       = cylinders;
+    ctx->geometry_block.heads           = heads;
+    ctx->geometry_block.sectorsPerTrack = sectors_per_track;
+    ctx->cylinders                      = cylinders;
+    ctx->heads                          = heads;
+    ctx->sectors_per_track              = sectors_per_track;
 
     TRACE("Exiting aaruf_set_geometry(%p, %u, %u, %u) = AARUF_STATUS_OK", context, cylinders, heads, sectors_per_track);
     return AARUF_STATUS_OK;
@@ -373,7 +373,7 @@ int32_t aaruf_set_media_sequence(void *context, const int32_t sequence, const in
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -385,7 +385,7 @@ int32_t aaruf_set_media_sequence(void *context, const int32_t sequence, const in
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -394,10 +394,10 @@ int32_t aaruf_set_media_sequence(void *context, const int32_t sequence, const in
     }
 
     // Initialize
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock) ctx->metadataBlockHeader.identifier = MetadataBlock;
+    if(ctx->metadata_block_header.identifier != MetadataBlock) ctx->metadata_block_header.identifier = MetadataBlock;
 
-    ctx->metadataBlockHeader.mediaSequence     = sequence;
-    ctx->metadataBlockHeader.lastMediaSequence = last_sequence;
+    ctx->metadata_block_header.mediaSequence     = sequence;
+    ctx->metadata_block_header.lastMediaSequence = last_sequence;
 
     TRACE("Exiting aaruf_set_media_sequence(%p, %d, %d) = AARUF_STATUS_OK", context, sequence, last_sequence);
     return AARUF_STATUS_OK;
@@ -503,7 +503,7 @@ int32_t aaruf_set_creator(void *context, const uint8_t *data, const int32_t leng
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -515,7 +515,7 @@ int32_t aaruf_set_creator(void *context, const uint8_t *data, const int32_t leng
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -524,7 +524,7 @@ int32_t aaruf_set_creator(void *context, const uint8_t *data, const int32_t leng
     }
 
     // Initialize
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock) ctx->metadataBlockHeader.identifier = MetadataBlock;
+    if(ctx->metadata_block_header.identifier != MetadataBlock) ctx->metadata_block_header.identifier = MetadataBlock;
 
     // Reserve memory
     uint8_t *copy = malloc(length);
@@ -536,9 +536,9 @@ int32_t aaruf_set_creator(void *context, const uint8_t *data, const int32_t leng
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->Creator != NULL) free(ctx->Creator);
-    ctx->Creator                           = copy;
-    ctx->metadataBlockHeader.creatorLength = length;
+    if(ctx->creator != NULL) free(ctx->creator);
+    ctx->creator                             = copy;
+    ctx->metadata_block_header.creatorLength = length;
 
     TRACE("Exiting aaruf_set_creator(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
     return AARUF_STATUS_OK;
@@ -617,7 +617,7 @@ int32_t aaruf_set_comments(void *context, const uint8_t *data, const int32_t len
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -629,7 +629,7 @@ int32_t aaruf_set_comments(void *context, const uint8_t *data, const int32_t len
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -638,7 +638,7 @@ int32_t aaruf_set_comments(void *context, const uint8_t *data, const int32_t len
     }
 
     // Initialize
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock) ctx->metadataBlockHeader.identifier = MetadataBlock;
+    if(ctx->metadata_block_header.identifier != MetadataBlock) ctx->metadata_block_header.identifier = MetadataBlock;
 
     // Reserve memory
     uint8_t *copy = malloc(length);
@@ -650,9 +650,9 @@ int32_t aaruf_set_comments(void *context, const uint8_t *data, const int32_t len
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->Comments != NULL) free(ctx->Comments);
-    ctx->Comments                           = copy;
-    ctx->metadataBlockHeader.commentsLength = length;
+    if(ctx->comments != NULL) free(ctx->comments);
+    ctx->comments                             = copy;
+    ctx->metadata_block_header.commentsLength = length;
 
     TRACE("Exiting aaruf_set_comments(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
     return AARUF_STATUS_OK;
@@ -730,7 +730,7 @@ int32_t aaruf_set_media_title(void *context, const uint8_t *data, const int32_t 
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -742,7 +742,7 @@ int32_t aaruf_set_media_title(void *context, const uint8_t *data, const int32_t 
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -751,7 +751,7 @@ int32_t aaruf_set_media_title(void *context, const uint8_t *data, const int32_t 
     }
 
     // Initialize
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock) ctx->metadataBlockHeader.identifier = MetadataBlock;
+    if(ctx->metadata_block_header.identifier != MetadataBlock) ctx->metadata_block_header.identifier = MetadataBlock;
 
     // Reserve memory
     uint8_t *copy = malloc(length);
@@ -763,9 +763,9 @@ int32_t aaruf_set_media_title(void *context, const uint8_t *data, const int32_t 
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->MediaTitle != NULL) free(ctx->MediaTitle);
-    ctx->MediaTitle                           = copy;
-    ctx->metadataBlockHeader.mediaTitleLength = length;
+    if(ctx->media_title != NULL) free(ctx->media_title);
+    ctx->media_title                            = copy;
+    ctx->metadata_block_header.mediaTitleLength = length;
 
     TRACE("Exiting aaruf_set_media_title(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
     return AARUF_STATUS_OK;
@@ -842,7 +842,7 @@ int32_t aaruf_set_media_manufacturer(void *context, const uint8_t *data, const i
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -854,7 +854,7 @@ int32_t aaruf_set_media_manufacturer(void *context, const uint8_t *data, const i
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -863,7 +863,7 @@ int32_t aaruf_set_media_manufacturer(void *context, const uint8_t *data, const i
     }
 
     // Initialize
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock) ctx->metadataBlockHeader.identifier = MetadataBlock;
+    if(ctx->metadata_block_header.identifier != MetadataBlock) ctx->metadata_block_header.identifier = MetadataBlock;
 
     // Reserve memory
     uint8_t *copy = malloc(length);
@@ -875,9 +875,9 @@ int32_t aaruf_set_media_manufacturer(void *context, const uint8_t *data, const i
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->MediaManufacturer != NULL) free(ctx->MediaManufacturer);
-    ctx->MediaManufacturer                           = copy;
-    ctx->metadataBlockHeader.mediaManufacturerLength = length;
+    if(ctx->media_manufacturer != NULL) free(ctx->media_manufacturer);
+    ctx->media_manufacturer                            = copy;
+    ctx->metadata_block_header.mediaManufacturerLength = length;
 
     TRACE("Exiting aaruf_set_media_manufacturer(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
     return AARUF_STATUS_OK;
@@ -949,7 +949,7 @@ int32_t aaruf_set_media_model(void *context, const uint8_t *data, const int32_t 
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -961,7 +961,7 @@ int32_t aaruf_set_media_model(void *context, const uint8_t *data, const int32_t 
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -970,7 +970,7 @@ int32_t aaruf_set_media_model(void *context, const uint8_t *data, const int32_t 
     }
 
     // Initialize
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock) ctx->metadataBlockHeader.identifier = MetadataBlock;
+    if(ctx->metadata_block_header.identifier != MetadataBlock) ctx->metadata_block_header.identifier = MetadataBlock;
 
     // Reserve memory
     uint8_t *copy = malloc(length);
@@ -982,9 +982,9 @@ int32_t aaruf_set_media_model(void *context, const uint8_t *data, const int32_t 
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->MediaModel != NULL) free(ctx->MediaModel);
-    ctx->MediaModel                           = copy;
-    ctx->metadataBlockHeader.mediaModelLength = length;
+    if(ctx->media_model != NULL) free(ctx->media_model);
+    ctx->media_model                            = copy;
+    ctx->metadata_block_header.mediaModelLength = length;
 
     TRACE("Exiting aaruf_set_media_model(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
     return AARUF_STATUS_OK;
@@ -1064,7 +1064,7 @@ int32_t aaruf_set_media_serial_number(void *context, const uint8_t *data, const 
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -1076,7 +1076,7 @@ int32_t aaruf_set_media_serial_number(void *context, const uint8_t *data, const 
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -1085,7 +1085,7 @@ int32_t aaruf_set_media_serial_number(void *context, const uint8_t *data, const 
     }
 
     // Initialize
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock) ctx->metadataBlockHeader.identifier = MetadataBlock;
+    if(ctx->metadata_block_header.identifier != MetadataBlock) ctx->metadata_block_header.identifier = MetadataBlock;
 
     // Reserve memory
     uint8_t *copy = malloc(length);
@@ -1097,9 +1097,9 @@ int32_t aaruf_set_media_serial_number(void *context, const uint8_t *data, const 
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->MediaSerialNumber != NULL) free(ctx->MediaSerialNumber);
-    ctx->MediaSerialNumber                           = copy;
-    ctx->metadataBlockHeader.mediaSerialNumberLength = length;
+    if(ctx->media_serial_number != NULL) free(ctx->media_serial_number);
+    ctx->media_serial_number                           = copy;
+    ctx->metadata_block_header.mediaSerialNumberLength = length;
 
     TRACE("Exiting aaruf_set_media_serial_number(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
     return AARUF_STATUS_OK;
@@ -1186,7 +1186,7 @@ int32_t aaruf_set_media_barcode(void *context, const uint8_t *data, const int32_
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -1198,7 +1198,7 @@ int32_t aaruf_set_media_barcode(void *context, const uint8_t *data, const int32_
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -1207,7 +1207,7 @@ int32_t aaruf_set_media_barcode(void *context, const uint8_t *data, const int32_
     }
 
     // Initialize
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock) ctx->metadataBlockHeader.identifier = MetadataBlock;
+    if(ctx->metadata_block_header.identifier != MetadataBlock) ctx->metadata_block_header.identifier = MetadataBlock;
 
     // Reserve memory
     uint8_t *copy = malloc(length);
@@ -1219,9 +1219,9 @@ int32_t aaruf_set_media_barcode(void *context, const uint8_t *data, const int32_
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->MediaBarcode != NULL) free(ctx->MediaBarcode);
-    ctx->MediaBarcode                           = copy;
-    ctx->metadataBlockHeader.mediaBarcodeLength = length;
+    if(ctx->media_barcode != NULL) free(ctx->media_barcode);
+    ctx->media_barcode                            = copy;
+    ctx->metadata_block_header.mediaBarcodeLength = length;
 
     TRACE("Exiting aaruf_set_media_barcode(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
     return AARUF_STATUS_OK;
@@ -1307,7 +1307,7 @@ int32_t aaruf_set_media_part_number(void *context, const uint8_t *data, const in
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -1319,7 +1319,7 @@ int32_t aaruf_set_media_part_number(void *context, const uint8_t *data, const in
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -1328,7 +1328,7 @@ int32_t aaruf_set_media_part_number(void *context, const uint8_t *data, const in
     }
 
     // Initialize
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock) ctx->metadataBlockHeader.identifier = MetadataBlock;
+    if(ctx->metadata_block_header.identifier != MetadataBlock) ctx->metadata_block_header.identifier = MetadataBlock;
 
     // Reserve memory
     uint8_t *copy = malloc(length);
@@ -1340,9 +1340,9 @@ int32_t aaruf_set_media_part_number(void *context, const uint8_t *data, const in
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->MediaPartNumber != NULL) free(ctx->MediaPartNumber);
-    ctx->MediaPartNumber                           = copy;
-    ctx->metadataBlockHeader.mediaPartNumberLength = length;
+    if(ctx->media_part_number != NULL) free(ctx->media_part_number);
+    ctx->media_part_number                           = copy;
+    ctx->metadata_block_header.mediaPartNumberLength = length;
 
     TRACE("Exiting aaruf_set_media_part_number(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
     return AARUF_STATUS_OK;
@@ -1422,7 +1422,7 @@ int32_t aaruf_set_drive_manufacturer(void *context, const uint8_t *data, const i
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -1434,7 +1434,7 @@ int32_t aaruf_set_drive_manufacturer(void *context, const uint8_t *data, const i
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -1443,7 +1443,7 @@ int32_t aaruf_set_drive_manufacturer(void *context, const uint8_t *data, const i
     }
 
     // Initialize
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock) ctx->metadataBlockHeader.identifier = MetadataBlock;
+    if(ctx->metadata_block_header.identifier != MetadataBlock) ctx->metadata_block_header.identifier = MetadataBlock;
 
     // Reserve memory
     uint8_t *copy = malloc(length);
@@ -1455,9 +1455,9 @@ int32_t aaruf_set_drive_manufacturer(void *context, const uint8_t *data, const i
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->DriveManufacturer != NULL) free(ctx->DriveManufacturer);
-    ctx->DriveManufacturer                           = copy;
-    ctx->metadataBlockHeader.driveManufacturerLength = length;
+    if(ctx->drive_manufacturer != NULL) free(ctx->drive_manufacturer);
+    ctx->drive_manufacturer                            = copy;
+    ctx->metadata_block_header.driveManufacturerLength = length;
 
     TRACE("Exiting aaruf_set_drive_manufacturer(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
     return AARUF_STATUS_OK;
@@ -1544,7 +1544,7 @@ int32_t aaruf_set_drive_model(void *context, const uint8_t *data, const int32_t 
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -1556,7 +1556,7 @@ int32_t aaruf_set_drive_model(void *context, const uint8_t *data, const int32_t 
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -1565,7 +1565,7 @@ int32_t aaruf_set_drive_model(void *context, const uint8_t *data, const int32_t 
     }
 
     // Initialize
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock) ctx->metadataBlockHeader.identifier = MetadataBlock;
+    if(ctx->metadata_block_header.identifier != MetadataBlock) ctx->metadata_block_header.identifier = MetadataBlock;
 
     // Reserve memory
     uint8_t *copy = malloc(length);
@@ -1577,9 +1577,9 @@ int32_t aaruf_set_drive_model(void *context, const uint8_t *data, const int32_t 
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->DriveModel != NULL) free(ctx->DriveModel);
-    ctx->DriveModel                           = copy;
-    ctx->metadataBlockHeader.driveModelLength = length;
+    if(ctx->drive_model != NULL) free(ctx->drive_model);
+    ctx->drive_model                            = copy;
+    ctx->metadata_block_header.driveModelLength = length;
 
     TRACE("Exiting aaruf_set_drive_model(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
     return AARUF_STATUS_OK;
@@ -1668,7 +1668,7 @@ int32_t aaruf_set_drive_serial_number(void *context, const uint8_t *data, const 
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -1680,7 +1680,7 @@ int32_t aaruf_set_drive_serial_number(void *context, const uint8_t *data, const 
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -1689,7 +1689,7 @@ int32_t aaruf_set_drive_serial_number(void *context, const uint8_t *data, const 
     }
 
     // Initialize
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock) ctx->metadataBlockHeader.identifier = MetadataBlock;
+    if(ctx->metadata_block_header.identifier != MetadataBlock) ctx->metadata_block_header.identifier = MetadataBlock;
 
     // Reserve memory
     uint8_t *copy = malloc(length);
@@ -1701,9 +1701,9 @@ int32_t aaruf_set_drive_serial_number(void *context, const uint8_t *data, const 
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->DriveSerialNumber != NULL) free(ctx->DriveSerialNumber);
-    ctx->DriveSerialNumber                           = copy;
-    ctx->metadataBlockHeader.driveSerialNumberLength = length;
+    if(ctx->drive_serial_number != NULL) free(ctx->drive_serial_number);
+    ctx->drive_serial_number                           = copy;
+    ctx->metadata_block_header.driveSerialNumberLength = length;
 
     TRACE("Exiting aaruf_set_drive_serial_number(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
     return AARUF_STATUS_OK;
@@ -1803,7 +1803,7 @@ int32_t aaruf_set_drive_firmware_revision(void *context, const uint8_t *data, co
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -1815,7 +1815,7 @@ int32_t aaruf_set_drive_firmware_revision(void *context, const uint8_t *data, co
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -1824,7 +1824,7 @@ int32_t aaruf_set_drive_firmware_revision(void *context, const uint8_t *data, co
     }
 
     // Initialize
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock) ctx->metadataBlockHeader.identifier = MetadataBlock;
+    if(ctx->metadata_block_header.identifier != MetadataBlock) ctx->metadata_block_header.identifier = MetadataBlock;
 
     // Reserve memory
     uint8_t *copy = malloc(length);
@@ -1836,9 +1836,9 @@ int32_t aaruf_set_drive_firmware_revision(void *context, const uint8_t *data, co
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->DriveFirmwareRevision != NULL) free(ctx->DriveFirmwareRevision);
-    ctx->DriveFirmwareRevision                           = copy;
-    ctx->metadataBlockHeader.driveFirmwareRevisionLength = length;
+    if(ctx->drive_firmware_revision != NULL) free(ctx->drive_firmware_revision);
+    ctx->drive_firmware_revision                           = copy;
+    ctx->metadata_block_header.driveFirmwareRevisionLength = length;
 
     TRACE("Exiting aaruf_set_drive_firmware_revision(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
     return AARUF_STATUS_OK;
@@ -1954,7 +1954,7 @@ int32_t aaruf_get_cicm_metadata(const void *context, uint8_t *buffer, size_t *le
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    const aaruformatContext *ctx = context;
+    const aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -1965,7 +1965,7 @@ int32_t aaruf_get_cicm_metadata(const void *context, uint8_t *buffer, size_t *le
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->cicmBlock == NULL || ctx->cicmBlockHeader.length == 0 || ctx->cicmBlockHeader.identifier != CicmBlock)
+    if(ctx->cicm_block == NULL || ctx->cicm_block_header.length == 0 || ctx->cicm_block_header.identifier != CicmBlock)
     {
         TRACE("No CICM XML metadata present");
         *length = 0;
@@ -1974,17 +1974,17 @@ int32_t aaruf_get_cicm_metadata(const void *context, uint8_t *buffer, size_t *le
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
-    if(*length < ctx->cicmBlockHeader.length)
+    if(*length < ctx->cicm_block_header.length)
     {
-        TRACE("Buffer too small for CICM XML metadata, required %u bytes", ctx->cicmBlockHeader.length);
-        *length = ctx->cicmBlockHeader.length;
+        TRACE("Buffer too small for CICM XML metadata, required %u bytes", ctx->cicm_block_header.length);
+        *length = ctx->cicm_block_header.length;
 
         TRACE("Exiting aaruf_get_cicm_metadata() = AARUF_ERROR_BUFFER_TOO_SMALL");
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
-    *length = ctx->cicmBlockHeader.length;
-    memcpy(buffer, ctx->cicmBlock, ctx->cicmBlockHeader.length);
+    *length = ctx->cicm_block_header.length;
+    memcpy(buffer, ctx->cicm_block, ctx->cicm_block_header.length);
 
     TRACE("CICM XML metadata read successfully, length %u", *length);
     TRACE("Exiting aaruf_get_cicm_metadata(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
@@ -2109,7 +2109,7 @@ int32_t aaruf_get_aaru_json_metadata(const void *context, uint8_t *buffer, size_
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    const aaruformatContext *ctx = context;
+    const aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -2120,8 +2120,8 @@ int32_t aaruf_get_aaru_json_metadata(const void *context, uint8_t *buffer, size_
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->jsonBlock == NULL || ctx->jsonBlockHeader.length == 0 ||
-       ctx->jsonBlockHeader.identifier != AaruMetadataJsonBlock)
+    if(ctx->json_block == NULL || ctx->json_block_header.length == 0 ||
+       ctx->json_block_header.identifier != AaruMetadataJsonBlock)
     {
         TRACE("No Aaru metadata JSON present");
         *length = 0;
@@ -2130,17 +2130,17 @@ int32_t aaruf_get_aaru_json_metadata(const void *context, uint8_t *buffer, size_
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
-    if(*length < ctx->jsonBlockHeader.length)
+    if(*length < ctx->json_block_header.length)
     {
-        TRACE("Buffer too small for Aaru metadata JSON, required %u bytes", ctx->jsonBlockHeader.length);
-        *length = ctx->jsonBlockHeader.length;
+        TRACE("Buffer too small for Aaru metadata JSON, required %u bytes", ctx->json_block_header.length);
+        *length = ctx->json_block_header.length;
 
         TRACE("Exiting aaruf_get_aaru_json_metadata() = AARUF_ERROR_BUFFER_TOO_SMALL");
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
-    *length = ctx->jsonBlockHeader.length;
-    memcpy(buffer, ctx->jsonBlock, ctx->jsonBlockHeader.length);
+    *length = ctx->json_block_header.length;
+    memcpy(buffer, ctx->json_block, ctx->json_block_header.length);
 
     TRACE("Aaru metadata JSON read successfully, length %u", *length);
     TRACE("Exiting aaruf_get_aaru_json_metadata(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
@@ -2268,7 +2268,7 @@ int32_t aaruf_set_aaru_json_metadata(void *context, uint8_t *data, size_t length
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -2280,7 +2280,7 @@ int32_t aaruf_set_aaru_json_metadata(void *context, uint8_t *data, size_t length
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -2298,10 +2298,10 @@ int32_t aaruf_set_aaru_json_metadata(void *context, uint8_t *data, size_t length
 
     // Copy opaque UTF-8 string
     memcpy(copy, data, length);
-    if(ctx->jsonBlock != NULL) free(ctx->jsonBlock);
-    ctx->jsonBlock                  = copy;
-    ctx->jsonBlockHeader.identifier = AaruMetadataJsonBlock;
-    ctx->jsonBlockHeader.length     = (uint32_t)length;
+    if(ctx->json_block != NULL) free(ctx->json_block);
+    ctx->json_block                   = copy;
+    ctx->json_block_header.identifier = AaruMetadataJsonBlock;
+    ctx->json_block_header.length     = (uint32_t)length;
 
     TRACE("Exiting aaruf_set_aaru_json_metadata(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
     return AARUF_STATUS_OK;
@@ -2347,7 +2347,7 @@ int32_t aaruf_get_media_sequence(const void *context, int32_t *sequence, int32_t
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    const aaruformatContext *ctx = context;
+    const aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -2358,7 +2358,7 @@ int32_t aaruf_get_media_sequence(const void *context, int32_t *sequence, int32_t
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock)
+    if(ctx->metadata_block_header.identifier != MetadataBlock)
     {
         FATAL("No metadata block present");
 
@@ -2366,8 +2366,8 @@ int32_t aaruf_get_media_sequence(const void *context, int32_t *sequence, int32_t
         return AARUF_ERROR_METADATA_NOT_PRESENT;
     }
 
-    *sequence      = ctx->metadataBlockHeader.mediaSequence;
-    *last_sequence = ctx->metadataBlockHeader.lastMediaSequence;
+    *sequence      = ctx->metadata_block_header.mediaSequence;
+    *last_sequence = ctx->metadata_block_header.lastMediaSequence;
 
     TRACE("Exiting aaruf_set_media_sequence(%p, %d, %d) = AARUF_STATUS_OK", context, *sequence, *last_sequence);
     return AARUF_STATUS_OK;
@@ -2414,7 +2414,7 @@ int32_t aaruf_get_creator(const void *context, uint8_t *buffer, int32_t *length)
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    const aaruformatContext *ctx = context;
+    const aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -2425,8 +2425,8 @@ int32_t aaruf_get_creator(const void *context, uint8_t *buffer, int32_t *length)
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->Creator == NULL ||
-       ctx->metadataBlockHeader.creatorLength == 0)
+    if(ctx->metadata_block_header.identifier != MetadataBlock || ctx->creator == NULL ||
+       ctx->metadata_block_header.creatorLength == 0)
     {
         FATAL("No metadata block present");
 
@@ -2434,17 +2434,17 @@ int32_t aaruf_get_creator(const void *context, uint8_t *buffer, int32_t *length)
         return AARUF_ERROR_METADATA_NOT_PRESENT;
     }
 
-    if(buffer == NULL || *length < ctx->metadataBlockHeader.creatorLength)
+    if(buffer == NULL || *length < ctx->metadata_block_header.creatorLength)
     {
-        *length = ctx->metadataBlockHeader.creatorLength;
+        *length = ctx->metadata_block_header.creatorLength;
 
         TRACE("Exiting aaruf_get_creator() = AARUF_ERROR_BUFFER_TOO_SMALL");
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->Creator, ctx->metadataBlockHeader.creatorLength);
-    *length = ctx->metadataBlockHeader.creatorLength;
+    memcpy(buffer, ctx->creator, ctx->metadata_block_header.creatorLength);
+    *length = ctx->metadata_block_header.creatorLength;
 
     TRACE("Exiting aaruf_get_creator(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
     return AARUF_STATUS_OK;
@@ -2486,7 +2486,7 @@ int32_t aaruf_get_comments(const void *context, uint8_t *buffer, int32_t *length
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    const aaruformatContext *ctx = context;
+    const aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -2497,8 +2497,8 @@ int32_t aaruf_get_comments(const void *context, uint8_t *buffer, int32_t *length
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->Comments == NULL ||
-       ctx->metadataBlockHeader.commentsLength == 0)
+    if(ctx->metadata_block_header.identifier != MetadataBlock || ctx->comments == NULL ||
+       ctx->metadata_block_header.commentsLength == 0)
     {
         FATAL("No metadata block present");
 
@@ -2506,17 +2506,17 @@ int32_t aaruf_get_comments(const void *context, uint8_t *buffer, int32_t *length
         return AARUF_ERROR_METADATA_NOT_PRESENT;
     }
 
-    if(buffer == NULL || *length < ctx->metadataBlockHeader.commentsLength)
+    if(buffer == NULL || *length < ctx->metadata_block_header.commentsLength)
     {
-        *length = ctx->metadataBlockHeader.commentsLength;
+        *length = ctx->metadata_block_header.commentsLength;
 
         TRACE("Exiting aaruf_get_comments() = AARUF_ERROR_BUFFER_TOO_SMALL");
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->Comments, ctx->metadataBlockHeader.commentsLength);
-    *length = ctx->metadataBlockHeader.commentsLength;
+    memcpy(buffer, ctx->comments, ctx->metadata_block_header.commentsLength);
+    *length = ctx->metadata_block_header.commentsLength;
 
     TRACE("Exiting aaruf_get_comments(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
     return AARUF_STATUS_OK;
@@ -2556,7 +2556,7 @@ int32_t aaruf_get_media_title(const void *context, uint8_t *buffer, int32_t *len
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    const aaruformatContext *ctx = context;
+    const aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -2567,8 +2567,8 @@ int32_t aaruf_get_media_title(const void *context, uint8_t *buffer, int32_t *len
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->MediaTitle == NULL ||
-       ctx->metadataBlockHeader.mediaTitleLength == 0)
+    if(ctx->metadata_block_header.identifier != MetadataBlock || ctx->media_title == NULL ||
+       ctx->metadata_block_header.mediaTitleLength == 0)
     {
         FATAL("No metadata block present");
 
@@ -2576,17 +2576,17 @@ int32_t aaruf_get_media_title(const void *context, uint8_t *buffer, int32_t *len
         return AARUF_ERROR_METADATA_NOT_PRESENT;
     }
 
-    if(buffer == NULL || *length < ctx->metadataBlockHeader.mediaTitleLength)
+    if(buffer == NULL || *length < ctx->metadata_block_header.mediaTitleLength)
     {
-        *length = ctx->metadataBlockHeader.mediaTitleLength;
+        *length = ctx->metadata_block_header.mediaTitleLength;
 
         TRACE("Exiting aaruf_get_media_title() = AARUF_ERROR_BUFFER_TOO_SMALL");
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->MediaTitle, ctx->metadataBlockHeader.mediaTitleLength);
-    *length = ctx->metadataBlockHeader.mediaTitleLength;
+    memcpy(buffer, ctx->media_title, ctx->metadata_block_header.mediaTitleLength);
+    *length = ctx->metadata_block_header.mediaTitleLength;
 
     TRACE("Exiting aaruf_get_media_title(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
     return AARUF_STATUS_OK;
@@ -2626,7 +2626,7 @@ int32_t aaruf_get_media_manufacturer(const void *context, uint8_t *buffer, int32
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    const aaruformatContext *ctx = context;
+    const aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -2637,8 +2637,8 @@ int32_t aaruf_get_media_manufacturer(const void *context, uint8_t *buffer, int32
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->MediaManufacturer == NULL ||
-       ctx->metadataBlockHeader.mediaManufacturerLength == 0)
+    if(ctx->metadata_block_header.identifier != MetadataBlock || ctx->media_manufacturer == NULL ||
+       ctx->metadata_block_header.mediaManufacturerLength == 0)
     {
         FATAL("No metadata block present");
 
@@ -2646,17 +2646,17 @@ int32_t aaruf_get_media_manufacturer(const void *context, uint8_t *buffer, int32
         return AARUF_ERROR_METADATA_NOT_PRESENT;
     }
 
-    if(buffer == NULL || *length < ctx->metadataBlockHeader.mediaManufacturerLength)
+    if(buffer == NULL || *length < ctx->metadata_block_header.mediaManufacturerLength)
     {
-        *length = ctx->metadataBlockHeader.mediaManufacturerLength;
+        *length = ctx->metadata_block_header.mediaManufacturerLength;
 
         TRACE("Exiting aaruf_get_media_manufacturer() = AARUF_ERROR_BUFFER_TOO_SMALL");
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->MediaManufacturer, ctx->metadataBlockHeader.mediaManufacturerLength);
-    *length = ctx->metadataBlockHeader.mediaManufacturerLength;
+    memcpy(buffer, ctx->media_manufacturer, ctx->metadata_block_header.mediaManufacturerLength);
+    *length = ctx->metadata_block_header.mediaManufacturerLength;
 
     TRACE("Exiting aaruf_get_media_manufacturer(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
     return AARUF_STATUS_OK;
@@ -2696,7 +2696,7 @@ int32_t aaruf_get_media_model(const void *context, uint8_t *buffer, int32_t *len
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    const aaruformatContext *ctx = context;
+    const aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -2707,8 +2707,8 @@ int32_t aaruf_get_media_model(const void *context, uint8_t *buffer, int32_t *len
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->MediaModel == NULL ||
-       ctx->metadataBlockHeader.mediaModelLength == 0)
+    if(ctx->metadata_block_header.identifier != MetadataBlock || ctx->media_model == NULL ||
+       ctx->metadata_block_header.mediaModelLength == 0)
     {
         FATAL("No metadata block present");
 
@@ -2716,17 +2716,17 @@ int32_t aaruf_get_media_model(const void *context, uint8_t *buffer, int32_t *len
         return AARUF_ERROR_METADATA_NOT_PRESENT;
     }
 
-    if(buffer == NULL || *length < ctx->metadataBlockHeader.mediaModelLength)
+    if(buffer == NULL || *length < ctx->metadata_block_header.mediaModelLength)
     {
-        *length = ctx->metadataBlockHeader.mediaModelLength;
+        *length = ctx->metadata_block_header.mediaModelLength;
 
         TRACE("Exiting aaruf_get_media_model() = AARUF_ERROR_BUFFER_TOO_SMALL");
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->MediaModel, ctx->metadataBlockHeader.mediaModelLength);
-    *length = ctx->metadataBlockHeader.mediaModelLength;
+    memcpy(buffer, ctx->media_model, ctx->metadata_block_header.mediaModelLength);
+    *length = ctx->metadata_block_header.mediaModelLength;
 
     TRACE("Exiting aaruf_get_media_model(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
     return AARUF_STATUS_OK;
@@ -2766,7 +2766,7 @@ int32_t aaruf_get_media_serial_number(const void *context, uint8_t *buffer, int3
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    const aaruformatContext *ctx = context;
+    const aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -2777,8 +2777,8 @@ int32_t aaruf_get_media_serial_number(const void *context, uint8_t *buffer, int3
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->MediaSerialNumber == NULL ||
-       ctx->metadataBlockHeader.mediaSerialNumberLength == 0)
+    if(ctx->metadata_block_header.identifier != MetadataBlock || ctx->media_serial_number == NULL ||
+       ctx->metadata_block_header.mediaSerialNumberLength == 0)
     {
         FATAL("No metadata block present");
 
@@ -2786,17 +2786,17 @@ int32_t aaruf_get_media_serial_number(const void *context, uint8_t *buffer, int3
         return AARUF_ERROR_METADATA_NOT_PRESENT;
     }
 
-    if(buffer == NULL || *length < ctx->metadataBlockHeader.mediaSerialNumberLength)
+    if(buffer == NULL || *length < ctx->metadata_block_header.mediaSerialNumberLength)
     {
-        *length = ctx->metadataBlockHeader.mediaSerialNumberLength;
+        *length = ctx->metadata_block_header.mediaSerialNumberLength;
 
         TRACE("Exiting aaruf_get_media_serial_number() = AARUF_ERROR_BUFFER_TOO_SMALL");
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->MediaSerialNumber, ctx->metadataBlockHeader.mediaSerialNumberLength);
-    *length = ctx->metadataBlockHeader.mediaSerialNumberLength;
+    memcpy(buffer, ctx->media_serial_number, ctx->metadata_block_header.mediaSerialNumberLength);
+    *length = ctx->metadata_block_header.mediaSerialNumberLength;
 
     TRACE("Exiting aaruf_get_media_serial_number(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
     return AARUF_STATUS_OK;
@@ -2835,7 +2835,7 @@ int32_t aaruf_get_media_barcode(const void *context, uint8_t *buffer, int32_t *l
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    const aaruformatContext *ctx = context;
+    const aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -2846,8 +2846,8 @@ int32_t aaruf_get_media_barcode(const void *context, uint8_t *buffer, int32_t *l
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->MediaBarcode == NULL ||
-       ctx->metadataBlockHeader.mediaBarcodeLength == 0)
+    if(ctx->metadata_block_header.identifier != MetadataBlock || ctx->media_barcode == NULL ||
+       ctx->metadata_block_header.mediaBarcodeLength == 0)
     {
         FATAL("No metadata block present");
 
@@ -2855,17 +2855,17 @@ int32_t aaruf_get_media_barcode(const void *context, uint8_t *buffer, int32_t *l
         return AARUF_ERROR_METADATA_NOT_PRESENT;
     }
 
-    if(buffer == NULL || *length < ctx->metadataBlockHeader.mediaBarcodeLength)
+    if(buffer == NULL || *length < ctx->metadata_block_header.mediaBarcodeLength)
     {
-        *length = ctx->metadataBlockHeader.mediaBarcodeLength;
+        *length = ctx->metadata_block_header.mediaBarcodeLength;
 
         TRACE("Exiting aaruf_get_media_barcode() = AARUF_ERROR_BUFFER_TOO_SMALL");
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->MediaBarcode, ctx->metadataBlockHeader.mediaBarcodeLength);
-    *length = ctx->metadataBlockHeader.mediaBarcodeLength;
+    memcpy(buffer, ctx->media_barcode, ctx->metadata_block_header.mediaBarcodeLength);
+    *length = ctx->metadata_block_header.mediaBarcodeLength;
 
     TRACE("Exiting aaruf_get_media_barcode(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
     return AARUF_STATUS_OK;
@@ -2906,7 +2906,7 @@ int32_t aaruf_get_media_part_number(const void *context, uint8_t *buffer, int32_
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    const aaruformatContext *ctx = context;
+    const aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -2917,8 +2917,8 @@ int32_t aaruf_get_media_part_number(const void *context, uint8_t *buffer, int32_
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->MediaPartNumber == NULL ||
-       ctx->metadataBlockHeader.mediaPartNumberLength == 0)
+    if(ctx->metadata_block_header.identifier != MetadataBlock || ctx->media_part_number == NULL ||
+       ctx->metadata_block_header.mediaPartNumberLength == 0)
     {
         FATAL("No metadata block present");
 
@@ -2926,17 +2926,17 @@ int32_t aaruf_get_media_part_number(const void *context, uint8_t *buffer, int32_
         return AARUF_ERROR_METADATA_NOT_PRESENT;
     }
 
-    if(buffer == NULL || *length < ctx->metadataBlockHeader.mediaPartNumberLength)
+    if(buffer == NULL || *length < ctx->metadata_block_header.mediaPartNumberLength)
     {
-        *length = ctx->metadataBlockHeader.mediaPartNumberLength;
+        *length = ctx->metadata_block_header.mediaPartNumberLength;
 
         TRACE("Exiting aaruf_get_media_part_number() = AARUF_ERROR_BUFFER_TOO_SMALL");
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->MediaPartNumber, ctx->metadataBlockHeader.mediaPartNumberLength);
-    *length = ctx->metadataBlockHeader.mediaPartNumberLength;
+    memcpy(buffer, ctx->media_part_number, ctx->metadata_block_header.mediaPartNumberLength);
+    *length = ctx->metadata_block_header.mediaPartNumberLength;
 
     TRACE("Exiting aaruf_get_media_part_number(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
     return AARUF_STATUS_OK;
@@ -2978,7 +2978,7 @@ int32_t aaruf_get_drive_manufacturer(const void *context, uint8_t *buffer, int32
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    const aaruformatContext *ctx = context;
+    const aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -2989,8 +2989,8 @@ int32_t aaruf_get_drive_manufacturer(const void *context, uint8_t *buffer, int32
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->DriveManufacturer == NULL ||
-       ctx->metadataBlockHeader.driveManufacturerLength == 0)
+    if(ctx->metadata_block_header.identifier != MetadataBlock || ctx->drive_manufacturer == NULL ||
+       ctx->metadata_block_header.driveManufacturerLength == 0)
     {
         FATAL("No metadata block present");
 
@@ -2998,17 +2998,17 @@ int32_t aaruf_get_drive_manufacturer(const void *context, uint8_t *buffer, int32
         return AARUF_ERROR_METADATA_NOT_PRESENT;
     }
 
-    if(buffer == NULL || *length < ctx->metadataBlockHeader.driveManufacturerLength)
+    if(buffer == NULL || *length < ctx->metadata_block_header.driveManufacturerLength)
     {
-        *length = ctx->metadataBlockHeader.driveManufacturerLength;
+        *length = ctx->metadata_block_header.driveManufacturerLength;
 
         TRACE("Exiting aaruf_get_drive_manufacturer() = AARUF_ERROR_BUFFER_TOO_SMALL");
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->DriveManufacturer, ctx->metadataBlockHeader.driveManufacturerLength);
-    *length = ctx->metadataBlockHeader.driveManufacturerLength;
+    memcpy(buffer, ctx->drive_manufacturer, ctx->metadata_block_header.driveManufacturerLength);
+    *length = ctx->metadata_block_header.driveManufacturerLength;
 
     TRACE("Exiting aaruf_get_drive_manufacturer(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
     return AARUF_STATUS_OK;
@@ -3048,7 +3048,7 @@ int32_t aaruf_get_drive_model(const void *context, uint8_t *buffer, int32_t *len
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    const aaruformatContext *ctx = context;
+    const aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -3059,8 +3059,8 @@ int32_t aaruf_get_drive_model(const void *context, uint8_t *buffer, int32_t *len
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->DriveModel == NULL ||
-       ctx->metadataBlockHeader.driveModelLength == 0)
+    if(ctx->metadata_block_header.identifier != MetadataBlock || ctx->drive_model == NULL ||
+       ctx->metadata_block_header.driveModelLength == 0)
     {
         FATAL("No metadata block present");
 
@@ -3068,17 +3068,17 @@ int32_t aaruf_get_drive_model(const void *context, uint8_t *buffer, int32_t *len
         return AARUF_ERROR_METADATA_NOT_PRESENT;
     }
 
-    if(buffer == NULL || *length < ctx->metadataBlockHeader.driveModelLength)
+    if(buffer == NULL || *length < ctx->metadata_block_header.driveModelLength)
     {
-        *length = ctx->metadataBlockHeader.driveModelLength;
+        *length = ctx->metadata_block_header.driveModelLength;
 
         TRACE("Exiting aaruf_get_drive_model() = AARUF_ERROR_BUFFER_TOO_SMALL");
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->DriveModel, ctx->metadataBlockHeader.driveModelLength);
-    *length = ctx->metadataBlockHeader.driveModelLength;
+    memcpy(buffer, ctx->drive_model, ctx->metadata_block_header.driveModelLength);
+    *length = ctx->metadata_block_header.driveModelLength;
 
     TRACE("Exiting aaruf_get_drive_model(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
     return AARUF_STATUS_OK;
@@ -3118,7 +3118,7 @@ int32_t aaruf_get_drive_serial_number(const void *context, uint8_t *buffer, int3
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    const aaruformatContext *ctx = context;
+    const aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -3129,8 +3129,8 @@ int32_t aaruf_get_drive_serial_number(const void *context, uint8_t *buffer, int3
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->DriveSerialNumber == NULL ||
-       ctx->metadataBlockHeader.driveSerialNumberLength == 0)
+    if(ctx->metadata_block_header.identifier != MetadataBlock || ctx->drive_serial_number == NULL ||
+       ctx->metadata_block_header.driveSerialNumberLength == 0)
     {
         FATAL("No metadata block present");
 
@@ -3138,17 +3138,17 @@ int32_t aaruf_get_drive_serial_number(const void *context, uint8_t *buffer, int3
         return AARUF_ERROR_METADATA_NOT_PRESENT;
     }
 
-    if(buffer == NULL || *length < ctx->metadataBlockHeader.driveSerialNumberLength)
+    if(buffer == NULL || *length < ctx->metadata_block_header.driveSerialNumberLength)
     {
-        *length = ctx->metadataBlockHeader.driveSerialNumberLength;
+        *length = ctx->metadata_block_header.driveSerialNumberLength;
 
         TRACE("Exiting aaruf_get_drive_serial_number() = AARUF_ERROR_BUFFER_TOO_SMALL");
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->DriveSerialNumber, ctx->metadataBlockHeader.driveSerialNumberLength);
-    *length = ctx->metadataBlockHeader.driveSerialNumberLength;
+    memcpy(buffer, ctx->drive_serial_number, ctx->metadata_block_header.driveSerialNumberLength);
+    *length = ctx->metadata_block_header.driveSerialNumberLength;
 
     TRACE("Exiting aaruf_get_drive_serial_number(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
     return AARUF_STATUS_OK;
@@ -3188,7 +3188,7 @@ int32_t aaruf_get_drive_firmware_revision(const void *context, uint8_t *buffer, 
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    const aaruformatContext *ctx = context;
+    const aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -3199,8 +3199,8 @@ int32_t aaruf_get_drive_firmware_revision(const void *context, uint8_t *buffer, 
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->DriveFirmwareRevision == NULL ||
-       ctx->metadataBlockHeader.driveFirmwareRevisionLength == 0)
+    if(ctx->metadata_block_header.identifier != MetadataBlock || ctx->drive_firmware_revision == NULL ||
+       ctx->metadata_block_header.driveFirmwareRevisionLength == 0)
     {
         FATAL("No metadata block present");
 
@@ -3208,17 +3208,17 @@ int32_t aaruf_get_drive_firmware_revision(const void *context, uint8_t *buffer, 
         return AARUF_ERROR_METADATA_NOT_PRESENT;
     }
 
-    if(buffer == NULL || *length < ctx->metadataBlockHeader.driveFirmwareRevisionLength)
+    if(buffer == NULL || *length < ctx->metadata_block_header.driveFirmwareRevisionLength)
     {
-        *length = ctx->metadataBlockHeader.driveFirmwareRevisionLength;
+        *length = ctx->metadata_block_header.driveFirmwareRevisionLength;
 
         TRACE("Exiting aaruf_get_drive_firmware_revision() = AARUF_ERROR_BUFFER_TOO_SMALL");
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->DriveFirmwareRevision, ctx->metadataBlockHeader.driveFirmwareRevisionLength);
-    *length = ctx->metadataBlockHeader.driveFirmwareRevisionLength;
+    memcpy(buffer, ctx->drive_firmware_revision, ctx->metadata_block_header.driveFirmwareRevisionLength);
+    *length = ctx->metadata_block_header.driveFirmwareRevisionLength;
 
     TRACE("Exiting aaruf_get_drive_firmware_revision(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
     return AARUF_STATUS_OK;

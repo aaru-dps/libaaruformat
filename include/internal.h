@@ -21,43 +21,43 @@
 
 #include "utarray.h"
 
-UT_array *process_index_v1(aaruformatContext *ctx);
-int32_t   verify_index_v1(aaruformatContext *ctx);
-UT_array *process_index_v2(aaruformatContext *ctx);
-int32_t   verify_index_v2(aaruformatContext *ctx);
-UT_array *process_index_v3(aaruformatContext *ctx);
-int32_t   verify_index_v3(aaruformatContext *ctx);
-int32_t   process_data_block(aaruformatContext *ctx, IndexEntry *entry);
-int32_t   process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *found_user_data_ddt);
-int32_t   process_ddt_v2(aaruformatContext *ctx, IndexEntry *entry, bool *found_user_data_ddt);
-void      process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry);
-void      process_geometry_block(aaruformatContext *ctx, const IndexEntry *entry);
-void      process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry);
-void      process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry);
-void      process_aaru_metadata_json_block(aaruformatContext *ctx, const IndexEntry *entry);
-void      process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry);
-void      process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry);
-void      process_tape_files_block(aaruformatContext *ctx, const IndexEntry *entry);
-void      process_tape_partitions_block(aaruformatContext *ctx, const IndexEntry *entry);
-int32_t   decode_ddt_entry_v1(aaruformatContext *ctx, uint64_t sector_address, uint64_t *offset, uint64_t *block_offset,
-                              uint8_t *sector_status);
-int32_t   decode_ddt_entry_v2(aaruformatContext *ctx, uint64_t sector_address, bool negative, uint64_t *offset,
-                              uint64_t *block_offset, uint8_t *sector_status);
-int32_t   decode_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, bool negative, uint64_t *offset,
-                                     uint64_t *block_offset, uint8_t *sector_status);
-int32_t   decode_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, bool negative, uint64_t *offset,
-                                    uint64_t *block_offset, uint8_t *sector_status);
-bool      set_ddt_entry_v2(aaruformatContext *ctx, uint64_t sector_address, bool negative, uint64_t offset,
-                           uint64_t block_offset, uint8_t sector_status, uint64_t *ddt_entry);
-bool      set_ddt_single_level_v2(aaruformatContext *ctx, uint64_t sector_address, bool negative, uint64_t offset,
-                                  uint64_t block_offset, uint8_t sector_status, uint64_t *ddt_entry);
-bool      set_ddt_multi_level_v2(aaruformatContext *ctx, uint64_t sector_address, bool negative, uint64_t offset,
-                                 uint64_t block_offset, uint8_t sector_status, uint64_t *ddt_entry);
-bool      set_ddt_tape(aaruformatContext *ctx, uint64_t sector_address, uint64_t offset, uint64_t block_offset,
-                       uint8_t sector_status, uint64_t *ddt_entry);
+UT_array *process_index_v1(aaruformat_context *ctx);
+int32_t   verify_index_v1(aaruformat_context *ctx);
+UT_array *process_index_v2(aaruformat_context *ctx);
+int32_t   verify_index_v2(aaruformat_context *ctx);
+UT_array *process_index_v3(aaruformat_context *ctx);
+int32_t   verify_index_v3(aaruformat_context *ctx);
+int32_t   process_data_block(aaruformat_context *ctx, IndexEntry *entry);
+int32_t   process_ddt_v1(aaruformat_context *ctx, IndexEntry *entry, bool *found_user_data_ddt);
+int32_t   process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_user_data_ddt);
+void      process_metadata_block(aaruformat_context *ctx, const IndexEntry *entry);
+void      process_geometry_block(aaruformat_context *ctx, const IndexEntry *entry);
+void      process_tracks_block(aaruformat_context *ctx, const IndexEntry *entry);
+void      process_cicm_block(aaruformat_context *ctx, const IndexEntry *entry);
+void      process_aaru_metadata_json_block(aaruformat_context *ctx, const IndexEntry *entry);
+void      process_dumphw_block(aaruformat_context *ctx, const IndexEntry *entry);
+void      process_checksum_block(aaruformat_context *ctx, const IndexEntry *entry);
+void      process_tape_files_block(aaruformat_context *ctx, const IndexEntry *entry);
+void      process_tape_partitions_block(aaruformat_context *ctx, const IndexEntry *entry);
+int32_t decode_ddt_entry_v1(aaruformat_context *ctx, uint64_t sector_address, uint64_t *offset, uint64_t *block_offset,
+                            uint8_t *sector_status);
+int32_t decode_ddt_entry_v2(aaruformat_context *ctx, uint64_t sector_address, bool negative, uint64_t *offset,
+                            uint64_t *block_offset, uint8_t *sector_status);
+int32_t decode_ddt_single_level_v2(aaruformat_context *ctx, uint64_t sector_address, bool negative, uint64_t *offset,
+                                   uint64_t *block_offset, uint8_t *sector_status);
+int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bool negative, uint64_t *offset,
+                                  uint64_t *block_offset, uint8_t *sector_status);
+bool    set_ddt_entry_v2(aaruformat_context *ctx, uint64_t sector_address, bool negative, uint64_t offset,
+                         uint64_t block_offset, uint8_t sector_status, uint64_t *ddt_entry);
+bool    set_ddt_single_level_v2(aaruformat_context *ctx, uint64_t sector_address, bool negative, uint64_t offset,
+                                uint64_t block_offset, uint8_t sector_status, uint64_t *ddt_entry);
+bool    set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bool negative, uint64_t offset,
+                               uint64_t block_offset, uint8_t sector_status, uint64_t *ddt_entry);
+bool    set_ddt_tape(aaruformat_context *ctx, uint64_t sector_address, uint64_t offset, uint64_t block_offset,
+                     uint8_t sector_status, uint64_t *ddt_entry);
 aaru_options parse_options(const char *options);
 uint64_t     get_filetime_uint64();
-int32_t      aaruf_close_current_block(aaruformatContext *ctx);
+int32_t      aaruf_close_current_block(aaruformat_context *ctx);
 int          compare_extents(const void *a, const void *b);
 
 #endif  // LIBAARUFORMAT_INTERNAL_H

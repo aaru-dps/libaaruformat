@@ -30,12 +30,12 @@
 
 int convert(const char *input_path, const char *output_path)
 {
-    aaruformatContext *input_ctx     = NULL;
-    aaruformatContext *output_ctx    = NULL;
-    int32_t            res           = 0;
-    uint32_t           sector_size   = 0;
-    uint64_t           total_sectors = 0;
-    uint8_t           *sector_data   = NULL;
+    aaruformat_context *input_ctx     = NULL;
+    aaruformat_context *output_ctx    = NULL;
+    int32_t             res           = 0;
+    uint32_t            sector_size   = 0;
+    uint64_t            total_sectors = 0;
+    uint8_t            *sector_data   = NULL;
 
     printf("Converting image from %s to %s...\n", input_path, output_path);
 
@@ -48,8 +48,8 @@ int convert(const char *input_path, const char *output_path)
     }
 
     // Get image information from input
-    total_sectors = input_ctx->imageInfo.Sectors;
-    sector_size   = input_ctx->imageInfo.SectorSize;
+    total_sectors = input_ctx->image_info.Sectors;
+    sector_size   = input_ctx->image_info.SectorSize;
 
     printf("Input image has %llu sectors of %u bytes each.\n", total_sectors, sector_size);
 
@@ -93,7 +93,7 @@ int convert(const char *input_path, const char *output_path)
     free(app_name_utf16);
 
     // Create output image
-    output_ctx = aaruf_create(output_path, input_ctx->imageInfo.MediaType, sector_size, total_sectors,
+    output_ctx = aaruf_create(output_path, input_ctx->image_info.MediaType, sector_size, total_sectors,
                               0,     // negative sectors
                               0,     // overflow sectors
                               NULL,  // options

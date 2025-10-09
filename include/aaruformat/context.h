@@ -144,7 +144,7 @@ typedef struct TapeDdtHashEntry
     UT_hash_handle hh;     ///< UTHASH handle
 } TapeDdtHashEntry;
 
-/** \struct aaruformatContext
+/** \struct aaruformat_context
  *  \brief Master context representing an open or in‑creation Aaru image.
  *
  *  Contains stream handle, parsed headers, deduplication structures, optical extras, metadata blocks, checksum
@@ -168,38 +168,38 @@ typedef struct TapeDdtHashEntry
  *   - shift retained for backward compatibility with earlier single‑level address shift semantics.
  *   - mappedMemoryDdtSize is meaningful only if userDataDdt references an mmapped region.
  */
-typedef struct aaruformatContext
+typedef struct aaruformat_context
 {
     /* Core & header */
-    uint64_t     magic;                ///< File magic (AARU_MAGIC) post-open.
-    AaruHeaderV2 header;               ///< Parsed container header (v2).
-    uint8_t      libraryMajorVersion;  ///< Linked library major version.
-    uint8_t      libraryMinorVersion;  ///< Linked library minor version.
-    FILE        *imageStream;          ///< Underlying FILE* stream (binary mode).
+    uint64_t     magic;                  ///< File magic (AARU_MAGIC) post-open.
+    AaruHeaderV2 header;                 ///< Parsed container header (v2).
+    uint8_t      library_major_version;  ///< Linked library major version.
+    uint8_t      library_minor_version;  ///< Linked library minor version.
+    FILE        *imageStream;            ///< Underlying FILE* stream (binary mode).
 
     /* Deduplication tables (DDT) */
-    uint8_t           shift;                  ///< Legacy overall shift (deprecated by data_shift/table_shift).
-    bool              inMemoryDdt;            ///< True if primary (and possibly secondary) DDT loaded.
-    uint64_t         *userDataDdt;            ///< Legacy flat DDT pointer (NULL when using v2 mini/big arrays).
-    size_t            mappedMemoryDdtSize;    ///< Length of mmapped DDT if userDataDdt is mmapped.
-    uint32_t         *sectorPrefixDdt;        ///< Legacy CD sector prefix DDT (deprecated by *2).
-    uint32_t         *sectorSuffixDdt;        ///< Legacy CD sector suffix DDT.
-    uint32_t         *sectorPrefixDdt2;       ///< CD sector prefix DDT V2.
-    uint32_t         *sectorSuffixDdt2;       ///< CD sector suffix DDT V2.
-    TapeDdtHashEntry *tapeDdt;                ///< Hash table root for tape DDT entries
-    DdtHeader2        userDataDdtHeader;      ///< Active user data DDT v2 header (primary table meta).
-    int               ddtVersion;             ///< DDT version in use (1=legacy, 2=v2 hierarchical).
-    uint32_t         *userDataDdtBig;         ///< DDT entries (big variant) primary/secondary current.
-    uint64_t          cachedDdtOffset;        ///< File offset of currently cached secondary DDT (0=none).
-    uint64_t          cachedDdtPosition;      ///< Position index of cached secondary DDT.
-    uint64_t          primaryDdtOffset;       ///< File offset of the primary DDT v2 table.
-    uint32_t         *cachedSecondaryDdtBig;  ///< Cached secondary table (big entries) or NULL.
+    uint8_t           shift;                   ///< Legacy overall shift (deprecated by data_shift/table_shift).
+    bool              in_memory_ddt;           ///< True if primary (and possibly secondary) DDT loaded.
+    uint64_t         *user_data_ddt;           ///< Legacy flat DDT pointer (NULL when using v2 mini/big arrays).
+    size_t            mapped_memory_ddt_size;  ///< Length of mmapped DDT if userDataDdt is mmapped.
+    uint32_t         *sector_prefix_ddt;       ///< Legacy CD sector prefix DDT (deprecated by *2).
+    uint32_t         *sector_suffix_ddt;       ///< Legacy CD sector suffix DDT.
+    uint32_t         *sector_prefix_ddt2;      ///< CD sector prefix DDT V2.
+    uint32_t         *sector_suffix_ddt2;      ///< CD sector suffix DDT V2.
+    TapeDdtHashEntry *tape_ddt;                ///< Hash table root for tape DDT entries
+    DdtHeader2        user_data_ddt_header;    ///< Active user data DDT v2 header (primary table meta).
+    int               ddt_version;             ///< DDT version in use (1=legacy, 2=v2 hierarchical).
+    uint32_t         *user_data_ddt2;          ///< DDT entries (big variant) primary/secondary current.
+    uint64_t          cached_ddt_offset;       ///< File offset of currently cached secondary DDT (0=none).
+    uint64_t          cached_ddt_position;     ///< Position index of cached secondary DDT.
+    uint64_t          primary_ddt_offset;      ///< File offset of the primary DDT v2 table.
+    uint32_t         *cached_secondary_ddt2;   ///< Cached secondary table (big entries) or NULL.
 
     /* Optical auxiliary buffers (NULL if not present) */
     uint8_t *sector_prefix;               ///< Raw per-sector prefix (e.g., sync+header) uncorrected.
-    uint8_t *sectorPrefixCorrected;       ///< Corrected variant (post error correction) if stored.
+    uint8_t *sector_prefix_corrected;     ///< Corrected variant (post error correction) if stored.
     uint8_t *sector_suffix;               ///< Raw per-sector suffix (EDC/ECC) uncorrected.
-    uint8_t *sectorSuffixCorrected;       ///< Corrected suffix if stored separately.
+    uint8_t *sector_suffix_corrected;     ///< Corrected suffix if stored separately.
     uint8_t *sector_subchannel;           ///< Raw 96-byte subchannel (if captured).
     uint8_t *mode2_subheaders;            ///< MODE2 Form1/Form2 8-byte subheaders (concatenated).
     uint8_t *sector_id;                   ///< DVD sector ID (4 bytes) if present.
@@ -209,54 +209,55 @@ typedef struct aaruformatContext
     uint8_t *sector_decrypted_title_key;  ///< DVD decrypted title key (5 bytes) if present.
 
     /* Metadata & geometry */
-    GeometryBlockHeader                 geometryBlock;                ///< Logical geometry block (if present).
-    MetadataBlockHeader                 metadataBlockHeader;          ///< Metadata block header.
-    uint8_t                            *metadataBlock;                ///< Raw metadata UTF-16LE concatenated strings.
-    CicmMetadataBlock                   cicmBlockHeader;              ///< CICM metadata header (if present).
-    uint8_t                            *cicmBlock;                    ///< CICM XML payload.
-    DumpHardwareHeader                  dumpHardwareHeader;           ///< Dump hardware header.
-    struct DumpHardwareEntriesWithData *dumpHardwareEntriesWithData;  ///< Array of dump hardware entries + strings.
-    AaruMetadataJsonBlockHeader         jsonBlockHeader;              ///< JSON metadata block header (if present).
-    uint8_t                            *jsonBlock;                    ///< JSON metadata block payload (UTF-8).
-    uint8_t                            *Creator;                      ///< Who (person) created the image?
-    uint8_t                            *MediaTitle;                   ///< Title of the media represented by the image
-    uint8_t                            *Comments;                     ///< Image comments
-    uint8_t                            *MediaManufacturer;  ///< Manufacturer of the media represented by the image
-    uint8_t                            *MediaModel;         ///< Model of the media represented by the image
-    uint8_t                            *MediaSerialNumber;  ///< Serial number of the media represented by the image
-    uint8_t                            *MediaBarcode;       ///< Barcode of the media represented by the image
-    uint8_t                            *MediaPartNumber;    ///< Part number of the media represented by the image
-    uint8_t *DriveManufacturer;      ///< Manufacturer of the drive used to read the media represented by the image
-    uint8_t *DriveModel;             ///< Model of the drive used to read the media represented by the image
-    uint8_t *DriveSerialNumber;      ///< Serial number of the drive used to read the media represented by the image
-    uint8_t *DriveFirmwareRevision;  ///< Firmware revision of the drive used to read the media represented by the image
-    int32_t  MediaSequence;          ///< Number in sequence for the media represented by the image
-    int32_t  LastMediaSequence;      ///< Last media of the sequence the media represented by the image corresponds to
-    uint32_t Cylinders;              ///< Cylinders of the media represented by the image
-    uint32_t Heads;                  ///< Heads of the media represented by the image
-    uint32_t SectorsPerTrack;  ///< Sectors per track of the media represented by the image (for variable image, the
-                               ///< smallest)
+    GeometryBlockHeader                 geometry_block;         ///< Logical geometry block (if present).
+    MetadataBlockHeader                 metadata_block_header;  ///< Metadata block header.
+    uint8_t                            *metadata_block;         ///< Raw metadata UTF-16LE concatenated strings.
+    CicmMetadataBlock                   cicm_block_header;      ///< CICM metadata header (if present).
+    uint8_t                            *cicm_block;             ///< CICM XML payload.
+    DumpHardwareHeader                  dump_hardware_header;   ///< Dump hardware header.
+    struct DumpHardwareEntriesWithData *dump_hardware_entries_with_data;  ///< Array of dump hardware entries + strings.
+    AaruMetadataJsonBlockHeader         json_block_header;                ///< JSON metadata block header (if present).
+    uint8_t                            *json_block;                       ///< JSON metadata block payload (UTF-8).
+    uint8_t                            *creator;                          ///< Who (person) created the image?
+    uint8_t                            *media_title;          ///< Title of the media represented by the image
+    uint8_t                            *comments;             ///< Image comments
+    uint8_t                            *media_manufacturer;   ///< Manufacturer of the media represented by the image
+    uint8_t                            *media_model;          ///< Model of the media represented by the image
+    uint8_t                            *media_serial_number;  ///< Serial number of the media represented by the image
+    uint8_t                            *media_barcode;        ///< Barcode of the media represented by the image
+    uint8_t                            *media_part_number;    ///< Part number of the media represented by the image
+    uint8_t *drive_manufacturer;   ///< Manufacturer of the drive used to read the media represented by the image
+    uint8_t *drive_model;          ///< Model of the drive used to read the media represented by the image
+    uint8_t *drive_serial_number;  ///< Serial number of the drive used to read the media represented by the image
+    uint8_t
+        *drive_firmware_revision;  ///< Firmware revision of the drive used to read the media represented by the image
+    int32_t  media_sequence;       ///< Number in sequence for the media represented by the image
+    int32_t  last_media_sequence;  ///< Last media of the sequence the media represented by the image corresponds to
+    uint32_t cylinders;            ///< Cylinders of the media represented by the image
+    uint32_t heads;                ///< Heads of the media represented by the image
+    uint32_t sectors_per_track;    ///< Sectors per track of the media represented by the image (for variable image, the
+                                   ///< smallest)
 
     /* Optical information */
-    TracksHeader tracksHeader;        ///< Tracks header (optical) if present.
-    TrackEntry  *trackEntries;        ///< Full track list (tracksHeader.entries elements).
-    uint8_t      numberOfDataTracks;  ///< Count of tracks considered "data" (sequence 1..99 heuristics).
-    TrackEntry  *dataTracks;          ///< Filtered list of data tracks (subset of trackEntries).
+    TracksHeader tracks_header;          ///< Tracks header (optical) if present.
+    TrackEntry  *track_entries;          ///< Full track list (tracksHeader.entries elements).
+    uint8_t      number_of_data_tracks;  ///< Count of tracks considered "data" (sequence 1..99 heuristics).
+    TrackEntry  *data_tracks;            ///< Filtered list of data tracks (subset of trackEntries).
 
     /* Integrity & ECC */
-    CdEccContext *eccCdContext;  ///< CD ECC/EDC helper tables (allocated on demand).
-    crc64_ctx    *crc64Context;  ///< Opaque CRC64 context for streaming updates.
+    CdEccContext *ecc_cd_context;  ///< CD ECC/EDC helper tables (allocated on demand).
+    crc64_ctx    *crc64_context;   ///< Opaque CRC64 context for streaming updates.
 
     /* Index & deduplication lookup */
-    UT_array   *indexEntries;   ///< Flattened index entries (UT_array of IndexEntry).
-    hash_map_t *sectorHashMap;  ///< Deduplication hash map (fingerprint->entry mapping).
+    UT_array   *index_entries;    ///< Flattened index entries (UT_array of IndexEntry).
+    hash_map_t *sector_hash_map;  ///< Deduplication hash map (fingerprint->entry mapping).
 
     /* Caches */
-    struct CacheHeader blockHeaderCache;  ///< LRU/Cache header for block headers.
-    struct CacheHeader blockCache;        ///< LRU/Cache header for block payloads.
+    struct CacheHeader block_header_cache;  ///< LRU/Cache header for block headers.
+    struct CacheHeader block_cache;         ///< LRU/Cache header for block payloads.
 
     /* High-level summary */
-    ImageInfo imageInfo;  ///< Exposed high-level image info summary.
+    ImageInfo image_info;  ///< Exposed high-level image info summary.
 
     /* Tags */
     bool          *readableSectorTags;  ///< Per-sector boolean array (optical tags read successfully?).
@@ -276,17 +277,17 @@ typedef struct aaruformatContext
     blake3_hasher *blake3_context;       ///< Opaque BLAKE3 context for streaming updates
 
     /* Write path */
-    bool        isWriting;              ///< True if context opened/created for writing.
-    BlockHeader currentBlockHeader;     ///< Header for block currently being assembled (write path).
-    uint8_t    *writingBuffer;          ///< Accumulation buffer for current block data.
-    int         currentBlockOffset;     ///< Logical offset inside block (units: bytes or sectors depending on path).
-    int         writingBufferPosition;  ///< Current size / position within writingBuffer.
-    uint64_t    nextBlockPosition;      ///< Absolute file offset where next block will be written.
-    bool        rewinded;               ///< True if stream has been rewound after open (write path).
-    uint64_t    last_written_block;     ///< Last written block number (write path).
-    uint8_t     currentTrackType;  ///< Current track type (when writing optical images with tracks, needed for block
-                                   ///< compression type).
-    bool        writingLong;       ///< True if writing long sectors
+    bool        is_writing;               ///< True if context opened/created for writing.
+    BlockHeader current_block_header;     ///< Header for block currently being assembled (write path).
+    uint8_t    *writing_buffer;           ///< Accumulation buffer for current block data.
+    int         current_block_offset;     ///< Logical offset inside block (units: bytes or sectors depending on path).
+    int         writing_buffer_position;  ///< Current size / position within writingBuffer.
+    uint64_t    next_block_position;      ///< Absolute file offset where next block will be written.
+    bool        rewinded;                 ///< True if stream has been rewound after open (write path).
+    uint64_t    last_written_block;       ///< Last written block number (write path).
+    uint8_t     current_track_type;  ///< Current track type (when writing optical images with tracks, needed for block
+                                     ///< compression type).
+    bool        writing_long;        ///< True if writing long sectors
     size_t      sector_prefix_length;  ///< Length of sector_prefix
     size_t      sector_suffix_length;  ///< Length of sector_suffix
     size_t      sector_prefix_offset;  ///< Current position in sector_prefix
@@ -298,10 +299,10 @@ typedef struct aaruformatContext
     uint32_t lzma_dict_size;       ///< LZMA dictionary size (writing path).
 
     /* Tape-specific structures */
-    tapeFileHashEntry      *tapeFiles;       ///< Hash table root for tape files
-    TapePartitionHashEntry *tapePartitions;  ///< Hash table root for tape partitions
-    bool                    is_tape;         ///< True if the image is a tape image
-} aaruformatContext;
+    tapeFileHashEntry      *tape_files;       ///< Hash table root for tape files
+    TapePartitionHashEntry *tape_partitions;  ///< Hash table root for tape partitions
+    bool                    is_tape;          ///< True if the image is a tape image
+} aaruformat_context;
 
 /** \struct DumpHardwareEntriesWithData
  *  \brief In-memory representation of a dump hardware entry plus decoded variable-length fields & extents.

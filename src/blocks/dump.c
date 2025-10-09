@@ -51,14 +51,14 @@ static void free_dump_hardware_entries_array(DumpHardwareEntriesWithData *entrie
     }
 }
 
-static void reset_dump_hardware_context(aaruformatContext *ctx)
+static void reset_dump_hardware_context(aaruformat_context *ctx)
 {
     if(ctx == NULL) return;
 
-    free_dump_hardware_entries_array(ctx->dumpHardwareEntriesWithData, ctx->dumpHardwareHeader.entries);
-    free(ctx->dumpHardwareEntriesWithData);
-    ctx->dumpHardwareEntriesWithData = NULL;
-    memset(&ctx->dumpHardwareHeader, 0, sizeof(ctx->dumpHardwareHeader));
+    free_dump_hardware_entries_array(ctx->dump_hardware_entries_with_data, ctx->dump_hardware_header.entries);
+    free(ctx->dump_hardware_entries_with_data);
+    ctx->dump_hardware_entries_with_data = NULL;
+    memset(&ctx->dump_hardware_header, 0, sizeof(ctx->dump_hardware_header));
 }
 
 static bool read_dump_string(FILE *stream, const char *field_name, uint32_t length, uint32_t *remaining,
@@ -105,7 +105,7 @@ static bool read_dump_string(FILE *stream, const char *field_name, uint32_t leng
  * @param ctx Pointer to the aaruformat context.
  * @param entry Pointer to the index entry describing the dump hardware block.
  */
-void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
+void process_dumphw_block(aaruformat_context *ctx, const IndexEntry *entry)
 {
     TRACE("Entering process_dumphw_block(%p, %p)", ctx, entry);
     size_t read_bytes = 0;
@@ -214,7 +214,7 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
     if(header.entries == 0)
     {
         reset_dump_hardware_context(ctx);
-        ctx->dumpHardwareHeader = header;
+        ctx->dump_hardware_header = header;
         TRACE("Dump hardware block contains no entries. Clearing existing metadata.");
         TRACE("Exiting process_dumphw_block()");
         return;
@@ -336,8 +336,8 @@ void process_dumphw_block(aaruformatContext *ctx, const IndexEntry *entry)
     }
 
     reset_dump_hardware_context(ctx);
-    ctx->dumpHardwareEntriesWithData = entries;
-    ctx->dumpHardwareHeader          = header;
+    ctx->dump_hardware_entries_with_data = entries;
+    ctx->dump_hardware_header            = header;
 
     if(remaining_payload != 0)
     {

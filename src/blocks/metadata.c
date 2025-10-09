@@ -32,7 +32,7 @@
  * @param ctx Pointer to the aaruformat context.
  * @param entry Pointer to the index entry describing the metadata block.
  */
-void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
+void process_metadata_block(aaruformat_context *ctx, const IndexEntry *entry)
 {
     TRACE("Entering process_metadata_block(%p, %p)", ctx, entry);
     int    pos        = 0;
@@ -59,176 +59,177 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
 
     // Even if those two checks shall have been done before
     TRACE("Reading metadata block header at position %" PRIu64, entry->offset);
-    read_bytes = fread(&ctx->metadataBlockHeader, 1, sizeof(MetadataBlockHeader), ctx->imageStream);
+    read_bytes = fread(&ctx->metadata_block_header, 1, sizeof(MetadataBlockHeader), ctx->imageStream);
 
     if(read_bytes != sizeof(MetadataBlockHeader))
     {
-        memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
+        memset(&ctx->metadata_block_header, 0, sizeof(MetadataBlockHeader));
         FATAL("Could not read metadata block header, continuing...");
 
         TRACE("Exiting process_metadata_block()");
         return;
     }
 
-    if(ctx->metadataBlockHeader.identifier != entry->blockType)
+    if(ctx->metadata_block_header.identifier != entry->blockType)
     {
-        memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
+        memset(&ctx->metadata_block_header, 0, sizeof(MetadataBlockHeader));
         TRACE("Incorrect identifier for data block at position %" PRIu64 "", entry->offset);
 
         TRACE("Exiting process_metadata_block()");
         return;
     }
 
-    ctx->imageInfo.ImageSize += ctx->metadataBlockHeader.blockSize;
+    ctx->image_info.ImageSize += ctx->metadata_block_header.blockSize;
 
-    ctx->metadataBlock = (uint8_t *)malloc(ctx->metadataBlockHeader.blockSize);
+    ctx->metadata_block = (uint8_t *)malloc(ctx->metadata_block_header.blockSize);
 
-    if(ctx->metadataBlock == NULL)
+    if(ctx->metadata_block == NULL)
     {
-        memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
+        memset(&ctx->metadata_block_header, 0, sizeof(MetadataBlockHeader));
         FATAL("Could not allocate memory for metadata block, continuing...");
 
         TRACE("Exiting process_metadata_block()");
         return;
     }
 
-    TRACE("Reading metadata block of size %u at position %" PRIu64, ctx->metadataBlockHeader.blockSize,
+    TRACE("Reading metadata block of size %u at position %" PRIu64, ctx->metadata_block_header.blockSize,
           entry->offset + sizeof(MetadataBlockHeader));
-    read_bytes = fread(ctx->metadataBlock, 1, ctx->metadataBlockHeader.blockSize, ctx->imageStream);
+    read_bytes = fread(ctx->metadata_block, 1, ctx->metadata_block_header.blockSize, ctx->imageStream);
 
-    if(read_bytes != ctx->metadataBlockHeader.blockSize)
+    if(read_bytes != ctx->metadata_block_header.blockSize)
     {
-        memset(&ctx->metadataBlockHeader, 0, sizeof(MetadataBlockHeader));
-        free(ctx->metadataBlock);
+        memset(&ctx->metadata_block_header, 0, sizeof(MetadataBlockHeader));
+        free(ctx->metadata_block);
         FATAL("Could not read metadata block, continuing...");
     }
 
-    if(ctx->metadataBlockHeader.mediaSequence > 0 && ctx->metadataBlockHeader.lastMediaSequence > 0)
+    if(ctx->metadata_block_header.mediaSequence > 0 && ctx->metadata_block_header.lastMediaSequence > 0)
     {
-        ctx->MediaSequence     = ctx->metadataBlockHeader.mediaSequence;
-        ctx->LastMediaSequence = ctx->metadataBlockHeader.lastMediaSequence;
-        TRACE("Setting media sequence as %d of %d", ctx->MediaSequence, ctx->LastMediaSequence);
+        ctx->media_sequence      = ctx->metadata_block_header.mediaSequence;
+        ctx->last_media_sequence = ctx->metadata_block_header.lastMediaSequence;
+        TRACE("Setting media sequence as %d of %d", ctx->media_sequence, ctx->last_media_sequence);
     }
 
-    if(ctx->metadataBlockHeader.creatorLength > 0 &&
-       ctx->metadataBlockHeader.creatorOffset + ctx->metadataBlockHeader.creatorLength <=
-           ctx->metadataBlockHeader.blockSize)
+    if(ctx->metadata_block_header.creatorLength > 0 &&
+       ctx->metadata_block_header.creatorOffset + ctx->metadata_block_header.creatorLength <=
+           ctx->metadata_block_header.blockSize)
     {
-        ctx->Creator = (uint8_t *)malloc(ctx->metadataBlockHeader.creatorLength);
-        if(ctx->Creator != NULL)
-            memcpy(ctx->Creator, ctx->metadataBlock + ctx->metadataBlockHeader.creatorOffset,
-                   ctx->metadataBlockHeader.creatorLength);
+        ctx->creator = (uint8_t *)malloc(ctx->metadata_block_header.creatorLength);
+        if(ctx->creator != NULL)
+            memcpy(ctx->creator, ctx->metadata_block + ctx->metadata_block_header.creatorOffset,
+                   ctx->metadata_block_header.creatorLength);
     }
 
-    if(ctx->metadataBlockHeader.commentsLength > 0 &&
-       ctx->metadataBlockHeader.commentsOffset + ctx->metadataBlockHeader.commentsLength <=
-           ctx->metadataBlockHeader.blockSize)
+    if(ctx->metadata_block_header.commentsLength > 0 &&
+       ctx->metadata_block_header.commentsOffset + ctx->metadata_block_header.commentsLength <=
+           ctx->metadata_block_header.blockSize)
     {
-        ctx->Comments = (uint8_t *)malloc(ctx->metadataBlockHeader.commentsLength);
-        if(ctx->Comments != NULL)
-            memcpy(ctx->Comments, ctx->metadataBlock + ctx->metadataBlockHeader.commentsOffset,
-                   ctx->metadataBlockHeader.commentsLength);
+        ctx->comments = (uint8_t *)malloc(ctx->metadata_block_header.commentsLength);
+        if(ctx->comments != NULL)
+            memcpy(ctx->comments, ctx->metadata_block + ctx->metadata_block_header.commentsOffset,
+                   ctx->metadata_block_header.commentsLength);
     }
 
-    if(ctx->metadataBlockHeader.mediaTitleLength > 0 &&
-       ctx->metadataBlockHeader.mediaTitleOffset + ctx->metadataBlockHeader.mediaTitleLength <=
-           ctx->metadataBlockHeader.blockSize)
+    if(ctx->metadata_block_header.mediaTitleLength > 0 &&
+       ctx->metadata_block_header.mediaTitleOffset + ctx->metadata_block_header.mediaTitleLength <=
+           ctx->metadata_block_header.blockSize)
     {
-        ctx->MediaTitle = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaTitleLength);
-        if(ctx->MediaTitle != NULL)
-            memcpy(ctx->MediaTitle, ctx->metadataBlock + ctx->metadataBlockHeader.mediaTitleOffset,
-                   ctx->metadataBlockHeader.mediaTitleLength);
+        ctx->media_title = (uint8_t *)malloc(ctx->metadata_block_header.mediaTitleLength);
+        if(ctx->media_title != NULL)
+            memcpy(ctx->media_title, ctx->metadata_block + ctx->metadata_block_header.mediaTitleOffset,
+                   ctx->metadata_block_header.mediaTitleLength);
     }
 
-    if(ctx->metadataBlockHeader.mediaManufacturerLength > 0 &&
-       ctx->metadataBlockHeader.mediaManufacturerOffset + ctx->metadataBlockHeader.mediaManufacturerLength <=
-           ctx->metadataBlockHeader.blockSize)
+    if(ctx->metadata_block_header.mediaManufacturerLength > 0 &&
+       ctx->metadata_block_header.mediaManufacturerOffset + ctx->metadata_block_header.mediaManufacturerLength <=
+           ctx->metadata_block_header.blockSize)
     {
-        ctx->MediaManufacturer = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaManufacturerLength);
-        if(ctx->MediaManufacturer != NULL)
-            memcpy(ctx->MediaManufacturer, ctx->metadataBlock + ctx->metadataBlockHeader.mediaManufacturerOffset,
-                   ctx->metadataBlockHeader.mediaManufacturerLength);
+        ctx->media_manufacturer = (uint8_t *)malloc(ctx->metadata_block_header.mediaManufacturerLength);
+        if(ctx->media_manufacturer != NULL)
+            memcpy(ctx->media_manufacturer, ctx->metadata_block + ctx->metadata_block_header.mediaManufacturerOffset,
+                   ctx->metadata_block_header.mediaManufacturerLength);
     }
 
-    if(ctx->metadataBlockHeader.mediaModelLength > 0 &&
-       ctx->metadataBlockHeader.mediaModelOffset + ctx->metadataBlockHeader.mediaModelLength <=
-           ctx->metadataBlockHeader.blockSize)
+    if(ctx->metadata_block_header.mediaModelLength > 0 &&
+       ctx->metadata_block_header.mediaModelOffset + ctx->metadata_block_header.mediaModelLength <=
+           ctx->metadata_block_header.blockSize)
     {
-        ctx->MediaModel = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaModelLength);
-        if(ctx->MediaModel != NULL)
-            memcpy(ctx->MediaModel, ctx->metadataBlock + ctx->metadataBlockHeader.mediaModelOffset,
-                   ctx->metadataBlockHeader.mediaModelLength);
+        ctx->media_model = (uint8_t *)malloc(ctx->metadata_block_header.mediaModelLength);
+        if(ctx->media_model != NULL)
+            memcpy(ctx->media_model, ctx->metadata_block + ctx->metadata_block_header.mediaModelOffset,
+                   ctx->metadata_block_header.mediaModelLength);
     }
 
-    if(ctx->metadataBlockHeader.mediaSerialNumberLength > 0 &&
-       ctx->metadataBlockHeader.mediaSerialNumberOffset + ctx->metadataBlockHeader.mediaSerialNumberLength <=
-           ctx->metadataBlockHeader.blockSize)
+    if(ctx->metadata_block_header.mediaSerialNumberLength > 0 &&
+       ctx->metadata_block_header.mediaSerialNumberOffset + ctx->metadata_block_header.mediaSerialNumberLength <=
+           ctx->metadata_block_header.blockSize)
     {
-        ctx->MediaSerialNumber = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaSerialNumberLength);
-        if(ctx->MediaSerialNumber != NULL)
-            memcpy(ctx->MediaSerialNumber, ctx->metadataBlock + ctx->metadataBlockHeader.mediaSerialNumberOffset,
-                   ctx->metadataBlockHeader.mediaSerialNumberLength);
+        ctx->media_serial_number = (uint8_t *)malloc(ctx->metadata_block_header.mediaSerialNumberLength);
+        if(ctx->media_serial_number != NULL)
+            memcpy(ctx->media_serial_number, ctx->metadata_block + ctx->metadata_block_header.mediaSerialNumberOffset,
+                   ctx->metadata_block_header.mediaSerialNumberLength);
     }
 
-    if(ctx->metadataBlockHeader.mediaBarcodeLength > 0 &&
-       ctx->metadataBlockHeader.mediaBarcodeOffset + ctx->metadataBlockHeader.mediaBarcodeLength <=
-           ctx->metadataBlockHeader.blockSize)
+    if(ctx->metadata_block_header.mediaBarcodeLength > 0 &&
+       ctx->metadata_block_header.mediaBarcodeOffset + ctx->metadata_block_header.mediaBarcodeLength <=
+           ctx->metadata_block_header.blockSize)
     {
-        ctx->MediaBarcode = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaBarcodeLength);
-        if(ctx->MediaBarcode != NULL)
-            memcpy(ctx->MediaBarcode, ctx->metadataBlock + ctx->metadataBlockHeader.mediaBarcodeOffset,
-                   ctx->metadataBlockHeader.mediaBarcodeLength);
+        ctx->media_barcode = (uint8_t *)malloc(ctx->metadata_block_header.mediaBarcodeLength);
+        if(ctx->media_barcode != NULL)
+            memcpy(ctx->media_barcode, ctx->metadata_block + ctx->metadata_block_header.mediaBarcodeOffset,
+                   ctx->metadata_block_header.mediaBarcodeLength);
     }
 
-    if(ctx->metadataBlockHeader.mediaPartNumberLength > 0 &&
-       ctx->metadataBlockHeader.mediaPartNumberOffset + ctx->metadataBlockHeader.mediaPartNumberLength <=
-           ctx->metadataBlockHeader.blockSize)
+    if(ctx->metadata_block_header.mediaPartNumberLength > 0 &&
+       ctx->metadata_block_header.mediaPartNumberOffset + ctx->metadata_block_header.mediaPartNumberLength <=
+           ctx->metadata_block_header.blockSize)
     {
-        ctx->MediaPartNumber = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaPartNumberLength);
-        if(ctx->MediaPartNumber != NULL)
-            memcpy(ctx->MediaPartNumber, ctx->metadataBlock + ctx->metadataBlockHeader.mediaPartNumberOffset,
-                   ctx->metadataBlockHeader.mediaPartNumberLength);
+        ctx->media_part_number = (uint8_t *)malloc(ctx->metadata_block_header.mediaPartNumberLength);
+        if(ctx->media_part_number != NULL)
+            memcpy(ctx->media_part_number, ctx->metadata_block + ctx->metadata_block_header.mediaPartNumberOffset,
+                   ctx->metadata_block_header.mediaPartNumberLength);
     }
 
-    if(ctx->metadataBlockHeader.driveManufacturerLength > 0 &&
-       ctx->metadataBlockHeader.driveManufacturerOffset + ctx->metadataBlockHeader.driveManufacturerLength <=
-           ctx->metadataBlockHeader.blockSize)
+    if(ctx->metadata_block_header.driveManufacturerLength > 0 &&
+       ctx->metadata_block_header.driveManufacturerOffset + ctx->metadata_block_header.driveManufacturerLength <=
+           ctx->metadata_block_header.blockSize)
     {
-        ctx->DriveManufacturer = (uint8_t *)malloc(ctx->metadataBlockHeader.driveManufacturerLength);
-        if(ctx->DriveManufacturer != NULL)
-            memcpy(ctx->DriveManufacturer, ctx->metadataBlock + ctx->metadataBlockHeader.driveManufacturerOffset,
-                   ctx->metadataBlockHeader.driveManufacturerLength);
+        ctx->drive_manufacturer = (uint8_t *)malloc(ctx->metadata_block_header.driveManufacturerLength);
+        if(ctx->drive_manufacturer != NULL)
+            memcpy(ctx->drive_manufacturer, ctx->metadata_block + ctx->metadata_block_header.driveManufacturerOffset,
+                   ctx->metadata_block_header.driveManufacturerLength);
     }
 
-    if(ctx->metadataBlockHeader.driveModelLength > 0 &&
-       ctx->metadataBlockHeader.driveModelOffset + ctx->metadataBlockHeader.driveModelLength <=
-           ctx->metadataBlockHeader.blockSize)
+    if(ctx->metadata_block_header.driveModelLength > 0 &&
+       ctx->metadata_block_header.driveModelOffset + ctx->metadata_block_header.driveModelLength <=
+           ctx->metadata_block_header.blockSize)
     {
-        ctx->DriveModel = (uint8_t *)malloc(ctx->metadataBlockHeader.driveModelLength);
-        if(ctx->DriveModel != NULL)
-            memcpy(ctx->DriveModel, ctx->metadataBlock + ctx->metadataBlockHeader.driveModelOffset,
-                   ctx->metadataBlockHeader.driveModelLength);
+        ctx->drive_model = (uint8_t *)malloc(ctx->metadata_block_header.driveModelLength);
+        if(ctx->drive_model != NULL)
+            memcpy(ctx->drive_model, ctx->metadata_block + ctx->metadata_block_header.driveModelOffset,
+                   ctx->metadata_block_header.driveModelLength);
     }
 
-    if(ctx->metadataBlockHeader.driveSerialNumberLength > 0 &&
-       ctx->metadataBlockHeader.driveSerialNumberOffset + ctx->metadataBlockHeader.driveSerialNumberLength <=
-           ctx->metadataBlockHeader.blockSize)
+    if(ctx->metadata_block_header.driveSerialNumberLength > 0 &&
+       ctx->metadata_block_header.driveSerialNumberOffset + ctx->metadata_block_header.driveSerialNumberLength <=
+           ctx->metadata_block_header.blockSize)
     {
-        ctx->DriveSerialNumber = (uint8_t *)malloc(ctx->metadataBlockHeader.driveSerialNumberLength);
-        if(ctx->DriveSerialNumber != NULL)
-            memcpy(ctx->DriveSerialNumber, ctx->metadataBlock + ctx->metadataBlockHeader.driveSerialNumberOffset,
-                   ctx->metadataBlockHeader.driveSerialNumberLength);
+        ctx->drive_serial_number = (uint8_t *)malloc(ctx->metadata_block_header.driveSerialNumberLength);
+        if(ctx->drive_serial_number != NULL)
+            memcpy(ctx->drive_serial_number, ctx->metadata_block + ctx->metadata_block_header.driveSerialNumberOffset,
+                   ctx->metadata_block_header.driveSerialNumberLength);
     }
 
-    if(ctx->metadataBlockHeader.driveFirmwareRevisionLength > 0 &&
-       ctx->metadataBlockHeader.driveFirmwareRevisionOffset + ctx->metadataBlockHeader.driveFirmwareRevisionLength <=
-           ctx->metadataBlockHeader.blockSize)
+    if(ctx->metadata_block_header.driveFirmwareRevisionLength > 0 &&
+       ctx->metadata_block_header.driveFirmwareRevisionOffset +
+               ctx->metadata_block_header.driveFirmwareRevisionLength <=
+           ctx->metadata_block_header.blockSize)
     {
-        ctx->DriveFirmwareRevision = (uint8_t *)malloc(ctx->metadataBlockHeader.driveFirmwareRevisionLength);
-        if(ctx->DriveFirmwareRevision != NULL)
-            memcpy(ctx->DriveFirmwareRevision,
-                   ctx->metadataBlock + ctx->metadataBlockHeader.driveFirmwareRevisionOffset,
-                   ctx->metadataBlockHeader.driveFirmwareRevisionLength);
+        ctx->drive_firmware_revision = (uint8_t *)malloc(ctx->metadata_block_header.driveFirmwareRevisionLength);
+        if(ctx->drive_firmware_revision != NULL)
+            memcpy(ctx->drive_firmware_revision,
+                   ctx->metadata_block + ctx->metadata_block_header.driveFirmwareRevisionOffset,
+                   ctx->metadata_block_header.driveFirmwareRevisionLength);
     }
 
     TRACE("Exiting process_metadata_block()");
@@ -242,7 +243,7 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
  * @param ctx Pointer to the aaruformat context.
  * @param entry Pointer to the index entry describing the geometry block.
  */
-void process_geometry_block(aaruformatContext *ctx, const IndexEntry *entry)
+void process_geometry_block(aaruformat_context *ctx, const IndexEntry *entry)
 {
     TRACE("Entering process_geometry_block(%p, %p)", ctx, entry);
     size_t read_bytes = 0;
@@ -266,30 +267,30 @@ void process_geometry_block(aaruformatContext *ctx, const IndexEntry *entry)
     }
 
     TRACE("Reading geometry block header at position %" PRIu64, entry->offset);
-    read_bytes = fread(&ctx->geometryBlock, 1, sizeof(GeometryBlockHeader), ctx->imageStream);
+    read_bytes = fread(&ctx->geometry_block, 1, sizeof(GeometryBlockHeader), ctx->imageStream);
 
     if(read_bytes != sizeof(GeometryBlockHeader))
     {
-        memset(&ctx->geometryBlock, 0, sizeof(GeometryBlockHeader));
+        memset(&ctx->geometry_block, 0, sizeof(GeometryBlockHeader));
         TRACE("Could not read geometry block header, continuing...");
         return;
     }
 
-    if(ctx->geometryBlock.identifier != GeometryBlock)
+    if(ctx->geometry_block.identifier != GeometryBlock)
     {
-        memset(&ctx->geometryBlock, 0, sizeof(GeometryBlockHeader));
+        memset(&ctx->geometry_block, 0, sizeof(GeometryBlockHeader));
         TRACE("Incorrect identifier for geometry block at position %" PRIu64 "", entry->offset);
         return;
     }
 
-    ctx->imageInfo.ImageSize += sizeof(GeometryBlockHeader);
+    ctx->image_info.ImageSize += sizeof(GeometryBlockHeader);
 
-    TRACE("Geometry set to %d cylinders %d heads %d sectors per track", ctx->geometryBlock.cylinders,
-          ctx->geometryBlock.heads, ctx->geometryBlock.sectorsPerTrack);
+    TRACE("Geometry set to %d cylinders %d heads %d sectors per track", ctx->geometry_block.cylinders,
+          ctx->geometry_block.heads, ctx->geometry_block.sectorsPerTrack);
 
-    ctx->Cylinders       = ctx->geometryBlock.cylinders;
-    ctx->Heads           = ctx->geometryBlock.heads;
-    ctx->SectorsPerTrack = ctx->geometryBlock.sectorsPerTrack;
+    ctx->cylinders         = ctx->geometry_block.cylinders;
+    ctx->heads             = ctx->geometry_block.heads;
+    ctx->sectors_per_track = ctx->geometry_block.sectorsPerTrack;
 
     TRACE("Exiting process_geometry_block()");
 }
@@ -302,7 +303,7 @@ void process_geometry_block(aaruformatContext *ctx, const IndexEntry *entry)
  * @param ctx Pointer to the aaruformat context.
  * @param entry Pointer to the index entry describing the CICM block.
  */
-void process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry)
+void process_cicm_block(aaruformat_context *ctx, const IndexEntry *entry)
 {
     TRACE("Entering process_cicm_block(%p, %p)", ctx, entry);
     int    pos        = 0;
@@ -330,42 +331,42 @@ void process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry)
 
     // Even if those two checks shall have been done before
     TRACE("Reading CICM XML metadata block header at position %" PRIu64, entry->offset);
-    read_bytes = fread(&ctx->cicmBlockHeader, 1, sizeof(CicmMetadataBlock), ctx->imageStream);
+    read_bytes = fread(&ctx->cicm_block_header, 1, sizeof(CicmMetadataBlock), ctx->imageStream);
 
     if(read_bytes != sizeof(CicmMetadataBlock))
     {
-        memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
+        memset(&ctx->cicm_block_header, 0, sizeof(CicmMetadataBlock));
         TRACE("Could not read CICM XML metadata header, continuing...");
         return;
     }
 
-    if(ctx->cicmBlockHeader.identifier != CicmBlock)
+    if(ctx->cicm_block_header.identifier != CicmBlock)
     {
-        memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
+        memset(&ctx->cicm_block_header, 0, sizeof(CicmMetadataBlock));
         TRACE("Incorrect identifier for data block at position %" PRIu64 "", entry->offset);
     }
 
-    ctx->imageInfo.ImageSize += ctx->cicmBlockHeader.length;
+    ctx->image_info.ImageSize += ctx->cicm_block_header.length;
 
-    ctx->cicmBlock = (uint8_t *)malloc(ctx->cicmBlockHeader.length);
+    ctx->cicm_block = (uint8_t *)malloc(ctx->cicm_block_header.length);
 
-    if(ctx->cicmBlock == NULL)
+    if(ctx->cicm_block == NULL)
     {
-        memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
+        memset(&ctx->cicm_block_header, 0, sizeof(CicmMetadataBlock));
         TRACE("Could not allocate memory for CICM XML metadata block, continuing...");
 
         TRACE("Exiting process_cicm_block()");
         return;
     }
 
-    TRACE("Reading CICM XML metadata block of size %u at position %" PRIu64, ctx->cicmBlockHeader.length,
+    TRACE("Reading CICM XML metadata block of size %u at position %" PRIu64, ctx->cicm_block_header.length,
           entry->offset + sizeof(CicmMetadataBlock));
-    read_bytes = fread(ctx->cicmBlock, 1, ctx->cicmBlockHeader.length, ctx->imageStream);
+    read_bytes = fread(ctx->cicm_block, 1, ctx->cicm_block_header.length, ctx->imageStream);
 
-    if(read_bytes != ctx->cicmBlockHeader.length)
+    if(read_bytes != ctx->cicm_block_header.length)
     {
-        memset(&ctx->cicmBlockHeader, 0, sizeof(CicmMetadataBlock));
-        free(ctx->cicmBlock);
+        memset(&ctx->cicm_block_header, 0, sizeof(CicmMetadataBlock));
+        free(ctx->cicm_block);
         TRACE("Could not read CICM XML metadata block, continuing...");
     }
 
@@ -466,7 +467,7 @@ void process_cicm_block(aaruformatContext *ctx, const IndexEntry *entry)
  *
  * @internal
  */
-void process_aaru_metadata_json_block(aaruformatContext *ctx, const IndexEntry *entry)
+void process_aaru_metadata_json_block(aaruformat_context *ctx, const IndexEntry *entry)
 {
     TRACE("Entering process_aaru_metadata_json_block(%p, %p)", ctx, entry);
     int    pos        = 0;
@@ -494,42 +495,42 @@ void process_aaru_metadata_json_block(aaruformatContext *ctx, const IndexEntry *
 
     // Even if those two checks shall have been done before
     TRACE("Reading Aaru metadata JSON block header at position %" PRIu64, entry->offset);
-    read_bytes = fread(&ctx->jsonBlockHeader, 1, sizeof(AaruMetadataJsonBlockHeader), ctx->imageStream);
+    read_bytes = fread(&ctx->json_block_header, 1, sizeof(AaruMetadataJsonBlockHeader), ctx->imageStream);
 
     if(read_bytes != sizeof(AaruMetadataJsonBlockHeader))
     {
-        memset(&ctx->jsonBlockHeader, 0, sizeof(AaruMetadataJsonBlockHeader));
+        memset(&ctx->json_block_header, 0, sizeof(AaruMetadataJsonBlockHeader));
         TRACE("Could not read Aaru metadata JSON header, continuing...");
         return;
     }
 
-    if(ctx->jsonBlockHeader.identifier != AaruMetadataJsonBlock)
+    if(ctx->json_block_header.identifier != AaruMetadataJsonBlock)
     {
-        memset(&ctx->jsonBlockHeader, 0, sizeof(AaruMetadataJsonBlockHeader));
+        memset(&ctx->json_block_header, 0, sizeof(AaruMetadataJsonBlockHeader));
         TRACE("Incorrect identifier for data block at position %" PRIu64 "", entry->offset);
     }
 
-    ctx->imageInfo.ImageSize += ctx->jsonBlockHeader.length;
+    ctx->image_info.ImageSize += ctx->json_block_header.length;
 
-    ctx->jsonBlock = (uint8_t *)malloc(ctx->jsonBlockHeader.length);
+    ctx->json_block = (uint8_t *)malloc(ctx->json_block_header.length);
 
-    if(ctx->jsonBlock == NULL)
+    if(ctx->json_block == NULL)
     {
-        memset(&ctx->jsonBlockHeader, 0, sizeof(AaruMetadataJsonBlockHeader));
+        memset(&ctx->json_block_header, 0, sizeof(AaruMetadataJsonBlockHeader));
         TRACE("Could not allocate memory for Aaru metadata JSON block, continuing...");
 
         TRACE("Exiting process_aaru_metadata_json_block()");
         return;
     }
 
-    TRACE("Reading Aaru metadata JSON block of size %u at position %" PRIu64, ctx->jsonBlockHeader.length,
+    TRACE("Reading Aaru metadata JSON block of size %u at position %" PRIu64, ctx->json_block_header.length,
           entry->offset + sizeof(AaruMetadataJsonBlockHeader));
-    read_bytes = fread(ctx->jsonBlock, 1, ctx->jsonBlockHeader.length, ctx->imageStream);
+    read_bytes = fread(ctx->json_block, 1, ctx->json_block_header.length, ctx->imageStream);
 
-    if(read_bytes != ctx->jsonBlockHeader.length)
+    if(read_bytes != ctx->json_block_header.length)
     {
-        memset(&ctx->jsonBlockHeader, 0, sizeof(AaruMetadataJsonBlockHeader));
-        free(ctx->jsonBlock);
+        memset(&ctx->json_block_header, 0, sizeof(AaruMetadataJsonBlockHeader));
+        free(ctx->json_block);
         TRACE("Could not read Aaru metadata JSON block, continuing...");
     }
 

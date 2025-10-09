@@ -26,10 +26,10 @@
 
 int read(const unsigned long long sector_no, const char *path)
 {
-    aaruformatContext *ctx    = NULL;
-    int32_t            res    = 0;
-    uint32_t           length = 0;
-    uint8_t           *data   = NULL;
+    aaruformat_context *ctx    = NULL;
+    int32_t             res    = 0;
+    uint32_t            length = 0;
+    uint8_t            *data   = NULL;
 
     ctx = aaruf_open(path);
 
@@ -78,10 +78,10 @@ int read(const unsigned long long sector_no, const char *path)
 
 int read_long(const unsigned long long sector_no, const char *path)
 {
-    aaruformatContext *ctx    = NULL;
-    int32_t            res    = 0;
-    uint32_t           length = 0;
-    uint8_t           *data   = NULL;
+    aaruformat_context *ctx    = NULL;
+    int32_t             res    = 0;
+    uint32_t            length = 0;
+    uint8_t            *data   = NULL;
 
     ctx = aaruf_open(path);
 

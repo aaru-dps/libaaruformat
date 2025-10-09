@@ -108,7 +108,7 @@
  * @see aaruf_get_tracks()
  * @see aaruf_set_tracks()
  */
-void process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry)
+void process_tracks_block(aaruformat_context *ctx, const IndexEntry *entry)
 {
     int      pos        = 0;
     size_t   read_bytes = 0;
@@ -132,87 +132,87 @@ void process_tracks_block(aaruformatContext *ctx, const IndexEntry *entry)
     }
 
     // Even if those two checks shall have been done before
-    read_bytes = fread(&ctx->tracksHeader, 1, sizeof(TracksHeader), ctx->imageStream);
+    read_bytes = fread(&ctx->tracks_header, 1, sizeof(TracksHeader), ctx->imageStream);
 
     if(read_bytes != sizeof(TracksHeader))
     {
-        memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
+        memset(&ctx->tracks_header, 0, sizeof(TracksHeader));
         TRACE("Could not read tracks header, continuing...\n");
         return;
     }
 
-    if(ctx->tracksHeader.identifier != TracksBlock)
+    if(ctx->tracks_header.identifier != TracksBlock)
     {
-        memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
+        memset(&ctx->tracks_header, 0, sizeof(TracksHeader));
         TRACE("Incorrect identifier for data block at position %" PRIu64 "\n", entry->offset);
     }
 
-    ctx->imageInfo.ImageSize += sizeof(TrackEntry) * ctx->tracksHeader.entries;
+    ctx->image_info.ImageSize += sizeof(TrackEntry) * ctx->tracks_header.entries;
 
-    ctx->trackEntries = (TrackEntry *)malloc(sizeof(TrackEntry) * ctx->tracksHeader.entries);
+    ctx->track_entries = (TrackEntry *)malloc(sizeof(TrackEntry) * ctx->tracks_header.entries);
 
-    if(ctx->trackEntries == NULL)
+    if(ctx->track_entries == NULL)
     {
-        memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
+        memset(&ctx->tracks_header, 0, sizeof(TracksHeader));
         FATAL("Could not allocate memory for metadata block, continuing...\n");
         return;
     }
 
-    read_bytes = fread(ctx->trackEntries, sizeof(TrackEntry), ctx->tracksHeader.entries, ctx->imageStream);
+    read_bytes = fread(ctx->track_entries, sizeof(TrackEntry), ctx->tracks_header.entries, ctx->imageStream);
 
-    if(read_bytes != ctx->tracksHeader.entries)
+    if(read_bytes != ctx->tracks_header.entries)
     {
-        memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
-        free(ctx->trackEntries);
-        ctx->trackEntries = NULL;
+        memset(&ctx->tracks_header, 0, sizeof(TracksHeader));
+        free(ctx->track_entries);
+        ctx->track_entries = NULL;
         FATAL("Could not read metadata block, continuing...\n");
 
         return;
     }
 
-    crc64 = aaruf_crc64_data((const uint8_t *)ctx->trackEntries, ctx->tracksHeader.entries * sizeof(TrackEntry));
+    crc64 = aaruf_crc64_data((const uint8_t *)ctx->track_entries, ctx->tracks_header.entries * sizeof(TrackEntry));
 
     // Due to how C# wrote it, it is effectively reversed
     if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
 
-    if(crc64 != ctx->tracksHeader.crc64)
+    if(crc64 != ctx->tracks_header.crc64)
     {
         TRACE("Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64 ", continuing...\n", crc64,
-              ctx->tracksHeader.crc64);
+              ctx->tracks_header.crc64);
         return;
     }
 
-    TRACE("Found %d tracks at position %" PRIu64 ".\n", ctx->tracksHeader.entries, entry->offset);
+    TRACE("Found %d tracks at position %" PRIu64 ".\n", ctx->tracks_header.entries, entry->offset);
 
-    ctx->imageInfo.HasPartitions = true;
-    ctx->imageInfo.HasSessions   = true;
+    ctx->image_info.HasPartitions = true;
+    ctx->image_info.HasSessions   = true;
 
-    ctx->numberOfDataTracks = 0;
+    ctx->number_of_data_tracks = 0;
 
-    for(j = 0; j < ctx->tracksHeader.entries; j++)
+    for(j = 0; j < ctx->tracks_header.entries; j++)
     {
-        if(ctx->trackEntries[j].sequence > 0 && ctx->trackEntries[j].sequence <= 99) ctx->numberOfDataTracks++;
+        if(ctx->track_entries[j].sequence > 0 && ctx->track_entries[j].sequence <= 99) ctx->number_of_data_tracks++;
     }
 
-    if(ctx->numberOfDataTracks > 0)
+    if(ctx->number_of_data_tracks > 0)
     {
-        ctx->dataTracks = malloc(sizeof(TrackEntry) * ctx->numberOfDataTracks);
-        if(ctx->dataTracks == NULL)
+        ctx->data_tracks = malloc(sizeof(TrackEntry) * ctx->number_of_data_tracks);
+        if(ctx->data_tracks == NULL)
         {
             FATAL("Could not allocate memory for data tracks, continuing without filtered list.\n");
-            ctx->numberOfDataTracks = 0;
+            ctx->number_of_data_tracks = 0;
         }
     }
     else
-        ctx->dataTracks = NULL;
+        ctx->data_tracks = NULL;
 
-    if(ctx->dataTracks != NULL)
+    if(ctx->data_tracks != NULL)
     {
         k = 0;
-        for(j = 0; j < ctx->tracksHeader.entries; j++)
+        for(j = 0; j < ctx->tracks_header.entries; j++)
         {
-            if(ctx->trackEntries[j].sequence > 0 && ctx->trackEntries[j].sequence <= 99)
-                memcpy(&ctx->dataTracks[k++], &ctx->trackEntries[j], sizeof(TrackEntry));
+            if(ctx->track_entries[j].sequence > 0 && ctx->track_entries[j].sequence <= 99)
+                memcpy(&ctx->data_tracks[k++], &ctx->track_entries[j], sizeof(TrackEntry));
         }
     }
 }
@@ -291,7 +291,7 @@ int32_t aaruf_get_tracks(const void *context, uint8_t *buffer, size_t *length)
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    const aaruformatContext *ctx = context;
+    const aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -302,7 +302,7 @@ int32_t aaruf_get_tracks(const void *context, uint8_t *buffer, size_t *length)
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->tracksHeader.entries == 0 || ctx->trackEntries == NULL)
+    if(ctx->tracks_header.entries == 0 || ctx->track_entries == NULL)
     {
         FATAL("Image contains no tracks");
 
@@ -310,7 +310,7 @@ int32_t aaruf_get_tracks(const void *context, uint8_t *buffer, size_t *length)
         return AARUF_ERROR_TRACK_NOT_FOUND;
     }
 
-    size_t required_length = ctx->tracksHeader.entries * sizeof(TrackEntry);
+    size_t required_length = ctx->tracks_header.entries * sizeof(TrackEntry);
 
     if(buffer == NULL || length == NULL || *length < required_length)
     {
@@ -321,7 +321,7 @@ int32_t aaruf_get_tracks(const void *context, uint8_t *buffer, size_t *length)
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
-    memcpy(buffer, ctx->trackEntries, required_length);
+    memcpy(buffer, ctx->track_entries, required_length);
     *length = required_length;
 
     TRACE("Exiting aaruf_get_tracks(%p, %p, %zu) = AARUF_STATUS_OK", context, buffer, *length);
@@ -403,7 +403,7 @@ int32_t aaruf_set_tracks(void *context, TrackEntry *tracks, const int count)
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -417,12 +417,12 @@ int32_t aaruf_set_tracks(void *context, TrackEntry *tracks, const int count)
     // Clearing existing tracks
     if(count == 0)
     {
-        memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
-        free(ctx->trackEntries);
-        ctx->trackEntries = NULL;
-        free(ctx->dataTracks);
-        ctx->dataTracks         = NULL;
-        ctx->numberOfDataTracks = 0;
+        memset(&ctx->tracks_header, 0, sizeof(TracksHeader));
+        free(ctx->track_entries);
+        ctx->track_entries = NULL;
+        free(ctx->data_tracks);
+        ctx->data_tracks           = NULL;
+        ctx->number_of_data_tracks = 0;
 
         TRACE("Exiting aaruf_set_tracks() = AARUF_STATUS_OK");
         return AARUF_STATUS_OK;
@@ -436,41 +436,41 @@ int32_t aaruf_set_tracks(void *context, TrackEntry *tracks, const int count)
         return AARUF_ERROR_INVALID_TRACK_FORMAT;
     }
 
-    ctx->tracksHeader.identifier = TracksBlock;
-    ctx->tracksHeader.entries    = (uint16_t)count;
-    free(ctx->trackEntries);
-    ctx->trackEntries = malloc(sizeof(TrackEntry) * count);
-    if(ctx->trackEntries == NULL)
+    ctx->tracks_header.identifier = TracksBlock;
+    ctx->tracks_header.entries    = (uint16_t)count;
+    free(ctx->track_entries);
+    ctx->track_entries = malloc(sizeof(TrackEntry) * count);
+    if(ctx->track_entries == NULL)
     {
-        memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
+        memset(&ctx->tracks_header, 0, sizeof(TracksHeader));
         FATAL("Could not allocate memory for tracks");
 
         TRACE("Exiting aaruf_set_tracks() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
         return AARUF_ERROR_NOT_ENOUGH_MEMORY;
     }
-    memcpy(ctx->trackEntries, tracks, sizeof(TrackEntry) * count);
-    ctx->tracksHeader.crc64 = aaruf_crc64_data((const uint8_t *)ctx->trackEntries, sizeof(TrackEntry) * count);
+    memcpy(ctx->track_entries, tracks, sizeof(TrackEntry) * count);
+    ctx->tracks_header.crc64 = aaruf_crc64_data((const uint8_t *)ctx->track_entries, sizeof(TrackEntry) * count);
 
-    ctx->imageInfo.HasPartitions = true;
-    ctx->imageInfo.HasSessions   = true;
+    ctx->image_info.HasPartitions = true;
+    ctx->image_info.HasSessions   = true;
 
-    free(ctx->dataTracks);
-    ctx->dataTracks = NULL;
+    free(ctx->data_tracks);
+    ctx->data_tracks = NULL;
 
-    ctx->numberOfDataTracks = 0;
+    ctx->number_of_data_tracks = 0;
 
-    for(int j = 0; j < ctx->tracksHeader.entries; j++)
-        if(ctx->trackEntries[j].sequence > 0 && ctx->trackEntries[j].sequence <= 99) ctx->numberOfDataTracks++;
+    for(int j = 0; j < ctx->tracks_header.entries; j++)
+        if(ctx->track_entries[j].sequence > 0 && ctx->track_entries[j].sequence <= 99) ctx->number_of_data_tracks++;
 
-    if(ctx->numberOfDataTracks > 0)
+    if(ctx->number_of_data_tracks > 0)
     {
-        ctx->dataTracks = malloc(sizeof(TrackEntry) * ctx->numberOfDataTracks);
-        if(ctx->dataTracks == NULL)
+        ctx->data_tracks = malloc(sizeof(TrackEntry) * ctx->number_of_data_tracks);
+        if(ctx->data_tracks == NULL)
         {
-            free(ctx->trackEntries);
-            ctx->trackEntries = NULL;
-            memset(&ctx->tracksHeader, 0, sizeof(TracksHeader));
-            ctx->numberOfDataTracks = 0;
+            free(ctx->track_entries);
+            ctx->track_entries = NULL;
+            memset(&ctx->tracks_header, 0, sizeof(TracksHeader));
+            ctx->number_of_data_tracks = 0;
             FATAL("Could not allocate memory for data tracks");
 
             TRACE("Exiting aaruf_set_tracks() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
@@ -478,12 +478,12 @@ int32_t aaruf_set_tracks(void *context, TrackEntry *tracks, const int count)
         }
     }
 
-    if(ctx->dataTracks != NULL)
+    if(ctx->data_tracks != NULL)
     {
         int k = 0;
-        for(int j = 0; j < ctx->tracksHeader.entries; j++)
-            if(ctx->trackEntries[j].sequence > 0 && ctx->trackEntries[j].sequence <= 99)
-                memcpy(&ctx->dataTracks[k++], &ctx->trackEntries[j], sizeof(TrackEntry));
+        for(int j = 0; j < ctx->tracks_header.entries; j++)
+            if(ctx->track_entries[j].sequence > 0 && ctx->track_entries[j].sequence <= 99)
+                memcpy(&ctx->data_tracks[k++], &ctx->track_entries[j], sizeof(TrackEntry));
     }
 
     TRACE("Exiting aaruf_set_tracks() = AARUF_STATUS_OK");

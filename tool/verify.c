@@ -25,8 +25,8 @@
 
 int verify(const char *path)
 {
-    aaruformatContext *ctx = NULL;
-    uint32_t           res = 0;
+    aaruformat_context *ctx = NULL;
+    uint32_t            res = 0;
 
     ctx = aaruf_open(path);
 
@@ -50,13 +50,13 @@ int verify(const char *path)
 
 int verify_sectors(const char *path)
 {
-    aaruformatContext *ctx            = NULL;
-    uint8_t           *buffer         = NULL;
-    uint32_t           buffer_len     = 2352;
-    int32_t            res            = 0;
-    CdEccContext      *cd_ecc_context = NULL;
-    ctx                               = aaruf_open(path);
-    bool     verify_result            = false;
+    aaruformat_context *ctx            = NULL;
+    uint8_t            *buffer         = NULL;
+    uint32_t            buffer_len     = 2352;
+    int32_t             res            = 0;
+    CdEccContext       *cd_ecc_context = NULL;
+    ctx                                = aaruf_open(path);
+    bool     verify_result             = false;
     bool     has_edc = false, has_ecc_p = false, ecc_p_correct = false, has_ecc_q = false, ecc_q_correct = false;
     bool     edc_correct = false;
     bool     unknown     = false;
@@ -69,7 +69,7 @@ int verify_sectors(const char *path)
         return errno;
     }
 
-    if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+    if(ctx->image_info.MetadataMediaType != OpticalDisc)
     {
         printf("Image sectors do not contain checksums, cannot verify.\n");
         return 0;
@@ -80,7 +80,7 @@ int verify_sectors(const char *path)
     unknowns       = 0;
     any_error      = false;
 
-    for(uint64_t s = 0; s < ctx->imageInfo.Sectors; s++)
+    for(uint64_t s = 0; s < ctx->image_info.Sectors; s++)
     {
         printf("\rVerifying sector %llu...", s);
         res = aaruf_read_sector_long(ctx, s, buffer, false, &buffer_len);
@@ -118,7 +118,7 @@ int verify_sectors(const char *path)
     else
         printf("\rAll sector checksums are correct.\n");
 
-    printf("Total sectors........... %llu\n", ctx->imageInfo.Sectors);
+    printf("Total sectors........... %llu\n", ctx->image_info.Sectors);
     printf("Total errors............ %llu\n", errors);
     printf("Total unknowns.......... %llu\n", unknowns);
     printf("Total errors+unknowns... %llu\n", errors + unknowns);

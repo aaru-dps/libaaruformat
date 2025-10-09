@@ -82,7 +82,7 @@
  * @warning The function modifies context state including sector count, shift value, and DDT version.
  *          Ensure proper context cleanup when the function completes.
  */
-int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *found_user_data_ddt)
+int32_t process_ddt_v1(aaruformat_context *ctx, IndexEntry *entry, bool *found_user_data_ddt)
 {
     TRACE("Entering process_ddt_v1(%p, %p, %d)", ctx, entry, *found_user_data_ddt);
 
@@ -129,13 +129,13 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
 
     *found_user_data_ddt = true;
 
-    ctx->imageInfo.ImageSize += ddt_header.cmpLength;
+    ctx->image_info.ImageSize += ddt_header.cmpLength;
 
     if(entry->dataType == UserData)
     {
-        ctx->imageInfo.Sectors = ddt_header.entries;
-        ctx->shift             = ddt_header.shift;
-        ctx->ddtVersion        = 1;
+        ctx->image_info.Sectors = ddt_header.entries;
+        ctx->shift              = ddt_header.shift;
+        ctx->ddt_version        = 1;
 
         // Check for DDT compression
         switch(ddt_header.compression)
@@ -157,8 +157,8 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
                     break;
                 }
 
-                ctx->userDataDdt = (uint64_t *)malloc(ddt_header.length);
-                if(ctx->userDataDdt == NULL)
+                ctx->user_data_ddt = (uint64_t *)malloc(ddt_header.length);
+                if(ctx->user_data_ddt == NULL)
                 {
                     TRACE("Cannot allocate memory for DDT, continuing...");
                     free(cmp_data);
@@ -170,8 +170,8 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
                 {
                     TRACE("Could not read LZMA properties, continuing...");
                     free(cmp_data);
-                    free(ctx->userDataDdt);
-                    ctx->userDataDdt = NULL;
+                    free(ctx->user_data_ddt);
+                    ctx->user_data_ddt = NULL;
                     break;
                 }
 
@@ -180,22 +180,22 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
                 {
                     TRACE("Could not read compressed block, continuing...");
                     free(cmp_data);
-                    free(ctx->userDataDdt);
-                    ctx->userDataDdt = NULL;
+                    free(ctx->user_data_ddt);
+                    ctx->user_data_ddt = NULL;
                     break;
                 }
 
                 read_bytes = ddt_header.length;
                 TRACE("Decompressing block of size %zu bytes", ddt_header.length);
-                error_no = aaruf_lzma_decode_buffer((uint8_t *)ctx->userDataDdt, &read_bytes, cmp_data, &lzma_size,
+                error_no = aaruf_lzma_decode_buffer((uint8_t *)ctx->user_data_ddt, &read_bytes, cmp_data, &lzma_size,
                                                     lzma_properties, LZMA_PROPERTIES_LENGTH);
 
                 if(error_no != 0)
                 {
                     FATAL("Got error %d from LZMA, stopping...", error_no);
                     free(cmp_data);
-                    free(ctx->userDataDdt);
-                    ctx->userDataDdt = NULL;
+                    free(ctx->user_data_ddt);
+                    ctx->user_data_ddt = NULL;
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
@@ -203,15 +203,15 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
                 {
                     FATAL("Error decompressing block, should be {0} bytes but got {1} bytes., stopping...");
                     free(cmp_data);
-                    free(ctx->userDataDdt);
-                    ctx->userDataDdt = NULL;
+                    free(ctx->user_data_ddt);
+                    ctx->user_data_ddt = NULL;
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
                 }
 
                 free(cmp_data);
                 cmp_data = NULL;
 
-                ctx->inMemoryDdt     = true;
+                ctx->in_memory_ddt   = true;
                 *found_user_data_ddt = true;
 
                 break;
@@ -219,18 +219,18 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
             case None:
 #ifdef __linux__
                 TRACE("Memory mapping deduplication table at position %" PRIu64, entry->offset + sizeof(ddt_header));
-                ctx->mappedMemoryDdtSize = sizeof(uint64_t) * ddt_header.entries;
-                ctx->userDataDdt = mmap(NULL, ctx->mappedMemoryDdtSize, PROT_READ, MAP_SHARED, fileno(ctx->imageStream),
-                                        entry->offset + sizeof(ddt_header));
+                ctx->mapped_memory_ddt_size = sizeof(uint64_t) * ddt_header.entries;
+                ctx->user_data_ddt          = mmap(NULL, ctx->mapped_memory_ddt_size, PROT_READ, MAP_SHARED,
+                                                   fileno(ctx->imageStream), entry->offset + sizeof(ddt_header));
 
-                if(ctx->userDataDdt == MAP_FAILED)
+                if(ctx->user_data_ddt == MAP_FAILED)
                 {
                     *found_user_data_ddt = false;
                     FATAL("Could not read map deduplication table.");
                     break;
                 }
 
-                ctx->inMemoryDdt = false;
+                ctx->in_memory_ddt = false;
                 break;
 #else  // TODO: Implement
                 TRACE("Uncompressed DDT not yet implemented...");
@@ -315,9 +315,9 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
                 cmp_data = NULL;
 
                 if(entry->dataType == CdSectorPrefixCorrected)
-                    ctx->sectorPrefixDdt = cd_ddt;
+                    ctx->sector_prefix_ddt = cd_ddt;
                 else if(entry->dataType == CdSectorSuffixCorrected)
-                    ctx->sectorSuffixDdt = cd_ddt;
+                    ctx->sector_suffix_ddt = cd_ddt;
                 else
                     free(cd_ddt);
 
@@ -343,9 +343,9 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
                 }
 
                 if(entry->dataType == CdSectorPrefixCorrected)
-                    ctx->sectorPrefixDdt = cd_ddt;
+                    ctx->sector_prefix_ddt = cd_ddt;
                 else if(entry->dataType == CdSectorSuffixCorrected)
-                    ctx->sectorSuffixDdt = cd_ddt;
+                    ctx->sector_suffix_ddt = cd_ddt;
                 else
                     free(cd_ddt);
 
@@ -402,7 +402,7 @@ int32_t process_ddt_v1(aaruformatContext *ctx, IndexEntry *entry, bool *found_us
  * @warning No bounds checking is performed on sector_address. Accessing beyond the DDT table
  *          boundaries will result in undefined behavior.
  */
-int32_t decode_ddt_entry_v1(aaruformatContext *ctx, const uint64_t sector_address, uint64_t *offset,
+int32_t decode_ddt_entry_v1(aaruformat_context *ctx, const uint64_t sector_address, uint64_t *offset,
                             uint64_t *block_offset, uint8_t *sector_status)
 {
     TRACE("Entering decode_ddt_entry_v1(%p, %" PRIu64 ", %p, %p, %p)", ctx, sector_address, offset, block_offset,
@@ -416,7 +416,7 @@ int32_t decode_ddt_entry_v1(aaruformatContext *ctx, const uint64_t sector_addres
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->userDataDdt == NULL)
+    if(ctx->user_data_ddt == NULL)
     {
         FATAL("User data DDT not loaded.");
         TRACE("Exiting decode_ddt_entry_v1() = AARUF_ERROR_NOT_AARUFORMAT");
@@ -430,7 +430,7 @@ int32_t decode_ddt_entry_v1(aaruformatContext *ctx, const uint64_t sector_addres
         return AARUF_ERROR_INCORRECT_DATA_SIZE;
     }
 
-    const uint64_t ddt_entry     = ctx->userDataDdt[sector_address];
+    const uint64_t ddt_entry     = ctx->user_data_ddt[sector_address];
     const uint64_t offset_mask64 = (UINT64_C(1) << ctx->shift) - UINT64_C(1);
     *offset                      = ddt_entry & offset_mask64;
     *block_offset                = ddt_entry >> ctx->shift;

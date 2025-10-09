@@ -74,12 +74,12 @@
  *       the function is a no-op returning AARUF_STATUS_OK.
  * @internal
  */
-static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
+static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
 {
     // Write cached secondary table to file end and update primary table entry with its position
     // Check if we have a cached table that needs to be written (either it has an offset or exists in memory)
     bool has_cached_secondary_ddt =
-        ctx->userDataDdtHeader.tableShift > 0 && (ctx->cachedDdtOffset != 0 || ctx->cachedSecondaryDdtBig != NULL);
+        ctx->user_data_ddt_header.tableShift > 0 && (ctx->cached_ddt_offset != 0 || ctx->cached_secondary_ddt2 != NULL);
 
     if(!has_cached_secondary_ddt) return AARUF_STATUS_OK;
 
@@ -89,7 +89,7 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
     long end_of_file = ftell(ctx->imageStream);
 
     // Align the position according to block alignment shift
-    uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(end_of_file & alignment_mask)
     {
         // Calculate the next aligned position
@@ -101,7 +101,7 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
 
         TRACE("Aligned DDT write position from %ld to %" PRIu64 " (alignment shift: %d)",
               ftell(ctx->imageStream) - (aligned_position - end_of_file), aligned_position,
-              ctx->userDataDdtHeader.blockAlignmentShift);
+              ctx->user_data_ddt_header.blockAlignmentShift);
     }
 
     // Prepare DDT header for the cached table
@@ -109,20 +109,20 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
     ddt_header.identifier          = DeDuplicationTable2;
     ddt_header.type                = UserData;
     ddt_header.compression         = ctx->compression_enabled ? Lzma : None;
-    ddt_header.levels              = ctx->userDataDdtHeader.levels;
-    ddt_header.tableLevel          = ctx->userDataDdtHeader.tableLevel + 1;
-    ddt_header.previousLevelOffset = ctx->primaryDdtOffset;
-    ddt_header.negative            = ctx->userDataDdtHeader.negative;
-    ddt_header.overflow            = ctx->userDataDdtHeader.overflow;
-    ddt_header.blockAlignmentShift = ctx->userDataDdtHeader.blockAlignmentShift;
-    ddt_header.dataShift           = ctx->userDataDdtHeader.dataShift;
+    ddt_header.levels              = ctx->user_data_ddt_header.levels;
+    ddt_header.tableLevel          = ctx->user_data_ddt_header.tableLevel + 1;
+    ddt_header.previousLevelOffset = ctx->primary_ddt_offset;
+    ddt_header.negative            = ctx->user_data_ddt_header.negative;
+    ddt_header.overflow            = ctx->user_data_ddt_header.overflow;
+    ddt_header.blockAlignmentShift = ctx->user_data_ddt_header.blockAlignmentShift;
+    ddt_header.dataShift           = ctx->user_data_ddt_header.dataShift;
     ddt_header.tableShift          = 0;  // Secondary tables are single level
-    ddt_header.sizeType            = ctx->userDataDdtHeader.sizeType;
+    ddt_header.sizeType            = ctx->user_data_ddt_header.sizeType;
 
-    uint64_t items_per_ddt_entry = 1 << ctx->userDataDdtHeader.tableShift;
+    uint64_t items_per_ddt_entry = 1 << ctx->user_data_ddt_header.tableShift;
     ddt_header.blocks            = items_per_ddt_entry;
     ddt_header.entries           = items_per_ddt_entry;
-    ddt_header.start             = ctx->cachedDdtPosition * items_per_ddt_entry;
+    ddt_header.start             = ctx->cached_ddt_position * items_per_ddt_entry;
 
     // Calculate data size
     ddt_header.length = items_per_ddt_entry * sizeof(uint32_t);
@@ -131,7 +131,7 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
     crc64_ctx *crc64_context = aaruf_crc64_init();
     if(crc64_context != NULL)
     {
-        aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cachedSecondaryDdtBig, (uint32_t)ddt_header.length);
+        aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cached_secondary_ddt2, (uint32_t)ddt_header.length);
 
         uint64_t crc64;
         aaruf_crc64_final(crc64_context, &crc64);
@@ -143,7 +143,7 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
 
     if(ddt_header.compression == None)
     {
-        buffer              = (uint8_t *)ctx->cachedSecondaryDdtBig;
+        buffer              = (uint8_t *)ctx->cached_secondary_ddt2;
         ddt_header.cmpCrc64 = ddt_header.crc64;
     }
     else
@@ -159,7 +159,7 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
         size_t props_size = LZMA_PROPERTIES_LENGTH;
         aaruf_lzma_encode_buffer(buffer, &dst_size,
 
-                                 (uint8_t *)ctx->cachedSecondaryDdtBig, ddt_header.length, lzma_properties, &props_size,
+                                 (uint8_t *)ctx->cached_secondary_ddt2, ddt_header.length, lzma_properties, &props_size,
                                  9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
 
         ddt_header.cmpLength = (uint32_t)dst_size;
@@ -168,7 +168,7 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
         {
             ddt_header.compression = None;
             free(buffer);
-            buffer = (uint8_t *)ctx->cachedSecondaryDdtBig;
+            buffer = (uint8_t *)ctx->cached_secondary_ddt2;
         }
     }
 
@@ -191,27 +191,28 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
         if(fwrite(buffer, ddt_header.cmpLength, 1, ctx->imageStream) == 1)
         {
             // Update primary table entry to point to new location
-            const uint64_t new_secondary_table_block_offset = end_of_file >> ctx->userDataDdtHeader.blockAlignmentShift;
+            const uint64_t new_secondary_table_block_offset =
+                end_of_file >> ctx->user_data_ddt_header.blockAlignmentShift;
 
-            ctx->userDataDdtBig[ctx->cachedDdtPosition] = (uint32_t)new_secondary_table_block_offset;
+            ctx->user_data_ddt2[ctx->cached_ddt_position] = (uint32_t)new_secondary_table_block_offset;
 
             // Update index: remove old entry for cached DDT and add new one
             TRACE("Updating index for cached secondary DDT");
 
             // Remove old index entry for the cached DDT
-            if(ctx->cachedDdtOffset != 0)
+            if(ctx->cached_ddt_offset != 0)
             {
-                TRACE("Removing old index entry for DDT at offset %" PRIu64, ctx->cachedDdtOffset);
+                TRACE("Removing old index entry for DDT at offset %" PRIu64, ctx->cached_ddt_offset);
                 const IndexEntry *entry = NULL;
 
                 // Find and remove the old index entry
-                for(unsigned int k = 0; k < utarray_len(ctx->indexEntries); k++)
+                for(unsigned int k = 0; k < utarray_len(ctx->index_entries); k++)
                 {
-                    entry = (IndexEntry *)utarray_eltptr(ctx->indexEntries, k);
-                    if(entry && entry->offset == ctx->cachedDdtOffset && entry->blockType == DeDuplicationTable2)
+                    entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+                    if(entry && entry->offset == ctx->cached_ddt_offset && entry->blockType == DeDuplicationTable2)
                     {
                         TRACE("Found old DDT index entry at position %u, removing", k);
-                        utarray_erase(ctx->indexEntries, k, 1);
+                        utarray_erase(ctx->index_entries, k, 1);
                         break;
                     }
                 }
@@ -223,17 +224,17 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
             new_ddt_entry.dataType  = UserData;
             new_ddt_entry.offset    = end_of_file;
 
-            utarray_push_back(ctx->indexEntries, &new_ddt_entry);
+            utarray_push_back(ctx->index_entries, &new_ddt_entry);
             TRACE("Added new DDT index entry at offset %" PRIu64, end_of_file);
 
             // Write the updated primary table back to its original position in the file
             long saved_pos = ftell(ctx->imageStream);
-            fseek(ctx->imageStream, ctx->primaryDdtOffset + sizeof(DdtHeader2), SEEK_SET);
+            fseek(ctx->imageStream, ctx->primary_ddt_offset + sizeof(DdtHeader2), SEEK_SET);
 
-            size_t primary_table_size = ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+            size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint32_t);
 
             size_t primary_written_bytes = 0;
-            primary_written_bytes        = fwrite(ctx->userDataDdtBig, primary_table_size, 1, ctx->imageStream);
+            primary_written_bytes        = fwrite(ctx->user_data_ddt2, primary_table_size, 1, ctx->imageStream);
 
             if(primary_written_bytes != 1)
             {
@@ -250,9 +251,9 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
         TRACE("Failed to write cached secondary DDT header");
 
     // Free the cached table
-    free(ctx->cachedSecondaryDdtBig);
-    ctx->cachedSecondaryDdtBig = NULL;
-    ctx->cachedDdtOffset       = 0;
+    free(ctx->cached_secondary_ddt2);
+    ctx->cached_secondary_ddt2 = NULL;
+    ctx->cached_ddt_offset     = 0;
 
     // Set position
     fseek(ctx->imageStream, 0, SEEK_END);
@@ -279,10 +280,10 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
  * @retval AARUF_ERROR_CANNOT_WRITE_HEADER Failed writing header or primary table data.
  * @internal
  */
-static int32_t write_primary_ddt(aaruformatContext *ctx)
+static int32_t write_primary_ddt(aaruformat_context *ctx)
 {
     // Write the cached primary DDT table back to its position in the file
-    if(ctx->userDataDdtHeader.tableShift <= 0 || ctx->userDataDdtBig == NULL) return AARUF_STATUS_OK;
+    if(ctx->user_data_ddt_header.tableShift <= 0 || ctx->user_data_ddt2 == NULL) return AARUF_STATUS_OK;
 
     TRACE("Writing cached primary DDT table back to file");
 
@@ -290,31 +291,31 @@ static int32_t write_primary_ddt(aaruformatContext *ctx)
     crc64_ctx *crc64_context = aaruf_crc64_init();
     if(crc64_context != NULL)
     {
-        size_t primary_table_size = ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+        size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint32_t);
 
-        aaruf_crc64_update(crc64_context, (uint8_t *)ctx->userDataDdtBig, primary_table_size);
+        aaruf_crc64_update(crc64_context, (uint8_t *)ctx->user_data_ddt2, primary_table_size);
 
         uint64_t crc64;
         aaruf_crc64_final(crc64_context, &crc64);
 
         // Properly populate all header fields for multi-level DDT primary table
-        ctx->userDataDdtHeader.identifier  = DeDuplicationTable2;
-        ctx->userDataDdtHeader.type        = UserData;
-        ctx->userDataDdtHeader.compression = None;
+        ctx->user_data_ddt_header.identifier  = DeDuplicationTable2;
+        ctx->user_data_ddt_header.type        = UserData;
+        ctx->user_data_ddt_header.compression = None;
         // levels, tableLevel, previousLevelOffset, negative, overflow, blockAlignmentShift,
         // dataShift, tableShift, sizeType, entries, blocks, start are already set during creation
-        ctx->userDataDdtHeader.crc64       = crc64;
-        ctx->userDataDdtHeader.cmpCrc64    = crc64;
-        ctx->userDataDdtHeader.length      = primary_table_size;
-        ctx->userDataDdtHeader.cmpLength   = primary_table_size;
+        ctx->user_data_ddt_header.crc64       = crc64;
+        ctx->user_data_ddt_header.cmpCrc64    = crc64;
+        ctx->user_data_ddt_header.length      = primary_table_size;
+        ctx->user_data_ddt_header.cmpLength   = primary_table_size;
 
         TRACE("Calculated CRC64 for primary DDT: 0x%16lX", crc64);
     }
 
     // First write the DDT header
-    fseek(ctx->imageStream, ctx->primaryDdtOffset, SEEK_SET);
+    fseek(ctx->imageStream, ctx->primary_ddt_offset, SEEK_SET);
 
-    size_t headerWritten = fwrite(&ctx->userDataDdtHeader, sizeof(DdtHeader2), 1, ctx->imageStream);
+    size_t headerWritten = fwrite(&ctx->user_data_ddt_header, sizeof(DdtHeader2), 1, ctx->imageStream);
     if(headerWritten != 1)
     {
         TRACE("Failed to write primary DDT header to file");
@@ -322,26 +323,26 @@ static int32_t write_primary_ddt(aaruformatContext *ctx)
     }
 
     // Then write the table data (position is already after the header)
-    size_t primary_table_size = ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+    size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint32_t);
 
     // Write the primary table data
     size_t written_bytes = 0;
-    written_bytes        = fwrite(ctx->userDataDdtBig, primary_table_size, 1, ctx->imageStream);
+    written_bytes        = fwrite(ctx->user_data_ddt2, primary_table_size, 1, ctx->imageStream);
 
     if(written_bytes == 1)
     {
         TRACE("Successfully wrote primary DDT header and table to file (%" PRIu64 " entries, %zu bytes)",
-              ctx->userDataDdtHeader.entries, primary_table_size);
+              ctx->user_data_ddt_header.entries, primary_table_size);
 
         // Add primary DDT to index
         TRACE("Adding primary DDT to index");
         IndexEntry primary_ddt_entry;
         primary_ddt_entry.blockType = DeDuplicationTable2;
         primary_ddt_entry.dataType  = UserData;
-        primary_ddt_entry.offset    = ctx->primaryDdtOffset;
+        primary_ddt_entry.offset    = ctx->primary_ddt_offset;
 
-        utarray_push_back(ctx->indexEntries, &primary_ddt_entry);
-        TRACE("Added primary DDT index entry at offset %" PRIu64, ctx->primaryDdtOffset);
+        utarray_push_back(ctx->index_entries, &primary_ddt_entry);
+        TRACE("Added primary DDT index entry at offset %" PRIu64, ctx->primary_ddt_offset);
     }
     else
         TRACE("Failed to write primary DDT table to file");
@@ -365,81 +366,83 @@ static int32_t write_primary_ddt(aaruformatContext *ctx)
  * @retval AARUF_ERROR_CANNOT_WRITE_HEADER Failed writing header or table data.
  * @internal
  */
-static int32_t write_single_level_ddt(aaruformatContext *ctx)
+static int32_t write_single_level_ddt(aaruformat_context *ctx)
 {
     // Write the single level DDT table block aligned just after the header
-    if(ctx->userDataDdtHeader.tableShift != 0 || ctx->userDataDdtBig == NULL) return AARUF_STATUS_OK;
+    if(ctx->user_data_ddt_header.tableShift != 0 || ctx->user_data_ddt2 == NULL) return AARUF_STATUS_OK;
 
     TRACE("Writing single-level DDT table to file");
 
     // Calculate CRC64 of the primary DDT table data
-    const size_t primary_table_size = ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+    const size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint32_t);
 
     // Properly populate all header fields
-    ctx->userDataDdtHeader.identifier          = DeDuplicationTable2;
-    ctx->userDataDdtHeader.type                = UserData;
-    ctx->userDataDdtHeader.compression         = ctx->compression_enabled ? Lzma : None;
-    ctx->userDataDdtHeader.levels              = 1;  // Single level
-    ctx->userDataDdtHeader.tableLevel          = 0;  // Top level
-    ctx->userDataDdtHeader.previousLevelOffset = 0;  // No previous level for single-level DDT
+    ctx->user_data_ddt_header.identifier          = DeDuplicationTable2;
+    ctx->user_data_ddt_header.type                = UserData;
+    ctx->user_data_ddt_header.compression         = ctx->compression_enabled ? Lzma : None;
+    ctx->user_data_ddt_header.levels              = 1;  // Single level
+    ctx->user_data_ddt_header.tableLevel          = 0;  // Top level
+    ctx->user_data_ddt_header.previousLevelOffset = 0;  // No previous level for single-level DDT
     // negative and overflow are already set during creation
     // blockAlignmentShift, dataShift, tableShift, sizeType, entries, blocks, start are already set
-    ctx->userDataDdtHeader.length              = primary_table_size;
-    ctx->userDataDdtHeader.cmpLength           = primary_table_size;
+    ctx->user_data_ddt_header.length              = primary_table_size;
+    ctx->user_data_ddt_header.cmpLength           = primary_table_size;
 
-    ctx->userDataDdtHeader.crc64 = aaruf_crc64_data((uint8_t *)ctx->userDataDdtBig, primary_table_size);
+    ctx->user_data_ddt_header.crc64 = aaruf_crc64_data((uint8_t *)ctx->user_data_ddt2, primary_table_size);
 
-    TRACE("Calculated CRC64 for single-level DDT: 0x%16lX", ctx->userDataDdtHeader.crc64);
+    TRACE("Calculated CRC64 for single-level DDT: 0x%16lX", ctx->user_data_ddt_header.crc64);
 
     uint8_t *cmp_buffer                              = NULL;
     uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
 
-    if(ctx->userDataDdtHeader.compression == None)
+    if(ctx->user_data_ddt_header.compression == None)
     {
 
-        cmp_buffer                      = (uint8_t *)ctx->userDataDdtBig;
-        ctx->userDataDdtHeader.cmpCrc64 = ctx->userDataDdtHeader.crc64;
+        cmp_buffer                         = (uint8_t *)ctx->user_data_ddt2;
+        ctx->user_data_ddt_header.cmpCrc64 = ctx->user_data_ddt_header.crc64;
     }
     else
     {
-        cmp_buffer = malloc((size_t)ctx->userDataDdtHeader.length * 2);  // Allocate double size for compression
+        cmp_buffer = malloc((size_t)ctx->user_data_ddt_header.length * 2);  // Allocate double size for compression
         if(cmp_buffer == NULL)
         {
             TRACE("Failed to allocate memory for secondary DDT v2 compression");
             return AARUF_ERROR_NOT_ENOUGH_MEMORY;
         }
 
-        size_t dst_size   = (size_t)ctx->userDataDdtHeader.length * 2 * 2;
+        size_t dst_size   = (size_t)ctx->user_data_ddt_header.length * 2 * 2;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, (uint8_t *)ctx->userDataDdtBig, ctx->userDataDdtHeader.length,
-                                 lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+        aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, (uint8_t *)ctx->user_data_ddt2,
+                                 ctx->user_data_ddt_header.length, lzma_properties, &props_size, 9, ctx->lzma_dict_size,
+                                 4, 0, 2, 273, 8);
 
-        ctx->userDataDdtHeader.cmpLength = (uint32_t)dst_size;
+        ctx->user_data_ddt_header.cmpLength = (uint32_t)dst_size;
 
-        if(ctx->userDataDdtHeader.cmpLength >= ctx->userDataDdtHeader.length)
+        if(ctx->user_data_ddt_header.cmpLength >= ctx->user_data_ddt_header.length)
         {
-            ctx->userDataDdtHeader.compression = None;
+            ctx->user_data_ddt_header.compression = None;
             free(cmp_buffer);
 
-            cmp_buffer = (uint8_t *)ctx->userDataDdtBig;
+            cmp_buffer = (uint8_t *)ctx->user_data_ddt2;
         }
     }
 
-    if(ctx->userDataDdtHeader.compression == None)
+    if(ctx->user_data_ddt_header.compression == None)
     {
-        ctx->userDataDdtHeader.cmpLength = ctx->userDataDdtHeader.length;
-        ctx->userDataDdtHeader.cmpCrc64  = ctx->userDataDdtHeader.crc64;
+        ctx->user_data_ddt_header.cmpLength = ctx->user_data_ddt_header.length;
+        ctx->user_data_ddt_header.cmpCrc64  = ctx->user_data_ddt_header.crc64;
     }
     else
-        ctx->userDataDdtHeader.cmpCrc64 = aaruf_crc64_data(cmp_buffer, (uint32_t)ctx->userDataDdtHeader.cmpLength);
+        ctx->user_data_ddt_header.cmpCrc64 =
+            aaruf_crc64_data(cmp_buffer, (uint32_t)ctx->user_data_ddt_header.cmpLength);
 
-    if(ctx->userDataDdtHeader.compression == Lzma) ctx->userDataDdtHeader.cmpLength += LZMA_PROPERTIES_LENGTH;
+    if(ctx->user_data_ddt_header.compression == Lzma) ctx->user_data_ddt_header.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write the DDT header first
     fseek(ctx->imageStream, 0, SEEK_END);
     long           ddt_position   = ftell(ctx->imageStream);
     // Align index position to block boundary if needed
-    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(ddt_position & alignment_mask)
     {
         const uint64_t aligned_position = ddt_position + alignment_mask & ~alignment_mask;
@@ -447,7 +450,7 @@ static int32_t write_single_level_ddt(aaruformatContext *ctx)
         ddt_position = aligned_position;
     }
 
-    const size_t header_written = fwrite(&ctx->userDataDdtHeader, sizeof(DdtHeader2), 1, ctx->imageStream);
+    const size_t header_written = fwrite(&ctx->user_data_ddt_header, sizeof(DdtHeader2), 1, ctx->imageStream);
     if(header_written != 1)
     {
         TRACE("Failed to write single-level DDT header to file");
@@ -456,15 +459,16 @@ static int32_t write_single_level_ddt(aaruformatContext *ctx)
 
     // Write the primary table data
     size_t written_bytes = 0;
-    if(ctx->userDataDdtHeader.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
+    if(ctx->user_data_ddt_header.compression == Lzma)
+        fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
 
-    written_bytes = fwrite(cmp_buffer, ctx->userDataDdtHeader.cmpLength, 1, ctx->imageStream);
+    written_bytes = fwrite(cmp_buffer, ctx->user_data_ddt_header.cmpLength, 1, ctx->imageStream);
 
     if(written_bytes == 1)
     {
         TRACE("Successfully wrote single-level DDT header and table to file (%" PRIu64
               " entries, %zu bytes, %zu compressed bytes)",
-              ctx->userDataDdtHeader.entries, ctx->userDataDdtHeader.length, ctx->userDataDdtHeader.cmpLength);
+              ctx->user_data_ddt_header.entries, ctx->user_data_ddt_header.length, ctx->user_data_ddt_header.cmpLength);
 
         // Add single-level DDT to index
         TRACE("Adding single-level DDT to index");
@@ -473,7 +477,7 @@ static int32_t write_single_level_ddt(aaruformatContext *ctx)
         single_ddt_entry.dataType  = UserData;
         single_ddt_entry.offset    = ddt_position;
 
-        utarray_push_back(ctx->indexEntries, &single_ddt_entry);
+        utarray_push_back(ctx->index_entries, &single_ddt_entry);
         TRACE("Added single-level DDT index entry at offset %" PRIu64, ddt_position);
     }
     else
@@ -589,44 +593,44 @@ static int32_t write_single_level_ddt(aaruformatContext *ctx)
  * @see TapeDdtHashEntry for the hash table entry structure
  * @internal
  */
-static int32_t write_tape_ddt(aaruformatContext *ctx)
+static int32_t write_tape_ddt(aaruformat_context *ctx)
 {
     if(!ctx->is_tape) return AARUF_STATUS_INVALID_CONTEXT;
 
     // Traverse the tape DDT uthash and find the biggest key
     uint64_t          max_key = 0;
     TapeDdtHashEntry *entry, *tmp;
-    HASH_ITER(hh, ctx->tapeDdt, entry, tmp)
+    HASH_ITER(hh, ctx->tape_ddt, entry, tmp)
     if(entry->key > max_key) max_key = entry->key;
 
     // Initialize context user data DDT header
-    ctx->userDataDdtHeader.identifier          = DeDuplicationTable2;
-    ctx->userDataDdtHeader.type                = UserData;
-    ctx->userDataDdtHeader.compression         = ctx->compression_enabled ? Lzma : None;
-    ctx->userDataDdtHeader.levels              = 1;  // Single level
-    ctx->userDataDdtHeader.tableLevel          = 0;  // Top level
-    ctx->userDataDdtHeader.previousLevelOffset = 0;  // No previous level for single-level DDT
-    ctx->userDataDdtHeader.negative            = 0;
-    ctx->userDataDdtHeader.overflow            = 0;
-    ctx->userDataDdtHeader.tableShift          = 0;  // Single level
-    ctx->userDataDdtHeader.sizeType            = BigDdtSizeType;
-    ctx->userDataDdtHeader.entries             = max_key + 1;
-    ctx->userDataDdtHeader.blocks              = max_key + 1;
-    ctx->userDataDdtHeader.start               = 0;
-    ctx->userDataDdtHeader.length              = ctx->userDataDdtHeader.entries * sizeof(uint32_t);
-    ctx->userDataDdtHeader.cmpLength           = ctx->userDataDdtHeader.length;
+    ctx->user_data_ddt_header.identifier          = DeDuplicationTable2;
+    ctx->user_data_ddt_header.type                = UserData;
+    ctx->user_data_ddt_header.compression         = ctx->compression_enabled ? Lzma : None;
+    ctx->user_data_ddt_header.levels              = 1;  // Single level
+    ctx->user_data_ddt_header.tableLevel          = 0;  // Top level
+    ctx->user_data_ddt_header.previousLevelOffset = 0;  // No previous level for single-level DDT
+    ctx->user_data_ddt_header.negative            = 0;
+    ctx->user_data_ddt_header.overflow            = 0;
+    ctx->user_data_ddt_header.tableShift          = 0;  // Single level
+    ctx->user_data_ddt_header.sizeType            = BigDdtSizeType;
+    ctx->user_data_ddt_header.entries             = max_key + 1;
+    ctx->user_data_ddt_header.blocks              = max_key + 1;
+    ctx->user_data_ddt_header.start               = 0;
+    ctx->user_data_ddt_header.length              = ctx->user_data_ddt_header.entries * sizeof(uint32_t);
+    ctx->user_data_ddt_header.cmpLength           = ctx->user_data_ddt_header.length;
 
     // Initialize memory for user data DDT
-    ctx->userDataDdtBig = calloc(ctx->userDataDdtHeader.entries, sizeof(uint32_t));
-    if(ctx->userDataDdtBig == NULL)
+    ctx->user_data_ddt2 = calloc(ctx->user_data_ddt_header.entries, sizeof(uint32_t));
+    if(ctx->user_data_ddt2 == NULL)
     {
         TRACE("Failed to allocate memory for tape DDT table");
         return AARUF_ERROR_NOT_ENOUGH_MEMORY;
     }
 
     // Populate user data DDT from tape DDT uthash
-    HASH_ITER(hh, ctx->tapeDdt, entry, tmp)
-    if(entry->key < ctx->userDataDdtHeader.blocks) ctx->userDataDdtBig[entry->key] = entry->value;
+    HASH_ITER(hh, ctx->tape_ddt, entry, tmp)
+    if(entry->key < ctx->user_data_ddt_header.blocks) ctx->user_data_ddt2[entry->key] = entry->value;
 
     // Do not repeat code
     return write_single_level_ddt(ctx);
@@ -648,7 +652,7 @@ static int32_t write_tape_ddt(aaruformatContext *ctx)
  * @param ctx Pointer to an initialized aaruformatContext in write mode.
  * @internal
  */
-static void write_checksum_block(aaruformatContext *ctx)
+static void write_checksum_block(aaruformat_context *ctx)
 {
     uint64_t alignment_mask;
     uint64_t aligned_position;
@@ -695,7 +699,7 @@ static void write_checksum_block(aaruformatContext *ctx)
     fseek(ctx->imageStream, 0, SEEK_END);
     long checksum_position = ftell(ctx->imageStream);
     // Align index position to block boundary if needed
-    alignment_mask         = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    alignment_mask         = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(checksum_position & alignment_mask)
     {
         aligned_position = checksum_position + alignment_mask & ~alignment_mask;
@@ -778,7 +782,7 @@ static void write_checksum_block(aaruformatContext *ctx)
     checksum_index_entry.dataType  = 0;
     checksum_index_entry.offset    = checksum_position;
 
-    utarray_push_back(ctx->indexEntries, &checksum_index_entry);
+    utarray_push_back(ctx->index_entries, &checksum_index_entry);
     TRACE("Added checksum block index entry at offset %" PRIu64, checksum_position);
 }
 
@@ -792,15 +796,15 @@ static void write_checksum_block(aaruformatContext *ctx)
  * @param ctx Pointer to an initialized aaruformatContext in write mode.
  * @internal
  */
-static void write_tracks_block(aaruformatContext *ctx)
+static void write_tracks_block(aaruformat_context *ctx)
 {
     // Write tracks block
-    if(ctx->tracksHeader.entries <= 0 || ctx->trackEntries == NULL) return;
+    if(ctx->tracks_header.entries <= 0 || ctx->track_entries == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
     long     tracks_position = ftell(ctx->imageStream);
     // Align index position to block boundary if needed
-    uint64_t alignment_mask  = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    uint64_t alignment_mask  = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(tracks_position & alignment_mask)
     {
         uint64_t aligned_position = tracks_position + alignment_mask & ~alignment_mask;
@@ -810,15 +814,15 @@ static void write_tracks_block(aaruformatContext *ctx)
 
     TRACE("Writing tracks block at position %ld", tracks_position);
     // Write header
-    if(fwrite(&ctx->tracksHeader, sizeof(TracksHeader), 1, ctx->imageStream) == 1)
+    if(fwrite(&ctx->tracks_header, sizeof(TracksHeader), 1, ctx->imageStream) == 1)
     {
         // Write entries
         size_t written_entries =
-            fwrite(ctx->trackEntries, sizeof(TrackEntry), ctx->tracksHeader.entries, ctx->imageStream);
+            fwrite(ctx->track_entries, sizeof(TrackEntry), ctx->tracks_header.entries, ctx->imageStream);
 
-        if(written_entries == ctx->tracksHeader.entries)
+        if(written_entries == ctx->tracks_header.entries)
         {
-            TRACE("Successfully wrote tracks block with %u entries", ctx->tracksHeader.entries);
+            TRACE("Successfully wrote tracks block with %u entries", ctx->tracks_header.entries);
             // Add tracks block to index
             TRACE("Adding tracks block to index");
 
@@ -826,7 +830,7 @@ static void write_tracks_block(aaruformatContext *ctx)
             tracks_index_entry.blockType = TracksBlock;
             tracks_index_entry.dataType  = 0;
             tracks_index_entry.offset    = tracks_position;
-            utarray_push_back(ctx->indexEntries, &tracks_index_entry);
+            utarray_push_back(ctx->index_entries, &tracks_index_entry);
             TRACE("Added tracks block index entry at offset %" PRIu64, tracks_position);
         }
     }
@@ -844,7 +848,7 @@ static void write_tracks_block(aaruformatContext *ctx)
  *            point to a buffer sized for the described sector span.
  * @internal
  */
-static void write_mode2_subheaders_block(aaruformatContext *ctx)
+static void write_mode2_subheaders_block(aaruformat_context *ctx)
 {
     // Write MODE 2 subheader data block
     if(ctx->mode2_subheaders == NULL) return;
@@ -852,7 +856,7 @@ static void write_mode2_subheaders_block(aaruformatContext *ctx)
     fseek(ctx->imageStream, 0, SEEK_END);
     long     mode2_subheaders_position = ftell(ctx->imageStream);
     // Align index position to block boundary if needed
-    uint64_t alignment_mask            = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    uint64_t alignment_mask            = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(mode2_subheaders_position & alignment_mask)
     {
         uint64_t aligned_position = mode2_subheaders_position + alignment_mask & ~alignment_mask;
@@ -866,7 +870,8 @@ static void write_mode2_subheaders_block(aaruformatContext *ctx)
     subheaders_block.type        = CompactDiscMode2Subheader;
     subheaders_block.compression = ctx->compression_enabled ? Lzma : None;
     subheaders_block.length =
-        (uint32_t)(ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow) * 8;
+        (uint32_t)(ctx->user_data_ddt_header.negative + ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow) *
+        8;
 
     // Calculate CRC64
     subheaders_block.crc64 = aaruf_crc64_data(ctx->mode2_subheaders, subheaders_block.length);
@@ -929,7 +934,7 @@ static void write_mode2_subheaders_block(aaruformatContext *ctx)
             mode2_subheaders_index_entry.blockType = DataBlock;
             mode2_subheaders_index_entry.dataType  = CompactDiscMode2Subheader;
             mode2_subheaders_index_entry.offset    = mode2_subheaders_position;
-            utarray_push_back(ctx->indexEntries, &mode2_subheaders_index_entry);
+            utarray_push_back(ctx->index_entries, &mode2_subheaders_index_entry);
             TRACE("Added MODE 2 subheaders block index entry at offset %" PRIu64, mode2_subheaders_position);
         }
     }
@@ -959,14 +964,14 @@ static void write_mode2_subheaders_block(aaruformatContext *ctx)
  * @param ctx Pointer to an initialized aaruformatContext in write mode.
  * @internal
  */
-static void write_sector_prefix(aaruformatContext *ctx)
+static void write_sector_prefix(aaruformat_context *ctx)
 {
     if(ctx->sector_prefix == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
     long     prefix_position = ftell(ctx->imageStream);
     // Align index position to block boundary if needed
-    uint64_t alignment_mask  = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    uint64_t alignment_mask  = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(prefix_position & alignment_mask)
     {
         uint64_t aligned_position = prefix_position + alignment_mask & ~alignment_mask;
@@ -1042,7 +1047,7 @@ static void write_sector_prefix(aaruformatContext *ctx)
             prefix_index_entry.blockType = DataBlock;
             prefix_index_entry.dataType  = CdSectorPrefix;
             prefix_index_entry.offset    = prefix_position;
-            utarray_push_back(ctx->indexEntries, &prefix_index_entry);
+            utarray_push_back(ctx->index_entries, &prefix_index_entry);
             TRACE("Added CD sector prefix block index entry at offset %" PRIu64, prefix_position);
         }
     }
@@ -1081,14 +1086,14 @@ static void write_sector_prefix(aaruformatContext *ctx)
  * @param ctx Pointer to an initialized aaruformatContext in write mode. Must not be NULL.
  * @internal
  */
-static void write_sector_suffix(aaruformatContext *ctx)
+static void write_sector_suffix(aaruformat_context *ctx)
 {
     if(ctx->sector_suffix == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
     long           suffix_position = ftell(ctx->imageStream);
     // Align index position to block boundary if needed
-    const uint64_t alignment_mask  = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    const uint64_t alignment_mask  = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(suffix_position & alignment_mask)
     {
         const uint64_t aligned_position = suffix_position + alignment_mask & ~alignment_mask;
@@ -1164,7 +1169,7 @@ static void write_sector_suffix(aaruformatContext *ctx)
             suffix_index_entry.blockType = DataBlock;
             suffix_index_entry.dataType  = CdSectorSuffix;
             suffix_index_entry.offset    = suffix_position;
-            utarray_push_back(ctx->indexEntries, &suffix_index_entry);
+            utarray_push_back(ctx->index_entries, &suffix_index_entry);
             TRACE("Added CD sector suffix block index entry at offset %" PRIu64, suffix_position);
         }
     }
@@ -1201,14 +1206,14 @@ static void write_sector_suffix(aaruformatContext *ctx)
  * @param ctx Pointer to a valid aaruformatContext in write mode (must not be NULL).
  * @internal
  */
-static void write_sector_prefix_ddt(aaruformatContext *ctx)
+static void write_sector_prefix_ddt(aaruformat_context *ctx)
 {
-    if(ctx->sectorPrefixDdt2 == NULL) return;
+    if(ctx->sector_prefix_ddt2 == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
     long           prefix_ddt_position = ftell(ctx->imageStream);
     // Align index position to block boundary if needed
-    const uint64_t alignment_mask      = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    const uint64_t alignment_mask      = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(prefix_ddt_position & alignment_mask)
     {
         const uint64_t aligned_position = prefix_ddt_position + alignment_mask & ~alignment_mask;
@@ -1223,25 +1228,26 @@ static void write_sector_prefix_ddt(aaruformatContext *ctx)
     ddt_header2.compression         = ctx->compression_enabled ? Lzma : None;
     ddt_header2.levels              = 1;
     ddt_header2.tableLevel          = 0;
-    ddt_header2.negative            = ctx->userDataDdtHeader.negative;
-    ddt_header2.overflow            = ctx->userDataDdtHeader.overflow;
-    ddt_header2.blockAlignmentShift = ctx->userDataDdtHeader.blockAlignmentShift;
-    ddt_header2.dataShift           = ctx->userDataDdtHeader.dataShift;
+    ddt_header2.negative            = ctx->user_data_ddt_header.negative;
+    ddt_header2.overflow            = ctx->user_data_ddt_header.overflow;
+    ddt_header2.blockAlignmentShift = ctx->user_data_ddt_header.blockAlignmentShift;
+    ddt_header2.dataShift           = ctx->user_data_ddt_header.dataShift;
     ddt_header2.tableShift          = 0;  // Single-level DDT
     ddt_header2.sizeType            = BigDdtSizeType;
-    ddt_header2.entries = ctx->imageInfo.Sectors + ctx->userDataDdtHeader.negative + ctx->userDataDdtHeader.overflow;
-    ddt_header2.blocks  = ctx->userDataDdtHeader.blocks;
-    ddt_header2.start   = 0;
-    ddt_header2.length  = ddt_header2.entries * sizeof(uint32_t);
+    ddt_header2.entries =
+        ctx->image_info.Sectors + ctx->user_data_ddt_header.negative + ctx->user_data_ddt_header.overflow;
+    ddt_header2.blocks = ctx->user_data_ddt_header.blocks;
+    ddt_header2.start  = 0;
+    ddt_header2.length = ddt_header2.entries * sizeof(uint32_t);
     // Calculate CRC64
-    ddt_header2.crc64   = aaruf_crc64_data((uint8_t *)ctx->sectorPrefixDdt2, (uint32_t)ddt_header2.length);
+    ddt_header2.crc64  = aaruf_crc64_data((uint8_t *)ctx->sector_prefix_ddt2, (uint32_t)ddt_header2.length);
 
     uint8_t *buffer                                  = NULL;
     uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
 
     if(ddt_header2.compression == None)
     {
-        buffer               = (uint8_t *)ctx->sectorPrefixDdt2;
+        buffer               = (uint8_t *)ctx->sector_prefix_ddt2;
         ddt_header2.cmpCrc64 = ddt_header2.crc64;
     }
     else
@@ -1255,7 +1261,7 @@ static void write_sector_prefix_ddt(aaruformatContext *ctx)
 
         size_t dst_size   = (size_t)ddt_header2.length * 2 * 2;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(buffer, &dst_size, (uint8_t *)ctx->sectorPrefixDdt2, ddt_header2.length,
+        aaruf_lzma_encode_buffer(buffer, &dst_size, (uint8_t *)ctx->sector_prefix_ddt2, ddt_header2.length,
                                  lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
 
         ddt_header2.cmpLength = (uint32_t)dst_size;
@@ -1264,7 +1270,7 @@ static void write_sector_prefix_ddt(aaruformatContext *ctx)
         {
             ddt_header2.compression = None;
             free(buffer);
-            buffer = (uint8_t *)ctx->sectorPrefixDdt2;
+            buffer = (uint8_t *)ctx->sector_prefix_ddt2;
         }
     }
 
@@ -1294,7 +1300,7 @@ static void write_sector_prefix_ddt(aaruformatContext *ctx)
             prefix_ddt_index_entry.blockType = DeDuplicationTable2;
             prefix_ddt_index_entry.dataType  = CdSectorPrefix;
             prefix_ddt_index_entry.offset    = prefix_ddt_position;
-            utarray_push_back(ctx->indexEntries, &prefix_ddt_index_entry);
+            utarray_push_back(ctx->index_entries, &prefix_ddt_index_entry);
             TRACE("Added sector prefix DDT v2 index entry at offset %" PRIu64, prefix_ddt_position);
         }
     }
@@ -1346,14 +1352,14 @@ static void write_sector_prefix_ddt(aaruformatContext *ctx)
  * @param ctx Active aaruformatContext being finalized.
  * @internal
  */
-static void write_sector_suffix_ddt(aaruformatContext *ctx)
+static void write_sector_suffix_ddt(aaruformat_context *ctx)
 {
-    if(ctx->sectorSuffixDdt2 == NULL) return;
+    if(ctx->sector_suffix_ddt2 == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
     long           suffix_ddt_position = ftell(ctx->imageStream);
     // Align index position to block boundary if needed
-    const uint64_t alignment_mask      = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    const uint64_t alignment_mask      = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(suffix_ddt_position & alignment_mask)
     {
         const uint64_t aligned_position = suffix_ddt_position + alignment_mask & ~alignment_mask;
@@ -1368,25 +1374,26 @@ static void write_sector_suffix_ddt(aaruformatContext *ctx)
     ddt_header2.compression         = ctx->compression_enabled ? Lzma : None;
     ddt_header2.levels              = 1;
     ddt_header2.tableLevel          = 0;
-    ddt_header2.negative            = ctx->userDataDdtHeader.negative;
-    ddt_header2.overflow            = ctx->userDataDdtHeader.overflow;
-    ddt_header2.blockAlignmentShift = ctx->userDataDdtHeader.blockAlignmentShift;
-    ddt_header2.dataShift           = ctx->userDataDdtHeader.dataShift;
+    ddt_header2.negative            = ctx->user_data_ddt_header.negative;
+    ddt_header2.overflow            = ctx->user_data_ddt_header.overflow;
+    ddt_header2.blockAlignmentShift = ctx->user_data_ddt_header.blockAlignmentShift;
+    ddt_header2.dataShift           = ctx->user_data_ddt_header.dataShift;
     ddt_header2.tableShift          = 0;  // Single-level DDT
     ddt_header2.sizeType            = BigDdtSizeType;
-    ddt_header2.entries = ctx->imageInfo.Sectors + ctx->userDataDdtHeader.negative + ctx->userDataDdtHeader.overflow;
-    ddt_header2.blocks  = ctx->userDataDdtHeader.blocks;
-    ddt_header2.start   = 0;
-    ddt_header2.length  = ddt_header2.entries * sizeof(uint32_t);
+    ddt_header2.entries =
+        ctx->image_info.Sectors + ctx->user_data_ddt_header.negative + ctx->user_data_ddt_header.overflow;
+    ddt_header2.blocks = ctx->user_data_ddt_header.blocks;
+    ddt_header2.start  = 0;
+    ddt_header2.length = ddt_header2.entries * sizeof(uint32_t);
     // Calculate CRC64
-    ddt_header2.crc64   = aaruf_crc64_data((uint8_t *)ctx->sectorSuffixDdt2, (uint32_t)ddt_header2.length);
+    ddt_header2.crc64  = aaruf_crc64_data((uint8_t *)ctx->sector_suffix_ddt2, (uint32_t)ddt_header2.length);
 
     uint8_t *buffer                                  = NULL;
     uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
 
     if(ddt_header2.compression == None)
     {
-        buffer               = (uint8_t *)ctx->sectorSuffixDdt2;
+        buffer               = (uint8_t *)ctx->sector_suffix_ddt2;
         ddt_header2.cmpCrc64 = ddt_header2.crc64;
     }
     else
@@ -1400,7 +1407,7 @@ static void write_sector_suffix_ddt(aaruformatContext *ctx)
 
         size_t dst_size   = (size_t)ddt_header2.length * 2 * 2;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(buffer, &dst_size, (uint8_t *)ctx->sectorSuffixDdt2, ddt_header2.length,
+        aaruf_lzma_encode_buffer(buffer, &dst_size, (uint8_t *)ctx->sector_suffix_ddt2, ddt_header2.length,
                                  lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
 
         ddt_header2.cmpLength = (uint32_t)dst_size;
@@ -1409,7 +1416,7 @@ static void write_sector_suffix_ddt(aaruformatContext *ctx)
         {
             ddt_header2.compression = None;
             free(buffer);
-            buffer = (uint8_t *)ctx->sectorSuffixDdt2;
+            buffer = (uint8_t *)ctx->sector_suffix_ddt2;
         }
     }
 
@@ -1439,7 +1446,7 @@ static void write_sector_suffix_ddt(aaruformatContext *ctx)
             suffix_ddt_index_entry.blockType = DeDuplicationTable2;
             suffix_ddt_index_entry.dataType  = CdSectorSuffix;
             suffix_ddt_index_entry.offset    = suffix_ddt_position;
-            utarray_push_back(ctx->indexEntries, &suffix_ddt_index_entry);
+            utarray_push_back(ctx->index_entries, &suffix_ddt_index_entry);
             TRACE("Added sector suffix DDT v2 index entry at offset %" PRIu64, suffix_ddt_position);
         }
     }
@@ -1504,14 +1511,14 @@ static void write_sector_suffix_ddt(aaruformatContext *ctx)
  *
  * @internal
  */
-static void write_sector_subchannel(const aaruformatContext *ctx)
+static void write_sector_subchannel(const aaruformat_context *ctx)
 {
     if(ctx->sector_subchannel == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
     long           block_position = ftell(ctx->imageStream);
     // Align index position to block boundary if needed
-    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(block_position & alignment_mask)
     {
         const uint64_t aligned_position = block_position + alignment_mask & ~alignment_mask;
@@ -1530,11 +1537,12 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
 
     subchannel_block.cmpLength = subchannel_block.length;
 
-    if(ctx->imageInfo.MetadataMediaType == OpticalDisc)
+    if(ctx->image_info.MetadataMediaType == OpticalDisc)
     {
-        subchannel_block.type = CdSectorSubchannel;
-        subchannel_block.length =
-            (uint32_t)(ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow) * 96;
+        subchannel_block.type   = CdSectorSubchannel;
+        subchannel_block.length = (uint32_t)(ctx->user_data_ddt_header.negative + ctx->image_info.Sectors +
+                                             ctx->user_data_ddt_header.overflow) *
+                                  96;
 
         if(ctx->compression_enabled)
         {
@@ -1579,23 +1587,23 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
             }
         }
     }
-    else if(ctx->imageInfo.MetadataMediaType == BlockMedia)
+    else if(ctx->image_info.MetadataMediaType == BlockMedia)
     {
-        switch(ctx->imageInfo.MediaType)
+        switch(ctx->image_info.MediaType)
         {
             case AppleProfile:
             case AppleFileWare:
                 subchannel_block.type   = AppleProfileTag;
-                subchannel_block.length = (uint32_t)(ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow) * 20;
+                subchannel_block.length = (uint32_t)(ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow) * 20;
                 break;
             case AppleSonyDS:
             case AppleSonySS:
                 subchannel_block.type   = AppleSonyTag;
-                subchannel_block.length = (uint32_t)(ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow) * 12;
+                subchannel_block.length = (uint32_t)(ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow) * 12;
                 break;
             case PriamDataTower:
                 subchannel_block.type   = PriamDataTowerTag;
-                subchannel_block.length = (uint32_t)(ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow) * 24;
+                subchannel_block.length = (uint32_t)(ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow) * 24;
                 break;
             default:
                 TRACE("Incorrect media type, not writing sector subchannel block");
@@ -1659,7 +1667,7 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
             subchannel_index_entry.blockType = DataBlock;
             subchannel_index_entry.dataType  = subchannel_block.type;
             subchannel_index_entry.offset    = block_position;
-            utarray_push_back(ctx->indexEntries, &subchannel_index_entry);
+            utarray_push_back(ctx->index_entries, &subchannel_index_entry);
             TRACE("Added sector subchannel block index entry at offset %" PRIu64, block_position);
         }
     }
@@ -1803,17 +1811,18 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
  *
  * @internal
  */
-void write_dvd_long_sector_blocks(aaruformatContext *ctx)
+void write_dvd_long_sector_blocks(aaruformat_context *ctx)
 {
     if(ctx->sector_id == NULL || ctx->sector_ied == NULL || ctx->sector_cpr_mai == NULL || ctx->sector_edc == NULL)
         return;
 
-    uint64_t total_sectors = ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow;
+    uint64_t total_sectors =
+        ctx->user_data_ddt_header.negative + ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow;
 
     // Write DVD sector ID block
     fseek(ctx->imageStream, 0, SEEK_END);
     long           id_position    = ftell(ctx->imageStream);
-    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(id_position & alignment_mask)
     {
         const uint64_t aligned_position = id_position + alignment_mask & ~alignment_mask;
@@ -1888,7 +1897,7 @@ void write_dvd_long_sector_blocks(aaruformatContext *ctx)
             id_index_entry.blockType = DataBlock;
             id_index_entry.dataType  = DvdSectorId;
             id_index_entry.offset    = id_position;
-            utarray_push_back(ctx->indexEntries, &id_index_entry);
+            utarray_push_back(ctx->index_entries, &id_index_entry);
             TRACE("Added DVD sector ID block index entry at offset %" PRIu64, id_position);
         }
     }
@@ -1970,7 +1979,7 @@ void write_dvd_long_sector_blocks(aaruformatContext *ctx)
             ied_index_entry.blockType = DataBlock;
             ied_index_entry.dataType  = DvdSectorIed;
             ied_index_entry.offset    = ied_position;
-            utarray_push_back(ctx->indexEntries, &ied_index_entry);
+            utarray_push_back(ctx->index_entries, &ied_index_entry);
             TRACE("Added DVD sector IED block index entry at offset %" PRIu64, ied_position);
         }
     }
@@ -2052,7 +2061,7 @@ void write_dvd_long_sector_blocks(aaruformatContext *ctx)
             cpr_mai_index_entry.blockType = DataBlock;
             cpr_mai_index_entry.dataType  = DvdSectorCprMai;
             cpr_mai_index_entry.offset    = cpr_mai_position;
-            utarray_push_back(ctx->indexEntries, &cpr_mai_index_entry);
+            utarray_push_back(ctx->index_entries, &cpr_mai_index_entry);
             TRACE("Added DVD sector CPR/MAI block index entry at offset %" PRIu64, cpr_mai_position);
         }
     }
@@ -2134,7 +2143,7 @@ void write_dvd_long_sector_blocks(aaruformatContext *ctx)
             edc_index_entry.blockType = DataBlock;
             edc_index_entry.dataType  = DvdSectorEdc;
             edc_index_entry.offset    = edc_position;
-            utarray_push_back(ctx->indexEntries, &edc_index_entry);
+            utarray_push_back(ctx->index_entries, &edc_index_entry);
             TRACE("Added DVD sector EDC block index entry at offset %" PRIu64, edc_position);
         }
     }
@@ -2239,13 +2248,13 @@ void write_dvd_long_sector_blocks(aaruformatContext *ctx)
  *
  * @internal
  */
-static void write_dvd_title_key_decrypted_block(const aaruformatContext *ctx)
+static void write_dvd_title_key_decrypted_block(const aaruformat_context *ctx)
 {
     if(ctx->sector_decrypted_title_key == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
     long           block_position = ftell(ctx->imageStream);
-    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(block_position & alignment_mask)
     {
         const uint64_t aligned_position = block_position + alignment_mask & ~alignment_mask;
@@ -2258,7 +2267,8 @@ static void write_dvd_title_key_decrypted_block(const aaruformatContext *ctx)
     decrypted_title_key_block.type        = DvdSectorTitleKeyDecrypted;
     decrypted_title_key_block.compression = ctx->compression_enabled ? Lzma : None;
     decrypted_title_key_block.length =
-        (uint32_t)(ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow) * 5;
+        (uint32_t)(ctx->user_data_ddt_header.negative + ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow) *
+        5;
     // Calculate CRC64
     decrypted_title_key_block.crc64 =
         aaruf_crc64_data(ctx->sector_decrypted_title_key, decrypted_title_key_block.length);
@@ -2323,7 +2333,7 @@ static void write_dvd_title_key_decrypted_block(const aaruformatContext *ctx)
             decrypted_title_key_index_entry.blockType = DataBlock;
             decrypted_title_key_index_entry.dataType  = DvdSectorTitleKeyDecrypted;
             decrypted_title_key_index_entry.offset    = block_position;
-            utarray_push_back(ctx->indexEntries, &decrypted_title_key_index_entry);
+            utarray_push_back(ctx->index_entries, &decrypted_title_key_index_entry);
             TRACE("Added DVD decrypted title key block index entry at offset %" PRIu64, block_position);
         }
     }
@@ -2402,7 +2412,7 @@ static void write_dvd_title_key_decrypted_block(const aaruformatContext *ctx)
  *
  * @internal
  */
-static void write_media_tags(const aaruformatContext *ctx)
+static void write_media_tags(const aaruformat_context *ctx)
 {
     if(ctx->mediaTags == NULL) return;
 
@@ -2413,7 +2423,7 @@ static void write_media_tags(const aaruformatContext *ctx)
     {
         fseek(ctx->imageStream, 0, SEEK_END);
         long           tag_position   = ftell(ctx->imageStream);
-        const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+        const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
         if(tag_position & alignment_mask)
         {
             const uint64_t aligned_position = tag_position + alignment_mask & ~alignment_mask;
@@ -2491,7 +2501,7 @@ static void write_media_tags(const aaruformatContext *ctx)
                 tag_index_entry.blockType = DataBlock;
                 tag_index_entry.dataType  = tag_block.type;
                 tag_index_entry.offset    = tag_position;
-                utarray_push_back(ctx->indexEntries, &tag_index_entry);
+                utarray_push_back(ctx->index_entries, &tag_index_entry);
                 TRACE("Added media tag block type %d index entry at offset %" PRIu64, tag_block.type, tag_position);
             }
         }
@@ -2662,15 +2672,15 @@ static void write_media_tags(const aaruformatContext *ctx)
  *
  * @internal
  */
-static void write_tape_file_block(const aaruformatContext *ctx)
+static void write_tape_file_block(const aaruformat_context *ctx)
 {
-    if(ctx->tapeFiles == NULL) return;
+    if(ctx->tape_files == NULL) return;
 
     // Iterate the uthash and count how many entries do we have
     const tapeFileHashEntry *tape_file       = NULL;
     const tapeFileHashEntry *tmp_tape_file   = NULL;
     size_t                   tape_file_count = 0;
-    HASH_ITER(hh, ctx->tapeFiles, tape_file, tmp_tape_file) tape_file_count++;
+    HASH_ITER(hh, ctx->tape_files, tape_file, tmp_tape_file) tape_file_count++;
 
     // Create a memory buffer to copy all the file entries
     const size_t   buffer_size = tape_file_count * sizeof(TapeFileEntry);
@@ -2682,7 +2692,7 @@ static void write_tape_file_block(const aaruformatContext *ctx)
     }
     memset(buffer, 0, buffer_size);
     size_t index = 0;
-    HASH_ITER(hh, ctx->tapeFiles, tape_file, tmp_tape_file)
+    HASH_ITER(hh, ctx->tape_files, tape_file, tmp_tape_file)
     {
         if(index >= tape_file_count) break;
         memcpy(&buffer[index], &tape_file->fileEntry, sizeof(TapeFileEntry));
@@ -2698,7 +2708,7 @@ static void write_tape_file_block(const aaruformatContext *ctx)
     // Write tape file block to file, block aligned
     fseek(ctx->imageStream, 0, SEEK_END);
     long           block_position = ftell(ctx->imageStream);
-    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(block_position & alignment_mask)
     {
         const uint64_t aligned_position = block_position + alignment_mask & ~alignment_mask;
@@ -2718,7 +2728,7 @@ static void write_tape_file_block(const aaruformatContext *ctx)
             index_entry.blockType = TapeFileBlock;
             index_entry.dataType  = 0;
             index_entry.offset    = block_position;
-            utarray_push_back(ctx->indexEntries, &index_entry);
+            utarray_push_back(ctx->index_entries, &index_entry);
             TRACE("Added tape file block index entry at offset %" PRIu64, block_position);
         }
     }
@@ -2894,15 +2904,15 @@ static void write_tape_file_block(const aaruformatContext *ctx)
  *
  * @internal
  */
-static void write_tape_partition_block(const aaruformatContext *ctx)
+static void write_tape_partition_block(const aaruformat_context *ctx)
 {
-    if(ctx->tapePartitions == NULL) return;
+    if(ctx->tape_partitions == NULL) return;
 
     // Iterate the uthash and count how many entries do we have
     const TapePartitionHashEntry *tape_partition       = NULL;
     const TapePartitionHashEntry *tmp_tape_partition   = NULL;
     size_t                        tape_partition_count = 0;
-    HASH_ITER(hh, ctx->tapePartitions, tape_partition, tmp_tape_partition) tape_partition_count++;
+    HASH_ITER(hh, ctx->tape_partitions, tape_partition, tmp_tape_partition) tape_partition_count++;
 
     // Create a memory buffer to copy all the partition entries
     const size_t        buffer_size = tape_partition_count * sizeof(TapePartitionEntry);
@@ -2914,7 +2924,7 @@ static void write_tape_partition_block(const aaruformatContext *ctx)
     }
     memset(buffer, 0, buffer_size);
     size_t index = 0;
-    HASH_ITER(hh, ctx->tapePartitions, tape_partition, tmp_tape_partition)
+    HASH_ITER(hh, ctx->tape_partitions, tape_partition, tmp_tape_partition)
     {
         if(index >= tape_partition_count) break;
         memcpy(&buffer[index], &tape_partition->partitionEntry, sizeof(TapePartitionEntry));
@@ -2930,7 +2940,7 @@ static void write_tape_partition_block(const aaruformatContext *ctx)
     // Write tape partition block to partition, block aligned
     fseek(ctx->imageStream, 0, SEEK_END);
     long           block_position = ftell(ctx->imageStream);
-    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(block_position & alignment_mask)
     {
         const uint64_t aligned_position = block_position + alignment_mask & ~alignment_mask;
@@ -2950,7 +2960,7 @@ static void write_tape_partition_block(const aaruformatContext *ctx)
             index_entry.blockType = TapePartitionBlock;
             index_entry.dataType  = 0;
             index_entry.offset    = block_position;
-            utarray_push_back(ctx->indexEntries, &index_entry);
+            utarray_push_back(ctx->index_entries, &index_entry);
             TRACE("Added tape partition block index entry at offset %" PRIu64, block_position);
         }
     }
@@ -3019,13 +3029,13 @@ static void write_tape_partition_block(const aaruformatContext *ctx)
  * @see GeometryBlockHeader
  * @see aaruf_set_geometry() for setting geometry values before closing.
  */
-static void write_geometry_block(const aaruformatContext *ctx)
+static void write_geometry_block(const aaruformat_context *ctx)
 {
-    if(ctx->geometryBlock.identifier != GeometryBlock) return;
+    if(ctx->geometry_block.identifier != GeometryBlock) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
     long           block_position = ftell(ctx->imageStream);
-    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(block_position & alignment_mask)
     {
         const uint64_t aligned_position = block_position + alignment_mask & ~alignment_mask;
@@ -3036,7 +3046,7 @@ static void write_geometry_block(const aaruformatContext *ctx)
     TRACE("Writing geometry block at position %ld", block_position);
 
     // Write header
-    if(fwrite(&ctx->geometryBlock, sizeof(GeometryBlockHeader), 1, ctx->imageStream) == 1)
+    if(fwrite(&ctx->geometry_block, sizeof(GeometryBlockHeader), 1, ctx->imageStream) == 1)
     {
         TRACE("Successfully wrote geometry block");
 
@@ -3046,7 +3056,7 @@ static void write_geometry_block(const aaruformatContext *ctx)
         index_entry.blockType = GeometryBlock;
         index_entry.dataType  = 0;
         index_entry.offset    = block_position;
-        utarray_push_back(ctx->indexEntries, &index_entry);
+        utarray_push_back(ctx->index_entries, &index_entry);
         TRACE("Added geometry block index entry at offset %" PRIu64, block_position);
     }
 }
@@ -3155,117 +3165,118 @@ static void write_geometry_block(const aaruformatContext *ctx)
  *
  * @internal
  */
-static void write_metadata_block(aaruformatContext *ctx)
+static void write_metadata_block(aaruformat_context *ctx)
 {
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock && ctx->metadataBlockHeader.mediaSequence == 0 &&
-       ctx->metadataBlockHeader.lastMediaSequence == 0 && ctx->Creator == NULL && ctx->Comments == NULL &&
-       ctx->MediaTitle == NULL && ctx->MediaManufacturer == NULL && ctx->MediaModel == NULL &&
-       ctx->MediaSerialNumber == NULL && ctx->MediaBarcode == NULL && ctx->MediaPartNumber == NULL &&
-       ctx->DriveManufacturer == NULL && ctx->DriveModel == NULL && ctx->DriveSerialNumber == NULL &&
-       ctx->DriveFirmwareRevision == NULL)
+    if(ctx->metadata_block_header.identifier != MetadataBlock && ctx->metadata_block_header.mediaSequence == 0 &&
+       ctx->metadata_block_header.lastMediaSequence == 0 && ctx->creator == NULL && ctx->comments == NULL &&
+       ctx->media_title == NULL && ctx->media_manufacturer == NULL && ctx->media_model == NULL &&
+       ctx->media_serial_number == NULL && ctx->media_barcode == NULL && ctx->media_part_number == NULL &&
+       ctx->drive_manufacturer == NULL && ctx->drive_model == NULL && ctx->drive_serial_number == NULL &&
+       ctx->drive_firmware_revision == NULL)
         return;
 
-    ctx->metadataBlockHeader.blockSize =
-        sizeof(MetadataBlockHeader) + ctx->metadataBlockHeader.creatorLength + ctx->metadataBlockHeader.commentsLength +
-        ctx->metadataBlockHeader.mediaTitleLength + ctx->metadataBlockHeader.mediaManufacturerLength +
-        ctx->metadataBlockHeader.mediaModelLength + ctx->metadataBlockHeader.mediaSerialNumberLength +
-        ctx->metadataBlockHeader.mediaBarcodeLength + ctx->metadataBlockHeader.mediaPartNumberLength +
-        ctx->metadataBlockHeader.driveManufacturerLength + ctx->metadataBlockHeader.driveModelLength +
-        ctx->metadataBlockHeader.driveSerialNumberLength + ctx->metadataBlockHeader.driveFirmwareRevisionLength;
+    ctx->metadata_block_header.blockSize =
+        sizeof(MetadataBlockHeader) + ctx->metadata_block_header.creatorLength +
+        ctx->metadata_block_header.commentsLength + ctx->metadata_block_header.mediaTitleLength +
+        ctx->metadata_block_header.mediaManufacturerLength + ctx->metadata_block_header.mediaModelLength +
+        ctx->metadata_block_header.mediaSerialNumberLength + ctx->metadata_block_header.mediaBarcodeLength +
+        ctx->metadata_block_header.mediaPartNumberLength + ctx->metadata_block_header.driveManufacturerLength +
+        ctx->metadata_block_header.driveModelLength + ctx->metadata_block_header.driveSerialNumberLength +
+        ctx->metadata_block_header.driveFirmwareRevisionLength;
 
-    ctx->metadataBlockHeader.identifier = MetadataBlock;
+    ctx->metadata_block_header.identifier = MetadataBlock;
 
     int pos = sizeof(MetadataBlockHeader);
 
-    uint8_t *buffer = calloc(1, ctx->metadataBlockHeader.blockSize);
+    uint8_t *buffer = calloc(1, ctx->metadata_block_header.blockSize);
     if(buffer == NULL) return;
 
-    if(ctx->Creator != NULL && ctx->metadataBlockHeader.creatorLength > 0)
+    if(ctx->creator != NULL && ctx->metadata_block_header.creatorLength > 0)
     {
-        memcpy(buffer + pos, ctx->Creator, ctx->metadataBlockHeader.creatorLength);
-        ctx->metadataBlockHeader.creatorOffset = pos;
-        pos += ctx->metadataBlockHeader.creatorLength;
+        memcpy(buffer + pos, ctx->creator, ctx->metadata_block_header.creatorLength);
+        ctx->metadata_block_header.creatorOffset = pos;
+        pos += ctx->metadata_block_header.creatorLength;
     }
 
-    if(ctx->Comments != NULL && ctx->metadataBlockHeader.commentsLength > 0)
+    if(ctx->comments != NULL && ctx->metadata_block_header.commentsLength > 0)
     {
-        memcpy(buffer + pos, ctx->Comments, ctx->metadataBlockHeader.commentsLength);
-        ctx->metadataBlockHeader.commentsOffset = pos;
-        pos += ctx->metadataBlockHeader.commentsLength;
+        memcpy(buffer + pos, ctx->comments, ctx->metadata_block_header.commentsLength);
+        ctx->metadata_block_header.commentsOffset = pos;
+        pos += ctx->metadata_block_header.commentsLength;
     }
 
-    if(ctx->MediaTitle != NULL && ctx->metadataBlockHeader.mediaTitleLength > 0)
+    if(ctx->media_title != NULL && ctx->metadata_block_header.mediaTitleLength > 0)
     {
-        memcpy(buffer + pos, ctx->MediaTitle, ctx->metadataBlockHeader.mediaTitleLength);
-        ctx->metadataBlockHeader.mediaTitleOffset = pos;
-        pos += ctx->metadataBlockHeader.mediaTitleLength;
+        memcpy(buffer + pos, ctx->media_title, ctx->metadata_block_header.mediaTitleLength);
+        ctx->metadata_block_header.mediaTitleOffset = pos;
+        pos += ctx->metadata_block_header.mediaTitleLength;
     }
 
-    if(ctx->MediaManufacturer != NULL && ctx->metadataBlockHeader.mediaManufacturerLength > 0)
+    if(ctx->media_manufacturer != NULL && ctx->metadata_block_header.mediaManufacturerLength > 0)
     {
-        memcpy(buffer + pos, ctx->MediaManufacturer, ctx->metadataBlockHeader.mediaManufacturerLength);
-        ctx->metadataBlockHeader.mediaManufacturerOffset = pos;
-        pos += ctx->metadataBlockHeader.mediaManufacturerLength;
+        memcpy(buffer + pos, ctx->media_manufacturer, ctx->metadata_block_header.mediaManufacturerLength);
+        ctx->metadata_block_header.mediaManufacturerOffset = pos;
+        pos += ctx->metadata_block_header.mediaManufacturerLength;
     }
 
-    if(ctx->MediaModel != NULL && ctx->metadataBlockHeader.mediaModelLength > 0)
+    if(ctx->media_model != NULL && ctx->metadata_block_header.mediaModelLength > 0)
     {
-        memcpy(buffer + pos, ctx->MediaModel, ctx->metadataBlockHeader.mediaModelLength);
-        ctx->metadataBlockHeader.mediaModelOffset = pos;
-        pos += ctx->metadataBlockHeader.mediaModelLength;
+        memcpy(buffer + pos, ctx->media_model, ctx->metadata_block_header.mediaModelLength);
+        ctx->metadata_block_header.mediaModelOffset = pos;
+        pos += ctx->metadata_block_header.mediaModelLength;
     }
 
-    if(ctx->MediaSerialNumber != NULL && ctx->metadataBlockHeader.mediaSerialNumberLength > 0)
+    if(ctx->media_serial_number != NULL && ctx->metadata_block_header.mediaSerialNumberLength > 0)
     {
-        memcpy(buffer + pos, ctx->MediaSerialNumber, ctx->metadataBlockHeader.mediaSerialNumberLength);
-        ctx->metadataBlockHeader.mediaSerialNumberOffset = pos;
-        pos += ctx->metadataBlockHeader.mediaSerialNumberLength;
+        memcpy(buffer + pos, ctx->media_serial_number, ctx->metadata_block_header.mediaSerialNumberLength);
+        ctx->metadata_block_header.mediaSerialNumberOffset = pos;
+        pos += ctx->metadata_block_header.mediaSerialNumberLength;
     }
 
-    if(ctx->MediaBarcode != NULL && ctx->metadataBlockHeader.mediaBarcodeLength > 0)
+    if(ctx->media_barcode != NULL && ctx->metadata_block_header.mediaBarcodeLength > 0)
     {
-        memcpy(buffer + pos, ctx->MediaBarcode, ctx->metadataBlockHeader.mediaBarcodeLength);
-        ctx->metadataBlockHeader.mediaBarcodeOffset = pos;
-        pos += ctx->metadataBlockHeader.mediaBarcodeLength;
+        memcpy(buffer + pos, ctx->media_barcode, ctx->metadata_block_header.mediaBarcodeLength);
+        ctx->metadata_block_header.mediaBarcodeOffset = pos;
+        pos += ctx->metadata_block_header.mediaBarcodeLength;
     }
 
-    if(ctx->MediaPartNumber != NULL && ctx->metadataBlockHeader.mediaPartNumberLength > 0)
+    if(ctx->media_part_number != NULL && ctx->metadata_block_header.mediaPartNumberLength > 0)
     {
-        memcpy(buffer + pos, ctx->MediaPartNumber, ctx->metadataBlockHeader.mediaPartNumberLength);
-        ctx->metadataBlockHeader.mediaPartNumberOffset = pos;
-        pos += ctx->metadataBlockHeader.mediaPartNumberLength;
+        memcpy(buffer + pos, ctx->media_part_number, ctx->metadata_block_header.mediaPartNumberLength);
+        ctx->metadata_block_header.mediaPartNumberOffset = pos;
+        pos += ctx->metadata_block_header.mediaPartNumberLength;
     }
 
-    if(ctx->DriveManufacturer != NULL && ctx->metadataBlockHeader.driveManufacturerLength > 0)
+    if(ctx->drive_manufacturer != NULL && ctx->metadata_block_header.driveManufacturerLength > 0)
     {
-        memcpy(buffer + pos, ctx->DriveManufacturer, ctx->metadataBlockHeader.driveManufacturerLength);
-        ctx->metadataBlockHeader.driveManufacturerOffset = pos;
-        pos += ctx->metadataBlockHeader.driveManufacturerLength;
+        memcpy(buffer + pos, ctx->drive_manufacturer, ctx->metadata_block_header.driveManufacturerLength);
+        ctx->metadata_block_header.driveManufacturerOffset = pos;
+        pos += ctx->metadata_block_header.driveManufacturerLength;
     }
 
-    if(ctx->DriveModel != NULL && ctx->metadataBlockHeader.driveModelLength > 0)
+    if(ctx->drive_model != NULL && ctx->metadata_block_header.driveModelLength > 0)
     {
-        memcpy(buffer + pos, ctx->DriveModel, ctx->metadataBlockHeader.driveModelLength);
-        ctx->metadataBlockHeader.driveModelOffset = pos;
-        pos += ctx->metadataBlockHeader.driveModelLength;
+        memcpy(buffer + pos, ctx->drive_model, ctx->metadata_block_header.driveModelLength);
+        ctx->metadata_block_header.driveModelOffset = pos;
+        pos += ctx->metadata_block_header.driveModelLength;
     }
 
-    if(ctx->DriveSerialNumber != NULL && ctx->metadataBlockHeader.driveSerialNumberLength > 0)
+    if(ctx->drive_serial_number != NULL && ctx->metadata_block_header.driveSerialNumberLength > 0)
     {
-        memcpy(buffer + pos, ctx->DriveSerialNumber, ctx->metadataBlockHeader.driveSerialNumberLength);
-        ctx->metadataBlockHeader.driveSerialNumberOffset = pos;
-        pos += ctx->metadataBlockHeader.driveSerialNumberLength;
+        memcpy(buffer + pos, ctx->drive_serial_number, ctx->metadata_block_header.driveSerialNumberLength);
+        ctx->metadata_block_header.driveSerialNumberOffset = pos;
+        pos += ctx->metadata_block_header.driveSerialNumberLength;
     }
 
-    if(ctx->DriveFirmwareRevision != NULL && ctx->metadataBlockHeader.driveFirmwareRevisionLength > 0)
+    if(ctx->drive_firmware_revision != NULL && ctx->metadata_block_header.driveFirmwareRevisionLength > 0)
     {
-        memcpy(buffer + pos, ctx->DriveFirmwareRevision, ctx->metadataBlockHeader.driveFirmwareRevisionLength);
-        ctx->metadataBlockHeader.driveFirmwareRevisionOffset = pos;
+        memcpy(buffer + pos, ctx->drive_firmware_revision, ctx->metadata_block_header.driveFirmwareRevisionLength);
+        ctx->metadata_block_header.driveFirmwareRevisionOffset = pos;
     }
 
     fseek(ctx->imageStream, 0, SEEK_END);
     long           block_position = ftell(ctx->imageStream);
-    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(block_position & alignment_mask)
     {
         const uint64_t aligned_position = block_position + alignment_mask & ~alignment_mask;
@@ -3275,7 +3286,7 @@ static void write_metadata_block(aaruformatContext *ctx)
 
     TRACE("Writing metadata block at position %ld", block_position);
 
-    if(fwrite(buffer, ctx->metadataBlockHeader.blockSize, 1, ctx->imageStream) == 1)
+    if(fwrite(buffer, ctx->metadata_block_header.blockSize, 1, ctx->imageStream) == 1)
     {
         TRACE("Successfully wrote metadata block");
 
@@ -3285,7 +3296,7 @@ static void write_metadata_block(aaruformatContext *ctx)
         index_entry.blockType = MetadataBlock;
         index_entry.dataType  = 0;
         index_entry.offset    = block_position;
-        utarray_push_back(ctx->indexEntries, &index_entry);
+        utarray_push_back(ctx->index_entries, &index_entry);
         TRACE("Added metadata block index entry at offset %" PRIu64, block_position);
     }
 
@@ -3437,14 +3448,14 @@ static void write_metadata_block(aaruformatContext *ctx)
  *
  * @internal
  */
-static void write_dumphw_block(aaruformatContext *ctx)
+static void write_dumphw_block(aaruformat_context *ctx)
 {
 
-    if(ctx->dumpHardwareEntriesWithData == NULL || ctx->dumpHardwareHeader.entries == 0 ||
-       ctx->dumpHardwareHeader.identifier != DumpHardwareBlock)
+    if(ctx->dump_hardware_entries_with_data == NULL || ctx->dump_hardware_header.entries == 0 ||
+       ctx->dump_hardware_header.identifier != DumpHardwareBlock)
         return;
 
-    const size_t required_length = sizeof(DumpHardwareHeader) + ctx->dumpHardwareHeader.length;
+    const size_t required_length = sizeof(DumpHardwareHeader) + ctx->dump_hardware_header.length;
 
     uint8_t *buffer = calloc(1, required_length);
 
@@ -3452,17 +3463,18 @@ static void write_dumphw_block(aaruformatContext *ctx)
 
     // Start to iterate and copy the data
     size_t offset = 0;
-    for(int i = 0; i < ctx->dumpHardwareHeader.entries; i++)
+    for(int i = 0; i < ctx->dump_hardware_header.entries; i++)
     {
-        size_t entry_size = sizeof(DumpHardwareEntry) + ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength +
-                            ctx->dumpHardwareEntriesWithData[i].entry.modelLength +
-                            ctx->dumpHardwareEntriesWithData[i].entry.revisionLength +
-                            ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength +
-                            ctx->dumpHardwareEntriesWithData[i].entry.serialLength +
-                            ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength +
-                            ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength +
-                            ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength +
-                            ctx->dumpHardwareEntriesWithData[i].entry.extents * sizeof(DumpExtent);
+        size_t entry_size = sizeof(DumpHardwareEntry) +
+                            ctx->dump_hardware_entries_with_data[i].entry.manufacturerLength +
+                            ctx->dump_hardware_entries_with_data[i].entry.modelLength +
+                            ctx->dump_hardware_entries_with_data[i].entry.revisionLength +
+                            ctx->dump_hardware_entries_with_data[i].entry.firmwareLength +
+                            ctx->dump_hardware_entries_with_data[i].entry.serialLength +
+                            ctx->dump_hardware_entries_with_data[i].entry.softwareNameLength +
+                            ctx->dump_hardware_entries_with_data[i].entry.softwareVersionLength +
+                            ctx->dump_hardware_entries_with_data[i].entry.softwareOperatingSystemLength +
+                            ctx->dump_hardware_entries_with_data[i].entry.extents * sizeof(DumpExtent);
 
         if(offset + entry_size > required_length)
         {
@@ -3471,82 +3483,83 @@ static void write_dumphw_block(aaruformatContext *ctx)
             return;
         }
 
-        memcpy(buffer + offset, &ctx->dumpHardwareEntriesWithData[i].entry, sizeof(DumpHardwareEntry));
+        memcpy(buffer + offset, &ctx->dump_hardware_entries_with_data[i].entry, sizeof(DumpHardwareEntry));
         offset += sizeof(DumpHardwareEntry);
-        if(ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength > 0 &&
-           ctx->dumpHardwareEntriesWithData[i].manufacturer != NULL)
+        if(ctx->dump_hardware_entries_with_data[i].entry.manufacturerLength > 0 &&
+           ctx->dump_hardware_entries_with_data[i].manufacturer != NULL)
         {
-            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].manufacturer,
-                   ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength);
-            offset += ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength;
+            memcpy(buffer + offset, ctx->dump_hardware_entries_with_data[i].manufacturer,
+                   ctx->dump_hardware_entries_with_data[i].entry.manufacturerLength);
+            offset += ctx->dump_hardware_entries_with_data[i].entry.manufacturerLength;
         }
-        if(ctx->dumpHardwareEntriesWithData[i].entry.modelLength > 0 &&
-           ctx->dumpHardwareEntriesWithData[i].model != NULL)
+        if(ctx->dump_hardware_entries_with_data[i].entry.modelLength > 0 &&
+           ctx->dump_hardware_entries_with_data[i].model != NULL)
         {
-            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].model,
-                   ctx->dumpHardwareEntriesWithData[i].entry.modelLength);
-            offset += ctx->dumpHardwareEntriesWithData[i].entry.modelLength;
+            memcpy(buffer + offset, ctx->dump_hardware_entries_with_data[i].model,
+                   ctx->dump_hardware_entries_with_data[i].entry.modelLength);
+            offset += ctx->dump_hardware_entries_with_data[i].entry.modelLength;
         }
-        if(ctx->dumpHardwareEntriesWithData[i].entry.revisionLength > 0 &&
-           ctx->dumpHardwareEntriesWithData[i].revision != NULL)
+        if(ctx->dump_hardware_entries_with_data[i].entry.revisionLength > 0 &&
+           ctx->dump_hardware_entries_with_data[i].revision != NULL)
         {
-            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].revision,
-                   ctx->dumpHardwareEntriesWithData[i].entry.revisionLength);
-            offset += ctx->dumpHardwareEntriesWithData[i].entry.revisionLength;
+            memcpy(buffer + offset, ctx->dump_hardware_entries_with_data[i].revision,
+                   ctx->dump_hardware_entries_with_data[i].entry.revisionLength);
+            offset += ctx->dump_hardware_entries_with_data[i].entry.revisionLength;
         }
-        if(ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength > 0 &&
-           ctx->dumpHardwareEntriesWithData[i].firmware != NULL)
+        if(ctx->dump_hardware_entries_with_data[i].entry.firmwareLength > 0 &&
+           ctx->dump_hardware_entries_with_data[i].firmware != NULL)
         {
-            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].firmware,
-                   ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength);
-            offset += ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength;
+            memcpy(buffer + offset, ctx->dump_hardware_entries_with_data[i].firmware,
+                   ctx->dump_hardware_entries_with_data[i].entry.firmwareLength);
+            offset += ctx->dump_hardware_entries_with_data[i].entry.firmwareLength;
         }
-        if(ctx->dumpHardwareEntriesWithData[i].entry.serialLength > 0 &&
-           ctx->dumpHardwareEntriesWithData[i].serial != NULL)
+        if(ctx->dump_hardware_entries_with_data[i].entry.serialLength > 0 &&
+           ctx->dump_hardware_entries_with_data[i].serial != NULL)
         {
-            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].serial,
-                   ctx->dumpHardwareEntriesWithData[i].entry.serialLength);
-            offset += ctx->dumpHardwareEntriesWithData[i].entry.serialLength;
+            memcpy(buffer + offset, ctx->dump_hardware_entries_with_data[i].serial,
+                   ctx->dump_hardware_entries_with_data[i].entry.serialLength);
+            offset += ctx->dump_hardware_entries_with_data[i].entry.serialLength;
         }
-        if(ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength > 0 &&
-           ctx->dumpHardwareEntriesWithData[i].softwareName != NULL)
+        if(ctx->dump_hardware_entries_with_data[i].entry.softwareNameLength > 0 &&
+           ctx->dump_hardware_entries_with_data[i].softwareName != NULL)
         {
-            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].softwareName,
-                   ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength);
-            offset += ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength;
+            memcpy(buffer + offset, ctx->dump_hardware_entries_with_data[i].softwareName,
+                   ctx->dump_hardware_entries_with_data[i].entry.softwareNameLength);
+            offset += ctx->dump_hardware_entries_with_data[i].entry.softwareNameLength;
         }
-        if(ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength > 0 &&
-           ctx->dumpHardwareEntriesWithData[i].softwareVersion != NULL)
+        if(ctx->dump_hardware_entries_with_data[i].entry.softwareVersionLength > 0 &&
+           ctx->dump_hardware_entries_with_data[i].softwareVersion != NULL)
         {
-            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].softwareVersion,
-                   ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength);
-            offset += ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength;
+            memcpy(buffer + offset, ctx->dump_hardware_entries_with_data[i].softwareVersion,
+                   ctx->dump_hardware_entries_with_data[i].entry.softwareVersionLength);
+            offset += ctx->dump_hardware_entries_with_data[i].entry.softwareVersionLength;
         }
-        if(ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength > 0 &&
-           ctx->dumpHardwareEntriesWithData[i].softwareOperatingSystem != NULL)
+        if(ctx->dump_hardware_entries_with_data[i].entry.softwareOperatingSystemLength > 0 &&
+           ctx->dump_hardware_entries_with_data[i].softwareOperatingSystem != NULL)
         {
-            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].softwareOperatingSystem,
-                   ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength);
-            offset += ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength;
+            memcpy(buffer + offset, ctx->dump_hardware_entries_with_data[i].softwareOperatingSystem,
+                   ctx->dump_hardware_entries_with_data[i].entry.softwareOperatingSystemLength);
+            offset += ctx->dump_hardware_entries_with_data[i].entry.softwareOperatingSystemLength;
         }
-        if(ctx->dumpHardwareEntriesWithData[i].entry.extents > 0 && ctx->dumpHardwareEntriesWithData[i].extents != NULL)
+        if(ctx->dump_hardware_entries_with_data[i].entry.extents > 0 &&
+           ctx->dump_hardware_entries_with_data[i].extents != NULL)
         {
-            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].extents,
-                   ctx->dumpHardwareEntriesWithData[i].entry.extents * sizeof(DumpExtent));
-            offset += ctx->dumpHardwareEntriesWithData[i].entry.extents * sizeof(DumpExtent);
+            memcpy(buffer + offset, ctx->dump_hardware_entries_with_data[i].extents,
+                   ctx->dump_hardware_entries_with_data[i].entry.extents * sizeof(DumpExtent));
+            offset += ctx->dump_hardware_entries_with_data[i].entry.extents * sizeof(DumpExtent);
         }
     }
 
     // Calculate CRC64
-    ctx->dumpHardwareHeader.crc64 =
-        aaruf_crc64_data(buffer + sizeof(DumpHardwareHeader), ctx->dumpHardwareHeader.length);
+    ctx->dump_hardware_header.crc64 =
+        aaruf_crc64_data(buffer + sizeof(DumpHardwareHeader), ctx->dump_hardware_header.length);
 
     // Copy header
-    memcpy(buffer, &ctx->dumpHardwareHeader, sizeof(DumpHardwareHeader));
+    memcpy(buffer, &ctx->dump_hardware_header, sizeof(DumpHardwareHeader));
 
     fseek(ctx->imageStream, 0, SEEK_END);
     long           block_position = ftell(ctx->imageStream);
-    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(block_position & alignment_mask)
     {
         const uint64_t aligned_position = block_position + alignment_mask & ~alignment_mask;
@@ -3564,7 +3577,7 @@ static void write_dumphw_block(aaruformatContext *ctx)
         index_entry.blockType = DumpHardwareBlock;
         index_entry.dataType  = 0;
         index_entry.offset    = block_position;
-        utarray_push_back(ctx->indexEntries, &index_entry);
+        utarray_push_back(ctx->index_entries, &index_entry);
         TRACE("Added dump hardware block index entry at offset %" PRIu64, block_position);
     }
 
@@ -3665,14 +3678,14 @@ static void write_dumphw_block(aaruformatContext *ctx)
  *
  * @internal
  */
-static void write_cicm_block(const aaruformatContext *ctx)
+static void write_cicm_block(const aaruformat_context *ctx)
 {
-    if(ctx->cicmBlock == NULL || ctx->cicmBlockHeader.length == 0 || ctx->cicmBlockHeader.identifier != CicmBlock)
+    if(ctx->cicm_block == NULL || ctx->cicm_block_header.length == 0 || ctx->cicm_block_header.identifier != CicmBlock)
         return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
     long           block_position = ftell(ctx->imageStream);
-    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
 
     if(block_position & alignment_mask)
     {
@@ -3682,8 +3695,8 @@ static void write_cicm_block(const aaruformatContext *ctx)
     }
 
     TRACE("Writing CICM XML block at position %ld", block_position);
-    if(fwrite(&ctx->cicmBlockHeader, sizeof(CicmMetadataBlock), 1, ctx->imageStream) == 1)
-        if(fwrite(ctx->cicmBlock, ctx->cicmBlockHeader.length, 1, ctx->imageStream) == 1)
+    if(fwrite(&ctx->cicm_block_header, sizeof(CicmMetadataBlock), 1, ctx->imageStream) == 1)
+        if(fwrite(ctx->cicm_block, ctx->cicm_block_header.length, 1, ctx->imageStream) == 1)
         {
             TRACE("Successfully wrote CICM XML block");
 
@@ -3693,7 +3706,7 @@ static void write_cicm_block(const aaruformatContext *ctx)
             index_entry.blockType = CicmBlock;
             index_entry.dataType  = 0;
             index_entry.offset    = block_position;
-            utarray_push_back(ctx->indexEntries, &index_entry);
+            utarray_push_back(ctx->index_entries, &index_entry);
             TRACE("Added CICM XML block index entry at offset %" PRIu64, block_position);
         }
 }
@@ -3802,15 +3815,15 @@ static void write_cicm_block(const aaruformatContext *ctx)
  *
  * @internal
  */
-static void write_aaru_json_block(const aaruformatContext *ctx)
+static void write_aaru_json_block(const aaruformat_context *ctx)
 {
-    if(ctx->jsonBlock == NULL || ctx->jsonBlockHeader.length == 0 ||
-       ctx->jsonBlockHeader.identifier != AaruMetadataJsonBlock)
+    if(ctx->json_block == NULL || ctx->json_block_header.length == 0 ||
+       ctx->json_block_header.identifier != AaruMetadataJsonBlock)
         return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
     long           block_position = ftell(ctx->imageStream);
-    const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
 
     if(block_position & alignment_mask)
     {
@@ -3820,8 +3833,8 @@ static void write_aaru_json_block(const aaruformatContext *ctx)
     }
 
     TRACE("Writing Aaru metadata JSON block at position %ld", block_position);
-    if(fwrite(&ctx->jsonBlockHeader, sizeof(AaruMetadataJsonBlockHeader), 1, ctx->imageStream) == 1)
-        if(fwrite(ctx->jsonBlock, ctx->jsonBlockHeader.length, 1, ctx->imageStream) == 1)
+    if(fwrite(&ctx->json_block_header, sizeof(AaruMetadataJsonBlockHeader), 1, ctx->imageStream) == 1)
+        if(fwrite(ctx->json_block, ctx->json_block_header.length, 1, ctx->imageStream) == 1)
         {
             TRACE("Successfully wrote Aaru metadata JSON block");
 
@@ -3831,7 +3844,7 @@ static void write_aaru_json_block(const aaruformatContext *ctx)
             index_entry.blockType = AaruMetadataJsonBlock;
             index_entry.dataType  = 0;
             index_entry.offset    = block_position;
-            utarray_push_back(ctx->indexEntries, &index_entry);
+            utarray_push_back(ctx->index_entries, &index_entry);
             TRACE("Added Aaru metadata JSON block index entry at offset %" PRIu64, block_position);
         }
 }
@@ -3852,7 +3865,7 @@ static void write_aaru_json_block(const aaruformatContext *ctx)
  * @retval AARUF_ERROR_CANNOT_WRITE_HEADER Failed writing index header, entries, or updating main header.
  * @internal
  */
-static int32_t write_index_block(aaruformatContext *ctx)
+static int32_t write_index_block(aaruformat_context *ctx)
 {
     // Write the complete index at the end of the file
     TRACE("Writing index at the end of the file");
@@ -3860,7 +3873,7 @@ static int32_t write_index_block(aaruformatContext *ctx)
     long index_position = ftell(ctx->imageStream);
 
     // Align index position to block boundary if needed
-    uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
+    uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(index_position & alignment_mask)
     {
         uint64_t aligned_position = index_position + alignment_mask & ~alignment_mask;
@@ -3872,7 +3885,7 @@ static int32_t write_index_block(aaruformatContext *ctx)
     // Prepare index header
     IndexHeader3 index_header;
     index_header.identifier = IndexBlock3;
-    index_header.entries    = utarray_len(ctx->indexEntries);
+    index_header.entries    = utarray_len(ctx->index_entries);
     index_header.previous   = 0;  // No previous index for now
 
     TRACE("Writing index with %" PRIu64 " entries at position %ld", index_header.entries, index_position);
@@ -3882,7 +3895,7 @@ static int32_t write_index_block(aaruformatContext *ctx)
     if(index_crc64_context != NULL && index_header.entries > 0)
     {
         size_t index_data_size = index_header.entries * sizeof(IndexEntry);
-        aaruf_crc64_update(index_crc64_context, utarray_front(ctx->indexEntries), index_data_size);
+        aaruf_crc64_update(index_crc64_context, utarray_front(ctx->index_entries), index_data_size);
         aaruf_crc64_final(index_crc64_context, &index_header.crc64);
         TRACE("Calculated index CRC64: 0x%16lX", index_header.crc64);
     }
@@ -3900,8 +3913,8 @@ static int32_t write_index_block(aaruformatContext *ctx)
             size_t      entries_written = 0;
             IndexEntry *entry           = NULL;
 
-            for(entry = (IndexEntry *)utarray_front(ctx->indexEntries); entry != NULL;
-                entry = (IndexEntry *)utarray_next(ctx->indexEntries, entry))
+            for(entry = (IndexEntry *)utarray_front(ctx->index_entries); entry != NULL;
+                entry = (IndexEntry *)utarray_next(ctx->index_entries, entry))
                 if(fwrite(entry, sizeof(IndexEntry), 1, ctx->imageStream) == 1)
                 {
                     entries_written++;
@@ -3999,7 +4012,7 @@ int aaruf_close(void *context)
         return -1;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -4009,7 +4022,7 @@ int aaruf_close(void *context)
         return -1;
     }
 
-    if(ctx->isWriting)
+    if(ctx->is_writing)
     {
         TRACE("File is writing");
 
@@ -4028,7 +4041,7 @@ int aaruf_close(void *context)
 
         // Close current block first
         TRACE("Closing current block if any");
-        if(ctx->writingBuffer != NULL)
+        if(ctx->writing_buffer != NULL)
         {
             int error = aaruf_close_current_block(ctx);
 
@@ -4115,12 +4128,12 @@ int aaruf_close(void *context)
         res = write_index_block(ctx);
         if(res != AARUF_STATUS_OK) return res;
 
-        if(ctx->deduplicate && ctx->sectorHashMap != NULL)
+        if(ctx->deduplicate && ctx->sector_hash_map != NULL)
         {
             TRACE("Clearing sector hash map");
             // Clear sector hash map
-            free_map(ctx->sectorHashMap);
-            ctx->sectorHashMap = NULL;
+            free_map(ctx->sector_hash_map);
+            ctx->sector_hash_map = NULL;
         }
     }
 
@@ -4133,20 +4146,20 @@ int aaruf_close(void *context)
     }
 
     // Free index entries array
-    if(ctx->indexEntries != NULL)
+    if(ctx->index_entries != NULL)
     {
-        utarray_free(ctx->indexEntries);
-        ctx->indexEntries = NULL;
+        utarray_free(ctx->index_entries);
+        ctx->index_entries = NULL;
     }
 
     free(ctx->sector_prefix);
     ctx->sector_prefix = NULL;
-    free(ctx->sectorPrefixCorrected);
-    ctx->sectorPrefixCorrected = NULL;
+    free(ctx->sector_prefix_corrected);
+    ctx->sector_prefix_corrected = NULL;
     free(ctx->sector_suffix);
     ctx->sector_suffix = NULL;
-    free(ctx->sectorSuffixCorrected);
-    ctx->sectorSuffixCorrected = NULL;
+    free(ctx->sector_suffix_corrected);
+    ctx->sector_suffix_corrected = NULL;
     free(ctx->sector_subchannel);
     ctx->sector_subchannel = NULL;
     free(ctx->mode2_subheaders);
@@ -4162,60 +4175,60 @@ int aaruf_close(void *context)
 
 #ifdef __linux__  // TODO: Implement
     TRACE("Unmapping user data DDT if it is not in memory");
-    if(!ctx->inMemoryDdt)
+    if(!ctx->in_memory_ddt)
     {
-        munmap(ctx->userDataDdt, ctx->mappedMemoryDdtSize);
-        ctx->userDataDdt = NULL;
+        munmap(ctx->user_data_ddt, ctx->mapped_memory_ddt_size);
+        ctx->user_data_ddt = NULL;
     }
 #endif
 
-    free(ctx->sectorPrefixDdt2);
-    ctx->sectorPrefixDdt2 = NULL;
-    free(ctx->sectorPrefixDdt);
-    ctx->sectorPrefixDdt = NULL;
-    free(ctx->sectorSuffixDdt2);
-    ctx->sectorSuffixDdt2 = NULL;
-    free(ctx->sectorSuffixDdt);
-    ctx->sectorSuffixDdt = NULL;
+    free(ctx->sector_prefix_ddt2);
+    ctx->sector_prefix_ddt2 = NULL;
+    free(ctx->sector_prefix_ddt);
+    ctx->sector_prefix_ddt = NULL;
+    free(ctx->sector_suffix_ddt2);
+    ctx->sector_suffix_ddt2 = NULL;
+    free(ctx->sector_suffix_ddt);
+    ctx->sector_suffix_ddt = NULL;
 
-    free(ctx->metadataBlock);
-    ctx->metadataBlock = NULL;
-    free(ctx->trackEntries);
-    ctx->trackEntries = NULL;
-    free(ctx->cicmBlock);
-    ctx->cicmBlock = NULL;
+    free(ctx->metadata_block);
+    ctx->metadata_block = NULL;
+    free(ctx->track_entries);
+    ctx->track_entries = NULL;
+    free(ctx->cicm_block);
+    ctx->cicm_block = NULL;
 
-    if(ctx->dumpHardwareEntriesWithData != NULL)
+    if(ctx->dump_hardware_entries_with_data != NULL)
     {
-        for(int i = 0; i < ctx->dumpHardwareHeader.entries; i++)
+        for(int i = 0; i < ctx->dump_hardware_header.entries; i++)
         {
-            free(ctx->dumpHardwareEntriesWithData[i].extents);
-            ctx->dumpHardwareEntriesWithData[i].extents = NULL;
-            free(ctx->dumpHardwareEntriesWithData[i].manufacturer);
-            ctx->dumpHardwareEntriesWithData[i].manufacturer = NULL;
-            free(ctx->dumpHardwareEntriesWithData[i].model);
-            ctx->dumpHardwareEntriesWithData[i].model = NULL;
-            free(ctx->dumpHardwareEntriesWithData[i].revision);
-            ctx->dumpHardwareEntriesWithData[i].revision = NULL;
-            free(ctx->dumpHardwareEntriesWithData[i].firmware);
-            ctx->dumpHardwareEntriesWithData[i].firmware = NULL;
-            free(ctx->dumpHardwareEntriesWithData[i].serial);
-            ctx->dumpHardwareEntriesWithData[i].serial = NULL;
-            free(ctx->dumpHardwareEntriesWithData[i].softwareName);
-            ctx->dumpHardwareEntriesWithData[i].softwareName = NULL;
-            free(ctx->dumpHardwareEntriesWithData[i].softwareVersion);
-            ctx->dumpHardwareEntriesWithData[i].softwareVersion = NULL;
-            free(ctx->dumpHardwareEntriesWithData[i].softwareOperatingSystem);
-            ctx->dumpHardwareEntriesWithData[i].softwareOperatingSystem = NULL;
+            free(ctx->dump_hardware_entries_with_data[i].extents);
+            ctx->dump_hardware_entries_with_data[i].extents = NULL;
+            free(ctx->dump_hardware_entries_with_data[i].manufacturer);
+            ctx->dump_hardware_entries_with_data[i].manufacturer = NULL;
+            free(ctx->dump_hardware_entries_with_data[i].model);
+            ctx->dump_hardware_entries_with_data[i].model = NULL;
+            free(ctx->dump_hardware_entries_with_data[i].revision);
+            ctx->dump_hardware_entries_with_data[i].revision = NULL;
+            free(ctx->dump_hardware_entries_with_data[i].firmware);
+            ctx->dump_hardware_entries_with_data[i].firmware = NULL;
+            free(ctx->dump_hardware_entries_with_data[i].serial);
+            ctx->dump_hardware_entries_with_data[i].serial = NULL;
+            free(ctx->dump_hardware_entries_with_data[i].softwareName);
+            ctx->dump_hardware_entries_with_data[i].softwareName = NULL;
+            free(ctx->dump_hardware_entries_with_data[i].softwareVersion);
+            ctx->dump_hardware_entries_with_data[i].softwareVersion = NULL;
+            free(ctx->dump_hardware_entries_with_data[i].softwareOperatingSystem);
+            ctx->dump_hardware_entries_with_data[i].softwareOperatingSystem = NULL;
         }
-        ctx->dumpHardwareEntriesWithData = NULL;
+        ctx->dump_hardware_entries_with_data = NULL;
     }
 
     free(ctx->readableSectorTags);
     ctx->readableSectorTags = NULL;
 
-    free(ctx->eccCdContext);
-    ctx->eccCdContext = NULL;
+    free(ctx->ecc_cd_context);
+    ctx->ecc_cd_context = NULL;
 
     free(ctx->checksums.spamsum);
     ctx->checksums.spamsum = NULL;

@@ -27,7 +27,7 @@
 #include "log.h"
 #include "utarray.h"
 
-static bool add_subindex_entries(aaruformatContext *ctx, UT_array *index_entries, const IndexEntry *subindex_entry);
+static bool add_subindex_entries(aaruformat_context *ctx, UT_array *index_entries, const IndexEntry *subindex_entry);
 
 /**
  * @brief Processes an index block (version 3) from the image stream.
@@ -95,7 +95,7 @@ static bool add_subindex_entries(aaruformatContext *ctx, UT_array *index_entries
  * @warning The function assumes ctx->header.indexOffset points to a valid index block.
  *          Invalid offsets may cause file access errors or reading incorrect data.
  */
-UT_array *process_index_v3(aaruformatContext *ctx)
+UT_array *process_index_v3(aaruformat_context *ctx)
 {
     TRACE("Entering process_index_v3(%p)", ctx);
 
@@ -244,7 +244,7 @@ UT_array *process_index_v3(aaruformatContext *ctx)
  * @warning No validation is performed on individual IndexEntry contents - only
  *          structural validation of subindex headers is done.
  */
-static bool add_subindex_entries(aaruformatContext *ctx, UT_array *index_entries, const IndexEntry *subindex_entry)
+static bool add_subindex_entries(aaruformat_context *ctx, UT_array *index_entries, const IndexEntry *subindex_entry)
 {
     TRACE("Entering add_subindex_entries(%p, %p, %p)", ctx, index_entries, subindex_entry);
 
@@ -405,7 +405,7 @@ static bool add_subindex_entries(aaruformatContext *ctx, UT_array *index_entries
  * @warning For complete integrity verification of hierarchical indexes, additional validation
  *          of subindex blocks may be required beyond this function's scope.
  */
-int32_t verify_index_v3(aaruformatContext *ctx)
+int32_t verify_index_v3(aaruformat_context *ctx)
 {
     TRACE("Entering verify_index_v3(%p)", ctx);
 

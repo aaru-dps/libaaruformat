@@ -110,7 +110,7 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -122,7 +122,7 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -130,7 +130,7 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
         return AARUF_READ_ONLY;
     }
 
-    if(negative && sector_address > ctx->userDataDdtHeader.negative - 1)
+    if(negative && sector_address > ctx->user_data_ddt_header.negative - 1)
     {
         FATAL("Sector address out of bounds");
 
@@ -138,7 +138,7 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
         return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
     }
 
-    if(!negative && sector_address > ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow - 1)
+    if(!negative && sector_address > ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow - 1)
     {
         FATAL("Sector address out of bounds");
 
@@ -169,26 +169,26 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
     }
 
     // Calculate MD5 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-    if(ctx->calculating_md5 && !negative && sector_address <= ctx->imageInfo.Sectors && !ctx->writingLong)
+    if(ctx->calculating_md5 && !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long)
         aaruf_md5_update(&ctx->md5_context, data, length);
     // Calculate SHA1 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-    if(ctx->calculating_sha1 && !negative && sector_address <= ctx->imageInfo.Sectors && !ctx->writingLong)
+    if(ctx->calculating_sha1 && !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long)
         aaruf_sha1_update(&ctx->sha1_context, data, length);
     // Calculate SHA256 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-    if(ctx->calculating_sha256 && !negative && sector_address <= ctx->imageInfo.Sectors && !ctx->writingLong)
+    if(ctx->calculating_sha256 && !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long)
         aaruf_sha256_update(&ctx->sha256_context, data, length);
     // Calculate SpamSum on-the-fly if requested and sector is within user sectors (not negative or overflow)
-    if(ctx->calculating_spamsum && !negative && sector_address <= ctx->imageInfo.Sectors && !ctx->writingLong)
+    if(ctx->calculating_spamsum && !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long)
         aaruf_spamsum_update(ctx->spamsum_context, data, length);
     // Calculate BLAKE3 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-    if(ctx->calculating_blake3 && !negative && sector_address <= ctx->imageInfo.Sectors && !ctx->writingLong)
+    if(ctx->calculating_blake3 && !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long)
         blake3_hasher_update(ctx->blake3_context, data, length);
 
     // Close current block first
-    if(ctx->writingBuffer != NULL &&
+    if(ctx->writing_buffer != NULL &&
        // When sector size changes or block reaches maximum size
-       (ctx->currentBlockHeader.sectorSize != length ||
-        ctx->currentBlockOffset == 1 << ctx->userDataDdtHeader.dataShift))
+       (ctx->current_block_header.sectorSize != length ||
+        ctx->current_block_offset == 1 << ctx->user_data_ddt_header.dataShift))
     {
         TRACE("Closing current block before writing new data");
         int error = aaruf_close_current_block(ctx);
@@ -212,10 +212,10 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
         uint64_t hash = XXH3_64bits(data, length);
 
         // Check if the hash is already in the map
-        bool existing = lookup_map(ctx->sectorHashMap, hash, &ddt_entry);
+        bool existing = lookup_map(ctx->sector_hash_map, hash, &ddt_entry);
         TRACE("Block does %s exist in deduplication map", existing ? "already" : "not yet");
 
-        ddt_ok = set_ddt_entry_v2(ctx, sector_address, negative, ctx->currentBlockOffset, ctx->nextBlockPosition,
+        ddt_ok = set_ddt_entry_v2(ctx, sector_address, negative, ctx->current_block_offset, ctx->next_block_position,
                                   sector_status, &ddt_entry);
         if(!ddt_ok)
         {
@@ -231,10 +231,10 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
         }
 
         TRACE("Inserting sector hash into deduplication map, proceeding to write into image as normal");
-        insert_map(ctx->sectorHashMap, hash, ddt_entry);
+        insert_map(ctx->sector_hash_map, hash, ddt_entry);
     }
     else
-        ddt_ok = set_ddt_entry_v2(ctx, sector_address, negative, ctx->currentBlockOffset, ctx->nextBlockPosition,
+        ddt_ok = set_ddt_entry_v2(ctx, sector_address, negative, ctx->current_block_offset, ctx->next_block_position,
                                   sector_status, &ddt_entry);
 
     if(!ddt_ok)
@@ -244,66 +244,66 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
     }
 
     // No block set
-    if(ctx->writingBufferPosition == 0)
+    if(ctx->writing_buffer_position == 0)
     {
         TRACE("Creating new writing block");
-        ctx->currentBlockHeader.identifier = DataBlock;
-        ctx->currentBlockHeader.type       = UserData;
-        ctx->currentBlockHeader.sectorSize = length;
+        ctx->current_block_header.identifier = DataBlock;
+        ctx->current_block_header.type       = UserData;
+        ctx->current_block_header.sectorSize = length;
 
         // We need to save the track type for later compression
-        if(ctx->imageInfo.MetadataMediaType == OpticalDisc && ctx->trackEntries != NULL)
+        if(ctx->image_info.MetadataMediaType == OpticalDisc && ctx->track_entries != NULL)
         {
             const TrackEntry *track = NULL;
-            for(int i = 0; i < ctx->tracksHeader.entries; i++)
-                if(sector_address >= ctx->trackEntries[i].start && sector_address <= ctx->trackEntries[i].end)
+            for(int i = 0; i < ctx->tracks_header.entries; i++)
+                if(sector_address >= ctx->track_entries[i].start && sector_address <= ctx->track_entries[i].end)
                 {
-                    track = &ctx->trackEntries[i];
+                    track = &ctx->track_entries[i];
                     break;
                 }
 
             if(track != NULL)
             {
-                ctx->currentTrackType = track->type;
+                ctx->current_track_type = track->type;
 
-                if(track->sequence == 0 && track->start == 0 && track->end == 0) ctx->currentTrackType = Data;
+                if(track->sequence == 0 && track->start == 0 && track->end == 0) ctx->current_track_type = Data;
             }
             else
-                ctx->currentTrackType = Data;
+                ctx->current_track_type = Data;
 
-            if(ctx->currentTrackType == Audio &&
+            if(ctx->current_track_type == Audio &&
                // JaguarCD stores data in audio tracks. FLAC is too inefficient, we need to use LZMA as data.
-               (ctx->imageInfo.MediaType == JaguarCD && track->session > 1 ||
+               (ctx->image_info.MediaType == JaguarCD && track->session > 1 ||
                 // VideoNow stores video in audio tracks, and LZMA works better too.
-                ctx->imageInfo.MediaType == VideoNow || ctx->imageInfo.MediaType == VideoNowColor ||
-                ctx->imageInfo.MediaType == VideoNowXp))
-                ctx->currentTrackType = Data;
+                ctx->image_info.MediaType == VideoNow || ctx->image_info.MediaType == VideoNowColor ||
+                ctx->image_info.MediaType == VideoNowXp))
+                ctx->current_track_type = Data;
 
             if(ctx->compression_enabled)
             {
-                if(ctx->currentTrackType == Audio)
-                    ctx->currentBlockHeader.compression = Flac;
+                if(ctx->current_track_type == Audio)
+                    ctx->current_block_header.compression = Flac;
                 else
-                    ctx->currentBlockHeader.compression = Lzma;
+                    ctx->current_block_header.compression = Lzma;
             }
             else
-                ctx->currentBlockHeader.compression = None;
+                ctx->current_block_header.compression = None;
         }
         else
         {
-            ctx->currentTrackType = Data;
+            ctx->current_track_type = Data;
             if(ctx->compression_enabled)
-                ctx->currentBlockHeader.compression = Lzma;
+                ctx->current_block_header.compression = Lzma;
             else
-                ctx->currentBlockHeader.compression = None;
+                ctx->current_block_header.compression = None;
         }
 
-        uint32_t max_buffer_size = (1 << ctx->userDataDdtHeader.dataShift) * ctx->currentBlockHeader.sectorSize;
+        uint32_t max_buffer_size = (1 << ctx->user_data_ddt_header.dataShift) * ctx->current_block_header.sectorSize;
         TRACE("Setting max buffer size to %u bytes", max_buffer_size);
 
         TRACE("Allocating memory for writing buffer");
-        ctx->writingBuffer = (uint8_t *)calloc(1, max_buffer_size);
-        if(ctx->writingBuffer == NULL)
+        ctx->writing_buffer = (uint8_t *)calloc(1, max_buffer_size);
+        if(ctx->writing_buffer == NULL)
         {
             FATAL("Could not allocate memory");
 
@@ -312,12 +312,12 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
         }
     }
 
-    TRACE("Copying data to writing buffer at position %zu", ctx->writingBufferPosition);
-    memcpy(ctx->writingBuffer + ctx->writingBufferPosition, data, length);
-    TRACE("Advancing writing buffer position to %zu", ctx->writingBufferPosition + length);
-    ctx->writingBufferPosition += length;
-    TRACE("Advancing current block offset to %zu", ctx->currentBlockOffset + 1);
-    ctx->currentBlockOffset++;
+    TRACE("Copying data to writing buffer at position %zu", ctx->writing_buffer_position);
+    memcpy(ctx->writing_buffer + ctx->writing_buffer_position, data, length);
+    TRACE("Advancing writing buffer position to %zu", ctx->writing_buffer_position + length);
+    ctx->writing_buffer_position += length;
+    TRACE("Advancing current block offset to %zu", ctx->current_block_offset + 1);
+    ctx->current_block_offset++;
 
     TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
@@ -544,7 +544,7 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -556,7 +556,7 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -564,7 +564,7 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
         return AARUF_READ_ONLY;
     }
 
-    if(negative && sector_address > ctx->userDataDdtHeader.negative - 1)
+    if(negative && sector_address > ctx->user_data_ddt_header.negative - 1)
     {
         FATAL("Sector address out of bounds");
 
@@ -572,7 +572,7 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
         return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
     }
 
-    if(!negative && sector_address > ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow - 1)
+    if(!negative && sector_address > ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow - 1)
     {
         FATAL("Sector address out of bounds");
 
@@ -580,15 +580,15 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
         return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
     }
 
-    switch(ctx->imageInfo.MetadataMediaType)
+    switch(ctx->image_info.MetadataMediaType)
     {
         case OpticalDisc:
             TrackEntry track = {0};
 
-            for(int i = 0; i < ctx->tracksHeader.entries; i++)
-                if(sector_address >= ctx->trackEntries[i].start && sector_address <= ctx->trackEntries[i].end)
+            for(int i = 0; i < ctx->tracks_header.entries; i++)
+                if(sector_address >= ctx->track_entries[i].start && sector_address <= ctx->track_entries[i].end)
                 {
-                    track = ctx->trackEntries[i];
+                    track = ctx->track_entries[i];
                     break;
                 }
 
@@ -598,22 +598,22 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
 
             // Calculate positive or negative sector
             if(negative)
-                corrected_sector_address -= ctx->userDataDdtHeader.negative;
+                corrected_sector_address -= ctx->user_data_ddt_header.negative;
             else
-                corrected_sector_address += ctx->userDataDdtHeader.negative;
+                corrected_sector_address += ctx->user_data_ddt_header.negative;
 
             uint64_t total_sectors =
-                ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow;
+                ctx->user_data_ddt_header.negative + ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow;
 
             // DVD long sector
-            if(length == 2064 && (ctx->imageInfo.MediaType == DVDROM || ctx->imageInfo.MediaType == PS2DVD ||
-                                  ctx->imageInfo.MediaType == SACD || ctx->imageInfo.MediaType == PS3DVD ||
-                                  ctx->imageInfo.MediaType == DVDR || ctx->imageInfo.MediaType == DVDRW ||
-                                  ctx->imageInfo.MediaType == DVDPR || ctx->imageInfo.MediaType == DVDPRW ||
-                                  ctx->imageInfo.MediaType == DVDPRWDL || ctx->imageInfo.MediaType == DVDRDL ||
-                                  ctx->imageInfo.MediaType == DVDPRDL || ctx->imageInfo.MediaType == DVDRAM ||
-                                  ctx->imageInfo.MediaType == DVDRWDL || ctx->imageInfo.MediaType == DVDDownload ||
-                                  ctx->imageInfo.MediaType == Nuon))
+            if(length == 2064 && (ctx->image_info.MediaType == DVDROM || ctx->image_info.MediaType == PS2DVD ||
+                                  ctx->image_info.MediaType == SACD || ctx->image_info.MediaType == PS3DVD ||
+                                  ctx->image_info.MediaType == DVDR || ctx->image_info.MediaType == DVDRW ||
+                                  ctx->image_info.MediaType == DVDPR || ctx->image_info.MediaType == DVDPRW ||
+                                  ctx->image_info.MediaType == DVDPRWDL || ctx->image_info.MediaType == DVDRDL ||
+                                  ctx->image_info.MediaType == DVDPRDL || ctx->image_info.MediaType == DVDRAM ||
+                                  ctx->image_info.MediaType == DVDRWDL || ctx->image_info.MediaType == DVDDownload ||
+                                  ctx->image_info.MediaType == Nuon))
             {
                 if(ctx->sector_id == NULL) ctx->sector_id = calloc(1, 4 * total_sectors);
                 if(ctx->sector_ied == NULL) ctx->sector_ied = calloc(1, 2 * total_sectors);
@@ -635,7 +635,7 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                 return AARUF_ERROR_INCORRECT_DATA_SIZE;
             }
 
-            ctx->writingLong = true;
+            ctx->writing_long = true;
 
             if(!ctx->rewinded)
             {
@@ -660,19 +660,19 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
             }
 
             // Calculate MD5 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-            if(ctx->calculating_md5 && !negative && sector_address <= ctx->imageInfo.Sectors)
+            if(ctx->calculating_md5 && !negative && sector_address <= ctx->image_info.Sectors)
                 aaruf_md5_update(&ctx->md5_context, data, length);
             // Calculate SHA1 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-            if(ctx->calculating_sha1 && !negative && sector_address <= ctx->imageInfo.Sectors)
+            if(ctx->calculating_sha1 && !negative && sector_address <= ctx->image_info.Sectors)
                 aaruf_sha1_update(&ctx->sha1_context, data, length);
             // Calculate SHA256 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-            if(ctx->calculating_sha256 && !negative && sector_address <= ctx->imageInfo.Sectors)
+            if(ctx->calculating_sha256 && !negative && sector_address <= ctx->image_info.Sectors)
                 aaruf_sha256_update(&ctx->sha256_context, data, length);
             // Calculate SpamSum on-the-fly if requested and sector is within user sectors (not negative or overflow)
-            if(ctx->calculating_spamsum && !negative && sector_address <= ctx->imageInfo.Sectors)
+            if(ctx->calculating_spamsum && !negative && sector_address <= ctx->image_info.Sectors)
                 aaruf_spamsum_update(ctx->spamsum_context, data, length);
             // Calculate BLAKE3 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-            if(ctx->calculating_blake3 && !negative && sector_address <= ctx->imageInfo.Sectors)
+            if(ctx->calculating_blake3 && !negative && sector_address <= ctx->image_info.Sectors)
                 blake3_hasher_update(ctx->blake3_context, data, length);
 
             bool prefix_correct;
@@ -686,13 +686,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                 case CdMode1:
 
                     // If we do not have a DDT V2 for sector prefix, create one
-                    if(ctx->sectorPrefixDdt2 == NULL)
+                    if(ctx->sector_prefix_ddt2 == NULL)
                     {
-                        ctx->sectorPrefixDdt2 =
-                            calloc(1, sizeof(uint32_t) * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
-                                                          ctx->userDataDdtHeader.overflow));
+                        ctx->sector_prefix_ddt2 =
+                            calloc(1, sizeof(uint32_t) * (ctx->user_data_ddt_header.negative + ctx->image_info.Sectors +
+                                                          ctx->user_data_ddt_header.overflow));
 
-                        if(ctx->sectorPrefixDdt2 == NULL)
+                        if(ctx->sector_prefix_ddt2 == NULL)
                         {
                             FATAL("Could not allocate memory for CD sector prefix DDT");
 
@@ -702,13 +702,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     }
 
                     // If we do not have a DDT V2 for sector suffix, create one
-                    if(ctx->sectorSuffixDdt2 == NULL)
+                    if(ctx->sector_suffix_ddt2 == NULL)
                     {
-                        ctx->sectorSuffixDdt2 =
-                            calloc(1, sizeof(uint32_t) * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
-                                                          ctx->userDataDdtHeader.overflow));
+                        ctx->sector_suffix_ddt2 =
+                            calloc(1, sizeof(uint32_t) * (ctx->user_data_ddt_header.negative + ctx->image_info.Sectors +
+                                                          ctx->user_data_ddt_header.overflow));
 
-                        if(ctx->sectorSuffixDdt2 == NULL)
+                        if(ctx->sector_suffix_ddt2 == NULL)
                         {
                             FATAL("Could not allocate memory for CD sector prefix DDT");
 
@@ -719,8 +719,8 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
 
                     if(ctx->sector_prefix == NULL)
                     {
-                        ctx->sector_prefix_length = 16 * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
-                                                          ctx->userDataDdtHeader.overflow);
+                        ctx->sector_prefix_length = 16 * (ctx->user_data_ddt_header.negative + ctx->image_info.Sectors +
+                                                          ctx->user_data_ddt_header.overflow);
                         ctx->sector_prefix        = malloc(ctx->sector_prefix_length);
 
                         if(ctx->sector_prefix == NULL)
@@ -734,9 +734,10 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
 
                     if(ctx->sector_suffix == NULL)
                     {
-                        ctx->sector_suffix_length = 288 * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
-                                                           ctx->userDataDdtHeader.overflow);
-                        ctx->sector_suffix        = malloc(ctx->sector_suffix_length);
+                        ctx->sector_suffix_length =
+                            288 * (ctx->user_data_ddt_header.negative + ctx->image_info.Sectors +
+                                   ctx->user_data_ddt_header.overflow);
+                        ctx->sector_suffix = malloc(ctx->sector_suffix_length);
 
                         if(ctx->sector_suffix == NULL)
                         {
@@ -758,8 +759,8 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
 
                     if(empty)
                     {
-                        ctx->sectorPrefixDdt2[corrected_sector_address] = SectorStatusNotDumped;
-                        ctx->sectorSuffixDdt2[corrected_sector_address] = SectorStatusNotDumped;
+                        ctx->sector_prefix_ddt2[corrected_sector_address] = SectorStatusNotDumped;
+                        ctx->sector_suffix_ddt2[corrected_sector_address] = SectorStatusNotDumped;
                         return aaruf_write_sector(context, sector_address, negative, data + 16, SectorStatusNotDumped,
                                                   2048);
                     }
@@ -782,13 +783,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     }
 
                     if(prefix_correct)
-                        ctx->sectorPrefixDdt2[corrected_sector_address] = SectorStatusMode1Correct << 28;
+                        ctx->sector_prefix_ddt2[corrected_sector_address] = SectorStatusMode1Correct << 28;
                     else
                     {
                         // Copy CD prefix from data buffer to prefix buffer
                         memcpy(ctx->sector_prefix + ctx->sector_prefix_offset, data, 16);
-                        ctx->sectorPrefixDdt2[corrected_sector_address] = (uint32_t)(ctx->sector_prefix_offset / 16);
-                        ctx->sectorPrefixDdt2[corrected_sector_address] |= SectorStatusErrored << 28;
+                        ctx->sector_prefix_ddt2[corrected_sector_address] = (uint32_t)(ctx->sector_prefix_offset / 16);
+                        ctx->sector_prefix_ddt2[corrected_sector_address] |= SectorStatusErrored << 28;
                         ctx->sector_prefix_offset += 16;
 
                         // Grow prefix buffer if needed
@@ -810,13 +811,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     const bool suffix_correct = aaruf_ecc_cd_is_suffix_correct(context, data);
 
                     if(suffix_correct)
-                        ctx->sectorSuffixDdt2[corrected_sector_address] = SectorStatusMode1Correct << 28;
+                        ctx->sector_suffix_ddt2[corrected_sector_address] = SectorStatusMode1Correct << 28;
                     else
                     {
                         // Copy CD suffix from data buffer to suffix buffer
                         memcpy(ctx->sector_suffix + ctx->sector_suffix_offset, data + 2064, 288);
-                        ctx->sectorSuffixDdt2[corrected_sector_address] = (uint32_t)(ctx->sector_suffix_offset / 288);
-                        ctx->sectorSuffixDdt2[corrected_sector_address] |= SectorStatusErrored << 28;
+                        ctx->sector_suffix_ddt2[corrected_sector_address] = (uint32_t)(ctx->sector_suffix_offset / 288);
+                        ctx->sector_suffix_ddt2[corrected_sector_address] |= SectorStatusErrored << 28;
                         ctx->sector_suffix_offset += 288;
 
                         // Grow suffix buffer if needed
@@ -841,13 +842,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                 case CdMode2Form2:
                 case CdMode2Formless:
                     // If we do not have a DDT V2 for sector prefix, create one
-                    if(ctx->sectorPrefixDdt2 == NULL)
+                    if(ctx->sector_prefix_ddt2 == NULL)
                     {
-                        ctx->sectorPrefixDdt2 =
-                            calloc(1, sizeof(uint32_t) * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
-                                                          ctx->userDataDdtHeader.overflow));
+                        ctx->sector_prefix_ddt2 =
+                            calloc(1, sizeof(uint32_t) * (ctx->user_data_ddt_header.negative + ctx->image_info.Sectors +
+                                                          ctx->user_data_ddt_header.overflow));
 
-                        if(ctx->sectorPrefixDdt2 == NULL)
+                        if(ctx->sector_prefix_ddt2 == NULL)
                         {
                             FATAL("Could not allocate memory for CD sector prefix DDT");
 
@@ -857,13 +858,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     }
 
                     // If we do not have a DDT V2 for sector suffix, create one
-                    if(ctx->sectorSuffixDdt2 == NULL)
+                    if(ctx->sector_suffix_ddt2 == NULL)
                     {
-                        ctx->sectorSuffixDdt2 =
-                            calloc(1, sizeof(uint32_t) * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
-                                                          ctx->userDataDdtHeader.overflow));
+                        ctx->sector_suffix_ddt2 =
+                            calloc(1, sizeof(uint32_t) * (ctx->user_data_ddt_header.negative + ctx->image_info.Sectors +
+                                                          ctx->user_data_ddt_header.overflow));
 
-                        if(ctx->sectorSuffixDdt2 == NULL)
+                        if(ctx->sector_suffix_ddt2 == NULL)
                         {
                             FATAL("Could not allocate memory for CD sector prefix DDT");
 
@@ -874,8 +875,8 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
 
                     if(ctx->sector_prefix == NULL)
                     {
-                        ctx->sector_prefix_length = 16 * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
-                                                          ctx->userDataDdtHeader.overflow);
+                        ctx->sector_prefix_length = 16 * (ctx->user_data_ddt_header.negative + ctx->image_info.Sectors +
+                                                          ctx->user_data_ddt_header.overflow);
                         ctx->sector_prefix        = malloc(ctx->sector_prefix_length);
 
                         if(ctx->sector_prefix == NULL)
@@ -889,9 +890,10 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
 
                     if(ctx->sector_suffix == NULL)
                     {
-                        ctx->sector_suffix_length = 288 * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
-                                                           ctx->userDataDdtHeader.overflow);
-                        ctx->sector_suffix        = malloc(ctx->sector_suffix_length);
+                        ctx->sector_suffix_length =
+                            288 * (ctx->user_data_ddt_header.negative + ctx->image_info.Sectors +
+                                   ctx->user_data_ddt_header.overflow);
+                        ctx->sector_suffix = malloc(ctx->sector_suffix_length);
 
                         if(ctx->sector_suffix == NULL)
                         {
@@ -913,8 +915,8 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
 
                     if(empty)
                     {
-                        ctx->sectorPrefixDdt2[corrected_sector_address] = SectorStatusNotDumped;
-                        ctx->sectorSuffixDdt2[corrected_sector_address] = SectorStatusNotDumped;
+                        ctx->sector_prefix_ddt2[corrected_sector_address] = SectorStatusNotDumped;
+                        ctx->sector_suffix_ddt2[corrected_sector_address] = SectorStatusNotDumped;
                         return aaruf_write_sector(context, sector_address, negative, data + 16, SectorStatusNotDumped,
                                                   2328);
                     }
@@ -939,14 +941,14 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     }
 
                     if(prefix_correct)
-                        ctx->sectorPrefixDdt2[corrected_sector_address] =
+                        ctx->sector_prefix_ddt2[corrected_sector_address] =
                             (form2 ? SectorStatusMode2Form2Ok : SectorStatusMode2Form1Ok) << 28;
                     else
                     {
                         // Copy CD prefix from data buffer to prefix buffer
                         memcpy(ctx->sector_prefix + ctx->sector_prefix_offset, data, 16);
-                        ctx->sectorPrefixDdt2[corrected_sector_address] = (uint32_t)(ctx->sector_prefix_offset / 16);
-                        ctx->sectorPrefixDdt2[corrected_sector_address] |= SectorStatusErrored << 28;
+                        ctx->sector_prefix_ddt2[corrected_sector_address] = (uint32_t)(ctx->sector_prefix_offset / 16);
+                        ctx->sector_prefix_ddt2[corrected_sector_address] |= SectorStatusErrored << 28;
                         ctx->sector_prefix_offset += 16;
 
                         // Grow prefix buffer if needed
@@ -968,8 +970,8 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     if(ctx->mode2_subheaders == NULL)
                     {
                         ctx->mode2_subheaders =
-                            calloc(1, 8 * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
-                                           ctx->userDataDdtHeader.overflow));
+                            calloc(1, 8 * (ctx->user_data_ddt_header.negative + ctx->image_info.Sectors +
+                                           ctx->user_data_ddt_header.overflow));
 
                         if(ctx->mode2_subheaders == NULL)
                         {
@@ -988,16 +990,16 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                         const bool correct_edc = computed_edc == edc;
 
                         if(correct_edc)
-                            ctx->sectorSuffixDdt2[corrected_sector_address] = SectorStatusMode2Form2Ok << 28;
+                            ctx->sector_suffix_ddt2[corrected_sector_address] = SectorStatusMode2Form2Ok << 28;
                         else if(edc == 0)
-                            ctx->sectorSuffixDdt2[corrected_sector_address] = SectorStatusMode2Form2NoCrc << 28;
+                            ctx->sector_suffix_ddt2[corrected_sector_address] = SectorStatusMode2Form2NoCrc << 28;
                         else
                         {
                             // Copy CD suffix from data buffer to suffix buffer
                             memcpy(ctx->sector_suffix + ctx->sector_suffix_offset, data + 2348, 4);
-                            ctx->sectorSuffixDdt2[corrected_sector_address] =
+                            ctx->sector_suffix_ddt2[corrected_sector_address] =
                                 (uint32_t)(ctx->sector_suffix_offset / 288);
-                            ctx->sectorSuffixDdt2[corrected_sector_address] |= SectorStatusErrored << 28;
+                            ctx->sector_suffix_ddt2[corrected_sector_address] |= SectorStatusErrored << 28;
                             ctx->sector_suffix_offset += 288;
 
                             // Grow suffix buffer if needed
@@ -1032,13 +1034,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     const bool correct_edc = computed_edc == edc;
 
                     if(correct_ecc && correct_edc)
-                        ctx->sectorSuffixDdt2[corrected_sector_address] = SectorStatusMode2Form1Ok << 28;
+                        ctx->sector_suffix_ddt2[corrected_sector_address] = SectorStatusMode2Form1Ok << 28;
                     else
                     {
                         // Copy CD suffix from data buffer to suffix buffer
                         memcpy(ctx->sector_suffix + ctx->sector_suffix_offset, data + 2072, 280);
-                        ctx->sectorSuffixDdt2[corrected_sector_address] = (uint32_t)(ctx->sector_suffix_offset / 288);
-                        ctx->sectorSuffixDdt2[corrected_sector_address] |= SectorStatusErrored << 28;
+                        ctx->sector_suffix_ddt2[corrected_sector_address] = (uint32_t)(ctx->sector_suffix_offset / 288);
+                        ctx->sector_suffix_ddt2[corrected_sector_address] |= SectorStatusErrored << 28;
                         ctx->sector_suffix_offset += 288;
 
                         // Grow suffix buffer if needed
@@ -1066,7 +1068,7 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
 
             break;
         case BlockMedia:
-            switch(ctx->imageInfo.MediaType)
+            switch(ctx->image_info.MediaType)
             {
                 case AppleFileWare:
                 case AppleProfile:
@@ -1083,19 +1085,20 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                         case 12:
                             const sony_tag decoded_sony_tag = bytes_to_sony_tag(data + 512);
 
-                            if(ctx->imageInfo.MediaType == AppleProfile || ctx->imageInfo.MediaType == AppleFileWare)
+                            if(ctx->image_info.MediaType == AppleProfile || ctx->image_info.MediaType == AppleFileWare)
                             {
                                 const profile_tag decoded_profile_tag = sony_tag_to_profile(decoded_sony_tag);
                                 newTag                                = profile_tag_to_bytes(decoded_profile_tag);
                                 newTagSize                            = 20;
                             }
-                            else if(ctx->imageInfo.MediaType == PriamDataTower)
+                            else if(ctx->image_info.MediaType == PriamDataTower)
                             {
                                 const priam_tag decoded_priam_tag = sony_tag_to_priam(decoded_sony_tag);
                                 newTag                            = priam_tag_to_bytes(decoded_priam_tag);
                                 newTagSize                        = 24;
                             }
-                            else if(ctx->imageInfo.MediaType == AppleSonyDS || ctx->imageInfo.MediaType == AppleSonySS)
+                            else if(ctx->image_info.MediaType == AppleSonyDS ||
+                                    ctx->image_info.MediaType == AppleSonySS)
                             {
                                 newTag = malloc(12);
                                 memcpy(newTag, data + 512, 12);
@@ -1106,19 +1109,20 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                         case 20:
                             const profile_tag decoded_profile_tag = bytes_to_profile_tag(data + 512);
 
-                            if(ctx->imageInfo.MediaType == AppleProfile || ctx->imageInfo.MediaType == AppleFileWare)
+                            if(ctx->image_info.MediaType == AppleProfile || ctx->image_info.MediaType == AppleFileWare)
                             {
                                 newTag = malloc(20);
                                 memcpy(newTag, data + 512, 20);
                                 newTagSize = 20;
                             }
-                            else if(ctx->imageInfo.MediaType == PriamDataTower)
+                            else if(ctx->image_info.MediaType == PriamDataTower)
                             {
                                 const priam_tag decoded_priam_tag = profile_tag_to_priam(decoded_profile_tag);
                                 newTag                            = priam_tag_to_bytes(decoded_priam_tag);
                                 newTagSize                        = 24;
                             }
-                            else if(ctx->imageInfo.MediaType == AppleSonyDS || ctx->imageInfo.MediaType == AppleSonySS)
+                            else if(ctx->image_info.MediaType == AppleSonyDS ||
+                                    ctx->image_info.MediaType == AppleSonySS)
                             {
                                 const sony_tag decoded_sony_tag = profile_tag_to_sony(decoded_profile_tag);
                                 newTag                          = sony_tag_to_bytes(decoded_sony_tag);
@@ -1128,19 +1132,20 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                         // Priam tag
                         case 24:
                             const priam_tag decoded_priam_tag = bytes_to_priam_tag(data + 512);
-                            if(ctx->imageInfo.MediaType == AppleProfile || ctx->imageInfo.MediaType == AppleFileWare)
+                            if(ctx->image_info.MediaType == AppleProfile || ctx->image_info.MediaType == AppleFileWare)
                             {
                                 const profile_tag decoded_profile_tag = priam_tag_to_profile(decoded_priam_tag);
                                 newTag                                = profile_tag_to_bytes(decoded_profile_tag);
                                 newTagSize                            = 20;
                             }
-                            else if(ctx->imageInfo.MediaType == PriamDataTower)
+                            else if(ctx->image_info.MediaType == PriamDataTower)
                             {
                                 newTag = malloc(24);
                                 memcpy(newTag, data + 512, 24);
                                 newTagSize = 24;
                             }
-                            else if(ctx->imageInfo.MediaType == AppleSonyDS || ctx->imageInfo.MediaType == AppleSonySS)
+                            else if(ctx->image_info.MediaType == AppleSonyDS ||
+                                    ctx->image_info.MediaType == AppleSonySS)
                             {
                                 const sony_tag decoded_sony_tag = priam_tag_to_sony(decoded_priam_tag);
                                 newTag                          = sony_tag_to_bytes(decoded_sony_tag);
@@ -1162,7 +1167,7 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     if(ctx->sector_subchannel == NULL)
                     {
                         ctx->sector_subchannel =
-                            calloc(1, newTagSize * (ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow));
+                            calloc(1, newTagSize * (ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow));
 
                         if(ctx->sector_subchannel == NULL)
                         {
@@ -1373,38 +1378,38 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
  *
  * @internal
  */
-int32_t aaruf_close_current_block(aaruformatContext *ctx)
+int32_t aaruf_close_current_block(aaruformat_context *ctx)
 {
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC) return AARUF_ERROR_NOT_AARUFORMAT;
 
     // Check we are writing
-    if(!ctx->isWriting) return AARUF_READ_ONLY;
+    if(!ctx->is_writing) return AARUF_READ_ONLY;
 
-    ctx->currentBlockHeader.length = ctx->currentBlockOffset * ctx->currentBlockHeader.sectorSize;
+    ctx->current_block_header.length = ctx->current_block_offset * ctx->current_block_header.sectorSize;
 
     TRACE("Initializing CRC64 context");
-    ctx->crc64Context = aaruf_crc64_init();
+    ctx->crc64_context = aaruf_crc64_init();
     TRACE("Updating CRC64");
-    aaruf_crc64_update(ctx->crc64Context, ctx->writingBuffer, ctx->currentBlockHeader.length);
-    aaruf_crc64_final(ctx->crc64Context, &ctx->currentBlockHeader.crc64);
+    aaruf_crc64_update(ctx->crc64_context, ctx->writing_buffer, ctx->current_block_header.length);
+    aaruf_crc64_final(ctx->crc64_context, &ctx->current_block_header.crc64);
 
     uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
     uint8_t *cmp_buffer                              = NULL;
 
-    switch(ctx->currentBlockHeader.compression)
+    switch(ctx->current_block_header.compression)
     {
         case None:
             break;
         case Flac:
-            cmp_buffer = malloc(ctx->currentBlockHeader.length * 2);
+            cmp_buffer = malloc(ctx->current_block_header.length * 2);
             if(cmp_buffer == NULL)
             {
                 FATAL("Could not allocate buffer for compressed data");
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
-            const uint32_t current_samples = ctx->currentBlockOffset * SAMPLES_PER_SECTOR;
-            uint32_t       flac_block_size = ctx->currentBlockOffset * SAMPLES_PER_SECTOR;
+            const uint32_t current_samples = ctx->current_block_offset * SAMPLES_PER_SECTOR;
+            uint32_t       flac_block_size = ctx->current_block_offset * SAMPLES_PER_SECTOR;
 
             if(flac_block_size > MAX_FLAKE_BLOCK) flac_block_size = MAX_FLAKE_BLOCK;
             if(flac_block_size < MIN_FLAKE_BLOCK) flac_block_size = MIN_FLAKE_BLOCK;
@@ -1413,37 +1418,37 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
 
             // Fill FLAC block
             if(remaining != 0)
-                for(int r = 0; r < remaining * 4; r++) ctx->writingBuffer[ctx->writingBufferPosition + r] = 0;
+                for(int r = 0; r < remaining * 4; r++) ctx->writing_buffer[ctx->writing_buffer_position + r] = 0;
 
-            ctx->currentBlockHeader.cmpLength = aaruf_flac_encode_redbook_buffer(
-                cmp_buffer, ctx->currentBlockHeader.length * 2, ctx->writingBuffer, ctx->currentBlockHeader.length,
+            ctx->current_block_header.cmpLength = aaruf_flac_encode_redbook_buffer(
+                cmp_buffer, ctx->current_block_header.length * 2, ctx->writing_buffer, ctx->current_block_header.length,
                 flac_block_size, true, false, "hamming", 12, 15, true, false, 0, 8, "Aaru", 4);
 
-            if(ctx->currentBlockHeader.cmpLength >= ctx->currentBlockHeader.length)
+            if(ctx->current_block_header.cmpLength >= ctx->current_block_header.length)
             {
-                ctx->currentBlockHeader.compression = None;
+                ctx->current_block_header.compression = None;
                 free(cmp_buffer);
             }
 
             break;
         case Lzma:
-            cmp_buffer = malloc(ctx->currentBlockHeader.length * 2);
+            cmp_buffer = malloc(ctx->current_block_header.length * 2);
             if(cmp_buffer == NULL)
             {
                 FATAL("Could not allocate buffer for compressed data");
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
 
-            size_t dst_size   = ctx->currentBlockHeader.length * 2;
+            size_t dst_size   = ctx->current_block_header.length * 2;
             size_t props_size = LZMA_PROPERTIES_LENGTH;
-            aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, ctx->writingBuffer, ctx->currentBlockHeader.length,
+            aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, ctx->writing_buffer, ctx->current_block_header.length,
                                      lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
 
-            ctx->currentBlockHeader.cmpLength = (uint32_t)dst_size;
+            ctx->current_block_header.cmpLength = (uint32_t)dst_size;
 
-            if(ctx->currentBlockHeader.cmpLength >= ctx->currentBlockHeader.length)
+            if(ctx->current_block_header.cmpLength >= ctx->current_block_header.length)
             {
-                ctx->currentBlockHeader.compression = None;
+                ctx->current_block_header.compression = None;
                 free(cmp_buffer);
             }
 
@@ -1453,51 +1458,51 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
             return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
     }
 
-    if(ctx->currentBlockHeader.compression == None)
+    if(ctx->current_block_header.compression == None)
     {
-        ctx->currentBlockHeader.cmpCrc64  = ctx->currentBlockHeader.crc64;
-        ctx->currentBlockHeader.cmpLength = ctx->currentBlockHeader.length;
+        ctx->current_block_header.cmpCrc64  = ctx->current_block_header.crc64;
+        ctx->current_block_header.cmpLength = ctx->current_block_header.length;
     }
     else
-        ctx->currentBlockHeader.cmpCrc64 = aaruf_crc64_data(cmp_buffer, ctx->currentBlockHeader.cmpLength);
+        ctx->current_block_header.cmpCrc64 = aaruf_crc64_data(cmp_buffer, ctx->current_block_header.cmpLength);
 
-    if(ctx->currentBlockHeader.compression == Lzma) ctx->currentBlockHeader.cmpLength += LZMA_PROPERTIES_LENGTH;
+    if(ctx->current_block_header.compression == Lzma) ctx->current_block_header.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Add to index
     TRACE("Adding block to index");
     IndexEntry index_entry;
     index_entry.blockType = DataBlock;
     index_entry.dataType  = UserData;
-    index_entry.offset    = ctx->nextBlockPosition;
+    index_entry.offset    = ctx->next_block_position;
 
-    utarray_push_back(ctx->indexEntries, &index_entry);
+    utarray_push_back(ctx->index_entries, &index_entry);
     TRACE("Block added to index at offset %" PRIu64, index_entry.offset);
 
     // Write block header to file
 
     // Move to expected block position
-    fseek(ctx->imageStream, ctx->nextBlockPosition, SEEK_SET);
+    fseek(ctx->imageStream, ctx->next_block_position, SEEK_SET);
 
     // Write block header
-    if(fwrite(&ctx->currentBlockHeader, sizeof(BlockHeader), 1, ctx->imageStream) != 1)
+    if(fwrite(&ctx->current_block_header, sizeof(BlockHeader), 1, ctx->imageStream) != 1)
         return AARUF_ERROR_CANNOT_WRITE_BLOCK_HEADER;
 
     // Write block data
-    if(ctx->currentBlockHeader.compression == Lzma &&
+    if(ctx->current_block_header.compression == Lzma &&
        fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream) != 1)
     {
         free(cmp_buffer);
         return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
     }
 
-    if(ctx->currentBlockHeader.compression == None)
+    if(ctx->current_block_header.compression == None)
     {
-        if(fwrite(ctx->writingBuffer, ctx->currentBlockHeader.length, 1, ctx->imageStream) != 1)
+        if(fwrite(ctx->writing_buffer, ctx->current_block_header.length, 1, ctx->imageStream) != 1)
             return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
     }
     else
     {
-        if(fwrite(cmp_buffer, ctx->currentBlockHeader.cmpLength, 1, ctx->imageStream) != 1)
+        if(fwrite(cmp_buffer, ctx->current_block_header.cmpLength, 1, ctx->imageStream) != 1)
         {
             free(cmp_buffer);
             return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
@@ -1507,18 +1512,18 @@ int32_t aaruf_close_current_block(aaruformatContext *ctx)
     }
 
     // Update nextBlockPosition to point to the next available aligned position
-    const uint64_t block_total_size = sizeof(BlockHeader) + ctx->currentBlockHeader.cmpLength;
-    const uint64_t alignment_mask   = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
-    ctx->nextBlockPosition          = ctx->nextBlockPosition + block_total_size + alignment_mask & ~alignment_mask;
-    TRACE("Updated nextBlockPosition to %" PRIu64, ctx->nextBlockPosition);
+    const uint64_t block_total_size = sizeof(BlockHeader) + ctx->current_block_header.cmpLength;
+    const uint64_t alignment_mask   = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
+    ctx->next_block_position        = ctx->next_block_position + block_total_size + alignment_mask & ~alignment_mask;
+    TRACE("Updated nextBlockPosition to %" PRIu64, ctx->next_block_position);
 
     // Clear values
-    free(ctx->writingBuffer);
-    ctx->writingBuffer      = NULL;
-    ctx->currentBlockOffset = 0;
-    memset(&ctx->currentBlockHeader, 0, sizeof(BlockHeader));
-    aaruf_crc64_free(ctx->crc64Context);
-    ctx->writingBufferPosition = 0;
+    free(ctx->writing_buffer);
+    ctx->writing_buffer       = NULL;
+    ctx->current_block_offset = 0;
+    memset(&ctx->current_block_header, 0, sizeof(BlockHeader));
+    aaruf_crc64_free(ctx->crc64_context);
+    ctx->writing_buffer_position = 0;
 
     return AARUF_STATUS_OK;
 }
@@ -1783,7 +1788,7 @@ int32_t aaruf_write_media_tag(void *context, const uint8_t *data, const int32_t 
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -1795,7 +1800,7 @@ int32_t aaruf_write_media_tag(void *context, const uint8_t *data, const int32_t 
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -2053,7 +2058,7 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -2065,7 +2070,7 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -2073,7 +2078,7 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
         return AARUF_READ_ONLY;
     }
 
-    if(negative && sector_address > ctx->userDataDdtHeader.negative - 1)
+    if(negative && sector_address > ctx->user_data_ddt_header.negative - 1)
     {
         FATAL("Sector address out of bounds");
 
@@ -2081,7 +2086,7 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
         return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
     }
 
-    if(!negative && sector_address > ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow - 1)
+    if(!negative && sector_address > ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow - 1)
     {
         FATAL("Sector address out of bounds");
 
@@ -2099,17 +2104,17 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
 
     // Calculate positive or negative sector
     if(negative)
-        corrected_sector_address -= ctx->userDataDdtHeader.negative;
+        corrected_sector_address -= ctx->user_data_ddt_header.negative;
     else
-        corrected_sector_address += ctx->userDataDdtHeader.negative;
+        corrected_sector_address += ctx->user_data_ddt_header.negative;
 
     const uint64_t total_sectors =
-        ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow;
+        ctx->user_data_ddt_header.negative + ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow;
 
     switch(tag)
     {
         case CdTrackFlags:
-            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -2123,10 +2128,10 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
                 return AARUF_ERROR_INCORRECT_DATA_SIZE;
             }
 
-            for(int i = 0; i < ctx->tracksHeader.entries; i++)
-                if(sector_address >= ctx->trackEntries[i].start && sector_address <= ctx->trackEntries[i].end)
+            for(int i = 0; i < ctx->tracks_header.entries; i++)
+                if(sector_address >= ctx->track_entries[i].start && sector_address <= ctx->track_entries[i].end)
                 {
-                    ctx->trackEntries[i].flags = data[0];
+                    ctx->track_entries[i].flags = data[0];
                     TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
                     return AARUF_STATUS_OK;
                 }
@@ -2134,7 +2139,7 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
             FATAL("Track not found");
             return AARUF_ERROR_TRACK_NOT_FOUND;
         case CdTrackIsrc:
-            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -2148,10 +2153,10 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
                 return AARUF_ERROR_INCORRECT_DATA_SIZE;
             }
 
-            for(int i = 0; i < ctx->tracksHeader.entries; i++)
-                if(sector_address >= ctx->trackEntries[i].start && sector_address <= ctx->trackEntries[i].end)
+            for(int i = 0; i < ctx->tracks_header.entries; i++)
+                if(sector_address >= ctx->track_entries[i].start && sector_address <= ctx->track_entries[i].end)
                 {
-                    memcpy(ctx->trackEntries[i].isrc, data, 12);
+                    memcpy(ctx->track_entries[i].isrc, data, 12);
                     TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
                     return AARUF_STATUS_OK;
                 }
@@ -2159,7 +2164,7 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
             FATAL("Track not found");
             return AARUF_ERROR_TRACK_NOT_FOUND;
         case CdSectorSubchannel:
-            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -2187,7 +2192,7 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdCmi:
-            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -2215,7 +2220,7 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdSectorInformation:
-            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -2243,7 +2248,7 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdSectorNumber:
-            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -2271,7 +2276,7 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdSectorIed:
-            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -2299,7 +2304,7 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdSectorEdc:
-            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -2327,7 +2332,7 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdTitleKeyDecrypted:
-            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -2355,7 +2360,7 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case AppleSonyTag:
-            if(ctx->imageInfo.MetadataMediaType != BlockMedia)
+            if(ctx->image_info.MetadataMediaType != BlockMedia)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -2383,7 +2388,7 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case AppleProfileTag:
-            if(ctx->imageInfo.MetadataMediaType != BlockMedia)
+            if(ctx->image_info.MetadataMediaType != BlockMedia)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -2411,7 +2416,7 @@ int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, con
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case PriamDataTowerTag:
-            if(ctx->imageInfo.MetadataMediaType != BlockMedia)
+            if(ctx->image_info.MetadataMediaType != BlockMedia)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");

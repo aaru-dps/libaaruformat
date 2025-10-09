@@ -190,7 +190,7 @@ int32_t aaruf_get_dumphw(void *context, uint8_t *buffer, size_t *length)
 
     TRACE("Entering aaruf_get_dumphw(%p, %p, %zu)", context, buffer, length_value);
 
-    aaruformatContext *ctx = NULL;
+    aaruformat_context *ctx = NULL;
 
     if(context == NULL)
     {
@@ -219,8 +219,8 @@ int32_t aaruf_get_dumphw(void *context, uint8_t *buffer, size_t *length)
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->dumpHardwareEntriesWithData == NULL || ctx->dumpHardwareHeader.entries == 0 ||
-       ctx->dumpHardwareHeader.identifier != DumpHardwareBlock)
+    if(ctx->dump_hardware_entries_with_data == NULL || ctx->dump_hardware_header.entries == 0 ||
+       ctx->dump_hardware_header.identifier != DumpHardwareBlock)
     {
         FATAL("No dump hardware information present");
 
@@ -228,7 +228,7 @@ int32_t aaruf_get_dumphw(void *context, uint8_t *buffer, size_t *length)
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
-    size_t required_length = sizeof(DumpHardwareHeader) + (size_t)ctx->dumpHardwareHeader.length;
+    size_t required_length = sizeof(DumpHardwareHeader) + (size_t)ctx->dump_hardware_header.length;
     if(required_length < sizeof(DumpHardwareHeader))
     {
         FATAL("Dump hardware payload length overflow");
@@ -250,11 +250,11 @@ int32_t aaruf_get_dumphw(void *context, uint8_t *buffer, size_t *length)
 
     // Start to iterate and copy the data
     size_t offset = 0;
-    for(uint32_t i = 0; i < ctx->dumpHardwareHeader.entries; i++)
+    for(uint32_t i = 0; i < ctx->dump_hardware_header.entries; i++)
     {
         size_t entry_size = sizeof(DumpHardwareEntry);
 
-        const DumpHardwareEntry *entry = &ctx->dumpHardwareEntriesWithData[i].entry;
+        const DumpHardwareEntry *entry = &ctx->dump_hardware_entries_with_data[i].entry;
 
         const size_t extent_bytes = (size_t)entry->extents * sizeof(DumpExtent);
         if(entry->extents != 0 && extent_bytes / sizeof(DumpExtent) != entry->extents)
@@ -292,77 +292,77 @@ int32_t aaruf_get_dumphw(void *context, uint8_t *buffer, size_t *length)
             return AARUF_ERROR_BUFFER_TOO_SMALL;
         }
 
-        memcpy(buffer + offset, &ctx->dumpHardwareEntriesWithData[i].entry, sizeof(DumpHardwareEntry));
+        memcpy(buffer + offset, &ctx->dump_hardware_entries_with_data[i].entry, sizeof(DumpHardwareEntry));
         offset += sizeof(DumpHardwareEntry);
-        if(ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength > 0 &&
-           ctx->dumpHardwareEntriesWithData[i].manufacturer != NULL)
+        if(ctx->dump_hardware_entries_with_data[i].entry.manufacturerLength > 0 &&
+           ctx->dump_hardware_entries_with_data[i].manufacturer != NULL)
         {
-            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].manufacturer,
-                   ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength);
-            offset += ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength;
+            memcpy(buffer + offset, ctx->dump_hardware_entries_with_data[i].manufacturer,
+                   ctx->dump_hardware_entries_with_data[i].entry.manufacturerLength);
+            offset += ctx->dump_hardware_entries_with_data[i].entry.manufacturerLength;
         }
-        if(ctx->dumpHardwareEntriesWithData[i].entry.modelLength > 0 &&
-           ctx->dumpHardwareEntriesWithData[i].model != NULL)
+        if(ctx->dump_hardware_entries_with_data[i].entry.modelLength > 0 &&
+           ctx->dump_hardware_entries_with_data[i].model != NULL)
         {
-            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].model,
-                   ctx->dumpHardwareEntriesWithData[i].entry.modelLength);
-            offset += ctx->dumpHardwareEntriesWithData[i].entry.modelLength;
+            memcpy(buffer + offset, ctx->dump_hardware_entries_with_data[i].model,
+                   ctx->dump_hardware_entries_with_data[i].entry.modelLength);
+            offset += ctx->dump_hardware_entries_with_data[i].entry.modelLength;
         }
-        if(ctx->dumpHardwareEntriesWithData[i].entry.revisionLength > 0 &&
-           ctx->dumpHardwareEntriesWithData[i].revision != NULL)
+        if(ctx->dump_hardware_entries_with_data[i].entry.revisionLength > 0 &&
+           ctx->dump_hardware_entries_with_data[i].revision != NULL)
         {
-            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].revision,
-                   ctx->dumpHardwareEntriesWithData[i].entry.revisionLength);
-            offset += ctx->dumpHardwareEntriesWithData[i].entry.revisionLength;
+            memcpy(buffer + offset, ctx->dump_hardware_entries_with_data[i].revision,
+                   ctx->dump_hardware_entries_with_data[i].entry.revisionLength);
+            offset += ctx->dump_hardware_entries_with_data[i].entry.revisionLength;
         }
-        if(ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength > 0 &&
-           ctx->dumpHardwareEntriesWithData[i].firmware != NULL)
+        if(ctx->dump_hardware_entries_with_data[i].entry.firmwareLength > 0 &&
+           ctx->dump_hardware_entries_with_data[i].firmware != NULL)
         {
-            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].firmware,
-                   ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength);
-            offset += ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength;
+            memcpy(buffer + offset, ctx->dump_hardware_entries_with_data[i].firmware,
+                   ctx->dump_hardware_entries_with_data[i].entry.firmwareLength);
+            offset += ctx->dump_hardware_entries_with_data[i].entry.firmwareLength;
         }
-        if(ctx->dumpHardwareEntriesWithData[i].entry.serialLength > 0 &&
-           ctx->dumpHardwareEntriesWithData[i].serial != NULL)
+        if(ctx->dump_hardware_entries_with_data[i].entry.serialLength > 0 &&
+           ctx->dump_hardware_entries_with_data[i].serial != NULL)
         {
-            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].serial,
-                   ctx->dumpHardwareEntriesWithData[i].entry.serialLength);
-            offset += ctx->dumpHardwareEntriesWithData[i].entry.serialLength;
+            memcpy(buffer + offset, ctx->dump_hardware_entries_with_data[i].serial,
+                   ctx->dump_hardware_entries_with_data[i].entry.serialLength);
+            offset += ctx->dump_hardware_entries_with_data[i].entry.serialLength;
         }
-        if(ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength > 0 &&
-           ctx->dumpHardwareEntriesWithData[i].softwareName != NULL)
+        if(ctx->dump_hardware_entries_with_data[i].entry.softwareNameLength > 0 &&
+           ctx->dump_hardware_entries_with_data[i].softwareName != NULL)
         {
-            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].softwareName,
-                   ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength);
-            offset += ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength;
+            memcpy(buffer + offset, ctx->dump_hardware_entries_with_data[i].softwareName,
+                   ctx->dump_hardware_entries_with_data[i].entry.softwareNameLength);
+            offset += ctx->dump_hardware_entries_with_data[i].entry.softwareNameLength;
         }
-        if(ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength > 0 &&
-           ctx->dumpHardwareEntriesWithData[i].softwareVersion != NULL)
+        if(ctx->dump_hardware_entries_with_data[i].entry.softwareVersionLength > 0 &&
+           ctx->dump_hardware_entries_with_data[i].softwareVersion != NULL)
         {
-            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].softwareVersion,
-                   ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength);
-            offset += ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength;
+            memcpy(buffer + offset, ctx->dump_hardware_entries_with_data[i].softwareVersion,
+                   ctx->dump_hardware_entries_with_data[i].entry.softwareVersionLength);
+            offset += ctx->dump_hardware_entries_with_data[i].entry.softwareVersionLength;
         }
-        if(ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength > 0 &&
-           ctx->dumpHardwareEntriesWithData[i].softwareOperatingSystem != NULL)
+        if(ctx->dump_hardware_entries_with_data[i].entry.softwareOperatingSystemLength > 0 &&
+           ctx->dump_hardware_entries_with_data[i].softwareOperatingSystem != NULL)
         {
-            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].softwareOperatingSystem,
-                   ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength);
-            offset += ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength;
+            memcpy(buffer + offset, ctx->dump_hardware_entries_with_data[i].softwareOperatingSystem,
+                   ctx->dump_hardware_entries_with_data[i].entry.softwareOperatingSystemLength);
+            offset += ctx->dump_hardware_entries_with_data[i].entry.softwareOperatingSystemLength;
         }
-        if(entry->extents > 0 && ctx->dumpHardwareEntriesWithData[i].extents != NULL)
+        if(entry->extents > 0 && ctx->dump_hardware_entries_with_data[i].extents != NULL)
         {
-            memcpy(buffer + offset, ctx->dumpHardwareEntriesWithData[i].extents, extent_bytes);
+            memcpy(buffer + offset, ctx->dump_hardware_entries_with_data[i].extents, extent_bytes);
             offset += extent_bytes;
         }
     }
 
     // Calculate CRC64
-    ctx->dumpHardwareHeader.crc64 =
-        aaruf_crc64_data(buffer + sizeof(DumpHardwareHeader), ctx->dumpHardwareHeader.length);
+    ctx->dump_hardware_header.crc64 =
+        aaruf_crc64_data(buffer + sizeof(DumpHardwareHeader), ctx->dump_hardware_header.length);
 
     // Copy header
-    memcpy(buffer, &ctx->dumpHardwareHeader, sizeof(DumpHardwareHeader));
+    memcpy(buffer, &ctx->dump_hardware_header, sizeof(DumpHardwareHeader));
 
     TRACE("Exiting aaruf_get_dumphw() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
@@ -541,7 +541,7 @@ int32_t aaruf_set_dumphw(void *context, uint8_t *data, size_t length)
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -553,7 +553,7 @@ int32_t aaruf_set_dumphw(void *context, uint8_t *data, size_t length)
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -674,9 +674,9 @@ int32_t aaruf_set_dumphw(void *context, uint8_t *data, size_t length)
         goto invalid_data;
     }
 
-    free_dump_hardware_entries(ctx->dumpHardwareEntriesWithData, ctx->dumpHardwareHeader.entries);
-    ctx->dumpHardwareEntriesWithData = copy;
-    ctx->dumpHardwareHeader          = header;
+    free_dump_hardware_entries(ctx->dump_hardware_entries_with_data, ctx->dump_hardware_header.entries);
+    ctx->dump_hardware_entries_with_data = copy;
+    ctx->dump_hardware_header            = header;
 
     TRACE("Exiting aaruf_set_dumphw() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;

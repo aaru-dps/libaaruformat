@@ -44,24 +44,24 @@ void draw_progress_bar(int row, int percent)
 
 int compare(const char *path1, const char *path2)
 {
-    int                ret                  = AARUF_STATUS_OK;
-    aaruformatContext *ctx1                 = NULL;
-    aaruformatContext *ctx2                 = NULL;
-    bool               imagesAreDifferent   = false;
-    char              *strBuffer            = NULL;
-    UErrorCode         u_error_code         = U_ZERO_ERROR;
-    int                lr                   = 0;
-    int                rr                   = 0;
-    uintattr_t         appVerColor          = TB_WHITE;
-    uintattr_t         imageVerColor        = TB_WHITE;
-    uintattr_t         mediaTypeColor       = TB_WHITE;
-    uintattr_t         creationTimeColor    = TB_WHITE;
-    uintattr_t         lastWrittenTimeColor = TB_WHITE;
-    uintattr_t         partitionsColor      = TB_WHITE;
-    uintattr_t         sessionsColor        = TB_WHITE;
-    uintattr_t         sectorsColor         = TB_WHITE;
-    uintattr_t         sectorSizeColor      = TB_WHITE;
-    uintattr_t         versionColor         = TB_WHITE;
+    int                 ret                  = AARUF_STATUS_OK;
+    aaruformat_context *ctx1                 = NULL;
+    aaruformat_context *ctx2                 = NULL;
+    bool                imagesAreDifferent   = false;
+    char               *strBuffer            = NULL;
+    UErrorCode          u_error_code         = U_ZERO_ERROR;
+    int                 lr                   = 0;
+    int                 rr                   = 0;
+    uintattr_t          appVerColor          = TB_WHITE;
+    uintattr_t          imageVerColor        = TB_WHITE;
+    uintattr_t          mediaTypeColor       = TB_WHITE;
+    uintattr_t          creationTimeColor    = TB_WHITE;
+    uintattr_t          lastWrittenTimeColor = TB_WHITE;
+    uintattr_t          partitionsColor      = TB_WHITE;
+    uintattr_t          sessionsColor        = TB_WHITE;
+    uintattr_t          sectorsColor         = TB_WHITE;
+    uintattr_t          sectorSizeColor      = TB_WHITE;
+    uintattr_t          versionColor         = TB_WHITE;
 
     // Initialize termbox2
     if(tb_init() != 0) return 1;
@@ -229,8 +229,8 @@ int compare(const char *path1, const char *path2)
 
     // Compare ImageInfo
     u_error_code = U_ZERO_ERROR;
-    u_error_code = u_strCompare((const UChar *)ctx1->imageInfo.Application, -1,
-                                (const UChar *)ctx2->imageInfo.Application, -1, false);
+    u_error_code = u_strCompare((const UChar *)ctx1->image_info.Application, -1,
+                                (const UChar *)ctx2->image_info.Application, -1, false);
     if(u_error_code != U_ZERO_ERROR) imagesAreDifferent = true;
 
     // Current left row
@@ -238,73 +238,73 @@ int compare(const char *path1, const char *path2)
     // Current right row
     rr = 9;
 
-    if(ctx1->imageInfo.HasPartitions != ctx2->imageInfo.HasPartitions)
+    if(ctx1->image_info.HasPartitions != ctx2->image_info.HasPartitions)
     {
         imagesAreDifferent = true;
         partitionsColor    = TB_RED;
     }
-    if(ctx1->imageInfo.HasSessions != ctx2->imageInfo.HasSessions)
+    if(ctx1->image_info.HasSessions != ctx2->image_info.HasSessions)
     {
         imagesAreDifferent = true;
         sessionsColor      = TB_RED;
     }
-    if(ctx1->imageInfo.Sectors != ctx2->imageInfo.Sectors)
+    if(ctx1->image_info.Sectors != ctx2->image_info.Sectors)
     {
         imagesAreDifferent = true;
         sectorsColor       = TB_RED;
     }
-    if(ctx1->imageInfo.SectorSize != ctx2->imageInfo.SectorSize)
+    if(ctx1->image_info.SectorSize != ctx2->image_info.SectorSize)
     {
         imagesAreDifferent = true;
         sectorSizeColor    = TB_RED;
     }
-    if(ctx1->imageInfo.Version != ctx2->imageInfo.Version)
+    if(ctx1->image_info.Version != ctx2->image_info.Version)
     {
         imagesAreDifferent = true;
         versionColor       = TB_RED;
     }
 
     tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Has partitions?: ");
-    tb_printf(19, lr++, partitionsColor, TB_BLUE, "%s", ctx1->imageInfo.HasPartitions ? "yes" : "no");
+    tb_printf(19, lr++, partitionsColor, TB_BLUE, "%s", ctx1->image_info.HasPartitions ? "yes" : "no");
     tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Has sessions?: ");
-    tb_printf(17, lr++, sessionsColor, TB_BLUE, "%s", ctx1->imageInfo.HasSessions ? "yes" : "no");
+    tb_printf(17, lr++, sessionsColor, TB_BLUE, "%s", ctx1->image_info.HasSessions ? "yes" : "no");
     tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Image size without headers: ");
-    tb_printf(30, lr++, TB_WHITE, TB_BLUE, "%llu bytes", ctx1->imageInfo.ImageSize);
+    tb_printf(30, lr++, TB_WHITE, TB_BLUE, "%llu bytes", ctx1->image_info.ImageSize);
     tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Image contains: ");
-    tb_printf(18, lr++, sectorsColor, TB_BLUE, "%llu sectors", ctx1->imageInfo.Sectors);
+    tb_printf(18, lr++, sectorsColor, TB_BLUE, "%llu sectors", ctx1->image_info.Sectors);
     tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Biggest sector is: ");
-    tb_printf(21, lr++, sectorSizeColor, TB_BLUE, "%d bytes", ctx1->imageInfo.SectorSize);
+    tb_printf(21, lr++, sectorSizeColor, TB_BLUE, "%d bytes", ctx1->image_info.SectorSize);
     tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Image version: ");
-    tb_printf(17, lr++, versionColor, TB_BLUE, "%s", ctx1->imageInfo.Version);
+    tb_printf(17, lr++, versionColor, TB_BLUE, "%s", ctx1->image_info.Version);
     tb_present();
 
     tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Has partitions?: ");
-    tb_printf(mid_x + 19, rr++, partitionsColor, TB_BLUE, "%s", ctx2->imageInfo.HasPartitions ? "yes" : "no");
+    tb_printf(mid_x + 19, rr++, partitionsColor, TB_BLUE, "%s", ctx2->image_info.HasPartitions ? "yes" : "no");
     tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Has sessions?: ");
-    tb_printf(mid_x + 17, rr++, sessionsColor, TB_BLUE, "%s", ctx2->imageInfo.HasSessions ? "yes" : "no");
+    tb_printf(mid_x + 17, rr++, sessionsColor, TB_BLUE, "%s", ctx2->image_info.HasSessions ? "yes" : "no");
     tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Image size without headers: ");
-    tb_printf(mid_x + 30, rr++, TB_WHITE, TB_BLUE, "%llu bytes", ctx2->imageInfo.ImageSize);
+    tb_printf(mid_x + 30, rr++, TB_WHITE, TB_BLUE, "%llu bytes", ctx2->image_info.ImageSize);
     tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Image contains: ");
-    tb_printf(mid_x + 18, rr++, sectorsColor, TB_BLUE, "%llu sectors", ctx2->imageInfo.Sectors);
+    tb_printf(mid_x + 18, rr++, sectorsColor, TB_BLUE, "%llu sectors", ctx2->image_info.Sectors);
     tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Biggest sector is: ");
-    tb_printf(mid_x + 21, rr++, sectorSizeColor, TB_BLUE, "%d bytes", ctx2->imageInfo.SectorSize);
+    tb_printf(mid_x + 21, rr++, sectorSizeColor, TB_BLUE, "%d bytes", ctx2->image_info.SectorSize);
     tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Image version: ");
-    tb_printf(mid_x + 17, rr++, versionColor, TB_BLUE, "%s", ctx2->imageInfo.Version);
+    tb_printf(mid_x + 17, rr++, versionColor, TB_BLUE, "%s", ctx2->image_info.Version);
     tb_present();
 
-    if(ctx1->imageInfo.Application != NULL || ctx2->imageInfo.Application != NULL)
+    if(ctx1->image_info.Application != NULL || ctx2->image_info.Application != NULL)
     {
         strBuffer = malloc(65);
         memset(strBuffer, 0, 65);
         u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
-        ucnv_convert(NULL, "UTF-16LE", strBuffer, 64, (const char *)ctx1->imageInfo.Application, 64, &u_error_code);
+        ucnv_convert(NULL, "UTF-16LE", strBuffer, 64, (const char *)ctx1->image_info.Application, 64, &u_error_code);
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Application: ");
         if(u_error_code == U_ZERO_ERROR) tb_printf(15, lr, TB_WHITE, TB_BLUE, "%s", strBuffer);
         lr++;
 
         memset(strBuffer, 0, 65);
         u_error_code = U_ZERO_ERROR;  // Reset error code before conversion
-        ucnv_convert(NULL, "UTF-16LE", strBuffer, 64, (const char *)ctx2->imageInfo.Application, 64, &u_error_code);
+        ucnv_convert(NULL, "UTF-16LE", strBuffer, 64, (const char *)ctx2->image_info.Application, 64, &u_error_code);
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Application: ");
         if(u_error_code == U_ZERO_ERROR) tb_printf(mid_x + 15, rr, TB_WHITE, TB_BLUE, "%s", strBuffer);
         rr++;
@@ -313,155 +313,156 @@ int compare(const char *path1, const char *path2)
         tb_present();
     }
 
-    if(ctx1->imageInfo.ApplicationVersion != NULL || ctx2->imageInfo.ApplicationVersion != NULL)
+    if(ctx1->image_info.ApplicationVersion != NULL || ctx2->image_info.ApplicationVersion != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Application version: ");
-        tb_printf(23, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->imageInfo.ApplicationVersion);
+        tb_printf(23, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->image_info.ApplicationVersion);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Application version: ");
-        tb_printf(mid_x + 23, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->imageInfo.ApplicationVersion);
+        tb_printf(mid_x + 23, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->image_info.ApplicationVersion);
     }
-    if(ctx1->Creator != NULL || ctx2->Creator != NULL)
+    if(ctx1->creator != NULL || ctx2->creator != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Creator: ");
-        tb_printf(11, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->Creator);
+        tb_printf(11, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->creator);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Creator: ");
-        tb_printf(mid_x + 11, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->Creator);
+        tb_printf(mid_x + 11, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->creator);
     }
 
     tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Creation time: ");
-    tb_printf(17, lr++, TB_WHITE, TB_BLUE, "%lld", ctx1->imageInfo.CreationTime);
+    tb_printf(17, lr++, TB_WHITE, TB_BLUE, "%lld", ctx1->image_info.CreationTime);
 
     tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Creation time: ");
-    tb_printf(mid_x + 17, rr++, TB_WHITE, TB_BLUE, "%lld", ctx2->imageInfo.CreationTime);
+    tb_printf(mid_x + 17, rr++, TB_WHITE, TB_BLUE, "%lld", ctx2->image_info.CreationTime);
 
     tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Last written time: ");
-    tb_printf(21, lr++, TB_WHITE, TB_BLUE, "%lld", ctx1->imageInfo.LastModificationTime);
+    tb_printf(21, lr++, TB_WHITE, TB_BLUE, "%lld", ctx1->image_info.LastModificationTime);
 
     tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Last written time: ");
-    tb_printf(mid_x + 21, rr++, TB_WHITE, TB_BLUE, "%lld", ctx2->imageInfo.LastModificationTime);
+    tb_printf(mid_x + 21, rr++, TB_WHITE, TB_BLUE, "%lld", ctx2->image_info.LastModificationTime);
 
-    if(ctx1->Comments != NULL || ctx2->Comments != NULL)
+    if(ctx1->comments != NULL || ctx2->comments != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Comments: ");
-        tb_printf(12, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->Comments);
+        tb_printf(12, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->comments);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Comments: ");
-        tb_printf(mid_x + 12, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->Comments);
+        tb_printf(mid_x + 12, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->comments);
     }
-    if(ctx1->MediaTitle != NULL || ctx2->MediaTitle != NULL)
+    if(ctx1->media_title != NULL || ctx2->media_title != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Media title: ");
-        tb_printf(15, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->MediaTitle);
+        tb_printf(15, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->media_title);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Media title: ");
-        tb_printf(mid_x + 15, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->MediaTitle);
+        tb_printf(mid_x + 15, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->media_title);
     }
-    if(ctx1->MediaManufacturer != NULL || ctx2->MediaManufacturer != NULL)
+    if(ctx1->media_manufacturer != NULL || ctx2->media_manufacturer != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Media manufacturer: ");
-        tb_printf(22, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->MediaManufacturer);
+        tb_printf(22, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->media_manufacturer);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Media manufacturer: ");
-        tb_printf(mid_x + 22, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->MediaManufacturer);
+        tb_printf(mid_x + 22, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->media_manufacturer);
     }
-    if(ctx1->MediaSerialNumber != NULL || ctx2->MediaSerialNumber != NULL)
+    if(ctx1->media_serial_number != NULL || ctx2->media_serial_number != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Media serial number: ");
-        tb_printf(23, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->MediaSerialNumber);
+        tb_printf(23, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->media_serial_number);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Media serial number: ");
-        tb_printf(mid_x + 23, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->MediaSerialNumber);
+        tb_printf(mid_x + 23, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->media_serial_number);
     }
-    if(ctx1->MediaBarcode != NULL || ctx2->MediaBarcode != NULL)
+    if(ctx1->media_barcode != NULL || ctx2->media_barcode != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Media barcode: ");
-        tb_printf(17, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->MediaBarcode);
+        tb_printf(17, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->media_barcode);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Media barcode: ");
-        tb_printf(mid_x + 17, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->MediaBarcode);
+        tb_printf(mid_x + 17, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->media_barcode);
     }
-    if(ctx1->MediaPartNumber != NULL || ctx2->MediaPartNumber != NULL)
+    if(ctx1->media_part_number != NULL || ctx2->media_part_number != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Media part number: ");
-        tb_printf(21, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->MediaPartNumber);
+        tb_printf(21, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->media_part_number);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Media part number: ");
-        tb_printf(mid_x + 21, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->MediaPartNumber);
+        tb_printf(mid_x + 21, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->media_part_number);
     }
     tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Media type: ");
-    tb_printf(14, lr++, TB_WHITE, TB_BLUE, "%u", ctx1->imageInfo.MediaType);
+    tb_printf(14, lr++, TB_WHITE, TB_BLUE, "%u", ctx1->image_info.MediaType);
 
     tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Media type: ");
-    tb_printf(mid_x + 14, rr++, TB_WHITE, TB_BLUE, "%u", ctx2->imageInfo.MediaType);
+    tb_printf(mid_x + 14, rr++, TB_WHITE, TB_BLUE, "%u", ctx2->image_info.MediaType);
 
-    if(ctx1->MediaSequence > 0 || ctx1->LastMediaSequence > 0 || ctx2->MediaSequence > 0 || ctx2->LastMediaSequence > 0)
+    if(ctx1->media_sequence > 0 || ctx1->last_media_sequence > 0 || ctx2->media_sequence > 0 ||
+       ctx2->last_media_sequence > 0)
     {
-        tb_printf(2, lr++, TB_WHITE | TB_BOLD, TB_BLUE, "Media is number %d in a set of %d media", ctx1->MediaSequence,
-                  ctx1->LastMediaSequence);
+        tb_printf(2, lr++, TB_WHITE | TB_BOLD, TB_BLUE, "Media is number %d in a set of %d media", ctx1->media_sequence,
+                  ctx1->last_media_sequence);
 
         tb_printf(mid_x + 2, rr++, TB_WHITE | TB_BOLD, TB_BLUE, "Media is number %d in a set of %d media",
-                  ctx2->MediaSequence, ctx2->LastMediaSequence);
+                  ctx2->media_sequence, ctx2->last_media_sequence);
     }
 
-    if(ctx1->DriveManufacturer != NULL || ctx2->DriveManufacturer != NULL)
+    if(ctx1->drive_manufacturer != NULL || ctx2->drive_manufacturer != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Drive manufacturer: ");
-        tb_printf(22, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->DriveManufacturer);
+        tb_printf(22, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->drive_manufacturer);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Drive manufacturer: ");
-        tb_printf(mid_x + 22, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->DriveManufacturer);
+        tb_printf(mid_x + 22, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->drive_manufacturer);
     }
-    if(ctx1->DriveModel != NULL || ctx2->DriveModel != NULL)
+    if(ctx1->drive_model != NULL || ctx2->drive_model != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Drive model: ");
-        tb_printf(15, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->DriveModel);
+        tb_printf(15, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->drive_model);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Drive model: ");
-        tb_printf(mid_x + 15, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->DriveModel);
+        tb_printf(mid_x + 15, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->drive_model);
     }
-    if(ctx1->DriveSerialNumber != NULL || ctx2->DriveSerialNumber != NULL)
+    if(ctx1->drive_serial_number != NULL || ctx2->drive_serial_number != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Drive serial number: ");
-        tb_printf(23, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->DriveSerialNumber);
+        tb_printf(23, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->drive_serial_number);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Drive serial number: ");
-        tb_printf(mid_x + 23, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->DriveSerialNumber);
+        tb_printf(mid_x + 23, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->drive_serial_number);
     }
-    if(ctx1->DriveFirmwareRevision != NULL || ctx2->DriveFirmwareRevision != NULL)
+    if(ctx1->drive_firmware_revision != NULL || ctx2->drive_firmware_revision != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Drive firmware revision: ");
-        tb_printf(27, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->DriveFirmwareRevision);
+        tb_printf(27, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->drive_firmware_revision);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Drive firmware revision: ");
-        tb_printf(mid_x + 27, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->DriveFirmwareRevision);
+        tb_printf(mid_x + 27, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->drive_firmware_revision);
     }
     tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "XML media type: ");
-    tb_printf(18, lr++, TB_WHITE, TB_BLUE, "%d", ctx1->imageInfo.MetadataMediaType);
+    tb_printf(18, lr++, TB_WHITE, TB_BLUE, "%d", ctx1->image_info.MetadataMediaType);
 
     tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "XML media type: ");
-    tb_printf(mid_x + 18, rr++, TB_WHITE, TB_BLUE, "%d", ctx2->imageInfo.MetadataMediaType);
+    tb_printf(mid_x + 18, rr++, TB_WHITE, TB_BLUE, "%d", ctx2->image_info.MetadataMediaType);
 
-    if(ctx1->Cylinders > 0 || ctx1->Heads > 0 || ctx1->SectorsPerTrack > 0 || ctx2->Cylinders > 0 || ctx2->Heads > 0 ||
-       ctx2->SectorsPerTrack > 0)
+    if(ctx1->cylinders > 0 || ctx1->heads > 0 || ctx1->sectors_per_track > 0 || ctx2->cylinders > 0 ||
+       ctx2->heads > 0 || ctx2->sectors_per_track > 0)
     {
         tb_printf(2, lr++, TB_WHITE | TB_BOLD, TB_BLUE, "Media has %d cylinders, %d heads and %d sectors per track",
-                  ctx1->Cylinders, ctx1->Heads, ctx1->SectorsPerTrack);
+                  ctx1->cylinders, ctx1->heads, ctx1->sectors_per_track);
 
         tb_printf(mid_x + 2, rr++, TB_WHITE | TB_BOLD, TB_BLUE,
-                  "Media has %d cylinders, %d heads and %d sectors per track", ctx2->Cylinders, ctx2->Heads,
-                  ctx2->SectorsPerTrack);
+                  "Media has %d cylinders, %d heads and %d sectors per track", ctx2->cylinders, ctx2->heads,
+                  ctx2->sectors_per_track);
     }
 
     tb_present();
 
     lr++;
-    uint64_t sectors = ctx1->imageInfo.Sectors;
-    if(ctx2->imageInfo.Sectors < sectors) sectors = ctx2->imageInfo.Sectors;
+    uint64_t sectors = ctx1->image_info.Sectors;
+    if(ctx2->image_info.Sectors < sectors) sectors = ctx2->image_info.Sectors;
     bool     imageContentsAreDifferent = false;
-    uint32_t sectorSize                = ctx1->imageInfo.SectorSize;
-    if(ctx2->imageInfo.SectorSize > sectorSize) sectorSize = ctx2->imageInfo.SectorSize;
+    uint32_t sectorSize                = ctx1->image_info.SectorSize;
+    if(ctx2->image_info.SectorSize > sectorSize) sectorSize = ctx2->image_info.SectorSize;
     uint8_t *buffer1 = malloc(sectorSize);
 
     if(buffer1 == NULL)

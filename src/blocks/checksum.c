@@ -36,7 +36,7 @@
  * @param ctx Pointer to the aaruformat context.
  * @param entry Pointer to the index entry describing the checksum block.
  */
-void process_checksum_block(aaruformatContext *ctx, const IndexEntry *entry)
+void process_checksum_block(aaruformat_context *ctx, const IndexEntry *entry)
 {
     TRACE("Entering process_checksum_block(%p, %p)", ctx, entry);
 

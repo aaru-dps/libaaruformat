@@ -104,7 +104,7 @@ int32_t aaruf_read_media_tag(void *context, uint8_t *data, const int32_t tag, ui
         return AARUF_ERROR_INCORRECT_DATA_SIZE;
     }
 
-    const aaruformatContext *ctx = context;
+    const aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -254,17 +254,17 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
     TRACE("Entering aaruf_read_sector(%p, %" PRIu64 ", %d, %p, %u)", context, sector_address, negative, data,
           initial_length);
 
-    aaruformatContext *ctx          = NULL;
-    uint64_t           offset       = 0;
-    uint64_t           block_offset = 0;
-    BlockHeader       *block_header = NULL;
-    uint8_t           *block        = NULL;
-    size_t             read_bytes   = 0;
-    uint8_t            lzma_properties[LZMA_PROPERTIES_LENGTH];
-    size_t             lzma_size     = 0;
-    uint8_t           *cmp_data      = NULL;
-    int                error_no      = 0;
-    uint8_t            sector_status = 0;
+    aaruformat_context *ctx          = NULL;
+    uint64_t            offset       = 0;
+    uint64_t            block_offset = 0;
+    BlockHeader        *block_header = NULL;
+    uint8_t            *block        = NULL;
+    size_t              read_bytes   = 0;
+    uint8_t             lzma_properties[LZMA_PROPERTIES_LENGTH];
+    size_t              lzma_size     = 0;
+    uint8_t            *cmp_data      = NULL;
+    int                 error_no      = 0;
+    uint8_t             sector_status = 0;
 
     if(context == NULL)
     {
@@ -293,7 +293,7 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(negative && sector_address > ctx->userDataDdtHeader.negative - 1)
+    if(negative && sector_address > ctx->user_data_ddt_header.negative - 1)
     {
         FATAL("Sector address out of bounds");
 
@@ -301,7 +301,7 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
         return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
     }
 
-    if(!negative && sector_address > ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow - 1)
+    if(!negative && sector_address > ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow - 1)
     {
         FATAL("Sector address out of bounds");
 
@@ -309,7 +309,7 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
         return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
     }
 
-    if(ctx->ddtVersion == 1)
+    if(ctx->ddt_version == 1)
     {
         if(negative)
         {
@@ -319,7 +319,7 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
 
         error_no = decode_ddt_entry_v1(ctx, sector_address, &offset, &block_offset, &sector_status);
     }
-    else if(ctx->ddtVersion == 2)
+    else if(ctx->ddt_version == 2)
         error_no = decode_ddt_entry_v2(ctx, sector_address, negative, &offset, &block_offset, &sector_status);
 
     if(error_no != AARUF_STATUS_OK)
@@ -333,7 +333,7 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
     // Partially written image... as we can't know the real sector size just assume it's common :/
     if(sector_status == SectorStatusNotDumped)
     {
-        *length = ctx->imageInfo.SectorSize;
+        *length = ctx->image_info.SectorSize;
 
         TRACE("Exiting aaruf_read_sector() = AARUF_STATUS_SECTOR_NOT_DUMPED");
         return AARUF_STATUS_SECTOR_NOT_DUMPED;
@@ -341,7 +341,7 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
 
     // Check if block header is cached
     TRACE("Checking if block header is cached");
-    block_header = find_in_cache_uint64(&ctx->blockHeaderCache, block_offset);
+    block_header = find_in_cache_uint64(&ctx->block_header_cache, block_offset);
 
     // Read block header
     if(block_header == NULL)
@@ -378,7 +378,7 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
         }
 
         TRACE("Adding block header to cache");
-        add_to_cache_uint64(&ctx->blockHeaderCache, block_offset, block_header);
+        add_to_cache_uint64(&ctx->block_header_cache, block_offset, block_header);
     }
     else if(fseek(ctx->imageStream, block_offset + sizeof(BlockHeader), SEEK_SET) != 0)
     {
@@ -399,7 +399,7 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
 
     // Check if block is cached
     TRACE("Checking if block is cached");
-    block = find_in_cache_uint64(&ctx->blockCache, block_offset);
+    block = find_in_cache_uint64(&ctx->block_cache, block_offset);
 
     if(block != NULL)
     {
@@ -582,7 +582,7 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
 
     // Add block to cache
     TRACE("Adding block to cache");
-    add_to_cache_uint64(&ctx->blockCache, block_offset, block);
+    add_to_cache_uint64(&ctx->block_cache, block_offset, block);
 
     memcpy(data, block + offset * block_header->sectorSize, block_header->sectorSize);
     *length = block_header->sectorSize;
@@ -676,7 +676,7 @@ int32_t aaruf_read_track_sector(void *context, uint8_t *data, const uint64_t sec
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformatContext *ctx = context;
+    aaruformat_context *ctx = context;
 
     if(length == NULL)
     {
@@ -695,7 +695,7 @@ int32_t aaruf_read_track_sector(void *context, uint8_t *data, const uint64_t sec
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+    if(ctx->image_info.MetadataMediaType != OpticalDisc)
     {
         FATAL("Incorrect media type %d, expected OpticalDisc", ctx->imageInfo.XmlMediaType);
 
@@ -703,9 +703,9 @@ int32_t aaruf_read_track_sector(void *context, uint8_t *data, const uint64_t sec
         return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
     }
 
-    for(int i = 0; i < ctx->numberOfDataTracks; i++)
-        if(ctx->dataTracks[i].sequence == track)
-            return aaruf_read_sector(context, ctx->dataTracks[i].start + sector_address, false, data, length);
+    for(int i = 0; i < ctx->number_of_data_tracks; i++)
+        if(ctx->data_tracks[i].sequence == track)
+            return aaruf_read_sector(context, ctx->data_tracks[i].start + sector_address, false, data, length);
 
     TRACE("Track %d not found", track);
     TRACE("Exiting aaruf_read_track_sector() = AARUF_ERROR_TRACK_NOT_FOUND");
@@ -820,15 +820,15 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
     TRACE("Entering aaruf_read_sector_long(%p, %" PRIu64 ", %d, %p, %u)", context, sector_address, data,
           initial_length);
 
-    const aaruformatContext *ctx         = NULL;
-    uint32_t                 bare_length = 0;
-    uint32_t                 tag_length  = 0;
-    uint8_t                 *bare_data   = NULL;
-    int32_t                  res         = 0;
-    int32_t                  query_status;
-    TrackEntry               trk;
-    int                      i         = 0;
-    bool                     trk_found = false;
+    const aaruformat_context *ctx         = NULL;
+    uint32_t                  bare_length = 0;
+    uint32_t                  tag_length  = 0;
+    uint8_t                  *bare_data   = NULL;
+    int32_t                   res         = 0;
+    int32_t                   query_status;
+    TrackEntry                trk;
+    int                       i         = 0;
+    bool                      trk_found = false;
 
     if(context == NULL)
     {
@@ -857,7 +857,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(negative && sector_address > ctx->userDataDdtHeader.negative - 1)
+    if(negative && sector_address > ctx->user_data_ddt_header.negative - 1)
     {
         FATAL("Sector address out of bounds");
 
@@ -865,7 +865,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
         return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
     }
 
-    if(!negative && sector_address > ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow - 1)
+    if(!negative && sector_address > ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow - 1)
     {
         FATAL("Sector address out of bounds");
 
@@ -877,21 +877,21 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
 
     // Calculate positive or negative sector
     if(negative)
-        corrected_sector_address -= ctx->userDataDdtHeader.negative;
+        corrected_sector_address -= ctx->user_data_ddt_header.negative;
     else
-        corrected_sector_address += ctx->userDataDdtHeader.negative;
+        corrected_sector_address += ctx->user_data_ddt_header.negative;
 
-    switch(ctx->imageInfo.MetadataMediaType)
+    switch(ctx->image_info.MetadataMediaType)
     {
         case OpticalDisc:
-            if(ctx->imageInfo.MediaType == DVDROM || ctx->imageInfo.MediaType == PS2DVD ||
-               ctx->imageInfo.MediaType == SACD || ctx->imageInfo.MediaType == PS3DVD ||
-               ctx->imageInfo.MediaType == DVDR || ctx->imageInfo.MediaType == DVDRW ||
-               ctx->imageInfo.MediaType == DVDPR || ctx->imageInfo.MediaType == DVDPRW ||
-               ctx->imageInfo.MediaType == DVDPRWDL || ctx->imageInfo.MediaType == DVDRDL ||
-               ctx->imageInfo.MediaType == DVDPRDL || ctx->imageInfo.MediaType == DVDRAM ||
-               ctx->imageInfo.MediaType == DVDRWDL || ctx->imageInfo.MediaType == DVDDownload ||
-               ctx->imageInfo.MediaType == Nuon)
+            if(ctx->image_info.MediaType == DVDROM || ctx->image_info.MediaType == PS2DVD ||
+               ctx->image_info.MediaType == SACD || ctx->image_info.MediaType == PS3DVD ||
+               ctx->image_info.MediaType == DVDR || ctx->image_info.MediaType == DVDRW ||
+               ctx->image_info.MediaType == DVDPR || ctx->image_info.MediaType == DVDPRW ||
+               ctx->image_info.MediaType == DVDPRWDL || ctx->image_info.MediaType == DVDRDL ||
+               ctx->image_info.MediaType == DVDPRDL || ctx->image_info.MediaType == DVDRAM ||
+               ctx->image_info.MediaType == DVDRWDL || ctx->image_info.MediaType == DVDDownload ||
+               ctx->image_info.MediaType == Nuon)
             {
                 if(ctx->sector_id == NULL || ctx->sector_ied == NULL || ctx->sector_cpr_mai == NULL ||
                    ctx->sector_edc == NULL)
@@ -967,7 +967,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
             }
 
             if((ctx->sector_suffix == NULL || ctx->sector_prefix == NULL) &&
-               (ctx->sectorSuffixCorrected == NULL || ctx->sectorPrefixCorrected == NULL))
+               (ctx->sector_suffix_corrected == NULL || ctx->sector_prefix_corrected == NULL))
                 return aaruf_read_sector(context, sector_address, negative, data, length);
 
             bare_length  = 0;
@@ -1010,11 +1010,11 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
 
             trk_found = false;
 
-            for(i = 0; i < ctx->numberOfDataTracks; i++)
-                if(sector_address >= ctx->dataTracks[i].start && sector_address <= ctx->dataTracks[i].end)
+            for(i = 0; i < ctx->number_of_data_tracks; i++)
+                if(sector_address >= ctx->data_tracks[i].start && sector_address <= ctx->data_tracks[i].end)
                 {
                     trk_found = true;
-                    trk       = ctx->dataTracks[i];
+                    trk       = ctx->data_tracks[i];
                     break;
                 }
 
@@ -1040,19 +1040,19 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
 
                     if(ctx->sector_prefix != NULL)
                         memcpy(data, ctx->sector_prefix + corrected_sector_address * 16, 16);
-                    else if(ctx->sectorPrefixDdt != NULL)
+                    else if(ctx->sector_prefix_ddt != NULL)
                     {
-                        if((ctx->sectorPrefixDdt[corrected_sector_address] & CD_XFIX_MASK) == Correct)
+                        if((ctx->sector_prefix_ddt[corrected_sector_address] & CD_XFIX_MASK) == Correct)
                         {
                             aaruf_ecc_cd_reconstruct_prefix(data, trk.type, sector_address);
                             res = AARUF_STATUS_OK;
                         }
-                        else if((ctx->sectorPrefixDdt[corrected_sector_address] & CD_XFIX_MASK) == NotDumped)
+                        else if((ctx->sector_prefix_ddt[corrected_sector_address] & CD_XFIX_MASK) == NotDumped)
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
                         else
                             memcpy(data,
-                                   ctx->sectorPrefixCorrected +
-                                       ((ctx->sectorPrefixDdt[corrected_sector_address] & CD_DFIX_MASK) - 1) * 16,
+                                   ctx->sector_prefix_corrected +
+                                       ((ctx->sector_prefix_ddt[corrected_sector_address] & CD_DFIX_MASK) - 1) * 16,
                                    16);
                     }
                     else
@@ -1071,19 +1071,19 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
 
                     if(ctx->sector_suffix != NULL)
                         memcpy(data + 2064, ctx->sector_suffix + corrected_sector_address * 288, 288);
-                    else if(ctx->sectorSuffixDdt != NULL)
+                    else if(ctx->sector_suffix_ddt != NULL)
                     {
-                        if((ctx->sectorSuffixDdt[corrected_sector_address] & CD_XFIX_MASK) == Correct)
+                        if((ctx->sector_suffix_ddt[corrected_sector_address] & CD_XFIX_MASK) == Correct)
                         {
-                            aaruf_ecc_cd_reconstruct(ctx->eccCdContext, data, trk.type);
+                            aaruf_ecc_cd_reconstruct(ctx->ecc_cd_context, data, trk.type);
                             res = AARUF_STATUS_OK;
                         }
-                        else if((ctx->sectorSuffixDdt[corrected_sector_address] & CD_XFIX_MASK) == NotDumped)
+                        else if((ctx->sector_suffix_ddt[corrected_sector_address] & CD_XFIX_MASK) == NotDumped)
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
                         else
                             memcpy(data + 2064,
-                                   ctx->sectorSuffixCorrected +
-                                       ((ctx->sectorSuffixDdt[corrected_sector_address] & CD_DFIX_MASK) - 1) * 288,
+                                   ctx->sector_suffix_corrected +
+                                       ((ctx->sector_suffix_ddt[corrected_sector_address] & CD_DFIX_MASK) - 1) * 288,
                                    288);
                     }
                     else
@@ -1101,19 +1101,19 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                 case CdMode2Form2:
                     if(ctx->sector_prefix != NULL)
                         memcpy(data, ctx->sector_prefix + corrected_sector_address * 16, 16);
-                    else if(ctx->sectorPrefixDdt != NULL)
+                    else if(ctx->sector_prefix_ddt != NULL)
                     {
-                        if((ctx->sectorPrefixDdt[corrected_sector_address] & CD_XFIX_MASK) == Correct)
+                        if((ctx->sector_prefix_ddt[corrected_sector_address] & CD_XFIX_MASK) == Correct)
                         {
                             aaruf_ecc_cd_reconstruct_prefix(data, trk.type, sector_address);
                             res = AARUF_STATUS_OK;
                         }
-                        else if((ctx->sectorPrefixDdt[corrected_sector_address] & CD_XFIX_MASK) == NotDumped)
+                        else if((ctx->sector_prefix_ddt[corrected_sector_address] & CD_XFIX_MASK) == NotDumped)
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
                         else
                             memcpy(data,
-                                   ctx->sectorPrefixCorrected +
-                                       ((ctx->sectorPrefixDdt[corrected_sector_address] & CD_DFIX_MASK) - 1) * 16,
+                                   ctx->sector_prefix_corrected +
+                                       ((ctx->sector_prefix_ddt[corrected_sector_address] & CD_DFIX_MASK) - 1) * 16,
                                    16);
                     }
                     else
@@ -1130,23 +1130,23 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                         return res;
                     }
 
-                    if(ctx->mode2_subheaders != NULL && ctx->sectorSuffixDdt != NULL)
+                    if(ctx->mode2_subheaders != NULL && ctx->sector_suffix_ddt != NULL)
                     {
                         memcpy(data + 16, ctx->mode2_subheaders + corrected_sector_address * 8, 8);
 
-                        if((ctx->sectorSuffixDdt[corrected_sector_address] & CD_XFIX_MASK) == Mode2Form1Ok)
+                        if((ctx->sector_suffix_ddt[corrected_sector_address] & CD_XFIX_MASK) == Mode2Form1Ok)
                         {
                             memcpy(data + 24, bare_data, 2048);
-                            aaruf_ecc_cd_reconstruct(ctx->eccCdContext, data, CdMode2Form1);
+                            aaruf_ecc_cd_reconstruct(ctx->ecc_cd_context, data, CdMode2Form1);
                         }
-                        else if((ctx->sectorSuffixDdt[corrected_sector_address] & CD_XFIX_MASK) == Mode2Form2Ok ||
-                                (ctx->sectorSuffixDdt[corrected_sector_address] & CD_XFIX_MASK) == Mode2Form2NoCrc)
+                        else if((ctx->sector_suffix_ddt[corrected_sector_address] & CD_XFIX_MASK) == Mode2Form2Ok ||
+                                (ctx->sector_suffix_ddt[corrected_sector_address] & CD_XFIX_MASK) == Mode2Form2NoCrc)
                         {
                             memcpy(data + 24, bare_data, 2324);
-                            if((ctx->sectorSuffixDdt[corrected_sector_address] & CD_XFIX_MASK) == Mode2Form2Ok)
-                                aaruf_ecc_cd_reconstruct(ctx->eccCdContext, data, CdMode2Form2);
+                            if((ctx->sector_suffix_ddt[corrected_sector_address] & CD_XFIX_MASK) == Mode2Form2Ok)
+                                aaruf_ecc_cd_reconstruct(ctx->ecc_cd_context, data, CdMode2Form2);
                         }
-                        else if((ctx->sectorSuffixDdt[corrected_sector_address] & CD_XFIX_MASK) == NotDumped)
+                        else if((ctx->sector_suffix_ddt[corrected_sector_address] & CD_XFIX_MASK) == NotDumped)
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
                         else
                             // Mode 2 where ECC failed
@@ -1171,7 +1171,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                     return AARUF_ERROR_INVALID_TRACK_FORMAT;
             }
         case BlockMedia:
-            switch(ctx->imageInfo.MediaType)
+            switch(ctx->image_info.MediaType)
             {
                 case AppleFileWare:
                 case AppleProfile:
@@ -1182,7 +1182,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                     if(ctx->sector_subchannel == NULL)
                         return aaruf_read_sector(context, sector_address, negative, data, length);
 
-                    switch(ctx->imageInfo.MediaType)
+                    switch(ctx->image_info.MediaType)
                     {
                         case AppleFileWare:
                         case AppleProfile:
@@ -1394,7 +1394,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
     TRACE("Entering aaruf_read_sector_tag(%p, %" PRIu64 ", %d, %p, %u, %d)", context, sector_address, negative, buffer,
           initial_length, tag);
 
-    const aaruformatContext *ctx = NULL;
+    const aaruformat_context *ctx = NULL;
 
     if(context == NULL)
     {
@@ -1423,7 +1423,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(negative && sector_address > ctx->userDataDdtHeader.negative - 1)
+    if(negative && sector_address > ctx->user_data_ddt_header.negative - 1)
     {
         FATAL("Sector address out of bounds");
 
@@ -1431,7 +1431,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
         return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
     }
 
-    if(!negative && sector_address > ctx->imageInfo.Sectors + ctx->userDataDdtHeader.overflow - 1)
+    if(!negative && sector_address > ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow - 1)
     {
         FATAL("Sector address out of bounds");
 
@@ -1443,14 +1443,14 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
 
     // Calculate positive or negative sector
     if(negative)
-        corrected_sector_address -= ctx->userDataDdtHeader.negative;
+        corrected_sector_address -= ctx->user_data_ddt_header.negative;
     else
-        corrected_sector_address += ctx->userDataDdtHeader.negative;
+        corrected_sector_address += ctx->user_data_ddt_header.negative;
 
     switch(tag)
     {
         case CdTrackFlags:
-            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1465,10 +1465,10 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
                 return AARUF_ERROR_INCORRECT_DATA_SIZE;
             }
 
-            for(int i = 0; i < ctx->tracksHeader.entries; i++)
-                if(sector_address >= ctx->trackEntries[i].start && sector_address <= ctx->trackEntries[i].end)
+            for(int i = 0; i < ctx->tracks_header.entries; i++)
+                if(sector_address >= ctx->track_entries[i].start && sector_address <= ctx->track_entries[i].end)
                 {
-                    buffer[0] = ctx->trackEntries[i].flags;
+                    buffer[0] = ctx->track_entries[i].flags;
                     TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
                     return AARUF_STATUS_OK;
                 }
@@ -1476,7 +1476,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             FATAL("Track not found");
             return AARUF_ERROR_TRACK_NOT_FOUND;
         case CdTrackIsrc:
-            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1491,10 +1491,10 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
                 return AARUF_ERROR_INCORRECT_DATA_SIZE;
             }
 
-            for(int i = 0; i < ctx->tracksHeader.entries; i++)
-                if(sector_address >= ctx->trackEntries[i].start && sector_address <= ctx->trackEntries[i].end)
+            for(int i = 0; i < ctx->tracks_header.entries; i++)
+                if(sector_address >= ctx->track_entries[i].start && sector_address <= ctx->track_entries[i].end)
                 {
-                    memcpy(buffer, ctx->trackEntries[i].isrc, 12);
+                    memcpy(buffer, ctx->track_entries[i].isrc, 12);
                     TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
                     return AARUF_STATUS_OK;
                 }
@@ -1502,7 +1502,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             FATAL("Track not found");
             return AARUF_ERROR_TRACK_NOT_FOUND;
         case CdSectorSubchannel:
-            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1528,7 +1528,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdCmi:
-            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1554,7 +1554,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdSectorInformation:
-            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1580,7 +1580,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdSectorNumber:
-            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1606,7 +1606,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdSectorIed:
-            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1632,7 +1632,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdSectorEdc:
-            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1658,7 +1658,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdTitleKeyDecrypted:
-            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1684,7 +1684,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case AppleSonyTag:
-            if(ctx->imageInfo.MetadataMediaType != BlockMedia)
+            if(ctx->image_info.MetadataMediaType != BlockMedia)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1710,7 +1710,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case AppleProfileTag:
-            if(ctx->imageInfo.MetadataMediaType != BlockMedia)
+            if(ctx->image_info.MetadataMediaType != BlockMedia)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1736,7 +1736,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case PriamDataTowerTag:
-            if(ctx->imageInfo.MetadataMediaType != BlockMedia)
+            if(ctx->image_info.MetadataMediaType != BlockMedia)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");

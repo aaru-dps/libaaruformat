@@ -30,26 +30,26 @@
 #include "internal.h"
 #include "log.h"
 
-static void cleanup_failed_create(aaruformatContext *ctx)
+static void cleanup_failed_create(aaruformat_context *ctx)
 {
     if(ctx == NULL) return;
 
-    if(ctx->sectorHashMap != NULL)
+    if(ctx->sector_hash_map != NULL)
     {
-        free_map(ctx->sectorHashMap);
-        ctx->sectorHashMap = NULL;
+        free_map(ctx->sector_hash_map);
+        ctx->sector_hash_map = NULL;
     }
 
-    if(ctx->indexEntries != NULL)
+    if(ctx->index_entries != NULL)
     {
-        utarray_free(ctx->indexEntries);
-        ctx->indexEntries = NULL;
+        utarray_free(ctx->index_entries);
+        ctx->index_entries = NULL;
     }
 
-    if(ctx->userDataDdtBig != NULL)
+    if(ctx->user_data_ddt2 != NULL)
     {
-        free(ctx->userDataDdtBig);
-        ctx->userDataDdtBig = NULL;
+        free(ctx->user_data_ddt2);
+        ctx->user_data_ddt2 = NULL;
     }
 
     if(ctx->spamsum_context != NULL)
@@ -64,10 +64,10 @@ static void cleanup_failed_create(aaruformatContext *ctx)
         ctx->blake3_context = NULL;
     }
 
-    if(ctx->eccCdContext != NULL)
+    if(ctx->ecc_cd_context != NULL)
     {
-        free(ctx->eccCdContext);
-        ctx->eccCdContext = NULL;
+        free(ctx->ecc_cd_context);
+        ctx->ecc_cd_context = NULL;
     }
 
     if(ctx->readableSectorTags != NULL)
@@ -297,7 +297,7 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
 
     // Allocate context
     TRACE("Allocating memory for context");
-    aaruformatContext *ctx = malloc(sizeof(aaruformatContext));
+    aaruformat_context *ctx = malloc(sizeof(aaruformat_context));
     if(ctx == NULL)
     {
         FATAL("Not enough memory to create context");
@@ -307,7 +307,7 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
         return NULL;
     }
 
-    memset(ctx, 0, sizeof(aaruformatContext));
+    memset(ctx, 0, sizeof(aaruformat_context));
 
     // Create the image file
     TRACE("Creating image file %s", filepath);
@@ -386,29 +386,29 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
             // Ensure it fits in the Application buffer (64 bytes including null terminator)
             if(app_name_utf8_len < 64)
             {
-                u_strToUTF8(ctx->imageInfo.Application, 64, NULL, app_name_utf16, app_name_utf16_len, &status);
+                u_strToUTF8(ctx->image_info.Application, 64, NULL, app_name_utf16, app_name_utf16_len, &status);
 
                 if(U_FAILURE(status))
                 {
                     TRACE("Error converting application name to UTF-8: %d, using raw bytes", status);
                     // Fallback: just copy what we can
-                    memset(ctx->imageInfo.Application, 0, 64);
-                    memcpy(ctx->imageInfo.Application, ctx->header.application, AARU_HEADER_APP_NAME_LEN);
+                    memset(ctx->image_info.Application, 0, 64);
+                    memcpy(ctx->image_info.Application, ctx->header.application, AARU_HEADER_APP_NAME_LEN);
                 }
             }
             else
             {
                 TRACE("Application name too long for buffer, truncating");
-                u_strToUTF8(ctx->imageInfo.Application, 63, NULL, app_name_utf16, app_name_utf16_len, &status);
-                ctx->imageInfo.Application[63] = '\0';
+                u_strToUTF8(ctx->image_info.Application, 63, NULL, app_name_utf16, app_name_utf16_len, &status);
+                ctx->image_info.Application[63] = '\0';
             }
         }
         else
         {
             TRACE("Error getting UTF-8 length: %d, using raw bytes", status);
             // Fallback: just copy what we can
-            memset(ctx->imageInfo.Application, 0, 64);
-            memcpy(ctx->imageInfo.Application, ctx->header.application, AARU_HEADER_APP_NAME_LEN);
+            memset(ctx->image_info.Application, 0, 64);
+            memcpy(ctx->image_info.Application, ctx->header.application, AARU_HEADER_APP_NAME_LEN);
         }
 
         free(app_name_utf16);
@@ -417,95 +417,95 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
     {
         TRACE("Could not allocate memory for UTF-16 conversion, using raw bytes");
         // Fallback: just copy what we can
-        memset(ctx->imageInfo.Application, 0, 64);
-        memcpy(ctx->imageInfo.Application, ctx->header.application, AARU_HEADER_APP_NAME_LEN);
+        memset(ctx->image_info.Application, 0, 64);
+        memcpy(ctx->image_info.Application, ctx->header.application, AARU_HEADER_APP_NAME_LEN);
     }
 
     // Set application version string directly in the fixed-size array
-    memset(ctx->imageInfo.ApplicationVersion, 0, 32);
-    sprintf(ctx->imageInfo.ApplicationVersion, "%d.%d", ctx->header.applicationMajorVersion,
+    memset(ctx->image_info.ApplicationVersion, 0, 32);
+    sprintf(ctx->image_info.ApplicationVersion, "%d.%d", ctx->header.applicationMajorVersion,
             ctx->header.applicationMinorVersion);
 
     // Set image version string directly in the fixed-size array
-    memset(ctx->imageInfo.Version, 0, 32);
-    sprintf(ctx->imageInfo.Version, "%d.%d", ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
+    memset(ctx->image_info.Version, 0, 32);
+    sprintf(ctx->image_info.Version, "%d.%d", ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
 
-    ctx->imageInfo.MediaType            = ctx->header.mediaType;
-    ctx->imageInfo.ImageSize            = 0;
-    ctx->imageInfo.CreationTime         = ctx->header.creationTime;
-    ctx->imageInfo.LastModificationTime = ctx->header.lastWrittenTime;
-    ctx->imageInfo.MetadataMediaType    = aaruf_get_xml_mediatype(ctx->header.mediaType);
-    ctx->imageInfo.SectorSize           = sector_size;
+    ctx->image_info.MediaType            = ctx->header.mediaType;
+    ctx->image_info.ImageSize            = 0;
+    ctx->image_info.CreationTime         = ctx->header.creationTime;
+    ctx->image_info.LastModificationTime = ctx->header.lastWrittenTime;
+    ctx->image_info.MetadataMediaType    = aaruf_get_xml_mediatype(ctx->header.mediaType);
+    ctx->image_info.SectorSize           = sector_size;
 
     // Initialize caches
     TRACE("Initializing caches");
-    ctx->blockHeaderCache.cache     = NULL;
-    const uint64_t cache_divisor    = (uint64_t)ctx->imageInfo.SectorSize * (1ULL << ctx->shift);
-    ctx->blockHeaderCache.max_items = cache_divisor == 0 ? 0 : MAX_CACHE_SIZE / cache_divisor;
-    ctx->blockCache.cache           = NULL;
-    ctx->blockCache.max_items       = ctx->blockHeaderCache.max_items;
+    ctx->block_header_cache.cache     = NULL;
+    const uint64_t cache_divisor      = (uint64_t)ctx->image_info.SectorSize * (1ULL << ctx->shift);
+    ctx->block_header_cache.max_items = cache_divisor == 0 ? 0 : MAX_CACHE_SIZE / cache_divisor;
+    ctx->block_cache.cache            = NULL;
+    ctx->block_cache.max_items        = ctx->block_header_cache.max_items;
 
     // TODO: Cache tracks and sessions?
 
     // Initialize ECC for Compact Disc
     TRACE("Initializing Compact Disc ECC");
-    ctx->eccCdContext = (CdEccContext *)aaruf_ecc_cd_init();
+    ctx->ecc_cd_context = (CdEccContext *)aaruf_ecc_cd_init();
 
-    ctx->magic               = AARU_MAGIC;
-    ctx->libraryMajorVersion = LIBAARUFORMAT_MAJOR_VERSION;
-    ctx->libraryMinorVersion = LIBAARUFORMAT_MINOR_VERSION;
+    ctx->magic                 = AARU_MAGIC;
+    ctx->library_major_version = LIBAARUFORMAT_MAJOR_VERSION;
+    ctx->library_minor_version = LIBAARUFORMAT_MINOR_VERSION;
 
     if(!is_tape)
     {  // Initialize DDT2
         TRACE("Initializing DDT2");
-        ctx->inMemoryDdt                           = true;
-        ctx->userDataDdtHeader.identifier          = DeDuplicationTable2;
-        ctx->userDataDdtHeader.type                = UserData;
-        ctx->userDataDdtHeader.compression         = None;
-        ctx->userDataDdtHeader.tableLevel          = 0;
-        ctx->userDataDdtHeader.previousLevelOffset = 0;
-        ctx->userDataDdtHeader.negative            = negative_sectors;
-        ctx->userDataDdtHeader.blocks              = user_sectors + overflow_sectors + negative_sectors;
-        ctx->userDataDdtHeader.overflow            = overflow_sectors;
-        ctx->userDataDdtHeader.start               = 0;
-        ctx->userDataDdtHeader.blockAlignmentShift = parsed_options.block_alignment;
-        ctx->userDataDdtHeader.dataShift           = parsed_options.data_shift;
-        ctx->userDataDdtHeader.sizeType            = BigDdtSizeType;
+        ctx->in_memory_ddt                            = true;
+        ctx->user_data_ddt_header.identifier          = DeDuplicationTable2;
+        ctx->user_data_ddt_header.type                = UserData;
+        ctx->user_data_ddt_header.compression         = None;
+        ctx->user_data_ddt_header.tableLevel          = 0;
+        ctx->user_data_ddt_header.previousLevelOffset = 0;
+        ctx->user_data_ddt_header.negative            = negative_sectors;
+        ctx->user_data_ddt_header.blocks              = user_sectors + overflow_sectors + negative_sectors;
+        ctx->user_data_ddt_header.overflow            = overflow_sectors;
+        ctx->user_data_ddt_header.start               = 0;
+        ctx->user_data_ddt_header.blockAlignmentShift = parsed_options.block_alignment;
+        ctx->user_data_ddt_header.dataShift           = parsed_options.data_shift;
+        ctx->user_data_ddt_header.sizeType            = BigDdtSizeType;
 
         if(parsed_options.table_shift == -1)
         {
             const uint64_t total_sectors = user_sectors + overflow_sectors + negative_sectors;
 
             if(total_sectors < 0x8388608ULL)
-                ctx->userDataDdtHeader.tableShift = 0;
+                ctx->user_data_ddt_header.tableShift = 0;
             else
-                ctx->userDataDdtHeader.tableShift = 22;
+                ctx->user_data_ddt_header.tableShift = 22;
         }
         else
-            ctx->userDataDdtHeader.tableShift =
+            ctx->user_data_ddt_header.tableShift =
                 parsed_options.table_shift > 0 ? (uint8_t)parsed_options.table_shift : 0;
 
-        ctx->userDataDdtHeader.levels = ctx->userDataDdtHeader.tableShift > 0 ? 2 : 1;
+        ctx->user_data_ddt_header.levels = ctx->user_data_ddt_header.tableShift > 0 ? 2 : 1;
 
-        uint8_t effective_table_shift = ctx->userDataDdtHeader.tableShift;
+        uint8_t effective_table_shift = ctx->user_data_ddt_header.tableShift;
         if(effective_table_shift >= 63)
         {
             TRACE("Clamping table shift from %u to 62 to avoid overflow", effective_table_shift);
-            effective_table_shift             = 62;
-            ctx->userDataDdtHeader.tableShift = effective_table_shift;
+            effective_table_shift                = 62;
+            ctx->user_data_ddt_header.tableShift = effective_table_shift;
         }
 
-        const uint64_t sectors_per_entry = 1ULL << effective_table_shift;
-        ctx->userDataDdtHeader.entries   = ctx->userDataDdtHeader.blocks / sectors_per_entry;
-        if(ctx->userDataDdtHeader.blocks % sectors_per_entry != 0 || ctx->userDataDdtHeader.entries == 0)
-            ctx->userDataDdtHeader.entries++;
+        const uint64_t sectors_per_entry  = 1ULL << effective_table_shift;
+        ctx->user_data_ddt_header.entries = ctx->user_data_ddt_header.blocks / sectors_per_entry;
+        if(ctx->user_data_ddt_header.blocks % sectors_per_entry != 0 || ctx->user_data_ddt_header.entries == 0)
+            ctx->user_data_ddt_header.entries++;
 
         TRACE("Initializing primary/single DDT");
-        if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
+        if(ctx->user_data_ddt_header.sizeType == BigDdtSizeType)
         {
-            ctx->userDataDdtBig =
-                (uint32_t *)calloc(ctx->userDataDdtHeader.entries, sizeof(uint32_t));  // All entries to zero
-            if(ctx->userDataDdtBig == NULL)
+            ctx->user_data_ddt2 =
+                (uint32_t *)calloc(ctx->user_data_ddt_header.entries, sizeof(uint32_t));  // All entries to zero
+            if(ctx->user_data_ddt2 == NULL)
             {
                 FATAL("Not enough memory to allocate primary DDT (big)");
                 errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
@@ -516,42 +516,42 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
         }
 
         // Set the primary DDT offset (just after the header, block aligned)
-        ctx->primaryDdtOffset         = sizeof(AaruHeaderV2);  // Start just after the header
-        const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
-        ctx->primaryDdtOffset         = ctx->primaryDdtOffset + alignment_mask & ~alignment_mask;
+        ctx->primary_ddt_offset       = sizeof(AaruHeaderV2);  // Start just after the header
+        const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
+        ctx->primary_ddt_offset       = ctx->primary_ddt_offset + alignment_mask & ~alignment_mask;
 
-        TRACE("Primary DDT will be placed at offset %" PRIu64, ctx->primaryDdtOffset);
+        TRACE("Primary DDT will be placed at offset %" PRIu64, ctx->primary_ddt_offset);
 
         // Calculate size of primary DDT table
-        const uint64_t primary_table_size = ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+        const uint64_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint32_t);
 
         // Calculate where data blocks can start (after primary DDT + header)
-        if(ctx->userDataDdtHeader.tableShift > 0)
+        if(ctx->user_data_ddt_header.tableShift > 0)
         {
-            const uint64_t data_start_position = ctx->primaryDdtOffset + sizeof(DdtHeader2) + primary_table_size;
-            ctx->nextBlockPosition             = data_start_position + alignment_mask & ~alignment_mask;
+            const uint64_t data_start_position = ctx->primary_ddt_offset + sizeof(DdtHeader2) + primary_table_size;
+            ctx->next_block_position           = data_start_position + alignment_mask & ~alignment_mask;
         }
         else
-            ctx->nextBlockPosition = ctx->primaryDdtOffset;  // Single-level DDT can start anywhere
+            ctx->next_block_position = ctx->primary_ddt_offset;  // Single-level DDT can start anywhere
     }
     else
     {
         // Fill needed values
-        ctx->userDataDdtHeader.blockAlignmentShift = parsed_options.block_alignment;
-        ctx->userDataDdtHeader.dataShift           = parsed_options.data_shift;
+        ctx->user_data_ddt_header.blockAlignmentShift = parsed_options.block_alignment;
+        ctx->user_data_ddt_header.dataShift           = parsed_options.data_shift;
 
         // Calculate aligned next block position
         const uint64_t alignment_mask = (1ULL << parsed_options.block_alignment) - 1;
-        ctx->nextBlockPosition        = sizeof(AaruHeaderV2);  // Start just after the header
-        ctx->nextBlockPosition        = ctx->nextBlockPosition + alignment_mask & ~alignment_mask;
+        ctx->next_block_position      = sizeof(AaruHeaderV2);  // Start just after the header
+        ctx->next_block_position      = ctx->next_block_position + alignment_mask & ~alignment_mask;
         ctx->is_tape                  = 1;
-        ctx->tapeDdt                  = NULL;
+        ctx->tape_ddt                 = NULL;
     }
 
-    TRACE("Data blocks will start at position %" PRIu64, ctx->nextBlockPosition);
+    TRACE("Data blocks will start at position %" PRIu64, ctx->next_block_position);
 
     // Position file pointer at the data start position
-    if(fseek(ctx->imageStream, ctx->nextBlockPosition, SEEK_SET) != 0)
+    if(fseek(ctx->imageStream, ctx->next_block_position, SEEK_SET) != 0)
     {
         FATAL("Could not seek to data start position");
         errno = AARUF_ERROR_CANNOT_CREATE_FILE;
@@ -563,9 +563,9 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
     // Initialize index entries array
     TRACE("Initializing index entries array");
     const UT_icd index_entry_icd = {sizeof(IndexEntry), NULL, NULL, NULL};
-    utarray_new(ctx->indexEntries, &index_entry_icd);
+    utarray_new(ctx->index_entries, &index_entry_icd);
 
-    if(ctx->indexEntries == NULL)
+    if(ctx->index_entries == NULL)
     {
         FATAL("Not enough memory to create index entries array");
         errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
@@ -579,7 +579,7 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
     ctx->lzma_dict_size      = parsed_options.dictionary;
     ctx->deduplicate         = parsed_options.deduplicate;
     if(ctx->deduplicate)
-        ctx->sectorHashMap = create_map(ctx->userDataDdtHeader.blocks * 25 / 100);  // 25% of total sectors
+        ctx->sector_hash_map = create_map(ctx->user_data_ddt_header.blocks * 25 / 100);  // 25% of total sectors
 
     ctx->rewinded           = false;
     ctx->last_written_block = 0;
@@ -615,7 +615,7 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
     }
 
     // Is writing
-    ctx->isWriting = true;
+    ctx->is_writing = true;
 
     TRACE("Exiting aaruf_create() = %p", ctx);
     // Return context

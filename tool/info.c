@@ -69,7 +69,7 @@ static const char *format_filetime(uint64_t filetime)
 
 int info(const char *path)
 {
-    aaruformatContext   *ctx          = NULL;
+    aaruformat_context  *ctx          = NULL;
     char                *strBuffer    = NULL;
     UErrorCode           u_error_code = U_ZERO_ERROR;
     uint                 i            = 0;
@@ -86,7 +86,7 @@ int info(const char *path)
 
     printf("AaruFormat context information:\n");
     printf("Magic number: %8.8s\n", (char *)&ctx->magic);
-    printf("Library version: %d.%d\n", ctx->libraryMajorVersion, ctx->libraryMinorVersion);
+    printf("Library version: %d.%d\n", ctx->library_major_version, ctx->library_minor_version);
     printf("AaruFormat header:\n");
     printf("\tIdentifier: %8.8s\n", (char *)&ctx->header.identifier);
 
@@ -107,11 +107,11 @@ int info(const char *path)
 
     if(ctx->sector_prefix != NULL) printf("Sector prefix array has been read.\n");
 
-    if(ctx->sectorPrefixCorrected != NULL) printf("Sector prefix corrected array has been read.\n");
+    if(ctx->sector_prefix_corrected != NULL) printf("Sector prefix corrected array has been read.\n");
 
     if(ctx->sector_suffix != NULL) printf("Sector suffix array has been read.\n");
 
-    if(ctx->sectorSuffixCorrected != NULL) printf("Sector suffix corrected array has been read.\n");
+    if(ctx->sector_suffix_corrected != NULL) printf("Sector suffix corrected array has been read.\n");
 
     if(ctx->sector_subchannel != NULL) printf("Sector subchannel array has been read.\n");
 
@@ -119,15 +119,15 @@ int info(const char *path)
 
     printf("Shift is %d (%d bytes).\n", ctx->shift, 1 << ctx->shift);
 
-    if(ctx->inMemoryDdt) printf("User-data DDT resides in memory.\n");
+    if(ctx->in_memory_ddt) printf("User-data DDT resides in memory.\n");
 
-    if(ctx->userDataDdt != NULL) printf("User-data DDT has been read to memory.\n");
+    if(ctx->user_data_ddt != NULL) printf("User-data DDT has been read to memory.\n");
 
-    if(ctx->mappedMemoryDdtSize > 0) printf("Mapped memory DDT has %zu bytes", ctx->mappedMemoryDdtSize);
+    if(ctx->mapped_memory_ddt_size > 0) printf("Mapped memory DDT has %zu bytes", ctx->mapped_memory_ddt_size);
 
-    if(ctx->sectorPrefixDdt != NULL) printf("Sector prefix DDT has been read to memory.\n");
+    if(ctx->sector_prefix_ddt != NULL) printf("Sector prefix DDT has been read to memory.\n");
 
-    if(ctx->sectorPrefixDdt != NULL) printf("Sector suffix DDT has been read to memory.\n");
+    if(ctx->sector_prefix_ddt != NULL) printf("Sector suffix DDT has been read to memory.\n");
 
     uint32_t cylinders       = 0;
     uint32_t heads           = 0;
@@ -421,181 +421,183 @@ int info(const char *path)
     }
 
     // TODO: Table format?
-    if(ctx->tracksHeader.identifier == TracksBlock)
+    if(ctx->tracks_header.identifier == TracksBlock)
     {
         printf("Tracks block:\n");
-        for(i = 0; i < ctx->tracksHeader.entries; i++)
+        for(i = 0; i < ctx->tracks_header.entries; i++)
         {
             printf("\tTrack entry %d:\n", i);
-            printf("\t\tSequence: %d\n", ctx->trackEntries[i].sequence);
-            printf("\t\tType: %d\n", ctx->trackEntries[i].type);
-            printf("\t\tStart: %lld\n", ctx->trackEntries[i].start);
-            printf("\t\tEnd: %lld\n", ctx->trackEntries[i].end);
-            printf("\t\tPregap: %lld\n", ctx->trackEntries[i].pregap);
-            printf("\t\tSession: %d\n", ctx->trackEntries[i].session);
-            printf("\t\tISRC: %.13s\n", ctx->trackEntries[i].isrc);
-            printf("\t\tFlags: %d\n", ctx->trackEntries[i].flags);
+            printf("\t\tSequence: %d\n", ctx->track_entries[i].sequence);
+            printf("\t\tType: %d\n", ctx->track_entries[i].type);
+            printf("\t\tStart: %lld\n", ctx->track_entries[i].start);
+            printf("\t\tEnd: %lld\n", ctx->track_entries[i].end);
+            printf("\t\tPregap: %lld\n", ctx->track_entries[i].pregap);
+            printf("\t\tSession: %d\n", ctx->track_entries[i].session);
+            printf("\t\tISRC: %.13s\n", ctx->track_entries[i].isrc);
+            printf("\t\tFlags: %d\n", ctx->track_entries[i].flags);
         }
     }
 
-    if(ctx->cicmBlockHeader.identifier == CicmBlock)
+    if(ctx->cicm_block_header.identifier == CicmBlock)
     {
         printf("CICM block:\n");
-        printf("%s", ctx->cicmBlock);
+        printf("%s", ctx->cicm_block);
     }
 
     // TODO: Table format?
-    if(ctx->dumpHardwareHeader.identifier == DumpHardwareBlock)
+    if(ctx->dump_hardware_header.identifier == DumpHardwareBlock)
     {
         printf("Dump hardware block:\n");
 
-        for(i = 0; i < ctx->dumpHardwareHeader.entries; i++)
+        for(i = 0; i < ctx->dump_hardware_header.entries; i++)
         {
             printf("\tDump hardware entry %d\n", i);
 
-            if(ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength > 0)
+            if(ctx->dump_hardware_entries_with_data[i].entry.manufacturerLength > 0)
             {
-                strBuffer = malloc(ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength + 1);
-                memset(strBuffer, 0, ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength + 1);
+                strBuffer = malloc(ctx->dump_hardware_entries_with_data[i].entry.manufacturerLength + 1);
+                memset(strBuffer, 0, ctx->dump_hardware_entries_with_data[i].entry.manufacturerLength + 1);
                 ucnv_convert(NULL, "UTF-8", strBuffer,
-                             (int)ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength,
-                             (char *)ctx->dumpHardwareEntriesWithData[i].manufacturer,
-                             (int)ctx->dumpHardwareEntriesWithData[i].entry.manufacturerLength, &u_error_code);
+                             (int)ctx->dump_hardware_entries_with_data[i].entry.manufacturerLength,
+                             (char *)ctx->dump_hardware_entries_with_data[i].manufacturer,
+                             (int)ctx->dump_hardware_entries_with_data[i].entry.manufacturerLength, &u_error_code);
                 printf("\t\tManufacturer: %s\n", strBuffer);
                 free(strBuffer);
             }
 
-            if(ctx->dumpHardwareEntriesWithData[i].entry.modelLength > 0)
+            if(ctx->dump_hardware_entries_with_data[i].entry.modelLength > 0)
             {
-                strBuffer = malloc(ctx->dumpHardwareEntriesWithData[i].entry.modelLength + 1);
-                memset(strBuffer, 0, ctx->dumpHardwareEntriesWithData[i].entry.modelLength + 1);
-                ucnv_convert(NULL, "UTF-8", strBuffer, (int)ctx->dumpHardwareEntriesWithData[i].entry.modelLength,
-                             (char *)ctx->dumpHardwareEntriesWithData[i].model,
-                             (int)ctx->dumpHardwareEntriesWithData[i].entry.modelLength, &u_error_code);
+                strBuffer = malloc(ctx->dump_hardware_entries_with_data[i].entry.modelLength + 1);
+                memset(strBuffer, 0, ctx->dump_hardware_entries_with_data[i].entry.modelLength + 1);
+                ucnv_convert(NULL, "UTF-8", strBuffer, (int)ctx->dump_hardware_entries_with_data[i].entry.modelLength,
+                             (char *)ctx->dump_hardware_entries_with_data[i].model,
+                             (int)ctx->dump_hardware_entries_with_data[i].entry.modelLength, &u_error_code);
                 printf("\t\tModel: %s\n", strBuffer);
                 free(strBuffer);
             }
 
-            if(ctx->dumpHardwareEntriesWithData[i].entry.revisionLength > 0)
+            if(ctx->dump_hardware_entries_with_data[i].entry.revisionLength > 0)
             {
-                strBuffer = malloc(ctx->dumpHardwareEntriesWithData[i].entry.revisionLength + 1);
-                memset(strBuffer, 0, ctx->dumpHardwareEntriesWithData[i].entry.revisionLength + 1);
-                ucnv_convert(NULL, "UTF-8", strBuffer, (int)ctx->dumpHardwareEntriesWithData[i].entry.revisionLength,
-                             (char *)ctx->dumpHardwareEntriesWithData[i].revision,
-                             (int)ctx->dumpHardwareEntriesWithData[i].entry.revisionLength, &u_error_code);
+                strBuffer = malloc(ctx->dump_hardware_entries_with_data[i].entry.revisionLength + 1);
+                memset(strBuffer, 0, ctx->dump_hardware_entries_with_data[i].entry.revisionLength + 1);
+                ucnv_convert(NULL, "UTF-8", strBuffer,
+                             (int)ctx->dump_hardware_entries_with_data[i].entry.revisionLength,
+                             (char *)ctx->dump_hardware_entries_with_data[i].revision,
+                             (int)ctx->dump_hardware_entries_with_data[i].entry.revisionLength, &u_error_code);
                 printf("\t\tRevision: %s\n", strBuffer);
                 free(strBuffer);
             }
 
-            if(ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength > 0)
+            if(ctx->dump_hardware_entries_with_data[i].entry.firmwareLength > 0)
             {
-                strBuffer = malloc(ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength + 1);
-                memset(strBuffer, 0, ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength + 1);
-                ucnv_convert(NULL, "UTF-8", strBuffer, (int)ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength,
-                             (char *)ctx->dumpHardwareEntriesWithData[i].firmware,
-                             (int)ctx->dumpHardwareEntriesWithData[i].entry.firmwareLength, &u_error_code);
+                strBuffer = malloc(ctx->dump_hardware_entries_with_data[i].entry.firmwareLength + 1);
+                memset(strBuffer, 0, ctx->dump_hardware_entries_with_data[i].entry.firmwareLength + 1);
+                ucnv_convert(NULL, "UTF-8", strBuffer,
+                             (int)ctx->dump_hardware_entries_with_data[i].entry.firmwareLength,
+                             (char *)ctx->dump_hardware_entries_with_data[i].firmware,
+                             (int)ctx->dump_hardware_entries_with_data[i].entry.firmwareLength, &u_error_code);
                 printf("\t\tFirmware version: %s\n", strBuffer);
                 free(strBuffer);
             }
 
-            if(ctx->dumpHardwareEntriesWithData[i].entry.serialLength > 0)
+            if(ctx->dump_hardware_entries_with_data[i].entry.serialLength > 0)
             {
-                strBuffer = malloc(ctx->dumpHardwareEntriesWithData[i].entry.serialLength + 1);
-                memset(strBuffer, 0, ctx->dumpHardwareEntriesWithData[i].entry.serialLength + 1);
-                ucnv_convert(NULL, "UTF-8", strBuffer, (int)ctx->dumpHardwareEntriesWithData[i].entry.serialLength,
-                             (char *)ctx->dumpHardwareEntriesWithData[i].serial,
-                             (int)ctx->dumpHardwareEntriesWithData[i].entry.serialLength, &u_error_code);
+                strBuffer = malloc(ctx->dump_hardware_entries_with_data[i].entry.serialLength + 1);
+                memset(strBuffer, 0, ctx->dump_hardware_entries_with_data[i].entry.serialLength + 1);
+                ucnv_convert(NULL, "UTF-8", strBuffer, (int)ctx->dump_hardware_entries_with_data[i].entry.serialLength,
+                             (char *)ctx->dump_hardware_entries_with_data[i].serial,
+                             (int)ctx->dump_hardware_entries_with_data[i].entry.serialLength, &u_error_code);
                 printf("\t\tSerial number: %s\n", strBuffer);
                 free(strBuffer);
             }
 
-            if(ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength > 0)
+            if(ctx->dump_hardware_entries_with_data[i].entry.softwareNameLength > 0)
             {
-                strBuffer = malloc(ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength + 1);
-                memset(strBuffer, 0, ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength + 1);
+                strBuffer = malloc(ctx->dump_hardware_entries_with_data[i].entry.softwareNameLength + 1);
+                memset(strBuffer, 0, ctx->dump_hardware_entries_with_data[i].entry.softwareNameLength + 1);
                 ucnv_convert(NULL, "UTF-8", strBuffer,
-                             (int)ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength,
-                             (char *)ctx->dumpHardwareEntriesWithData[i].softwareName,
-                             (int)ctx->dumpHardwareEntriesWithData[i].entry.softwareNameLength, &u_error_code);
+                             (int)ctx->dump_hardware_entries_with_data[i].entry.softwareNameLength,
+                             (char *)ctx->dump_hardware_entries_with_data[i].softwareName,
+                             (int)ctx->dump_hardware_entries_with_data[i].entry.softwareNameLength, &u_error_code);
                 printf("\t\tSoftware name: %s\n", strBuffer);
                 free(strBuffer);
             }
 
-            if(ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength > 0)
+            if(ctx->dump_hardware_entries_with_data[i].entry.softwareVersionLength > 0)
             {
-                strBuffer = malloc(ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength + 1);
-                memset(strBuffer, 0, ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength + 1);
+                strBuffer = malloc(ctx->dump_hardware_entries_with_data[i].entry.softwareVersionLength + 1);
+                memset(strBuffer, 0, ctx->dump_hardware_entries_with_data[i].entry.softwareVersionLength + 1);
                 ucnv_convert(NULL, "UTF-8", strBuffer,
-                             (int)ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength,
-                             (char *)ctx->dumpHardwareEntriesWithData[i].softwareVersion,
-                             (int)ctx->dumpHardwareEntriesWithData[i].entry.softwareVersionLength, &u_error_code);
+                             (int)ctx->dump_hardware_entries_with_data[i].entry.softwareVersionLength,
+                             (char *)ctx->dump_hardware_entries_with_data[i].softwareVersion,
+                             (int)ctx->dump_hardware_entries_with_data[i].entry.softwareVersionLength, &u_error_code);
                 printf("\t\tSoftware version: %s\n", strBuffer);
                 free(strBuffer);
             }
 
-            if(ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength > 0)
+            if(ctx->dump_hardware_entries_with_data[i].entry.softwareOperatingSystemLength > 0)
             {
-                strBuffer = malloc(ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength + 1);
-                memset(strBuffer, 0, ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength + 1);
+                strBuffer = malloc(ctx->dump_hardware_entries_with_data[i].entry.softwareOperatingSystemLength + 1);
+                memset(strBuffer, 0, ctx->dump_hardware_entries_with_data[i].entry.softwareOperatingSystemLength + 1);
                 ucnv_convert(NULL, "UTF-8", strBuffer,
-                             (int)ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength,
-                             (char *)ctx->dumpHardwareEntriesWithData[i].softwareOperatingSystem,
-                             (int)ctx->dumpHardwareEntriesWithData[i].entry.softwareOperatingSystemLength,
+                             (int)ctx->dump_hardware_entries_with_data[i].entry.softwareOperatingSystemLength,
+                             (char *)ctx->dump_hardware_entries_with_data[i].softwareOperatingSystem,
+                             (int)ctx->dump_hardware_entries_with_data[i].entry.softwareOperatingSystemLength,
                              &u_error_code);
                 printf("\t\tSoftware operating system: %s\n", strBuffer);
                 free(strBuffer);
             }
 
-            for(uint j = 0; j < ctx->dumpHardwareEntriesWithData[i].entry.extents; j++)
+            for(uint j = 0; j < ctx->dump_hardware_entries_with_data[i].entry.extents; j++)
             {
                 printf("\t\tExtent %d:\n", j);
-                printf("\t\t\tStart: %llu\n", ctx->dumpHardwareEntriesWithData[i].extents[j].start);
-                printf("\t\t\tEnd: %llu\n", ctx->dumpHardwareEntriesWithData[i].extents[j].end);
+                printf("\t\t\tStart: %llu\n", ctx->dump_hardware_entries_with_data[i].extents[j].start);
+                printf("\t\t\tEnd: %llu\n", ctx->dump_hardware_entries_with_data[i].extents[j].end);
             }
         }
     }
 
-    if(ctx->eccCdContext != NULL) printf("CD ECC has been initialized.\n");
+    if(ctx->ecc_cd_context != NULL) printf("CD ECC has been initialized.\n");
 
-    printf("There are %d data tracks.\n", ctx->numberOfDataTracks);
+    printf("There are %d data tracks.\n", ctx->number_of_data_tracks);
 
     // TODO: ctx->readableSectorTags;
 
-    if(ctx->blockHeaderCache.max_items > 0)
+    if(ctx->block_header_cache.max_items > 0)
     {
-        if(ctx->blockHeaderCache.cache != NULL) printf("Block header cache has been initialized.\n");
-        printf("Block header cache can contain a maximum of %llu items.\n", ctx->blockHeaderCache.max_items);
+        if(ctx->block_header_cache.cache != NULL) printf("Block header cache has been initialized.\n");
+        printf("Block header cache can contain a maximum of %llu items.\n", ctx->block_header_cache.max_items);
     }
 
-    if(ctx->blockCache.max_items > 0)
+    if(ctx->block_cache.max_items > 0)
     {
-        if(ctx->blockCache.cache != NULL) printf("Block cache has been initialized.\n");
-        printf("Block cache can contain a maximum of %llu items.\n", ctx->blockCache.max_items);
+        if(ctx->block_cache.cache != NULL) printf("Block cache has been initialized.\n");
+        printf("Block cache can contain a maximum of %llu items.\n", ctx->block_cache.max_items);
     }
 
     printf("Aaru's ImageInfo:\n");
-    printf("\tHas partitions?: %s\n", ctx->imageInfo.HasPartitions ? "yes" : "no");
-    printf("\tHas sessions?: %s\n", ctx->imageInfo.HasSessions ? "yes" : "no");
-    printf("\tImage size without headers: %llu bytes\n", ctx->imageInfo.ImageSize);
-    printf("\tImage contains %llu sectors\n", ctx->imageInfo.Sectors);
-    printf("\tBiggest sector is %d bytes\n", ctx->imageInfo.SectorSize);
-    printf("\tImage version: %s\n", ctx->imageInfo.Version);
+    printf("\tHas partitions?: %s\n", ctx->image_info.HasPartitions ? "yes" : "no");
+    printf("\tHas sessions?: %s\n", ctx->image_info.HasSessions ? "yes" : "no");
+    printf("\tImage size without headers: %llu bytes\n", ctx->image_info.ImageSize);
+    printf("\tImage contains %llu sectors\n", ctx->image_info.Sectors);
+    printf("\tBiggest sector is %d bytes\n", ctx->image_info.SectorSize);
+    printf("\tImage version: %s\n", ctx->image_info.Version);
 
-    if(ctx->imageInfo.Application != NULL)
+    if(ctx->image_info.Application != NULL)
     {
         strBuffer = malloc(65);
         memset(strBuffer, 0, 65);
-        ucnv_convert(NULL, "UTF-16LE", strBuffer, 64, (const char *)ctx->imageInfo.Application, 64, &u_error_code);
+        ucnv_convert(NULL, "UTF-16LE", strBuffer, 64, (const char *)ctx->image_info.Application, 64, &u_error_code);
         if(u_error_code == U_ZERO_ERROR) printf("\tApplication: %s\n", strBuffer);
         free(strBuffer);
     }
 
-    if(ctx->imageInfo.ApplicationVersion != NULL)
-        printf("\tApplication version: %s\n", ctx->imageInfo.ApplicationVersion);
-    printf("\tCreation time: %s\n", format_filetime(ctx->imageInfo.CreationTime));
-    printf("\tLast written time: %s\n", format_filetime(ctx->imageInfo.LastModificationTime));
-    printf("\tMedia type: %u (%s)\n", ctx->imageInfo.MediaType, media_type_to_string(ctx->imageInfo.MediaType));
-    printf("\tXML media type: %d\n", ctx->imageInfo.MetadataMediaType);
+    if(ctx->image_info.ApplicationVersion != NULL)
+        printf("\tApplication version: %s\n", ctx->image_info.ApplicationVersion);
+    printf("\tCreation time: %s\n", format_filetime(ctx->image_info.CreationTime));
+    printf("\tLast written time: %s\n", format_filetime(ctx->image_info.LastModificationTime));
+    printf("\tMedia type: %u (%s)\n", ctx->image_info.MediaType, media_type_to_string(ctx->image_info.MediaType));
+    printf("\tXML media type: %d\n", ctx->image_info.MetadataMediaType);
 
     if(ctx->checksums.hasMd5)
     {

@@ -131,18 +131,18 @@ int32_t aaruf_verify_image(void *context)
 {
     TRACE("Entering aaruf_verify_image(%p)", context);
 
-    aaruformatContext *ctx           = NULL;
-    uint64_t           crc64         = 0;
-    size_t             read_bytes    = 0;
-    void              *buffer        = NULL;
-    crc64_ctx         *crc64_context = NULL;
-    BlockHeader        block_header;
-    DdtHeader          ddt_header;
-    DdtHeader2         ddt2_header;
-    TracksHeader       tracks_header;
-    uint32_t           signature     = 0;
-    UT_array          *index_entries = NULL;
-    int32_t            status        = AARUF_STATUS_OK;
+    aaruformat_context *ctx           = NULL;
+    uint64_t            crc64         = 0;
+    size_t              read_bytes    = 0;
+    void               *buffer        = NULL;
+    crc64_ctx          *crc64_context = NULL;
+    BlockHeader         block_header;
+    DdtHeader           ddt_header;
+    DdtHeader2          ddt2_header;
+    TracksHeader        tracks_header;
+    uint32_t            signature     = 0;
+    UT_array           *index_entries = NULL;
+    int32_t             status        = AARUF_STATUS_OK;
 
     if(context == NULL)
     {

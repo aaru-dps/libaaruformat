@@ -28,18 +28,18 @@
 
 int cli_compare(const char *path1, const char *path2)
 {
-    aaruformatContext *ctx1              = NULL;
-    aaruformatContext *ctx2              = NULL;
-    uint8_t           *buffer1           = NULL;
-    uint8_t           *buffer2           = NULL;
-    uint32_t           buffer1_length    = 0;
-    uint32_t           buffer2_length    = 0;
-    uint64_t           total_sectors     = 0;
-    uint64_t           different_sectors = 0;
-    uint64_t           sectors_processed = 0;
-    int                result            = 0;
-    int32_t            read_result1      = 0;
-    int32_t            read_result2      = 0;
+    aaruformat_context *ctx1              = NULL;
+    aaruformat_context *ctx2              = NULL;
+    uint8_t            *buffer1           = NULL;
+    uint8_t            *buffer2           = NULL;
+    uint32_t            buffer1_length    = 0;
+    uint32_t            buffer2_length    = 0;
+    uint64_t            total_sectors     = 0;
+    uint64_t            different_sectors = 0;
+    uint64_t            sectors_processed = 0;
+    int                 result            = 0;
+    int32_t             read_result1      = 0;
+    int32_t             read_result2      = 0;
 
     printf("Opening first image: %s\n", path1);
     ctx1 = aaruf_open(path1);
@@ -60,32 +60,32 @@ int cli_compare(const char *path1, const char *path2)
 
     // Access image information through context structure
     printf("\nImage Information:\n");
-    printf("Image 1: %llu sectors, %u bytes per sector\n", (unsigned long long)ctx1->imageInfo.Sectors,
-           ctx1->imageInfo.SectorSize);
-    printf("Image 2: %llu sectors, %u bytes per sector\n", (unsigned long long)ctx2->imageInfo.Sectors,
-           ctx2->imageInfo.SectorSize);
+    printf("Image 1: %llu sectors, %u bytes per sector\n", (unsigned long long)ctx1->image_info.Sectors,
+           ctx1->image_info.SectorSize);
+    printf("Image 2: %llu sectors, %u bytes per sector\n", (unsigned long long)ctx2->image_info.Sectors,
+           ctx2->image_info.SectorSize);
 
-    if(ctx1->imageInfo.Sectors != ctx2->imageInfo.Sectors)
+    if(ctx1->image_info.Sectors != ctx2->image_info.Sectors)
     {
         fprintf(stderr, "Warning: Images have different number of sectors\n");
         total_sectors =
-            ctx1->imageInfo.Sectors < ctx2->imageInfo.Sectors ? ctx1->imageInfo.Sectors : ctx2->imageInfo.Sectors;
+            ctx1->image_info.Sectors < ctx2->image_info.Sectors ? ctx1->image_info.Sectors : ctx2->image_info.Sectors;
         printf("Will compare first %llu sectors\n", (unsigned long long)total_sectors);
     }
-    else { total_sectors = ctx1->imageInfo.Sectors; }
+    else { total_sectors = ctx1->image_info.Sectors; }
 
-    if(ctx1->imageInfo.SectorSize != ctx2->imageInfo.SectorSize)
+    if(ctx1->image_info.SectorSize != ctx2->image_info.SectorSize)
     {
-        fprintf(stderr, "Error: Images have different sector sizes (%u vs %u)\n", ctx1->imageInfo.SectorSize,
-                ctx2->imageInfo.SectorSize);
+        fprintf(stderr, "Error: Images have different sector sizes (%u vs %u)\n", ctx1->image_info.SectorSize,
+                ctx2->image_info.SectorSize);
         aaruf_close(ctx1);
         aaruf_close(ctx2);
         return -1;
     }
 
     // Allocate buffers for sector data
-    buffer1 = malloc(ctx1->imageInfo.SectorSize);
-    buffer2 = malloc(ctx2->imageInfo.SectorSize);
+    buffer1 = malloc(ctx1->image_info.SectorSize);
+    buffer2 = malloc(ctx2->image_info.SectorSize);
     if(buffer1 == NULL || buffer2 == NULL)
     {
         fprintf(stderr, "Error: Could not allocate memory for sector buffers\n");
@@ -103,8 +103,8 @@ int cli_compare(const char *path1, const char *path2)
     // Compare sectors
     for(uint64_t sector = 0; sector < total_sectors; sector++)
     {
-        buffer1_length = ctx1->imageInfo.SectorSize;
-        buffer2_length = ctx2->imageInfo.SectorSize;
+        buffer1_length = ctx1->image_info.SectorSize;
+        buffer2_length = ctx2->image_info.SectorSize;
 
         read_result1 = aaruf_read_sector(ctx1, sector, false, buffer1, &buffer1_length);
         read_result2 = aaruf_read_sector(ctx2, sector, false, buffer2, &buffer2_length);

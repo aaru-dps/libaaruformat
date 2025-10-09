@@ -123,7 +123,7 @@
  * @see tapeFileHashEntry for the hash table entry structure
  * @see process_tape_partition_block() for partition metadata processing
  */
-void process_tape_files_block(aaruformatContext *ctx, const IndexEntry *entry)
+void process_tape_files_block(aaruformat_context *ctx, const IndexEntry *entry)
 {
     long           pos              = 0;
     size_t         read_bytes       = 0;
@@ -160,7 +160,7 @@ void process_tape_files_block(aaruformatContext *ctx, const IndexEntry *entry)
         return;
     }
 
-    ctx->imageInfo.ImageSize += sizeof(TapeFileEntry) * tape_file_header.entries;
+    ctx->image_info.ImageSize += sizeof(TapeFileEntry) * tape_file_header.entries;
 
     uint8_t *buffer = malloc(sizeof(TapeFileEntry) * tape_file_header.entries);
     if(buffer == NULL)
@@ -207,7 +207,7 @@ void process_tape_files_block(aaruformatContext *ctx, const IndexEntry *entry)
 
         // Replace if exists, add if new
         tapeFileHashEntry *old_entry = NULL;
-        HASH_REPLACE(hh, ctx->tapeFiles, key, sizeof(uint64_t), hash_entry, old_entry);
+        HASH_REPLACE(hh, ctx->tape_files, key, sizeof(uint64_t), hash_entry, old_entry);
 
         // Free old entry if it was replaced
         if(old_entry != NULL)
@@ -343,7 +343,7 @@ void process_tape_files_block(aaruformatContext *ctx, const IndexEntry *entry)
  * @see TapePartitionHashEntry for the hash table entry structure
  * @see process_tape_files_block() for tape file metadata processing
  */
-void process_tape_partitions_block(aaruformatContext *ctx, const IndexEntry *entry)
+void process_tape_partitions_block(aaruformat_context *ctx, const IndexEntry *entry)
 {
     long                pos                   = 0;
     size_t              read_bytes            = 0;
@@ -380,7 +380,7 @@ void process_tape_partitions_block(aaruformatContext *ctx, const IndexEntry *ent
         return;
     }
 
-    ctx->imageInfo.ImageSize += sizeof(TapePartitionEntry) * tape_partition_header.entries;
+    ctx->image_info.ImageSize += sizeof(TapePartitionEntry) * tape_partition_header.entries;
 
     uint8_t *buffer = malloc(sizeof(TapePartitionEntry) * tape_partition_header.entries);
     if(buffer == NULL)
@@ -427,7 +427,7 @@ void process_tape_partitions_block(aaruformatContext *ctx, const IndexEntry *ent
 
         // Replace if exists, add if new
         TapePartitionHashEntry *old_entry = NULL;
-        HASH_REPLACE(hh, ctx->tapePartitions, key, sizeof(uint8_t), hash_entry, old_entry);
+        HASH_REPLACE(hh, ctx->tape_partitions, key, sizeof(uint8_t), hash_entry, old_entry);
 
         // Free old entry if it was replaced
         if(old_entry != NULL)
@@ -572,7 +572,7 @@ int32_t aaruf_get_tape_file(const void *context, const uint8_t partition, const 
     TRACE("Entering aaruf_get_tape_file(%p, %d, %d, %llu, %llu)", context, partition, file, *starting_block,
           *ending_block);
 
-    const aaruformatContext *ctx = NULL;
+    const aaruformat_context *ctx = NULL;
 
     if(context == NULL)
     {
@@ -595,7 +595,7 @@ int32_t aaruf_get_tape_file(const void *context, const uint8_t partition, const 
 
     uint64_t           key   = (uint64_t)partition << 32 | file;
     tapeFileHashEntry *entry = NULL;
-    HASH_FIND(hh, ctx->tapeFiles, &key, sizeof(uint64_t), entry);
+    HASH_FIND(hh, ctx->tape_files, &key, sizeof(uint64_t), entry);
 
     if(entry == NULL)
     {
@@ -773,7 +773,7 @@ int32_t aaruf_set_tape_file(void *context, const uint8_t partition, const uint32
     TRACE("Entering aaruf_set_tape_file(%p, %d, %d, %llu, %llu)", context, partition, file, starting_block,
           ending_block);
 
-    aaruformatContext *ctx = NULL;
+    aaruformat_context *ctx = NULL;
 
     if(context == NULL)
     {
@@ -795,7 +795,7 @@ int32_t aaruf_set_tape_file(void *context, const uint8_t partition, const uint32
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -824,7 +824,7 @@ int32_t aaruf_set_tape_file(void *context, const uint8_t partition, const uint32
 
     // Replace if exists, add if new
     tapeFileHashEntry *old_entry = NULL;
-    HASH_REPLACE(hh, ctx->tapeFiles, key, sizeof(uint64_t), hash_entry, old_entry);
+    HASH_REPLACE(hh, ctx->tape_files, key, sizeof(uint64_t), hash_entry, old_entry);
 
     // Free old entry if it was replaced
     if(old_entry != NULL)
@@ -984,7 +984,7 @@ int32_t aaruf_get_tape_partition(const void *context, const uint8_t partition, u
 {
     TRACE("Entering aaruf_get_tape_partition(%p, %d, %llu, %llu)", context, partition, *starting_block, *ending_block);
 
-    const aaruformatContext *ctx = NULL;
+    const aaruformat_context *ctx = NULL;
 
     if(context == NULL)
     {
@@ -1007,7 +1007,7 @@ int32_t aaruf_get_tape_partition(const void *context, const uint8_t partition, u
 
     uint8_t                 key   = partition;
     TapePartitionHashEntry *entry = NULL;
-    HASH_FIND(hh, ctx->tapePartitions, &key, sizeof(uint8_t), entry);
+    HASH_FIND(hh, ctx->tape_partitions, &key, sizeof(uint8_t), entry);
 
     if(entry == NULL)
     {
@@ -1198,7 +1198,7 @@ int32_t aaruf_set_tape_partition(void *context, const uint8_t partition, const u
 {
     TRACE("Entering aaruf_set_tape_partition(%p, %d, %llu, %llu)", context, partition, starting_block, ending_block);
 
-    aaruformatContext *ctx = NULL;
+    aaruformat_context *ctx = NULL;
 
     if(context == NULL)
     {
@@ -1220,7 +1220,7 @@ int32_t aaruf_set_tape_partition(void *context, const uint8_t partition, const u
     }
 
     // Check we are writing
-    if(!ctx->isWriting)
+    if(!ctx->is_writing)
     {
         FATAL("Trying to write a read-only image");
 
@@ -1248,7 +1248,7 @@ int32_t aaruf_set_tape_partition(void *context, const uint8_t partition, const u
 
     // Replace if exists, add if new
     TapePartitionHashEntry *old_entry = NULL;
-    HASH_REPLACE(hh, ctx->tapePartitions, key, sizeof(uint8_t), hash_entry, old_entry);
+    HASH_REPLACE(hh, ctx->tape_partitions, key, sizeof(uint8_t), hash_entry, old_entry);
 
     // Free old entry if it was replaced
     if(old_entry != NULL)

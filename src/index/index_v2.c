@@ -78,7 +78,7 @@
  * @warning The function assumes ctx->header.indexOffset points to a valid index block.
  *          Invalid offsets may cause file access errors or reading incorrect data.
  */
-UT_array *process_index_v2(aaruformatContext *ctx)
+UT_array *process_index_v2(aaruformat_context *ctx)
 {
     TRACE("Entering process_index_v2(%p)", ctx);
 
@@ -224,7 +224,7 @@ UT_array *process_index_v2(aaruformatContext *ctx)
  * @warning CRC validation failure indicates potential data corruption and may suggest
  *          the image file is damaged or has been modified outside of library control.
  */
-int32_t verify_index_v2(aaruformatContext *ctx)
+int32_t verify_index_v2(aaruformat_context *ctx)
 {
     TRACE("Entering verify_index_v2(%p)", ctx);
 

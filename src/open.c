@@ -31,7 +31,7 @@
 #include "log.h"
 #include "utarray.h"
 
-static void cleanup_open_failure(aaruformatContext *ctx)
+static void cleanup_open_failure(aaruformat_context *ctx)
 {
     if(ctx == NULL) return;
 
@@ -127,13 +127,13 @@ static void cleanup_open_failure(aaruformatContext *ctx)
  */
 void *aaruf_open(const char *filepath)  // NOLINT(readability-function-size)
 {
-    aaruformatContext *ctx           = NULL;
-    int                error_no      = 0;
-    size_t             read_bytes    = 0;
-    long               pos           = 0;
-    int                i             = 0;
-    uint32_t           signature     = 0;
-    UT_array          *index_entries = NULL;
+    aaruformat_context *ctx           = NULL;
+    int                 error_no      = 0;
+    size_t              read_bytes    = 0;
+    long                pos           = 0;
+    int                 i             = 0;
+    uint32_t            signature     = 0;
+    UT_array           *index_entries = NULL;
 
 #ifdef USE_SLOG
 #include "slog.h"
@@ -146,7 +146,7 @@ void *aaruf_open(const char *filepath)  // NOLINT(readability-function-size)
     TRACE("Entering aaruf_open(%s)", filepath);
 
     TRACE("Allocating memory for context");
-    ctx = (aaruformatContext *)malloc(sizeof(aaruformatContext));
+    ctx = (aaruformat_context *)malloc(sizeof(aaruformat_context));
 
     if(ctx == NULL)
     {
@@ -157,7 +157,7 @@ void *aaruf_open(const char *filepath)  // NOLINT(readability-function-size)
         return NULL;
     }
 
-    memset(ctx, 0, sizeof(aaruformatContext));
+    memset(ctx, 0, sizeof(aaruformat_context));
 
     TRACE("Opening file %s", filepath);
     ctx->imageStream = fopen(filepath, "rb");
@@ -267,29 +267,29 @@ void *aaruf_open(const char *filepath)  // NOLINT(readability-function-size)
             // Ensure it fits in the Application buffer (64 bytes including null terminator)
             if(app_name_utf8_len < 64)
             {
-                u_strToUTF8(ctx->imageInfo.Application, 64, NULL, app_name_utf16, app_name_utf16_len, &status);
+                u_strToUTF8(ctx->image_info.Application, 64, NULL, app_name_utf16, app_name_utf16_len, &status);
 
                 if(U_FAILURE(status))
                 {
                     TRACE("Error converting application name to UTF-8: %d, using raw bytes", status);
                     // Fallback: just copy what we can
-                    memset(ctx->imageInfo.Application, 0, 64);
-                    strncpy(ctx->imageInfo.Application, (const char *)ctx->header.application, 63);
+                    memset(ctx->image_info.Application, 0, 64);
+                    strncpy(ctx->image_info.Application, (const char *)ctx->header.application, 63);
                 }
             }
             else
             {
                 TRACE("Application name too long for buffer, truncating");
-                u_strToUTF8(ctx->imageInfo.Application, 63, NULL, app_name_utf16, app_name_utf16_len, &status);
-                ctx->imageInfo.Application[63] = '\0';
+                u_strToUTF8(ctx->image_info.Application, 63, NULL, app_name_utf16, app_name_utf16_len, &status);
+                ctx->image_info.Application[63] = '\0';
             }
         }
         else
         {
             TRACE("Error getting UTF-8 length: %d, using raw bytes", status);
             // Fallback: just copy what we can
-            memset(ctx->imageInfo.Application, 0, 64);
-            strncpy(ctx->imageInfo.Application, (const char *)ctx->header.application, 63);
+            memset(ctx->image_info.Application, 0, 64);
+            strncpy(ctx->image_info.Application, (const char *)ctx->header.application, 63);
         }
 
         free(app_name_utf16);
@@ -298,20 +298,20 @@ void *aaruf_open(const char *filepath)  // NOLINT(readability-function-size)
     {
         TRACE("Could not allocate memory for UTF-16 conversion, using raw bytes");
         // Fallback: just copy what we can
-        memset(ctx->imageInfo.Application, 0, 64);
-        strncpy(ctx->imageInfo.Application, (const char *)ctx->header.application, 63);
+        memset(ctx->image_info.Application, 0, 64);
+        strncpy(ctx->image_info.Application, (const char *)ctx->header.application, 63);
     }
 
     // Set application version string directly in the fixed-size array
-    memset(ctx->imageInfo.ApplicationVersion, 0, 32);
-    sprintf(ctx->imageInfo.ApplicationVersion, "%d.%d", ctx->header.applicationMajorVersion,
+    memset(ctx->image_info.ApplicationVersion, 0, 32);
+    sprintf(ctx->image_info.ApplicationVersion, "%d.%d", ctx->header.applicationMajorVersion,
             ctx->header.applicationMinorVersion);
 
     // Set image version string directly in the fixed-size array
-    memset(ctx->imageInfo.Version, 0, 32);
-    sprintf(ctx->imageInfo.Version, "%d.%d", ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
+    memset(ctx->image_info.Version, 0, 32);
+    sprintf(ctx->image_info.Version, "%d.%d", ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
 
-    ctx->imageInfo.MediaType = ctx->header.mediaType;
+    ctx->image_info.MediaType = ctx->header.mediaType;
 
     // Read the index header
     TRACE("Reading index header at position %" PRIu64, ctx->header.indexOffset);
@@ -373,8 +373,8 @@ void *aaruf_open(const char *filepath)  // NOLINT(readability-function-size)
               entry->dataType, entry->offset);
     }
 
-    bool found_user_data_ddt = false;
-    ctx->imageInfo.ImageSize = 0;
+    bool found_user_data_ddt  = false;
+    ctx->image_info.ImageSize = 0;
     for(i = 0; i < utarray_len(index_entries); i++)
     {
         IndexEntry *entry = utarray_eltptr(index_entries, i);
@@ -486,43 +486,43 @@ void *aaruf_open(const char *filepath)  // NOLINT(readability-function-size)
         return NULL;
     }
 
-    ctx->imageInfo.CreationTime         = ctx->header.creationTime;
-    ctx->imageInfo.LastModificationTime = ctx->header.lastWrittenTime;
-    ctx->imageInfo.MetadataMediaType    = aaruf_get_xml_mediatype(ctx->header.mediaType);
+    ctx->image_info.CreationTime         = ctx->header.creationTime;
+    ctx->image_info.LastModificationTime = ctx->header.lastWrittenTime;
+    ctx->image_info.MetadataMediaType    = aaruf_get_xml_mediatype(ctx->header.mediaType);
 
-    if(ctx->geometryBlock.identifier != GeometryBlock && ctx->imageInfo.MetadataMediaType == BlockMedia)
+    if(ctx->geometry_block.identifier != GeometryBlock && ctx->image_info.MetadataMediaType == BlockMedia)
     {
-        ctx->Cylinders       = (uint32_t)(ctx->imageInfo.Sectors / 16 / 63);
-        ctx->Heads           = 16;
-        ctx->SectorsPerTrack = 63;
+        ctx->cylinders         = (uint32_t)(ctx->image_info.Sectors / 16 / 63);
+        ctx->heads             = 16;
+        ctx->sectors_per_track = 63;
     }
 
     // Initialize caches
     TRACE("Initializing caches");
-    ctx->blockHeaderCache.cache = NULL;
-    ctx->blockCache.cache       = NULL;
+    ctx->block_header_cache.cache = NULL;
+    ctx->block_cache.cache        = NULL;
 
-    const uint64_t cache_divisor = (uint64_t)ctx->imageInfo.SectorSize * (1ULL << ctx->shift);
+    const uint64_t cache_divisor = (uint64_t)ctx->image_info.SectorSize * (1ULL << ctx->shift);
     if(cache_divisor == 0)
     {
-        ctx->blockHeaderCache.max_items = 0;
-        ctx->blockCache.max_items       = 0;
+        ctx->block_header_cache.max_items = 0;
+        ctx->block_cache.max_items        = 0;
     }
     else
     {
-        ctx->blockHeaderCache.max_items = MAX_CACHE_SIZE / cache_divisor;
-        ctx->blockCache.max_items       = ctx->blockHeaderCache.max_items;
+        ctx->block_header_cache.max_items = MAX_CACHE_SIZE / cache_divisor;
+        ctx->block_cache.max_items        = ctx->block_header_cache.max_items;
     }
 
     // TODO: Cache tracks and sessions?
 
     // Initialize ECC for Compact Disc
     TRACE("Initializing ECC for Compact Disc");
-    ctx->eccCdContext = (CdEccContext *)aaruf_ecc_cd_init();
+    ctx->ecc_cd_context = (CdEccContext *)aaruf_ecc_cd_init();
 
-    ctx->magic               = AARU_MAGIC;
-    ctx->libraryMajorVersion = LIBAARUFORMAT_MAJOR_VERSION;
-    ctx->libraryMinorVersion = LIBAARUFORMAT_MINOR_VERSION;
+    ctx->magic                 = AARU_MAGIC;
+    ctx->library_major_version = LIBAARUFORMAT_MAJOR_VERSION;
+    ctx->library_minor_version = LIBAARUFORMAT_MINOR_VERSION;
 
     TRACE("Exiting aaruf_open() = %p", ctx);
     return ctx;

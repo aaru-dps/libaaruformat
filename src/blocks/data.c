@@ -68,7 +68,7 @@
  *          the context is destroyed. The function may replace existing data in the context.
  */
 
-int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
+int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
 {
     TRACE("Entering process_data_block(%p, %p)", ctx, entry);
     BlockHeader    block_header;
@@ -119,15 +119,15 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
         return AARUF_STATUS_OK;
     }
 
-    ctx->imageInfo.ImageSize += block_header.cmpLength;
+    ctx->image_info.ImageSize += block_header.cmpLength;
 
     // Unused, skip
     if(entry->dataType == UserData)
     {
-        if(block_header.sectorSize > ctx->imageInfo.SectorSize)
+        if(block_header.sectorSize > ctx->image_info.SectorSize)
         {
             TRACE("Setting sector size to %" PRIu64 " bytes", block_header.sectorSize);
-            ctx->imageInfo.SectorSize = block_header.sectorSize;
+            ctx->image_info.SectorSize = block_header.sectorSize;
         }
 
         TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
@@ -339,7 +339,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
     {
         case CdSectorPrefix:
         case CdSectorPrefixCorrected:
-            if(entry->dataType == CdSectorPrefixCorrected) { ctx->sectorPrefixCorrected = data; }
+            if(entry->dataType == CdSectorPrefixCorrected) { ctx->sector_prefix_corrected = data; }
             else
                 ctx->sector_prefix = data;
 
@@ -350,7 +350,7 @@ int32_t process_data_block(aaruformatContext *ctx, IndexEntry *entry)
         case CdSectorSuffix:
         case CdSectorSuffixCorrected:
             if(entry->dataType == CdSectorSuffixCorrected)
-                ctx->sectorSuffixCorrected = data;
+                ctx->sector_suffix_corrected = data;
             else
                 ctx->sector_suffix = data;
 
