@@ -3223,3 +3223,357 @@ int32_t aaruf_get_drive_firmware_revision(const void *context, uint8_t *buffer, 
     TRACE("Exiting aaruf_get_drive_firmware_revision(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
     return AARUF_STATUS_OK;
 }
+
+/**
+ * @brief Retrieves the total number of user-accessible sectors in the AaruFormat image.
+ *
+ * Returns the count of standard user data sectors in the image, excluding any negative (pre-gap)
+ * or overflow (post-gap) sectors. This represents the primary addressable sector range that contains
+ * the main user data, typically corresponding to the logical capacity of the storage medium as it
+ * would be seen by an operating system or file system. For optical media, this excludes lead-in and
+ * lead-out areas. For hard disks, this represents the standard LBA-addressable range.
+ *
+ * @param context Pointer to a valid aaruformat context (must be properly initialized).
+ * @param sectors Pointer to a uint64_t that receives the total user sector count on success.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully retrieved the user sector count. This is returned when:
+ *         - The context is valid and properly initialized
+ *         - The context magic number matches AARU_MAGIC
+ *         - The sectors parameter is successfully populated with the user sector count
+ *         - The value is taken from ctx->user_data_ddt_header.blocks
+ *         - For block devices: sectors typically equals the total capacity in sectors
+ *         - For optical media: sectors represents the user data area excluding lead-in/lead-out
+ *         - For tape media: sectors may represent the total block count across all files
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
+ *         - The context was not properly initialized by aaruf_open() or aaruf_create()
+ *
+ * @note Sector Range Context:
+ *       - User sectors represent the standard addressable range: 0 to (user_sectors - 1)
+ *       - Total addressable sectors = negative_sectors + user_sectors + overflow_sectors
+ *       - Negative sectors precede user sectors (pre-gap, lead-in)
+ *       - Overflow sectors follow user sectors (post-gap, lead-out)
+ *       - Use aaruf_get_negative_sectors() to get the negative sector count
+ *       - Use aaruf_get_overflow_sectors() to get the overflow sector count
+ *
+ * @note Media Type Considerations:
+ *       - **Optical Media (CD/DVD/BD)**: User sectors exclude lead-in and lead-out areas.
+ *         Negative sectors may contain TOC and pre-gap data. Overflow sectors may contain
+ *         post-gap and lead-out data.
+ *       - **Hard Disk Drives**: User sectors represent the full LBA range. Negative and
+ *         overflow sectors are typically zero unless capturing special areas.
+ *       - **Floppy Disks**: User sectors represent the standard formatted capacity.
+ *       - **Tape Media**: User sectors may represent the total block count. Negative and
+ *         overflow sectors are typically not used for tape.
+ *
+ * @note DDT Header Source:
+ *       - The value is retrieved from ctx->user_data_ddt_header.blocks
+ *       - The DDT (Deduplication and Data Table) header tracks sector allocation
+ *       - This field is populated during image creation with aaruf_create()
+ *       - The value is fixed for read-only images opened with aaruf_open()
+ *       - For write-enabled images, this represents the allocated capacity
+ *
+ * @note Addressing and I/O Operations:
+ *       - When reading/writing sectors with aaruf_read_sector() or aaruf_write_sector():
+ *         - Set negative=false and use sector_address in range [0, user_sectors - 1]
+ *         - For negative sectors: set negative=true, sector_address in [0, negative_sectors - 1]
+ *         - For overflow sectors: set negative=false, sector_address in [user_sectors, user_sectors + overflow_sectors - 1]
+ *
+ * @note Relationship to Image Creation:
+ *       - The user_sectors value is specified when calling aaruf_create()
+ *       - It should match the logical capacity of the medium being imaged
+ *       - For forensic images, ensure it matches the source medium exactly
+ *       - For virtual disks, set it to the desired capacity
+ */
+int32_t aaruf_get_user_sectors(const void *context, uint64_t *sectors)
+{
+    TRACE("Entering aaruf_get_user_sectors(%p, %p)", context, sectors);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_user_sectors() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_user_sectors() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    *sectors = ctx->user_data_ddt_header.blocks;
+
+    TRACE("Exiting aaruf_get_user_sectors(%p, %llu) = AARUF_STATUS_OK", context, *sectors);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Retrieves the number of negative (pre-gap) sectors in the AaruFormat image.
+ *
+ * Returns the count of negative sectors that precede the standard user data area. Negative sectors
+ * are used to capture pre-gap data, lead-in areas, and other metadata that exists before the main
+ * user-accessible storage region. This is particularly important for optical media (CD, DVD, BD)
+ * where the lead-in contains the Table of Contents (TOC) and other essential disc structures, and
+ * for audio CDs where pre-gap sectors contain silence or hidden tracks. For most hard disk and
+ * floppy disk images, this value is typically zero.
+ *
+ * @param context Pointer to a valid aaruformat context (must be properly initialized).
+ * @param sectors Pointer to a uint16_t that receives the negative sector count on success.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully retrieved the negative sector count. This is returned when:
+ *         - The context is valid and properly initialized
+ *         - The context magic number matches AARU_MAGIC
+ *         - The sectors parameter is successfully populated with the negative sector count
+ *         - The value is taken from ctx->user_data_ddt_header.negative
+ *         - For optical media with lead-in data: sectors may be non-zero
+ *         - For standard hard disk/floppy images: sectors is typically 0
+ *         - Maximum value is 65,535 (uint16_t limit)
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
+ *         - The context was not properly initialized by aaruf_open() or aaruf_create()
+ *
+ * @note Negative Sector Addressing:
+ *       - Negative sectors are addressed with the 'negative' flag set to true
+ *       - Sector addresses range from 0 to (negative_sectors - 1)
+ *       - When calling aaruf_read_sector() or aaruf_write_sector():
+ *         - Use negative=true
+ *         - Use sector_address in range [0, negative_sectors - 1]
+ *         - The actual logical position is before the user data area
+ *
+ * @note Optical Media Context:
+ *       - **CD-ROM/CD-DA**: Negative sectors contain lead-in area with TOC (Table of Contents).
+ *         The lead-in typically spans LBA -450000 to -1, though only a portion may be captured.
+ *         Pre-gap sectors (usually 150 sectors/2 seconds before each track) may also be stored
+ *         as negative sectors for the first track.
+ *       - **DVD**: May contain lead-in with disc structure information, copyright data, and
+ *         region codes. The lead-in area varies by format (DVD-ROM, DVD-R, DVD+R, etc.).
+ *       - **Blu-ray**: Lead-in contains disc information, burst cutting area (BCA), and other
+ *         metadata. The structure differs between BD-ROM, BD-R, and BD-RE.
+ *
+ * @note Hard Disk and Floppy Context:
+ *       - Hard disk drives: Negative sectors are typically zero unless capturing special
+ *         manufacturer reserved areas (HPA, DCO) that precede the standard user area.
+ *       - Floppy disks: Negative sectors are typically zero as floppies have a simple
+ *         linear sector layout without lead-in areas.
+ *
+ * @note Audio CD Hidden Tracks:
+ *       - Some audio CDs contain hidden tracks in the pre-gap of the first track
+ *       - These pre-gap sectors can extend up to several minutes before track 1
+ *       - Negative sectors can capture this "hidden" audio data
+ *       - The pre-gap for track 1 typically starts at LBA -150 (2 seconds)
+ *
+ * @note DDT Header Source:
+ *       - The value is retrieved from ctx->user_data_ddt_header.negative
+ *       - The DDT (Deduplication and Data Table) header tracks all sector allocation
+ *       - This field is populated during image creation with aaruf_create()
+ *       - The value is fixed for read-only images opened with aaruf_open()
+ *       - Maximum representable value is 65,535 (uint16_t)
+ *
+ * @note Total Addressable Space:
+ *       - Total sectors = negative_sectors + user_sectors + overflow_sectors
+ *       - The negative region comes first in logical order
+ *       - Followed by the user region [0, user_sectors - 1]
+ *       - Followed by the overflow region if present
+ *
+ * @note Relationship to Image Creation:
+ *       - The negative_sectors value is specified when calling aaruf_create()
+ *       - It should be set based on the medium type and imaging requirements:
+ *         - Optical discs: Set to the number of lead-in sectors captured
+ *         - Hard disks: Typically 0, unless capturing HPA/DCO areas
+ *         - Floppy disks: Typically 0
+ *         - Audio CDs: May be non-zero to capture pre-gap hidden tracks
+ *
+ * @warning The sectors parameter is only modified on success (AARUF_STATUS_OK).
+ *          On error, its value remains unchanged. Initialize it before calling
+ *          if a default value is needed on failure.
+ *
+ * @warning This function reads from the in-memory DDT header loaded during
+ *          aaruf_open() or set during aaruf_create(). It does not perform file
+ *          I/O operations and executes quickly.
+ *
+ * @warning The maximum negative sector count is 65,535 due to the uint16_t storage type.
+ *          If imaging optical media with larger lead-in areas, some data may not be
+ *          representable. This limit is generally sufficient for most practical cases.
+ *
+ * @warning Negative sector data may contain copy-protected or encrypted content
+ *          (e.g., CSS on DVDs, AACS on Blu-rays). Handle this data according to
+ *          applicable laws and licensing agreements.
+ */
+int32_t aaruf_get_negative_sectors(const void *context, uint16_t *sectors)
+{
+    TRACE("Entering aaruf_get_negative_sectors(%p, %p)", context, sectors);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_negative_sectors() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_negative_sectors() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    *sectors = ctx->user_data_ddt_header.negative;
+
+    TRACE("Exiting aaruf_get_negative_sectors(%p, %u) = AARUF_STATUS_OK", context, *sectors);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Retrieves the number of overflow (post-gap) sectors in the AaruFormat image.
+ *
+ * Returns the count of overflow sectors that follow the standard user data area. Overflow sectors
+ * are used to capture post-gap data, lead-out areas, and other metadata that exists after the main
+ * user-accessible storage region. This is particularly important for optical media (CD, DVD, BD)
+ * where the lead-out marks the physical end of the recorded data and contains disc finalization
+ * information, and for multi-session discs where gaps between sessions need to be preserved. For
+ * most hard disk and floppy disk images, this value is typically zero.
+ *
+ * @param context Pointer to a valid aaruformat context (must be properly initialized).
+ * @param sectors Pointer to a uint16_t that receives the overflow sector count on success.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully retrieved the overflow sector count. This is returned when:
+ *         - The context is valid and properly initialized
+ *         - The context magic number matches AARU_MAGIC
+ *         - The sectors parameter is successfully populated with the overflow sector count
+ *         - The value is taken from ctx->user_data_ddt_header.overflow
+ *         - For optical media with lead-out data: sectors may be non-zero
+ *         - For standard hard disk/floppy images: sectors is typically 0
+ *         - Maximum value is 65,535 (uint16_t limit)
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
+ *         - The context was not properly initialized by aaruf_open() or aaruf_create()
+ *
+ * @note Overflow Sector Addressing:
+ *       - Overflow sectors are addressed with the 'negative' flag set to false
+ *       - Sector addresses range from user_sectors to (user_sectors + overflow_sectors - 1)
+ *       - When calling aaruf_read_sector() or aaruf_write_sector():
+ *         - Use negative=false
+ *         - Use sector_address in range [user_sectors, user_sectors + overflow_sectors - 1]
+ *         - The actual logical position is after the user data area
+ *
+ * @note Optical Media Context:
+ *       - **CD-ROM/CD-DA**: Overflow sectors contain the lead-out area, which marks the physical
+ *         end of the disc's recorded data. The lead-out consists of unreadable sectors filled
+ *         with specific patterns.
+ *       - **DVD**: May contain lead-out with disc finalization data, middle area (for dual-layer),
+ *         and outer zone. DVD+R/RW discs may have substantial lead-out areas.
+ *       - **Blu-ray**: Lead-out contains disc finalization markers and padding. For multi-layer
+ *         discs, may include middle zones and outer areas.
+ *
+ * @note Multi-Session and Track Context:
+ *       - Multi-session optical discs have gaps between sessions
+ *       - Audio CDs with post-gap after the last track may use overflow sectors
+ *       - Track post-gaps (silence after audio tracks) typically 2 seconds/150 sectors
+ *
+ * @note Hard Disk and Floppy Context:
+ *       - Hard disk drives: Overflow sectors are typically zero unless capturing special
+ *         manufacturer reserved areas (like DCO or HPA) that follow the standard user area.
+ *       - Floppy disks: Overflow sectors are typically zero as floppies have a simple
+ *         linear sector layout without lead-out areas. They may contain mastering information.
+ *       - Some proprietary copy protection schemes may place data beyond the normal
+ *         capacity, which could be captured as overflow sectors.
+ *
+ * @note DDT Header Source:
+ *       - The value is retrieved from ctx->user_data_ddt_header.overflow
+ *       - The DDT (Deduplication and Data Table) header tracks all sector allocation
+ *       - This field is populated during image creation with aaruf_create()
+ *       - The value is fixed for read-only images opened with aaruf_open()
+ *       - Maximum representable value is 65,535 (uint16_t)
+ *
+ * @note Total Addressable Space:
+ *       - Total sectors = negative_sectors + user_sectors + overflow_sectors
+ *       - The negative region comes first in logical order
+ *       - Followed by the user region [0, user_sectors - 1]
+ *       - Followed by the overflow region at the end
+ *       - Overflow represents the final addressable range in the image
+ *
+ * @note Relationship to Image Creation:
+ *       - The overflow_sectors value is specified when calling aaruf_create()
+ *       - It should be set based on the medium type and imaging requirements:
+ *         - Optical discs: Set to the number of lead-out sectors captured
+ *         - Multi-session discs: May include inter-session gaps
+ *         - Hard disks: Typically 0, unless capturing post-user reserved areas
+ *         - Floppy disks: Typically 0
+ *         - Copy-protected media: May be non-zero to capture protection schemes
+ *
+ * @note Forensic Imaging Considerations:
+ *       - Some copy protection schemes intentionally place data in overflow regions
+ *       - These "overburn" areas extend beyond the disc's rated capacity
+ *       - Overflow sectors ensure complete forensic capture of all readable data
+ *       - Important for authenticity verification and copy protection analysis
+ *
+ * @warning The sectors parameter is only modified on success (AARUF_STATUS_OK).
+ *          On error, its value remains unchanged. Initialize it before calling
+ *          if a default value is needed on failure.
+ *
+ * @warning This function reads from the in-memory DDT header loaded during
+ *          aaruf_open() or set during aaruf_create(). It does not perform file
+ *          I/O operations and executes quickly.
+ *
+ * @warning The maximum overflow sector count is 65,535 due to the uint16_t storage type.
+ *          If imaging optical media with larger lead-out areas or extensive overburn
+ *          regions, some data may not be representable. This limit is generally
+ *          sufficient for most practical cases.
+ *
+ * @warning Overflow sector data may be difficult or impossible to read on some drives,
+ *          as it often resides in lead-out areas or beyond rated capacity. The presence
+ *          of overflow sectors in an image indicates the imaging drive was capable of
+ *          reading these extended areas, but other drives may not be able to access them.
+ */
+int32_t aaruf_get_overflow_sectors(const void *context, uint16_t *sectors)
+{
+    TRACE("Entering aaruf_get_overflow_sectors(%p, %p)", context, sectors);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_overflow_sectors() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_overflow_sectors() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    *sectors = ctx->user_data_ddt_header.overflow;
+
+    TRACE("Exiting aaruf_get_overflow_sectors(%p, %u) = AARUF_STATUS_OK", context, *sectors);
+    return AARUF_STATUS_OK;
+}
