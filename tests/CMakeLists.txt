@@ -33,3 +33,8 @@ add_executable(tests_run crc64.cpp spamsum.cpp crc32.c crc32.h flac.cpp lzma.cpp
 
 # Link libraries
 target_link_libraries(tests_run PRIVATE gtest gtest_main aaruformat)
+
+# Integrate with CTest (per-test reporting)
+enable_testing()
+include(GoogleTest)
+gtest_discover_tests(tests_run)
