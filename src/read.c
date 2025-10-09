@@ -1038,7 +1038,23 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                 case CdMode1:
                     memcpy(data + 16, bare_data, 2048);
 
-                    if(ctx->sector_prefix != NULL)
+                    if(ctx->sector_prefix_ddt2 != NULL)
+                    {
+                        const uint32_t prefix_ddt_entry = ctx->sector_prefix_ddt2[corrected_sector_address];
+                        const uint32_t prefix_status    = prefix_ddt_entry >> 28;
+                        const uint32_t prefix_index     = prefix_ddt_entry & 0x0FFFFFFF;
+
+                        if(prefix_status == SectorStatusMode1Correct)
+                        {
+                            aaruf_ecc_cd_reconstruct_prefix(data, trk.type, sector_address);
+                            res = AARUF_STATUS_OK;
+                        }
+                        else if(prefix_status == SectorStatusNotDumped)
+                            res = AARUF_STATUS_SECTOR_NOT_DUMPED;
+                        else
+                            memcpy(data, ctx->sector_prefix + prefix_index * 16, 16);
+                    }
+                    else if(ctx->sector_prefix != NULL)
                         memcpy(data, ctx->sector_prefix + corrected_sector_address * 16, 16);
                     else if(ctx->sector_prefix_ddt != NULL)
                     {
@@ -1069,7 +1085,23 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                         return res;
                     }
 
-                    if(ctx->sector_suffix != NULL)
+                    if(ctx->sector_suffix_ddt2 != NULL)
+                    {
+                        const uint32_t suffix_ddt_entry = ctx->sector_suffix_ddt2[corrected_sector_address];
+                        const uint32_t suffix_status    = suffix_ddt_entry >> 28;
+                        const uint32_t suffix_index     = suffix_ddt_entry & 0x0FFFFFFF;
+
+                        if(suffix_status == SectorStatusMode1Correct)
+                        {
+                            aaruf_ecc_cd_reconstruct(ctx->ecc_cd_context, data, trk.type);
+                            res = AARUF_STATUS_OK;
+                        }
+                        else if(suffix_status == SectorStatusNotDumped)
+                            res = AARUF_STATUS_SECTOR_NOT_DUMPED;
+                        else
+                            memcpy(data + 2064, ctx->sector_suffix + suffix_index * 288, 288);
+                    }
+                    else if(ctx->sector_suffix != NULL)
                         memcpy(data + 2064, ctx->sector_suffix + corrected_sector_address * 288, 288);
                     else if(ctx->sector_suffix_ddt != NULL)
                     {
@@ -1099,7 +1131,23 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                 case CdMode2Formless:
                 case CdMode2Form1:
                 case CdMode2Form2:
-                    if(ctx->sector_prefix != NULL)
+                    if(ctx->sector_prefix_ddt2 != NULL)
+                    {
+                        const uint32_t prefix_ddt_entry = ctx->sector_prefix_ddt2[corrected_sector_address];
+                        const uint32_t prefix_status    = prefix_ddt_entry >> 28;
+                        const uint32_t prefix_index     = prefix_ddt_entry & 0x0FFFFFFF;
+
+                        if(prefix_status == SectorStatusMode2Form1Ok || prefix_status == SectorStatusMode2Form2Ok)
+                        {
+                            aaruf_ecc_cd_reconstruct_prefix(data, trk.type, sector_address);
+                            res = AARUF_STATUS_OK;
+                        }
+                        else if(prefix_status == SectorStatusNotDumped)
+                            res = AARUF_STATUS_SECTOR_NOT_DUMPED;
+                        else
+                            memcpy(data, ctx->sector_prefix + prefix_index * 16, 16);
+                    }
+                    else if(ctx->sector_prefix != NULL)
                         memcpy(data, ctx->sector_prefix + corrected_sector_address * 16, 16);
                     else if(ctx->sector_prefix_ddt != NULL)
                     {
@@ -1130,7 +1178,32 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                         return res;
                     }
 
-                    if(ctx->mode2_subheaders != NULL && ctx->sector_suffix_ddt != NULL)
+                    if(ctx->mode2_subheaders != NULL && ctx->sector_suffix_ddt2 != NULL)
+                    {
+                        memcpy(data + 16, ctx->mode2_subheaders + corrected_sector_address * 8, 8);
+                        const uint32_t suffix_ddt_entry = ctx->sector_suffix_ddt2[corrected_sector_address];
+                        const uint32_t suffix_status    = suffix_ddt_entry >> 28;
+                        const uint32_t suffix_index     = suffix_ddt_entry & 0x0FFFFFFF;
+
+                        if(suffix_status == SectorStatusMode2Form1Ok)
+                        {
+                            memcpy(data + 24, bare_data, 2048);
+                            aaruf_ecc_cd_reconstruct(ctx->ecc_cd_context, data, CdMode2Form1);
+                        }
+                        else if(suffix_status == SectorStatusMode2Form2Ok ||
+                                suffix_status == SectorStatusMode2Form2NoCrc)
+                        {
+                            memcpy(data + 24, bare_data, 2324);
+                            if(suffix_status == SectorStatusMode2Form2Ok)
+                                aaruf_ecc_cd_reconstruct(ctx->ecc_cd_context, data, CdMode2Form2);
+                        }
+                        else if(suffix_status == SectorStatusNotDumped)
+                            res = AARUF_STATUS_SECTOR_NOT_DUMPED;
+                        else
+                            // Mode 2 where ECC failed
+                            memcpy(data + 24, bare_data, 2328);
+                    }
+                    else if(ctx->mode2_subheaders != NULL && ctx->sector_suffix_ddt != NULL)
                     {
                         memcpy(data + 16, ctx->mode2_subheaders + corrected_sector_address * 8, 8);
 
