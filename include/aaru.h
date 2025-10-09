@@ -818,7 +818,7 @@ typedef struct ImageInfo  // NOLINT
     int64_t  CreationTime;            ///< Image creation time
     int64_t  LastModificationTime;    ///< Image last modification time
     uint32_t MediaType;               ///< Media type represented by the image
-    uint8_t  XmlMediaType;            ///< Type of the media represented by the image to use in XML sidecars
+    uint8_t  MetadataMediaType;       ///< Type of the media represented by the image to use in XML sidecars
 } ImageInfo;
 
 /** \addtogroup SectorTags Per-sector metadata tag types

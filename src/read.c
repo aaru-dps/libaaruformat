@@ -695,7 +695,7 @@ int32_t aaruf_read_track_sector(void *context, uint8_t *data, const uint64_t sec
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+    if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
     {
         FATAL("Incorrect media type %d, expected OpticalDisc", ctx->imageInfo.XmlMediaType);
 
@@ -881,7 +881,7 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
     else
         corrected_sector_address += ctx->userDataDdtHeader.negative;
 
-    switch(ctx->imageInfo.XmlMediaType)
+    switch(ctx->imageInfo.MetadataMediaType)
     {
         case OpticalDisc:
             if(ctx->imageInfo.MediaType == DVDROM || ctx->imageInfo.MediaType == PS2DVD ||
@@ -1450,7 +1450,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
     switch(tag)
     {
         case CdTrackFlags:
-            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1476,7 +1476,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             FATAL("Track not found");
             return AARUF_ERROR_TRACK_NOT_FOUND;
         case CdTrackIsrc:
-            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1502,7 +1502,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             FATAL("Track not found");
             return AARUF_ERROR_TRACK_NOT_FOUND;
         case CdSectorSubchannel:
-            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1528,7 +1528,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdCmi:
-            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1554,7 +1554,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdSectorInformation:
-            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1580,7 +1580,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdSectorNumber:
-            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1606,7 +1606,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdSectorIed:
-            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1632,7 +1632,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdSectorEdc:
-            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1658,7 +1658,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdTitleKeyDecrypted:
-            if(ctx->imageInfo.XmlMediaType != OpticalDisc)
+            if(ctx->imageInfo.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1684,7 +1684,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case AppleSonyTag:
-            if(ctx->imageInfo.XmlMediaType != BlockMedia)
+            if(ctx->imageInfo.MetadataMediaType != BlockMedia)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1710,7 +1710,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case AppleProfileTag:
-            if(ctx->imageInfo.XmlMediaType != BlockMedia)
+            if(ctx->imageInfo.MetadataMediaType != BlockMedia)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
@@ -1736,7 +1736,7 @@ int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case PriamDataTowerTag:
-            if(ctx->imageInfo.XmlMediaType != BlockMedia)
+            if(ctx->imageInfo.MetadataMediaType != BlockMedia)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");

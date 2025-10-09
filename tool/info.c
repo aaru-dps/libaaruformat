@@ -595,7 +595,7 @@ int info(const char *path)
     printf("\tCreation time: %s\n", format_filetime(ctx->imageInfo.CreationTime));
     printf("\tLast written time: %s\n", format_filetime(ctx->imageInfo.LastModificationTime));
     printf("\tMedia type: %u (%s)\n", ctx->imageInfo.MediaType, media_type_to_string(ctx->imageInfo.MediaType));
-    printf("\tXML media type: %d\n", ctx->imageInfo.XmlMediaType);
+    printf("\tXML media type: %d\n", ctx->imageInfo.MetadataMediaType);
 
     if(ctx->checksums.hasMd5)
     {

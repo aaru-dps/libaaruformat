@@ -1530,7 +1530,7 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
 
     subchannel_block.cmpLength = subchannel_block.length;
 
-    if(ctx->imageInfo.XmlMediaType == OpticalDisc)
+    if(ctx->imageInfo.MetadataMediaType == OpticalDisc)
     {
         subchannel_block.type = CdSectorSubchannel;
         subchannel_block.length =
@@ -1579,7 +1579,7 @@ static void write_sector_subchannel(const aaruformatContext *ctx)
             }
         }
     }
-    else if(ctx->imageInfo.XmlMediaType == BlockMedia)
+    else if(ctx->imageInfo.MetadataMediaType == BlockMedia)
     {
         switch(ctx->imageInfo.MediaType)
         {

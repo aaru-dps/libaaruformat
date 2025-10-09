@@ -488,9 +488,9 @@ void *aaruf_open(const char *filepath)  // NOLINT(readability-function-size)
 
     ctx->imageInfo.CreationTime         = ctx->header.creationTime;
     ctx->imageInfo.LastModificationTime = ctx->header.lastWrittenTime;
-    ctx->imageInfo.XmlMediaType         = aaruf_get_xml_mediatype(ctx->header.mediaType);
+    ctx->imageInfo.MetadataMediaType    = aaruf_get_xml_mediatype(ctx->header.mediaType);
 
-    if(ctx->geometryBlock.identifier != GeometryBlock && ctx->imageInfo.XmlMediaType == BlockMedia)
+    if(ctx->geometryBlock.identifier != GeometryBlock && ctx->imageInfo.MetadataMediaType == BlockMedia)
     {
         ctx->Cylinders       = (uint32_t)(ctx->imageInfo.Sectors / 16 / 63);
         ctx->Heads           = 16;

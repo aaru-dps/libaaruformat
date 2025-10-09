@@ -396,11 +396,10 @@ int compare(const char *path1, const char *path2)
     tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Media type: ");
     tb_printf(mid_x + 14, rr++, TB_WHITE, TB_BLUE, "%u", ctx2->imageInfo.MediaType);
 
-    if(ctx1->MediaSequence > 0 || ctx1->LastMediaSequence > 0 ||
-       ctx2->MediaSequence > 0 || ctx2->LastMediaSequence > 0)
+    if(ctx1->MediaSequence > 0 || ctx1->LastMediaSequence > 0 || ctx2->MediaSequence > 0 || ctx2->LastMediaSequence > 0)
     {
-        tb_printf(2, lr++, TB_WHITE | TB_BOLD, TB_BLUE, "Media is number %d in a set of %d media",
-                  ctx1->MediaSequence, ctx1->LastMediaSequence);
+        tb_printf(2, lr++, TB_WHITE | TB_BOLD, TB_BLUE, "Media is number %d in a set of %d media", ctx1->MediaSequence,
+                  ctx1->LastMediaSequence);
 
         tb_printf(mid_x + 2, rr++, TB_WHITE | TB_BOLD, TB_BLUE, "Media is number %d in a set of %d media",
                   ctx2->MediaSequence, ctx2->LastMediaSequence);
@@ -439,20 +438,20 @@ int compare(const char *path1, const char *path2)
         tb_printf(mid_x + 27, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->DriveFirmwareRevision);
     }
     tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "XML media type: ");
-    tb_printf(18, lr++, TB_WHITE, TB_BLUE, "%d", ctx1->imageInfo.XmlMediaType);
+    tb_printf(18, lr++, TB_WHITE, TB_BLUE, "%d", ctx1->imageInfo.MetadataMediaType);
 
     tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "XML media type: ");
-    tb_printf(mid_x + 18, rr++, TB_WHITE, TB_BLUE, "%d", ctx2->imageInfo.XmlMediaType);
+    tb_printf(mid_x + 18, rr++, TB_WHITE, TB_BLUE, "%d", ctx2->imageInfo.MetadataMediaType);
 
-    if(ctx1->Cylinders > 0 || ctx1->Heads > 0 || ctx1->SectorsPerTrack > 0 ||
-       ctx2->Cylinders > 0 || ctx2->Heads > 0 || ctx2->SectorsPerTrack > 0)
+    if(ctx1->Cylinders > 0 || ctx1->Heads > 0 || ctx1->SectorsPerTrack > 0 || ctx2->Cylinders > 0 || ctx2->Heads > 0 ||
+       ctx2->SectorsPerTrack > 0)
     {
         tb_printf(2, lr++, TB_WHITE | TB_BOLD, TB_BLUE, "Media has %d cylinders, %d heads and %d sectors per track",
                   ctx1->Cylinders, ctx1->Heads, ctx1->SectorsPerTrack);
 
         tb_printf(mid_x + 2, rr++, TB_WHITE | TB_BOLD, TB_BLUE,
-                  "Media has %d cylinders, %d heads and %d sectors per track", ctx2->Cylinders,
-                  ctx2->Heads, ctx2->SectorsPerTrack);
+                  "Media has %d cylinders, %d heads and %d sectors per track", ctx2->Cylinders, ctx2->Heads,
+                  ctx2->SectorsPerTrack);
     }
 
     tb_present();
