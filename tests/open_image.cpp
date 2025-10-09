@@ -214,6 +214,64 @@ TEST_F(OpenImageFixture, open_floptical_v1)
     EXPECT_EQ(close_result, AARUF_STATUS_OK) << "Failed to close image";
 }
 
+TEST_F(OpenImageFixture, open_floptical_v2)
+{
+    char path[PATH_MAX];
+    char filename[PATH_MAX];
+
+    getcwd(path, PATH_MAX);
+    snprintf(filename, PATH_MAX, "%s/data/floptical.aif", path);
+
+    // Attempt to open the image file
+    void *context = aaruf_open(filename);
+
+    // Verify that the file was successfully opened
+    ASSERT_NE(context, nullptr) << "Failed to open floptical.aif";
+
+    // Get image info to verify it's a valid image
+    ImageInfo     image_info;
+    const int32_t result = aaruf_get_image_info(context, &image_info);
+
+    ASSERT_EQ(result, AARUF_STATUS_OK) << "Failed to get image info";
+
+    // Basic sanity checks on the image info
+    ASSERT_EQ(image_info.HasPartitions, false) << "Image should not have partitions";
+    ASSERT_EQ(image_info.HasSessions, false) << "Image should not have sessions";
+    ASSERT_EQ(image_info.ImageSize, 115) << "Unexpected image size";
+    ASSERT_EQ(image_info.Sectors, 40662) << "Unexpected number of sectors";
+    ASSERT_EQ(image_info.SectorSize, 512) << "Unexpected sector size";
+    ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
+    ASSERT_STREQ(image_info.Application, "aaruformattool") << "Unexpected application name";
+    ASSERT_STREQ(image_info.ApplicationVersion, "1.0") << "Unexpected application version";
+    ASSERT_EQ(image_info.CreationTime, 134045021406383110ULL) << "Unexpected creation time";
+    ASSERT_EQ(image_info.LastModificationTime, 134045021406383110ULL) << "Unexpected modification time";
+    ASSERT_EQ(image_info.MediaType, 662) << "Unexpected media type";
+    ASSERT_EQ(image_info.MetadataMediaType, 1) << "Unexpected metadata media type";
+
+    crc64_ctx *ctx = aaruf_crc64_init();
+    uint64_t   crc = 0;
+
+    for(int i = 0; i < 40662; i++)
+    {
+        uint8_t  buffer[512];
+        uint32_t length = sizeof(buffer);
+
+        const int32_t read_result = aaruf_read_sector(context, i, false, buffer, &length);
+        EXPECT_EQ(read_result, AARUF_STATUS_OK) << "Failed to read sector " << i;
+        EXPECT_EQ(length, 512U) << "Unexpected length for sector " << i;
+        aaruf_crc64_update(ctx, buffer, 512);
+    }
+
+    aaruf_crc64_final(ctx, &crc);
+    aaruf_crc64_free(ctx);
+
+    EXPECT_EQ(crc, 0x924451887b380a43) << "Unexpected CRC64 for image data";
+
+    // Close the image
+    const int32_t close_result = aaruf_close(context);
+    EXPECT_EQ(close_result, AARUF_STATUS_OK) << "Failed to close image";
+}
+
 // Test opening a non-existent file
 TEST_F(OpenImageFixture, OpenNonExistentFile)
 {
