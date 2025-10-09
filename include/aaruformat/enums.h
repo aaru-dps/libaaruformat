@@ -226,8 +226,7 @@ typedef enum
  */
 typedef enum
 {
-    SmallDdtSizeType = 0,  ///< Small sized DDT entries.
-    BigDdtSizeType   = 1   ///< Large sized DDT entries.
+    BigDdtSizeType = 1  ///< Large sized DDT entries.
 } DdtSizeType;
 
 /**

@@ -188,8 +188,10 @@ typedef struct aaruformatContext
     bool      inMemoryDdt;          ///< True if primary (and possibly secondary) DDT loaded.
     uint64_t *userDataDdt;          ///< Legacy flat DDT pointer (NULL when using v2 mini/big arrays).
     size_t    mappedMemoryDdtSize;  ///< Length of mmapped DDT if userDataDdt is mmapped.
-    uint32_t *sectorPrefixDdt;      ///< Legacy CD sector prefix DDT (deprecated by *_Mini/Big).
+    uint32_t *sectorPrefixDdt;      ///< Legacy CD sector prefix DDT (deprecated by *2).
     uint32_t *sectorSuffixDdt;      ///< Legacy CD sector suffix DDT.
+    uint32_t *sectorPrefixDdt2;     ///< CD sector prefix DDT V2.
+    uint32_t *sectorSuffixDdt2;     ///< CD sector suffix DDT V2.
 
     GeometryBlockHeader                 geometryBlock;        ///< Logical geometry block (if present).
     MetadataBlockHeader                 metadataBlockHeader;  ///< Metadata block header.
@@ -213,18 +215,14 @@ typedef struct aaruformatContext
     Checksums      checksums;  ///< Whole-image checksums discovered.
     mediaTagEntry *mediaTags;  ///< Hash table of extra media tags (uthash root).
 
-    DdtHeader2 userDataDdtHeader;    ///< Active user data DDT v2 header (primary table meta).
-    int        ddtVersion;           ///< DDT version in use (1=legacy, 2=v2 hierarchical).
-    uint16_t  *userDataDdtMini;      ///< DDT entries (small variant) primary/secondary current.
-    uint32_t  *userDataDdtBig;       ///< DDT entries (big variant) primary/secondary current.
-    uint16_t  *sectorPrefixDdtMini;  ///< CD sector prefix corrected DDT (small) if present.
-    uint16_t  *sectorSuffixDdtMini;  ///< CD sector suffix corrected DDT (small) if present.
+    DdtHeader2 userDataDdtHeader;  ///< Active user data DDT v2 header (primary table meta).
+    int        ddtVersion;         ///< DDT version in use (1=legacy, 2=v2 hierarchical).
+    uint32_t  *userDataDdtBig;     ///< DDT entries (big variant) primary/secondary current.
 
-    uint64_t  cachedDdtOffset;          ///< File offset of currently cached secondary DDT (0=none).
-    uint64_t  cachedDdtPosition;        ///< Position index of cached secondary DDT.
-    uint64_t  primaryDdtOffset;         ///< File offset of the primary DDT v2 table.
-    uint16_t *cachedSecondaryDdtSmall;  ///< Cached secondary table (small entries) or NULL.
-    uint32_t *cachedSecondaryDdtBig;    ///< Cached secondary table (big entries) or NULL.
+    uint64_t  cachedDdtOffset;        ///< File offset of currently cached secondary DDT (0=none).
+    uint64_t  cachedDdtPosition;      ///< Position index of cached secondary DDT.
+    uint64_t  primaryDdtOffset;       ///< File offset of the primary DDT v2 table.
+    uint32_t *cachedSecondaryDdtBig;  ///< Cached secondary table (big entries) or NULL.
 
     bool        isWriting;              ///< True if context opened/created for writing.
     BlockHeader currentBlockHeader;     ///< Header for block currently being assembled (write path).

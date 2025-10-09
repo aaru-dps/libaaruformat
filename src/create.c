@@ -43,12 +43,6 @@ static void cleanup_failed_create(aaruformatContext *ctx)
         ctx->indexEntries = NULL;
     }
 
-    if(ctx->userDataDdtMini != NULL)
-    {
-        free(ctx->userDataDdtMini);
-        ctx->userDataDdtMini = NULL;
-    }
-
     if(ctx->userDataDdtBig != NULL)
     {
         free(ctx->userDataDdtBig);
@@ -397,7 +391,7 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
 
     // Initialize caches
     TRACE("Initializing caches");
-    ctx->blockHeaderCache.cache = NULL;
+    ctx->blockHeaderCache.cache     = NULL;
     const uint64_t cache_divisor    = (uint64_t)ctx->imageInfo.SectorSize * (1ULL << ctx->shift);
     ctx->blockHeaderCache.max_items = cache_divisor == 0 ? 0 : MAX_CACHE_SIZE / cache_divisor;
     ctx->blockCache.cache           = NULL;
@@ -459,20 +453,7 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
             ctx->userDataDdtHeader.entries++;
 
         TRACE("Initializing primary/single DDT");
-        if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-        {
-            ctx->userDataDdtMini =
-                (uint16_t *)calloc(ctx->userDataDdtHeader.entries, sizeof(uint16_t));  // All entries to zero
-            if(ctx->userDataDdtMini == NULL)
-            {
-                FATAL("Not enough memory to allocate primary DDT (mini)");
-                errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
-                TRACE("Exiting aaruf_create() = NULL");
-                cleanup_failed_create(ctx);
-                return NULL;
-            }
-        }
-        else if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
+        if(ctx->userDataDdtHeader.sizeType == BigDdtSizeType)
         {
             ctx->userDataDdtBig =
                 (uint32_t *)calloc(ctx->userDataDdtHeader.entries, sizeof(uint32_t));  // All entries to zero
@@ -487,16 +468,14 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
         }
 
         // Set the primary DDT offset (just after the header, block aligned)
-        ctx->primaryDdtOffset        = sizeof(AaruHeaderV2);  // Start just after the header
+        ctx->primaryDdtOffset         = sizeof(AaruHeaderV2);  // Start just after the header
         const uint64_t alignment_mask = (1ULL << ctx->userDataDdtHeader.blockAlignmentShift) - 1;
-        ctx->primaryDdtOffset        = ctx->primaryDdtOffset + alignment_mask & ~alignment_mask;
+        ctx->primaryDdtOffset         = ctx->primaryDdtOffset + alignment_mask & ~alignment_mask;
 
         TRACE("Primary DDT will be placed at offset %" PRIu64, ctx->primaryDdtOffset);
 
         // Calculate size of primary DDT table
-        const uint64_t primary_table_size = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
-                                                ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
-                                                : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+        const uint64_t primary_table_size = ctx->userDataDdtHeader.entries * sizeof(uint32_t);
 
         // Calculate where data blocks can start (after primary DDT + header)
         if(ctx->userDataDdtHeader.tableShift > 0)
@@ -514,11 +493,11 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
         ctx->userDataDdtHeader.dataShift           = parsed_options.data_shift;
 
         // Calculate aligned next block position
-    const uint64_t alignment_mask = (1ULL << parsed_options.block_alignment) - 1;
-        ctx->nextBlockPosition       = sizeof(AaruHeaderV2);  // Start just after the header
-    ctx->nextBlockPosition       = ctx->nextBlockPosition + alignment_mask & ~alignment_mask;
-        ctx->is_tape                 = 1;
-        ctx->tapeDdt                 = NULL;
+        const uint64_t alignment_mask = (1ULL << parsed_options.block_alignment) - 1;
+        ctx->nextBlockPosition        = sizeof(AaruHeaderV2);  // Start just after the header
+        ctx->nextBlockPosition        = ctx->nextBlockPosition + alignment_mask & ~alignment_mask;
+        ctx->is_tape                  = 1;
+        ctx->tapeDdt                  = NULL;
     }
 
     TRACE("Data blocks will start at position %" PRIu64, ctx->nextBlockPosition);

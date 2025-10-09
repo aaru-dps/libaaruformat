@@ -371,8 +371,8 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
  *
  * **Memory Management Strategy:**
  * - **Mini-DDT Arrays**: Lazily allocated 16-bit arrays sized for total addressable space (negative + user + overflow)
- *   * sectorPrefixDdtMini: Tracks prefix status and buffer offsets (high 4 bits = status, low 12 bits = offset/16)
- *   * sectorSuffixDdtMini: Tracks suffix status and buffer offsets (high 4 bits = status, low 12 bits = offset/288)
+ *   * sectorPrefixDdt2: Tracks prefix status and buffer offsets (high 4 bits = status, low 12 bits = offset/16)
+ *   * sectorSuffixDdt2: Tracks suffix status and buffer offsets (high 4 bits = status, low 12 bits = offset/288)
  * - **Prefix Buffer**: Dynamically growing buffer storing non-standard 16-byte CD prefixes
  * - **Suffix Buffer**: Dynamically growing buffer storing non-standard CD suffixes (288 bytes for Mode 1, 4 bytes for
  * Mode 2 Form 2, 280 bytes for Mode 2 Form 1)
@@ -468,7 +468,7 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
  *         - length not in {512, 524, 532, 536} for supported block media types
  *
  * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
- *         - Failed to allocate mini-DDT arrays (sectorPrefixDdtMini, sectorSuffixDdtMini)
+ *         - Failed to allocate mini-DDT arrays (sectorPrefixDdt2, sectorSuffixDdt2)
  *         - Failed to allocate or grow prefix buffer (sector_prefix)
  *         - Failed to allocate or grow suffix buffer (sector_suffix)
  *         - Failed to allocate subheader buffer (mode2_subheaders)
@@ -686,13 +686,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                 case CdMode1:
 
                     // If we do not have a DDT V2 for sector prefix, create one
-                    if(ctx->sectorPrefixDdtMini == NULL)
+                    if(ctx->sectorPrefixDdt2 == NULL)
                     {
-                        ctx->sectorPrefixDdtMini =
-                            calloc(1, sizeof(uint16_t) * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
+                        ctx->sectorPrefixDdt2 =
+                            calloc(1, sizeof(uint32_t) * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
                                                           ctx->userDataDdtHeader.overflow));
 
-                        if(ctx->sectorPrefixDdtMini == NULL)
+                        if(ctx->sectorPrefixDdt2 == NULL)
                         {
                             FATAL("Could not allocate memory for CD sector prefix DDT");
 
@@ -702,13 +702,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     }
 
                     // If we do not have a DDT V2 for sector suffix, create one
-                    if(ctx->sectorSuffixDdtMini == NULL)
+                    if(ctx->sectorSuffixDdt2 == NULL)
                     {
-                        ctx->sectorSuffixDdtMini =
-                            calloc(1, sizeof(uint16_t) * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
+                        ctx->sectorSuffixDdt2 =
+                            calloc(1, sizeof(uint32_t) * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
                                                           ctx->userDataDdtHeader.overflow));
 
-                        if(ctx->sectorSuffixDdtMini == NULL)
+                        if(ctx->sectorSuffixDdt2 == NULL)
                         {
                             FATAL("Could not allocate memory for CD sector prefix DDT");
 
@@ -758,8 +758,8 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
 
                     if(empty)
                     {
-                        ctx->sectorPrefixDdtMini[corrected_sector_address] = SectorStatusNotDumped;
-                        ctx->sectorSuffixDdtMini[corrected_sector_address] = SectorStatusNotDumped;
+                        ctx->sectorPrefixDdt2[corrected_sector_address] = SectorStatusNotDumped;
+                        ctx->sectorSuffixDdt2[corrected_sector_address] = SectorStatusNotDumped;
                         return aaruf_write_sector(context, sector_address, negative, data + 16, SectorStatusNotDumped,
                                                   2048);
                     }
@@ -782,13 +782,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     }
 
                     if(prefix_correct)
-                        ctx->sectorPrefixDdtMini[corrected_sector_address] = SectorStatusMode1Correct << 12;
+                        ctx->sectorPrefixDdt2[corrected_sector_address] = SectorStatusMode1Correct << 28;
                     else
                     {
                         // Copy CD prefix from data buffer to prefix buffer
                         memcpy(ctx->sector_prefix + ctx->sector_prefix_offset, data, 16);
-                        ctx->sectorPrefixDdtMini[corrected_sector_address] = (uint16_t)(ctx->sector_prefix_offset / 16);
-                        ctx->sectorPrefixDdtMini[corrected_sector_address] |= SectorStatusErrored << 12;
+                        ctx->sectorPrefixDdt2[corrected_sector_address] = (uint32_t)(ctx->sector_prefix_offset / 16);
+                        ctx->sectorPrefixDdt2[corrected_sector_address] |= SectorStatusErrored << 28;
                         ctx->sector_prefix_offset += 16;
 
                         // Grow prefix buffer if needed
@@ -810,14 +810,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     const bool suffix_correct = aaruf_ecc_cd_is_suffix_correct(context, data);
 
                     if(suffix_correct)
-                        ctx->sectorSuffixDdtMini[corrected_sector_address] = SectorStatusMode1Correct << 12;
+                        ctx->sectorSuffixDdt2[corrected_sector_address] = SectorStatusMode1Correct << 28;
                     else
                     {
                         // Copy CD suffix from data buffer to suffix buffer
                         memcpy(ctx->sector_suffix + ctx->sector_suffix_offset, data + 2064, 288);
-                        ctx->sectorSuffixDdtMini[corrected_sector_address] =
-                            (uint16_t)(ctx->sector_suffix_offset / 288);
-                        ctx->sectorSuffixDdtMini[corrected_sector_address] |= SectorStatusErrored << 12;
+                        ctx->sectorSuffixDdt2[corrected_sector_address] = (uint32_t)(ctx->sector_suffix_offset / 288);
+                        ctx->sectorSuffixDdt2[corrected_sector_address] |= SectorStatusErrored << 28;
                         ctx->sector_suffix_offset += 288;
 
                         // Grow suffix buffer if needed
@@ -842,13 +841,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                 case CdMode2Form2:
                 case CdMode2Formless:
                     // If we do not have a DDT V2 for sector prefix, create one
-                    if(ctx->sectorPrefixDdtMini == NULL)
+                    if(ctx->sectorPrefixDdt2 == NULL)
                     {
-                        ctx->sectorPrefixDdtMini =
-                            calloc(1, sizeof(uint16_t) * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
+                        ctx->sectorPrefixDdt2 =
+                            calloc(1, sizeof(uint32_t) * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
                                                           ctx->userDataDdtHeader.overflow));
 
-                        if(ctx->sectorPrefixDdtMini == NULL)
+                        if(ctx->sectorPrefixDdt2 == NULL)
                         {
                             FATAL("Could not allocate memory for CD sector prefix DDT");
 
@@ -858,13 +857,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     }
 
                     // If we do not have a DDT V2 for sector suffix, create one
-                    if(ctx->sectorSuffixDdtMini == NULL)
+                    if(ctx->sectorSuffixDdt2 == NULL)
                     {
-                        ctx->sectorSuffixDdtMini =
-                            calloc(1, sizeof(uint16_t) * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
+                        ctx->sectorSuffixDdt2 =
+                            calloc(1, sizeof(uint32_t) * (ctx->userDataDdtHeader.negative + ctx->imageInfo.Sectors +
                                                           ctx->userDataDdtHeader.overflow));
 
-                        if(ctx->sectorSuffixDdtMini == NULL)
+                        if(ctx->sectorSuffixDdt2 == NULL)
                         {
                             FATAL("Could not allocate memory for CD sector prefix DDT");
 
@@ -914,8 +913,8 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
 
                     if(empty)
                     {
-                        ctx->sectorPrefixDdtMini[corrected_sector_address] = SectorStatusNotDumped;
-                        ctx->sectorSuffixDdtMini[corrected_sector_address] = SectorStatusNotDumped;
+                        ctx->sectorPrefixDdt2[corrected_sector_address] = SectorStatusNotDumped;
+                        ctx->sectorSuffixDdt2[corrected_sector_address] = SectorStatusNotDumped;
                         return aaruf_write_sector(context, sector_address, negative, data + 16, SectorStatusNotDumped,
                                                   2328);
                     }
@@ -940,14 +939,14 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     }
 
                     if(prefix_correct)
-                        ctx->sectorPrefixDdtMini[corrected_sector_address] =
-                            (form2 ? SectorStatusMode2Form2Ok : SectorStatusMode2Form1Ok) << 12;
+                        ctx->sectorPrefixDdt2[corrected_sector_address] =
+                            (form2 ? SectorStatusMode2Form2Ok : SectorStatusMode2Form1Ok) << 28;
                     else
                     {
                         // Copy CD prefix from data buffer to prefix buffer
                         memcpy(ctx->sector_prefix + ctx->sector_prefix_offset, data, 16);
-                        ctx->sectorPrefixDdtMini[corrected_sector_address] = (uint16_t)(ctx->sector_prefix_offset / 16);
-                        ctx->sectorPrefixDdtMini[corrected_sector_address] |= SectorStatusErrored << 12;
+                        ctx->sectorPrefixDdt2[corrected_sector_address] = (uint32_t)(ctx->sector_prefix_offset / 16);
+                        ctx->sectorPrefixDdt2[corrected_sector_address] |= SectorStatusErrored << 28;
                         ctx->sector_prefix_offset += 16;
 
                         // Grow prefix buffer if needed
@@ -989,16 +988,16 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                         const bool correct_edc = computed_edc == edc;
 
                         if(correct_edc)
-                            ctx->sectorSuffixDdtMini[corrected_sector_address] = SectorStatusMode2Form2Ok << 12;
+                            ctx->sectorSuffixDdt2[corrected_sector_address] = SectorStatusMode2Form2Ok << 28;
                         else if(edc == 0)
-                            ctx->sectorSuffixDdtMini[corrected_sector_address] = SectorStatusMode2Form2NoCrc << 12;
+                            ctx->sectorSuffixDdt2[corrected_sector_address] = SectorStatusMode2Form2NoCrc << 28;
                         else
                         {
                             // Copy CD suffix from data buffer to suffix buffer
                             memcpy(ctx->sector_suffix + ctx->sector_suffix_offset, data + 2348, 4);
-                            ctx->sectorSuffixDdtMini[corrected_sector_address] =
-                                (uint16_t)(ctx->sector_suffix_offset / 288);
-                            ctx->sectorSuffixDdtMini[corrected_sector_address] |= SectorStatusErrored << 12;
+                            ctx->sectorSuffixDdt2[corrected_sector_address] =
+                                (uint32_t)(ctx->sector_suffix_offset / 288);
+                            ctx->sectorSuffixDdt2[corrected_sector_address] |= SectorStatusErrored << 28;
                             ctx->sector_suffix_offset += 288;
 
                             // Grow suffix buffer if needed
@@ -1033,14 +1032,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     const bool correct_edc = computed_edc == edc;
 
                     if(correct_ecc && correct_edc)
-                        ctx->sectorSuffixDdtMini[corrected_sector_address] = SectorStatusMode2Form1Ok << 12;
+                        ctx->sectorSuffixDdt2[corrected_sector_address] = SectorStatusMode2Form1Ok << 28;
                     else
                     {
                         // Copy CD suffix from data buffer to suffix buffer
                         memcpy(ctx->sector_suffix + ctx->sector_suffix_offset, data + 2072, 280);
-                        ctx->sectorSuffixDdtMini[corrected_sector_address] =
-                            (uint16_t)(ctx->sector_suffix_offset / 288);
-                        ctx->sectorSuffixDdtMini[corrected_sector_address] |= SectorStatusErrored << 12;
+                        ctx->sectorSuffixDdt2[corrected_sector_address] = (uint32_t)(ctx->sector_suffix_offset / 288);
+                        ctx->sectorSuffixDdt2[corrected_sector_address] |= SectorStatusErrored << 28;
                         ctx->sector_suffix_offset += 288;
 
                         // Grow suffix buffer if needed

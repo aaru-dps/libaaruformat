@@ -79,8 +79,7 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
     // Write cached secondary table to file end and update primary table entry with its position
     // Check if we have a cached table that needs to be written (either it has an offset or exists in memory)
     bool has_cached_secondary_ddt =
-        ctx->userDataDdtHeader.tableShift > 0 &&
-        (ctx->cachedDdtOffset != 0 || ctx->cachedSecondaryDdtSmall != NULL || ctx->cachedSecondaryDdtBig != NULL);
+        ctx->userDataDdtHeader.tableShift > 0 && (ctx->cachedDdtOffset != 0 || ctx->cachedSecondaryDdtBig != NULL);
 
     if(!has_cached_secondary_ddt) return AARUF_STATUS_OK;
 
@@ -126,19 +125,13 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
     ddt_header.start             = ctx->cachedDdtPosition * items_per_ddt_entry;
 
     // Calculate data size
-    if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-        ddt_header.length = items_per_ddt_entry * sizeof(uint16_t);
-    else
-        ddt_header.length = items_per_ddt_entry * sizeof(uint32_t);
+    ddt_header.length = items_per_ddt_entry * sizeof(uint32_t);
 
     // Calculate CRC64 of the data
     crc64_ctx *crc64_context = aaruf_crc64_init();
     if(crc64_context != NULL)
     {
-        if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-            aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cachedSecondaryDdtSmall, (uint32_t)ddt_header.length);
-        else
-            aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cachedSecondaryDdtBig, (uint32_t)ddt_header.length);
+        aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cachedSecondaryDdtBig, (uint32_t)ddt_header.length);
 
         uint64_t crc64;
         aaruf_crc64_final(crc64_context, &crc64);
@@ -150,10 +143,7 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
 
     if(ddt_header.compression == None)
     {
-        if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-            buffer = (uint8_t *)ctx->cachedSecondaryDdtSmall;
-        else
-            buffer = (uint8_t *)ctx->cachedSecondaryDdtBig;
+        buffer              = (uint8_t *)ctx->cachedSecondaryDdtBig;
         ddt_header.cmpCrc64 = ddt_header.crc64;
     }
     else
@@ -167,11 +157,10 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
 
         size_t dst_size   = (size_t)ddt_header.length * 2 * 2;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(
-            buffer, &dst_size,
-            ctx->userDataDdtHeader.sizeType == SmallDdtSizeType ? (uint8_t *)ctx->cachedSecondaryDdtSmall
-                                                                : (uint8_t *)ctx->cachedSecondaryDdtBig,
-            ddt_header.length, lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+        aaruf_lzma_encode_buffer(buffer, &dst_size,
+
+                                 (uint8_t *)ctx->cachedSecondaryDdtBig, ddt_header.length, lzma_properties, &props_size,
+                                 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
 
         ddt_header.cmpLength = (uint32_t)dst_size;
 
@@ -179,10 +168,7 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
         {
             ddt_header.compression = None;
             free(buffer);
-            if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-                buffer = (uint8_t *)ctx->cachedSecondaryDdtSmall;
-            else
-                buffer = (uint8_t *)ctx->cachedSecondaryDdtBig;
+            buffer = (uint8_t *)ctx->cachedSecondaryDdtBig;
         }
     }
 
@@ -207,10 +193,7 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
             // Update primary table entry to point to new location
             const uint64_t new_secondary_table_block_offset = end_of_file >> ctx->userDataDdtHeader.blockAlignmentShift;
 
-            if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-                ctx->userDataDdtMini[ctx->cachedDdtPosition] = (uint16_t)new_secondary_table_block_offset;
-            else
-                ctx->userDataDdtBig[ctx->cachedDdtPosition] = (uint32_t)new_secondary_table_block_offset;
+            ctx->userDataDdtBig[ctx->cachedDdtPosition] = (uint32_t)new_secondary_table_block_offset;
 
             // Update index: remove old entry for cached DDT and add new one
             TRACE("Updating index for cached secondary DDT");
@@ -247,15 +230,10 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
             long saved_pos = ftell(ctx->imageStream);
             fseek(ctx->imageStream, ctx->primaryDdtOffset + sizeof(DdtHeader2), SEEK_SET);
 
-            size_t primary_table_size = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
-                                            ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
-                                            : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+            size_t primary_table_size = ctx->userDataDdtHeader.entries * sizeof(uint32_t);
 
             size_t primary_written_bytes = 0;
-            if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-                primary_written_bytes = fwrite(ctx->userDataDdtMini, primary_table_size, 1, ctx->imageStream);
-            else
-                primary_written_bytes = fwrite(ctx->userDataDdtBig, primary_table_size, 1, ctx->imageStream);
+            primary_written_bytes        = fwrite(ctx->userDataDdtBig, primary_table_size, 1, ctx->imageStream);
 
             if(primary_written_bytes != 1)
             {
@@ -272,17 +250,9 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
         TRACE("Failed to write cached secondary DDT header");
 
     // Free the cached table
-    if(ctx->cachedSecondaryDdtSmall != NULL)
-    {
-        free(ctx->cachedSecondaryDdtSmall);
-        ctx->cachedSecondaryDdtSmall = NULL;
-    }
-    if(ctx->cachedSecondaryDdtBig != NULL)
-    {
-        free(ctx->cachedSecondaryDdtBig);
-        ctx->cachedSecondaryDdtBig = NULL;
-    }
-    ctx->cachedDdtOffset = 0;
+    free(ctx->cachedSecondaryDdtBig);
+    ctx->cachedSecondaryDdtBig = NULL;
+    ctx->cachedDdtOffset       = 0;
 
     // Set position
     fseek(ctx->imageStream, 0, SEEK_END);
@@ -312,8 +282,7 @@ static int32_t write_cached_secondary_ddt(aaruformatContext *ctx)
 static int32_t write_primary_ddt(aaruformatContext *ctx)
 {
     // Write the cached primary DDT table back to its position in the file
-    if(ctx->userDataDdtHeader.tableShift <= 0 || ctx->userDataDdtMini == NULL && ctx->userDataDdtBig == NULL)
-        return AARUF_STATUS_OK;
+    if(ctx->userDataDdtHeader.tableShift <= 0 || ctx->userDataDdtBig == NULL) return AARUF_STATUS_OK;
 
     TRACE("Writing cached primary DDT table back to file");
 
@@ -321,14 +290,9 @@ static int32_t write_primary_ddt(aaruformatContext *ctx)
     crc64_ctx *crc64_context = aaruf_crc64_init();
     if(crc64_context != NULL)
     {
-        size_t primary_table_size = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
-                                        ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
-                                        : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+        size_t primary_table_size = ctx->userDataDdtHeader.entries * sizeof(uint32_t);
 
-        if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-            aaruf_crc64_update(crc64_context, (uint8_t *)ctx->userDataDdtMini, primary_table_size);
-        else
-            aaruf_crc64_update(crc64_context, (uint8_t *)ctx->userDataDdtBig, primary_table_size);
+        aaruf_crc64_update(crc64_context, (uint8_t *)ctx->userDataDdtBig, primary_table_size);
 
         uint64_t crc64;
         aaruf_crc64_final(crc64_context, &crc64);
@@ -358,16 +322,11 @@ static int32_t write_primary_ddt(aaruformatContext *ctx)
     }
 
     // Then write the table data (position is already after the header)
-    size_t primary_table_size = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
-                                    ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
-                                    : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+    size_t primary_table_size = ctx->userDataDdtHeader.entries * sizeof(uint32_t);
 
     // Write the primary table data
     size_t written_bytes = 0;
-    if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-        written_bytes = fwrite(ctx->userDataDdtMini, primary_table_size, 1, ctx->imageStream);
-    else
-        written_bytes = fwrite(ctx->userDataDdtBig, primary_table_size, 1, ctx->imageStream);
+    written_bytes        = fwrite(ctx->userDataDdtBig, primary_table_size, 1, ctx->imageStream);
 
     if(written_bytes == 1)
     {
@@ -409,15 +368,12 @@ static int32_t write_primary_ddt(aaruformatContext *ctx)
 static int32_t write_single_level_ddt(aaruformatContext *ctx)
 {
     // Write the single level DDT table block aligned just after the header
-    if(ctx->userDataDdtHeader.tableShift != 0 || ctx->userDataDdtMini == NULL && ctx->userDataDdtBig == NULL)
-        return AARUF_STATUS_OK;
+    if(ctx->userDataDdtHeader.tableShift != 0 || ctx->userDataDdtBig == NULL) return AARUF_STATUS_OK;
 
     TRACE("Writing single-level DDT table to file");
 
     // Calculate CRC64 of the primary DDT table data
-    const size_t primary_table_size = ctx->userDataDdtHeader.sizeType == SmallDdtSizeType
-                                          ? ctx->userDataDdtHeader.entries * sizeof(uint16_t)
-                                          : ctx->userDataDdtHeader.entries * sizeof(uint32_t);
+    const size_t primary_table_size = ctx->userDataDdtHeader.entries * sizeof(uint32_t);
 
     // Properly populate all header fields
     ctx->userDataDdtHeader.identifier          = DeDuplicationTable2;
@@ -431,10 +387,7 @@ static int32_t write_single_level_ddt(aaruformatContext *ctx)
     ctx->userDataDdtHeader.length              = primary_table_size;
     ctx->userDataDdtHeader.cmpLength           = primary_table_size;
 
-    if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-        ctx->userDataDdtHeader.crc64 = aaruf_crc64_data((uint8_t *)ctx->userDataDdtMini, primary_table_size);
-    else
-        ctx->userDataDdtHeader.crc64 = aaruf_crc64_data((uint8_t *)ctx->userDataDdtBig, primary_table_size);
+    ctx->userDataDdtHeader.crc64 = aaruf_crc64_data((uint8_t *)ctx->userDataDdtBig, primary_table_size);
 
     TRACE("Calculated CRC64 for single-level DDT: 0x%16lX", ctx->userDataDdtHeader.crc64);
 
@@ -443,10 +396,8 @@ static int32_t write_single_level_ddt(aaruformatContext *ctx)
 
     if(ctx->userDataDdtHeader.compression == None)
     {
-        if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-            cmp_buffer = (uint8_t *)ctx->userDataDdtMini;
-        else
-            cmp_buffer = (uint8_t *)ctx->userDataDdtBig;
+
+        cmp_buffer                      = (uint8_t *)ctx->userDataDdtBig;
         ctx->userDataDdtHeader.cmpCrc64 = ctx->userDataDdtHeader.crc64;
     }
     else
@@ -460,11 +411,8 @@ static int32_t write_single_level_ddt(aaruformatContext *ctx)
 
         size_t dst_size   = (size_t)ctx->userDataDdtHeader.length * 2 * 2;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(cmp_buffer, &dst_size,
-                                 ctx->userDataDdtHeader.sizeType == SmallDdtSizeType ? (uint8_t *)ctx->userDataDdtMini
-                                                                                     : (uint8_t *)ctx->userDataDdtBig,
-                                 ctx->userDataDdtHeader.length, lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4,
-                                 0, 2, 273, 8);
+        aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, (uint8_t *)ctx->userDataDdtBig, ctx->userDataDdtHeader.length,
+                                 lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
 
         ctx->userDataDdtHeader.cmpLength = (uint32_t)dst_size;
 
@@ -472,10 +420,8 @@ static int32_t write_single_level_ddt(aaruformatContext *ctx)
         {
             ctx->userDataDdtHeader.compression = None;
             free(cmp_buffer);
-            if(ctx->userDataDdtHeader.sizeType == SmallDdtSizeType)
-                cmp_buffer = (uint8_t *)ctx->userDataDdtMini;
-            else
-                cmp_buffer = (uint8_t *)ctx->userDataDdtBig;
+
+            cmp_buffer = (uint8_t *)ctx->userDataDdtBig;
         }
     }
 
@@ -1241,7 +1187,7 @@ static void write_sector_suffix(aaruformatContext *ctx)
  * Notes:
  *   - Unlike DDT v1, there are no CD_XFIX_MASK / CD_DFIX_MASK macros used here. The bit layout is compact
  *     and directly encoded when writing (status values are pre-shifted where needed in write.c).
- *   - Only the 16-bit mini variant is currently produced (sectorPrefixDdtMini). A 32-bit form is reserved
+ *   - Only the 16-bit mini variant is currently produced (sectorPrefixDdt2). A 32-bit form is reserved
  *     for future expansion (sectorPrefixDdt) but is not emitted unless populated.
  *   - The table length equals (negative + Sectors + overflow) * entrySize.
  *   - dataShift is set to 4 (2^4 = 16) expressing the granularity of referenced prefix units.
@@ -1257,7 +1203,7 @@ static void write_sector_suffix(aaruformatContext *ctx)
  */
 static void write_sector_prefix_ddt(aaruformatContext *ctx)
 {
-    if(ctx->sectorPrefixDdtMini == NULL) return;
+    if(ctx->sectorPrefixDdt2 == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
     long           prefix_ddt_position = ftell(ctx->imageStream);
@@ -1282,20 +1228,20 @@ static void write_sector_prefix_ddt(aaruformatContext *ctx)
     ddt_header2.blockAlignmentShift = ctx->userDataDdtHeader.blockAlignmentShift;
     ddt_header2.dataShift           = ctx->userDataDdtHeader.dataShift;
     ddt_header2.tableShift          = 0;  // Single-level DDT
-    ddt_header2.sizeType            = SmallDdtSizeType;
+    ddt_header2.sizeType            = BigDdtSizeType;
     ddt_header2.entries = ctx->imageInfo.Sectors + ctx->userDataDdtHeader.negative + ctx->userDataDdtHeader.overflow;
     ddt_header2.blocks  = ctx->userDataDdtHeader.blocks;
     ddt_header2.start   = 0;
-    ddt_header2.length  = ddt_header2.entries * sizeof(uint16_t);
+    ddt_header2.length  = ddt_header2.entries * sizeof(uint32_t);
     // Calculate CRC64
-    ddt_header2.crc64   = aaruf_crc64_data((uint8_t *)ctx->sectorPrefixDdtMini, (uint32_t)ddt_header2.length);
+    ddt_header2.crc64   = aaruf_crc64_data((uint8_t *)ctx->sectorPrefixDdt2, (uint32_t)ddt_header2.length);
 
     uint8_t *buffer                                  = NULL;
     uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
 
     if(ddt_header2.compression == None)
     {
-        buffer               = (uint8_t *)ctx->sectorPrefixDdtMini;
+        buffer               = (uint8_t *)ctx->sectorPrefixDdt2;
         ddt_header2.cmpCrc64 = ddt_header2.crc64;
     }
     else
@@ -1309,7 +1255,7 @@ static void write_sector_prefix_ddt(aaruformatContext *ctx)
 
         size_t dst_size   = (size_t)ddt_header2.length * 2 * 2;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(buffer, &dst_size, (uint8_t *)ctx->sectorPrefixDdtMini, ddt_header2.length,
+        aaruf_lzma_encode_buffer(buffer, &dst_size, (uint8_t *)ctx->sectorPrefixDdt2, ddt_header2.length,
                                  lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
 
         ddt_header2.cmpLength = (uint32_t)dst_size;
@@ -1318,7 +1264,7 @@ static void write_sector_prefix_ddt(aaruformatContext *ctx)
         {
             ddt_header2.compression = None;
             free(buffer);
-            buffer = (uint8_t *)ctx->sectorPrefixDdtMini;
+            buffer = (uint8_t *)ctx->sectorPrefixDdt2;
         }
     }
 
@@ -1375,13 +1321,13 @@ static void write_sector_prefix_ddt(aaruformatContext *ctx)
  *
  * Characteristics & constraints:
  *   - Only DDT v2 is supported here; no fallback or mixed-mode emission with v1 occurs.
- *   - Only the compact "mini" (16-bit) table form is currently produced (sectorSuffixDdtMini filled during write).
+ *   - Only the compact "mini" (16-bit) table form is currently produced (sectorSuffixDdt2 filled during write).
  *   - Table length = (negative + total Sectors + overflow) * sizeof(uint16_t).
  *   - dataShift mirrors userDataDdtHeader.dataShift (expressing granularity for index referencing).
  *   - Single-level table (levels = 1, tableLevel = 0, tableShift = 0).
  *   - Compression is applied if enabled; CRC64 protects the table bytes.
  *   - Alignment: The table is aligned to 2^(blockAlignmentShift) before writing to guarantee block boundary access.
- *   - Idempotence: If sectorSuffixDdtMini is NULL the function is a no-op (indicating no suffix anomalies captured).
+ *   - Idempotence: If sectorSuffixDdt2 is NULL the function is a no-op (indicating no suffix anomalies captured).
  *
  * Index integration:
  *   On success an IndexEntry (blockType = DeDuplicationTable2, dataType = CdSectorSuffix, offset = file position)
@@ -1395,14 +1341,14 @@ static void write_sector_prefix_ddt(aaruformatContext *ctx)
  *
  * Preconditions:
  *   - ctx must be a valid non-NULL pointer opened for writing.
- *   - ctx->sectorSuffixDdtMini must point to a fully populated contiguous array of uint16_t entries.
+ *   - ctx->sectorSuffixDdt2 must point to a fully populated contiguous array of uint16_t entries.
  *
  * @param ctx Active aaruformatContext being finalized.
  * @internal
  */
 static void write_sector_suffix_ddt(aaruformatContext *ctx)
 {
-    if(ctx->sectorSuffixDdtMini == NULL) return;
+    if(ctx->sectorSuffixDdt2 == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
     long           suffix_ddt_position = ftell(ctx->imageStream);
@@ -1427,20 +1373,20 @@ static void write_sector_suffix_ddt(aaruformatContext *ctx)
     ddt_header2.blockAlignmentShift = ctx->userDataDdtHeader.blockAlignmentShift;
     ddt_header2.dataShift           = ctx->userDataDdtHeader.dataShift;
     ddt_header2.tableShift          = 0;  // Single-level DDT
-    ddt_header2.sizeType            = SmallDdtSizeType;
+    ddt_header2.sizeType            = BigDdtSizeType;
     ddt_header2.entries = ctx->imageInfo.Sectors + ctx->userDataDdtHeader.negative + ctx->userDataDdtHeader.overflow;
     ddt_header2.blocks  = ctx->userDataDdtHeader.blocks;
     ddt_header2.start   = 0;
-    ddt_header2.length  = ddt_header2.entries * sizeof(uint16_t);
+    ddt_header2.length  = ddt_header2.entries * sizeof(uint32_t);
     // Calculate CRC64
-    ddt_header2.crc64   = aaruf_crc64_data((uint8_t *)ctx->sectorSuffixDdtMini, (uint32_t)ddt_header2.length);
+    ddt_header2.crc64   = aaruf_crc64_data((uint8_t *)ctx->sectorSuffixDdt2, (uint32_t)ddt_header2.length);
 
     uint8_t *buffer                                  = NULL;
     uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
 
     if(ddt_header2.compression == None)
     {
-        buffer               = (uint8_t *)ctx->sectorSuffixDdtMini;
+        buffer               = (uint8_t *)ctx->sectorSuffixDdt2;
         ddt_header2.cmpCrc64 = ddt_header2.crc64;
     }
     else
@@ -1454,7 +1400,7 @@ static void write_sector_suffix_ddt(aaruformatContext *ctx)
 
         size_t dst_size   = (size_t)ddt_header2.length * 2 * 2;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(buffer, &dst_size, (uint8_t *)ctx->sectorSuffixDdtMini, ddt_header2.length,
+        aaruf_lzma_encode_buffer(buffer, &dst_size, (uint8_t *)ctx->sectorSuffixDdt2, ddt_header2.length,
                                  lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
 
         ddt_header2.cmpLength = (uint32_t)dst_size;
@@ -1463,7 +1409,7 @@ static void write_sector_suffix_ddt(aaruformatContext *ctx)
         {
             ddt_header2.compression = None;
             free(buffer);
-            buffer = (uint8_t *)ctx->sectorSuffixDdtMini;
+            buffer = (uint8_t *)ctx->sectorSuffixDdt2;
         }
     }
 
@@ -4226,12 +4172,12 @@ int aaruf_close(void *context)
     }
 #endif
 
-    free(ctx->sectorPrefixDdtMini);
-    ctx->sectorPrefixDdtMini = NULL;
+    free(ctx->sectorPrefixDdt2);
+    ctx->sectorPrefixDdt2 = NULL;
     free(ctx->sectorPrefixDdt);
     ctx->sectorPrefixDdt = NULL;
-    free(ctx->sectorSuffixDdtMini);
-    ctx->sectorSuffixDdtMini = NULL;
+    free(ctx->sectorSuffixDdt2);
+    ctx->sectorSuffixDdt2 = NULL;
     free(ctx->sectorSuffixDdt);
     ctx->sectorSuffixDdt = NULL;
 
