@@ -22,6 +22,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <unicode/ucnv.h>
+#include <unicode/ustring.h>
+
 #include "aaruformat.h"
 #include "enums.h"
 #include "internal.h"
@@ -73,17 +76,7 @@ static void cleanup_failed_create(aaruformatContext *ctx)
         ctx->readableSectorTags = NULL;
     }
 
-    if(ctx->imageInfo.ApplicationVersion != NULL)
-    {
-        free(ctx->imageInfo.ApplicationVersion);
-        ctx->imageInfo.ApplicationVersion = NULL;
-    }
-
-    if(ctx->imageInfo.Version != NULL)
-    {
-        free(ctx->imageInfo.Version);
-        ctx->imageInfo.Version = NULL;
-    }
+    // ApplicationVersion and Version are fixed-size arrays, not pointers - no need to free
 
     if(ctx->imageStream != NULL)
     {
@@ -368,20 +361,75 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
 
     // Initialize image info
     TRACE("Initializing image info");
-    ctx->imageInfo.Application        = ctx->header.application;
-    ctx->imageInfo.ApplicationVersion = (uint8_t *)malloc(32);
-    if(ctx->imageInfo.ApplicationVersion != NULL)
+
+    // Convert application name from UTF-16LE to UTF-8 using libicu
+    UErrorCode status             = U_ZERO_ERROR;
+    int32_t    app_name_utf16_len = AARU_HEADER_APP_NAME_LEN / 2;  // UTF-16LE uses 2 bytes per character
+    UChar     *app_name_utf16     = (UChar *)malloc(app_name_utf16_len * sizeof(UChar));
+
+    if(app_name_utf16 != NULL)
     {
-        memset(ctx->imageInfo.ApplicationVersion, 0, 32);
-        sprintf((char *)ctx->imageInfo.ApplicationVersion, "%d.%d", ctx->header.applicationMajorVersion,
-                ctx->header.applicationMinorVersion);
+        // Convert raw UTF-16LE bytes to UChar (UTF-16, host endian)
+        for(int32_t j = 0; j < app_name_utf16_len; j++)
+        {
+            app_name_utf16[j] = (UChar)(ctx->header.application[j * 2] | (ctx->header.application[j * 2 + 1] << 8));
+        }
+
+        // Get required length for UTF-8
+        int32_t app_name_utf8_len = 0;
+        u_strToUTF8(NULL, 0, &app_name_utf8_len, app_name_utf16, app_name_utf16_len, &status);
+
+        if(U_SUCCESS(status) || status == U_BUFFER_OVERFLOW_ERROR)
+        {
+            status = U_ZERO_ERROR;
+
+            // Ensure it fits in the Application buffer (64 bytes including null terminator)
+            if(app_name_utf8_len < 64)
+            {
+                u_strToUTF8(ctx->imageInfo.Application, 64, NULL, app_name_utf16, app_name_utf16_len, &status);
+
+                if(U_FAILURE(status))
+                {
+                    TRACE("Error converting application name to UTF-8: %d, using raw bytes", status);
+                    // Fallback: just copy what we can
+                    memset(ctx->imageInfo.Application, 0, 64);
+                    memcpy(ctx->imageInfo.Application, ctx->header.application, AARU_HEADER_APP_NAME_LEN);
+                }
+            }
+            else
+            {
+                TRACE("Application name too long for buffer, truncating");
+                u_strToUTF8(ctx->imageInfo.Application, 63, NULL, app_name_utf16, app_name_utf16_len, &status);
+                ctx->imageInfo.Application[63] = '\0';
+            }
+        }
+        else
+        {
+            TRACE("Error getting UTF-8 length: %d, using raw bytes", status);
+            // Fallback: just copy what we can
+            memset(ctx->imageInfo.Application, 0, 64);
+            memcpy(ctx->imageInfo.Application, ctx->header.application, AARU_HEADER_APP_NAME_LEN);
+        }
+
+        free(app_name_utf16);
     }
-    ctx->imageInfo.Version = (uint8_t *)malloc(32);
-    if(ctx->imageInfo.Version != NULL)
+    else
     {
-        memset(ctx->imageInfo.Version, 0, 32);
-        sprintf((char *)ctx->imageInfo.Version, "%d.%d", ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
+        TRACE("Could not allocate memory for UTF-16 conversion, using raw bytes");
+        // Fallback: just copy what we can
+        memset(ctx->imageInfo.Application, 0, 64);
+        memcpy(ctx->imageInfo.Application, ctx->header.application, AARU_HEADER_APP_NAME_LEN);
     }
+
+    // Set application version string directly in the fixed-size array
+    memset(ctx->imageInfo.ApplicationVersion, 0, 32);
+    sprintf(ctx->imageInfo.ApplicationVersion, "%d.%d", ctx->header.applicationMajorVersion,
+            ctx->header.applicationMinorVersion);
+
+    // Set image version string directly in the fixed-size array
+    memset(ctx->imageInfo.Version, 0, 32);
+    sprintf(ctx->imageInfo.Version, "%d.%d", ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
+
     ctx->imageInfo.MediaType            = ctx->header.mediaType;
     ctx->imageInfo.ImageSize            = 0;
     ctx->imageInfo.CreationTime         = ctx->header.creationTime;

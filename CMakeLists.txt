@@ -156,8 +156,18 @@ include(3rdparty/flac.cmake)
 include(3rdparty/lzma.cmake)
 include(3rdparty/xxhash.cmake)
 include(3rdparty/blake3.cmake)
+
+# Find and link ICU library for UTF-16LE to UTF-8 conversion
+find_package(ICU COMPONENTS uc REQUIRED)
+
 if(TARGET blake3)
   target_link_libraries(aaruformat blake3)
+endif()
+
+# Add ICU include directories and link library to the target
+if(ICU_FOUND)
+  target_include_directories(aaruformat PRIVATE ${ICU_INCLUDE_DIRS})
+  target_link_libraries(aaruformat ${ICU_LIBRARIES})
 endif()
 
 macro(TARGET_LINK_LIBRARIES_WHOLE_ARCHIVE target)

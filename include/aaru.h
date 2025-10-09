@@ -807,18 +807,18 @@ typedef enum
  */
 typedef struct ImageInfo  // NOLINT
 {
-    uint8_t  HasPartitions;         ///< Image contains partitions (or tracks for optical media)
-    uint8_t  HasSessions;           ///< Image contains sessions (optical media only)
-    uint64_t ImageSize;             ///< Size of the image without headers
-    uint64_t Sectors;               ///< Sectors contained in the image
-    uint32_t SectorSize;            ///< Size of sectors contained in the image
-    uint8_t *Version;               ///< Image version
-    uint8_t *Application;           ///< Application that created the image
-    uint8_t *ApplicationVersion;    ///< Version of the application that created the image
-    int64_t  CreationTime;          ///< Image creation time
-    int64_t  LastModificationTime;  ///< Image last modification time
-    uint32_t MediaType;             ///< Media type represented by the image
-    uint8_t  XmlMediaType;          ///< Type of the media represented by the image to use in XML sidecars
+    uint8_t  HasPartitions;           ///< Image contains partitions (or tracks for optical media)
+    uint8_t  HasSessions;             ///< Image contains sessions (optical media only)
+    uint64_t ImageSize;               ///< Size of the image without headers
+    uint64_t Sectors;                 ///< Sectors contained in the image
+    uint32_t SectorSize;              ///< Size of sectors contained in the image
+    char     Version[32];             ///< Image version
+    char     Application[64];         ///< Application that created the image
+    char     ApplicationVersion[32];  ///< Version of the application that created the image
+    int64_t  CreationTime;            ///< Image creation time
+    int64_t  LastModificationTime;    ///< Image last modification time
+    uint32_t MediaType;               ///< Media type represented by the image
+    uint8_t  XmlMediaType;            ///< Type of the media represented by the image to use in XML sidecars
 } ImageInfo;
 
 /** \addtogroup SectorTags Per-sector metadata tag types
