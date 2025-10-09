@@ -3280,7 +3280,8 @@ int32_t aaruf_get_drive_firmware_revision(const void *context, uint8_t *buffer, 
  *       - When reading/writing sectors with aaruf_read_sector() or aaruf_write_sector():
  *         - Set negative=false and use sector_address in range [0, user_sectors - 1]
  *         - For negative sectors: set negative=true, sector_address in [0, negative_sectors - 1]
- *         - For overflow sectors: set negative=false, sector_address in [user_sectors, user_sectors + overflow_sectors - 1]
+ *         - For overflow sectors: set negative=false, sector_address in [user_sectors, user_sectors + overflow_sectors
+ * - 1]
  *
  * @note Relationship to Image Creation:
  *       - The user_sectors value is specified when calling aaruf_create()
@@ -3575,5 +3576,96 @@ int32_t aaruf_get_overflow_sectors(const void *context, uint16_t *sectors)
     *sectors = ctx->user_data_ddt_header.overflow;
 
     TRACE("Exiting aaruf_get_overflow_sectors(%p, %u) = AARUF_STATUS_OK", context, *sectors);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Retrieves a deep copy of the ImageInfo structure from the AaruFormat image.
+ *
+ * Returns a complete copy of the high-level image information summary containing
+ * metadata such as image size, sector count, sector size, version information,
+ * creation timestamps, and media type. This function performs a deep copy of all
+ * fields including string buffers, ensuring the caller receives a complete,
+ * independent copy of the image information.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, opened image context).
+ * @param image_info Pointer to an ImageInfo structure to receive the copied data.
+ *                   Must be a valid pointer to allocated memory.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully copied image info. The image_info parameter
+ *         contains a complete copy of all fields including:
+ *         - HasPartitions: Whether image contains partitions/tracks
+ *         - HasSessions: Whether image contains multiple sessions
+ *         - ImageSize: Size of image payload in bytes
+ *         - Sectors: Total count of addressable sectors/blocks
+ *         - SectorSize: Size of each logical sector in bytes
+ *         - Version: Image format version string (NUL-terminated)
+ *         - Application: Creating application name (NUL-terminated)
+ *         - ApplicationVersion: Application version string (NUL-terminated)
+ *         - CreationTime: Image creation timestamp (Windows FILETIME)
+ *         - LastModificationTime: Last modification timestamp (Windows FILETIME)
+ *         - MediaType: Media type identifier
+ *         - MetadataMediaType: Media type for sidecar generation
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC
+ *         - The context was not properly initialized
+ *
+ * @note The ImageInfo structure contains fixed-size character arrays that are
+ *       properly NUL-terminated, making it safe to use as C strings.
+ *
+ * @note This function performs a complete deep copy using memcpy, copying all
+ *       fields including strings, integers, and timestamps.
+ *
+ * @note The caller is responsible for allocating the ImageInfo structure before
+ *       calling this function. The structure is not dynamically allocated by
+ *       this function.
+ *
+ * @warning The image_info parameter must point to valid, allocated memory of
+ *          at least sizeof(ImageInfo) bytes. Passing NULL or invalid pointers
+ *          will result in undefined behavior.
+ *
+ * @warning This function reads from the in-memory image_info loaded during
+ *          aaruf_open() or populated during aaruf_create(). It does not perform
+ *          file I/O operations.
+ */
+int32_t aaruf_get_image_info(const void *context, ImageInfo *image_info)
+{
+    TRACE("Entering aaruf_get_image_info(%p, %p)", context, image_info);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_image_info() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_image_info() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(image_info == NULL)
+    {
+        FATAL("image_info parameter is NULL");
+
+        TRACE("Exiting aaruf_get_image_info() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+        return AARUF_ERROR_INCORRECT_DATA_SIZE;
+    }
+
+    // Perform deep copy of the image_info structure
+    memcpy(image_info, &ctx->image_info, sizeof(ImageInfo));
+
+    TRACE("Exiting aaruf_get_image_info() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
 }

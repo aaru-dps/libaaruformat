@@ -161,24 +161,25 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_drive_model(void *context, const uint8_t
 AARU_EXPORT int32_t AARU_CALL aaruf_set_drive_serial_number(void *context, const uint8_t *data, int32_t length);
 AARU_EXPORT int32_t AARU_CALL aaruf_set_drive_firmware_revision(void *context, const uint8_t *data, int32_t length);
 AARU_EXPORT int32_t AARU_CALL aaruf_get_media_sequence(const void *context, int32_t *sequence, int32_t *last_sequence);
-AARU_EXPORT int32_t AARU_CALL aaruf_get_creator(const void *context,  uint8_t *buffer, int32_t *length);
+AARU_EXPORT int32_t AARU_CALL aaruf_get_creator(const void *context, uint8_t *buffer, int32_t *length);
 AARU_EXPORT int32_t AARU_CALL aaruf_get_comments(const void *context, uint8_t *buffer, int32_t *length);
-AARU_EXPORT int32_t AARU_CALL aaruf_get_media_title(const void *context,  uint8_t *buffer, int32_t *length);
-AARU_EXPORT int32_t AARU_CALL aaruf_get_media_manufacturer(const void *context,  uint8_t *buffer, int32_t *length);
-AARU_EXPORT int32_t AARU_CALL aaruf_get_media_model(const void *context,  uint8_t *buffer, int32_t *length);
+AARU_EXPORT int32_t AARU_CALL aaruf_get_media_title(const void *context, uint8_t *buffer, int32_t *length);
+AARU_EXPORT int32_t AARU_CALL aaruf_get_media_manufacturer(const void *context, uint8_t *buffer, int32_t *length);
+AARU_EXPORT int32_t AARU_CALL aaruf_get_media_model(const void *context, uint8_t *buffer, int32_t *length);
 AARU_EXPORT int32_t AARU_CALL aaruf_get_media_serial_number(const void *context, uint8_t *buffer, int32_t *length);
-AARU_EXPORT int32_t AARU_CALL aaruf_get_media_barcode(const void *context,  uint8_t *buffer, int32_t *length);
-AARU_EXPORT int32_t AARU_CALL aaruf_get_media_part_number(const void *context,  uint8_t *buffer, int32_t *length);
-AARU_EXPORT int32_t AARU_CALL aaruf_get_drive_manufacturer(const void *context,  uint8_t *buffer, int32_t *length);
+AARU_EXPORT int32_t AARU_CALL aaruf_get_media_barcode(const void *context, uint8_t *buffer, int32_t *length);
+AARU_EXPORT int32_t AARU_CALL aaruf_get_media_part_number(const void *context, uint8_t *buffer, int32_t *length);
+AARU_EXPORT int32_t AARU_CALL aaruf_get_drive_manufacturer(const void *context, uint8_t *buffer, int32_t *length);
 AARU_EXPORT int32_t AARU_CALL aaruf_get_drive_model(const void *context, uint8_t *buffer, int32_t *length);
-AARU_EXPORT int32_t AARU_CALL aaruf_get_drive_serial_number(const void *context,  uint8_t *buffer, int32_t *length);
-AARU_EXPORT int32_t AARU_CALL aaruf_get_drive_firmware_revision(const void *context,  uint8_t *buffer, int32_t *length);
+AARU_EXPORT int32_t AARU_CALL aaruf_get_drive_serial_number(const void *context, uint8_t *buffer, int32_t *length);
+AARU_EXPORT int32_t AARU_CALL aaruf_get_drive_firmware_revision(const void *context, uint8_t *buffer, int32_t *length);
 AARU_EXPORT int32_t AARU_CALL aaruf_get_cicm_metadata(const void *context, uint8_t *buffer, size_t *length);
 AARU_EXPORT int32_t AARU_CALL aaruf_get_aaru_json_metadata(const void *context, uint8_t *buffer, size_t *length);
 AARU_EXPORT int32_t AARU_CALL aaruf_set_aaru_json_metadata(void *context, uint8_t *data, size_t length);
 AARU_EXPORT int32_t AARU_CALL aaruf_get_user_sectors(const void *context, uint64_t *sectors);
 AARU_EXPORT int32_t AARU_CALL aaruf_get_negative_sectors(const void *context, uint16_t *sectors);
 AARU_EXPORT int32_t AARU_CALL aaruf_get_overflow_sectors(const void *context, uint16_t *sectors);
+AARU_EXPORT int32_t AARU_CALL aaruf_get_image_info(const void *context, ImageInfo *image_info);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_get_tape_file(const void *context, uint8_t partition, uint32_t file,
                                                   uint64_t *starting_block, uint64_t *ending_block);
