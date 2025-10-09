@@ -218,6 +218,24 @@ typedef struct aaruformatContext
     struct DumpHardwareEntriesWithData *dumpHardwareEntriesWithData;  ///< Array of dump hardware entries + strings.
     AaruMetadataJsonBlockHeader         jsonBlockHeader;              ///< JSON metadata block header (if present).
     uint8_t                            *jsonBlock;                    ///< JSON metadata block payload (UTF-8).
+    uint8_t                            *Creator;                      ///< Who (person) created the image?
+    uint8_t                            *MediaTitle;                   ///< Title of the media represented by the image
+    uint8_t                            *Comments;                     ///< Image comments
+    uint8_t                            *MediaManufacturer;  ///< Manufacturer of the media represented by the image
+    uint8_t                            *MediaModel;         ///< Model of the media represented by the image
+    uint8_t                            *MediaSerialNumber;  ///< Serial number of the media represented by the image
+    uint8_t                            *MediaBarcode;       ///< Barcode of the media represented by the image
+    uint8_t                            *MediaPartNumber;    ///< Part number of the media represented by the image
+    uint8_t *DriveManufacturer;      ///< Manufacturer of the drive used to read the media represented by the image
+    uint8_t *DriveModel;             ///< Model of the drive used to read the media represented by the image
+    uint8_t *DriveSerialNumber;      ///< Serial number of the drive used to read the media represented by the image
+    uint8_t *DriveFirmwareRevision;  ///< Firmware revision of the drive used to read the media represented by the image
+    int32_t  MediaSequence;          ///< Number in sequence for the media represented by the image
+    int32_t  LastMediaSequence;      ///< Last media of the sequence the media represented by the image corresponds to
+    uint32_t Cylinders;              ///< Cylinders of the media represented by the image
+    uint32_t Heads;                  ///< Heads of the media represented by the image
+    uint32_t SectorsPerTrack;  ///< Sectors per track of the media represented by the image (for variable image, the
+                               ///< smallest)
 
     /* Optical information */
     TracksHeader tracksHeader;        ///< Tracks header (optical) if present.

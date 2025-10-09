@@ -105,18 +105,18 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
 
     if(ctx->metadataBlockHeader.mediaSequence > 0 && ctx->metadataBlockHeader.lastMediaSequence > 0)
     {
-        ctx->imageInfo.MediaSequence     = ctx->metadataBlockHeader.mediaSequence;
-        ctx->imageInfo.LastMediaSequence = ctx->metadataBlockHeader.lastMediaSequence;
-        TRACE("Setting media sequence as %d of %d", ctx->imageInfo.MediaSequence, ctx->imageInfo.LastMediaSequence);
+        ctx->MediaSequence     = ctx->metadataBlockHeader.mediaSequence;
+        ctx->LastMediaSequence = ctx->metadataBlockHeader.lastMediaSequence;
+        TRACE("Setting media sequence as %d of %d", ctx->MediaSequence, ctx->LastMediaSequence);
     }
 
     if(ctx->metadataBlockHeader.creatorLength > 0 &&
        ctx->metadataBlockHeader.creatorOffset + ctx->metadataBlockHeader.creatorLength <=
            ctx->metadataBlockHeader.blockSize)
     {
-        ctx->imageInfo.Creator = (uint8_t *)malloc(ctx->metadataBlockHeader.creatorLength);
-        if(ctx->imageInfo.Creator != NULL)
-            memcpy(ctx->imageInfo.Creator, ctx->metadataBlock + ctx->metadataBlockHeader.creatorOffset,
+        ctx->Creator = (uint8_t *)malloc(ctx->metadataBlockHeader.creatorLength);
+        if(ctx->Creator != NULL)
+            memcpy(ctx->Creator, ctx->metadataBlock + ctx->metadataBlockHeader.creatorOffset,
                    ctx->metadataBlockHeader.creatorLength);
     }
 
@@ -124,9 +124,9 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
        ctx->metadataBlockHeader.commentsOffset + ctx->metadataBlockHeader.commentsLength <=
            ctx->metadataBlockHeader.blockSize)
     {
-        ctx->imageInfo.Comments = (uint8_t *)malloc(ctx->metadataBlockHeader.commentsLength);
-        if(ctx->imageInfo.Comments != NULL)
-            memcpy(ctx->imageInfo.Comments, ctx->metadataBlock + ctx->metadataBlockHeader.commentsOffset,
+        ctx->Comments = (uint8_t *)malloc(ctx->metadataBlockHeader.commentsLength);
+        if(ctx->Comments != NULL)
+            memcpy(ctx->Comments, ctx->metadataBlock + ctx->metadataBlockHeader.commentsOffset,
                    ctx->metadataBlockHeader.commentsLength);
     }
 
@@ -134,9 +134,9 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
        ctx->metadataBlockHeader.mediaTitleOffset + ctx->metadataBlockHeader.mediaTitleLength <=
            ctx->metadataBlockHeader.blockSize)
     {
-        ctx->imageInfo.MediaTitle = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaTitleLength);
-        if(ctx->imageInfo.MediaTitle != NULL)
-            memcpy(ctx->imageInfo.MediaTitle, ctx->metadataBlock + ctx->metadataBlockHeader.mediaTitleOffset,
+        ctx->MediaTitle = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaTitleLength);
+        if(ctx->MediaTitle != NULL)
+            memcpy(ctx->MediaTitle, ctx->metadataBlock + ctx->metadataBlockHeader.mediaTitleOffset,
                    ctx->metadataBlockHeader.mediaTitleLength);
     }
 
@@ -144,10 +144,9 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
        ctx->metadataBlockHeader.mediaManufacturerOffset + ctx->metadataBlockHeader.mediaManufacturerLength <=
            ctx->metadataBlockHeader.blockSize)
     {
-        ctx->imageInfo.MediaManufacturer = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaManufacturerLength);
-        if(ctx->imageInfo.MediaManufacturer != NULL)
-            memcpy(ctx->imageInfo.MediaManufacturer,
-                   ctx->metadataBlock + ctx->metadataBlockHeader.mediaManufacturerOffset,
+        ctx->MediaManufacturer = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaManufacturerLength);
+        if(ctx->MediaManufacturer != NULL)
+            memcpy(ctx->MediaManufacturer, ctx->metadataBlock + ctx->metadataBlockHeader.mediaManufacturerOffset,
                    ctx->metadataBlockHeader.mediaManufacturerLength);
     }
 
@@ -155,9 +154,9 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
        ctx->metadataBlockHeader.mediaModelOffset + ctx->metadataBlockHeader.mediaModelLength <=
            ctx->metadataBlockHeader.blockSize)
     {
-        ctx->imageInfo.MediaModel = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaModelLength);
-        if(ctx->imageInfo.MediaModel != NULL)
-            memcpy(ctx->imageInfo.MediaModel, ctx->metadataBlock + ctx->metadataBlockHeader.mediaModelOffset,
+        ctx->MediaModel = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaModelLength);
+        if(ctx->MediaModel != NULL)
+            memcpy(ctx->MediaModel, ctx->metadataBlock + ctx->metadataBlockHeader.mediaModelOffset,
                    ctx->metadataBlockHeader.mediaModelLength);
     }
 
@@ -165,10 +164,9 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
        ctx->metadataBlockHeader.mediaSerialNumberOffset + ctx->metadataBlockHeader.mediaSerialNumberLength <=
            ctx->metadataBlockHeader.blockSize)
     {
-        ctx->imageInfo.MediaSerialNumber = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaSerialNumberLength);
-        if(ctx->imageInfo.MediaSerialNumber != NULL)
-            memcpy(ctx->imageInfo.MediaSerialNumber,
-                   ctx->metadataBlock + ctx->metadataBlockHeader.mediaSerialNumberOffset,
+        ctx->MediaSerialNumber = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaSerialNumberLength);
+        if(ctx->MediaSerialNumber != NULL)
+            memcpy(ctx->MediaSerialNumber, ctx->metadataBlock + ctx->metadataBlockHeader.mediaSerialNumberOffset,
                    ctx->metadataBlockHeader.mediaSerialNumberLength);
     }
 
@@ -176,9 +174,9 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
        ctx->metadataBlockHeader.mediaBarcodeOffset + ctx->metadataBlockHeader.mediaBarcodeLength <=
            ctx->metadataBlockHeader.blockSize)
     {
-        ctx->imageInfo.MediaBarcode = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaBarcodeLength);
-        if(ctx->imageInfo.MediaBarcode != NULL)
-            memcpy(ctx->imageInfo.MediaBarcode, ctx->metadataBlock + ctx->metadataBlockHeader.mediaBarcodeOffset,
+        ctx->MediaBarcode = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaBarcodeLength);
+        if(ctx->MediaBarcode != NULL)
+            memcpy(ctx->MediaBarcode, ctx->metadataBlock + ctx->metadataBlockHeader.mediaBarcodeOffset,
                    ctx->metadataBlockHeader.mediaBarcodeLength);
     }
 
@@ -186,9 +184,9 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
        ctx->metadataBlockHeader.mediaPartNumberOffset + ctx->metadataBlockHeader.mediaPartNumberLength <=
            ctx->metadataBlockHeader.blockSize)
     {
-        ctx->imageInfo.MediaPartNumber = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaPartNumberLength);
-        if(ctx->imageInfo.MediaPartNumber != NULL)
-            memcpy(ctx->imageInfo.MediaPartNumber, ctx->metadataBlock + ctx->metadataBlockHeader.mediaPartNumberOffset,
+        ctx->MediaPartNumber = (uint8_t *)malloc(ctx->metadataBlockHeader.mediaPartNumberLength);
+        if(ctx->MediaPartNumber != NULL)
+            memcpy(ctx->MediaPartNumber, ctx->metadataBlock + ctx->metadataBlockHeader.mediaPartNumberOffset,
                    ctx->metadataBlockHeader.mediaPartNumberLength);
     }
 
@@ -196,10 +194,9 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
        ctx->metadataBlockHeader.driveManufacturerOffset + ctx->metadataBlockHeader.driveManufacturerLength <=
            ctx->metadataBlockHeader.blockSize)
     {
-        ctx->imageInfo.DriveManufacturer = (uint8_t *)malloc(ctx->metadataBlockHeader.driveManufacturerLength);
-        if(ctx->imageInfo.DriveManufacturer != NULL)
-            memcpy(ctx->imageInfo.DriveManufacturer,
-                   ctx->metadataBlock + ctx->metadataBlockHeader.driveManufacturerOffset,
+        ctx->DriveManufacturer = (uint8_t *)malloc(ctx->metadataBlockHeader.driveManufacturerLength);
+        if(ctx->DriveManufacturer != NULL)
+            memcpy(ctx->DriveManufacturer, ctx->metadataBlock + ctx->metadataBlockHeader.driveManufacturerOffset,
                    ctx->metadataBlockHeader.driveManufacturerLength);
     }
 
@@ -207,9 +204,9 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
        ctx->metadataBlockHeader.driveModelOffset + ctx->metadataBlockHeader.driveModelLength <=
            ctx->metadataBlockHeader.blockSize)
     {
-        ctx->imageInfo.DriveModel = (uint8_t *)malloc(ctx->metadataBlockHeader.driveModelLength);
-        if(ctx->imageInfo.DriveModel != NULL)
-            memcpy(ctx->imageInfo.DriveModel, ctx->metadataBlock + ctx->metadataBlockHeader.driveModelOffset,
+        ctx->DriveModel = (uint8_t *)malloc(ctx->metadataBlockHeader.driveModelLength);
+        if(ctx->DriveModel != NULL)
+            memcpy(ctx->DriveModel, ctx->metadataBlock + ctx->metadataBlockHeader.driveModelOffset,
                    ctx->metadataBlockHeader.driveModelLength);
     }
 
@@ -217,10 +214,9 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
        ctx->metadataBlockHeader.driveSerialNumberOffset + ctx->metadataBlockHeader.driveSerialNumberLength <=
            ctx->metadataBlockHeader.blockSize)
     {
-        ctx->imageInfo.DriveSerialNumber = (uint8_t *)malloc(ctx->metadataBlockHeader.driveSerialNumberLength);
-        if(ctx->imageInfo.DriveSerialNumber != NULL)
-            memcpy(ctx->imageInfo.DriveSerialNumber,
-                   ctx->metadataBlock + ctx->metadataBlockHeader.driveSerialNumberOffset,
+        ctx->DriveSerialNumber = (uint8_t *)malloc(ctx->metadataBlockHeader.driveSerialNumberLength);
+        if(ctx->DriveSerialNumber != NULL)
+            memcpy(ctx->DriveSerialNumber, ctx->metadataBlock + ctx->metadataBlockHeader.driveSerialNumberOffset,
                    ctx->metadataBlockHeader.driveSerialNumberLength);
     }
 
@@ -228,9 +224,9 @@ void process_metadata_block(aaruformatContext *ctx, const IndexEntry *entry)
        ctx->metadataBlockHeader.driveFirmwareRevisionOffset + ctx->metadataBlockHeader.driveFirmwareRevisionLength <=
            ctx->metadataBlockHeader.blockSize)
     {
-        ctx->imageInfo.DriveFirmwareRevision = (uint8_t *)malloc(ctx->metadataBlockHeader.driveFirmwareRevisionLength);
-        if(ctx->imageInfo.DriveFirmwareRevision != NULL)
-            memcpy(ctx->imageInfo.DriveFirmwareRevision,
+        ctx->DriveFirmwareRevision = (uint8_t *)malloc(ctx->metadataBlockHeader.driveFirmwareRevisionLength);
+        if(ctx->DriveFirmwareRevision != NULL)
+            memcpy(ctx->DriveFirmwareRevision,
                    ctx->metadataBlock + ctx->metadataBlockHeader.driveFirmwareRevisionOffset,
                    ctx->metadataBlockHeader.driveFirmwareRevisionLength);
     }
@@ -291,9 +287,9 @@ void process_geometry_block(aaruformatContext *ctx, const IndexEntry *entry)
     TRACE("Geometry set to %d cylinders %d heads %d sectors per track", ctx->geometryBlock.cylinders,
           ctx->geometryBlock.heads, ctx->geometryBlock.sectorsPerTrack);
 
-    ctx->imageInfo.Cylinders       = ctx->geometryBlock.cylinders;
-    ctx->imageInfo.Heads           = ctx->geometryBlock.heads;
-    ctx->imageInfo.SectorsPerTrack = ctx->geometryBlock.sectorsPerTrack;
+    ctx->Cylinders       = ctx->geometryBlock.cylinders;
+    ctx->Heads           = ctx->geometryBlock.heads;
+    ctx->SectorsPerTrack = ctx->geometryBlock.sectorsPerTrack;
 
     TRACE("Exiting process_geometry_block()");
 }

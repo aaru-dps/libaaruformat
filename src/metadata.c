@@ -265,9 +265,9 @@ int32_t aaruf_set_geometry(void *context, const uint32_t cylinders, const uint32
     ctx->geometryBlock.cylinders       = cylinders;
     ctx->geometryBlock.heads           = heads;
     ctx->geometryBlock.sectorsPerTrack = sectors_per_track;
-    ctx->imageInfo.Cylinders           = cylinders;
-    ctx->imageInfo.Heads               = heads;
-    ctx->imageInfo.SectorsPerTrack     = sectors_per_track;
+    ctx->Cylinders           = cylinders;
+    ctx->Heads               = heads;
+    ctx->SectorsPerTrack     = sectors_per_track;
 
     TRACE("Exiting aaruf_set_geometry(%p, %u, %u, %u) = AARUF_STATUS_OK", context, cylinders, heads, sectors_per_track);
     return AARUF_STATUS_OK;
@@ -536,8 +536,8 @@ int32_t aaruf_set_creator(void *context, const uint8_t *data, const int32_t leng
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->imageInfo.Creator != NULL) free(ctx->imageInfo.Creator);
-    ctx->imageInfo.Creator                 = copy;
+    if(ctx->Creator != NULL) free(ctx->Creator);
+    ctx->Creator                           = copy;
     ctx->metadataBlockHeader.creatorLength = length;
 
     TRACE("Exiting aaruf_set_creator(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
@@ -650,8 +650,8 @@ int32_t aaruf_set_comments(void *context, const uint8_t *data, const int32_t len
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->imageInfo.Comments != NULL) free(ctx->imageInfo.Comments);
-    ctx->imageInfo.Comments                 = copy;
+    if(ctx->Comments != NULL) free(ctx->Comments);
+    ctx->Comments                           = copy;
     ctx->metadataBlockHeader.commentsLength = length;
 
     TRACE("Exiting aaruf_set_comments(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
@@ -763,8 +763,8 @@ int32_t aaruf_set_media_title(void *context, const uint8_t *data, const int32_t 
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->imageInfo.MediaTitle != NULL) free(ctx->imageInfo.MediaTitle);
-    ctx->imageInfo.MediaTitle                 = copy;
+    if(ctx->MediaTitle != NULL) free(ctx->MediaTitle);
+    ctx->MediaTitle                           = copy;
     ctx->metadataBlockHeader.mediaTitleLength = length;
 
     TRACE("Exiting aaruf_set_media_title(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
@@ -875,8 +875,8 @@ int32_t aaruf_set_media_manufacturer(void *context, const uint8_t *data, const i
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->imageInfo.MediaManufacturer != NULL) free(ctx->imageInfo.MediaManufacturer);
-    ctx->imageInfo.MediaManufacturer                 = copy;
+    if(ctx->MediaManufacturer != NULL) free(ctx->MediaManufacturer);
+    ctx->MediaManufacturer                           = copy;
     ctx->metadataBlockHeader.mediaManufacturerLength = length;
 
     TRACE("Exiting aaruf_set_media_manufacturer(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
@@ -982,8 +982,8 @@ int32_t aaruf_set_media_model(void *context, const uint8_t *data, const int32_t 
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->imageInfo.MediaModel != NULL) free(ctx->imageInfo.MediaModel);
-    ctx->imageInfo.MediaModel                 = copy;
+    if(ctx->MediaModel != NULL) free(ctx->MediaModel);
+    ctx->MediaModel                           = copy;
     ctx->metadataBlockHeader.mediaModelLength = length;
 
     TRACE("Exiting aaruf_set_media_model(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
@@ -1097,8 +1097,8 @@ int32_t aaruf_set_media_serial_number(void *context, const uint8_t *data, const 
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->imageInfo.MediaSerialNumber != NULL) free(ctx->imageInfo.MediaSerialNumber);
-    ctx->imageInfo.MediaSerialNumber                 = copy;
+    if(ctx->MediaSerialNumber != NULL) free(ctx->MediaSerialNumber);
+    ctx->MediaSerialNumber                           = copy;
     ctx->metadataBlockHeader.mediaSerialNumberLength = length;
 
     TRACE("Exiting aaruf_set_media_serial_number(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
@@ -1219,8 +1219,8 @@ int32_t aaruf_set_media_barcode(void *context, const uint8_t *data, const int32_
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->imageInfo.MediaBarcode != NULL) free(ctx->imageInfo.MediaBarcode);
-    ctx->imageInfo.MediaBarcode                 = copy;
+    if(ctx->MediaBarcode != NULL) free(ctx->MediaBarcode);
+    ctx->MediaBarcode                           = copy;
     ctx->metadataBlockHeader.mediaBarcodeLength = length;
 
     TRACE("Exiting aaruf_set_media_barcode(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
@@ -1340,8 +1340,8 @@ int32_t aaruf_set_media_part_number(void *context, const uint8_t *data, const in
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->imageInfo.MediaPartNumber != NULL) free(ctx->imageInfo.MediaPartNumber);
-    ctx->imageInfo.MediaPartNumber                 = copy;
+    if(ctx->MediaPartNumber != NULL) free(ctx->MediaPartNumber);
+    ctx->MediaPartNumber                           = copy;
     ctx->metadataBlockHeader.mediaPartNumberLength = length;
 
     TRACE("Exiting aaruf_set_media_part_number(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
@@ -1455,8 +1455,8 @@ int32_t aaruf_set_drive_manufacturer(void *context, const uint8_t *data, const i
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->imageInfo.DriveManufacturer != NULL) free(ctx->imageInfo.DriveManufacturer);
-    ctx->imageInfo.DriveManufacturer                 = copy;
+    if(ctx->DriveManufacturer != NULL) free(ctx->DriveManufacturer);
+    ctx->DriveManufacturer                           = copy;
     ctx->metadataBlockHeader.driveManufacturerLength = length;
 
     TRACE("Exiting aaruf_set_drive_manufacturer(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
@@ -1577,8 +1577,8 @@ int32_t aaruf_set_drive_model(void *context, const uint8_t *data, const int32_t 
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->imageInfo.DriveModel != NULL) free(ctx->imageInfo.DriveModel);
-    ctx->imageInfo.DriveModel                 = copy;
+    if(ctx->DriveModel != NULL) free(ctx->DriveModel);
+    ctx->DriveModel                           = copy;
     ctx->metadataBlockHeader.driveModelLength = length;
 
     TRACE("Exiting aaruf_set_drive_model(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
@@ -1701,8 +1701,8 @@ int32_t aaruf_set_drive_serial_number(void *context, const uint8_t *data, const 
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->imageInfo.DriveSerialNumber != NULL) free(ctx->imageInfo.DriveSerialNumber);
-    ctx->imageInfo.DriveSerialNumber                 = copy;
+    if(ctx->DriveSerialNumber != NULL) free(ctx->DriveSerialNumber);
+    ctx->DriveSerialNumber                           = copy;
     ctx->metadataBlockHeader.driveSerialNumberLength = length;
 
     TRACE("Exiting aaruf_set_drive_serial_number(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
@@ -1836,8 +1836,8 @@ int32_t aaruf_set_drive_firmware_revision(void *context, const uint8_t *data, co
 
     // Copy opaque UTF-16LE string
     memcpy(copy, data, length);
-    if(ctx->imageInfo.DriveFirmwareRevision != NULL) free(ctx->imageInfo.DriveFirmwareRevision);
-    ctx->imageInfo.DriveFirmwareRevision                 = copy;
+    if(ctx->DriveFirmwareRevision != NULL) free(ctx->DriveFirmwareRevision);
+    ctx->DriveFirmwareRevision                           = copy;
     ctx->metadataBlockHeader.driveFirmwareRevisionLength = length;
 
     TRACE("Exiting aaruf_set_drive_firmware_revision(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
@@ -2425,7 +2425,7 @@ int32_t aaruf_get_creator(const void *context, uint8_t *buffer, int32_t *length)
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.Creator == NULL ||
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->Creator == NULL ||
        ctx->metadataBlockHeader.creatorLength == 0)
     {
         FATAL("No metadata block present");
@@ -2443,7 +2443,7 @@ int32_t aaruf_get_creator(const void *context, uint8_t *buffer, int32_t *length)
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->imageInfo.Creator, ctx->metadataBlockHeader.creatorLength);
+    memcpy(buffer, ctx->Creator, ctx->metadataBlockHeader.creatorLength);
     *length = ctx->metadataBlockHeader.creatorLength;
 
     TRACE("Exiting aaruf_get_creator(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
@@ -2497,7 +2497,7 @@ int32_t aaruf_get_comments(const void *context, uint8_t *buffer, int32_t *length
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.Comments == NULL ||
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->Comments == NULL ||
        ctx->metadataBlockHeader.commentsLength == 0)
     {
         FATAL("No metadata block present");
@@ -2515,7 +2515,7 @@ int32_t aaruf_get_comments(const void *context, uint8_t *buffer, int32_t *length
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->imageInfo.Comments, ctx->metadataBlockHeader.commentsLength);
+    memcpy(buffer, ctx->Comments, ctx->metadataBlockHeader.commentsLength);
     *length = ctx->metadataBlockHeader.commentsLength;
 
     TRACE("Exiting aaruf_get_comments(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
@@ -2567,7 +2567,7 @@ int32_t aaruf_get_media_title(const void *context, uint8_t *buffer, int32_t *len
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.MediaTitle == NULL ||
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->MediaTitle == NULL ||
        ctx->metadataBlockHeader.mediaTitleLength == 0)
     {
         FATAL("No metadata block present");
@@ -2585,7 +2585,7 @@ int32_t aaruf_get_media_title(const void *context, uint8_t *buffer, int32_t *len
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->imageInfo.MediaTitle, ctx->metadataBlockHeader.mediaTitleLength);
+    memcpy(buffer, ctx->MediaTitle, ctx->metadataBlockHeader.mediaTitleLength);
     *length = ctx->metadataBlockHeader.mediaTitleLength;
 
     TRACE("Exiting aaruf_get_media_title(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
@@ -2637,7 +2637,7 @@ int32_t aaruf_get_media_manufacturer(const void *context, uint8_t *buffer, int32
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.MediaManufacturer == NULL ||
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->MediaManufacturer == NULL ||
        ctx->metadataBlockHeader.mediaManufacturerLength == 0)
     {
         FATAL("No metadata block present");
@@ -2655,7 +2655,7 @@ int32_t aaruf_get_media_manufacturer(const void *context, uint8_t *buffer, int32
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->imageInfo.MediaManufacturer, ctx->metadataBlockHeader.mediaManufacturerLength);
+    memcpy(buffer, ctx->MediaManufacturer, ctx->metadataBlockHeader.mediaManufacturerLength);
     *length = ctx->metadataBlockHeader.mediaManufacturerLength;
 
     TRACE("Exiting aaruf_get_media_manufacturer(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
@@ -2707,7 +2707,7 @@ int32_t aaruf_get_media_model(const void *context, uint8_t *buffer, int32_t *len
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.MediaModel == NULL ||
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->MediaModel == NULL ||
        ctx->metadataBlockHeader.mediaModelLength == 0)
     {
         FATAL("No metadata block present");
@@ -2725,7 +2725,7 @@ int32_t aaruf_get_media_model(const void *context, uint8_t *buffer, int32_t *len
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->imageInfo.MediaModel, ctx->metadataBlockHeader.mediaModelLength);
+    memcpy(buffer, ctx->MediaModel, ctx->metadataBlockHeader.mediaModelLength);
     *length = ctx->metadataBlockHeader.mediaModelLength;
 
     TRACE("Exiting aaruf_get_media_model(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
@@ -2777,7 +2777,7 @@ int32_t aaruf_get_media_serial_number(const void *context, uint8_t *buffer, int3
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.MediaSerialNumber == NULL ||
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->MediaSerialNumber == NULL ||
        ctx->metadataBlockHeader.mediaSerialNumberLength == 0)
     {
         FATAL("No metadata block present");
@@ -2795,7 +2795,7 @@ int32_t aaruf_get_media_serial_number(const void *context, uint8_t *buffer, int3
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->imageInfo.MediaSerialNumber, ctx->metadataBlockHeader.mediaSerialNumberLength);
+    memcpy(buffer, ctx->MediaSerialNumber, ctx->metadataBlockHeader.mediaSerialNumberLength);
     *length = ctx->metadataBlockHeader.mediaSerialNumberLength;
 
     TRACE("Exiting aaruf_get_media_serial_number(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
@@ -2846,7 +2846,7 @@ int32_t aaruf_get_media_barcode(const void *context, uint8_t *buffer, int32_t *l
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.MediaBarcode == NULL ||
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->MediaBarcode == NULL ||
        ctx->metadataBlockHeader.mediaBarcodeLength == 0)
     {
         FATAL("No metadata block present");
@@ -2864,7 +2864,7 @@ int32_t aaruf_get_media_barcode(const void *context, uint8_t *buffer, int32_t *l
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->imageInfo.MediaBarcode, ctx->metadataBlockHeader.mediaBarcodeLength);
+    memcpy(buffer, ctx->MediaBarcode, ctx->metadataBlockHeader.mediaBarcodeLength);
     *length = ctx->metadataBlockHeader.mediaBarcodeLength;
 
     TRACE("Exiting aaruf_get_media_barcode(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
@@ -2917,7 +2917,7 @@ int32_t aaruf_get_media_part_number(const void *context, uint8_t *buffer, int32_
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.MediaPartNumber == NULL ||
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->MediaPartNumber == NULL ||
        ctx->metadataBlockHeader.mediaPartNumberLength == 0)
     {
         FATAL("No metadata block present");
@@ -2935,7 +2935,7 @@ int32_t aaruf_get_media_part_number(const void *context, uint8_t *buffer, int32_
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->imageInfo.MediaPartNumber, ctx->metadataBlockHeader.mediaPartNumberLength);
+    memcpy(buffer, ctx->MediaPartNumber, ctx->metadataBlockHeader.mediaPartNumberLength);
     *length = ctx->metadataBlockHeader.mediaPartNumberLength;
 
     TRACE("Exiting aaruf_get_media_part_number(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
@@ -2989,7 +2989,7 @@ int32_t aaruf_get_drive_manufacturer(const void *context, uint8_t *buffer, int32
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.DriveManufacturer == NULL ||
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->DriveManufacturer == NULL ||
        ctx->metadataBlockHeader.driveManufacturerLength == 0)
     {
         FATAL("No metadata block present");
@@ -3007,7 +3007,7 @@ int32_t aaruf_get_drive_manufacturer(const void *context, uint8_t *buffer, int32
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->imageInfo.DriveManufacturer, ctx->metadataBlockHeader.driveManufacturerLength);
+    memcpy(buffer, ctx->DriveManufacturer, ctx->metadataBlockHeader.driveManufacturerLength);
     *length = ctx->metadataBlockHeader.driveManufacturerLength;
 
     TRACE("Exiting aaruf_get_drive_manufacturer(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
@@ -3059,7 +3059,7 @@ int32_t aaruf_get_drive_model(const void *context, uint8_t *buffer, int32_t *len
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.DriveModel == NULL ||
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->DriveModel == NULL ||
        ctx->metadataBlockHeader.driveModelLength == 0)
     {
         FATAL("No metadata block present");
@@ -3077,7 +3077,7 @@ int32_t aaruf_get_drive_model(const void *context, uint8_t *buffer, int32_t *len
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->imageInfo.DriveModel, ctx->metadataBlockHeader.driveModelLength);
+    memcpy(buffer, ctx->DriveModel, ctx->metadataBlockHeader.driveModelLength);
     *length = ctx->metadataBlockHeader.driveModelLength;
 
     TRACE("Exiting aaruf_get_drive_model(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
@@ -3129,7 +3129,7 @@ int32_t aaruf_get_drive_serial_number(const void *context, uint8_t *buffer, int3
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.DriveSerialNumber == NULL ||
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->DriveSerialNumber == NULL ||
        ctx->metadataBlockHeader.driveSerialNumberLength == 0)
     {
         FATAL("No metadata block present");
@@ -3147,7 +3147,7 @@ int32_t aaruf_get_drive_serial_number(const void *context, uint8_t *buffer, int3
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->imageInfo.DriveSerialNumber, ctx->metadataBlockHeader.driveSerialNumberLength);
+    memcpy(buffer, ctx->DriveSerialNumber, ctx->metadataBlockHeader.driveSerialNumberLength);
     *length = ctx->metadataBlockHeader.driveSerialNumberLength;
 
     TRACE("Exiting aaruf_get_drive_serial_number(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);
@@ -3199,7 +3199,7 @@ int32_t aaruf_get_drive_firmware_revision(const void *context, uint8_t *buffer, 
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->imageInfo.DriveFirmwareRevision == NULL ||
+    if(ctx->metadataBlockHeader.identifier != MetadataBlock || ctx->DriveFirmwareRevision == NULL ||
        ctx->metadataBlockHeader.driveFirmwareRevisionLength == 0)
     {
         FATAL("No metadata block present");
@@ -3217,7 +3217,7 @@ int32_t aaruf_get_drive_firmware_revision(const void *context, uint8_t *buffer, 
     }
 
     // Copy opaque UTF-16LE string
-    memcpy(buffer, ctx->imageInfo.DriveFirmwareRevision, ctx->metadataBlockHeader.driveFirmwareRevisionLength);
+    memcpy(buffer, ctx->DriveFirmwareRevision, ctx->metadataBlockHeader.driveFirmwareRevisionLength);
     *length = ctx->metadataBlockHeader.driveFirmwareRevisionLength;
 
     TRACE("Exiting aaruf_get_drive_firmware_revision(%p, %p, %d) = AARUF_STATUS_OK", context, buffer, *length);

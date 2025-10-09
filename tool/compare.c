@@ -321,13 +321,13 @@ int compare(const char *path1, const char *path2)
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Application version: ");
         tb_printf(mid_x + 23, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->imageInfo.ApplicationVersion);
     }
-    if(ctx1->imageInfo.Creator != NULL || ctx2->imageInfo.Creator != NULL)
+    if(ctx1->Creator != NULL || ctx2->Creator != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Creator: ");
-        tb_printf(11, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->imageInfo.Creator);
+        tb_printf(11, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->Creator);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Creator: ");
-        tb_printf(mid_x + 11, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->imageInfo.Creator);
+        tb_printf(mid_x + 11, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->Creator);
     }
 
     tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Creation time: ");
@@ -342,53 +342,53 @@ int compare(const char *path1, const char *path2)
     tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Last written time: ");
     tb_printf(mid_x + 21, rr++, TB_WHITE, TB_BLUE, "%lld", ctx2->imageInfo.LastModificationTime);
 
-    if(ctx1->imageInfo.Comments != NULL || ctx2->imageInfo.Comments != NULL)
+    if(ctx1->Comments != NULL || ctx2->Comments != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Comments: ");
-        tb_printf(12, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->imageInfo.Comments);
+        tb_printf(12, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->Comments);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Comments: ");
-        tb_printf(mid_x + 12, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->imageInfo.Comments);
+        tb_printf(mid_x + 12, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->Comments);
     }
-    if(ctx1->imageInfo.MediaTitle != NULL || ctx2->imageInfo.MediaTitle != NULL)
+    if(ctx1->MediaTitle != NULL || ctx2->MediaTitle != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Media title: ");
-        tb_printf(15, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->imageInfo.MediaTitle);
+        tb_printf(15, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->MediaTitle);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Media title: ");
-        tb_printf(mid_x + 15, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->imageInfo.MediaTitle);
+        tb_printf(mid_x + 15, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->MediaTitle);
     }
-    if(ctx1->imageInfo.MediaManufacturer != NULL || ctx2->imageInfo.MediaManufacturer != NULL)
+    if(ctx1->MediaManufacturer != NULL || ctx2->MediaManufacturer != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Media manufacturer: ");
-        tb_printf(22, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->imageInfo.MediaManufacturer);
+        tb_printf(22, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->MediaManufacturer);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Media manufacturer: ");
-        tb_printf(mid_x + 22, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->imageInfo.MediaManufacturer);
+        tb_printf(mid_x + 22, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->MediaManufacturer);
     }
-    if(ctx1->imageInfo.MediaSerialNumber != NULL || ctx2->imageInfo.MediaSerialNumber != NULL)
+    if(ctx1->MediaSerialNumber != NULL || ctx2->MediaSerialNumber != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Media serial number: ");
-        tb_printf(23, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->imageInfo.MediaSerialNumber);
+        tb_printf(23, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->MediaSerialNumber);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Media serial number: ");
-        tb_printf(mid_x + 23, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->imageInfo.MediaSerialNumber);
+        tb_printf(mid_x + 23, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->MediaSerialNumber);
     }
-    if(ctx1->imageInfo.MediaBarcode != NULL || ctx2->imageInfo.MediaBarcode != NULL)
+    if(ctx1->MediaBarcode != NULL || ctx2->MediaBarcode != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Media barcode: ");
-        tb_printf(17, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->imageInfo.MediaBarcode);
+        tb_printf(17, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->MediaBarcode);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Media barcode: ");
-        tb_printf(mid_x + 17, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->imageInfo.MediaBarcode);
+        tb_printf(mid_x + 17, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->MediaBarcode);
     }
-    if(ctx1->imageInfo.MediaPartNumber != NULL || ctx2->imageInfo.MediaPartNumber != NULL)
+    if(ctx1->MediaPartNumber != NULL || ctx2->MediaPartNumber != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Media part number: ");
-        tb_printf(21, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->imageInfo.MediaPartNumber);
+        tb_printf(21, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->MediaPartNumber);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Media part number: ");
-        tb_printf(mid_x + 21, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->imageInfo.MediaPartNumber);
+        tb_printf(mid_x + 21, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->MediaPartNumber);
     }
     tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Media type: ");
     tb_printf(14, lr++, TB_WHITE, TB_BLUE, "%u", ctx1->imageInfo.MediaType);
@@ -396,47 +396,47 @@ int compare(const char *path1, const char *path2)
     tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Media type: ");
     tb_printf(mid_x + 14, rr++, TB_WHITE, TB_BLUE, "%u", ctx2->imageInfo.MediaType);
 
-    if(ctx1->imageInfo.MediaSequence > 0 || ctx1->imageInfo.LastMediaSequence > 0 ||
-       ctx2->imageInfo.MediaSequence > 0 || ctx2->imageInfo.LastMediaSequence > 0)
+    if(ctx1->MediaSequence > 0 || ctx1->LastMediaSequence > 0 ||
+       ctx2->MediaSequence > 0 || ctx2->LastMediaSequence > 0)
     {
         tb_printf(2, lr++, TB_WHITE | TB_BOLD, TB_BLUE, "Media is number %d in a set of %d media",
-                  ctx1->imageInfo.MediaSequence, ctx1->imageInfo.LastMediaSequence);
+                  ctx1->MediaSequence, ctx1->LastMediaSequence);
 
         tb_printf(mid_x + 2, rr++, TB_WHITE | TB_BOLD, TB_BLUE, "Media is number %d in a set of %d media",
-                  ctx2->imageInfo.MediaSequence, ctx2->imageInfo.LastMediaSequence);
+                  ctx2->MediaSequence, ctx2->LastMediaSequence);
     }
 
-    if(ctx1->imageInfo.DriveManufacturer != NULL || ctx2->imageInfo.DriveManufacturer != NULL)
+    if(ctx1->DriveManufacturer != NULL || ctx2->DriveManufacturer != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Drive manufacturer: ");
-        tb_printf(22, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->imageInfo.DriveManufacturer);
+        tb_printf(22, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->DriveManufacturer);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Drive manufacturer: ");
-        tb_printf(mid_x + 22, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->imageInfo.DriveManufacturer);
+        tb_printf(mid_x + 22, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->DriveManufacturer);
     }
-    if(ctx1->imageInfo.DriveModel != NULL || ctx2->imageInfo.DriveModel != NULL)
+    if(ctx1->DriveModel != NULL || ctx2->DriveModel != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Drive model: ");
-        tb_printf(15, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->imageInfo.DriveModel);
+        tb_printf(15, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->DriveModel);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Drive model: ");
-        tb_printf(mid_x + 15, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->imageInfo.DriveModel);
+        tb_printf(mid_x + 15, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->DriveModel);
     }
-    if(ctx1->imageInfo.DriveSerialNumber != NULL || ctx2->imageInfo.DriveSerialNumber != NULL)
+    if(ctx1->DriveSerialNumber != NULL || ctx2->DriveSerialNumber != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Drive serial number: ");
-        tb_printf(23, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->imageInfo.DriveSerialNumber);
+        tb_printf(23, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->DriveSerialNumber);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Drive serial number: ");
-        tb_printf(mid_x + 23, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->imageInfo.DriveSerialNumber);
+        tb_printf(mid_x + 23, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->DriveSerialNumber);
     }
-    if(ctx1->imageInfo.DriveFirmwareRevision != NULL || ctx2->imageInfo.DriveFirmwareRevision != NULL)
+    if(ctx1->DriveFirmwareRevision != NULL || ctx2->DriveFirmwareRevision != NULL)
     {
         tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "Drive firmware revision: ");
-        tb_printf(27, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->imageInfo.DriveFirmwareRevision);
+        tb_printf(27, lr++, TB_WHITE, TB_BLUE, "%s", ctx1->DriveFirmwareRevision);
 
         tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "Drive firmware revision: ");
-        tb_printf(mid_x + 27, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->imageInfo.DriveFirmwareRevision);
+        tb_printf(mid_x + 27, rr++, TB_WHITE, TB_BLUE, "%s", ctx2->DriveFirmwareRevision);
     }
     tb_printf(2, lr, TB_WHITE | TB_BOLD, TB_BLUE, "XML media type: ");
     tb_printf(18, lr++, TB_WHITE, TB_BLUE, "%d", ctx1->imageInfo.XmlMediaType);
@@ -444,15 +444,15 @@ int compare(const char *path1, const char *path2)
     tb_printf(mid_x + 2, rr, TB_WHITE | TB_BOLD, TB_BLUE, "XML media type: ");
     tb_printf(mid_x + 18, rr++, TB_WHITE, TB_BLUE, "%d", ctx2->imageInfo.XmlMediaType);
 
-    if(ctx1->imageInfo.Cylinders > 0 || ctx1->imageInfo.Heads > 0 || ctx1->imageInfo.SectorsPerTrack > 0 ||
-       ctx2->imageInfo.Cylinders > 0 || ctx2->imageInfo.Heads > 0 || ctx2->imageInfo.SectorsPerTrack > 0)
+    if(ctx1->Cylinders > 0 || ctx1->Heads > 0 || ctx1->SectorsPerTrack > 0 ||
+       ctx2->Cylinders > 0 || ctx2->Heads > 0 || ctx2->SectorsPerTrack > 0)
     {
         tb_printf(2, lr++, TB_WHITE | TB_BOLD, TB_BLUE, "Media has %d cylinders, %d heads and %d sectors per track",
-                  ctx1->imageInfo.Cylinders, ctx1->imageInfo.Heads, ctx1->imageInfo.SectorsPerTrack);
+                  ctx1->Cylinders, ctx1->Heads, ctx1->SectorsPerTrack);
 
         tb_printf(mid_x + 2, rr++, TB_WHITE | TB_BOLD, TB_BLUE,
-                  "Media has %d cylinders, %d heads and %d sectors per track", ctx2->imageInfo.Cylinders,
-                  ctx2->imageInfo.Heads, ctx2->imageInfo.SectorsPerTrack);
+                  "Media has %d cylinders, %d heads and %d sectors per track", ctx2->Cylinders,
+                  ctx2->Heads, ctx2->SectorsPerTrack);
     }
 
     tb_present();

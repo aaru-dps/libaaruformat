@@ -3158,13 +3158,11 @@ static void write_geometry_block(const aaruformatContext *ctx)
 static void write_metadata_block(aaruformatContext *ctx)
 {
     if(ctx->metadataBlockHeader.identifier != MetadataBlock && ctx->metadataBlockHeader.mediaSequence == 0 &&
-       ctx->metadataBlockHeader.lastMediaSequence == 0 && ctx->imageInfo.Creator == NULL &&
-       ctx->imageInfo.Comments == NULL && ctx->imageInfo.MediaTitle == NULL &&
-       ctx->imageInfo.MediaManufacturer == NULL && ctx->imageInfo.MediaModel == NULL &&
-       ctx->imageInfo.MediaSerialNumber == NULL && ctx->imageInfo.MediaBarcode == NULL &&
-       ctx->imageInfo.MediaPartNumber == NULL && ctx->imageInfo.DriveManufacturer == NULL &&
-       ctx->imageInfo.DriveModel == NULL && ctx->imageInfo.DriveSerialNumber == NULL &&
-       ctx->imageInfo.DriveFirmwareRevision == NULL)
+       ctx->metadataBlockHeader.lastMediaSequence == 0 && ctx->Creator == NULL && ctx->Comments == NULL &&
+       ctx->MediaTitle == NULL && ctx->MediaManufacturer == NULL && ctx->MediaModel == NULL &&
+       ctx->MediaSerialNumber == NULL && ctx->MediaBarcode == NULL && ctx->MediaPartNumber == NULL &&
+       ctx->DriveManufacturer == NULL && ctx->DriveModel == NULL && ctx->DriveSerialNumber == NULL &&
+       ctx->DriveFirmwareRevision == NULL)
         return;
 
     ctx->metadataBlockHeader.blockSize =
@@ -3182,87 +3180,86 @@ static void write_metadata_block(aaruformatContext *ctx)
     uint8_t *buffer = calloc(1, ctx->metadataBlockHeader.blockSize);
     if(buffer == NULL) return;
 
-    if(ctx->imageInfo.Creator != NULL && ctx->metadataBlockHeader.creatorLength > 0)
+    if(ctx->Creator != NULL && ctx->metadataBlockHeader.creatorLength > 0)
     {
-        memcpy(buffer + pos, ctx->imageInfo.Creator, ctx->metadataBlockHeader.creatorLength);
+        memcpy(buffer + pos, ctx->Creator, ctx->metadataBlockHeader.creatorLength);
         ctx->metadataBlockHeader.creatorOffset = pos;
         pos += ctx->metadataBlockHeader.creatorLength;
     }
 
-    if(ctx->imageInfo.Comments != NULL && ctx->metadataBlockHeader.commentsLength > 0)
+    if(ctx->Comments != NULL && ctx->metadataBlockHeader.commentsLength > 0)
     {
-        memcpy(buffer + pos, ctx->imageInfo.Comments, ctx->metadataBlockHeader.commentsLength);
+        memcpy(buffer + pos, ctx->Comments, ctx->metadataBlockHeader.commentsLength);
         ctx->metadataBlockHeader.commentsOffset = pos;
         pos += ctx->metadataBlockHeader.commentsLength;
     }
 
-    if(ctx->imageInfo.MediaTitle != NULL && ctx->metadataBlockHeader.mediaTitleLength > 0)
+    if(ctx->MediaTitle != NULL && ctx->metadataBlockHeader.mediaTitleLength > 0)
     {
-        memcpy(buffer + pos, ctx->imageInfo.MediaTitle, ctx->metadataBlockHeader.mediaTitleLength);
+        memcpy(buffer + pos, ctx->MediaTitle, ctx->metadataBlockHeader.mediaTitleLength);
         ctx->metadataBlockHeader.mediaTitleOffset = pos;
         pos += ctx->metadataBlockHeader.mediaTitleLength;
     }
 
-    if(ctx->imageInfo.MediaManufacturer != NULL && ctx->metadataBlockHeader.mediaManufacturerLength > 0)
+    if(ctx->MediaManufacturer != NULL && ctx->metadataBlockHeader.mediaManufacturerLength > 0)
     {
-        memcpy(buffer + pos, ctx->imageInfo.MediaManufacturer, ctx->metadataBlockHeader.mediaManufacturerLength);
+        memcpy(buffer + pos, ctx->MediaManufacturer, ctx->metadataBlockHeader.mediaManufacturerLength);
         ctx->metadataBlockHeader.mediaManufacturerOffset = pos;
         pos += ctx->metadataBlockHeader.mediaManufacturerLength;
     }
 
-    if(ctx->imageInfo.MediaModel != NULL && ctx->metadataBlockHeader.mediaModelLength > 0)
+    if(ctx->MediaModel != NULL && ctx->metadataBlockHeader.mediaModelLength > 0)
     {
-        memcpy(buffer + pos, ctx->imageInfo.MediaModel, ctx->metadataBlockHeader.mediaModelLength);
+        memcpy(buffer + pos, ctx->MediaModel, ctx->metadataBlockHeader.mediaModelLength);
         ctx->metadataBlockHeader.mediaModelOffset = pos;
         pos += ctx->metadataBlockHeader.mediaModelLength;
     }
 
-    if(ctx->imageInfo.MediaSerialNumber != NULL && ctx->metadataBlockHeader.mediaSerialNumberLength > 0)
+    if(ctx->MediaSerialNumber != NULL && ctx->metadataBlockHeader.mediaSerialNumberLength > 0)
     {
-        memcpy(buffer + pos, ctx->imageInfo.MediaSerialNumber, ctx->metadataBlockHeader.mediaSerialNumberLength);
+        memcpy(buffer + pos, ctx->MediaSerialNumber, ctx->metadataBlockHeader.mediaSerialNumberLength);
         ctx->metadataBlockHeader.mediaSerialNumberOffset = pos;
         pos += ctx->metadataBlockHeader.mediaSerialNumberLength;
     }
 
-    if(ctx->imageInfo.MediaBarcode != NULL && ctx->metadataBlockHeader.mediaBarcodeLength > 0)
+    if(ctx->MediaBarcode != NULL && ctx->metadataBlockHeader.mediaBarcodeLength > 0)
     {
-        memcpy(buffer + pos, ctx->imageInfo.MediaBarcode, ctx->metadataBlockHeader.mediaBarcodeLength);
+        memcpy(buffer + pos, ctx->MediaBarcode, ctx->metadataBlockHeader.mediaBarcodeLength);
         ctx->metadataBlockHeader.mediaBarcodeOffset = pos;
         pos += ctx->metadataBlockHeader.mediaBarcodeLength;
     }
 
-    if(ctx->imageInfo.MediaPartNumber != NULL && ctx->metadataBlockHeader.mediaPartNumberLength > 0)
+    if(ctx->MediaPartNumber != NULL && ctx->metadataBlockHeader.mediaPartNumberLength > 0)
     {
-        memcpy(buffer + pos, ctx->imageInfo.MediaPartNumber, ctx->metadataBlockHeader.mediaPartNumberLength);
+        memcpy(buffer + pos, ctx->MediaPartNumber, ctx->metadataBlockHeader.mediaPartNumberLength);
         ctx->metadataBlockHeader.mediaPartNumberOffset = pos;
         pos += ctx->metadataBlockHeader.mediaPartNumberLength;
     }
 
-    if(ctx->imageInfo.DriveManufacturer != NULL && ctx->metadataBlockHeader.driveManufacturerLength > 0)
+    if(ctx->DriveManufacturer != NULL && ctx->metadataBlockHeader.driveManufacturerLength > 0)
     {
-        memcpy(buffer + pos, ctx->imageInfo.DriveManufacturer, ctx->metadataBlockHeader.driveManufacturerLength);
+        memcpy(buffer + pos, ctx->DriveManufacturer, ctx->metadataBlockHeader.driveManufacturerLength);
         ctx->metadataBlockHeader.driveManufacturerOffset = pos;
         pos += ctx->metadataBlockHeader.driveManufacturerLength;
     }
 
-    if(ctx->imageInfo.DriveModel != NULL && ctx->metadataBlockHeader.driveModelLength > 0)
+    if(ctx->DriveModel != NULL && ctx->metadataBlockHeader.driveModelLength > 0)
     {
-        memcpy(buffer + pos, ctx->imageInfo.DriveModel, ctx->metadataBlockHeader.driveModelLength);
+        memcpy(buffer + pos, ctx->DriveModel, ctx->metadataBlockHeader.driveModelLength);
         ctx->metadataBlockHeader.driveModelOffset = pos;
         pos += ctx->metadataBlockHeader.driveModelLength;
     }
 
-    if(ctx->imageInfo.DriveSerialNumber != NULL && ctx->metadataBlockHeader.driveSerialNumberLength > 0)
+    if(ctx->DriveSerialNumber != NULL && ctx->metadataBlockHeader.driveSerialNumberLength > 0)
     {
-        memcpy(buffer + pos, ctx->imageInfo.DriveSerialNumber, ctx->metadataBlockHeader.driveSerialNumberLength);
+        memcpy(buffer + pos, ctx->DriveSerialNumber, ctx->metadataBlockHeader.driveSerialNumberLength);
         ctx->metadataBlockHeader.driveSerialNumberOffset = pos;
         pos += ctx->metadataBlockHeader.driveSerialNumberLength;
     }
 
-    if(ctx->imageInfo.DriveFirmwareRevision != NULL && ctx->metadataBlockHeader.driveFirmwareRevisionLength > 0)
+    if(ctx->DriveFirmwareRevision != NULL && ctx->metadataBlockHeader.driveFirmwareRevisionLength > 0)
     {
-        memcpy(buffer + pos, ctx->imageInfo.DriveFirmwareRevision,
-               ctx->metadataBlockHeader.driveFirmwareRevisionLength);
+        memcpy(buffer + pos, ctx->DriveFirmwareRevision, ctx->metadataBlockHeader.driveFirmwareRevisionLength);
         ctx->metadataBlockHeader.driveFirmwareRevisionOffset = pos;
     }
 

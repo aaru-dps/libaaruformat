@@ -807,37 +807,18 @@ typedef enum
  */
 typedef struct ImageInfo  // NOLINT
 {
-    uint8_t  HasPartitions;          ///< Image contains partitions (or tracks for optical media)
-    uint8_t  HasSessions;            ///< Image contains sessions (optical media only)
-    uint64_t ImageSize;              ///< Size of the image without headers
-    uint64_t Sectors;                ///< Sectors contained in the image
-    uint32_t SectorSize;             ///< Size of sectors contained in the image
-    uint8_t *Version;                ///< Image version
-    uint8_t *Application;            ///< Application that created the image
-    uint8_t *ApplicationVersion;     ///< Version of the application that created the image
-    uint8_t *Creator;                ///< Who (person) created the image?
-    int64_t  CreationTime;           ///< Image creation time
-    int64_t  LastModificationTime;   ///< Image last modification time
-    uint8_t *MediaTitle;             ///< Title of the media represented by the image
-    uint8_t *Comments;               ///< Image comments
-    uint8_t *MediaManufacturer;      ///< Manufacturer of the media represented by the image
-    uint8_t *MediaModel;             ///< Model of the media represented by the image
-    uint8_t *MediaSerialNumber;      ///< Serial number of the media represented by the image
-    uint8_t *MediaBarcode;           ///< Barcode of the media represented by the image
-    uint8_t *MediaPartNumber;        ///< Part number of the media represented by the image
-    uint32_t MediaType;              ///< Media type represented by the image
-    int32_t  MediaSequence;          ///< Number in sequence for the media represented by the image
-    int32_t  LastMediaSequence;      ///< Last media of the sequence the media represented by the image corresponds to
-    uint8_t *DriveManufacturer;      ///< Manufacturer of the drive used to read the media represented by the image
-    uint8_t *DriveModel;             ///< Model of the drive used to read the media represented by the image
-    uint8_t *DriveSerialNumber;      ///< Serial number of the drive used to read the media represented by the image
-    uint8_t *DriveFirmwareRevision;  ///< Firmware revision of the drive used to read the media represented by the image
-    uint8_t  XmlMediaType;           ///< Type of the media represented by the image to use in XML sidecars
-    // CHS geometry...
-    uint32_t Cylinders;        ///< Cylinders of the media represented by the image
-    uint32_t Heads;            ///< Heads of the media represented by the image
-    uint32_t SectorsPerTrack;  ///< Sectors per track of the media represented by the image (for variable image, the
-                               ///< smallest)
+    uint8_t  HasPartitions;         ///< Image contains partitions (or tracks for optical media)
+    uint8_t  HasSessions;           ///< Image contains sessions (optical media only)
+    uint64_t ImageSize;             ///< Size of the image without headers
+    uint64_t Sectors;               ///< Sectors contained in the image
+    uint32_t SectorSize;            ///< Size of sectors contained in the image
+    uint8_t *Version;               ///< Image version
+    uint8_t *Application;           ///< Application that created the image
+    uint8_t *ApplicationVersion;    ///< Version of the application that created the image
+    int64_t  CreationTime;          ///< Image creation time
+    int64_t  LastModificationTime;  ///< Image last modification time
+    uint32_t MediaType;             ///< Media type represented by the image
+    uint8_t  XmlMediaType;          ///< Type of the media represented by the image to use in XML sidecars
 } ImageInfo;
 
 /** \addtogroup SectorTags Per-sector metadata tag types

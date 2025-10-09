@@ -440,9 +440,9 @@ void *aaruf_open(const char *filepath)  // NOLINT(readability-function-size)
 
     if(ctx->geometryBlock.identifier != GeometryBlock && ctx->imageInfo.XmlMediaType == BlockMedia)
     {
-        ctx->imageInfo.Cylinders       = (uint32_t)(ctx->imageInfo.Sectors / 16 / 63);
-        ctx->imageInfo.Heads           = 16;
-        ctx->imageInfo.SectorsPerTrack = 63;
+        ctx->Cylinders       = (uint32_t)(ctx->imageInfo.Sectors / 16 / 63);
+        ctx->Heads           = 16;
+        ctx->SectorsPerTrack = 63;
     }
 
     // Initialize caches
