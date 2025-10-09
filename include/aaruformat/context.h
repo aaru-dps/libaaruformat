@@ -170,74 +170,82 @@ typedef struct TapeDdtHashEntry
  */
 typedef struct aaruformatContext
 {
+    /* Core & header */
     uint64_t     magic;                ///< File magic (AARU_MAGIC) post-open.
+    AaruHeaderV2 header;               ///< Parsed container header (v2).
     uint8_t      libraryMajorVersion;  ///< Linked library major version.
     uint8_t      libraryMinorVersion;  ///< Linked library minor version.
     FILE        *imageStream;          ///< Underlying FILE* stream (binary mode).
-    AaruHeaderV2 header;               ///< Parsed container header (v2).
+
+    /* Deduplication tables (DDT) */
+    uint8_t           shift;                  ///< Legacy overall shift (deprecated by data_shift/table_shift).
+    bool              inMemoryDdt;            ///< True if primary (and possibly secondary) DDT loaded.
+    uint64_t         *userDataDdt;            ///< Legacy flat DDT pointer (NULL when using v2 mini/big arrays).
+    size_t            mappedMemoryDdtSize;    ///< Length of mmapped DDT if userDataDdt is mmapped.
+    uint32_t         *sectorPrefixDdt;        ///< Legacy CD sector prefix DDT (deprecated by *2).
+    uint32_t         *sectorSuffixDdt;        ///< Legacy CD sector suffix DDT.
+    uint32_t         *sectorPrefixDdt2;       ///< CD sector prefix DDT V2.
+    uint32_t         *sectorSuffixDdt2;       ///< CD sector suffix DDT V2.
+    TapeDdtHashEntry *tapeDdt;                ///< Hash table root for tape DDT entries
+    DdtHeader2        userDataDdtHeader;      ///< Active user data DDT v2 header (primary table meta).
+    int               ddtVersion;             ///< DDT version in use (1=legacy, 2=v2 hierarchical).
+    uint32_t         *userDataDdtBig;         ///< DDT entries (big variant) primary/secondary current.
+    uint64_t          cachedDdtOffset;        ///< File offset of currently cached secondary DDT (0=none).
+    uint64_t          cachedDdtPosition;      ///< Position index of cached secondary DDT.
+    uint64_t          primaryDdtOffset;       ///< File offset of the primary DDT v2 table.
+    uint32_t         *cachedSecondaryDdtBig;  ///< Cached secondary table (big entries) or NULL.
 
     /* Optical auxiliary buffers (NULL if not present) */
-    uint8_t *sector_prefix;          ///< Raw per-sector prefix (e.g., sync+header) uncorrected.
-    uint8_t *sectorPrefixCorrected;  ///< Corrected variant (post error correction) if stored.
-    uint8_t *sector_suffix;          ///< Raw per-sector suffix (EDC/ECC) uncorrected.
-    uint8_t *sectorSuffixCorrected;  ///< Corrected suffix if stored separately.
-    uint8_t *sector_subchannel;      ///< Raw 96-byte subchannel (if captured).
-    uint8_t *mode2_subheaders;       ///< MODE2 Form1/Form2 8-byte subheaders (concatenated).
+    uint8_t *sector_prefix;               ///< Raw per-sector prefix (e.g., sync+header) uncorrected.
+    uint8_t *sectorPrefixCorrected;       ///< Corrected variant (post error correction) if stored.
+    uint8_t *sector_suffix;               ///< Raw per-sector suffix (EDC/ECC) uncorrected.
+    uint8_t *sectorSuffixCorrected;       ///< Corrected suffix if stored separately.
+    uint8_t *sector_subchannel;           ///< Raw 96-byte subchannel (if captured).
+    uint8_t *mode2_subheaders;            ///< MODE2 Form1/Form2 8-byte subheaders (concatenated).
+    uint8_t *sector_id;                   ///< DVD sector ID (4 bytes) if present.
+    uint8_t *sector_ied;                  ///< DVD sector IED (2 bytes) if present.
+    uint8_t *sector_cpr_mai;              ///< DVD sector CPR_MAI (6 bytes) if present.
+    uint8_t *sector_edc;                  ///< DVD sector EDC (4 bytes) if present.
+    uint8_t *sector_decrypted_title_key;  ///< DVD decrypted title key (5 bytes) if present.
 
-    uint8_t   shift;                ///< Legacy overall shift (deprecated by data_shift/table_shift).
-    bool      inMemoryDdt;          ///< True if primary (and possibly secondary) DDT loaded.
-    uint64_t *userDataDdt;          ///< Legacy flat DDT pointer (NULL when using v2 mini/big arrays).
-    size_t    mappedMemoryDdtSize;  ///< Length of mmapped DDT if userDataDdt is mmapped.
-    uint32_t *sectorPrefixDdt;      ///< Legacy CD sector prefix DDT (deprecated by *2).
-    uint32_t *sectorSuffixDdt;      ///< Legacy CD sector suffix DDT.
-    uint32_t *sectorPrefixDdt2;     ///< CD sector prefix DDT V2.
-    uint32_t *sectorSuffixDdt2;     ///< CD sector suffix DDT V2.
-
-    GeometryBlockHeader                 geometryBlock;        ///< Logical geometry block (if present).
-    MetadataBlockHeader                 metadataBlockHeader;  ///< Metadata block header.
-    uint8_t                            *metadataBlock;        ///< Raw metadata UTF-16LE concatenated strings.
-    TracksHeader                        tracksHeader;         ///< Tracks header (optical) if present.
-    TrackEntry                         *trackEntries;         ///< Full track list (tracksHeader.entries elements).
-    CicmMetadataBlock                   cicmBlockHeader;      ///< CICM metadata header (if present).
-    uint8_t                            *cicmBlock;            ///< CICM XML payload.
-    DumpHardwareHeader                  dumpHardwareHeader;   ///< Dump hardware header.
+    /* Metadata & geometry */
+    GeometryBlockHeader                 geometryBlock;                ///< Logical geometry block (if present).
+    MetadataBlockHeader                 metadataBlockHeader;          ///< Metadata block header.
+    uint8_t                            *metadataBlock;                ///< Raw metadata UTF-16LE concatenated strings.
+    CicmMetadataBlock                   cicmBlockHeader;              ///< CICM metadata header (if present).
+    uint8_t                            *cicmBlock;                    ///< CICM XML payload.
+    DumpHardwareHeader                  dumpHardwareHeader;           ///< Dump hardware header.
     struct DumpHardwareEntriesWithData *dumpHardwareEntriesWithData;  ///< Array of dump hardware entries + strings.
-    ImageInfo                           imageInfo;                    ///< Exposed high-level image info summary.
+    AaruMetadataJsonBlockHeader         jsonBlockHeader;              ///< JSON metadata block header (if present).
+    uint8_t                            *jsonBlock;                    ///< JSON metadata block payload (UTF-8).
 
-    CdEccContext *eccCdContext;        ///< CD ECC/EDC helper tables (allocated on demand).
-    uint8_t       numberOfDataTracks;  ///< Count of tracks considered "data" (sequence 1..99 heuristics).
-    TrackEntry   *dataTracks;          ///< Filtered list of data tracks (subset of trackEntries).
-    bool         *readableSectorTags;  ///< Per-sector boolean array (optical tags read successfully?).
+    /* Optical information */
+    TracksHeader tracksHeader;        ///< Tracks header (optical) if present.
+    TrackEntry  *trackEntries;        ///< Full track list (tracksHeader.entries elements).
+    uint8_t      numberOfDataTracks;  ///< Count of tracks considered "data" (sequence 1..99 heuristics).
+    TrackEntry  *dataTracks;          ///< Filtered list of data tracks (subset of trackEntries).
 
+    /* Integrity & ECC */
+    CdEccContext *eccCdContext;  ///< CD ECC/EDC helper tables (allocated on demand).
+    crc64_ctx    *crc64Context;  ///< Opaque CRC64 context for streaming updates.
+
+    /* Index & deduplication lookup */
+    UT_array   *indexEntries;   ///< Flattened index entries (UT_array of IndexEntry).
+    hash_map_t *sectorHashMap;  ///< Deduplication hash map (fingerprint->entry mapping).
+
+    /* Caches */
     struct CacheHeader blockHeaderCache;  ///< LRU/Cache header for block headers.
     struct CacheHeader blockCache;        ///< LRU/Cache header for block payloads.
 
-    Checksums      checksums;  ///< Whole-image checksums discovered.
-    mediaTagEntry *mediaTags;  ///< Hash table of extra media tags (uthash root).
+    /* High-level summary */
+    ImageInfo imageInfo;  ///< Exposed high-level image info summary.
 
-    DdtHeader2 userDataDdtHeader;  ///< Active user data DDT v2 header (primary table meta).
-    int        ddtVersion;         ///< DDT version in use (1=legacy, 2=v2 hierarchical).
-    uint32_t  *userDataDdtBig;     ///< DDT entries (big variant) primary/secondary current.
+    /* Tags */
+    bool          *readableSectorTags;  ///< Per-sector boolean array (optical tags read successfully?).
+    mediaTagEntry *mediaTags;           ///< Hash table of extra media tags (uthash root).
 
-    uint64_t  cachedDdtOffset;        ///< File offset of currently cached secondary DDT (0=none).
-    uint64_t  cachedDdtPosition;      ///< Position index of cached secondary DDT.
-    uint64_t  primaryDdtOffset;       ///< File offset of the primary DDT v2 table.
-    uint32_t *cachedSecondaryDdtBig;  ///< Cached secondary table (big entries) or NULL.
-
-    bool        isWriting;              ///< True if context opened/created for writing.
-    BlockHeader currentBlockHeader;     ///< Header for block currently being assembled (write path).
-    uint8_t    *writingBuffer;          ///< Accumulation buffer for current block data.
-    int         currentBlockOffset;     ///< Logical offset inside block (units: bytes or sectors depending on path).
-    crc64_ctx  *crc64Context;           ///< Opaque CRC64 context for streaming updates.
-    int         writingBufferPosition;  ///< Current size / position within writingBuffer.
-    uint64_t    nextBlockPosition;      ///< Absolute file offset where next block will be written.
-
-    UT_array   *indexEntries;   ///< Flattened index entries (UT_array of IndexEntry).
-    hash_map_t *sectorHashMap;  ///< Deduplication hash map (fingerprint->entry mapping).
-    bool        deduplicate;    ///< Storage deduplication active (duplicates coalesce).
-
-    bool           rewinded;             ///< True if stream has been rewound after open (write path).
-    uint64_t       last_written_block;   ///< Last written block number (write path).
+    /* Checksums */
+    Checksums      checksums;            ///< Whole-image checksums discovered.
     bool           calculating_md5;      ///< True if whole-image MD5 being calculated on-the-fly.
     md5_ctx        md5_context;          ///< Opaque MD5 context for streaming updates
     bool           calculating_sha1;     ///< True if whole-image SHA-1 being calculated on-the-fly.
@@ -248,30 +256,33 @@ typedef struct aaruformatContext
     spamsum_ctx   *spamsum_context;      ///< Opaque SpamSum context for streaming updates
     bool           calculating_blake3;   ///< True if whole-image BLAKE3 being calculated on-the-fly.
     blake3_hasher *blake3_context;       ///< Opaque BLAKE3 context for streaming updates
-    uint8_t        currentTrackType;  ///< Current track type (when writing optical images with tracks, needed for block
-                                      ///< compression type).
-    bool           writingLong;       ///< True if writing long sectors
-    size_t         sector_prefix_length;  ///< Length of sector_prefix
-    size_t         sector_suffix_length;  ///< Length of sector_suffix
-    size_t         sector_prefix_offset;  ///< Current position in sector_prefix
-    size_t         sector_suffix_offset;  ///< Current position in sector_suffix
 
-    AaruMetadataJsonBlockHeader jsonBlockHeader;  ///< JSON metadata block header (if present).
-    uint8_t                    *jsonBlock;        ///< JSON metadata block payload (UTF-8).
+    /* Write path */
+    bool        isWriting;              ///< True if context opened/created for writing.
+    BlockHeader currentBlockHeader;     ///< Header for block currently being assembled (write path).
+    uint8_t    *writingBuffer;          ///< Accumulation buffer for current block data.
+    int         currentBlockOffset;     ///< Logical offset inside block (units: bytes or sectors depending on path).
+    int         writingBufferPosition;  ///< Current size / position within writingBuffer.
+    uint64_t    nextBlockPosition;      ///< Absolute file offset where next block will be written.
+    bool        rewinded;               ///< True if stream has been rewound after open (write path).
+    uint64_t    last_written_block;     ///< Last written block number (write path).
+    uint8_t     currentTrackType;  ///< Current track type (when writing optical images with tracks, needed for block
+                                   ///< compression type).
+    bool        writingLong;       ///< True if writing long sectors
+    size_t      sector_prefix_length;  ///< Length of sector_prefix
+    size_t      sector_suffix_length;  ///< Length of sector_suffix
+    size_t      sector_prefix_offset;  ///< Current position in sector_prefix
+    size_t      sector_suffix_offset;  ///< Current position in sector_suffix
 
-    uint8_t *sector_id;                   ///< DVD sector ID (4 bytes) if present.
-    uint8_t *sector_ied;                  ///< DVD sector IED (2 bytes) if present.
-    uint8_t *sector_cpr_mai;              ///< DVD sector CPR_MAI (6 bytes) if present.
-    uint8_t *sector_edc;                  ///< DVD sector EDC (4 bytes) if present.
-    uint8_t *sector_decrypted_title_key;  ///< DVD decrypted title key (5 bytes) if present.
-
+    /* Options */
+    bool     deduplicate;          ///< Storage deduplication active (duplicates coalesce).
     bool     compression_enabled;  ///< True if block compression enabled (writing path).
     uint32_t lzma_dict_size;       ///< LZMA dictionary size (writing path).
 
+    /* Tape-specific structures */
     tapeFileHashEntry      *tapeFiles;       ///< Hash table root for tape files
     TapePartitionHashEntry *tapePartitions;  ///< Hash table root for tape partitions
     bool                    is_tape;         ///< True if the image is a tape image
-    TapeDdtHashEntry       *tapeDdt;         ///< Hash table root for tape DDT entries
 } aaruformatContext;
 
 /** \struct DumpHardwareEntriesWithData
