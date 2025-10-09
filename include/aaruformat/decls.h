@@ -19,6 +19,7 @@
 #ifndef LIBAARUFORMAT_DECLS_H
 #define LIBAARUFORMAT_DECLS_H
 
+#include "aaru.h"
 #include "crc64.h"
 #include "md5.h"
 #include "sha1.h"
@@ -26,6 +27,7 @@
 #include "simd.h"
 #include "spamsum.h"
 #include "structs/optical.h"
+
 #ifdef __cplusplus
 #define EXTERNC extern "C"
 #else
