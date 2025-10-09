@@ -780,45 +780,106 @@ typedef enum
 
 /** \struct ImageInfo
  *  \ingroup MediaTypes
- *  \brief High-level summary of an opened Aaru image.
+ *  \brief High-level summary of an opened Aaru image containing metadata and media characteristics.
  *
- *  Field semantics:
- *   - HasPartitions: Non-zero if partition (or track, for optical) metadata structures were discovered.
- *   - HasSessions: Non-zero if multiple sessions (optical) are described.
- *   - ImageSize: Total number of addressable user-data bytes (excluding container / format headers).
- *   - Sectors / SectorSize: Logical block count and size. Note: (Sectors * SectorSize) may be <= ImageSize when
- *     variable-sized tracks exist or gap/padding bytes are preserved separately.
- *   - *_Time: Signed UNIX epoch seconds; negative denotes unknown / unset.
- *   - MediaType: Numeric value from \ref MediaType (cast-safe). 0 (Unknown) when detection failed or media is exotic.
- *   - XmlMediaType: Legacy compact identifier used in historical XML sidecars; retained for backward compatibility.
- *   - CHS geometry fields: Provided for legacy tooling; may be zero if not derivable. For variable track layouts the
- *     minimum SectorsPerTrack is reported (use per-track descriptors for exact geometry when available).
+ *  This structure aggregates essential information extracted from an Aaru format image file,
+ *  providing callers with a comprehensive view of the imaged media without requiring access
+ *  to internal image structures. All fields are read-only from the caller's perspective and
+ *  reflect the state at the time the image was created or last modified.
  *
- *  Pointer members:
- *   - All uint8_t* strings are UTF-8, NUL-terminated, and owned by the library. They may be NULL if absent.
- *   - Copy any needed strings before destroying/closing the image context to avoid dangling pointers.
+ *  \par Field Semantics:
  *
- *  Initialization contract:
- *   - A zeroed ImageInfo is a valid input to any population routine.
- *   - Callers must NOT free individual pointer members—use the designated image/context destroy API instead.
+ *  \b HasPartitions (uint8_t):
+ *    - Non-zero (typically 1) if the image contains partition table metadata (MBR, GPT, APM, etc.)
+ *      or, for optical media, track information structures.
+ *    - Zero if no partition/track structures were detected or if the media is unpartitioned.
+ *    - Usage: Check this before attempting to enumerate partitions/tracks via dedicated APIs.
  *
- *  Design note: This struct intentionally contains many fields for completeness / binary compatibility.
- *  Refactoring into sub-structures would break the public ABI, so a linter warning about field count is suppressed.
+ *  \b HasSessions (uint8_t):
+ *    - Non-zero (typically 1) if multiple recording sessions are present (primarily optical media).
+ *    - Zero for single-session media or media types that don't support sessions (e.g., floppy, HDD).
+ *    - Usage: Multi-session handling may require session-specific TOC/track enumeration.
+ *
+ *  \b ImageSize (uint64_t):
+ *    - Total size in bytes of image payload data, excluding format headers, metadata, and container overhead.
+ *    - May not reflect current file size due to compression, sparse allocation, or incremental updates.
+ *    - Usage: For informational/statistical purposes; not reliable for disk space calculations.
+ *
+ *  \b Sectors (uint64_t):
+ *    - Total count of addressable logical blocks (sectors) in the image.
+ *    - Range: [1, 2^64-1] for valid images; 0 indicates corruption or initialization failure.
+ *    - Usage: Multiply by SectorSize to determine total addressable capacity.
+ *
+ *  \b SectorSize (uint32_t):
+ *    - Size of each logical sector in bytes. Common values: 512, 2048, 2352, 4096.
+ *    - Guaranteed to be non-zero for valid images; may vary by media type (CD: 2352, HDD: 512/4096).
+ *    - Usage: Required for LBA-to-byte offset calculations and buffer allocation.
+ *
+ *  \b Version[32] (char array):
+ *    - NUL-terminated string identifying the Aaru image format version (e.g., "6.0", "5.3").
+ *    - Not necessarily the application version; reflects on-disk format compatibility level.
+ *    - Empty string if version information is unavailable or unrecognized.
+ *
+ *  \b Application[64] (char array):
+ *    - NUL-terminated string naming the application that created the image (e.g., "Aaru", "DiscImageChef").
+ *    - May contain vendor/project identifiers; not guaranteed to match executable name.
+ *    - Empty string if creator information was not stored or is unavailable.
+ *
+ *  \b ApplicationVersion[32] (char array):
+ *    - NUL-terminated string specifying the version of the creating application (e.g., "6.0.0-alpha1").
+ *    - Semantic versioning format recommended but not enforced.
+ *    - Empty string if version metadata is absent.
+ *
+ *  \b CreationTime (int64_t):
+ *    - Image creation timestamp as Windows FILETIME: 100-nanosecond intervals since January 1, 1601 00:00:00 UTC.
+ *    - Zero (0) may represent epoch or absence of creation time; check for < 0 for explicit invalidity.
+ *    - Usage: Convert to UNIX timestamp via: (CreationTime / 10000000) - 11644473600.
+ *
+ *  \b LastModificationTime (int64_t):
+ *    - Last modification timestamp in Windows FILETIME format (same encoding as CreationTime).
+ *    - Updated when image data or metadata is altered; not filesystem modification time.
+ *    - May equal CreationTime for unmodified images.
+ *    - Negative values indicate missing/invalid metadata.
+ *
+ *  \b MediaType (uint32_t):
+ *    - Numeric identifier from the \ref MediaType enumeration representing the physical/logical media.
+ *    - Value 0 (\ref Unknown) when automatic detection failed or media is unrecognized/exotic.
+ *    - Stable across versions; safe to persist and compare.
+ *    - Usage: Cast to \c MediaType enum for switch/case logic; always include default/Unknown handling.
+ *
+ *  \b MetadataMediaType (uint8_t):
+ *    - Internal identifier used for sidecar/metadata generation (METS/CICM/ALTO compatibility).
+ *    - Not directly useful for most callers; primarily for serialization/archival workflows.
+ *
+ *  \par Invariants and Constraints:
+ *  - All pointer-like char arrays are guaranteed NUL-terminated and safe for string functions.
+ *  - Sectors > 0 and SectorSize > 0 for structurally valid images.
+ *  - Timestamps may be 0 or negative; consumers must validate before using.
+ *  - MediaType range corresponds to \ref MediaType enum; out-of-range values are possible for future extensions.
+ *
+ *  \par Thread Safety:
+ *  - Struct contents are stable after retrieval; safe for concurrent reads.
+ *  - Do not cache ImageInfo across context operations that may invalidate it (e.g., re-opening).
+ *
+ *  \par ABI Stability:
+ *  - Field layout is ABI-stable; new fields append to end in future versions.
+ *  - Reordering or removing fields constitutes a major version break.
+ *  - Linter suppressions acknowledge intentionally large field count for completeness.
  */
 typedef struct ImageInfo  // NOLINT
 {
-    uint8_t  HasPartitions;           ///< Image contains partitions (or tracks for optical media)
-    uint8_t  HasSessions;             ///< Image contains sessions (optical media only)
-    uint64_t ImageSize;               ///< Size of the image without headers
-    uint64_t Sectors;                 ///< Sectors contained in the image
-    uint32_t SectorSize;              ///< Size of sectors contained in the image
-    char     Version[32];             ///< Image version
-    char     Application[64];         ///< Application that created the image
-    char     ApplicationVersion[32];  ///< Version of the application that created the image
-    int64_t  CreationTime;            ///< Image creation time
-    int64_t  LastModificationTime;    ///< Image last modification time
-    uint32_t MediaType;               ///< Media type represented by the image
-    uint8_t  MetadataMediaType;       ///< Type of the media represented by the image to use in XML sidecars
+    uint8_t  HasPartitions;           ///< Image contains partitions (or tracks for optical media); 0=no, non-zero=yes
+    uint8_t  HasSessions;             ///< Image contains multiple sessions (optical media); 0=single/none, non-zero=multi
+    uint64_t ImageSize;               ///< Size of the image payload in bytes (excludes headers/metadata)
+    uint64_t Sectors;                 ///< Total count of addressable logical sectors/blocks
+    uint32_t SectorSize;              ///< Size of each logical sector in bytes (512, 2048, 2352, 4096, etc.)
+    char     Version[32];             ///< Image format version string (NUL-terminated, e.g., "6.0")
+    char     Application[64];         ///< Name of application that created the image (NUL-terminated)
+    char     ApplicationVersion[32];  ///< Version of the creating application (NUL-terminated)
+    int64_t  CreationTime;            ///< Image creation timestamp (Windows FILETIME: 100ns since 1601-01-01 UTC)
+    int64_t  LastModificationTime;    ///< Last modification timestamp (Windows FILETIME format)
+    uint32_t MediaType;               ///< Media type identifier (see \ref MediaType enum; 0=Unknown)
+    uint8_t  MetadataMediaType;       ///< Media type for sidecar generation (internal archival use)
 } ImageInfo;
 
 /** \addtogroup SectorTags Per-sector metadata tag types
