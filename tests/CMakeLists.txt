@@ -33,6 +33,7 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/floptical_v1.aif DESTINATION ${CMAKE_
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/floptical.aif DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data/)
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/gigamo_v1.aif DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data/)
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/gigamo.aif DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data/)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/hifd_v1.aif DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data/)
 
 # Test executable (all unit tests)
 add_executable(tests_run crc64.cpp spamsum.cpp crc32.c crc32.h flac.cpp lzma.cpp sha256.cpp md5.cpp sha1.cpp open_image.cpp)
