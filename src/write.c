@@ -808,7 +808,7 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                         }
                     }
 
-                    const bool suffix_correct = aaruf_ecc_cd_is_suffix_correct(context, data);
+                    const bool suffix_correct = aaruf_ecc_cd_is_suffix_correct(ctx->ecc_cd_context, data);
 
                     if(suffix_correct)
                         ctx->sector_suffix_ddt2[corrected_sector_address] = (uint64_t)SectorStatusMode1Correct << 60;
@@ -984,7 +984,7 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
 
                     if(form2)
                     {
-                        const uint32_t computed_edc = aaruf_edc_cd_compute(context, 0, data, 0x91C, 0x10);
+                        const uint32_t computed_edc = aaruf_edc_cd_compute(ctx->ecc_cd_context, 0, data, 0x91C, 0x10);
                         uint32_t       edc          = 0;
                         memcpy(&edc, data + 0x92C, sizeof(edc));
                         const bool correct_edc = computed_edc == edc;
@@ -1029,8 +1029,8 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                                                   2324);
                     }
 
-                    const bool     correct_ecc  = aaruf_ecc_cd_is_suffix_correct_mode2(context, data);
-                    const uint32_t computed_edc = aaruf_edc_cd_compute(context, 0, data, 0x808, 0x10);
+                    const bool     correct_ecc  = aaruf_ecc_cd_is_suffix_correct_mode2(ctx->ecc_cd_context, data);
+                    const uint32_t computed_edc = aaruf_edc_cd_compute(ctx->ecc_cd_context, 0, data, 0x808, 0x10);
                     uint32_t       edc          = 0;
                     memcpy(&edc, data + 0x818, sizeof(edc));
                     const bool correct_edc = computed_edc == edc;
