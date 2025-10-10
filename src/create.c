@@ -436,6 +436,7 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
     ctx->image_info.LastModificationTime = ctx->header.lastWrittenTime;
     ctx->image_info.MetadataMediaType    = aaruf_get_xml_mediatype(ctx->header.mediaType);
     ctx->image_info.SectorSize           = sector_size;
+    ctx->image_info.Sectors              = user_sectors;
 
     // Initialize caches
     TRACE("Initializing caches");
