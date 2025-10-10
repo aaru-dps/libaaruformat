@@ -791,7 +791,7 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
             return AARUF_ERROR_CANNOT_READ_BLOCK;
         }
 
-        if(ddt_header.identifier != DeDuplicationTable2 || ddt_header.type != UserData)
+        if(ddt_header.identifier != DeDuplicationTableSecondary || ddt_header.type != UserData)
         {
             FATAL("Invalid block header at %" PRIu64 "", secondary_ddt_offset);
             TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
