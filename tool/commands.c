@@ -85,10 +85,11 @@ int cmd_compare(int argc, char *argv[])
 
 int cmd_cli_compare(int argc, char *argv[])
 {
+    struct arg_lit *use_long   = arg_lit0("l", NULL, "Use long sector read/write (includes tags and metadata)");
     struct arg_str *filename1  = arg_str1(NULL, NULL, "<filename1>", "First image to compare");
     struct arg_str *filename2  = arg_str1(NULL, NULL, "<filename2>", "Second image to compare");
     struct arg_end *end        = arg_end(10);
-    void           *argtable[] = {filename1, filename2, end};
+    void           *argtable[] = {use_long, filename1, filename2, end};
 
     if(arg_parse(argc, argv, argtable) > 0)
     {
@@ -98,7 +99,7 @@ int cmd_cli_compare(int argc, char *argv[])
         return -1;
     }
 
-    const int result = cli_compare(filename1->sval[0], filename2->sval[0]);
+    const int result = cli_compare(filename1->sval[0], filename2->sval[0], use_long->count > 0);
     arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
     return result;
 }

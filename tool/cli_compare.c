@@ -26,7 +26,7 @@
 
 #include "aaruformattool.h"
 
-int cli_compare(const char *path1, const char *path2)
+int cli_compare(const char *path1, const char *path2, bool use_long)
 {
     aaruformat_context *ctx1              = NULL;
     aaruformat_context *ctx2              = NULL;
@@ -65,6 +65,11 @@ int cli_compare(const char *path1, const char *path2)
     printf("Image 2: %llu sectors, %u bytes per sector\n", (unsigned long long)ctx2->image_info.Sectors,
            ctx2->image_info.SectorSize);
 
+    if(use_long)
+        printf("Mode: Long sector read (including tags and metadata)\n");
+    else
+        printf("Mode: Normal sector read\n");
+
     if(ctx1->image_info.Sectors != ctx2->image_info.Sectors)
     {
         fprintf(stderr, "Warning: Images have different number of sectors\n");
@@ -84,8 +89,10 @@ int cli_compare(const char *path1, const char *path2)
     }
 
     // Allocate buffers for sector data
-    buffer1 = malloc(ctx1->image_info.SectorSize);
-    buffer2 = malloc(ctx2->image_info.SectorSize);
+    // For long mode, we need larger buffers to accommodate tags and metadata
+    uint32_t buffer_size = use_long ? ctx1->image_info.SectorSize * 2 : ctx1->image_info.SectorSize;
+    buffer1              = malloc(buffer_size);
+    buffer2              = malloc(buffer_size);
     if(buffer1 == NULL || buffer2 == NULL)
     {
         fprintf(stderr, "Error: Could not allocate memory for sector buffers\n");
@@ -103,11 +110,19 @@ int cli_compare(const char *path1, const char *path2)
     // Compare sectors
     for(uint64_t sector = 0; sector < total_sectors; sector++)
     {
-        buffer1_length = ctx1->image_info.SectorSize;
-        buffer2_length = ctx2->image_info.SectorSize;
+        buffer1_length = buffer_size;
+        buffer2_length = buffer_size;
 
-        read_result1 = aaruf_read_sector(ctx1, sector, false, buffer1, &buffer1_length);
-        read_result2 = aaruf_read_sector(ctx2, sector, false, buffer2, &buffer2_length);
+        if(use_long)
+        {
+            read_result1 = aaruf_read_sector_long(ctx1, sector, false, buffer1, &buffer1_length);
+            read_result2 = aaruf_read_sector_long(ctx2, sector, false, buffer2, &buffer2_length);
+        }
+        else
+        {
+            read_result1 = aaruf_read_sector(ctx1, sector, false, buffer1, &buffer1_length);
+            read_result2 = aaruf_read_sector(ctx2, sector, false, buffer2, &buffer2_length);
+        }
 
         // Handle read errors or missing sectors
         const bool sector1_available = read_result1 == AARUF_STATUS_OK;

@@ -117,11 +117,13 @@ void usage_compare()
 void usage_cli_compare()
 {
     printf("\nUsage:\n");
-    printf("  aaruformattool cli-compare <filename1> <filename2>\n\n");
+    printf("  aaruformattool cli-compare [-l] <filename1> <filename2>\n\n");
     printf("Compares two AaruFormat images sector by sector and lists all different sectors.\n");
     printf("Arguments:\n");
     printf("  <filename1>      Path to first image file.\n");
     printf("  <filename2>      Path to second image file.\n");
+    printf("Options:\n");
+    printf("  -l               Use long sector read (includes tags and metadata).\n");
 }
 
 void usage_convert()
