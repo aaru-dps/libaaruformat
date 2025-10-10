@@ -1202,7 +1202,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
 
             // Prepare DDT header for the never-written cached table
             memset(&ddt_header, 0, sizeof(DdtHeader2));
-            ddt_header.identifier  = DeDuplicationTable2;
+            ddt_header.identifier  = DeDuplicationTableSecondary;
             ddt_header.type        = UserData;
             ddt_header.compression = ctx->compression_enabled ? Lzma : None;  // Use no compression for simplicity
             ddt_header.levels      = ctx->user_data_ddt_header.levels;
@@ -1303,7 +1303,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
 
             // Add index entry for the newly written secondary DDT
             IndexEntry new_ddt_entry;
-            new_ddt_entry.blockType = DeDuplicationTable2;
+            new_ddt_entry.blockType = DeDuplicationTableSecondary;
             new_ddt_entry.dataType  = UserData;
             new_ddt_entry.offset    = end_of_file;
 
@@ -1376,7 +1376,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
 
         // Prepare DDT header for the cached table
         memset(&ddt_header, 0, sizeof(DdtHeader2));
-        ddt_header.identifier          = DeDuplicationTable2;
+        ddt_header.identifier          = DeDuplicationTableSecondary;
         ddt_header.type                = UserData;
         ddt_header.compression         = ctx->compression_enabled ? Lzma : None;
         ddt_header.levels              = ctx->user_data_ddt_header.levels;
@@ -1489,7 +1489,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             for(unsigned int i = 0; i < utarray_len(ctx->index_entries); i++)
             {
                 entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, i);
-                if(entry && entry->offset == ctx->cached_ddt_offset && entry->blockType == DeDuplicationTable2)
+                if(entry && entry->offset == ctx->cached_ddt_offset && entry->blockType == DeDuplicationTableSecondary)
                 {
                     TRACE("Found old DDT index entry at position %u, removing", i);
                     utarray_erase(ctx->index_entries, i, 1);
@@ -1500,7 +1500,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
 
         // Add new index entry for the newly written secondary DDT
         IndexEntry new_ddt_entry;
-        new_ddt_entry.blockType = DeDuplicationTable2;
+        new_ddt_entry.blockType = DeDuplicationTableSecondary;
         new_ddt_entry.dataType  = UserData;
         new_ddt_entry.offset    = end_of_file;
 

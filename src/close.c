@@ -106,7 +106,7 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
 
     // Prepare DDT header for the cached table
     DdtHeader2 ddt_header          = {0};
-    ddt_header.identifier          = DeDuplicationTable2;
+    ddt_header.identifier          = DeDuplicationTableSecondary;
     ddt_header.type                = UserData;
     ddt_header.compression         = ctx->compression_enabled ? Lzma : None;
     ddt_header.levels              = ctx->user_data_ddt_header.levels;
@@ -208,7 +208,8 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
                 for(unsigned int k = 0; k < utarray_len(ctx->index_entries); k++)
                 {
                     entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
-                    if(entry && entry->offset == ctx->cached_ddt_offset && entry->blockType == DeDuplicationTable2)
+                    if(entry && entry->offset == ctx->cached_ddt_offset &&
+                       entry->blockType == DeDuplicationTableSecondary)
                     {
                         TRACE("Found old DDT index entry at position %u, removing", k);
                         utarray_erase(ctx->index_entries, k, 1);
@@ -219,7 +220,7 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
 
             // Add new index entry for the newly written secondary DDT
             IndexEntry new_ddt_entry;
-            new_ddt_entry.blockType = DeDuplicationTable2;
+            new_ddt_entry.blockType = DeDuplicationTableSecondary;
             new_ddt_entry.dataType  = UserData;
             new_ddt_entry.offset    = end_of_file;
 

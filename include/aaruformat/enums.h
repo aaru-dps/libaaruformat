@@ -141,6 +141,7 @@ typedef enum
     DataBlock                    = 0x4B4C4244,  ///< Block containing data.
     DeDuplicationTable           = 0x2A544444,  ///< Block containing a deduplication table (v1).
     DeDuplicationTable2          = 0x32544444,  ///< Block containing a deduplication table v2.
+    DeDuplicationTableSecondary  = 0x53545444,  ///< Block containing a secondary deduplication table (v2).
     IndexBlock                   = 0x58444E49,  ///< Block containing the index (v1).
     IndexBlock2                  = 0x32584449,  ///< Block containing the index v2.
     IndexBlock3                  = 0x33584449,  ///< Block containing the index v3.
