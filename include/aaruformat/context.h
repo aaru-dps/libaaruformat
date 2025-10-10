@@ -33,7 +33,7 @@
 /** \file aaruformat/context.h
  *  \brief Central runtime context structures for libaaruformat (image state, caches, checksum buffers).
  *
- *  The principal structure, \ref aaruformatContext, aggregates: header metadata, open stream handle, deduplication
+ *  The principal structure, \ref aaruformat_context, aggregates: header metadata, open stream handle, deduplication
  *  tables (DDT) currently in memory, optical disc auxiliary data (sector prefix/suffix/subchannel), track listings,
  *  geometry & metadata blocks, checksum accumulators, CRC & ECC helper contexts, hash map for deduplication, and
  *  transient write buffers.
