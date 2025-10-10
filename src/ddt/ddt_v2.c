@@ -140,8 +140,6 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
-    *found_user_data_ddt = false;
-
     ctx->image_info.ImageSize += ddt_header.cmpLength;
 
     if(entry->dataType == UserData)
