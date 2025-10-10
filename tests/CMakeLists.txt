@@ -42,6 +42,7 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/mo640.aif DESTINATION ${CMAKE_CURRENT
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/cdmode1_v1.aif DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data/)
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/cdmode1.aif DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data/)
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/cdmode2_v1.aif DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data/)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/cdmode2.aif DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data/)
 
 # Test executable (all unit tests)
 add_executable(tests_run crc64.cpp spamsum.cpp crc32.c crc32.h flac.cpp lzma.cpp sha256.cpp md5.cpp sha1.cpp open_image.cpp
