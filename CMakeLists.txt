@@ -222,3 +222,4 @@ target_link_libraries(aaruformat slog)
 
 add_subdirectory(tests)
 add_subdirectory(tool)
+add_subdirectory(docs/spec)
