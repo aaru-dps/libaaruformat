@@ -967,7 +967,8 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
             }
 
             if((ctx->sector_suffix == NULL || ctx->sector_prefix == NULL) &&
-               (ctx->sector_suffix_ddt == NULL || ctx->sector_prefix_ddt == NULL))
+               (ctx->sector_suffix_ddt == NULL || ctx->sector_prefix_ddt == NULL) &&
+               (ctx->sector_suffix_ddt2 == NULL || ctx->sector_prefix_ddt2 == NULL))
                 return aaruf_read_sector(context, sector_address, negative, data, length);
 
             bare_length  = 0;
