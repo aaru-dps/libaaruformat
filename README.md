@@ -2,23 +2,38 @@
 
 C implementation of [Aaru](https://www.github.com/aaru-dps/Aaru) file format.
 
-Work in progress, don't expect it to work yet.
+The target is to be able to compile it with a normal C (C89 compliant) compiler.
 
-The target is to be able with a normal C (C89 compliant) compiler, having no external dependencies.
-This means any hash or compression algorithm must be statically linked inside the library.
+Currently depends on libicu being available thru vcpkg due to UTF-16 shenanigans.
+Currently under debate on a breaking ABI change to remove this dependency.
 
 cmake is not a hard dependency, it's merely for the ease of using IDEs (specifically CLion).
 
+Currently supported features:
+- AaruFormat V1 images reading (writing will never be implemented)
+- AaruFormat V2 images reading and writing
+- LZMA compression
+- Claunia Subchannel Transform
+- Optical disc tracks
+- XML metadata retrieval (writing will never be implemented)
+- JSON metadata retrieval and writing
+- Hashing while writing (MD5, SHA1, SHA256, SpamSum and BLAKE3)
+- Deduplication
+- Tape file and partitions
+- Dump hardware lists
+- Currently on sync (as of October 2025) with Aaru's media type list
+- CHS geometry retrieval and setting
+- Metadata
+- Unit testing
+- Automatic generation of API documentation
+- It is to all effects feature parity with C#
+
 Things still to be implemented that are already in the C# version:
 
-- Tape file blocks
 - Automatic media type generation from C# enumeration
 - Nuget package for linking with Aaru
-- Writing
-- Hashing while writing (requires MD5, SHA1 and SHA256)
-- Deduplication (requires SHA256)
 
-Things to be implemented not in the C# version:
+Things to be implemented not in the C# version (maybe):
 
 - Compile for Dreamcast (KallistiOS preferibly)
 - Compile for PlayStation Portable
@@ -26,4 +41,6 @@ Things to be implemented not in the C# version:
 - Compile for Wii U
 - Compile for PlayStation 2
 - Compile for PlayStation 3
-- Unit testing
+- Snapshots
+- Parent images
+- Data positioning measurements
