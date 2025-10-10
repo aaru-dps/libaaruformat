@@ -811,13 +811,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     const bool suffix_correct = aaruf_ecc_cd_is_suffix_correct(context, data);
 
                     if(suffix_correct)
-                        ctx->sector_suffix_ddt2[corrected_sector_address] = SectorStatusMode1Correct << 60;
+                        ctx->sector_suffix_ddt2[corrected_sector_address] = (uint64_t)SectorStatusMode1Correct << 60;
                     else
                     {
                         // Copy CD suffix from data buffer to suffix buffer
                         memcpy(ctx->sector_suffix + ctx->sector_suffix_offset, data + 2064, 288);
                         ctx->sector_suffix_ddt2[corrected_sector_address] = (uint64_t)(ctx->sector_suffix_offset / 288);
-                        ctx->sector_suffix_ddt2[corrected_sector_address] |= SectorStatusErrored << 60;
+                        ctx->sector_suffix_ddt2[corrected_sector_address] |= (uint64_t)SectorStatusErrored << 60;
                         ctx->sector_suffix_offset += 288;
 
                         // Grow suffix buffer if needed
@@ -942,7 +942,7 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
 
                     if(prefix_correct)
                         ctx->sector_prefix_ddt2[corrected_sector_address] =
-                            (form2 ? SectorStatusMode2Form2Ok : SectorStatusMode2Form1Ok) << 60;
+                            (uint64_t)(form2 ? SectorStatusMode2Form2Ok : SectorStatusMode2Form1Ok) << 60;
                     else
                     {
                         // Copy CD prefix from data buffer to prefix buffer
@@ -990,16 +990,18 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                         const bool correct_edc = computed_edc == edc;
 
                         if(correct_edc)
-                            ctx->sector_suffix_ddt2[corrected_sector_address] = SectorStatusMode2Form2Ok << 60;
+                            ctx->sector_suffix_ddt2[corrected_sector_address] = (uint64_t)SectorStatusMode2Form2Ok
+                                                                                << 60;
                         else if(edc == 0)
-                            ctx->sector_suffix_ddt2[corrected_sector_address] = SectorStatusMode2Form2NoCrc << 60;
+                            ctx->sector_suffix_ddt2[corrected_sector_address] = (uint64_t)SectorStatusMode2Form2NoCrc
+                                                                                << 60;
                         else
                         {
                             // Copy CD suffix from data buffer to suffix buffer
                             memcpy(ctx->sector_suffix + ctx->sector_suffix_offset, data + 2348, 4);
                             ctx->sector_suffix_ddt2[corrected_sector_address] =
                                 (uint64_t)(ctx->sector_suffix_offset / 288);
-                            ctx->sector_suffix_ddt2[corrected_sector_address] |= SectorStatusErrored << 60;
+                            ctx->sector_suffix_ddt2[corrected_sector_address] |= (uint64_t)SectorStatusErrored << 60;
                             ctx->sector_suffix_offset += 288;
 
                             // Grow suffix buffer if needed
@@ -1034,13 +1036,13 @@ int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool neg
                     const bool correct_edc = computed_edc == edc;
 
                     if(correct_ecc && correct_edc)
-                        ctx->sector_suffix_ddt2[corrected_sector_address] = SectorStatusMode2Form1Ok << 60;
+                        ctx->sector_suffix_ddt2[corrected_sector_address] = (uint64_t)SectorStatusMode2Form1Ok << 60;
                     else
                     {
                         // Copy CD suffix from data buffer to suffix buffer
                         memcpy(ctx->sector_suffix + ctx->sector_suffix_offset, data + 2072, 280);
                         ctx->sector_suffix_ddt2[corrected_sector_address] = (uint64_t)(ctx->sector_suffix_offset / 288);
-                        ctx->sector_suffix_ddt2[corrected_sector_address] |= SectorStatusErrored << 60;
+                        ctx->sector_suffix_ddt2[corrected_sector_address] |= (uint64_t)SectorStatusErrored << 60;
                         ctx->sector_suffix_offset += 288;
 
                         // Grow suffix buffer if needed
