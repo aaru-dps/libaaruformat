@@ -303,8 +303,7 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
                 break;
         }
     }
-    else if(entry->dataType == CdSectorPrefixCorrected || entry->dataType == CdSectorSuffixCorrected)
-    {
+    else if(entry->dataType == CdSectorPrefix || entry->dataType == CdSectorSuffix)
         switch(ddt_header.compression)
         {
             case Lzma:
@@ -397,8 +396,10 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
 
-                if(entry->dataType == CdSectorPrefixCorrected) { ctx->sector_prefix_ddt = (uint32_t *)buffer; }
-                else if(entry->dataType == CdSectorSuffixCorrected) { ctx->sector_suffix_ddt = (uint32_t *)buffer; }
+                if(entry->dataType == CdSectorPrefix)
+                    ctx->sector_prefix_ddt2 = (uint64_t *)buffer;
+                else if(entry->dataType == CdSectorSuffix)
+                    ctx->sector_suffix_ddt2 = (uint64_t *)buffer;
                 else
                     free(buffer);
 
@@ -443,8 +444,10 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
 
-                if(entry->dataType == CdSectorPrefixCorrected) { ctx->sector_prefix_ddt = (uint32_t *)buffer; }
-                else if(entry->dataType == CdSectorSuffixCorrected) { ctx->sector_suffix_ddt = (uint32_t *)buffer; }
+                if(entry->dataType == CdSectorPrefix)
+                    ctx->sector_prefix_ddt2 = (uint64_t *)buffer;
+                else if(entry->dataType == CdSectorSuffix)
+                    ctx->sector_suffix_ddt2 = (uint64_t *)buffer;
                 else
                     free(buffer);
 
@@ -453,7 +456,6 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
                 TRACE("Found unknown compression type %d, continuing...", ddt_header.compression);
                 break;
         }
-    }
 
     TRACE("Exiting process_ddt_v2() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
@@ -1350,11 +1352,9 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             TRACE("Successfully wrote never-written cached secondary DDT to disk");
         }
         else
-        {
             // The cached DDT is actually for the requested block range, so we can use it directly
             TRACE("Cached DDT is for the correct block range, using it directly");
-            // No need to write to disk, just continue with the cached table
-        }
+        // No need to write to disk, just continue with the cached table
     }
 
     // Step 3: Write the currently in-memory cached secondary level table to the end of the file
