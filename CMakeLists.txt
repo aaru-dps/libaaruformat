@@ -220,6 +220,34 @@ endif()
 # Link slog
 target_link_libraries(aaruformat slog)
 
+# Find Doxygen for documentation generation
+find_package(Doxygen)
+
+if(DOXYGEN_FOUND)
+    # Set Doxygen configuration variables
+    set(DOXYGEN_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs")
+    set(PROJECT_VERSION "1.0")
+
+    # Configure the Doxyfile
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in
+                   ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+
+    # Add custom target to generate documentation
+    add_custom_target(doxygen
+        COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "Generating API documentation with Doxygen"
+        VERBATIM
+    )
+
+    message(STATUS "Found Doxygen: ${DOXYGEN_EXECUTABLE}")
+    message(STATUS "Added 'doxygen' target to generate API documentation")
+    message(STATUS "Documentation will be generated in: ${DOXYGEN_OUTPUT_DIR}/html")
+else()
+    message(STATUS "Doxygen not found - 'doxygen' target will not be available")
+    message(STATUS "Install it to generate API documentation")
+endif()
+
 add_subdirectory(tests)
 add_subdirectory(tool)
 add_subdirectory(docs/spec)
