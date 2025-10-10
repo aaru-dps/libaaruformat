@@ -141,9 +141,9 @@ bool aaruf_ecc_cd_is_suffix_correct(void *context, const uint8_t *sector)
         return false;
     }
 
-    uint32_t stored_edc = (uint32_t)sector[0x808] | (uint32_t)sector[0x809] << 8 | (uint32_t)sector[0x80A] << 16 |
-                          (uint32_t)sector[0x80B] << 24;
-    uint32_t calculated_edc = aaruf_edc_cd_compute(context, 0, sector + 16, size, pos);
+    uint32_t stored_edc;
+    memcpy(&stored_edc, sector + 0x810, 4);
+    uint32_t calculated_edc = aaruf_edc_cd_compute(context, 0, sector, 0x810, 0);
 
     if(stored_edc != calculated_edc)
     {
@@ -199,9 +199,12 @@ bool aaruf_ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector)
         TRACE("Exiting aaruf_ecc_cd_is_suffix_correct_mode2() = false");
         return false;
     }
-    uint32_t stored_edc = (uint32_t)sector[0x92C] | (uint32_t)sector[0x92D] << 8 | (uint32_t)sector[0x92E] << 16 |
-                          (uint32_t)sector[0x92F] << 24;
-    uint32_t calculated_edc = aaruf_edc_cd_compute(context, 0, sector + 16, size, pos);
+
+    const int form2 = (sector[0x12] & 0x20);
+
+    uint32_t stored_edc;
+    memcpy(&stored_edc, form2 ? sector + 0x92C : sector + 0x818, 4);
+    const uint32_t calculated_edc = aaruf_edc_cd_compute(context, 0, sector, form2 ? 0x91C : 0x808, 0x10);
 
     TRACE("Exiting aaruf_ecc_cd_is_suffix_correct_mode2() = %u == %u", calculated_edc, stored_edc);
     return calculated_edc == stored_edc;
