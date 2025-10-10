@@ -256,8 +256,8 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
             TRACE("Compressed payload present for zero-length block, continuing...");
             free(cmp_data);
 
-            TRACE("Exiting process_data_block() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
-            return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+            TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
         }
 
         if(block_header.compression == LzmaClauniaSubchannelTransform && block_header.length != 0)
