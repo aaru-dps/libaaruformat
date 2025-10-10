@@ -19,7 +19,9 @@ cmake_minimum_required(VERSION 3.13)
 # Integrate vcpkg toolchain if available but not explicitly provided.
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   if(DEFINED ENV{VCPKG_ROOT} AND EXISTS "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
-    set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file" FORCE)
+    set(CMAKE_TOOLCHAIN_FILE
+        "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+        CACHE STRING "Vcpkg toolchain file" FORCE)
   endif()
 endif()
 
@@ -62,7 +64,11 @@ message("Detected platform: ${CMAKE_C_PLATFORM_ID}")
 message("Size of (void*): ${CMAKE_SIZEOF_VOID_P}")
 
 # Check if target is 64-bit
-if("${CMAKE_SIZEOF_VOID_P}" MATCHES "8" OR "${CMAKE_C_COMPILER_ARCHITECTURE_ID}" MATCHES "x64" OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "AMD64" OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64")
+if("${CMAKE_SIZEOF_VOID_P}" MATCHES "8"
+   OR "${CMAKE_C_COMPILER_ARCHITECTURE_ID}" MATCHES "x64"
+   OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64"
+   OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "AMD64"
+   OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64")
   set(ARCHITECTURE_IS_64BIT TRUE)
 endif()
 
@@ -77,7 +83,9 @@ if("${CMAKE_BUILD_TYPE}" MATCHES "Release")
   else()
     add_compile_options(-ffast-math -O3)
 
-    if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64" OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "i686" OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "AMD64")
+    if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64"
+       OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "i686"
+       OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "AMD64")
       if(NOT "${CMAKE_C_COMPILER_ID}" MATCHES "AppleClang")
         add_compile_options(-march=core2 -mtune=westmere -mfpmath=sse)
       endif()
@@ -107,12 +115,39 @@ if("${CMAKE_BUILD_TYPE}" MATCHES "Release")
   endif()
 endif()
 
-add_library(aaruformat SHARED include/aaruformat/consts.h include/aaruformat/enums.h include/aaru.h include/aaruformat.h
-            include/aaruformat/decls.h include/aaruformat/structs.h src/identify.c src/open.c include/aaruformat/context.h
-            src/close.c include/aaruformat/errors.h src/read.c include/aaruformat/crc64.h src/compression/cst.c src/checksum/ecc_cd.c src/helpers.c
-            src/checksum/simd.c include/aaruformat/simd.h src/crc64/crc64.c src/crc64/crc64_clmul.c src/crc64/crc64_vmull.c
-            src/crc64/arm_vmull.c src/crc64/arm_vmull.h src/checksum/spamsum.c include/aaruformat/spamsum.h include/aaruformat/flac.h
-            src/compression/flac.c src/compression/lzma.c src/lru.c include/aaruformat/lru.h include/aaruformat/endian.h src/verify.c
+add_library(aaruformat SHARED
+            include/aaruformat/consts.h
+            include/aaruformat/enums.h
+            include/aaru.h
+            include/aaruformat.h
+            include/aaruformat/decls.h
+            include/aaruformat/structs.h
+            src/identify.c
+            src/open.c
+            include/aaruformat/context.h
+            src/close.c
+            include/aaruformat/errors.h
+            src/read.c
+            include/aaruformat/crc64.h
+            src/compression/cst.c
+            src/checksum/ecc_cd.c
+            src/helpers.c
+            src/checksum/simd.c
+            include/aaruformat/simd.h
+            src/crc64/crc64.c
+            src/crc64/crc64_clmul.c
+            src/crc64/crc64_vmull.c
+            src/crc64/arm_vmull.c
+            src/crc64/arm_vmull.h
+            src/checksum/spamsum.c
+            include/aaruformat/spamsum.h
+            include/aaruformat/flac.h
+            src/compression/flac.c
+            src/compression/lzma.c
+            src/lru.c
+            include/aaruformat/lru.h
+            include/aaruformat/endian.h
+            src/verify.c
             include/aaruformat/structs/header.h
             include/aaruformat/structs/ddt.h
             include/aaruformat/structs/index.h
@@ -189,7 +224,9 @@ macro(TARGET_LINK_LIBRARIES_WHOLE_ARCHIVE target)
   endif()
 endmacro()
 
-if(NOT "${CMAKE_C_PLATFORM_ID}" MATCHES "MinGW" OR (NOT ${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm" AND NOT ${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64"))
+if(NOT "${CMAKE_C_PLATFORM_ID}" MATCHES "MinGW"
+   OR (NOT ${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm"
+       AND NOT ${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64"))
   set_property(TARGET aaruformat PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 else()
   set_property(TARGET aaruformat PROPERTY POSITION_INDEPENDENT_CODE FALSE)
@@ -237,28 +274,28 @@ endif()
 find_package(Doxygen)
 
 if(DOXYGEN_FOUND)
-    # Set Doxygen configuration variables
-    set(DOXYGEN_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs")
-    set(PROJECT_VERSION "1.0")
+  # Set Doxygen configuration variables
+  set(DOXYGEN_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs")
+  set(PROJECT_VERSION "1.0")
 
-    # Configure the Doxyfile
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in
-                   ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+  # Configure the Doxyfile
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
 
-    # Add custom target to generate documentation
-    add_custom_target(doxygen
-        COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMENT "Generating API documentation with Doxygen"
-        VERBATIM
-    )
+  # Add custom target to generate documentation
+  add_custom_target(doxygen
+                    COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                    COMMENT "Generating API documentation with Doxygen"
+                    VERBATIM
+  )
 
-    message(STATUS "Found Doxygen: ${DOXYGEN_EXECUTABLE}")
-    message(STATUS "Added 'doxygen' target to generate API documentation")
-    message(STATUS "Documentation will be generated in: ${DOXYGEN_OUTPUT_DIR}/html")
+  message(STATUS "Found Doxygen: ${DOXYGEN_EXECUTABLE}")
+  message(STATUS "Added 'doxygen' target to generate API documentation")
+  message(STATUS "Documentation will be generated in: ${DOXYGEN_OUTPUT_DIR}/html")
 else()
-    message(STATUS "Doxygen not found - 'doxygen' target will not be available")
-    message(STATUS "Install it to generate API documentation")
+  message(STATUS "Doxygen not found - 'doxygen' target will not be available")
+  message(STATUS "Install it to generate API documentation")
 endif()
 
 add_subdirectory(tests)
