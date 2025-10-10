@@ -32,8 +32,6 @@ typedef struct DdtHeader2
     uint8_t  dataShift;
     /**Table shift */
     uint8_t  tableShift;
-    /**Size type */
-    uint8_t  sizeType;
     /**Entries in this table */
     uint64_t entries;
     /**Compressed length for the DDT */
@@ -120,11 +118,6 @@ typedef struct DdtHeader2
 |tableShift
 |Shift used to calculate the number of sectors in a deduplication table entry, using the formula 1 << tableShift.
 
-|uint8_t
-|1 byte
-|sizeType
-|Size type (see table below)
-
 |uint64_t
 |8 bytes
 |entries
@@ -149,35 +142,6 @@ typedef struct DdtHeader2
 |8 bytes
 |crc64
 |The CRC64-ECMA checksum of the decompressed table.
-|===
-
-===== Size Type
-
-The *size type* parameter defines the memory-efficient data type used to encode deduplication table entries.
-Its primary purpose is to minimize memory consumption by selecting the smallest viable representation for the medium in question.
-
-Implementations should select the minimal size type capable of accommodating the full extent of the image’s sector count.
-This decision must be based on the expected final size of the image file.
-
-It is important to account for *live* images—those still in the process of being dumped.
-These images may expand as additional sectors are captured, potentially exceeding initial bounds.
-Consequently, deduplication tables associated with such live captures must allow for dynamic growth beyond the originally anticipated media size.
-
-The following table enumerates the supported size types.
-
-[cols="1,1,6",options="header"]
-|===
-|Type
-|Value
-|Description
-
-|Small
-|0
-|Allocates 2 bytes per entry. The high nibble (mask `0xF000`) encodes status information, while the low byte serves as a pointer to either a target sector or a subordinate indexing level.
-
-|Big
-|1
-|Allocates 4 bytes per entry. The upper nibble (mask `0xF0000000`) holds status bits, and the lower 3 bytes function as a pointer to the relevant sector or hierarchical level.
 |===
 
 ==== Interpretation of Deduplication Table Entries
@@ -277,19 +241,19 @@ The following flags are defined:
 
 |Mode1Correct
 |`0x3`
-|Sector contains valid MODE 1 data with regenerable suffix or prefix. This status is applicable only to deduplication tables of type `CdSectorPrefixCorrected` or `CdSectorSuffixCorrected`.
+|Sector contains valid MODE 1 data with regenerable suffix or prefix. This status is applicable only to deduplication tables of type `CdSectorPrefix` or `CdSectorSuffix`.
 
 |Mode2Form1Ok
 |`0x4`
-|Sector suffix is verified and regenerable, corresponding to MODE 2 Form 1. This status is valid only for tables of type `CdSectorSuffixCorrected`.
+|Sector suffix is verified and regenerable, corresponding to MODE 2 Form 1. This status is valid only for tables of type `CdSectorSuffix`.
 
 |Mode2Form2Ok
 |`0x5`
-|Sector suffix matches MODE 2 Form 2 format with a valid CRC. Valid only for `CdSectorSuffixCorrected`.
+|Sector suffix matches MODE 2 Form 2 format with a valid CRC. Valid only for `CdSectorSuffix`.
 
 |Mode2Form2NoCrc
 |`0x6`
-|Sector suffix matches MODE 2 Form 2 format but contains an empty or missing CRC. Applicable only to `CdSectorSuffixCorrected`.
+|Sector suffix matches MODE 2 Form 2 format but contains an empty or missing CRC. Applicable only to `CdSectorSuffix`.
 
 |Twin
 |`0x7`
