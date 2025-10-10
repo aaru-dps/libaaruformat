@@ -155,10 +155,11 @@ int cmd_verify_sectors(int argc, char *argv[]) { return cmd_verify_common(argc, 
 
 int cmd_convert(int argc, char *argv[])
 {
+    struct arg_lit *use_long        = arg_lit0("l", NULL, "Use long sector read/write (includes tags and metadata)");
     struct arg_str *input_filename  = arg_str1(NULL, NULL, "<input>", "Input image file");
     struct arg_str *output_filename = arg_str1(NULL, NULL, "<output>", "Output image file");
     struct arg_end *end             = arg_end(10);
-    void           *argtable[]      = {input_filename, output_filename, end};
+    void           *argtable[]      = {use_long, input_filename, output_filename, end};
 
     if(arg_parse(argc, argv, argtable) > 0)
     {
@@ -168,7 +169,7 @@ int cmd_convert(int argc, char *argv[])
         return -1;
     }
 
-    const int result = convert(input_filename->sval[0], output_filename->sval[0]);
+    const int result = convert(input_filename->sval[0], output_filename->sval[0], use_long->count > 0);
     arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
     return result;
 }

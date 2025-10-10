@@ -28,7 +28,7 @@
 
 #include "aaruformattool.h"
 
-int convert(const char *input_path, const char *output_path)
+int convert(const char *input_path, const char *output_path, bool use_long)
 {
     aaruformat_context *input_ctx     = NULL;
     aaruformat_context *output_ctx    = NULL;
@@ -37,7 +37,7 @@ int convert(const char *input_path, const char *output_path)
     uint64_t            total_sectors = 0;
     uint8_t            *sector_data   = NULL;
 
-    printf("Converting image from %s to %s...\n", input_path, output_path);
+    printf("Converting image from %s to %s%s...\n", input_path, output_path, use_long ? " (long mode)" : "");
 
     // Open input image
     input_ctx = aaruf_open(input_path);
@@ -170,7 +170,7 @@ int convert(const char *input_path, const char *output_path)
     // Copy sectors from input to output
     for(uint64_t sector = 0; sector < total_sectors; sector++)
     {
-        uint32_t read_length = sector_size;
+        uint32_t read_length = 0;
 
         // Show progress every 1000 sectors
         if(sector % 1000 == 0 || sector == total_sectors - 1)
@@ -180,8 +180,38 @@ int convert(const char *input_path, const char *output_path)
             fflush(stdout);
         }
 
+        // Check sector size
+        if(use_long)
+            res = aaruf_read_sector_long(input_ctx, sector, false, sector_data, &read_length);
+        else
+            res = aaruf_read_sector(input_ctx, sector, false, sector_data, &read_length);
+
+        if(res != AARUF_ERROR_BUFFER_TOO_SMALL)
+        {
+            printf("\nError %d when reading sector %llu from input image.\n", res, (unsigned long long)sector);
+            break;
+        }
+
+        if(sector_size < read_length)
+        {
+            free(sector_data);
+            sector_size = read_length;
+            sector_data = malloc(sector_size);
+            if(sector_data == NULL)
+            {
+                printf("Error allocating memory for sector buffer.\n");
+                aaruf_close(input_ctx);
+                aaruf_close(output_ctx);
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+        }
+
         // Read sector from input
-        res = aaruf_read_sector(input_ctx, sector, false, sector_data, &read_length);
+        if(use_long)
+            res = aaruf_read_sector_long(input_ctx, sector, false, sector_data, &read_length);
+        else
+            res = aaruf_read_sector(input_ctx, sector, false, sector_data, &read_length);
+
         if(res != AARUF_STATUS_OK)
         {
             printf("\nError %d when reading sector %llu from input image.\n", res, (unsigned long long)sector);
@@ -189,7 +219,11 @@ int convert(const char *input_path, const char *output_path)
         }
 
         // Write sector to output
-        res = aaruf_write_sector(output_ctx, sector, false, sector_data, SectorStatusDumped, read_length);
+        if(use_long)
+            res = aaruf_write_sector_long(output_ctx, sector, false, sector_data, SectorStatusDumped, read_length);
+        else
+            res = aaruf_write_sector(output_ctx, sector, false, sector_data, SectorStatusDumped, read_length);
+
         if(res != AARUF_STATUS_OK)
         {
             printf("\nError %d when writing sector %llu to output image.\n", res, (unsigned long long)sector);

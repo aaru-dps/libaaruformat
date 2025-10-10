@@ -127,9 +127,11 @@ void usage_cli_compare()
 void usage_convert()
 {
     printf("\nUsage:\n");
-    printf("  aaruformattool convert <input> <output>\n\n");
+    printf("  aaruformattool convert [-l] <input> <output>\n\n");
     printf("Converts an AaruFormat image by reading all sectors from input and writing them to output.\n");
     printf("Arguments:\n");
     printf("  <input>          Path to input image file.\n");
     printf("  <output>         Path to output image file.\n");
+    printf("Options:\n");
+    printf("  -l               Use long sector read/write (includes tags and metadata).\n");
 }
