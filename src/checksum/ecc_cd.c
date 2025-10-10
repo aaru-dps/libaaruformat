@@ -167,7 +167,7 @@ bool aaruf_ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector)
     TRACE("Entering aaruf_ecc_cd_is_suffix_correct_mode2(%p, %p)", context, sector);
     uint32_t edc;
     int      size, pos;
-    uint8_t  zeroaddress[4];
+    uint8_t  zeroaddress[4] = {0};
 
     if(context == NULL || sector == NULL)
     {
@@ -183,7 +183,7 @@ bool aaruf_ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector)
         return false;
     }
 
-    memset(&zeroaddress, 4, sizeof(uint8_t));
+    const int form2 = sector[0x12] & 0x20;
 
     const bool correct_ecc_p = aaruf_ecc_cd_check(context, zeroaddress, sector, 86, 24, 2, 86, sector, 0, 0x10, 0x81C);
     if(!correct_ecc_p)
@@ -199,8 +199,6 @@ bool aaruf_ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector)
         TRACE("Exiting aaruf_ecc_cd_is_suffix_correct_mode2() = false");
         return false;
     }
-
-    const int form2 = (sector[0x12] & 0x20);
 
     uint32_t stored_edc;
     memcpy(&stored_edc, form2 ? sector + 0x92C : sector + 0x818, 4);
