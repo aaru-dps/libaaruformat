@@ -519,7 +519,7 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
         TRACE("Primary DDT will be placed at offset %" PRIu64, ctx->primary_ddt_offset);
 
         // Calculate size of primary DDT table
-        const uint64_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint32_t);
+        const uint64_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint64_t);
 
         // Calculate where data blocks can start (after primary DDT + header)
         if(ctx->user_data_ddt_header.tableShift > 0)

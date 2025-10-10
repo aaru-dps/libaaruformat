@@ -140,7 +140,7 @@ typedef struct TapePartitionHashEntry
 typedef struct TapeDdtHashEntry
 {
     uint64_t       key;    ///< Key: sector address
-    uint32_t       value;  ///< Value: DDT entry
+    uint64_t       value;  ///< Value: DDT entry
     UT_hash_handle hh;     ///< UTHASH handle
 } TapeDdtHashEntry;
 

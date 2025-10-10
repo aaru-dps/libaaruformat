@@ -124,7 +124,7 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
     ddt_header.start             = ctx->cached_ddt_position * items_per_ddt_entry;
 
     // Calculate data size
-    ddt_header.length = items_per_ddt_entry * sizeof(uint32_t);
+    ddt_header.length = items_per_ddt_entry * sizeof(uint64_t);
 
     // Calculate CRC64 of the data
     crc64_ctx *crc64_context = aaruf_crc64_init();
@@ -230,7 +230,7 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
             long saved_pos = ftell(ctx->imageStream);
             fseek(ctx->imageStream, ctx->primary_ddt_offset + sizeof(DdtHeader2), SEEK_SET);
 
-            size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint32_t);
+            size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint64_t);
 
             size_t primary_written_bytes = 0;
             primary_written_bytes        = fwrite(ctx->user_data_ddt2, primary_table_size, 1, ctx->imageStream);
@@ -322,7 +322,7 @@ static int32_t write_primary_ddt(aaruformat_context *ctx)
     }
 
     // Then write the table data (position is already after the header)
-    size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint32_t);
+    size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint64_t);
 
     // Write the primary table data
     size_t written_bytes = 0;
