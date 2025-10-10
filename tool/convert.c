@@ -111,6 +111,52 @@ int convert(const char *input_path, const char *output_path)
         return errno;
     }
 
+    size_t tracks_size = 0;
+    res                = aaruf_get_tracks(input_ctx, sector_data, &tracks_size);
+
+    if(res != AARUF_ERROR_BUFFER_TOO_SMALL && res != AARUF_ERROR_TRACK_NOT_FOUND)
+    {
+        printf("Error %d when getting tracks from input image.\n", res);
+        aaruf_close(input_ctx);
+        aaruf_close(output_ctx);
+        return res;
+    }
+
+    if(res == AARUF_ERROR_BUFFER_TOO_SMALL)
+    {
+        sector_data = malloc(tracks_size);
+        if(sector_data == NULL)
+        {
+            printf("Error allocating memory for tracks buffer.\n");
+            aaruf_close(input_ctx);
+            aaruf_close(output_ctx);
+            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        }
+
+        res = aaruf_get_tracks(input_ctx, sector_data, &tracks_size);
+        if(res != AARUF_STATUS_OK)
+        {
+            printf("Error %d when getting tracks from input image.\n", res);
+            free(sector_data);
+            aaruf_close(input_ctx);
+            aaruf_close(output_ctx);
+            return res;
+        }
+
+        res = aaruf_set_tracks(output_ctx, (TrackEntry *)sector_data, (int)(tracks_size / sizeof(TrackEntry)));
+        if(res != AARUF_STATUS_OK)
+        {
+            printf("Error %d when setting tracks on output image.\n", res);
+            free(sector_data);
+            aaruf_close(input_ctx);
+            aaruf_close(output_ctx);
+            return res;
+        }
+
+        free(sector_data);
+        sector_data = NULL;
+    }
+
     // Allocate buffer for sector data
     sector_data = malloc(sector_size);
     if(sector_data == NULL)
