@@ -35,6 +35,9 @@ ENDIF(APPLE)
 
 project(libaaruformat C)
 
+# Option to enable slog logging (disabled by default)
+option(USE_SLOG "Enable slog logging" OFF)
+
 add_compile_definitions(__STDC_FORMAT_MACROS=1)
 
 if("${CMAKE_C_COMPILER_ID}" MATCHES "MSVC" AND "${CMAKE_C_COMPILER_ARCHITECTURE_ID}" MATCHES "ARMV7")
@@ -200,15 +203,23 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 if(POLICY CMP0000)
   cmake_policy(VERSION 3.5)
 endif()
-add_subdirectory(3rdparty/slog)
+
+# Conditionally enable slog logging
+if(USE_SLOG)
+  add_subdirectory(3rdparty/slog)
+
+  # Include slog headers
+  include_directories(aaruformat 3rdparty/slog/src)
+
+  # Enable TRACE and slog output
+  add_compile_definitions(aaruformat ENABLE_TRACE ENABLE_FATAL USE_SLOG)
+
+  message(STATUS "slog logging enabled")
+else()
+  message(STATUS "slog logging disabled (enable with -DUSE_SLOG=ON)")
+endif()
 
 include_directories(include 3rdparty/uthash/src)
-
-# Include slog headers
-include_directories(aaruformat 3rdparty/slog/src)
-
-# Enable TRACE and slog output
-add_compile_definitions(aaruformat ENABLE_TRACE USE_SLOG)
 
 include(CheckLibraryExists)
 
@@ -217,8 +228,10 @@ if(HAVE_LIB_M)
   TARGET_LINK_LIBRARIES_WHOLE_ARCHIVE(aaruformat m)
 endif()
 
-# Link slog
-target_link_libraries(aaruformat slog)
+# Link slog conditionally
+if(USE_SLOG)
+  target_link_libraries(aaruformat slog)
+endif()
 
 # Find Doxygen for documentation generation
 find_package(Doxygen)
