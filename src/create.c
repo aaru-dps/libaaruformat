@@ -470,7 +470,6 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
         ctx->user_data_ddt_header.start               = 0;
         ctx->user_data_ddt_header.blockAlignmentShift = parsed_options.block_alignment;
         ctx->user_data_ddt_header.dataShift           = parsed_options.data_shift;
-        ctx->user_data_ddt_header.sizeType            = BigDdtSizeType;
 
         if(parsed_options.table_shift == -1)
         {
@@ -501,18 +500,15 @@ void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32
             ctx->user_data_ddt_header.entries++;
 
         TRACE("Initializing primary/single DDT");
-        if(ctx->user_data_ddt_header.sizeType == BigDdtSizeType)
+        ctx->user_data_ddt2 =
+            (uint64_t *)calloc(ctx->user_data_ddt_header.entries, sizeof(uint64_t));  // All entries to zero
+        if(ctx->user_data_ddt2 == NULL)
         {
-            ctx->user_data_ddt2 =
-                (uint32_t *)calloc(ctx->user_data_ddt_header.entries, sizeof(uint32_t));  // All entries to zero
-            if(ctx->user_data_ddt2 == NULL)
-            {
-                FATAL("Not enough memory to allocate primary DDT (big)");
-                errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
-                TRACE("Exiting aaruf_create() = NULL");
-                cleanup_failed_create(ctx);
-                return NULL;
-            }
+            FATAL("Not enough memory to allocate primary DDT (big)");
+            errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            TRACE("Exiting aaruf_create() = NULL");
+            cleanup_failed_create(ctx);
+            return NULL;
         }
 
         // Set the primary DDT offset (just after the header, block aligned)

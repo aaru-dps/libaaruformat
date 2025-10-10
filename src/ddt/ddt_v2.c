@@ -247,7 +247,7 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
 
-                ctx->user_data_ddt2 = (uint32_t *)buffer;
+                ctx->user_data_ddt2 = (uint64_t *)buffer;
 
                 ctx->in_memory_ddt   = true;
                 *found_user_data_ddt = true;
@@ -293,7 +293,7 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
 
-                ctx->user_data_ddt2 = (uint32_t *)buffer;
+                ctx->user_data_ddt2 = (uint64_t *)buffer;
 
                 ctx->in_memory_ddt   = true;
                 *found_user_data_ddt = true;
@@ -616,14 +616,7 @@ int32_t decode_ddt_single_level_v2(aaruformat_context *ctx, uint64_t sector_addr
     else
         sector_address += ctx->user_data_ddt_header.negative;
 
-    if(ctx->user_data_ddt_header.sizeType == BigDdtSizeType)
-        ddt_entry = ctx->user_data_ddt2[sector_address];
-    else
-    {
-        FATAL("Unknown DDT size type %d.", ctx->userDataDdtHeader.sizeType);
-        TRACE("Exiting decode_ddt_single_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
-        return AARUF_ERROR_CANNOT_READ_BLOCK;
-    }
+    ddt_entry = ctx->user_data_ddt2[sector_address];
 
     if(ddt_entry == 0)
     {
@@ -635,8 +628,8 @@ int32_t decode_ddt_single_level_v2(aaruformat_context *ctx, uint64_t sector_addr
         return AARUF_STATUS_OK;
     }
 
-    *sector_status = ddt_entry >> 28;
-    ddt_entry &= 0x0fffffff;
+    *sector_status = ddt_entry >> 60;
+    ddt_entry &= 0xFFFFFFFFFFFFFFF;
 
     const uint64_t offset_mask = (uint64_t)((1 << ctx->user_data_ddt_header.dataShift) - 1);
     *offset                    = ddt_entry & offset_mask;
@@ -776,17 +769,9 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
     else
         sector_address += ctx->user_data_ddt_header.negative;
 
-    items_per_ddt_entry = 1 << ctx->user_data_ddt_header.tableShift;
-    ddt_position        = sector_address / items_per_ddt_entry;
-
-    if(ctx->user_data_ddt_header.sizeType == BigDdtSizeType)
-        secondary_ddt_offset = ctx->user_data_ddt2[ddt_position];
-    else
-    {
-        FATAL("Unknown DDT size type %d.", ctx->userDataDdtHeader.sizeType);
-        TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
-        return AARUF_ERROR_CANNOT_READ_BLOCK;
-    }
+    items_per_ddt_entry  = 1 << ctx->user_data_ddt_header.tableShift;
+    ddt_position         = sector_address / items_per_ddt_entry;
+    secondary_ddt_offset = ctx->user_data_ddt2[ddt_position];
 
     // Position in file of the child DDT table
     secondary_ddt_offset *= 1 << ctx->user_data_ddt_header.blockAlignmentShift;
@@ -908,7 +893,7 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
 
-                ctx->cached_secondary_ddt2 = (uint32_t *)buffer;
+                ctx->cached_secondary_ddt2 = (uint64_t *)buffer;
 
                 ctx->cached_ddt_offset = secondary_ddt_offset;
 
@@ -954,7 +939,7 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
 
-                ctx->cached_secondary_ddt2 = (uint32_t *)buffer;
+                ctx->cached_secondary_ddt2 = (uint64_t *)buffer;
 
                 ctx->cached_ddt_offset = secondary_ddt_offset;
 
@@ -979,8 +964,8 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
         return AARUF_STATUS_OK;
     }
 
-    *sector_status = ddt_entry >> 28;
-    ddt_entry &= 0x0fffffff;
+    *sector_status = ddt_entry >> 60;
+    ddt_entry &= 0x0FFFFFFFFFFFFFFF;
 
     const uint64_t offset_mask = (uint64_t)((1 << ctx->user_data_ddt_header.dataShift) - 1);
     *offset                    = ddt_entry & offset_mask;
@@ -1079,18 +1064,18 @@ bool set_ddt_single_level_v2(aaruformat_context *ctx, uint64_t sector_address, c
                      block_index << ctx->user_data_ddt_header.dataShift;
 
         // Overflow detection for DDT entry
-        if(*ddt_entry > 0xFFFFFFF)
+        if(*ddt_entry > 0xFFFFFFFFFFFFFFF)
         {
             FATAL("DDT overflow: media does not fit in big DDT");
             TRACE("Exiting set_ddt_single_level_v2() = false");
             return false;
         }
 
-        *ddt_entry |= (uint64_t)sector_status << 28;
+        *ddt_entry |= (uint64_t)sector_status << 60;
     }
 
-    TRACE("Setting big single-level DDT entry %d to %u", sector_address, (uint32_t)*ddt_entry);
-    ctx->user_data_ddt2[sector_address] = (uint32_t)*ddt_entry;
+    TRACE("Setting big single-level DDT entry %d to %ull", sector_address, (uint64_t)*ddt_entry);
+    ctx->user_data_ddt2[sector_address] = *ddt_entry;
 
     TRACE("Exiting set_ddt_single_level_v2() = true");
     return true;
@@ -1153,17 +1138,9 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
         sector_address += ctx->user_data_ddt_header.negative;
 
     // Step 1: Calculate the corresponding secondary level table
-    items_per_ddt_entry = 1 << ctx->user_data_ddt_header.tableShift;
-    ddt_position        = sector_address / items_per_ddt_entry;
-
-    if(ctx->user_data_ddt_header.sizeType == BigDdtSizeType)
-        secondary_ddt_offset = ctx->user_data_ddt2[ddt_position];
-    else
-    {
-        FATAL("Unknown DDT size type %d.", ctx->userDataDdtHeader.sizeType);
-        TRACE("Exiting set_ddt_multi_level_v2() = false");
-        return false;
-    }
+    items_per_ddt_entry  = 1 << ctx->user_data_ddt_header.tableShift;
+    ddt_position         = sector_address / items_per_ddt_entry;
+    secondary_ddt_offset = ctx->user_data_ddt2[ddt_position];
 
     // Position in file of the child DDT table
     secondary_ddt_offset *= 1 << ctx->user_data_ddt_header.blockAlignmentShift;
@@ -1179,18 +1156,19 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
                          block_index << ctx->user_data_ddt_header.dataShift;
 
             // Overflow detection for DDT entry
-            if(*ddt_entry > 0xFFFFFFF)
+            if(*ddt_entry > 0xFFFFFFFFFFFFFFF)
             {
                 FATAL("DDT overflow: media does not fit in big DDT");
                 TRACE("Exiting set_ddt_multi_level_v2() = false");
                 return false;
             }
 
-            *ddt_entry |= (uint64_t)sector_status << 28;
+            *ddt_entry |= (uint64_t)sector_status << 60;
         }
 
-        TRACE("Setting small secondary DDT entry %d to %u", sector_address % items_per_ddt_entry, (uint16_t)*ddt_entry);
-        ctx->cached_secondary_ddt2[sector_address % items_per_ddt_entry] = (uint32_t)*ddt_entry;
+        TRACE("Setting small secondary DDT entry %d to %ull", sector_address % items_per_ddt_entry,
+              (uint64_t)*ddt_entry);
+        ctx->cached_secondary_ddt2[sector_address % items_per_ddt_entry] = *ddt_entry;
 
         TRACE("Updated cached secondary DDT entry at position %" PRIu64, sector_address % items_per_ddt_entry);
         TRACE("Exiting set_ddt_multi_level_v2() = true");
@@ -1237,12 +1215,11 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             ddt_header.blockAlignmentShift = ctx->user_data_ddt_header.blockAlignmentShift;
             ddt_header.dataShift           = ctx->user_data_ddt_header.dataShift;
             ddt_header.tableShift          = 0;  // Secondary tables are single level
-            ddt_header.sizeType            = ctx->user_data_ddt_header.sizeType;
             ddt_header.entries             = items_per_ddt_entry;
 
             // Calculate data size
 
-            ddt_header.length = items_per_ddt_entry * sizeof(uint32_t);
+            ddt_header.length = items_per_ddt_entry * sizeof(uint64_t);
 
             // Calculate CRC64 of the data
             crc64_context = aaruf_crc64_init();
@@ -1336,13 +1313,13 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             // Update the primary level table entry to point to the new location of the secondary table
             uint64_t new_secondary_table_block_offset = end_of_file >> ctx->user_data_ddt_header.blockAlignmentShift;
 
-            ctx->user_data_ddt2[ctx->cached_ddt_position] = (uint32_t)new_secondary_table_block_offset;
+            ctx->user_data_ddt2[ctx->cached_ddt_position] = new_secondary_table_block_offset;
 
             // Write the updated primary table back to its original position in the file
             long saved_pos = ftell(ctx->imageStream);
             fseek(ctx->imageStream, ctx->primary_ddt_offset + sizeof(DdtHeader2), SEEK_SET);
 
-            size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint32_t);
+            size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint64_t);
 
             written_bytes = fwrite(ctx->user_data_ddt2, primary_table_size, 1, ctx->imageStream);
 
@@ -1414,12 +1391,11 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
         ddt_header.blockAlignmentShift = ctx->user_data_ddt_header.blockAlignmentShift;
         ddt_header.dataShift           = ctx->user_data_ddt_header.dataShift;
         ddt_header.tableShift          = 0;  // Secondary tables are single level
-        ddt_header.sizeType            = ctx->user_data_ddt_header.sizeType;
         ddt_header.entries             = items_per_ddt_entry;
 
         // Calculate data size
 
-        ddt_header.length = items_per_ddt_entry * sizeof(uint32_t);
+        ddt_header.length = items_per_ddt_entry * sizeof(uint64_t);
 
         // Calculate CRC64 of the data
         crc64_context = aaruf_crc64_init();
@@ -1539,13 +1515,13 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
         // Update the primary table entry to point to the new location of the secondary table
         // Use ddtPosition which was calculated from sectorAddress, not cachedDdtOffset
 
-        ctx->user_data_ddt2[ddt_position] = (uint32_t)new_secondary_table_block_offset;
+        ctx->user_data_ddt2[ddt_position] = new_secondary_table_block_offset;
 
         // Write the updated primary table back to its original position in the file
         long saved_pos = ftell(ctx->imageStream);
         fseek(ctx->imageStream, ctx->primary_ddt_offset + sizeof(DdtHeader2), SEEK_SET);
 
-        size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint32_t);
+        size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint64_t);
 
         written_bytes = fwrite(ctx->user_data_ddt2, primary_table_size, 1, ctx->imageStream);
 
@@ -1632,7 +1608,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
 
         // Cache the loaded table
 
-        ctx->cached_secondary_ddt2 = (uint32_t *)buffer;
+        ctx->cached_secondary_ddt2 = (uint64_t *)buffer;
 
         ctx->cached_ddt_offset = secondary_ddt_offset;
     }
@@ -1640,7 +1616,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
     if(create_new_table)
     {
         // Create a new empty table
-        size_t table_size = items_per_ddt_entry * sizeof(uint32_t);
+        size_t table_size = items_per_ddt_entry * sizeof(uint64_t);
 
         buffer = calloc(1, table_size);
         if(buffer == NULL)
@@ -1650,7 +1626,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             return false;
         }
 
-        ctx->cached_secondary_ddt2 = (uint32_t *)buffer;
+        ctx->cached_secondary_ddt2 = (uint64_t *)buffer;
 
         ctx->cached_ddt_offset   = 0;             // Will be set when written to file
         ctx->cached_ddt_position = ddt_position;  // Track which primary DDT position this new table belongs to
@@ -1665,18 +1641,18 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
                      block_index << ctx->user_data_ddt_header.dataShift;
 
         // Overflow detection for DDT entry
-        if(*ddt_entry > 0xFFFFFFF)
+        if(*ddt_entry > 0xFFFFFFFFFFFFFFF)
         {
             FATAL("DDT overflow: media does not fit in big DDT");
             TRACE("Exiting set_ddt_multi_level_v2() = false");
             return false;
         }
 
-        *ddt_entry |= (uint64_t)sector_status << 28;
+        *ddt_entry |= (uint64_t)sector_status << 60;
     }
 
-    TRACE("Setting big secondary DDT entry %d to %u", sector_address % items_per_ddt_entry, (uint32_t)*ddt_entry);
-    ctx->cached_secondary_ddt2[sector_address % items_per_ddt_entry] = (uint32_t)*ddt_entry;
+    TRACE("Setting big secondary DDT entry %d to %ull", sector_address % items_per_ddt_entry, (uint64_t)*ddt_entry);
+    ctx->cached_secondary_ddt2[sector_address % items_per_ddt_entry] = *ddt_entry;
 
     TRACE("Updated secondary DDT entry at position %" PRIu64, sector_address % items_per_ddt_entry);
     TRACE("Exiting set_ddt_multi_level_v2() = true");
@@ -1827,14 +1803,14 @@ bool set_ddt_tape(aaruformat_context *ctx, uint64_t sector_address, const uint64
         *ddt_entry                 = offset & (1ULL << ctx->user_data_ddt_header.dataShift) - 1 |
                      block_index << ctx->user_data_ddt_header.dataShift;
         // Overflow detection for DDT entry
-        if(*ddt_entry > 0xFFFFFFF)
+        if(*ddt_entry > 0xFFFFFFFFFFFFFFF)
         {
             FATAL("DDT overflow: media does not fit in big DDT");
             TRACE("Exiting set_ddt_tape() = false");
             return false;
         }
 
-        *ddt_entry |= (uint64_t)sector_status << 28;
+        *ddt_entry |= (uint64_t)sector_status << 60;
     }
 
     // Create DDT hash entry

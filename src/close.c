@@ -117,7 +117,6 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
     ddt_header.blockAlignmentShift = ctx->user_data_ddt_header.blockAlignmentShift;
     ddt_header.dataShift           = ctx->user_data_ddt_header.dataShift;
     ddt_header.tableShift          = 0;  // Secondary tables are single level
-    ddt_header.sizeType            = ctx->user_data_ddt_header.sizeType;
 
     uint64_t items_per_ddt_entry = 1 << ctx->user_data_ddt_header.tableShift;
     ddt_header.blocks            = items_per_ddt_entry;
@@ -194,7 +193,7 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
             const uint64_t new_secondary_table_block_offset =
                 end_of_file >> ctx->user_data_ddt_header.blockAlignmentShift;
 
-            ctx->user_data_ddt2[ctx->cached_ddt_position] = (uint32_t)new_secondary_table_block_offset;
+            ctx->user_data_ddt2[ctx->cached_ddt_position] = (uint64_t)new_secondary_table_block_offset;
 
             // Update index: remove old entry for cached DDT and add new one
             TRACE("Updating index for cached secondary DDT");
@@ -291,7 +290,7 @@ static int32_t write_primary_ddt(aaruformat_context *ctx)
     crc64_ctx *crc64_context = aaruf_crc64_init();
     if(crc64_context != NULL)
     {
-        size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint32_t);
+        size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint64_t);
 
         aaruf_crc64_update(crc64_context, (uint8_t *)ctx->user_data_ddt2, primary_table_size);
 
@@ -374,7 +373,7 @@ static int32_t write_single_level_ddt(aaruformat_context *ctx)
     TRACE("Writing single-level DDT table to file");
 
     // Calculate CRC64 of the primary DDT table data
-    const size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint32_t);
+    const size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint64_t);
 
     // Properly populate all header fields
     ctx->user_data_ddt_header.identifier          = DeDuplicationTable2;
@@ -613,15 +612,14 @@ static int32_t write_tape_ddt(aaruformat_context *ctx)
     ctx->user_data_ddt_header.negative            = 0;
     ctx->user_data_ddt_header.overflow            = 0;
     ctx->user_data_ddt_header.tableShift          = 0;  // Single level
-    ctx->user_data_ddt_header.sizeType            = BigDdtSizeType;
     ctx->user_data_ddt_header.entries             = max_key + 1;
     ctx->user_data_ddt_header.blocks              = max_key + 1;
     ctx->user_data_ddt_header.start               = 0;
-    ctx->user_data_ddt_header.length              = ctx->user_data_ddt_header.entries * sizeof(uint32_t);
+    ctx->user_data_ddt_header.length              = ctx->user_data_ddt_header.entries * sizeof(uint64_t);
     ctx->user_data_ddt_header.cmpLength           = ctx->user_data_ddt_header.length;
 
     // Initialize memory for user data DDT
-    ctx->user_data_ddt2 = calloc(ctx->user_data_ddt_header.entries, sizeof(uint32_t));
+    ctx->user_data_ddt2 = calloc(ctx->user_data_ddt_header.entries, sizeof(uint64_t));
     if(ctx->user_data_ddt2 == NULL)
     {
         TRACE("Failed to allocate memory for tape DDT table");
@@ -1233,12 +1231,11 @@ static void write_sector_prefix_ddt(aaruformat_context *ctx)
     ddt_header2.blockAlignmentShift = ctx->user_data_ddt_header.blockAlignmentShift;
     ddt_header2.dataShift           = ctx->user_data_ddt_header.dataShift;
     ddt_header2.tableShift          = 0;  // Single-level DDT
-    ddt_header2.sizeType            = BigDdtSizeType;
     ddt_header2.entries =
         ctx->image_info.Sectors + ctx->user_data_ddt_header.negative + ctx->user_data_ddt_header.overflow;
     ddt_header2.blocks = ctx->user_data_ddt_header.blocks;
     ddt_header2.start  = 0;
-    ddt_header2.length = ddt_header2.entries * sizeof(uint32_t);
+    ddt_header2.length = ddt_header2.entries * sizeof(uint64_t);
     // Calculate CRC64
     ddt_header2.crc64  = aaruf_crc64_data((uint8_t *)ctx->sector_prefix_ddt2, (uint32_t)ddt_header2.length);
 
@@ -1379,12 +1376,11 @@ static void write_sector_suffix_ddt(aaruformat_context *ctx)
     ddt_header2.blockAlignmentShift = ctx->user_data_ddt_header.blockAlignmentShift;
     ddt_header2.dataShift           = ctx->user_data_ddt_header.dataShift;
     ddt_header2.tableShift          = 0;  // Single-level DDT
-    ddt_header2.sizeType            = BigDdtSizeType;
     ddt_header2.entries =
         ctx->image_info.Sectors + ctx->user_data_ddt_header.negative + ctx->user_data_ddt_header.overflow;
     ddt_header2.blocks = ctx->user_data_ddt_header.blocks;
     ddt_header2.start  = 0;
-    ddt_header2.length = ddt_header2.entries * sizeof(uint32_t);
+    ddt_header2.length = ddt_header2.entries * sizeof(uint64_t);
     // Calculate CRC64
     ddt_header2.crc64  = aaruf_crc64_data((uint8_t *)ctx->sector_suffix_ddt2, (uint32_t)ddt_header2.length);
 

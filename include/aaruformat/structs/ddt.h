@@ -113,7 +113,6 @@ typedef struct DdtHeader
  *  - blockAlignmentShift: log2 alignment of stored data blocks (byte granularity of block_offset).
  *  - dataShift:  log2 of the number of addressable sectors per increment of blockIndex bitfield unit.
  *  - tableShift: log2 of number of logical sectors covered by a single primary-table pointer (multi-level only).
- *  - sizeType:   Selects entry width (small=16b, big=32b) impacting available bits for blockIndex+offset.
  *
  * Notes & current limitations:
  *  - User area sector count = blocks - negative - overflow.
@@ -156,7 +155,6 @@ typedef struct DdtHeader2
     uint8_t dataShift;            ///< 2^dataShift = sectors represented per increment in blockIndex field.
     uint8_t tableShift;  ///< 2^tableShift = number of logical sectors per primary entry (multi-level only; 0 for
                          ///< single-level or secondary tables).
-    uint8_t sizeType;    ///< Entry size variant (\ref DdtSizeType) controlling width of E.
     uint64_t entries;    ///< Number of entries contained in (uncompressed) table payload.
     uint64_t cmpLength;  ///< Compressed payload size in bytes.
     uint64_t length;     ///< Uncompressed payload size in bytes.

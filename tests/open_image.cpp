@@ -121,14 +121,14 @@ TEST_F(OpenImageFixture, open_mf2hd_v2)
     // Basic sanity checks on the image info
     ASSERT_EQ(image_info.HasPartitions, false) << "Image should not have partitions";
     ASSERT_EQ(image_info.HasSessions, false) << "Image should not have sessions";
-    ASSERT_EQ(image_info.ImageSize, 49786) << "Unexpected image size";
+    ASSERT_EQ(image_info.ImageSize, 49802) << "Unexpected image size";
     ASSERT_EQ(image_info.Sectors, 2880) << "Unexpected number of sectors";
     ASSERT_EQ(image_info.SectorSize, 512) << "Unexpected sector size";
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "aaruformattool") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "1.0") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 134045021233497730ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 134045021233497730ULL) << "Unexpected modification time";
+    ASSERT_EQ(image_info.CreationTime, 134045317128230560ULL) << "Unexpected creation time";
+    ASSERT_EQ(image_info.LastModificationTime, 134045317128230560ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 199) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 1) << "Unexpected metadata media type";
 
@@ -237,14 +237,14 @@ TEST_F(OpenImageFixture, open_floptical_v2)
     // Basic sanity checks on the image info
     ASSERT_EQ(image_info.HasPartitions, false) << "Image should not have partitions";
     ASSERT_EQ(image_info.HasSessions, false) << "Image should not have sessions";
-    ASSERT_EQ(image_info.ImageSize, 115) << "Unexpected image size";
+    ASSERT_EQ(image_info.ImageSize, 142) << "Unexpected image size";
     ASSERT_EQ(image_info.Sectors, 40662) << "Unexpected number of sectors";
     ASSERT_EQ(image_info.SectorSize, 512) << "Unexpected sector size";
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "aaruformattool") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "1.0") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 134045021406383110ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 134045021406383110ULL) << "Unexpected modification time";
+    ASSERT_EQ(image_info.CreationTime, 134045315488892290ULL) << "Unexpected creation time";
+    ASSERT_EQ(image_info.LastModificationTime, 134045315488892290ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 662) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 1) << "Unexpected metadata media type";
 
@@ -353,14 +353,14 @@ TEST_F(OpenImageFixture, open_gigamo_v2)
     // Basic sanity checks on the image info
     ASSERT_EQ(image_info.HasPartitions, false) << "Image should not have partitions";
     ASSERT_EQ(image_info.HasSessions, false) << "Image should not have sessions";
-    ASSERT_EQ(image_info.ImageSize, 445) << "Unexpected image size";
+    ASSERT_EQ(image_info.ImageSize, 790) << "Unexpected image size";
     ASSERT_EQ(image_info.Sectors, 605846) << "Unexpected number of sectors";
     ASSERT_EQ(image_info.SectorSize, 2048) << "Unexpected sector size";
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "aaruformattool") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "1.0") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 134045021623404660ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 134045021623404660ULL) << "Unexpected modification time";
+    ASSERT_EQ(image_info.CreationTime, 134045315684449130ULL) << "Unexpected creation time";
+    ASSERT_EQ(image_info.LastModificationTime, 134045315684449130ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 653) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 1) << "Unexpected metadata media type";
 
@@ -469,14 +469,14 @@ TEST_F(OpenImageFixture, open_hifd_v2)
     // Basic sanity checks on the image info
     ASSERT_EQ(image_info.HasPartitions, false) << "Image should not have partitions";
     ASSERT_EQ(image_info.HasSessions, false) << "Image should not have sessions";
-    ASSERT_EQ(image_info.ImageSize, 811) << "Unexpected image size";
+    ASSERT_EQ(image_info.ImageSize, 1035) << "Unexpected image size";
     ASSERT_EQ(image_info.Sectors, 393380) << "Unexpected number of sectors";
     ASSERT_EQ(image_info.SectorSize, 512) << "Unexpected sector size";
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "aaruformattool") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "1.0") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 134045022447255050ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 134045022447255050ULL) << "Unexpected modification time";
+    ASSERT_EQ(image_info.CreationTime, 134045316523097400ULL) << "Unexpected creation time";
+    ASSERT_EQ(image_info.LastModificationTime, 134045316523097400ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 663) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 1) << "Unexpected metadata media type";
 
@@ -585,14 +585,14 @@ TEST_F(OpenImageFixture, open_mo540_v2)
     // Basic sanity checks on the image info
     ASSERT_EQ(image_info.HasPartitions, false) << "Image should not have partitions";
     ASSERT_EQ(image_info.HasSessions, false) << "Image should not have sessions";
-    ASSERT_EQ(image_info.ImageSize, 682) << "Unexpected image size";
+    ASSERT_EQ(image_info.ImageSize, 1273) << "Unexpected image size";
     ASSERT_EQ(image_info.Sectors, 1041500) << "Unexpected number of sectors";
     ASSERT_EQ(image_info.SectorSize, 512) << "Unexpected sector size";
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "aaruformattool") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "1.0") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 134045023010340070ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 134045023010340070ULL) << "Unexpected modification time";
+    ASSERT_EQ(image_info.CreationTime, 134045317276362850ULL) << "Unexpected creation time";
+    ASSERT_EQ(image_info.LastModificationTime, 134045317276362850ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 1) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 1) << "Unexpected metadata media type";
 
@@ -701,14 +701,14 @@ TEST_F(OpenImageFixture, open_mo640_v2)
     // Basic sanity checks on the image info
     ASSERT_EQ(image_info.HasPartitions, false) << "Image should not have partitions";
     ASSERT_EQ(image_info.HasSessions, false) << "Image should not have sessions";
-    ASSERT_EQ(image_info.ImageSize, 378) << "Unexpected image size";
+    ASSERT_EQ(image_info.ImageSize, 556) << "Unexpected image size";
     ASSERT_EQ(image_info.Sectors, 310352) << "Unexpected number of sectors";
     ASSERT_EQ(image_info.SectorSize, 2048) << "Unexpected sector size";
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "aaruformattool") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "1.0") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 134045024110831840ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 134045024110831840ULL) << "Unexpected modification time";
+    ASSERT_EQ(image_info.CreationTime, 134045318614141420ULL) << "Unexpected creation time";
+    ASSERT_EQ(image_info.LastModificationTime, 134045318614141420ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 646) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 1) << "Unexpected metadata media type";
 

@@ -221,15 +221,6 @@ typedef enum
 } XmlMediaType;
 
 /**
- * \enum DdtSizeType
- * \brief Size type for Deduplication Data Table (DDT) entries.
- */
-typedef enum
-{
-    BigDdtSizeType = 1  ///< Large sized DDT entries.
-} DdtSizeType;
-
-/**
  * \enum SectorStatus
  * \brief Acquisition / content status for one or more sectors.
  */

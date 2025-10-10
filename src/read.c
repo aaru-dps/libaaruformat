@@ -1040,9 +1040,9 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
 
                     if(ctx->sector_prefix_ddt2 != NULL)
                     {
-                        const uint32_t prefix_ddt_entry = ctx->sector_prefix_ddt2[corrected_sector_address];
-                        const uint32_t prefix_status    = prefix_ddt_entry >> 28;
-                        const uint32_t prefix_index     = prefix_ddt_entry & 0x0FFFFFFF;
+                        const uint64_t prefix_ddt_entry = ctx->sector_prefix_ddt2[corrected_sector_address];
+                        const uint32_t prefix_status    = prefix_ddt_entry >> 60;
+                        const uint64_t prefix_index     = prefix_ddt_entry & 0x0FFFFFFFFFFFFFFF;
 
                         if(prefix_status == SectorStatusMode1Correct)
                         {
@@ -1087,9 +1087,9 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
 
                     if(ctx->sector_suffix_ddt2 != NULL)
                     {
-                        const uint32_t suffix_ddt_entry = ctx->sector_suffix_ddt2[corrected_sector_address];
-                        const uint32_t suffix_status    = suffix_ddt_entry >> 28;
-                        const uint32_t suffix_index     = suffix_ddt_entry & 0x0FFFFFFF;
+                        const uint64_t suffix_ddt_entry = ctx->sector_suffix_ddt2[corrected_sector_address];
+                        const uint64_t suffix_status    = suffix_ddt_entry >> 60;
+                        const uint64_t suffix_index     = suffix_ddt_entry & 0x0FFFFFFFFFFFFFFF;
 
                         if(suffix_status == SectorStatusMode1Correct)
                         {
@@ -1133,9 +1133,9 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                 case CdMode2Form2:
                     if(ctx->sector_prefix_ddt2 != NULL)
                     {
-                        const uint32_t prefix_ddt_entry = ctx->sector_prefix_ddt2[corrected_sector_address];
-                        const uint32_t prefix_status    = prefix_ddt_entry >> 28;
-                        const uint32_t prefix_index     = prefix_ddt_entry & 0x0FFFFFFF;
+                        const uint64_t prefix_ddt_entry = ctx->sector_prefix_ddt2[corrected_sector_address];
+                        const uint64_t prefix_status    = prefix_ddt_entry >> 60;
+                        const uint64_t prefix_index     = prefix_ddt_entry & 0x0FFFFFFFFFFFFFFF;
 
                         if(prefix_status == SectorStatusMode2Form1Ok || prefix_status == SectorStatusMode2Form2Ok)
                         {
@@ -1181,9 +1181,9 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
                     if(ctx->mode2_subheaders != NULL && ctx->sector_suffix_ddt2 != NULL)
                     {
                         memcpy(data + 16, ctx->mode2_subheaders + corrected_sector_address * 8, 8);
-                        const uint32_t suffix_ddt_entry = ctx->sector_suffix_ddt2[corrected_sector_address];
-                        const uint32_t suffix_status    = suffix_ddt_entry >> 28;
-                        const uint32_t suffix_index     = suffix_ddt_entry & 0x0FFFFFFF;
+                        const uint64_t suffix_ddt_entry = ctx->sector_suffix_ddt2[corrected_sector_address];
+                        const uint64_t suffix_status    = suffix_ddt_entry >> 60;
+                        const uint64_t suffix_index     = suffix_ddt_entry & 0x0FFFFFFFFFFFFFFF;
 
                         if(suffix_status == SectorStatusMode2Form1Ok)
                         {

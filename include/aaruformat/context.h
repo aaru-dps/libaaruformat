@@ -182,10 +182,10 @@ typedef struct aaruformat_context
     TapeDdtHashEntry *tape_ddt;                ///< Hash table root for tape DDT entries
     uint32_t         *sector_prefix_ddt;       ///< Legacy CD sector prefix DDT (deprecated by *2).
     uint32_t         *sector_suffix_ddt;       ///< Legacy CD sector suffix DDT.
-    uint32_t         *sector_prefix_ddt2;      ///< CD sector prefix DDT V2.
-    uint32_t         *sector_suffix_ddt2;      ///< CD sector suffix DDT V2.
-    uint32_t         *user_data_ddt2;          ///< DDT entries (big variant) primary/secondary current.
-    uint32_t         *cached_secondary_ddt2;   ///< Cached secondary table (big entries) or NULL.
+    uint64_t         *sector_prefix_ddt2;      ///< CD sector prefix DDT V2.
+    uint64_t         *sector_suffix_ddt2;      ///< CD sector suffix DDT V2.
+    uint64_t         *user_data_ddt2;          ///< DDT entries (big variant) primary/secondary current.
+    uint64_t         *cached_secondary_ddt2;   ///< Cached secondary table (big entries) or NULL.
     DdtHeader2        user_data_ddt_header;    ///< Active user data DDT v2 header (primary table meta).
     uint64_t          cached_ddt_offset;       ///< File offset of currently cached secondary DDT (0=none).
     uint64_t          cached_ddt_position;     ///< Position index of cached secondary DDT.
