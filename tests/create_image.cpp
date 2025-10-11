@@ -118,8 +118,9 @@ TEST_F(CreateImageFixture, create_image_uncompresed_duplicated)
     {
         uint8_t  sector_buffer[512];
         uint32_t length = sizeof(sector_buffer);
+        uint8_t  sector_status = 0;
 
-        const int32_t read_result = aaruf_read_sector(context, i, false, sector_buffer, &length);
+        const int32_t read_result = aaruf_read_sector(context, i, false, sector_buffer, &length, &sector_status);
         EXPECT_EQ(read_result, AARUF_STATUS_OK) << "Failed to read sector " << i;
         EXPECT_EQ(length, 512U) << "Unexpected length for sector " << i;
         aaruf_crc64_update(ctx, sector_buffer, 512);
@@ -213,8 +214,9 @@ TEST_F(CreateImageFixture, create_image_uncompresed_deduplicated)
     {
         uint8_t  sector_buffer[512];
         uint32_t length = sizeof(sector_buffer);
+        uint8_t  sector_status = 0;
 
-        const int32_t read_result = aaruf_read_sector(context, i, false, sector_buffer, &length);
+        const int32_t read_result = aaruf_read_sector(context, i, false, sector_buffer, &length, &sector_status);
         EXPECT_EQ(read_result, AARUF_STATUS_OK) << "Failed to read sector " << i;
         EXPECT_EQ(length, 512U) << "Unexpected length for sector " << i;
         aaruf_crc64_update(ctx, sector_buffer, 512);
@@ -308,8 +310,9 @@ TEST_F(CreateImageFixture, create_image_compresed_duplicated)
     {
         uint8_t  sector_buffer[512];
         uint32_t length = sizeof(sector_buffer);
+        uint8_t  sector_status = 0;
 
-        const int32_t read_result = aaruf_read_sector(context, i, false, sector_buffer, &length);
+        const int32_t read_result = aaruf_read_sector(context, i, false, sector_buffer, &length, &sector_status);
         EXPECT_EQ(read_result, AARUF_STATUS_OK) << "Failed to read sector " << i;
         EXPECT_EQ(length, 512U) << "Unexpected length for sector " << i;
         aaruf_crc64_update(ctx, sector_buffer, 512);
@@ -403,8 +406,9 @@ TEST_F(CreateImageFixture, create_image_compresed_deduplicated)
     {
         uint8_t  sector_buffer[512];
         uint32_t length = sizeof(sector_buffer);
+        uint8_t  sector_status = 0;
 
-        const int32_t read_result = aaruf_read_sector(context, i, false, sector_buffer, &length);
+        const int32_t read_result = aaruf_read_sector(context, i, false, sector_buffer, &length, &sector_status);
         EXPECT_EQ(read_result, AARUF_STATUS_OK) << "Failed to read sector " << i;
         EXPECT_EQ(length, 512U) << "Unexpected length for sector " << i;
         aaruf_crc64_update(ctx, sector_buffer, 512);
@@ -498,8 +502,9 @@ TEST_F(CreateImageFixture, create_image_table_shift_9)
     {
         uint8_t  sector_buffer[512];
         uint32_t length = sizeof(sector_buffer);
+        uint8_t  sector_status = 0;
 
-        const int32_t read_result = aaruf_read_sector(context, i, false, sector_buffer, &length);
+        const int32_t read_result = aaruf_read_sector(context, i, false, sector_buffer, &length, &sector_status);
         EXPECT_EQ(read_result, AARUF_STATUS_OK) << "Failed to read sector " << i;
         EXPECT_EQ(length, 512U) << "Unexpected length for sector " << i;
         aaruf_crc64_update(ctx, sector_buffer, 512);
