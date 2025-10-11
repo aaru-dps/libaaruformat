@@ -54,7 +54,7 @@ typedef struct AaruHeaderV2
 |===
 | Name | Type | Description
 | identifier | uint64_t | Header identifier constant. Must match the predefined `AARU_MAGIC` value to validate the format.
-| application | uint8_t[HEADER_APP_NAME_LEN] | UTF-16LE encoded name of the application responsible for creating the image.
+| application | uint8_t[HEADER_APP_NAME_LEN] | UTF-16LE in version 1, UTF-8 in version 2, encoded name of the application responsible for creating the image.
 
 Length is defined by `HEADER_APP_NAME_LEN`.
 | imageMajorVersion | uint8_t | Major version of the AaruFormat structure.

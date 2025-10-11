@@ -4,8 +4,7 @@ C implementation of [Aaru](https://www.github.com/aaru-dps/Aaru) file format.
 
 The target is to be able to compile it with a normal C (C89 compliant) compiler.
 
-Currently depends on libicu being available thru vcpkg due to UTF-16 shenanigans.
-Currently under debate on a breaking ABI change to remove this dependency.
+There are no external dependencies.
 
 cmake is not a hard dependency, it's merely for the ease of using IDEs (specifically CLion).
 

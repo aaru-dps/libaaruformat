@@ -22,9 +22,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <unicode/ucnv.h>
-#include <unicode/ustring.h>
-
 #include <aaruformat.h>
 
 #include "internal.h"
@@ -243,63 +240,30 @@ void *aaruf_open(const char *filepath)  // NOLINT(readability-function-size)
 
     TRACE("Setting up image info");
 
-    // Convert application name from UTF-16LE to UTF-8 using libicu
-    UErrorCode status             = U_ZERO_ERROR;
-    int32_t    app_name_utf16_len = AARU_HEADER_APP_NAME_LEN / 2;  // UTF-16LE uses 2 bytes per character
-    UChar     *app_name_utf16     = (UChar *)malloc(app_name_utf16_len * sizeof(UChar));
+    // Handle application name based on image version
+    memset(ctx->image_info.Application, 0, 64);
 
-    if(app_name_utf16 != NULL)
+    if(ctx->header.imageMajorVersion >= AARUF_VERSION_V2)
     {
-        // Convert raw UTF-16LE bytes to UChar (UTF-16, host endian)
-        for(int32_t j = 0; j < app_name_utf16_len; j++)
-        {
-            app_name_utf16[j] = (UChar)(ctx->header.application[j * 2] | (ctx->header.application[j * 2 + 1] << 8));
-        }
-
-        // Get required length for UTF-8
-        int32_t app_name_utf8_len = 0;
-        u_strToUTF8(NULL, 0, &app_name_utf8_len, app_name_utf16, app_name_utf16_len, &status);
-
-        if(U_SUCCESS(status) || status == U_BUFFER_OVERFLOW_ERROR)
-        {
-            status = U_ZERO_ERROR;
-
-            // Ensure it fits in the Application buffer (64 bytes including null terminator)
-            if(app_name_utf8_len < 64)
-            {
-                u_strToUTF8(ctx->image_info.Application, 64, NULL, app_name_utf16, app_name_utf16_len, &status);
-
-                if(U_FAILURE(status))
-                {
-                    TRACE("Error converting application name to UTF-8: %d, using raw bytes", status);
-                    // Fallback: just copy what we can
-                    memset(ctx->image_info.Application, 0, 64);
-                    strncpy(ctx->image_info.Application, (const char *)ctx->header.application, 63);
-                }
-            }
-            else
-            {
-                TRACE("Application name too long for buffer, truncating");
-                u_strToUTF8(ctx->image_info.Application, 63, NULL, app_name_utf16, app_name_utf16_len, &status);
-                ctx->image_info.Application[63] = '\0';
-            }
-        }
-        else
-        {
-            TRACE("Error getting UTF-8 length: %d, using raw bytes", status);
-            // Fallback: just copy what we can
-            memset(ctx->image_info.Application, 0, 64);
-            strncpy(ctx->image_info.Application, (const char *)ctx->header.application, 63);
-        }
-
-        free(app_name_utf16);
+        // Version 2+: application name is UTF-8, direct copy
+        TRACE("Converting application name (v2+): UTF-8 direct copy");
+        size_t copy_len = AARU_HEADER_APP_NAME_LEN < 63 ? AARU_HEADER_APP_NAME_LEN : 63;
+        memcpy(ctx->image_info.Application, ctx->header.application, copy_len);
+        ctx->image_info.Application[63] = '\0';
     }
     else
     {
-        TRACE("Could not allocate memory for UTF-16 conversion, using raw bytes");
-        // Fallback: just copy what we can
-        memset(ctx->image_info.Application, 0, 64);
-        strncpy(ctx->image_info.Application, (const char *)ctx->header.application, 63);
+        // Version 1: application name is UTF-16LE, convert by taking every other byte
+        TRACE("Converting application name (v1): UTF-16LE to ASCII");
+        int dest_idx = 0;
+        for(int j = 0; j < AARU_HEADER_APP_NAME_LEN && dest_idx < 63; j += 2)
+            // Take the low byte, skip the high byte (assuming it's 0x00 for ASCII)
+            if(ctx->header.application[j] != 0)
+                ctx->image_info.Application[dest_idx++] = ctx->header.application[j];
+            else
+                // Stop at null terminator
+                break;
+        ctx->image_info.Application[dest_idx] = '\0';
     }
 
     // Set application version string directly in the fixed-size array
