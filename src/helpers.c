@@ -151,7 +151,7 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_media_tag_type_for_datatype(const int32_t
         case FloppyLeadOut:
             return Floppy_LeadOut;
         case DvdDiscControlBlock:
-            return DCB;
+            return DiscControlBlock;
         case CompactDiscFirstTrackPregap:
             return CD_FirstTrackPregap;
         case CompactDiscLeadOut:
@@ -308,7 +308,7 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_datatype_for_media_tag_type(const int32_t
             return XboxSecuritySector;
         case Floppy_LeadOut:
             return FloppyLeadOut;
-        case DCB:
+        case DiscControlBlock:
             return DvdDiscControlBlock;
         case CD_FirstTrackPregap:
             return CompactDiscFirstTrackPregap;
@@ -453,9 +453,7 @@ int compare_extents(const void *a, const void *b)
     const DumpExtent *extent_a = a;
     const DumpExtent *extent_b = b;
 
-    if(extent_a->start < extent_b->start)
-        return -1;
-    if(extent_a->start > extent_b->start)
-        return 1;
+    if(extent_a->start < extent_b->start) return -1;
+    if(extent_a->start > extent_b->start) return 1;
     return 0;
 }
