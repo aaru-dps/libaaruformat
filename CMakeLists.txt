@@ -16,11 +16,30 @@ cmake_minimum_required(VERSION 3.13)
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, see <http://www.gnu.org/licenses/>.
 
-if(APPLE)
-  if("${CMAKE_OSX_ARCHITECTURES}" STREQUAL "")
-    set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "Build architectures for Mac OS X" FORCE)
-  endif()
-endif()
+if (APPLE)
+  # Too early cmake has not yet set it
+  if ((NOT DEFINED CMAKE_SYSTEM_PROCESSOR) AND (NOT DEFINED AARU_MACOS_TARGET_ARCH))
+    execute_process(COMMAND uname -m OUTPUT_VARIABLE AARU_MACOS_TARGET_ARCH OUTPUT_STRIP_TRAILING_WHITESPACE)
+  endif ()
+
+  if (NOT DEFINED AARU_MACOS_TARGET_ARCH)
+    if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+      set(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE STRING "Build architectures for macOS" FORCE)
+    elseif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64")
+      set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "Build architectures for macOS" FORCE)
+    else ()
+      message(FATAL_ERROR "Unknown system processor ${CMAKE_SYSTEM_PROCESSOR} for macOS")
+    endif ()
+  elseif (AARU_MACOS_TARGET_ARCH STREQUAL "x86_64")
+    set(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE STRING "Build architectures for macOS" FORCE)
+  elseif (AARU_MACOS_TARGET_ARCH STREQUAL "arm64")
+    set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "Build architectures for macOS" FORCE)
+  else ()
+    message(FATAL_ERROR "Unknown Aaru target architecture ${AARU_MACOS_TARGET_ARCH} for macOS")
+  endif ()
+
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
+endif (APPLE)
 
 # Integrate vcpkg toolchain if available but not explicitly provided.
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
