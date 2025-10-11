@@ -59,5 +59,6 @@ aaru_options parse_options(const char *options);
 uint64_t     get_filetime_uint64();
 int32_t      aaruf_close_current_block(aaruformat_context *ctx);
 int          compare_extents(const void *a, const void *b);
+void         generate_random_bytes(uint8_t *buffer, size_t length);
 
 #endif  // LIBAARUFORMAT_INTERNAL_H

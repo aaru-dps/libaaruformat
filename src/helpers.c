@@ -19,6 +19,14 @@
 #include <aaru.h>
 
 #include <aaruformat.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#if defined(_WIN32) || defined(_WIN64)
+#include <wincrypt.h>
+#include <windows.h>
+#endif
 
 /**
  * @brief Converts an image data type to an Aaru media tag type.
@@ -456,4 +464,45 @@ int compare_extents(const void *a, const void *b)
     if(extent_a->start < extent_b->start) return -1;
     if(extent_a->start > extent_b->start) return 1;
     return 0;
+}
+
+/**
+ * @brief Generates cryptographically strong random bytes.
+ *
+ * This function fills the provided buffer with random bytes using platform-appropriate
+ * cryptographic random number generators. On Unix-like systems (including macOS and Linux),
+ * it reads from /dev/urandom. On Windows, it uses CryptGenRandom. If the platform-specific
+ * methods fail, it falls back to a time-seeded pseudo-random generator.
+ *
+ * @param buffer Pointer to the buffer to fill with random bytes.
+ * @param length Number of random bytes to generate.
+ */
+void generate_random_bytes(uint8_t *buffer, size_t length)
+{
+    if(buffer == NULL || length == 0) return;
+
+#if defined(_WIN32) || defined(_WIN64)
+    // Windows implementation using CryptGenRandom
+    HCRYPTPROV hCryptProv;
+    if(CryptAcquireContext(&hCryptProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
+    {
+        CryptGenRandom(hCryptProv, (DWORD)length, buffer);
+        CryptReleaseContext(hCryptProv, 0);
+        return;
+    }
+#else
+    // Unix-like systems (Linux, macOS, BSD, etc.) - use /dev/urandom
+    FILE *urandom = fopen("/dev/urandom", "rb");
+    if(urandom != NULL)
+    {
+        size_t bytes_read = fread(buffer, 1, length, urandom);
+        fclose(urandom);
+        if(bytes_read == length) return;
+    }
+#endif
+
+    // Fallback: use time-seeded rand() if platform-specific methods fail
+    // This is less secure but ensures we always generate some random data
+    srand((unsigned int)time(NULL));
+    for(size_t i = 0; i < length; i++) { buffer[i] = (uint8_t)(rand() % 256); }
 }

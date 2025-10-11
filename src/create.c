@@ -343,6 +343,10 @@ AARU_EXPORT void AARU_CALL *aaruf_create(const char *filepath, const uint32_t me
     ctx->header.creationTime            = get_filetime_uint64();
     ctx->header.lastWrittenTime         = get_filetime_uint64();
 
+    // Generate random GUID for the image
+    TRACE("Generating random GUID");
+    generate_random_bytes(ctx->header.guid, GUID_SIZE);
+
     ctx->readableSectorTags = (bool *)malloc(sizeof(bool) * MaxSectorTag);
 
     if(ctx->readableSectorTags == NULL)
