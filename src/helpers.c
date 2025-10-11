@@ -16,17 +16,17 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#include <wincrypt.h>
+#endif
+
 #include <aaru.h>
 
 #include <aaruformat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-
-#if defined(_WIN32) || defined(_WIN64)
-#include <wincrypt.h>
-#include <windows.h>
-#endif
 
 /**
  * @brief Converts an image data type to an Aaru media tag type.
