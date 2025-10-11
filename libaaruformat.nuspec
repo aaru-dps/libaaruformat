@@ -6,11 +6,9 @@
         <description>Library for management of AaruFormat images.</description>
         <authors>claunia</authors>
         <projectUrl>https://github.com/aaru-dps/libaaruformat</projectUrl>
-        <license type="expression">LGPL-2.1-only</license>
         <licenseUrl>https://spdx.org/licenses/LGPL-2.1-only.html</licenseUrl>
         <copyright>Copyright © 2011-2025 Natalia Portillo</copyright>
         <repository type="git" url="https://github.com/aaru-dps/libaaruformat.git" />
-        <readme>README.md</readme>
         <tags>aaru aaruformat libaaruformat disk image format</tags>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
     </metadata>
