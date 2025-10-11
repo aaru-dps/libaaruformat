@@ -1,0 +1,27 @@
+var close_8c =
+[
+    [ "aaruf_close", "close_8c.html#a6823e139f81a9dfd08efcb0e9b213a49", null ],
+    [ "write_aaru_json_block", "close_8c.html#adbc2790344fae0327f55d751b79dd800", null ],
+    [ "write_cached_secondary_ddt", "close_8c.html#af0f89d22c6e2bdca261223bbdda7654c", null ],
+    [ "write_checksum_block", "close_8c.html#a84f08d3fe750b46dad183b12bb3927c5", null ],
+    [ "write_cicm_block", "close_8c.html#aa868077fc938ed2cdee85832a40ef821", null ],
+    [ "write_dumphw_block", "close_8c.html#a796034966c1e918152e652635431dc39", null ],
+    [ "write_dvd_long_sector_blocks", "close_8c.html#a13f6c475294969c1eb8c59ff53c91af9", null ],
+    [ "write_dvd_title_key_decrypted_block", "close_8c.html#af9269816dfd495bc6927e9463422df91", null ],
+    [ "write_geometry_block", "close_8c.html#a5e24a87e4dd5eb0cb9225be3e25c7ef3", null ],
+    [ "write_index_block", "close_8c.html#a3532372fac3d5bb2619900820a26632e", null ],
+    [ "write_media_tags", "close_8c.html#a458e1630d31726b91a54b514f34a9b37", null ],
+    [ "write_metadata_block", "close_8c.html#af36ba67be5e488713558202feef0eeef", null ],
+    [ "write_mode2_subheaders_block", "close_8c.html#ade7f81cbae198dbbea937551bf670a4f", null ],
+    [ "write_primary_ddt", "close_8c.html#a1bb181171eb9d0b0016cf4091ed831d7", null ],
+    [ "write_sector_prefix", "close_8c.html#af383051987456d1295862e395027ffa8", null ],
+    [ "write_sector_prefix_ddt", "close_8c.html#ae5ee36ba745233583773cd7a644c8aa7", null ],
+    [ "write_sector_subchannel", "close_8c.html#ae0a4b670cbb5359edd44751e1b76ca9c", null ],
+    [ "write_sector_suffix", "close_8c.html#a8ea54bc4597be4246f2be361a5854251", null ],
+    [ "write_sector_suffix_ddt", "close_8c.html#a9d0eb026d1fa544b554493e780b7fbc1", null ],
+    [ "write_single_level_ddt", "close_8c.html#a7314de0d71768709fa4ba2db7f89cdb9", null ],
+    [ "write_tape_ddt", "close_8c.html#aed9f90614002b887ae9f3ef2333de16a", null ],
+    [ "write_tape_file_block", "close_8c.html#afffa52af1d2da0e17edf3add326e36d9", null ],
+    [ "write_tape_partition_block", "close_8c.html#a82707f569a505107ab77c9c86502cf79", null ],
+    [ "write_tracks_block", "close_8c.html#aa2451e6c0fc8d4db3bfb9874f2ca990c", null ]
+];
