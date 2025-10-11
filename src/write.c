@@ -583,6 +583,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
     switch(ctx->image_info.MetadataMediaType)
     {
         case OpticalDisc:
+        {
             TrackEntry track = {0};
 
             for(int i = 0; i < ctx->tracks_header.entries; i++)
@@ -1069,6 +1070,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
             }
 
             break;
+        }
         case BlockMedia:
             switch(ctx->image_info.MediaType)
             {
@@ -1078,6 +1080,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                 case AppleSonySS:
                 case AppleWidget:
                 case PriamDataTower:
+                {
                     uint8_t *newTag;
                     int      newTagSize = 0;
 
@@ -1085,6 +1088,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                     {
                         // Sony tag
                         case 12:
+                        {
                             const sony_tag decoded_sony_tag = bytes_to_sony_tag(data + 512);
 
                             if(ctx->image_info.MediaType == AppleProfile || ctx->image_info.MediaType == AppleFileWare)
@@ -1107,8 +1111,10 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                                 newTagSize = 12;
                             }
                             break;
-                        // Profile tag
+                        }
+                            // Profile tag
                         case 20:
+                        {
                             const profile_tag decoded_profile_tag = bytes_to_profile_tag(data + 512);
 
                             if(ctx->image_info.MediaType == AppleProfile || ctx->image_info.MediaType == AppleFileWare)
@@ -1131,8 +1137,10 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                                 newTagSize                      = 12;
                             }
                             break;
-                        // Priam tag
+                        }
+                            // Priam tag
                         case 24:
+                        {
                             const priam_tag decoded_priam_tag = bytes_to_priam_tag(data + 512);
                             if(ctx->image_info.MediaType == AppleProfile || ctx->image_info.MediaType == AppleFileWare)
                             {
@@ -1154,6 +1162,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                                 newTagSize                      = 12;
                             }
                             break;
+                        }
                         case 0:
                             newTagSize = 0;
                             break;
@@ -1186,6 +1195,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                     free(newTag);
 
                     return aaruf_write_sector(context, sector_address, negative, data, sector_status, 512);
+                }
                 default:
                     return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
             }
