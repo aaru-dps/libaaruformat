@@ -54,7 +54,7 @@ const char *media_type_to_string(MediaType type)
     switch(type)
     {
         // Generics, types 0 to 9
-        case Unknown:
+        case UnknownMedia:
             return "Unknown";
         case UnknownMO:
             return "Unknown Magneto-Optical";
@@ -886,7 +886,7 @@ const char *media_type_to_string(MediaType type)
             return "T10000D";
 
         // Travan, types 610 to 619
-        case Travan:
+        case Travan1:
             return "Travan";
         case Travan1Ex:
             return "Travan-1 Ex";

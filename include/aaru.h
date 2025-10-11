@@ -94,12 +94,12 @@
 typedef enum
 {
     // Generics, types 0 to 9
-    Unknown     = 0,  ///< Unknown disk type
-    UnknownMO   = 1,  ///< Unknown magneto-optical
-    GENERIC_HDD = 2,  ///< Generic hard disk
-    Microdrive  = 3,  ///< Microdrive type hard disk
-    Zone_HDD    = 4,  ///< Zoned hard disk
-    FlashDrive  = 5,  ///< USB flash drives
+    UnknownMedia = 0,  ///< Unknown disk type
+    UnknownMO    = 1,  ///< Unknown magneto-optical
+    GENERIC_HDD  = 2,  ///< Generic hard disk
+    Microdrive   = 3,  ///< Microdrive type hard disk
+    Zone_HDD     = 4,  ///< Zoned hard disk
+    FlashDrive   = 5,  ///< USB flash drives
     // Generics, types 0 to 9
 
     // Somewhat standard Compact Disc formats, types 10 to 39
@@ -617,7 +617,7 @@ typedef enum
     // StorageTek tapes, types 590 to 609
 
     // Travan, types 610 to 619
-    Travan    = 610,
+    Travan1   = 610,
     Travan1Ex = 611,
     Travan3   = 612,
     Travan3Ex = 613,
@@ -868,13 +868,13 @@ typedef enum
  */
 typedef struct ImageInfo  // NOLINT
 {
-    uint8_t  HasPartitions;           ///< Image contains partitions (or tracks for optical media); 0=no, non-zero=yes
-    uint8_t  HasSessions;             ///< Image contains multiple sessions (optical media); 0=single/none, non-zero=multi
-    uint64_t ImageSize;               ///< Size of the image payload in bytes (excludes headers/metadata)
-    uint64_t Sectors;                 ///< Total count of addressable logical sectors/blocks
-    uint32_t SectorSize;              ///< Size of each logical sector in bytes (512, 2048, 2352, 4096, etc.)
-    char     Version[32];             ///< Image format version string (NUL-terminated, e.g., "6.0")
-    char     Application[64];         ///< Name of application that created the image (NUL-terminated)
+    uint8_t  HasPartitions;    ///< Image contains partitions (or tracks for optical media); 0=no, non-zero=yes
+    uint8_t  HasSessions;      ///< Image contains multiple sessions (optical media); 0=single/none, non-zero=multi
+    uint64_t ImageSize;        ///< Size of the image payload in bytes (excludes headers/metadata)
+    uint64_t Sectors;          ///< Total count of addressable logical sectors/blocks
+    uint32_t SectorSize;       ///< Size of each logical sector in bytes (512, 2048, 2352, 4096, etc.)
+    char     Version[32];      ///< Image format version string (NUL-terminated, e.g., "6.0")
+    char     Application[64];  ///< Name of application that created the image (NUL-terminated)
     char     ApplicationVersion[32];  ///< Version of the creating application (NUL-terminated)
     int64_t  CreationTime;            ///< Image creation timestamp (Windows FILETIME: 100ns since 1601-01-01 UTC)
     int64_t  LastModificationTime;    ///< Last modification timestamp (Windows FILETIME format)
@@ -992,7 +992,7 @@ typedef enum
     MMC_ExtendedCSD               = 57,  ///< MMC Extended CSD (512 bytes)
     Xbox_SecuritySector           = 58,  ///< Xbox/Xbox 360 Security Sector (SS.bin)
     Floppy_LeadOut                = 59,  ///< Manufacturer / duplication cylinder (floppy special data)
-    DCB                           = 60,  ///< DVD Disc Control Blocks
+    DiscControlBlock              = 60,  ///< DVD Disc Control Blocks
     CD_FirstTrackPregap           = 61,  ///< First track pregap (index 0)
     CD_LeadOut                    = 62,  ///< Lead-out area contents
     SCSI_MODESENSE_6              = 63,  ///< Raw MODE SENSE (6) data
