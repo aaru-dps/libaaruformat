@@ -61,7 +61,7 @@ var group__MediaTags =
       [ "MMC_ExtendedCSD", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea6d0f27fc4872800de6463d373fbda75b", null ],
       [ "Xbox_SecuritySector", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea732b4820de4ba58e20953581fc1b0414", null ],
       [ "Floppy_LeadOut", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea8588ae2ee995dfda8014f67a8072c59a", null ],
-      [ "DCB", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea7ce91d5bad8ca3fa18e2296b28cd644f", null ],
+      [ "DiscControlBlock", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebeab6b5f42d594caef326abaec26178e026", null ],
       [ "CD_FirstTrackPregap", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebeaf55cf5503503f10b3e34eb16fa28d712", null ],
       [ "CD_LeadOut", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea6bc1632b0f411e02fee79e4109f76146", null ],
       [ "SCSI_MODESENSE_6", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea35dde3eb642e833bc907172c12cf72ca", null ],

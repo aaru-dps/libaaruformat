@@ -125,7 +125,7 @@ Macros</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-func-members" class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a7c7db5ce587c48e8355d67dc971d5b5e" id="r_a7c7db5ce587c48e8355d67dc971d5b5e"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="decls_8h.html#ac032d233a8ebfcd82fd49d0824eefb18">FORCE_INLINE</a> void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7c7db5ce587c48e8355d67dc971d5b5e">md5_process_block_loaded</a> (uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d, const unsigned char *ptr)</td></tr>
+<tr class="memitem:a92f9440c3e12efb10b838f29268af5da" id="r_a92f9440c3e12efb10b838f29268af5da"><td class="memItemLeft" align="right" valign="top"><a class="el" href="decls_8h.html#ac032d233a8ebfcd82fd49d0824eefb18">FORCE_INLINE</a> void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a92f9440c3e12efb10b838f29268af5da">md5_process_block_loaded</a> (uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d, const unsigned char *ptr)</td></tr>
 <tr class="memitem:aaab33b0295f6dda99a0de3cf1faf546b" id="r_aaab33b0295f6dda99a0de3cf1faf546b"><td class="memItemLeft" align="right" valign="top">static const void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aaab33b0295f6dda99a0de3cf1faf546b">body</a> (<a class="el" href="structmd5__ctx.html">md5_ctx</a> *ctx, const void *data, unsigned long size)</td></tr>
 <tr class="memitem:a1e614476485ba9f46e3ac79858210f63" id="r_a1e614476485ba9f46e3ac79858210f63"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1e614476485ba9f46e3ac79858210f63">aaruf_md5_init</a> (<a class="el" href="structmd5__ctx.html">md5_ctx</a> *ctx)</td></tr>
 <tr class="memitem:a6e19e853bea5db901de83fa2fa29055c" id="r_a6e19e853bea5db901de83fa2fa29055c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6e19e853bea5db901de83fa2fa29055c">aaruf_md5_update</a> (<a class="el" href="structmd5__ctx.html">md5_ctx</a> *ctx, const void *data, unsigned long size)</td></tr>
@@ -147,7 +147,7 @@ Functions</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="md5_8c_source.html#l00049">49</a> of file <a class="el" href="md5_8c_source.html">md5.c</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="md5_8c_source.html#l00436">aaruf_md5_update()</a>, <a class="el" href="md5_8c_source.html#l00268">body()</a>, and <a class="el" href="md5_8c_source.html#l00162">md5_process_block_loaded()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="md5_8c_source.html#l00447">aaruf_md5_update()</a>, <a class="el" href="md5_8c_source.html#l00268">body()</a>, and <a class="el" href="md5_8c_source.html#l00162">md5_process_block_loaded()</a>.</p>
 
 </div>
 </div>
@@ -364,7 +364,7 @@ Functions</h2></td></tr>
 </div><!-- fragment -->
 <p class="definition">Definition at line <a class="el" href="md5_8c_source.html#l00057">57</a> of file <a class="el" href="md5_8c_source.html">md5.c</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="md5_8c_source.html#l00436">aaruf_md5_update()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="md5_8c_source.html#l00447">aaruf_md5_update()</a>.</p>
 
 </div>
 </div>
@@ -495,9 +495,9 @@ Functions</h2></td></tr>
 <div class="line">    (dst)[2] = (<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>)((src) &gt;&gt; 16); \</div>
 <div class="line">    (dst)[3] = (<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>)((src) &gt;&gt; 24);</div>
 </div><!-- fragment -->
-<p class="definition">Definition at line <a class="el" href="md5_8c_source.html#l00469">469</a> of file <a class="el" href="md5_8c_source.html">md5.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="md5_8c_source.html#l00479">479</a> of file <a class="el" href="md5_8c_source.html">md5.c</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="md5_8c_source.html#l00475">aaruf_md5_final()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="md5_8c_source.html#l00485">aaruf_md5_final()</a>.</p>
 
 </div>
 </div>
@@ -597,7 +597,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <b>Value:</b><div class="fragment"><div class="line">    (a) += f((b), (c), (d)) + (x) + (uint32_t)(t); \</div>
-<div class="line">    (a) = <a class="code hl_define" href="#ab61aff55a4da7ead1de4cca6d2cd55a8">ROTL32</a>((a), (s)); \</div>
+<div class="line">    (a) = <a class="code hl_define" href="#ab61aff55a4da7ead1de4cca6d2cd55a8">ROTL32</a>((a), (s));                        \</div>
 <div class="line">    (a) += (b);</div>
 <div class="ttc" id="amd5_8c_html_ab61aff55a4da7ead1de4cca6d2cd55a8"><div class="ttname"><a href="#ab61aff55a4da7ead1de4cca6d2cd55a8">ROTL32</a></div><div class="ttdeci">#define ROTL32(x, s)</div><div class="ttdef"><b>Definition</b> <a href="md5_8c_source.html#l00122">md5.c:122</a></div></div>
 </div><!-- fragment -->
@@ -625,7 +625,7 @@ Functions</h2></td></tr>
 </div><!-- fragment -->
 <p class="definition">Definition at line <a class="el" href="md5_8c_source.html#l00058">58</a> of file <a class="el" href="md5_8c_source.html">md5.c</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="md5_8c_source.html#l00436">aaruf_md5_update()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="md5_8c_source.html#l00447">aaruf_md5_update()</a>.</p>
 
 </div>
 </div>
@@ -654,9 +654,9 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="md5_8c_source.html#l00508">508</a> of file <a class="el" href="md5_8c_source.html">md5.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="md5_8c_source.html#l00518">518</a> of file <a class="el" href="md5_8c_source.html">md5.c</a>.</p>
 
-<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="md5_8c_source.html#l00475">aaruf_md5_final()</a>, <a class="el" href="md5_8c_source.html#l00425">aaruf_md5_init()</a>, and <a class="el" href="md5_8c_source.html#l00436">aaruf_md5_update()</a>.</p>
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="md5_8c_source.html#l00485">aaruf_md5_final()</a>, <a class="el" href="md5_8c_source.html#l00436">aaruf_md5_init()</a>, and <a class="el" href="md5_8c_source.html#l00447">aaruf_md5_update()</a>.</p>
 
 </div>
 </div>
@@ -679,11 +679,11 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="md5_8c_source.html#l00475">475</a> of file <a class="el" href="md5_8c_source.html">md5.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="md5_8c_source.html#l00485">485</a> of file <a class="el" href="md5_8c_source.html">md5.c</a>.</p>
 
-<p class="reference">References <a class="el" href="md5_8h_source.html#l00034">md5_ctx::a</a>, <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="md5_8h_source.html#l00034">md5_ctx::b</a>, <a class="el" href="md5_8c_source.html#l00268">body()</a>, <a class="el" href="md5_8h_source.html#l00035">md5_ctx::buffer</a>, <a class="el" href="md5_8h_source.html#l00034">md5_ctx::c</a>, <a class="el" href="md5_8h_source.html#l00034">md5_ctx::d</a>, <a class="el" href="md5_8h_source.html#l00033">md5_ctx::hi</a>, <a class="el" href="md5_8h_source.html#l00033">md5_ctx::lo</a>, and <a class="el" href="md5_8c_source.html#l00469">OUT</a>.</p>
+<p class="reference">References <a class="el" href="md5_8h_source.html#l00034">md5_ctx::a</a>, <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="md5_8h_source.html#l00034">md5_ctx::b</a>, <a class="el" href="md5_8c_source.html#l00268">body()</a>, <a class="el" href="md5_8h_source.html#l00035">md5_ctx::buffer</a>, <a class="el" href="md5_8h_source.html#l00034">md5_ctx::c</a>, <a class="el" href="md5_8h_source.html#l00034">md5_ctx::d</a>, <a class="el" href="md5_8h_source.html#l00033">md5_ctx::hi</a>, <a class="el" href="md5_8h_source.html#l00033">md5_ctx::lo</a>, and <a class="el" href="md5_8c_source.html#l00479">OUT</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="md5_8c_source.html#l00508">aaruf_md5_buffer()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="md5_8c_source.html#l00518">aaruf_md5_buffer()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
 
 </div>
 </div>
@@ -702,11 +702,11 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="md5_8c_source.html#l00425">425</a> of file <a class="el" href="md5_8c_source.html">md5.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="md5_8c_source.html#l00436">436</a> of file <a class="el" href="md5_8c_source.html">md5.c</a>.</p>
 
 <p class="reference">References <a class="el" href="md5_8h_source.html#l00034">md5_ctx::a</a>, <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="md5_8h_source.html#l00034">md5_ctx::b</a>, <a class="el" href="md5_8h_source.html#l00034">md5_ctx::c</a>, <a class="el" href="md5_8h_source.html#l00034">md5_ctx::d</a>, <a class="el" href="md5_8h_source.html#l00033">md5_ctx::hi</a>, and <a class="el" href="md5_8h_source.html#l00033">md5_ctx::lo</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, and <a class="el" href="md5_8c_source.html#l00508">aaruf_md5_buffer()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, and <a class="el" href="md5_8c_source.html#l00518">aaruf_md5_buffer()</a>.</p>
 
 </div>
 </div>
@@ -734,11 +734,11 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="md5_8c_source.html#l00436">436</a> of file <a class="el" href="md5_8c_source.html">md5.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="md5_8c_source.html#l00447">447</a> of file <a class="el" href="md5_8c_source.html">md5.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="md5_8c_source.html#l00049">AARU_RESTRICT</a>, <a class="el" href="md5_8c_source.html#l00268">body()</a>, <a class="el" href="md5_8h_source.html#l00035">md5_ctx::buffer</a>, <a class="el" href="md5_8h_source.html#l00033">md5_ctx::hi</a>, <a class="el" href="md5_8c_source.html#l00057">LIKELY</a>, <a class="el" href="md5_8h_source.html#l00033">md5_ctx::lo</a>, and <a class="el" href="md5_8c_source.html#l00058">UNLIKELY</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="md5_8c_source.html#l00508">aaruf_md5_buffer()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, and <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="md5_8c_source.html#l00518">aaruf_md5_buffer()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, and <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>.</p>
 
 </div>
 </div>
@@ -778,18 +778,15 @@ Functions</h2></td></tr>
 
 <p class="reference">References <a class="el" href="md5_8h_source.html#l00034">md5_ctx::a</a>, <a class="el" href="md5_8c_source.html#l00049">AARU_RESTRICT</a>, <a class="el" href="md5_8h_source.html#l00034">md5_ctx::b</a>, <a class="el" href="md5_8h_source.html#l00034">md5_ctx::c</a>, <a class="el" href="md5_8h_source.html#l00034">md5_ctx::d</a>, <a class="el" href="md5_8c_source.html#l00105">F</a>, <a class="el" href="md5_8c_source.html#l00106">G</a>, <a class="el" href="md5_8c_source.html#l00155">GET</a>, <a class="el" href="md5_8c_source.html#l00107">H</a>, <a class="el" href="md5_8c_source.html#l00108">H2</a>, <a class="el" href="md5_8c_source.html#l00065">HOT</a>, <a class="el" href="md5_8c_source.html#l00109">I</a>, <a class="el" href="md5_8c_source.html#l00072">MD5_PREFETCH_DISTANCE_BLOCKS</a>, <a class="el" href="md5_8c_source.html#l00162">md5_process_block_loaded()</a>, <a class="el" href="md5_8c_source.html#l00084">MD5_UNROLL2_THRESHOLD</a>, <a class="el" href="md5_8c_source.html#l00081">MD5_UNROLL4_THRESHOLD</a>, <a class="el" href="md5_8c_source.html#l00078">MD5_UNROLL8_THRESHOLD</a>, <a class="el" href="md5_8c_source.html#l00152">SET</a>, and <a class="el" href="md5_8c_source.html#l00128">STEP</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="md5_8c_source.html#l00475">aaruf_md5_final()</a>, and <a class="el" href="md5_8c_source.html#l00436">aaruf_md5_update()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="md5_8c_source.html#l00485">aaruf_md5_final()</a>, and <a class="el" href="md5_8c_source.html#l00447">aaruf_md5_update()</a>.</p>
 
 </div>
 </div>
-<a id="a7c7db5ce587c48e8355d67dc971d5b5e" name="a7c7db5ce587c48e8355d67dc971d5b5e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7c7db5ce587c48e8355d67dc971d5b5e">&#9670;&#160;</a></span>md5_process_block_loaded()</h2>
+<a id="a92f9440c3e12efb10b838f29268af5da" name="a92f9440c3e12efb10b838f29268af5da"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a92f9440c3e12efb10b838f29268af5da">&#9670;&#160;</a></span>md5_process_block_loaded()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="decls_8h.html#ac032d233a8ebfcd82fd49d0824eefb18">FORCE_INLINE</a> void md5_process_block_loaded </td>
@@ -817,11 +814,6 @@ Functions</h2></td></tr>
           <td class="paramtype">const unsigned char *</td>          <td class="paramname"><span class="paramname"><em>ptr</em></span>&#160;)</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel static">static</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="md5_8c_source.html#l00162">162</a> of file <a class="el" href="md5_8c_source.html">md5.c</a>.</p>

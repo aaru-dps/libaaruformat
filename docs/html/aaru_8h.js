@@ -62,7 +62,7 @@ var aaru_8h =
       [ "MMC_ExtendedCSD", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea6d0f27fc4872800de6463d373fbda75b", null ],
       [ "Xbox_SecuritySector", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea732b4820de4ba58e20953581fc1b0414", null ],
       [ "Floppy_LeadOut", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea8588ae2ee995dfda8014f67a8072c59a", null ],
-      [ "DCB", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea7ce91d5bad8ca3fa18e2296b28cd644f", null ],
+      [ "DiscControlBlock", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebeab6b5f42d594caef326abaec26178e026", null ],
       [ "CD_FirstTrackPregap", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebeaf55cf5503503f10b3e34eb16fa28d712", null ],
       [ "CD_LeadOut", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea6bc1632b0f411e02fee79e4109f76146", null ],
       [ "SCSI_MODESENSE_6", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea35dde3eb642e833bc907172c12cf72ca", null ],
@@ -78,7 +78,7 @@ var aaru_8h =
       [ "DVD_DiscKey_Decrypted", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea109296d460fd5fc05446914dad9a0834", null ]
     ] ],
     [ "MediaType", "group__MediaTypes.html#ga1499e9f8a76cb81b43b7a4b0dbe7e44a", [
-      [ "Unknown", "group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa4e81c184ac3ad48a389cd4454c4a05bb", null ],
+      [ "UnknownMedia", "group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa44b97367fe7b98fbdd658b6147bb6de5", null ],
       [ "UnknownMO", "group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaa7fe08f73fb4c4f769e22c9fa7aac574", null ],
       [ "GENERIC_HDD", "group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aabe5fe31589b006affd9e65af071eb952", null ],
       [ "Microdrive", "group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aabbc00e6dd97647ce34dfb1df8abc90c3", null ],
@@ -456,7 +456,7 @@ var aaru_8h =
       [ "T10000B", "group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaafad79bd3e98b11dcc1e634da4ed555a", null ],
       [ "T10000C", "group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa74c9e610a5c7db0ad8d8ec74246be37f", null ],
       [ "T10000D", "group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aae4353df5a39ee6f919b4a0029f4c7957", null ],
-      [ "Travan", "group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aadc4bc3e46d2619158279110e1e4feae3", null ],
+      [ "Travan1", "group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa3572f4e68ba0f3cfb5664fa1bdf1c534", null ],
       [ "Travan1Ex", "group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa1773f94257858d5cdb89790bffda5d48", null ],
       [ "Travan3", "group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa8efb27ede835c4aa1fa7639c40f95cf2", null ],
       [ "Travan3Ex", "group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa262b14c1a54d581e2c09bf78f8a2c4aa", null ],

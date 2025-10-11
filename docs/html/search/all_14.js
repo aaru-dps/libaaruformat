@@ -40,7 +40,7 @@ var searchData=
   ['tracksblock_37',['TracksBlock',['../enums_8h.html#a54420623f26ab6bb61042b41cccf37a3ae550bdf57660fcbf3500155c29d4637e',1,'enums.h']]],
   ['tracksheader_38',['TracksHeader',['../structTracksHeader.html',1,'TracksHeader'],['../optical_8h.html#ab11869cb71789b4d8e2cde0cbe2149d5',1,'TracksHeader:&#160;optical.h']]],
   ['tracktype_39',['TrackType',['../enums_8h.html#ad80740dd555f7d3688d2c4d9f44d3b04',1,'enums.h']]],
-  ['travan_40',['Travan',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aadc4bc3e46d2619158279110e1e4feae3',1,'aaru.h']]],
+  ['travan1_40',['Travan1',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa3572f4e68ba0f3cfb5664fa1bdf1c534',1,'aaru.h']]],
   ['travan1ex_41',['Travan1Ex',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa1773f94257858d5cdb89790bffda5d48',1,'aaru.h']]],
   ['travan3_42',['Travan3',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa8efb27ede835c4aa1fa7639c40f95cf2',1,'aaru.h']]],
   ['travan3ex_43',['Travan3Ex',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa262b14c1a54d581e2c09bf78f8a2c4aa',1,'aaru.h']]],

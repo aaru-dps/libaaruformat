@@ -5,7 +5,7 @@ var searchData=
   ['udo2_5fworm_2',['UDO2_WORM',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa1db9c2ebd6274e845ca174dc8d6ea425',1,'aaru.h']]],
   ['uhd144_3',['UHD144',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa9942e74f56903efd79052f5c612a7cc2',1,'aaru.h']]],
   ['umd_4',['UMD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa649acec76a8835e5d968c8bd01e7a279',1,'aaru.h']]],
-  ['unknown_5',['Unknown',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa4e81c184ac3ad48a389cd4454c4a05bb',1,'aaru.h']]],
+  ['unknownmedia_5',['UnknownMedia',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa44b97367fe7b98fbdd658b6147bb6de5',1,'aaru.h']]],
   ['unknownmo_6',['UnknownMO',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaa7fe08f73fb4c4f769e22c9fa7aac574',1,'aaru.h']]],
   ['unlikely_7',['UNLIKELY',['../md5_8c.html#ab10d0a221f4d7a706701b806c8135fd7',1,'md5.c']]],
   ['update_5fcrc64_5ffrom_5fstream_8',['update_crc64_from_stream',['../verify_8c.html#a9af5ef946af3841757b56af39cb9e60d',1,'verify.c']]],
