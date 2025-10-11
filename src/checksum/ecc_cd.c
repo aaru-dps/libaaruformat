@@ -32,7 +32,7 @@
  *
  * @return Pointer to the initialized CdEccContext structure, or NULL on failure.
  */
-void *aaruf_ecc_cd_init()
+AARU_EXPORT void *AARU_CALL aaruf_ecc_cd_init()
 {
     TRACE("Entering aaruf_ecc_cd_init()");
     CdEccContext *context = NULL;
@@ -98,7 +98,7 @@ void *aaruf_ecc_cd_init()
  * @param sector Pointer to the sector data.
  * @return true if the suffix is correct, false otherwise.
  */
-bool aaruf_ecc_cd_is_suffix_correct(void *context, const uint8_t *sector)
+AARU_EXPORT bool AARU_CALL aaruf_ecc_cd_is_suffix_correct(void *context, const uint8_t *sector)
 {
     TRACE("Entering aaruf_ecc_cd_is_suffix_correct(%p, %p)", context, sector);
     uint32_t edc;
@@ -162,7 +162,7 @@ bool aaruf_ecc_cd_is_suffix_correct(void *context, const uint8_t *sector)
  * @param sector Pointer to the sector data.
  * @return true if the suffix is correct, false otherwise.
  */
-bool aaruf_ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector)
+AARU_EXPORT bool AARU_CALL aaruf_ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector)
 {
     TRACE("Entering aaruf_ecc_cd_is_suffix_correct_mode2(%p, %p)", context, sector);
     uint32_t edc;
@@ -224,10 +224,11 @@ bool aaruf_ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector)
  * @param ecc_offset Offset for the ECC field.
  * @return true if ECC is correct, false otherwise.
  */
-bool aaruf_ecc_cd_check(void *context, const uint8_t *address, const uint8_t *data, const uint32_t major_count,
-                        const uint32_t minor_count, const uint32_t major_mult, const uint32_t minor_inc,
-                        const uint8_t *ecc, const int32_t address_offset, const int32_t data_offset,
-                        const int32_t ecc_offset)
+AARU_EXPORT bool AARU_CALL aaruf_ecc_cd_check(void *context, const uint8_t *address, const uint8_t *data,
+                                              const uint32_t major_count, const uint32_t minor_count,
+                                              const uint32_t major_mult, const uint32_t minor_inc, const uint8_t *ecc,
+                                              const int32_t address_offset, const int32_t data_offset,
+                                              const int32_t ecc_offset)
 {
     TRACE("Entering aaruf_ecc_cd_check(%p, %p, %p, %u, %u, %u, %u, %p, %d, %d, %d)", context, address, data,
           major_count, minor_count, major_mult, minor_inc, ecc, address_offset, data_offset, ecc_offset);
@@ -289,9 +290,11 @@ bool aaruf_ecc_cd_check(void *context, const uint8_t *address, const uint8_t *da
  * @param data_offset Offset for the data field.
  * @param ecc_offset Offset for the ECC field.
  */
-void aaruf_ecc_cd_write(void *context, const uint8_t *address, const uint8_t *data, const uint32_t major_count,
-                        const uint32_t minor_count, const uint32_t major_mult, const uint32_t minor_inc, uint8_t *ecc,
-                        const int32_t address_offset, const int32_t data_offset, const int32_t ecc_offset)
+AARU_EXPORT void AARU_CALL aaruf_ecc_cd_write(void *context, const uint8_t *address, const uint8_t *data,
+                                              const uint32_t major_count, const uint32_t minor_count,
+                                              const uint32_t major_mult, const uint32_t minor_inc, uint8_t *ecc,
+                                              const int32_t address_offset, const int32_t data_offset,
+                                              const int32_t ecc_offset)
 {
     TRACE("Entering aaruf_ecc_cd_write(%p, %p, %p, %u, %u, %u, %u, %p, %d, %d, %d)", context, address, data,
           major_count, minor_count, major_mult, minor_inc, ecc, address_offset, data_offset, ecc_offset);
@@ -346,8 +349,9 @@ void aaruf_ecc_cd_write(void *context, const uint8_t *address, const uint8_t *da
  * @param data_offset Offset for the data field.
  * @param ecc_offset Offset for the ECC field.
  */
-void aaruf_ecc_cd_write_sector(void *context, const uint8_t *address, const uint8_t *data, uint8_t *ecc,
-                               const int32_t address_offset, const int32_t data_offset, const int32_t ecc_offset)
+AARU_EXPORT void AARU_CALL aaruf_ecc_cd_write_sector(void *context, const uint8_t *address, const uint8_t *data,
+                                                     uint8_t *ecc, const int32_t address_offset,
+                                                     const int32_t data_offset, const int32_t ecc_offset)
 {
     TRACE("Entering aaruf_ecc_cd_write_sector(%p, %p, %p, %p, %d, %d, %d)", context, address, data, ecc, address_offset,
           data_offset, ecc_offset);
@@ -367,7 +371,7 @@ void aaruf_ecc_cd_write_sector(void *context, const uint8_t *address, const uint
  * @param second Pointer to store the second value.
  * @param frame Pointer to store the frame value.
  */
-void aaruf_cd_lba_to_msf(const int64_t pos, uint8_t *minute, uint8_t *second, uint8_t *frame)
+AARU_LOCAL void AARU_CALL aaruf_cd_lba_to_msf(const int64_t pos, uint8_t *minute, uint8_t *second, uint8_t *frame)
 {
     TRACE("Entering aaruf_cd_lba_to_msf(%lld, %p, %p, %p)", pos, minute, second, frame);
 
@@ -385,9 +389,9 @@ void aaruf_cd_lba_to_msf(const int64_t pos, uint8_t *minute, uint8_t *second, ui
  * @param type Track type (mode).
  * @param lba Logical Block Address.
  */
-void aaruf_ecc_cd_reconstruct_prefix(uint8_t *sector, const uint8_t type, const int64_t lba)
+AARU_EXPORT void AARU_CALL aaruf_ecc_cd_reconstruct_prefix(uint8_t *sector, const uint8_t type, const int64_t lba)
 {
-    TRACE("Entering aaruf_ecc_cd_reconstruct_prefix(%p, %u, %lld)", sector, type, lba);
+    TRACE("Entering aaruf_cd_reconstruct_prefix(%p, %u, %lld)", sector, type, lba);
 
     uint8_t minute, second, frame;
 
@@ -452,7 +456,7 @@ void aaruf_ecc_cd_reconstruct_prefix(uint8_t *sector, const uint8_t type, const 
  * @param sector Pointer to the sector data (must be 2352 bytes).
  * @param type Track type (mode).
  */
-void aaruf_ecc_cd_reconstruct(void *context, uint8_t *sector, const uint8_t type)
+AARU_EXPORT void AARU_CALL aaruf_ecc_cd_reconstruct(void *context, uint8_t *sector, const uint8_t type)
 {
     TRACE("Entering aaruf_ecc_cd_reconstruct(%p, %p, %u)", context, sector, type);
 
@@ -540,7 +544,7 @@ void aaruf_ecc_cd_reconstruct(void *context, uint8_t *sector, const uint8_t type
  * @param pos Starting position in the data.
  * @return Computed EDC value.
  */
-uint32_t aaruf_edc_cd_compute(void *context, uint32_t edc, const uint8_t *src, int size, int pos)
+AARU_EXPORT uint32_t AARU_CALL aaruf_edc_cd_compute(void *context, uint32_t edc, const uint8_t *src, int size, int pos)
 {
     TRACE("Entering aaruf_edc_cd_compute(%p, %u, %p, %d, %d)", context, edc, src, size, pos);
 

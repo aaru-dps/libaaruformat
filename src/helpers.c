@@ -28,7 +28,7 @@
  * @param type Image data type identifier.
  * @return Corresponding Aaru media tag type, or -1 if not found.
  */
-int32_t aaruf_get_media_tag_type_for_datatype(const int32_t type)
+AARU_LOCAL int32_t AARU_CALL aaruf_get_media_tag_type_for_datatype(const int32_t type)
 {
     switch(type)
     {
@@ -186,7 +186,7 @@ int32_t aaruf_get_media_tag_type_for_datatype(const int32_t type)
  * @param tag_type Aaru media tag type identifier.
  * @return Corresponding image data type, or -1 if not found.
  */
-int32_t aaruf_get_datatype_for_media_tag_type(const int32_t tag_type)
+AARU_LOCAL int32_t AARU_CALL aaruf_get_datatype_for_media_tag_type(const int32_t tag_type)
 {
     switch(tag_type)
     {
@@ -336,7 +336,7 @@ int32_t aaruf_get_datatype_for_media_tag_type(const int32_t tag_type)
 }
 
 // Get the CICM XML media type from AARU media type
-int32_t aaruf_get_xml_mediatype(const int32_t type)
+AARU_LOCAL int32_t AARU_CALL aaruf_get_xml_mediatype(const int32_t type)
 {
     switch(type)
     {

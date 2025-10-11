@@ -183,7 +183,7 @@ static void free_dump_hardware_entries(DumpHardwareEntriesWithData *entries, uin
  * @see DumpExtent for the extent range structure definition.
  * @see process_dumphw_block() for the loading process during image opening.
  */
-int32_t aaruf_get_dumphw(void *context, uint8_t *buffer, size_t *length)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_dumphw(void *context, uint8_t *buffer, size_t *length)
 {
     size_t length_value = 0;
     if(length != NULL) length_value = *length;
@@ -528,7 +528,7 @@ int32_t aaruf_get_dumphw(void *context, uint8_t *buffer, size_t *length)
  * @see aaruf_get_dumphw() for retrieving dump hardware from opened images.
  * @see write_dumphw_block() for the serialization process during image closing.
  */
-int32_t aaruf_set_dumphw(void *context, uint8_t *data, size_t length)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_dumphw(void *context, uint8_t *data, size_t length)
 {
     TRACE("Entering aaruf_set_dumphw(%p, %p, %zu)", context, data, length);
 

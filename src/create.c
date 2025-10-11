@@ -276,10 +276,12 @@ static void cleanup_failed_create(aaruformat_context *ctx)
  * @see aaruf_set_tape_file() for defining tape file metadata
  * @see aaruf_set_tape_partition() for defining tape partition metadata
  */
-void *aaruf_create(const char *filepath, const uint32_t media_type, const uint32_t sector_size,
-                   const uint64_t user_sectors, const uint64_t negative_sectors, const uint64_t overflow_sectors,
-                   const char *options, const uint8_t *application_name, const uint8_t application_name_length,
-                   const uint8_t application_major_version, const uint8_t application_minor_version, const bool is_tape)
+AARU_EXPORT void AARU_CALL *aaruf_create(const char *filepath, const uint32_t media_type, const uint32_t sector_size,
+                                         const uint64_t user_sectors, const uint64_t negative_sectors,
+                                         const uint64_t overflow_sectors, const char *options,
+                                         const uint8_t *application_name, const uint8_t application_name_length,
+                                         const uint8_t application_major_version,
+                                         const uint8_t application_minor_version, const bool is_tape)
 {
     TRACE("Entering aaruf_create(%s, %u, %u, %llu, %llu, %llu, %s, %s, %u, %u, %u, %d)", filepath, media_type,
           sector_size, user_sectors, negative_sectors, overflow_sectors, options,

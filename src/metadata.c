@@ -91,7 +91,8 @@
  * @warning Geometry values may not accurately represent physical device geometry,
  *          especially for modern drives with zone-based recording or flash storage.
  */
-int32_t aaruf_get_geometry(const void *context, uint32_t *cylinders, uint32_t *heads, uint32_t *sectors_per_track)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_geometry(const void *context, uint32_t *cylinders, uint32_t *heads,
+                                                 uint32_t *sectors_per_track)
 {
     TRACE("Entering aaruf_get_geometry(%p, %p, %p, %p)", context, cylinders, heads, sectors_per_track);
 
@@ -226,8 +227,8 @@ int32_t aaruf_get_geometry(const void *context, uint32_t *cylinders, uint32_t *h
  *          - Flash-based storage typically doesn't have meaningful CHS geometry
  *          - Setting geometry for such media types is harmless but unnecessary
  */
-int32_t aaruf_set_geometry(void *context, const uint32_t cylinders, const uint32_t heads,
-                           const uint32_t sectors_per_track)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_geometry(void *context, const uint32_t cylinders, const uint32_t heads,
+                                                 const uint32_t sectors_per_track)
 {
     TRACE("Entering aaruf_set_geometry(%p, %u, %u, %u)", context, cylinders, heads, sectors_per_track);
 
@@ -360,7 +361,8 @@ int32_t aaruf_set_geometry(void *context, const uint32_t cylinders, const uint32
  *          - Archival systems may incorrectly report missing volumes
  *          - Restoration processes may fail if sequence is inconsistent
  */
-int32_t aaruf_set_media_sequence(void *context, const int32_t sequence, const int32_t last_sequence)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_media_sequence(void *context, const int32_t sequence,
+                                                       const int32_t last_sequence)
 {
     TRACE("Entering aaruf_set_media_sequence(%p, %d, %d)", context, sequence, last_sequence);
 
@@ -490,7 +492,7 @@ int32_t aaruf_set_media_sequence(void *context, const int32_t sequence, const in
  * @warning The metadata block is only written to the image file during aaruf_close().
  *          Changes made by this function are not immediately persisted.
  */
-int32_t aaruf_set_creator(void *context, const uint8_t *data, const int32_t length)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_creator(void *context, const uint8_t *data, const int32_t length)
 {
     TRACE("Entering aaruf_set_creator(%p, %p, %d)", context, data, length);
 
@@ -604,7 +606,7 @@ int32_t aaruf_set_creator(void *context, const uint8_t *data, const int32_t leng
  * @warning The metadata block is only written to the image file during aaruf_close().
  *          Changes made by this function are not immediately persisted.
  */
-int32_t aaruf_set_comments(void *context, const uint8_t *data, const int32_t length)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_comments(void *context, const uint8_t *data, const int32_t length)
 {
     TRACE("Entering aaruf_set_comments(%p, %p, %d)", context, data, length);
 
@@ -717,7 +719,7 @@ int32_t aaruf_set_comments(void *context, const uint8_t *data, const int32_t len
  * @warning The metadata block is only written to the image file during aaruf_close().
  *          Changes made by this function are not immediately persisted.
  */
-int32_t aaruf_set_media_title(void *context, const uint8_t *data, const int32_t length)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_media_title(void *context, const uint8_t *data, const int32_t length)
 {
     TRACE("Entering aaruf_set_media_title(%p, %p, %d)", context, data, length);
 
@@ -829,7 +831,7 @@ int32_t aaruf_set_media_title(void *context, const uint8_t *data, const int32_t 
  * @warning The metadata block is only written to the image file during aaruf_close().
  *          Changes made by this function are not immediately persisted.
  */
-int32_t aaruf_set_media_manufacturer(void *context, const uint8_t *data, const int32_t length)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_media_manufacturer(void *context, const uint8_t *data, const int32_t length)
 {
     TRACE("Entering aaruf_set_media_manufacturer(%p, %p, %d)", context, data, length);
 
@@ -936,7 +938,7 @@ int32_t aaruf_set_media_manufacturer(void *context, const uint8_t *data, const i
  * @warning The metadata block is only written to the image file during aaruf_close().
  *          Changes made by this function are not immediately persisted.
  */
-int32_t aaruf_set_media_model(void *context, const uint8_t *data, const int32_t length)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_media_model(void *context, const uint8_t *data, const int32_t length)
 {
     TRACE("Entering aaruf_set_media_model(%p, %p, %d)", context, data, length);
 
@@ -1051,7 +1053,7 @@ int32_t aaruf_set_media_model(void *context, const uint8_t *data, const int32_t 
  * @warning The metadata block is only written to the image file during aaruf_close().
  *          Changes made by this function are not immediately persisted.
  */
-int32_t aaruf_set_media_serial_number(void *context, const uint8_t *data, const int32_t length)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_media_serial_number(void *context, const uint8_t *data, const int32_t length)
 {
     TRACE("Entering aaruf_set_media_serial_number(%p, %p, %d)", context, data, length);
 
@@ -1173,7 +1175,7 @@ int32_t aaruf_set_media_serial_number(void *context, const uint8_t *data, const 
  * @warning The metadata block is only written to the image file during aaruf_close().
  *          Changes made by this function are not immediately persisted.
  */
-int32_t aaruf_set_media_barcode(void *context, const uint8_t *data, const int32_t length)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_media_barcode(void *context, const uint8_t *data, const int32_t length)
 {
     TRACE("Entering aaruf_set_media_barcode(%p, %p, %d)", context, data, length);
 
@@ -1294,7 +1296,7 @@ int32_t aaruf_set_media_barcode(void *context, const uint8_t *data, const int32_
  * @warning The metadata block is only written to the image file during aaruf_close().
  *          Changes made by this function are not immediately persisted.
  */
-int32_t aaruf_set_media_part_number(void *context, const uint8_t *data, const int32_t length)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_media_part_number(void *context, const uint8_t *data, const int32_t length)
 {
     TRACE("Entering aaruf_set_media_part_number(%p, %p, %d)", context, data, length);
 
@@ -1409,7 +1411,7 @@ int32_t aaruf_set_media_part_number(void *context, const uint8_t *data, const in
  * @warning The metadata block is only written to the image file during aaruf_close().
  *          Changes made by this function are not immediately persisted.
  */
-int32_t aaruf_set_drive_manufacturer(void *context, const uint8_t *data, const int32_t length)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_drive_manufacturer(void *context, const uint8_t *data, const int32_t length)
 {
     TRACE("Entering aaruf_set_drive_manufacturer(%p, %p, %d)", context, data, length);
 
@@ -1531,7 +1533,7 @@ int32_t aaruf_set_drive_manufacturer(void *context, const uint8_t *data, const i
  * @warning The metadata block is only written to the image file during aaruf_close().
  *          Changes made by this function are not immediately persisted.
  */
-int32_t aaruf_set_drive_model(void *context, const uint8_t *data, const int32_t length)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_drive_model(void *context, const uint8_t *data, const int32_t length)
 {
     TRACE("Entering aaruf_set_drive_model(%p, %p, %d)", context, data, length);
 
@@ -1655,7 +1657,7 @@ int32_t aaruf_set_drive_model(void *context, const uint8_t *data, const int32_t 
  * @warning The metadata block is only written to the image file during aaruf_close().
  *          Changes made by this function are not immediately persisted.
  */
-int32_t aaruf_set_drive_serial_number(void *context, const uint8_t *data, const int32_t length)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_drive_serial_number(void *context, const uint8_t *data, const int32_t length)
 {
     TRACE("Entering aaruf_set_drive_serial_number(%p, %p, %d)", context, data, length);
 
@@ -1790,7 +1792,8 @@ int32_t aaruf_set_drive_serial_number(void *context, const uint8_t *data, const 
  *          - May include letters, numbers, dots, or other characters
  *          - Should be recorded exactly as reported by the device
  */
-int32_t aaruf_set_drive_firmware_revision(void *context, const uint8_t *data, const int32_t length)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_drive_firmware_revision(void *context, const uint8_t *data,
+                                                                const int32_t length)
 {
     TRACE("Entering aaruf_set_drive_firmware_revision(%p, %p, %d)", context, data, length);
 
@@ -1941,7 +1944,7 @@ int32_t aaruf_set_drive_firmware_revision(void *context, const uint8_t *data, co
  * @see CicmMetadataBlock for the on-disk structure definition.
  * @see aaruf_set_cicm_metadata() for embedding CICM XML during image creation.
  */
-int32_t aaruf_get_cicm_metadata(const void *context, uint8_t *buffer, size_t *length)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_cicm_metadata(const void *context, uint8_t *buffer, size_t *length)
 {
     TRACE("Entering aaruf_get_cicm_metadata(%p, %p, %p)", context, buffer, length);
 
@@ -2096,7 +2099,7 @@ int32_t aaruf_get_cicm_metadata(const void *context, uint8_t *buffer, size_t *le
  * @see aaruf_get_cicm_metadata() for retrieving CICM XML metadata.
  * @see process_aaru_metadata_json_block() for the loading process during image opening.
  */
-int32_t aaruf_get_aaru_json_metadata(const void *context, uint8_t *buffer, size_t *length)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_aaru_json_metadata(const void *context, uint8_t *buffer, size_t *length)
 {
     TRACE("Entering aaruf_get_aaru_json_metadata(%p, %p, %p)", context, buffer, length);
 
@@ -2255,7 +2258,7 @@ int32_t aaruf_get_aaru_json_metadata(const void *context, uint8_t *buffer, size_
  * @see aaruf_get_aaru_json_metadata() for retrieving Aaru JSON from opened images.
  * @see write_aaru_json_block() for the serialization process during image closing.
  */
-int32_t aaruf_set_aaru_json_metadata(void *context, uint8_t *data, size_t length)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_aaru_json_metadata(void *context, uint8_t *data, size_t length)
 {
     TRACE("Entering aaruf_set_aaru_json_metadata(%p, %p, %d)", context, data, length);
 
@@ -2334,7 +2337,7 @@ int32_t aaruf_set_aaru_json_metadata(void *context, uint8_t *data, size_t length
  * @note The function does not validate logical consistency (e.g., whether sequence <= last_sequence);
  *       it simply returns the values stored in the image header.
  */
-int32_t aaruf_get_media_sequence(const void *context, int32_t *sequence, int32_t *last_sequence)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_media_sequence(const void *context, int32_t *sequence, int32_t *last_sequence)
 {
     TRACE("Entering aaruf_get_media_sequence(%p, %p, %p)", context, sequence, last_sequence);
 
@@ -2401,7 +2404,7 @@ int32_t aaruf_get_media_sequence(const void *context, int32_t *sequence, int32_t
  * @note The function does not allocate memory. Callers are responsible for ensuring @p buffer is
  *       large enough before requesting the data.
  */
-int32_t aaruf_get_creator(const void *context, uint8_t *buffer, int32_t *length)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_creator(const void *context, uint8_t *buffer, int32_t *length)
 {
     TRACE("Entering aaruf_get_creator(%p, %p, %p)", context, buffer, length);
 
@@ -2473,7 +2476,7 @@ int32_t aaruf_get_creator(const void *context, uint8_t *buffer, int32_t *length)
  * @note Comments are stored exactly as provided during image creation and may include multi-line text
  *       or other control characters. No validation or normalization is applied by the library.
  */
-int32_t aaruf_get_comments(const void *context, uint8_t *buffer, int32_t *length)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_comments(const void *context, uint8_t *buffer, int32_t *length)
 {
     TRACE("Entering aaruf_get_comments(%p, %p, %p)", context, buffer, length);
 
@@ -2543,7 +2546,7 @@ int32_t aaruf_get_comments(const void *context, uint8_t *buffer, int32_t *length
  * @note Titles may contain international characters, control codes, or mixed casing. The library does
  *       not attempt to sanitize or interpret the string.
  */
-int32_t aaruf_get_media_title(const void *context, uint8_t *buffer, int32_t *length)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_media_title(const void *context, uint8_t *buffer, int32_t *length)
 {
     TRACE("Entering aaruf_get_media_title(%p, %p, %p)", context, buffer, length);
 
@@ -2613,7 +2616,7 @@ int32_t aaruf_get_media_title(const void *context, uint8_t *buffer, int32_t *len
  * @note Values may include trailing spaces or vendor-specific capitalization. Treat the returned data
  *       as authoritative and avoid trimming unless required by the consuming application.
  */
-int32_t aaruf_get_media_manufacturer(const void *context, uint8_t *buffer, int32_t *length)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_media_manufacturer(const void *context, uint8_t *buffer, int32_t *length)
 {
     TRACE("Entering aaruf_get_media_manufacturer(%p, %p, %p)", context, buffer, length);
 
@@ -2683,7 +2686,7 @@ int32_t aaruf_get_media_manufacturer(const void *context, uint8_t *buffer, int32
  * @note Model strings often contain performance ratings (e.g., "16x", "LTO-7"). The data is opaque and
  *       should be handled without modification unless necessary.
  */
-int32_t aaruf_get_media_model(const void *context, uint8_t *buffer, int32_t *length)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_media_model(const void *context, uint8_t *buffer, int32_t *length)
 {
     TRACE("Entering aaruf_get_media_model(%p, %p, %p)", context, buffer, length);
 
@@ -2753,7 +2756,7 @@ int32_t aaruf_get_media_model(const void *context, uint8_t *buffer, int32_t *len
  * @note Serial numbers may contain spaces, hyphens, or alphanumeric characters. The library does not
  *       normalize or validate these strings.
  */
-int32_t aaruf_get_media_serial_number(const void *context, uint8_t *buffer, int32_t *length)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_media_serial_number(const void *context, uint8_t *buffer, int32_t *length)
 {
     TRACE("Entering aaruf_get_media_serial_number(%p, %p, %p)", context, buffer, length);
 
@@ -2822,7 +2825,7 @@ int32_t aaruf_get_media_serial_number(const void *context, uint8_t *buffer, int3
  * @note Barcode values can be strict alphanumeric codes (e.g., LTO cartridge IDs) or full strings from
  *       custom labeling systems. Preserve the returned string exactly for catalog interoperability.
  */
-int32_t aaruf_get_media_barcode(const void *context, uint8_t *buffer, int32_t *length)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_media_barcode(const void *context, uint8_t *buffer, int32_t *length)
 {
     TRACE("Entering aaruf_get_media_barcode(%p, %p, %p)", context, buffer, length);
 
@@ -2893,7 +2896,7 @@ int32_t aaruf_get_media_barcode(const void *context, uint8_t *buffer, int32_t *l
  * @note Part numbers may include manufacturer-specific formatting such as hyphens or suffix letters.
  *       The library stores and returns the data verbatim.
  */
-int32_t aaruf_get_media_part_number(const void *context, uint8_t *buffer, int32_t *length)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_media_part_number(const void *context, uint8_t *buffer, int32_t *length)
 {
     TRACE("Entering aaruf_get_media_part_number(%p, %p, %p)", context, buffer, length);
 
@@ -2965,7 +2968,7 @@ int32_t aaruf_get_media_part_number(const void *context, uint8_t *buffer, int32_
  * @note The returned manufacturer string corresponds to the value recorded by aaruf_set_drive_manufacturer()
  *       and may include branding or OEM designations.
  */
-int32_t aaruf_get_drive_manufacturer(const void *context, uint8_t *buffer, int32_t *length)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_drive_manufacturer(const void *context, uint8_t *buffer, int32_t *length)
 {
     TRACE("Entering aaruf_get_drive_manufacturer(%p, %p, %p)", context, buffer, length);
 
@@ -3035,7 +3038,7 @@ int32_t aaruf_get_drive_manufacturer(const void *context, uint8_t *buffer, int32
  * @note Model strings can include firmware suffixes, interface hints, or OEM variations. Consume the
  *       data verbatim to maintain accurate provenance records.
  */
-int32_t aaruf_get_drive_model(const void *context, uint8_t *buffer, int32_t *length)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_drive_model(const void *context, uint8_t *buffer, int32_t *length)
 {
     TRACE("Entering aaruf_get_drive_model(%p, %p, %p)", context, buffer, length);
 
@@ -3105,7 +3108,7 @@ int32_t aaruf_get_drive_model(const void *context, uint8_t *buffer, int32_t *len
  * @note Serial numbers are stored exactly as returned by the imaging hardware and may include leading
  *       zeros or spacing that should be preserved.
  */
-int32_t aaruf_get_drive_serial_number(const void *context, uint8_t *buffer, int32_t *length)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_drive_serial_number(const void *context, uint8_t *buffer, int32_t *length)
 {
     TRACE("Entering aaruf_get_drive_serial_number(%p, %p, %p)", context, buffer, length);
 
@@ -3175,7 +3178,7 @@ int32_t aaruf_get_drive_serial_number(const void *context, uint8_t *buffer, int3
  * @note Firmware revision formats vary between manufacturers (e.g., numeric, alphanumeric, dot-separated).
  *       The library stores the data verbatim without attempting normalization.
  */
-int32_t aaruf_get_drive_firmware_revision(const void *context, uint8_t *buffer, int32_t *length)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_drive_firmware_revision(const void *context, uint8_t *buffer, int32_t *length)
 {
     TRACE("Entering aaruf_get_drive_firmware_revision(%p, %p, %p)", context, buffer, length);
 
@@ -3289,7 +3292,7 @@ int32_t aaruf_get_drive_firmware_revision(const void *context, uint8_t *buffer, 
  *       - For forensic images, ensure it matches the source medium exactly
  *       - For virtual disks, set it to the desired capacity
  */
-int32_t aaruf_get_user_sectors(const void *context, uint64_t *sectors)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_user_sectors(const void *context, uint64_t *sectors)
 {
     TRACE("Entering aaruf_get_user_sectors(%p, %p)", context, sectors);
 
@@ -3414,7 +3417,7 @@ int32_t aaruf_get_user_sectors(const void *context, uint64_t *sectors)
  *          (e.g., CSS on DVDs, AACS on Blu-rays). Handle this data according to
  *          applicable laws and licensing agreements.
  */
-int32_t aaruf_get_negative_sectors(const void *context, uint16_t *sectors)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_negative_sectors(const void *context, uint16_t *sectors)
 {
     TRACE("Entering aaruf_get_negative_sectors(%p, %p)", context, sectors);
 
@@ -3549,7 +3552,7 @@ int32_t aaruf_get_negative_sectors(const void *context, uint16_t *sectors)
  *          of overflow sectors in an image indicates the imaging drive was capable of
  *          reading these extended areas, but other drives may not be able to access them.
  */
-int32_t aaruf_get_overflow_sectors(const void *context, uint16_t *sectors)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_overflow_sectors(const void *context, uint16_t *sectors)
 {
     TRACE("Entering aaruf_get_overflow_sectors(%p, %p)", context, sectors);
 
@@ -3631,7 +3634,7 @@ int32_t aaruf_get_overflow_sectors(const void *context, uint16_t *sectors)
  *          aaruf_open() or populated during aaruf_create(). It does not perform
  *          file I/O operations.
  */
-int32_t aaruf_get_image_info(const void *context, ImageInfo *image_info)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_image_info(const void *context, ImageInfo *image_info)
 {
     TRACE("Entering aaruf_get_image_info(%p, %p)", context, image_info);
 

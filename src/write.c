@@ -95,8 +95,8 @@
  * @warning The function may trigger automatic block closure, which can result in disk I/O
  *          operations and potential write errors even for seemingly simple sector writes.
  */
-int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative, const uint8_t *data,
-                           uint8_t sector_status, uint32_t length)
+AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_address, bool negative,
+                                                 const uint8_t *data, uint8_t sector_status, uint32_t length)
 {
     TRACE("Entering aaruf_write_sector(%p, %" PRIu64 ", %d, %p, %u, %u)", context, sector_address, negative, data,
           sector_status, length);
@@ -529,8 +529,8 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
  * @see aaruf_read_sector_long() for corresponding long sector reading functionality
  * @see aaruf_close() for metadata serialization and cleanup
  */
-int32_t aaruf_write_sector_long(void *context, uint64_t sector_address, bool negative, const uint8_t *data,
-                                uint8_t sector_status, uint32_t length)
+AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t sector_address, bool negative,
+                                                      const uint8_t *data, uint8_t sector_status, uint32_t length)
 {
     TRACE("Entering aaruf_write_sector_long(%p, %" PRIu64 ", %d, %p, %u, %u)", context, sector_address, negative, data,
           sector_status, length);
@@ -1777,7 +1777,8 @@ int32_t aaruf_close_current_block(aaruformat_context *ctx)
  * @see aaruf_close() for media tag serialization and memory cleanup
  * @see MediaTagType enumeration for valid type identifier values and meanings
  */
-int32_t aaruf_write_media_tag(void *context, const uint8_t *data, const int32_t type, const uint32_t length)
+AARU_EXPORT int32_t AARU_CALL aaruf_write_media_tag(void *context, const uint8_t *data, const int32_t type,
+                                                    const uint32_t length)
 {
     TRACE("Entering aaruf_write_media_tag(%p, %p, %d, %d)", context, data, type, length);
 
@@ -2045,8 +2046,8 @@ int32_t aaruf_write_media_tag(void *context, const uint8_t *data, const int32_t 
  * @see write_sector_subchannel() for the serialization of CD subchannel data.
  * @see write_dvd_long_sector_blocks() for the serialization of DVD auxiliary data.
  */
-int32_t aaruf_write_sector_tag(void *context, const uint64_t sector_address, const bool negative, const uint8_t *data,
-                               const size_t length, const int32_t tag)
+AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64_t sector_address, const bool negative,
+                                                     const uint8_t *data, const size_t length, const int32_t tag)
 {
     TRACE("Entering aaruf_write_sector_tag(%p, %" PRIu64 ", %d, %p, %zu, %d)", context, sector_address, negative, data,
           length, tag);

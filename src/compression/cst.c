@@ -32,7 +32,7 @@
  * @param length Length of the data buffer.
  * @return AARUF_STATUS_OK on success, or an error code on failure.
  */
-int32_t aaruf_cst_transform(const uint8_t *interleaved, uint8_t *sequential, const size_t length)
+AARU_EXPORT int32_t AARU_CALL aaruf_cst_transform(const uint8_t *interleaved, uint8_t *sequential, const size_t length)
 {
     uint8_t *p       = NULL;
     uint8_t *q       = NULL;
@@ -190,7 +190,8 @@ int32_t aaruf_cst_transform(const uint8_t *interleaved, uint8_t *sequential, con
  * @param length Length of the data in bytes.
  * @return AARUF_STATUS_OK on success, or an error code on failure.
  */
-int32_t aaruf_cst_untransform(const uint8_t *sequential, uint8_t *interleaved, const size_t length)
+AARU_EXPORT int32_t AARU_CALL aaruf_cst_untransform(const uint8_t *sequential, uint8_t *interleaved,
+                                                    const size_t length)
 {
     size_t i;
 

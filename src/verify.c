@@ -127,7 +127,7 @@ static int32_t update_crc64_from_stream(FILE *stream, const uint64_t total_lengt
  * @warning The function allocates a 1MB buffer for verification. Ensure sufficient
  *          memory is available before calling this function on resource-constrained systems.
  */
-int32_t aaruf_verify_image(void *context)
+AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context)
 {
     TRACE("Entering aaruf_verify_image(%p)", context);
 

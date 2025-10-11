@@ -125,9 +125,9 @@
 /*
  * The MD5 transformation for all four rounds.
  */
-#define STEP(f, a, b, c, d, x, t, s) \
+#define STEP(f, a, b, c, d, x, t, s)               \
     (a) += f((b), (c), (d)) + (x) + (uint32_t)(t); \
-    (a) = ROTL32((a), (s)); \
+    (a) = ROTL32((a), (s));                        \
     (a) += (b);
 
 /*
@@ -159,27 +159,27 @@
  * This processes one or more 64-byte data blocks, but does NOT update the bit
  * counters.  There are no alignment requirements.
  */
-static FORCE_INLINE HOT void md5_process_block_loaded(uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d,
-                                                  const unsigned char * AARU_RESTRICT ptr)
+FORCE_INLINE HOT void md5_process_block_loaded(uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d,
+                                               const unsigned char *AARU_RESTRICT ptr)
 {
-    const uint32_t *wp = (const uint32_t *)ptr; // unaligned ok on supported arch (we gate optimized path)
-    uint32_t A = *a, B = *b, C = *c, D = *d;
-    uint32_t w0  = wp[0];
-    uint32_t w1  = wp[1];
-    uint32_t w2  = wp[2];
-    uint32_t w3  = wp[3];
-    uint32_t w4  = wp[4];
-    uint32_t w5  = wp[5];
-    uint32_t w6  = wp[6];
-    uint32_t w7  = wp[7];
-    uint32_t w8  = wp[8];
-    uint32_t w9  = wp[9];
-    uint32_t w10 = wp[10];
-    uint32_t w11 = wp[11];
-    uint32_t w12 = wp[12];
-    uint32_t w13 = wp[13];
-    uint32_t w14 = wp[14];
-    uint32_t w15 = wp[15];
+    const uint32_t *wp = (const uint32_t *)ptr;  // unaligned ok on supported arch (we gate optimized path)
+    uint32_t        A = *a, B = *b, C = *c, D = *d;
+    uint32_t        w0  = wp[0];
+    uint32_t        w1  = wp[1];
+    uint32_t        w2  = wp[2];
+    uint32_t        w3  = wp[3];
+    uint32_t        w4  = wp[4];
+    uint32_t        w5  = wp[5];
+    uint32_t        w6  = wp[6];
+    uint32_t        w7  = wp[7];
+    uint32_t        w8  = wp[8];
+    uint32_t        w9  = wp[9];
+    uint32_t        w10 = wp[10];
+    uint32_t        w11 = wp[11];
+    uint32_t        w12 = wp[12];
+    uint32_t        w13 = wp[13];
+    uint32_t        w14 = wp[14];
+    uint32_t        w15 = wp[15];
 
     uint32_t sA = A, sB = B, sC = C, sD = D;
 
@@ -267,8 +267,8 @@ static FORCE_INLINE HOT void md5_process_block_loaded(uint32_t *a, uint32_t *b, 
  */
 static HOT const void *body(md5_ctx *ctx, const void *data, unsigned long size)
 {
-    const unsigned char * AARU_RESTRICT ptr = (const unsigned char *)data;
-    uint32_t a = ctx->a, b = ctx->b, c = ctx->c, d = ctx->d;
+    const unsigned char *AARU_RESTRICT ptr = (const unsigned char *)data;
+    uint32_t                           a = ctx->a, b = ctx->b, c = ctx->c, d = ctx->d;
 
 #if (defined(__x86_64__) || defined(__i386__) || defined(__aarch64__)) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
 #if MD5_MAX_UNROLL >= 8
@@ -287,7 +287,7 @@ static HOT const void *body(md5_ctx *ctx, const void *data, unsigned long size)
         md5_process_block_loaded(&a, &b, &c, &d, ptr + 64 * 5);
         md5_process_block_loaded(&a, &b, &c, &d, ptr + 64 * 6);
         md5_process_block_loaded(&a, &b, &c, &d, ptr + 64 * 7);
-        ptr  += 512;
+        ptr += 512;
         size -= 512;
     }
 #endif
@@ -322,8 +322,8 @@ static HOT const void *body(md5_ctx *ctx, const void *data, unsigned long size)
 #if MD5_ENABLE_PREFETCH
         if(size >= 64 * (MD5_PREFETCH_DISTANCE_BLOCKS))
         {
-            __builtin_prefetch(ptr + 64 * (MD5_PREFETCH_DISTANCE_BLOCKS/2), 0, 3);
-            __builtin_prefetch(ptr + 64 * (MD5_PREFETCH_DISTANCE_BLOCKS/2 + 2), 0, 3);
+            __builtin_prefetch(ptr + 64 * (MD5_PREFETCH_DISTANCE_BLOCKS / 2), 0, 3);
+            __builtin_prefetch(ptr + 64 * (MD5_PREFETCH_DISTANCE_BLOCKS / 2 + 2), 0, 3);
         }
 #endif
         md5_process_block_loaded(&a, &b, &c, &d, ptr);
@@ -332,9 +332,9 @@ static HOT const void *body(md5_ctx *ctx, const void *data, unsigned long size)
     }
 #else
     // Fallback original loop
-    uint32_t saved_a, saved_b, saved_c, saved_d;
+    uint32_t             saved_a, saved_b, saved_c, saved_d;
     const unsigned char *p2 = ptr;
-    unsigned long sz = size;
+    unsigned long        sz = size;
     while(sz >= 64)
     {
         if(sz >= 64 * 8)
@@ -347,7 +347,10 @@ static HOT const void *body(md5_ctx *ctx, const void *data, unsigned long size)
             __builtin_prefetch((const void *)(p2 + 64 * 6));
 #endif
         }
-        saved_a = a; saved_b = b; saved_c = c; saved_d = d;
+        saved_a = a;
+        saved_b = b;
+        saved_c = c;
+        saved_d = d;
         STEP(F, a, b, c, d, SET(0), 0xd76aa478, 7)
         STEP(F, d, a, b, c, SET(1), 0xe8c7b756, 12)
         STEP(F, c, d, a, b, SET(2), 0x242070db, 17)
@@ -412,13 +415,21 @@ static HOT const void *body(md5_ctx *ctx, const void *data, unsigned long size)
         STEP(I, d, a, b, c, GET(11), 0xbd3af235, 10)
         STEP(I, c, d, a, b, GET(2), 0x2ad7d2bb, 15)
         STEP(I, b, c, d, a, GET(9), 0xeb86d391, 21)
-        a += saved_a; b += saved_b; c += saved_c; d += saved_d;
-        p2 += 64; sz -= 64;
+        a += saved_a;
+        b += saved_b;
+        c += saved_c;
+        d += saved_d;
+        p2 += 64;
+        sz -= 64;
     }
-    ptr = p2; size = sz;
+    ptr  = p2;
+    size = sz;
 #endif
 
-    ctx->a = a; ctx->b = b; ctx->c = c; ctx->d = d;
+    ctx->a = a;
+    ctx->b = b;
+    ctx->c = c;
+    ctx->d = d;
     return ptr;
 }
 
@@ -433,7 +444,7 @@ AARU_EXPORT void AARU_CALL aaruf_md5_init(md5_ctx *ctx)
     ctx->hi = 0;
 }
 
-AARU_EXPORT void AARU_CALL aaruf_md5_update(md5_ctx *ctx, const void * AARU_RESTRICT data, unsigned long size)
+AARU_EXPORT void AARU_CALL aaruf_md5_update(md5_ctx *ctx, const void *AARU_RESTRICT data, unsigned long size)
 {
 
     const uint32_t saved_lo = ctx->lo;
@@ -462,8 +473,7 @@ AARU_EXPORT void AARU_CALL aaruf_md5_update(md5_ctx *ctx, const void * AARU_REST
         size &= 0x3f;
     }
 
-    if(size)
-        memcpy(ctx->buffer, data, size);
+    if(size) memcpy(ctx->buffer, data, size);
 }
 
 #define OUT(dst, src)                        \

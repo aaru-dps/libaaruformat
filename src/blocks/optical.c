@@ -278,7 +278,7 @@ void process_tracks_block(aaruformat_context *ctx, const IndexEntry *entry)
  *    (size / sizeof(TrackEntry)) entries.
  * 5. Free the buffer and close the image when done.
  */
-int32_t aaruf_get_tracks(const void *context, uint8_t *buffer, size_t *length)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_tracks(const void *context, uint8_t *buffer, size_t *length)
 {
     TRACE("Entering aaruf_get_tracks(%p, %p, %zu)", context, buffer, (length ? *length : 0));
 
@@ -389,7 +389,7 @@ int32_t aaruf_get_tracks(const void *context, uint8_t *buffer, size_t *length)
  * 3. To clear all tracks later call aaruf_set_tracks(ctx, NULL, 0).
  * 4. Use aaruf_get_tracks() afterwards to retrieve them if needed.
  */
-int32_t aaruf_set_tracks(void *context, TrackEntry *tracks, const int count)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_tracks(void *context, TrackEntry *tracks, const int count)
 {
     TRACE("Entering aaruf_set_tracks(%p, %p, %d)", context, tracks, count);
 

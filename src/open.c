@@ -122,7 +122,7 @@ static void cleanup_open_failure(aaruformat_context *ctx)
  * @warning Some memory allocations (version strings) are optional and failure doesn't
  *          prevent opening, but may affect functionality that depends on version information.
  */
-void *aaruf_open(const char *filepath)  // NOLINT(readability-function-size)
+AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath)  // NOLINT(readability-function-size)
 {
     aaruformat_context *ctx           = NULL;
     int                 error_no      = 0;

@@ -3992,7 +3992,7 @@ static int32_t write_index_block(aaruformat_context *ctx)
  * @retval <other negative libaaruformat code> Propagated from a write helper if future helpers add more error codes.
  * @note On success the context memory itself is freed; the caller must not reuse the pointer.
  */
-int aaruf_close(void *context)
+AARU_EXPORT int AARU_CALL aaruf_close(void *context)
 {
     TRACE("Entering aaruf_close(%p)", context);
 

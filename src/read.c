@@ -82,7 +82,7 @@
  * @warning Media tag data is stored as-is from the original medium. No format
  *          conversion or validation is performed on the tag content.
  */
-int32_t aaruf_read_media_tag(void *context, uint8_t *data, const int32_t tag, uint32_t *length)
+AARU_EXPORT int32_t AARU_CALL aaruf_read_media_tag(void *context, uint8_t *data, const int32_t tag, uint32_t *length)
 {
     const uint32_t initial_length = length == NULL ? 0U : *length;
 
@@ -247,7 +247,8 @@ int32_t aaruf_read_media_tag(void *context, uint8_t *data, const int32_t tag, ui
  * @warning Sector addresses are zero-based. The maximum valid address is
  *          ctx->imageInfo.Sectors - 1.
  */
-int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool negative, uint8_t *data, uint32_t *length)
+AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t sector_address, bool negative,
+                                                uint8_t *data, uint32_t *length)
 {
     const uint32_t initial_length = length == NULL ? 0U : *length;
 
@@ -660,8 +661,8 @@ int32_t aaruf_read_sector(void *context, const uint64_t sector_address, bool neg
  * @warning Track sequence numbers may not be contiguous. Always verify track
  *          existence before assuming a track number is valid.
  */
-int32_t aaruf_read_track_sector(void *context, uint8_t *data, const uint64_t sector_address, uint32_t *length,
-                                const uint8_t track)
+AARU_EXPORT int32_t AARU_CALL aaruf_read_track_sector(void *context, uint8_t *data, const uint64_t sector_address,
+                                                      uint32_t *length, const uint8_t track)
 {
     const uint32_t initial_length = length == NULL ? 0U : *length;
 
@@ -812,8 +813,8 @@ int32_t aaruf_read_track_sector(void *context, uint8_t *data, const uint64_t sec
  * @warning Not all AaruFormat images contain the metadata necessary for long sector
  *          reading. Some images may only support basic sector reading via aaruf_read_sector().
  */
-int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, bool negative, uint8_t *data,
-                               uint32_t *length)
+AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64_t sector_address, bool negative,
+                                                     uint8_t *data, uint32_t *length)
 {
     const uint32_t initial_length = length == NULL ? 0U : *length;
 
@@ -1460,8 +1461,9 @@ int32_t aaruf_read_sector_long(void *context, const uint64_t sector_address, boo
  * @warning Some tags contain binary data without string termination (e.g., ISRC).
  *          Do not treat tag buffers as null-terminated strings without validation.
  */
-int32_t aaruf_read_sector_tag(const void *context, const uint64_t sector_address, const bool negative, uint8_t *buffer,
-                              uint32_t *length, const int32_t tag)
+AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const uint64_t sector_address,
+                                                    const bool negative, uint8_t *buffer, uint32_t *length,
+                                                    const int32_t tag)
 {
     const uint32_t initial_length = length == NULL ? 0U : *length;
 

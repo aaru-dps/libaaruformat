@@ -81,7 +81,7 @@
  *          indicates the file appears to be AaruFormat but doesn't guarantee the
  *          entire file is valid or uncorrupted.
  */
-int aaruf_identify(const char *filename)
+AARU_EXPORT int AARU_CALL aaruf_identify(const char *filename)
 {
     if(filename == NULL) return EINVAL;
 
@@ -160,7 +160,7 @@ int aaruf_identify(const char *filename)
  * @warning No error codes are returned for I/O failures during header reading.
  *          Such failures result in a return value of 0 (not recognized).
  */
-int aaruf_identify_stream(FILE *image_stream)
+AARU_EXPORT int AARU_CALL aaruf_identify_stream(FILE *image_stream)
 {
     if(image_stream == NULL) return 0;
 

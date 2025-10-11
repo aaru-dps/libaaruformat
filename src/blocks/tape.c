@@ -566,8 +566,8 @@ void process_tape_partitions_block(aaruformat_context *ctx, const IndexEntry *en
  * @see tapeFileHashEntry for the hash table entry structure
  * @see aaruf_get_tape_partition() for partition-level queries (if available)
  */
-int32_t aaruf_get_tape_file(const void *context, const uint8_t partition, const uint32_t file, uint64_t *starting_block,
-                            uint64_t *ending_block)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_tape_file(const void *context, const uint8_t partition, const uint32_t file,
+                                                  uint64_t *starting_block, uint64_t *ending_block)
 {
     TRACE("Entering aaruf_get_tape_file(%p, %d, %d, %llu, %llu)", context, partition, file, *starting_block,
           *ending_block);
@@ -767,8 +767,8 @@ int32_t aaruf_get_tape_file(const void *context, const uint8_t partition, const 
  * @see TapeFileEntry for the structure defining file block ranges
  * @see tapeFileHashEntry for the hash table entry structure
  */
-int32_t aaruf_set_tape_file(void *context, const uint8_t partition, const uint32_t file, const uint64_t starting_block,
-                            const uint64_t ending_block)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_tape_file(void *context, const uint8_t partition, const uint32_t file,
+                                                  const uint64_t starting_block, const uint64_t ending_block)
 {
     TRACE("Entering aaruf_set_tape_file(%p, %d, %d, %llu, %llu)", context, partition, file, starting_block,
           ending_block);
@@ -979,8 +979,8 @@ int32_t aaruf_set_tape_file(void *context, const uint8_t partition, const uint32
  * @see aaruf_get_tape_file() for file-level queries within partitions
  * @see aaruf_set_tape_partition() for setting partition information during write
  */
-int32_t aaruf_get_tape_partition(const void *context, const uint8_t partition, uint64_t *starting_block,
-                                 uint64_t *ending_block)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_tape_partition(const void *context, const uint8_t partition,
+                                                       uint64_t *starting_block, uint64_t *ending_block)
 {
     TRACE("Entering aaruf_get_tape_partition(%p, %d, %llu, %llu)", context, partition, *starting_block, *ending_block);
 
@@ -1193,8 +1193,8 @@ int32_t aaruf_get_tape_partition(const void *context, const uint8_t partition, u
  * @see TapePartitionHashEntry for the hash table entry structure
  * @see aaruf_set_tape_file() for setting file metadata within partitions
  */
-int32_t aaruf_set_tape_partition(void *context, const uint8_t partition, const uint64_t starting_block,
-                                 const uint64_t ending_block)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_tape_partition(void *context, const uint8_t partition,
+                                                       const uint64_t starting_block, const uint64_t ending_block)
 {
     TRACE("Entering aaruf_set_tape_partition(%p, %d, %llu, %llu)", context, partition, starting_block, ending_block);
 

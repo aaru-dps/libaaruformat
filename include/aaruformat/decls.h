@@ -138,7 +138,7 @@ AARU_EXPORT uint32_t AARU_CALL aaruf_edc_cd_compute(void *context, uint32_t edc,
 
 AARU_EXPORT int32_t AARU_CALL aaruf_read_track_sector(void *context, uint8_t *data, uint64_t sector_address,
                                                       uint32_t *length, uint8_t track);
-int32_t aaruf_read_sector_tag(const void *context, uint64_t sector_address, bool negative, uint8_t *buffer,
+AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, uint64_t sector_address, bool negative, uint8_t *buffer,
                               uint32_t *length, int32_t tag);
 
 AARU_LOCAL int32_t AARU_CALL aaruf_get_media_tag_type_for_datatype(int32_t type);
