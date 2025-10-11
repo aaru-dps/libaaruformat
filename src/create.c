@@ -135,8 +135,6 @@ static void cleanup_failed_create(aaruformat_context *ctx)
  * The function automatically selects optimal DDT parameters:
  * - Single-level DDT (tableShift=0): For images < 138,412,552 sectors
  * - Multi-level DDT (tableShift=22): For images ≥ 138,412,552 sectors
- * - Small entries (16-bit): Default, supports most image sizes efficiently
- * - Big entries (32-bit): Reserved for future use with very large images
  *
  * The DDT offset calculation ensures proper alignment:
  * - Primary DDT placed immediately after header (block-aligned)
@@ -233,7 +231,6 @@ static void cleanup_failed_create(aaruformat_context *ctx)
  *
  * @note DDT Initialization (Block Media Only):
  *       - Uses DDT version 2 format with configurable compression and alignment
- *       - Supports both small (16-bit) and big (32-bit) DDT entry sizes
  *       - Calculates optimal table sizes based on sector counts and shift parameters
  *       - All DDT entries are initialized to zero (indicating unallocated sectors)
  *       - Multi-level DDT is used for images with ≥ 138,412,552 total sectors

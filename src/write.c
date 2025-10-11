@@ -370,9 +370,9 @@ int32_t aaruf_write_sector(void *context, uint64_t sector_address, bool negative
  * 8. **User Data Delegation**: Calls aaruf_write_sector() with extracted user data and derived status
  *
  * **Memory Management Strategy:**
- * - **Mini-DDT Arrays**: Lazily allocated 16-bit arrays sized for total addressable space (negative + user + overflow)
- *   * sectorPrefixDdt2: Tracks prefix status and buffer offsets (high 4 bits = status, low 12 bits = offset/16)
- *   * sectorSuffixDdt2: Tracks suffix status and buffer offsets (high 4 bits = status, low 12 bits = offset/288)
+ * - **DDT Arrays**: Lazily allocated 64-bit arrays sized for total addressable space (negative + user + overflow)
+ *   * sectorPrefixDdt2: Tracks prefix status and buffer offsets (high 4 bits = status, low 60 bits = offset/16)
+ *   * sectorSuffixDdt2: Tracks suffix status and buffer offsets (high 4 bits = status, low 60 bits = offset/288)
  * - **Prefix Buffer**: Dynamically growing buffer storing non-standard 16-byte CD prefixes
  * - **Suffix Buffer**: Dynamically growing buffer storing non-standard CD suffixes (288 bytes for Mode 1, 4 bytes for
  * Mode 2 Form 2, 280 bytes for Mode 2 Form 1)

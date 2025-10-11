@@ -93,11 +93,11 @@ typedef struct DdtHeader
  *        secondaryIndex = I % itemsPerPrimaryEntry
  *        The primary table entry at primaryIndex yields a secondary DDT file offset (scaled by 2^blockAlignmentShift),
  *        whose table entries are then indexed by secondaryIndex.
- *  3. Read raw DDT entry value E (16-bit if sizeType == SmallDdtSizeType, 32-bit if BigDdtSizeType).
+ *  3. Read raw DDT entry value E (64-bit).
  *  4. If E == 0: sector_status = SectorStatusNotDumped; offset=block_offset=0.
  *     Otherwise extract:
- *        statusBits = E >> 12  (small) or E >> 28 (big)
- *        baseBits   = E & 0x0FFF (small) or E & 0x0FFFFFFF (big)
+ *        statusBits = E >> 60
+ *        baseBits   = E & 0xFFFFFFFFFFFFFFF
  *        sectorOffsetWithinBlock = baseBits & ((1 << dataShift) - 1)
  *        blockIndex              = baseBits >> dataShift
  *        block_offset (bytes)    = blockIndex << blockAlignmentShift

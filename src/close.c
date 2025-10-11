@@ -1183,16 +1183,14 @@ static void write_sector_suffix(aaruformat_context *ctx)
  * index into the stored 16‑byte prefix capture buffer plus a 4-bit status code. It is written only
  * if at least one prefix status or captured prefix was recorded (i.e., the in-memory DDT array exists).
  *
- * Encoding (current implementation uses the "mini" 16-bit form):
- *   Bits 15..12 : SectorStatus enum value (see enums.h, values already positioned for v2 mini layout).
- *   Bits 11..0  : 12-bit index (0..4095) of the 16-byte prefix chunk inside the CdSectorPrefix data block,
+ * Encoding:
+ *   Bits 63..61 : SectorStatus enum value (see enums.h, values already positioned for v2 layout).
+ *   Bits 60..0  : Index of the 16-byte prefix chunk inside the CdSectorPrefix data block,
  *                 or 0 when no external prefix bytes were stored (status applies to a generated/implicit prefix).
  *
  * Notes:
  *   - Unlike DDT v1, there are no CD_XFIX_MASK / CD_DFIX_MASK macros used here. The bit layout is compact
  *     and directly encoded when writing (status values are pre-shifted where needed in write.c).
- *   - Only the 16-bit mini variant is currently produced (sectorPrefixDdt2). A 32-bit form is reserved
- *     for future expansion (sectorPrefixDdt) but is not emitted unless populated.
  *   - The table length equals (negative + Sectors + overflow) * entrySize.
  *   - dataShift is set to 4 (2^4 = 16) expressing the granularity of referenced prefix units.
  *   - Compression is applied if enabled; crc64/cmpCrc64 protect the raw table bytes.
@@ -1318,14 +1316,13 @@ static void write_sector_prefix_ddt(aaruformat_context *ctx)
  * the in-memory mini entry records the index of its 16 * 18 (288) byte chunk. If no suffix bytes
  * were explicitly stored for a sector the index field is zero and only the status applies.
  *
- * Encoding (mini 16-bit variant only, DDT v2 semantics):
- *   Bits 15..12 : SectorStatus enumeration (already aligned for direct storage; no legacy masks used).
- *   Bits 11..0  : 12-bit index (0..4095) referencing a suffix unit of size 288 bytes (2^dataShift granularity),
+ * Encoding (DDT v2 semantics):
+ *   Bits 63..61 : SectorStatus enumeration (already aligned for direct storage; no legacy masks used).
+ *   Bits 60..0  : Index referencing a suffix unit of size 288 bytes (2^dataShift granularity),
  *                 or 0 when the sector uses an implicit / regenerated suffix (no external data captured).
  *
  * Characteristics & constraints:
  *   - Only DDT v2 is supported here; no fallback or mixed-mode emission with v1 occurs.
- *   - Only the compact "mini" (16-bit) table form is currently produced (sectorSuffixDdt2 filled during write).
  *   - Table length = (negative + total Sectors + overflow) * sizeof(uint16_t).
  *   - dataShift mirrors userDataDdtHeader.dataShift (expressing granularity for index referencing).
  *   - Single-level table (levels = 1, tableLevel = 0, tableShift = 0).

@@ -73,7 +73,6 @@
  *       - The found_user_data_ddt flag is updated to reflect the success of user data DDT loading
  *
  * @note DDT v2 Features:
- *       - Supports both small (16-bit) and big (32-bit) DDT entry sizes
  *       - Handles multi-level DDT hierarchies with tableShift parameter
  *       - Updates context with sector counts, DDT version, and primary DDT offset
  *       - Stores DDT data in size-appropriate context fields (userDataDdtMini/Big, sectorPrefixDdt, etc.)
@@ -530,8 +529,7 @@ int32_t decode_ddt_entry_v2(aaruformat_context *ctx, const uint64_t sector_addre
  *
  * Used when the DDT table does not use multi-level indirection (tableShift = 0). This function
  * performs direct lookup in the primary DDT table to extract sector offset, block offset, and
- * sector status information. It handles both small (16-bit) and big (32-bit) DDT entry formats
- * and performs bit manipulation to decode the packed DDT entry values.
+ * sector status information. It performs bit manipulation to decode the packed DDT entry values.
  *
  * @param ctx Pointer to the aaruformat context containing the loaded DDT table.
  * @param sector_address Logical sector address to decode (adjusted for negative sectors).
@@ -556,16 +554,11 @@ int32_t decode_ddt_entry_v2(aaruformat_context *ctx, const uint64_t sector_addre
  *         - The DDT size type is unknown/unsupported (not SmallDdtSizeType or BigDdtSizeType)
  *         - Internal consistency checks fail
  *
- * @note DDT Entry Decoding (Small DDT - 16-bit entries):
- *       - Bits 15-12: Sector status (4 bits)
- *       - Bits 11-0: Combined offset and block index (12 bits)
+ * @note DDT Entry Decoding
+ *       - Bits 63-61: Sector status (4 bits)
+ *       - Bits 60-0: Combined offset and block index (60 bits)
  *       - Offset mask: Derived from dataShift parameter
  *       - Block offset: Calculated using blockAlignmentShift parameter
- *
- * @note DDT Entry Decoding (Big DDT - 32-bit entries):
- *       - Bits 31-28: Sector status (4 bits)
- *       - Bits 27-0: Combined offset and block index (28 bits)
- *       - Offset mask and block offset calculated same as small DDT
  *
  * @note Negative Sector Handling:
  *       - Sector address is automatically adjusted by adding ctx->userDataDdtHeader.negative
@@ -708,7 +701,6 @@ int32_t decode_ddt_single_level_v2(aaruformat_context *ctx, uint64_t sector_addr
  * @note Secondary DDT Processing:
  *       - Supports both LZMA compression and uncompressed formats
  *       - Performs full CRC64 validation of secondary DDT data
- *       - Handles both small (16-bit) and big (32-bit) entry formats
  *       - Same bit manipulation as single-level DDT for final entry decoding
  *
  * @note Error Handling Strategy:

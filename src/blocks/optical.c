@@ -378,7 +378,6 @@ int32_t aaruf_get_tracks(const void *context, uint8_t *buffer, size_t *length)
  * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY   Memory allocation failed while copying tracks.
  *
  * @warning Not thread-safe. Do not invoke concurrently with readers/writers of the same context.
- * @warning Counts above 65535 will be truncated to 16-bit without error (potential data loss of extra entries).
  * @note After success, aaruf_get_tracks() can be used to read back the stored table.
  * @see aaruf_get_tracks()
  *
