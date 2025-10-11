@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>libaaruformat</id>
+        <version>1.0.0-alpha.1</version>
+        <description>Library for management of AaruFormat images.</description>
+        <authors>claunia</authors>
+        <projectUrl>https://github.com/aaru-dps/libaaruformat</projectUrl>
+        <license type="expression">LGPL-2.1-only</license>
+        <licenseUrl>https://spdx.org/licenses/LGPL-2.1-only.html</licenseUrl>
+        <copyright>Copyright © 2011-2025 Natalia Portillo</copyright>
+        <repository type="git" url="https://github.com/aaru-dps/libaaruformat.git" />
+        <readme>README.md</readme>
+        <tags>aaru aaruformat libaaruformat disk image format</tags>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    </metadata>
+    <files>
+      <file src="LICENSE" target="LICENSE" />
+      <file src="README.md" target="README.md" />
+      <file src="runtimes\**" target="runtimes/" />
+    </files>
+</package>
