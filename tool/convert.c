@@ -36,6 +36,7 @@ int convert(const char *input_path, const char *output_path, bool use_long)
     uint32_t            sector_size   = 0;
     uint64_t            total_sectors = 0;
     uint8_t            *sector_data   = NULL;
+    uint8_t             sector_status = 0;
 
     printf("Converting image from %s to %s%s...\n", input_path, output_path, use_long ? " (long mode)" : "");
 
@@ -182,9 +183,9 @@ int convert(const char *input_path, const char *output_path, bool use_long)
 
         // Check sector size
         if(use_long)
-            res = aaruf_read_sector_long(input_ctx, sector, false, sector_data, &read_length);
+            res = aaruf_read_sector_long(input_ctx, sector, false, sector_data, &read_length, &sector_status);
         else
-            res = aaruf_read_sector(input_ctx, sector, false, sector_data, &read_length);
+            res = aaruf_read_sector(input_ctx, sector, false, sector_data, &read_length, &sector_status);
 
         if(res != AARUF_ERROR_BUFFER_TOO_SMALL)
         {
@@ -208,9 +209,9 @@ int convert(const char *input_path, const char *output_path, bool use_long)
 
         // Read sector from input
         if(use_long)
-            res = aaruf_read_sector_long(input_ctx, sector, false, sector_data, &read_length);
+            res = aaruf_read_sector_long(input_ctx, sector, false, sector_data, &read_length, &sector_status);
         else
-            res = aaruf_read_sector(input_ctx, sector, false, sector_data, &read_length);
+            res = aaruf_read_sector(input_ctx, sector, false, sector_data, &read_length, &sector_status);
 
         if(res != AARUF_STATUS_OK)
         {
@@ -220,9 +221,9 @@ int convert(const char *input_path, const char *output_path, bool use_long)
 
         // Write sector to output
         if(use_long)
-            res = aaruf_write_sector_long(output_ctx, sector, false, sector_data, SectorStatusDumped, read_length);
+            res = aaruf_write_sector_long(output_ctx, sector, false, sector_data, sector_status, read_length);
         else
-            res = aaruf_write_sector(output_ctx, sector, false, sector_data, SectorStatusDumped, read_length);
+            res = aaruf_write_sector(output_ctx, sector, false, sector_data, sector_status, read_length);
 
         if(res != AARUF_STATUS_OK)
         {

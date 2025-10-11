@@ -62,6 +62,8 @@ int compare(const char *path1, const char *path2)
     uintattr_t          sectorsColor         = TB_WHITE;
     uintattr_t          sectorSizeColor      = TB_WHITE;
     uintattr_t          versionColor         = TB_WHITE;
+    uint8_t             sector_status1       = 0;
+    uint8_t             sector_status2       = 0;
 
     // Initialize termbox2
     if(tb_init() != 0) return 1;
@@ -489,7 +491,7 @@ int compare(const char *path1, const char *path2)
         tb_printf(2, height - 5, TB_WHITE | TB_BOLD, TB_BLUE, "Comparing sector %llu of %llu", i + 1, sectors);
         draw_progress_bar(height - 4, i * 100 / sectors);
 
-        errno = aaruf_read_sector(ctx1, i, false, buffer1, &sectorSize);
+        errno = aaruf_read_sector(ctx1, i, false, buffer1, &sectorSize, &sector_status1);
         if(errno != AARUF_STATUS_OK && errno != AARUF_STATUS_SECTOR_NOT_DUMPED)
         {
             tb_printf(2, lr++, TB_RED | TB_BOLD, TB_BLUE, "Error reading sector %llu: %s", i, errno);
@@ -497,7 +499,7 @@ int compare(const char *path1, const char *path2)
             continue;
         }
 
-        errno = aaruf_read_sector(ctx2, i, false, buffer2, &sectorSize);
+        errno = aaruf_read_sector(ctx2, i, false, buffer2, &sectorSize, &sector_status2);
         if(errno != AARUF_STATUS_OK && errno != AARUF_STATUS_SECTOR_NOT_DUMPED)
         {
             tb_printf(2, rr++, TB_RED | TB_BOLD, TB_BLUE, "Error reading sector %llu: %s", i, errno);

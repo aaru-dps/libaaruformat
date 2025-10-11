@@ -90,9 +90,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_tracks(const void *context, uint8_t *buf
 AARU_EXPORT int32_t AARU_CALL aaruf_set_tracks(void *context, TrackEntry *tracks, const int count);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, uint64_t sector_address, bool negative, uint8_t *data,
-                                                uint32_t *length);
+                                                uint32_t *length, uint8_t *sector_status);
 AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, uint64_t sector_address, bool negative,
-                                                     uint8_t *data, uint32_t *length);
+                                                     uint8_t *data, uint32_t *length, uint8_t *sector_status);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_address, bool negative,
                                                  const uint8_t *data, uint8_t sector_status, uint32_t length);
@@ -137,9 +137,9 @@ AARU_EXPORT void AARU_CALL aaruf_ecc_cd_reconstruct(void *context, uint8_t *sect
 AARU_EXPORT uint32_t AARU_CALL aaruf_edc_cd_compute(void *context, uint32_t edc, const uint8_t *src, int size, int pos);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_read_track_sector(void *context, uint8_t *data, uint64_t sector_address,
-                                                      uint32_t *length, uint8_t track);
-AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, uint64_t sector_address, bool negative, uint8_t *buffer,
-                              uint32_t *length, int32_t tag);
+                                                      uint32_t *length, uint8_t track, uint8_t *sector_status);
+AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, uint64_t sector_address, bool negative,
+                                                    uint8_t *buffer, uint32_t *length, int32_t tag);
 
 AARU_LOCAL int32_t AARU_CALL aaruf_get_media_tag_type_for_datatype(int32_t type);
 AARU_LOCAL int32_t AARU_CALL aaruf_get_datatype_for_media_tag_type(int32_t tag_type);

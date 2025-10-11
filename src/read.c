@@ -157,6 +157,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_media_tag(void *context, uint8_t *data,
  * @param negative Indicates if the sector address is negative.
  * @param data Pointer to buffer where sector data will be stored. Can be NULL to query length.
  * @param length Pointer to variable containing buffer size on input, actual data length on output.
+ * @param sector_status Pointer to variable that will receive the sector status flags. Must not be NULL.
+ *                      The status indicates the condition of the sector data, such as whether it contains
+ *                      errors, was not dumped, or has other quality indicators from the imaging process.
  *
  * @return Returns one of the following status codes:
  * @retval AARUF_STATUS_OK (0) Successfully read the sector data. This is returned when:
@@ -248,7 +251,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_media_tag(void *context, uint8_t *data,
  *          ctx->imageInfo.Sectors - 1.
  */
 AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t sector_address, bool negative,
-                                                uint8_t *data, uint32_t *length)
+                                                uint8_t *data, uint32_t *length, uint8_t *sector_status)
 {
     const uint32_t initial_length = length == NULL ? 0U : *length;
 
@@ -262,10 +265,10 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
     uint8_t            *block        = NULL;
     size_t              read_bytes   = 0;
     uint8_t             lzma_properties[LZMA_PROPERTIES_LENGTH];
-    size_t              lzma_size     = 0;
-    uint8_t            *cmp_data      = NULL;
-    int                 error_no      = 0;
-    uint8_t             sector_status = 0;
+    size_t              lzma_size = 0;
+    uint8_t            *cmp_data  = NULL;
+    int                 error_no  = 0;
+    *sector_status                = SectorStatusNotDumped;
 
     if(context == NULL)
     {
@@ -318,10 +321,10 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
             return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
         }
 
-        error_no = decode_ddt_entry_v1(ctx, sector_address, &offset, &block_offset, &sector_status);
+        error_no = decode_ddt_entry_v1(ctx, sector_address, &offset, &block_offset, sector_status);
     }
     else if(ctx->ddt_version == 2)
-        error_no = decode_ddt_entry_v2(ctx, sector_address, negative, &offset, &block_offset, &sector_status);
+        error_no = decode_ddt_entry_v2(ctx, sector_address, negative, &offset, &block_offset, sector_status);
 
     if(error_no != AARUF_STATUS_OK)
     {
@@ -332,7 +335,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
     }
 
     // Partially written image... as we can't know the real sector size just assume it's common :/
-    if(sector_status == SectorStatusNotDumped)
+    if(*sector_status == SectorStatusNotDumped)
     {
         *length = ctx->image_info.SectorSize;
 
@@ -606,6 +609,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
  * @param sector_address The sector address relative to the track start.
  * @param length Pointer to variable containing buffer size on input, actual data length on output.
  * @param track The track sequence number to read from.
+ * @param sector_status Pointer to variable that will receive the sector status flags. Must not be NULL.
+ *                      The status indicates the condition of the sector data, such as whether it contains
+ *                      errors, was not dumped, or has other quality indicators from the imaging process.
  *
  * @return Returns one of the following status codes:
  * @retval AARUF_STATUS_OK (0) Successfully read the sector data from the specified track. This is returned when:
@@ -662,7 +668,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
  *          existence before assuming a track number is valid.
  */
 AARU_EXPORT int32_t AARU_CALL aaruf_read_track_sector(void *context, uint8_t *data, const uint64_t sector_address,
-                                                      uint32_t *length, const uint8_t track)
+                                                      uint32_t *length, const uint8_t track, uint8_t *sector_status)
 {
     const uint32_t initial_length = length == NULL ? 0U : *length;
 
@@ -706,7 +712,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_track_sector(void *context, uint8_t *da
 
     for(int i = 0; i < ctx->number_of_data_tracks; i++)
         if(ctx->data_tracks[i].sequence == track)
-            return aaruf_read_sector(context, ctx->data_tracks[i].start + sector_address, false, data, length);
+            return aaruf_read_sector(context, ctx->data_tracks[i].start + sector_address, false, data, length,
+                                     sector_status);
 
     TRACE("Track %d not found", track);
     TRACE("Exiting aaruf_read_track_sector() = AARUF_ERROR_TRACK_NOT_FOUND");
@@ -728,6 +735,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_track_sector(void *context, uint8_t *da
  * @param negative Indicates if the sector address is negative.
  * @param data Pointer to buffer where complete sector data will be stored. Can be NULL to query length.
  * @param length Pointer to variable containing buffer size on input, actual data length on output.
+ * @param sector_status Pointer to variable that will receive the sector status flags. Must not be NULL.
+ *                      The status indicates the condition of the sector data, such as whether it contains
+ *                      errors, was not dumped, or has other quality indicators from the imaging process.
  *
  * @return Returns one of the following status codes:
  * @retval AARUF_STATUS_OK (0) Successfully read the complete sector with metadata. This is returned when:
@@ -814,7 +824,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_track_sector(void *context, uint8_t *da
  *          reading. Some images may only support basic sector reading via aaruf_read_sector().
  */
 AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64_t sector_address, bool negative,
-                                                     uint8_t *data, uint32_t *length)
+                                                     uint8_t *data, uint32_t *length, uint8_t *sector_status)
 {
     const uint32_t initial_length = length == NULL ? 0U : *length;
 
@@ -896,7 +906,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
             {
                 if(ctx->sector_id == NULL || ctx->sector_ied == NULL || ctx->sector_cpr_mai == NULL ||
                    ctx->sector_edc == NULL)
-                    return aaruf_read_sector(context, sector_address, negative, data, length);
+                    return aaruf_read_sector(context, sector_address, negative, data, length, sector_status);
 
                 if(*length < 2064 || data == NULL)
                 {
@@ -908,7 +918,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                 }
 
                 bare_length  = 0;
-                query_status = aaruf_read_sector(context, sector_address, negative, NULL, &bare_length);
+                query_status = aaruf_read_sector(context, sector_address, negative, NULL, &bare_length, sector_status);
 
                 if(query_status != AARUF_ERROR_BUFFER_TOO_SMALL && query_status != AARUF_STATUS_OK)
                 {
@@ -935,7 +945,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                     return AARUF_ERROR_NOT_ENOUGH_MEMORY;
                 }
 
-                res = aaruf_read_sector(context, sector_address, negative, bare_data, &bare_length);
+                res = aaruf_read_sector(context, sector_address, negative, bare_data, &bare_length, sector_status);
 
                 if(res != AARUF_STATUS_OK)
                 {
@@ -970,10 +980,10 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
             if((ctx->sector_suffix == NULL || ctx->sector_prefix == NULL) &&
                (ctx->sector_suffix_ddt == NULL || ctx->sector_prefix_ddt == NULL) &&
                (ctx->sector_suffix_ddt2 == NULL || ctx->sector_prefix_ddt2 == NULL))
-                return aaruf_read_sector(context, sector_address, negative, data, length);
+                return aaruf_read_sector(context, sector_address, negative, data, length, sector_status);
 
             bare_length  = 0;
-            query_status = aaruf_read_sector(context, sector_address, negative, NULL, &bare_length);
+            query_status = aaruf_read_sector(context, sector_address, negative, NULL, &bare_length, sector_status);
 
             if(query_status != AARUF_ERROR_BUFFER_TOO_SMALL && query_status != AARUF_STATUS_OK)
             {
@@ -1000,7 +1010,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
 
-            res = aaruf_read_sector(context, sector_address, negative, bare_data, &bare_length);
+            res = aaruf_read_sector(context, sector_address, negative, bare_data, &bare_length, sector_status);
 
             if(res != AARUF_STATUS_OK)
             {
@@ -1255,7 +1265,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                 case AppleWidget:
                 case PriamDataTower:
                     if(ctx->sector_subchannel == NULL)
-                        return aaruf_read_sector(context, sector_address, negative, data, length);
+                        return aaruf_read_sector(context, sector_address, negative, data, length, sector_status);
 
                     switch(ctx->image_info.MediaType)
                     {
@@ -1300,7 +1310,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                         return AARUF_ERROR_NOT_ENOUGH_MEMORY;
                     }
 
-                    res = aaruf_read_sector(context, sector_address, negative, bare_data, &bare_length);
+                    res = aaruf_read_sector(context, sector_address, negative, bare_data, &bare_length, sector_status);
 
                     if(res != AARUF_STATUS_OK)
                     {

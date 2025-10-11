@@ -20,6 +20,7 @@
 #include <errno.h>
 
 #include <aaruformat.h>
+#include <sys/types.h>
 
 #include "aaruformattool.h"
 
@@ -61,7 +62,8 @@ int verify_sectors(const char *path)
     bool     edc_correct = false;
     bool     unknown     = false;
     uint64_t errors = 0, unknowns = 0;
-    bool     any_error = false;
+    bool     any_error     = false;
+    uint8_t  sector_status = 0;
 
     if(ctx == NULL)
     {
@@ -83,7 +85,7 @@ int verify_sectors(const char *path)
     for(uint64_t s = 0; s < ctx->image_info.Sectors; s++)
     {
         printf("\rVerifying sector %llu...", s);
-        res = aaruf_read_sector_long(ctx, s, buffer, false, &buffer_len);
+        res = aaruf_read_sector_long(ctx, s, buffer, false, &buffer_len, &sector_status);
 
         if(res != AARUF_STATUS_OK)
         {

@@ -40,6 +40,8 @@ int cli_compare(const char *path1, const char *path2, bool use_long)
     int                 result            = 0;
     int32_t             read_result1      = 0;
     int32_t             read_result2      = 0;
+    uint8_t             sector_status1    = 0;
+    uint8_t             sector_status2    = 0;
 
     printf("Opening first image: %s\n", path1);
     ctx1 = aaruf_open(path1);
@@ -115,13 +117,13 @@ int cli_compare(const char *path1, const char *path2, bool use_long)
 
         if(use_long)
         {
-            read_result1 = aaruf_read_sector_long(ctx1, sector, false, buffer1, &buffer1_length);
-            read_result2 = aaruf_read_sector_long(ctx2, sector, false, buffer2, &buffer2_length);
+            read_result1 = aaruf_read_sector_long(ctx1, sector, false, buffer1, &buffer1_length, &sector_status1);
+            read_result2 = aaruf_read_sector_long(ctx2, sector, false, buffer2, &buffer2_length, &sector_status2);
         }
         else
         {
-            read_result1 = aaruf_read_sector(ctx1, sector, false, buffer1, &buffer1_length);
-            read_result2 = aaruf_read_sector(ctx2, sector, false, buffer2, &buffer2_length);
+            read_result1 = aaruf_read_sector(ctx1, sector, false, buffer1, &buffer1_length, &sector_status1);
+            read_result2 = aaruf_read_sector(ctx2, sector, false, buffer2, &buffer2_length, &sector_status2);
         }
 
         // Handle read errors or missing sectors
@@ -137,6 +139,11 @@ int cli_compare(const char *path1, const char *path2, bool use_long)
         else if(sector1_available != sector2_available)
         {
             // One sector is available, the other is not - they're different
+            sectors_different = true;
+        }
+        else if(sector_status1 != sector_status2)
+        {
+            // Both sectors are available but have different status codes
             sectors_different = true;
         }
         else if(sector1_available && sector2_available &&
