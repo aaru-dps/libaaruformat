@@ -9,7 +9,17 @@ A well-known example is the LTFS filesystem.
 
 [source,c]
 #define TAPE_PARTITION_MAGIC 0x54504254
-/* TODO */
+typedef struct TapePartitionHeader
+{
+    uint32_t identifier;  ///< Block type identifier. Must be set to BlockType::TapePartitionBlock. This magic value
+                          ///< allows parsers to identify the block type.
+    uint8_t  entries;     ///< Number of partition entries following this header. Specifies how many TapePartitionEntry
+                          ///< structures are in this block. Valid range: 0-255. Most tapes have 1-4 partitions.
+    uint64_t length;      ///< Size of entry data in bytes (excluding this header). Calculated as: entries ×
+                          ///< sizeof(TapePartitionEntry). This is the number of bytes following the header.
+    uint64_t crc64;       ///< CRC64-ECMA checksum of the entry data. Computed over the array of TapePartitionEntry
+                          ///< structures only. Does NOT include this header. Used for integrity verification.
+} TapePartitionHeader;
 
 ==== Field Descriptions
 
@@ -44,7 +54,16 @@ A well-known example is the LTFS filesystem.
 ==== Tape partition entries
 
 [source,c]
-/* TODO */
+typedef struct TapePartitionEntry
+{
+    uint8_t  Number;  ///< Partition number (unique identifier for this partition). Identifies this partition among all
+                      ///< partitions on the tape. Valid range: 0-255, though most tapes use 0-3.
+    uint64_t FirstBlock;  ///< First block in the partition (inclusive). Starting block address for this partition's
+                          ///< address space. Often 0, but format-dependent.
+    uint64_t LastBlock;  ///< Last block in the partition (inclusive). Ending block address for this partition's address
+                         ///< space. Must be ≥ FirstBlock. The partition contains all blocks from FirstBlock through
+                         ///< LastBlock inclusive.
+} TapePartitionEntry;
 
 ==== Field Descriptions
 

@@ -7,7 +7,17 @@ Tape files are separations written to media, usually digital tapes, and are mark
 
 [source,c]
 #define TAPE_FILE_MAGIC 0x454C4654
-/* TODO */
+typedef struct TapeFileHeader
+{
+    uint32_t identifier;  ///< Block type identifier. Must be set to BlockType::TapeFileBlock. This magic value allows
+                          ///< parsers to identify the block type.
+    uint32_t entries;     ///< Number of file entries following this header. Specifies how many TapeFileEntry structures
+                          ///< are in this block. Valid range: 0 to 2^32-1.
+    uint64_t length;      ///< Size of entry data in bytes (excluding this header). Calculated as: entries ×
+                          ///< sizeof(TapeFileEntry). This is the number of bytes following the header.
+    uint64_t crc64;  ///< CRC64-ECMA checksum of the entry data. Computed over the array of TapeFileEntry structures
+                     ///< only. Does NOT include this header. Used for integrity verification.
+} TapeFileHeader;
 
 ==== Field Descriptions
 
@@ -42,7 +52,18 @@ Tape files are separations written to media, usually digital tapes, and are mark
 ==== Tape file entries
 
 [source,c]
-/* TODO */
+typedef struct TapeFileEntry
+{
+    uint32_t File;  ///< File number (unique within the partition). Identifies this file among all files in the same
+                    ///< partition. Numbering scheme is tape-format-dependent.
+    uint8_t  Partition;   ///< Partition number containing this file. References a partition defined in the
+                          ///< TapePartitionHeader block. Valid range: 0-255.
+    uint64_t FirstBlock;  ///< First block of the file (inclusive). This is the starting block address of the file data.
+                          ///< Block addresses are 0-based within the partition.
+    uint64_t
+        LastBlock;  ///< Last block of the file (inclusive). This is the ending block address of the file data. Must be
+                    ///< ≥ FirstBlock. The file contains all blocks from FirstBlock through LastBlock inclusive.
+} TapeFileEntry;
 
 ==== Field Descriptions
 

@@ -10,9 +10,8 @@ The contents of the XML are preserved in their original form and are not parsed,
 /**Header for the CICM XML metadata block */
 typedef struct CicmMetadataBlock
 {
-    /**Identifier, <see cref="BlockType.CicmBlock" /> */
-    uint32_t identifier;
-    uint32_t length;
+    uint32_t identifier;  ///< Block identifier, must be BlockType::CicmBlock.
+    uint32_t length;      ///< Length in bytes of the CICM metadata payload that follows.
 } CicmMetadataBlock;
 
 ==== Field Descriptions

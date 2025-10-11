@@ -106,7 +106,7 @@ typedef struct AaruHeader
 typedef struct AaruHeaderV2
 {
     uint64_t identifier;                             ///< File magic (AARU_MAGIC).
-    uint8_t  application[AARU_HEADER_APP_NAME_LEN];  ///< UTF-16LE creator application name (fixed 64 bytes).
+    uint8_t  application[AARU_HEADER_APP_NAME_LEN];  ///< UTF-8 creator application name (fixed 64 bytes).
     uint8_t  imageMajorVersion;                      ///< Container format major version.
     uint8_t  imageMinorVersion;                      ///< Container format minor version.
     uint8_t  applicationMajorVersion;                ///< Creator application major version.

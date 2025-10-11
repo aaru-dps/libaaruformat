@@ -10,12 +10,9 @@ This format is common in optical media such as CDs, DVDs, and related disc-based
 /**Contains list of optical disc tracks */
 typedef struct TracksHeader
 {
-    /**Identifier, <see cref="BlockType.TracksBlock" /> */
-    uint32_t identifier;
-    /**How many entries follow this header */
-    uint16_t entries;
-    /**CRC64-ECMA of the block */
-    uint64_t crc64;
+    uint32_t identifier;  ///< Block identifier (must be BlockType::TracksBlock).
+    uint16_t entries;     ///< Number of TrackEntry records following this header.
+    uint64_t crc64;  ///< CRC64-ECMA of the TrackEntry array (header excluded, legacy byte-swap for early versions).
 } TracksHeader;
 
 ==== Field Descriptions
@@ -34,22 +31,14 @@ typedef struct TracksHeader
 /**Optical disc track */
 typedef struct TrackEntry
 {
-    /**Track sequence */
-    uint8_t sequence;
-    /**Track type */
-    uint8_t type;
-    /**Track starting LBA */
-    int64_t start;
-    /**Track last LBA */
-    int64_t end;
-    /**Track pregap in sectors */
-    int64_t pregap;
-    /**Track session */
-    uint8_t session;
-    /**Track's ISRC in ASCII */
-    uint8_t isrc[13];
-    /**Track flags */
-    uint8_t flags;
+    uint8_t sequence;  ///< Track number (1..99 typical for CD audio/data). 0 may indicate placeholder/non-standard.
+    uint8_t type;      ///< Track type (value from \ref TrackType).
+    int64_t start;     ///< Inclusive starting LBA of the track.
+    int64_t end;       ///< Inclusive ending LBA of the track.
+    int64_t pregap;    ///< Pre-gap length in sectors preceding track start (0 if none).
+    uint8_t session;   ///< Session number (1-based). 1 for single-session discs.
+    uint8_t isrc[13];  ///< ISRC raw 13-byte code (no null terminator). All zeros if not present.
+    uint8_t flags;     ///< Control / attribute bitfield (see file documentation for suggested bit mapping).
 } TrackEntry;
 
 ==== Field Descriptions

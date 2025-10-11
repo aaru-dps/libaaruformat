@@ -18,14 +18,10 @@ Index entries can contain *at most* a single child index pointer.
 /**Header for the index, followed by entries */
 typedef struct IndexHeader3
 {
-    /**Identifier, <see cref="BlockType.Index" /> */
-    uint32_t identifier;
-    /**How many entries follow this header */
-    uint64_t entries;
-    /**CRC64-ECMA of the index */
-    uint64_t crc64;
-    /**Pointer to the previous index header */
-    uint64_t previous;
+    uint32_t identifier;  ///< Block identifier (must be BlockType::IndexBlock3).
+    uint64_t entries;     ///< Number of \ref IndexEntry records that follow in this (sub)index block.
+    uint64_t crc64;       ///< CRC64-ECMA of the local entries array (does NOT cover subindexes or previous chains).
+    uint64_t previous;    ///< File offset of a previous IndexBlock3 header (0 if none / root segment).
 } IndexHeader3;
 
 ==== Field Descriptions

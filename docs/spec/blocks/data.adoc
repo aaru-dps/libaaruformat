@@ -14,22 +14,14 @@ Conversely, if the block contains a single item (e.g., media tags), `sectorSize`
 /**Block header, precedes block data */
 typedef struct BlockHeader
 {
-    /**Identifier, <see cref="BlockType.DataBlock" /> */
-    uint32_t identifier;
-    /**Type of data contained by this block */
-    uint16_t type;
-    /**Compression algorithm used to compress the block */
-    uint16_t compression;
-    /**Size in uint8_ts of each sector contained in this block */
-    uint32_t sectorSize;
-    /**Compressed length for the block */
-    uint32_t cmpLength;
-    /**Uncompressed length for the block */
-    uint32_t length;
-    /**CRC64-ECMA of the compressed block */
-    uint64_t cmpCrc64;
-    /**CRC64-ECMA of the uncompressed block */
-    uint64_t crc64;
+    uint32_t identifier;   ///< Block identifier, must be BlockType::DataBlock.
+    uint16_t type;         ///< Logical data classification (value from \ref DataType).
+    uint16_t compression;  ///< Compression algorithm used (value from \ref CompressionType).
+    uint32_t sectorSize;   ///< Size in bytes of each logical sector represented in this block.
+    uint32_t cmpLength;    ///< Size in bytes of the compressed payload immediately following this header.
+    uint32_t length;       ///< Size in bytes of the uncompressed payload resulting after decompression.
+    uint64_t cmpCrc64;     ///< CRC64-ECMA of the compressed payload (cmpLength bytes).
+    uint64_t crc64;        ///< CRC64-ECMA of the uncompressed payload (length bytes).
 } BlockHeader;
 
 ==== Field Descriptions

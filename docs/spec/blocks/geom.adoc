@@ -10,11 +10,10 @@ Instead, it typically represents the translation parameters active at the time t
 /**Geometry block, contains physical geometry information */
 typedef struct GeometryBlockHeader
 {
-    /**Identifier, <see cref="BlockType.GeometryBlock" /> */
-    uint32_t identifier;
-    uint32_t cylinders;
-    uint32_t heads;
-    uint32_t sectorsPerTrack;
+    uint32_t identifier;       ///< Block identifier, must be BlockType::GeometryBlock.
+    uint32_t cylinders;        ///< Number of cylinders.
+    uint32_t heads;            ///< Number of heads (tracks per cylinder).
+    uint32_t sectorsPerTrack;  ///< Number of sectors per track.
 } GeometryBlockHeader;
 
 ==== Field Descriptions

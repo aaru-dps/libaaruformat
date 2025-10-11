@@ -15,12 +15,9 @@ If the image is modified, the checksum block is considered outdated and should b
  *  */
 typedef struct ChecksumHeader
 {
-    /**Identifier, <see cref="BlockType.ChecksumBlock" /> */
-    uint32_t identifier;
-    /**Length in uint8_ts of the block */
-    uint32_t length;
-    /**How many checksums follow */
-    uint8_t  entries;
+    uint32_t identifier;  ///< Block identifier, must be BlockType::ChecksumBlock.
+    uint32_t length;      ///< Length in bytes of the payload (all entries + their digest data, excluding this header).
+    uint8_t  entries;     ///< Number of checksum entries that follow in the payload.
 } ChecksumHeader;
 
 ==== Field Descriptions
@@ -54,10 +51,8 @@ typedef struct ChecksumHeader
 /**Checksum entry, followed by checksum data itself */
 typedef struct ChecksumEntry
 {
-    /**Checksum algorithm */
-    uint8_t  type;
-    /**Length in uint8_ts of checksum that follows this structure */
-    uint32_t length;
+    uint8_t  type;    ///< Algorithm used (value from \ref ChecksumAlgorithm).
+    uint32_t length;  ///< Length in bytes of the digest that immediately follows this structure.
 } ChecksumEntry;
 
 ==== Field Descriptions

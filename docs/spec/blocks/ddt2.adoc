@@ -6,42 +6,26 @@ It starts with the following header.
 [source,c]
 typedef struct DdtHeader2
 {
-    /**Identifier, <see cref="BlockType.DeDuplicationTable" /> */
-    uint32_t identifier;
-    /**Type of data pointed by this DDT */
-    uint16_t type;
-    /**Compression algorithm used to compress the DDT */
-    uint16_t compression;
-    /**How many levels of subtables are present */
-    uint8_t  levels;
-    /**Which level this table belongs to */
-    uint8_t  tableLevel;
-    /**Pointer to absolute byte offset in file where the previous level table is located */
-    uint64_t previousLevelOffset;
-    /**Negative displacement of LBAs */
-    uint16_t negative;
-    /**Number of blocks in media */
-    uint64_t blocks;
-    /**Positive overflow displacement of LBAs */
-    uint16_t overflow;
-    /**First LBA contained in this table */
-    uint64_t start;
-    /**Block alignment boundaries */
-    uint8_t  blockAlignmentShift;
-    /**Data shift */
-    uint8_t  dataShift;
-    /**Table shift */
-    uint8_t  tableShift;
-    /**Entries in this table */
-    uint64_t entries;
-    /**Compressed length for the DDT */
-    uint64_t cmpLength;
-    /**Uncompressed length for the DDT */
-    uint64_t length;
-    /**CRC64-ECMA of the compressed DDT */
-    uint64_t cmpCrc64;
-    /**CRC64-ECMA of the uncompressed DDT */
-    uint64_t crc64;
+    uint32_t identifier;           ///< Block identifier, must be BlockType::DeDuplicationTable2.
+    uint16_t type;                 ///< Data classification (\ref DataType) for sectors referenced by this table.
+    uint16_t compression;          ///< Compression algorithm for this table body (\ref CompressionType).
+    uint8_t  levels;               ///< Total number of hierarchy levels (root depth); > 0.
+    uint8_t  tableLevel;           ///< Zero-based level index of this table (0 = root, increases downward).
+    uint64_t previousLevelOffset;  ///< Absolute byte offset of the parent (previous) level table; 0 if root.
+    uint16_t negative;             ///< Leading negative LBA count; added to external L to build internal index.
+    uint64_t blocks;               ///< Total internal span (negative + usable + overflow) in logical sectors.
+    uint16_t overflow;  ///< Trailing dumped sectors beyond user area (overflow range), still mapped with entries.
+    uint64_t
+            start;  ///< Base internal index covered by this table (used for secondary tables; currently informational).
+    uint8_t blockAlignmentShift;  ///< 2^blockAlignmentShift = block alignment boundary in bytes.
+    uint8_t dataShift;            ///< 2^dataShift = sectors represented per increment in blockIndex field.
+    uint8_t tableShift;  ///< 2^tableShift = number of logical sectors per primary entry (multi-level only; 0 for
+                         ///< single-level or secondary tables).
+    uint64_t entries;    ///< Number of entries contained in (uncompressed) table payload.
+    uint64_t cmpLength;  ///< Compressed payload size in bytes.
+    uint64_t length;     ///< Uncompressed payload size in bytes.
+    uint64_t cmpCrc64;   ///< CRC64-ECMA of compressed table payload.
+    uint64_t crc64;      ///< CRC64-ECMA of uncompressed table payload.
 } DdtHeader2;
 
 ==== Field Descriptions

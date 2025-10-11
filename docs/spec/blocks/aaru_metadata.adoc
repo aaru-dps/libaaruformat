@@ -8,12 +8,11 @@ The contents of the JSON are preserved in their original form and are not parsed
 [source,c]
 #define METADATA_JSON_MAGIC 0x444D534A
 /**Header for the Aaru Metadata JSON block */
-typedef struct AaruMetadataJsonBlock
+typedef struct AaruMetadataJsonBlockHeader
 {
-    /**Identifier, <see cref="BlockType.AaruMetadataJsonBlock" /> */
-    uint32_t identifier;
-    uint32_t length;
-} AaruMetadataJsonBlock;
+    uint32_t identifier;  ///< Block identifier, must be BlockType::AaruMetadataJsonBlock.
+    uint32_t length;      ///< Length in bytes of the Aaru metadata JSON payload that follows.
+} AaruMetadataJsonBlockHeader;
 
 ==== Field Descriptions
 

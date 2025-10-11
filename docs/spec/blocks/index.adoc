@@ -14,12 +14,9 @@ Multiple index blocks may exist within a file to represent previous states or hi
 /**Header for the index, followed by entries */
 typedef struct IndexHeader
 {
-    /**Identifier, <see cref="BlockType.Index" /> */
-    uint32_t identifier;
-    /**How many entries follow this header */
-    uint16_t entries;
-    /**CRC64-ECMA of the index */
-    uint64_t crc64;
+    uint32_t identifier;  ///< Block identifier (must be BlockType::IndexBlock).
+    uint16_t entries;     ///< Number of \ref IndexEntry records that follow immediately.
+    uint64_t crc64;       ///< CRC64-ECMA of the entries array (legacy byte-swapped for early images).
 } IndexHeader;
 
 ==== Field Descriptions
@@ -53,12 +50,9 @@ typedef struct IndexHeader
 /**Index entry */
 typedef struct IndexEntry
 {
-    /**Type of item pointed by this entry */
-    uint32_t blockType;
-    /**Type of data contained by the block pointed by this entry */
-    uint16_t dataType;
-    /**Offset in file where item is stored */
-    uint64_t offset;
+    uint32_t blockType;  ///< Block identifier of the referenced block (value from \ref BlockType).
+    uint16_t dataType;   ///< Data classification (value from \ref DataType) or unused for untyped blocks.
+    uint64_t offset;     ///< Absolute byte offset in the image where the referenced block header begins.
 } IndexEntry;
 
 ==== Field Descriptions

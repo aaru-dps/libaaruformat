@@ -13,24 +13,15 @@ Every image must include at least one deduplication table of type `UserData`.
 /**Header for a deduplication table. Table follows it */
 typedef struct DdtHeader
 {
-    /**Identifier, <see cref="BlockType.DeDuplicationTable" /> */
-    uint32_t identifier;
-    /**Type of data pointed by this DDT */
-    uint16_t type;
-    /**Compression algorithm used to compress the DDT */
-    uint16_t compression;
-    /**Each entry is ((uint8_t offset in file) &lt;&lt; shift) + (sector offset in block) */
-    uint8_t  shift;
-    /**How many entries are in the table */
-    uint64_t entries;
-    /**Compressed length for the DDT */
-    uint64_t cmpLength;
-    /**Uncompressed length for the DDT */
-    uint64_t length;
-    /**CRC64-ECMA of the compressed DDT */
-    uint64_t cmpCrc64;
-    /**CRC64-ECMA of the uncompressed DDT */
-    uint64_t crc64;
+    uint32_t identifier;   ///< Block identifier, must be BlockType::DeDuplicationTable.
+    uint16_t type;         ///< Data classification (\ref DataType) for sectors referenced by this table.
+    uint16_t compression;  ///< Compression algorithm for the table body (\ref CompressionType).
+    uint8_t  shift;        ///< Left shift applied to per-entry file offset component forming logicalEntryValue.
+    uint64_t entries;      ///< Number of deduplication entries contained in (uncompressed) table.
+    uint64_t cmpLength;    ///< Size in bytes of compressed entries payload.
+    uint64_t length;       ///< Size in bytes of uncompressed entries payload.
+    uint64_t cmpCrc64;     ///< CRC64-ECMA of the compressed payload.
+    uint64_t crc64;        ///< CRC64-ECMA of the uncompressed payload.
 } DdtHeader;
 
 ==== Field Descriptions
