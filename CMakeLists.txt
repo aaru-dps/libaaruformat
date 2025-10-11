@@ -16,6 +16,12 @@ cmake_minimum_required(VERSION 3.13)
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, see <http://www.gnu.org/licenses/>.
 
+if(APPLE)
+  if("${CMAKE_OSX_ARCHITECTURES}" STREQUAL "")
+    set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "Build architectures for Mac OS X" FORCE)
+  endif()
+endif()
+
 # Integrate vcpkg toolchain if available but not explicitly provided.
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   if(DEFINED ENV{VCPKG_ROOT} AND EXISTS "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
@@ -29,39 +35,41 @@ if(DEFINED CMAKE_TOOLCHAIN_FILE AND EXISTS "${CMAKE_TOOLCHAIN_FILE}")
   include("${CMAKE_TOOLCHAIN_FILE}")
 endif()
 
-IF(APPLE)
-  IF("${CMAKE_OSX_ARCHITECTURES}" STREQUAL "")
-    SET(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "Build architectures for Mac OS X" FORCE)
-  ENDIF()
-ENDIF(APPLE)
-
 project(libaaruformat C)
 
 # Option to enable slog logging (disabled by default)
 option(USE_SLOG "Enable slog logging" OFF)
 
-add_compile_definitions(__STDC_FORMAT_MACROS=1)
+# Set C standard
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
 
+# Enable position independent code by default
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+# MSVC ARM specific override
 if("${CMAKE_C_COMPILER_ID}" MATCHES "MSVC" AND "${CMAKE_C_COMPILER_ARCHITECTURE_ID}" MATCHES "ARMV7")
   set(CMAKE_C_STANDARD 11)
-else()
-  set(CMAKE_C_STANDARD 99)
 endif()
 
+# Global compile definitions
+add_compile_definitions(__STDC_FORMAT_MACROS=1)
+
+# MinGW specific configuration
 if("${CMAKE_C_PLATFORM_ID}" MATCHES "MinGW")
   if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64" OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm")
     set(WIN32 TRUE)
   endif()
-
   add_link_options(-static-libgcc)
 endif()
 
-message("Detected system processor: ${CMAKE_SYSTEM_PROCESSOR}")
-message("Detected vs platform name: ${CMAKE_C_COMPILER_ARCHITECTURE_ID}")
-message("Detected compiler: ${CMAKE_C_COMPILER_ID}")
-message("Detected build type: ${CMAKE_BUILD_TYPE}")
-message("Detected platform: ${CMAKE_C_PLATFORM_ID}")
-message("Size of (void*): ${CMAKE_SIZEOF_VOID_P}")
+message(STATUS "Detected system processor: ${CMAKE_SYSTEM_PROCESSOR}")
+message(STATUS "Detected vs platform name: ${CMAKE_C_COMPILER_ARCHITECTURE_ID}")
+message(STATUS "Detected compiler: ${CMAKE_C_COMPILER_ID}")
+message(STATUS "Detected build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "Detected platform: ${CMAKE_C_PLATFORM_ID}")
+message(STATUS "Size of (void*): ${CMAKE_SIZEOF_VOID_P}")
 
 # Check if target is 64-bit
 if("${CMAKE_SIZEOF_VOID_P}" MATCHES "8"
@@ -188,7 +196,18 @@ add_library(aaruformat SHARED
             include/aaruformat/structs/tape.h
             src/blocks/tape.c)
 
-include_directories(include include/aaruformat 3rdparty/uthash/include 3rdparty/uthash/src)
+# Set up include directories for the target
+target_include_directories(aaruformat
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/aaruformat>
+    $<INSTALL_INTERFACE:include>
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/uthash/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/uthash/src
+)
+
+# Load third-party dependencies
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake-modules")
 
 include(3rdparty/flac.cmake)
 include(3rdparty/lzma.cmake)
@@ -215,15 +234,16 @@ macro(TARGET_LINK_LIBRARIES_WHOLE_ARCHIVE target)
     endforeach()
   elseif(APPLE)
     foreach(lib IN LISTS ARGN)
-      target_link_libraries(${target} "LINKER:--whole-archive" ${lib} "LINKER:--no-whole-archive")
+      target_link_libraries(${target} -Wl,-force_load ${lib})
     endforeach()
   elseif(UNIX)
     foreach(lib IN LISTS ARGN)
-      target_link_libraries(${target} "LINKER:--whole-archive" ${lib} "LINKER:--no-whole-archive")
+      target_link_libraries(${target} -Wl,--whole-archive ${lib} -Wl,--no-whole-archive)
     endforeach()
   endif()
 endmacro()
 
+# MinGW/ARM specific: disable PIC
 if(NOT "${CMAKE_C_PLATFORM_ID}" MATCHES "MinGW"
    OR (NOT ${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm"
        AND NOT ${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64"))
@@ -231,10 +251,6 @@ if(NOT "${CMAKE_C_PLATFORM_ID}" MATCHES "MinGW"
 else()
   set_property(TARGET aaruformat PROPERTY POSITION_INDEPENDENT_CODE FALSE)
 endif()
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake-modules")
-
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Add slog submodule
 if(POLICY CMP0000)
@@ -246,28 +262,25 @@ if(USE_SLOG)
   add_subdirectory(3rdparty/slog)
 
   # Include slog headers
-  include_directories(aaruformat 3rdparty/slog/src)
+  target_include_directories(aaruformat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/slog/src)
 
   # Enable TRACE and slog output
-  add_compile_definitions(aaruformat ENABLE_TRACE ENABLE_FATAL USE_SLOG)
+  target_compile_definitions(aaruformat PRIVATE ENABLE_TRACE ENABLE_FATAL USE_SLOG)
+
+  # Link slog
+  target_link_libraries(aaruformat PRIVATE slog)
 
   message(STATUS "slog logging enabled")
 else()
   message(STATUS "slog logging disabled (enable with -DUSE_SLOG=ON)")
 endif()
 
-include_directories(include 3rdparty/uthash/src)
-
+# Check for math library
 include(CheckLibraryExists)
 
 check_library_exists(m log "" HAVE_LIB_M)
 if(HAVE_LIB_M)
   TARGET_LINK_LIBRARIES_WHOLE_ARCHIVE(aaruformat m)
-endif()
-
-# Link slog conditionally
-if(USE_SLOG)
-  target_link_libraries(aaruformat slog)
 endif()
 
 # Find Doxygen for documentation generation
