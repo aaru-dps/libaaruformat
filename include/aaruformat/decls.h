@@ -204,6 +204,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_tape_partition(const void *context, uint
                                                        uint64_t *ending_block);
 AARU_EXPORT int32_t AARU_CALL aaruf_set_tape_partition(void *context, uint8_t partition, uint64_t starting_block,
                                                        uint64_t ending_block);
+AARU_EXPORT int32_t AARU_CALL aaruf_get_all_tape_files(const void *context, uint8_t *buffer, size_t *length);
+AARU_EXPORT int32_t AARU_CALL aaruf_get_all_tape_partitions(const void *context, uint8_t *buffer, size_t *length);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_get_dumphw(void *context, uint8_t *buffer, size_t *length);
 AARU_EXPORT int32_t AARU_CALL aaruf_set_dumphw(void *context, uint8_t *data, size_t length);

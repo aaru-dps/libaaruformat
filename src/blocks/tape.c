@@ -1263,3 +1263,210 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_tape_partition(void *context, const uint
           ending_block);
     return AARUF_STATUS_OK;
 }
+
+/**
+ * @brief Retrieves all tape file entries from the image.
+ *
+ * Extracts the complete set of tape file metadata entries from an Aaru tape image, returning
+ * an array of TapeFileEntry structures. Tape files represent logical file divisions on sequential
+ * access media (magnetic tapes) where data is organized into numbered files within numbered partitions.
+ * Each file entry defines a contiguous range of tape blocks (FirstBlock to LastBlock inclusive) that
+ * comprise one logical file unit on the tape medium.
+ *
+ * Tape file organization is hierarchical:
+ * - **Partition**: Physical or logical division of the tape (0-255)
+ * - **File**: Numbered file within a partition (0-4,294,967,295)
+ * - **Block Range**: Contiguous sequence of tape blocks containing the file data
+ *
+ * This function is essential for applications that need to:
+ * - Enumerate all logical files stored on a tape image
+ * - Build file system catalogs or directory structures for tape media
+ * - Implement tape navigation and seeking operations
+ * - Extract individual files from multi-file tape archives
+ * - Verify tape image completeness and structure
+ * - Generate tape content manifests for archival documentation
+ *
+ * The function supports a two-call pattern for buffer size determination:
+ * 1. First call with NULL buffer or insufficient length returns AARUF_ERROR_BUFFER_TOO_SMALL
+ *    and sets *length to the required size (entry_count × sizeof(TapeFileEntry))
+ * 2. Second call with properly sized buffer retrieves all file entries
+ *
+ * Alternatively, if the caller knows or pre-allocates sufficient buffer space, a single call
+ * will succeed and populate the buffer with all tape file entries.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, opened tape image context).
+ * @param buffer Pointer to a buffer that will receive the array of TapeFileEntry structures.
+ *               May be NULL to query the required buffer size without retrieving data.
+ * @param length Pointer to a size_t that serves dual purpose:
+ *               - On input: size of the provided buffer in bytes (ignored if buffer is NULL)
+ *               - On output: actual size required/used for all entries in bytes
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully retrieved all tape file entries.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid.
+ * @retval AARUF_ERROR_TAPE_FILE_NOT_FOUND (-19) No tape file metadata exists.
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-12) The provided buffer is insufficient.
+ *
+ * @see aaruf_get_tape_file() to retrieve a specific file's block range
+ * @see aaruf_set_tape_file() to define or update a tape file entry
+ * @see aaruf_get_all_tape_partitions() to retrieve partition boundaries
+ */
+AARU_EXPORT int32_t AARU_CALL aaruf_get_all_tape_files(const void *context, uint8_t *buffer, size_t *length)
+{
+    TRACE("Entering aaruf_get_all_tape_files(%p, %p, %zu)", context, buffer, (length ? *length : 0));
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+        TRACE("Exiting aaruf_get_all_tape_files() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+        TRACE("Exiting aaruf_get_all_tape_files() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->tape_files == NULL)
+    {
+        FATAL("Image contains no tape files");
+        TRACE("Exiting aaruf_get_all_tape_files() = AARUF_ERROR_TAPE_FILE_NOT_FOUND");
+        return AARUF_ERROR_TAPE_FILE_NOT_FOUND;
+    }
+
+    // Iterate all tape files to count how many do we have
+    const size_t count         = HASH_COUNT(ctx->tape_files);
+    const size_t required_size = count * sizeof(TapeFileEntry);
+
+    if(buffer == NULL || length == NULL || *length < required_size)
+    {
+        if(length) *length = required_size;
+        TRACE("Buffer too small for tape files, required %zu bytes", required_size);
+        TRACE("Exiting aaruf_get_all_tape_files() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    size_t                   index = 0;
+    const tapeFileHashEntry *entry;
+    const tapeFileHashEntry *tmp;
+    HASH_ITER(hh, ctx->tape_files, entry, tmp)
+    {
+        if(index < count)
+        {
+            memcpy(&((TapeFileEntry *)buffer)[index], &entry->fileEntry, sizeof(TapeFileEntry));
+            index++;
+        }
+    }
+    *length = required_size;
+
+    TRACE("Exiting aaruf_get_all_tape_files(%p, %p, %zu) = AARUF_STATUS_OK", context, buffer, *length);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Retrieves all tape partition entries from the image.
+ *
+ * Extracts the complete set of tape partition metadata entries from an Aaru tape image, returning
+ * an array of TapePartitionEntry structures. Tape partitions represent physical or logical divisions
+ * of sequential access media (magnetic tapes) that segment the tape into independent data regions.
+ * Each partition entry defines a contiguous range of tape blocks (FirstBlock to LastBlock inclusive)
+ * that comprise one partition on the tape medium.
+ *
+ * Tape partitions enable:
+ * - **Multi-partition tapes**: Modern tape formats (LTO-5+, SDLT) support multiple partitions
+ * - **Data organization**: Separating metadata, indexes, and data into distinct partitions
+ * - **Fast access**: Partition switching is faster than sequential seeking across the entire tape
+ * - **Logical separation**: Isolating different data sets or file systems on the same tape
+ *
+ * This function is essential for applications that need to:
+ * - Enumerate all partitions on a multi-partition tape image
+ * - Determine partition boundaries and sizes for navigation
+ * - Implement partition-aware file system drivers or extraction tools
+ * - Validate tape structure and partition layout integrity
+ * - Generate tape structure documentation for archival purposes
+ *
+ * The function supports a two-call pattern for buffer size determination:
+ * 1. First call with NULL buffer or insufficient length returns AARUF_ERROR_BUFFER_TOO_SMALL
+ *    and sets *length to the required size (partition_count × sizeof(TapePartitionEntry))
+ * 2. Second call with properly sized buffer retrieves all partition entries
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, opened tape image context).
+ * @param buffer Pointer to a buffer that will receive the array of TapePartitionEntry structures.
+ *               May be NULL to query the required buffer size without retrieving data.
+ * @param length Pointer to a size_t that serves dual purpose:
+ *               - On input: size of the provided buffer in bytes (ignored if buffer is NULL)
+ *               - On output: actual size required/used for all entries in bytes
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully retrieved all tape partition entries.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid.
+ * @retval AARUF_ERROR_TAPE_PARTITION_NOT_FOUND (-20) No tape partition metadata exists.
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-12) The provided buffer is insufficient.
+ *
+ * @see aaruf_get_tape_partition() to retrieve a specific partition's block range
+ * @see aaruf_set_tape_partition() to define or update a tape partition entry
+ * @see aaruf_get_all_tape_files() to retrieve all tape file entries
+ */
+AARU_EXPORT int32_t AARU_CALL aaruf_get_all_tape_partitions(const void *context, uint8_t *buffer, size_t *length)
+{
+    TRACE("Entering aaruf_get_all_tape_partitions(%p, %p, %zu)", context, buffer, (length ? *length : 0));
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+        TRACE("Exiting aaruf_get_all_tape_partitions() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+        TRACE("Exiting aaruf_get_all_tape_partitions() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->tape_partitions == NULL)
+    {
+        FATAL("Image contains no tape partitions");
+        TRACE("Exiting aaruf_get_all_tape_partitions() = AARUF_ERROR_TAPE_PARTITION_NOT_FOUND");
+        return AARUF_ERROR_TAPE_PARTITION_NOT_FOUND;
+    }
+
+    // Iterate all tape partitions to count how many do we have
+    const size_t count         = HASH_COUNT(ctx->tape_partitions);
+    const size_t required_size = count * sizeof(TapePartitionEntry);
+
+    if(buffer == NULL || length == NULL || *length < required_size)
+    {
+        if(length) *length = required_size;
+        TRACE("Buffer too small for tape partitions, required %zu bytes", required_size);
+        TRACE("Exiting aaruf_get_all_tape_partitions() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    size_t                        index = 0;
+    const TapePartitionHashEntry *entry;
+    const TapePartitionHashEntry *tmp;
+    HASH_ITER(hh, ctx->tape_partitions, entry, tmp)
+    {
+        if(index < count)
+        {
+            memcpy(&((TapePartitionEntry *)buffer)[index], &entry->partitionEntry, sizeof(TapePartitionEntry));
+            index++;
+        }
+    }
+    *length = required_size;
+
+    TRACE("Exiting aaruf_get_all_tape_partitions(%p, %p, %zu) = AARUF_STATUS_OK", context, buffer, *length);
+    return AARUF_STATUS_OK;
+}
