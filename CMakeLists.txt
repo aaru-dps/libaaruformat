@@ -46,12 +46,11 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   if(DEFINED ENV{VCPKG_ROOT} AND EXISTS "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
     set(CMAKE_TOOLCHAIN_FILE
         "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
-        CACHE STRING "Vcpkg toolchain file" FORCE)
+        CACHE STRING "Vcpkg toolchain file")
+    message(STATUS "vcpkg toolchain configured: $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
   endif()
-endif()
-
-if(DEFINED CMAKE_TOOLCHAIN_FILE AND EXISTS "${CMAKE_TOOLCHAIN_FILE}")
-  include("${CMAKE_TOOLCHAIN_FILE}")
+elseif(DEFINED CMAKE_TOOLCHAIN_FILE AND CMAKE_TOOLCHAIN_FILE MATCHES "vcpkg")
+  message(STATUS "vcpkg toolchain already set: ${CMAKE_TOOLCHAIN_FILE}")
 endif()
 
 project(libaaruformat C)
