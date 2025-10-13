@@ -41,6 +41,17 @@ target_link_libraries(aaruformattool
         ICU::uc
 )
 
+# On Linux, enable GNU/POSIX feature test macros so functions like strerror_r
+# and cfmakeraw are declared by system headers. We limit this to UNIX and not
+# Apple (macOS provides these declarations differently).
+if(UNIX AND NOT APPLE)
+    target_compile_definitions(aaruformattool PRIVATE
+                               _GNU_SOURCE
+                               _DEFAULT_SOURCE
+                               _XOPEN_SOURCE=700)
+endif()
+
+
 # On macOS/iOS, explicitly link the C++ standard library for ICU dependencies
 if(APPLE)
     target_link_libraries(aaruformattool PRIVATE "-lc++")
