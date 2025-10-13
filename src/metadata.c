@@ -3672,3 +3672,1246 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_image_info(const void *context, ImageInf
     TRACE("Exiting aaruf_get_image_info() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
 }
+
+/**
+ * @brief Clears the media sequence information from the image metadata.
+ *
+ * Removes the media sequence and last media sequence fields from the AaruFormat image's
+ * metadata block, effectively removing any indication that this media is part of a
+ * multi-volume set. Both the current sequence number and the total sequence count are
+ * reset to zero. If this operation results in all metadata fields being empty, the
+ * entire metadata block is deinitialized (identifier set to 0) to avoid writing an
+ * empty metadata block to the image file.
+ *
+ * This function is useful when repurposing an image that was originally part of a
+ * multi-disc set but is now being treated as standalone media, or when correcting
+ * metadata that was set incorrectly.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, write-enabled image context).
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully cleared media sequence information. This is returned when:
+ *         - The context is valid and properly initialized
+ *         - The context is opened in write mode (ctx->isWriting is true)
+ *         - Either the metadata block was not initialized (early exit, nothing to clear)
+ *         - Or the mediaSequence and lastMediaSequence fields are set to 0
+ *         - If all metadata fields are now empty, the metadata block identifier is cleared
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
+ *         - The context was not properly initialized by aaruf_create()
+ *
+ * @retval AARUF_READ_ONLY (-13) The context is not opened for writing. This occurs when:
+ *         - The image was opened with aaruf_open() instead of aaruf_create()
+ *         - The context's isWriting flag is false
+ *         - Attempting to modify a read-only image
+ *
+ * @note Metadata Block State Management:
+ *       - If the metadata block header is not initialized (identifier != MetadataBlock),
+ *         the function returns successfully without any action (nothing to clear)
+ *       - After clearing, if all metadata fields are empty, the metadata block header
+ *         identifier is set to 0, preventing an empty block from being written
+ *       - This automatic cleanup ensures efficient storage and avoids unnecessary blocks
+ *
+ * @note Sequence Field Reset:
+ *       - Both mediaSequence and lastMediaSequence are set to 0
+ *       - Zero values typically indicate "not part of a sequence" or "unknown sequence"
+ *       - The function does not differentiate between never-set and explicitly-cleared
+ *
+ * @note Use Cases:
+ *       - Correcting incorrectly set sequence metadata
+ *       - Converting multi-volume images to standalone format
+ *       - Removing obsolete sequence information during image repurposing
+ *       - Cleaning up test or development images
+ *
+ * @note Relationship to Other Metadata:
+ *       - This function only affects sequence fields; other metadata is preserved
+ *       - Use aaruf_set_media_sequence() to set new sequence values after clearing
+ *       - If reconstructing multi-volume metadata, set sequence before other fields
+ *
+ * @warning The metadata changes are only written to the image file during aaruf_close().
+ *          Changes made by this function are not immediately persisted to disk.
+ *
+ * @warning After clearing, the sequence information is permanently lost unless:
+ *          - The image file is not closed (context remains in memory)
+ *          - A backup of the original image exists
+ *          - The information is reconstructed from external sources
+ *
+ * @see aaruf_set_media_sequence() for setting sequence information.
+ */
+AARU_EXPORT int32_t AARU_CALL aaruf_clear_media_sequence(void *context)
+{
+    TRACE("Entering aaruf_clear_media_sequence(%p)", context);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_media_sequence() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_media_sequence() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->is_writing)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_clear_media_sequence() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    if(ctx->metadata_block_header.identifier != MetadataBlock)
+    {
+        TRACE("Exiting aaruf_clear_media_sequence() = AARUF_STATUS_OK");
+        return AARUF_STATUS_OK;
+    }
+
+    ctx->metadata_block_header.mediaSequence     = 0;
+    ctx->metadata_block_header.lastMediaSequence = 0;
+
+    // Check if all metadata is clear
+    if(ctx->metadata_block_header.creatorLength == 0 && ctx->metadata_block_header.commentsLength == 0 &&
+       ctx->metadata_block_header.mediaTitleLength == 0 && ctx->metadata_block_header.mediaManufacturerLength == 0 &&
+       ctx->metadata_block_header.mediaModelLength == 0 && ctx->metadata_block_header.mediaSerialNumberLength == 0 &&
+       ctx->metadata_block_header.mediaBarcodeLength == 0 && ctx->metadata_block_header.mediaPartNumberLength == 0 &&
+       ctx->metadata_block_header.driveModelLength == 0 && ctx->metadata_block_header.driveManufacturerLength == 0 &&
+       ctx->metadata_block_header.driveSerialNumberLength == 0 &&
+       ctx->metadata_block_header.driveFirmwareRevisionLength == 0)
+        ctx->metadata_block_header.identifier = 0;
+
+    TRACE("Exiting aaruf_clear_media_sequence() = AARUF_STATUS_OK");
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Clears the creator (person/operator) information from the image metadata.
+ *
+ * Removes the creator name string from the AaruFormat image's metadata block, freeing
+ * the associated memory and resetting the length field to zero. This effectively removes
+ * any record of who created the image. If this operation results in all metadata fields
+ * being empty, the entire metadata block is deinitialized to avoid writing an empty
+ * metadata block to the image file.
+ *
+ * This function is useful when anonymizing images for distribution, removing personally
+ * identifiable information for privacy compliance (e.g., GDPR), or correcting metadata
+ * that was set incorrectly during image creation.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, write-enabled image context).
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully cleared creator information. This is returned when:
+ *         - The context is valid and properly initialized
+ *         - The context is opened in write mode (ctx->isWriting is true)
+ *         - Either the metadata block was not initialized (early exit, nothing to clear)
+ *         - Or the creator string is freed (if it existed) and the pointer set to NULL
+ *         - The creatorLength field in the metadata block header is set to 0
+ *         - If all metadata fields are now empty, the metadata block identifier is cleared
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
+ *         - The context was not properly initialized by aaruf_create()
+ *
+ * @retval AARUF_READ_ONLY (-13) The context is not opened for writing. This occurs when:
+ *         - The image was opened with aaruf_open() instead of aaruf_create()
+ *         - The context's isWriting flag is false
+ *         - Attempting to modify a read-only image
+ *
+ * @note Memory Management:
+ *       - If ctx->creator is not NULL, the allocated memory is freed before clearing
+ *       - The ctx->creator pointer is set to NULL after freeing
+ *       - Safe to call even if creator was never set (NULL check protects against errors)
+ *       - No memory leaks occur when clearing previously set creator information
+ *
+ * @note Privacy and Anonymization:
+ *       - Removes personally identifiable information from image metadata
+ *       - Important for GDPR compliance and privacy protection
+ *       - Consider clearing creator before distributing images publicly
+ *       - May be required by institutional privacy policies
+ *
+ * @note Metadata Block State Management:
+ *       - If the metadata block header is not initialized, function returns success immediately
+ *       - After clearing, checks if all metadata fields are empty
+ *       - If all fields empty, sets metadata block identifier to 0 (deinitialized)
+ *       - Prevents writing empty metadata blocks, saving storage space
+ *
+ * @note Use Cases:
+ *       - Anonymizing images for public distribution or research datasets
+ *       - Compliance with data protection regulations (GDPR, CCPA, etc.)
+ *       - Removing incorrect or outdated operator information
+ *       - Preparing images for archival with institutional rather than personal attribution
+ *       - Sanitizing test or development images before production use
+ *
+ * @warning The metadata changes are only written to the image file during aaruf_close().
+ *          Changes made by this function are not immediately persisted to disk.
+ *
+ * @warning After clearing, the creator information is permanently lost unless:
+ *          - The image file is not closed (context remains in memory)
+ *          - A backup of the original image exists
+ *          - The information is reconstructed from external documentation
+ *
+ * @warning Clearing creator may affect:
+ *          - Forensic chain of custody requirements
+ *          - Provenance documentation for archival purposes
+ *          - Accountability and quality assurance workflows
+ *          - Consider legal and institutional requirements before clearing
+ *
+ * @see aaruf_set_creator() for setting creator information.
+ */
+AARU_EXPORT int32_t AARU_CALL aaruf_clear_creator(void *context)
+{
+    TRACE("Entering aaruf_clear_creator(%p)", context);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_creator() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_creator() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->is_writing)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_clear_creator() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    if(ctx->metadata_block_header.identifier != MetadataBlock)
+    {
+        TRACE("Exiting aaruf_clear_creator() = AARUF_STATUS_OK");
+        return AARUF_STATUS_OK;
+    }
+
+    if(ctx->creator != NULL) free(ctx->creator);
+
+    ctx->creator                             = NULL;
+    ctx->metadata_block_header.creatorLength = 0;
+
+    // Check if all metadata is clear
+    if(ctx->metadata_block_header.mediaSequence == 0 && ctx->metadata_block_header.lastMediaSequence == 0 &&
+       ctx->metadata_block_header.commentsLength == 0 && ctx->metadata_block_header.mediaTitleLength == 0 &&
+       ctx->metadata_block_header.mediaManufacturerLength == 0 && ctx->metadata_block_header.mediaModelLength == 0 &&
+       ctx->metadata_block_header.mediaSerialNumberLength == 0 && ctx->metadata_block_header.mediaBarcodeLength == 0 &&
+       ctx->metadata_block_header.mediaPartNumberLength == 0 && ctx->metadata_block_header.driveModelLength == 0 &&
+       ctx->metadata_block_header.driveManufacturerLength == 0 &&
+       ctx->metadata_block_header.driveSerialNumberLength == 0 &&
+       ctx->metadata_block_header.driveFirmwareRevisionLength == 0)
+        ctx->metadata_block_header.identifier = 0;
+
+    TRACE("Exiting aaruf_clear_creator() = AARUF_STATUS_OK");
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Clears user comments or notes from the image metadata.
+ *
+ * Removes the comments string from the AaruFormat image's metadata block, freeing the
+ * associated memory and resetting the length field to zero. This effectively removes
+ * any user-provided annotations, notes, or descriptions associated with the image.
+ * If this operation results in all metadata fields being empty, the entire metadata
+ * block is deinitialized to avoid writing an empty metadata block to the image file.
+ *
+ * This function is useful when removing outdated notes, clearing test comments before
+ * production deployment, sanitizing images for distribution, or resetting an image to
+ * a clean metadata state for repurposing.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, write-enabled image context).
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully cleared comments. This is returned when:
+ *         - The context is valid and properly initialized
+ *         - The context is opened in write mode (ctx->isWriting is true)
+ *         - Either the metadata block was not initialized (early exit, nothing to clear)
+ *         - Or the comments string is freed (if it existed) and the pointer set to NULL
+ *         - The commentsLength field in the metadata block header is set to 0
+ *         - If all metadata fields are now empty, the metadata block identifier is cleared
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
+ *         - The context was not properly initialized by aaruf_create()
+ *
+ * @retval AARUF_READ_ONLY (-13) The context is not opened for writing. This occurs when:
+ *         - The image was opened with aaruf_open() instead of aaruf_create()
+ *         - The context's isWriting flag is false
+ *         - Attempting to modify a read-only image
+ *
+ * @note Memory Management:
+ *       - If ctx->comments is not NULL, the allocated memory is freed before clearing
+ *       - The ctx->comments pointer is set to NULL after freeing
+ *       - Safe to call even if comments were never set (NULL check protects against errors)
+ *       - No memory leaks occur when clearing previously set comments
+ *
+ * @note Use Cases:
+ *       - Removing temporary or development notes before production deployment
+ *       - Clearing outdated comments that no longer apply
+ *       - Sanitizing images for distribution by removing internal notes
+ *       - Resetting images for repurposing with new documentation
+ *       - Removing potentially sensitive information from comments
+ *       - Preparing images for archival with standardized, minimal metadata
+ *
+ * @note Metadata Block State Management:
+ *       - If the metadata block header is not initialized, function returns success immediately
+ *       - After clearing, checks if all metadata fields are empty
+ *       - If all fields empty, sets metadata block identifier to 0 (deinitialized)
+ *       - Prevents writing empty metadata blocks, optimizing storage efficiency
+ *
+ * @note Information Loss Considerations:
+ *       - Comments may contain valuable provenance or preservation information
+ *       - Consider archiving comments externally before clearing if they contain important data
+ *       - Comments might document imaging conditions, errors encountered, or quality notes
+ *       - Workflow history and processing information may be lost
+ *
+ * @warning The metadata changes are only written to the image file during aaruf_close().
+ *          Changes made by this function are not immediately persisted to disk.
+ *
+ * @warning After clearing, the comments are permanently lost unless:
+ *          - The image file is not closed (context remains in memory)
+ *          - A backup of the original image exists
+ *          - The comments are documented in external metadata systems
+ *
+ * @see aaruf_set_comments() for setting comment information.
+ */
+AARU_EXPORT int32_t AARU_CALL aaruf_clear_comments(void *context)
+{
+    TRACE("Entering aaruf_clear_comments(%p)", context);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_comments() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_comments() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->is_writing)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_clear_comments() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    if(ctx->metadata_block_header.identifier != MetadataBlock)
+    {
+        TRACE("Exiting aaruf_clear_comments() = AARUF_STATUS_OK");
+        return AARUF_STATUS_OK;
+    }
+
+    if(ctx->comments != NULL) free(ctx->comments);
+
+    ctx->comments                             = NULL;
+    ctx->metadata_block_header.commentsLength = 0;
+
+    // Check if all metadata is clear
+    if(ctx->metadata_block_header.mediaSequence == 0 && ctx->metadata_block_header.lastMediaSequence == 0 &&
+       ctx->metadata_block_header.creatorLength == 0 && ctx->metadata_block_header.mediaTitleLength == 0 &&
+       ctx->metadata_block_header.mediaManufacturerLength == 0 && ctx->metadata_block_header.mediaModelLength == 0 &&
+       ctx->metadata_block_header.mediaSerialNumberLength == 0 && ctx->metadata_block_header.mediaBarcodeLength == 0 &&
+       ctx->metadata_block_header.mediaPartNumberLength == 0 && ctx->metadata_block_header.driveModelLength == 0 &&
+       ctx->metadata_block_header.driveManufacturerLength == 0 &&
+       ctx->metadata_block_header.driveSerialNumberLength == 0 &&
+       ctx->metadata_block_header.driveFirmwareRevisionLength == 0)
+        ctx->metadata_block_header.identifier = 0;
+
+    TRACE("Exiting aaruf_clear_comments() = AARUF_STATUS_OK");
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Clears the media title or label from the image metadata.
+ *
+ * Removes the media title string from the AaruFormat image's metadata block, freeing
+ * the associated memory and resetting the length field to zero. This effectively removes
+ * any record of the title, label, or name that was printed or written on the physical
+ * storage media. If this operation results in all metadata fields being empty, the
+ * entire metadata block is deinitialized.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, write-enabled image context).
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully cleared media title.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid.
+ * @retval AARUF_READ_ONLY (-13) The context is not opened for writing.
+ *
+ * @note Memory Management: Frees ctx->media_title if not NULL and sets pointer to NULL.
+ * @note Metadata Block: If all fields become empty, the metadata block is deinitialized.
+ * @note Use Cases: Removing physical label information, anonymizing media, or correcting errors.
+ *
+ * @warning Changes are only persisted during aaruf_close(). Lost unless backed up or not closed.
+ *
+ * @see aaruf_set_media_title() for setting media title information.
+ */
+AARU_EXPORT int32_t AARU_CALL aaruf_clear_media_title(void *context)
+{
+    TRACE("Entering aaruf_clear_media_title(%p)", context);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_media_title() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_media_title() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->is_writing)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_clear_media_title() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    if(ctx->metadata_block_header.identifier != MetadataBlock)
+    {
+        TRACE("Exiting aaruf_clear_media_title() = AARUF_STATUS_OK");
+        return AARUF_STATUS_OK;
+    }
+
+    if(ctx->media_title != NULL) free(ctx->media_title);
+
+    ctx->media_title                            = NULL;
+    ctx->metadata_block_header.mediaTitleLength = 0;
+
+    // Check if all metadata is clear
+    if(ctx->metadata_block_header.mediaSequence == 0 && ctx->metadata_block_header.lastMediaSequence == 0 &&
+       ctx->metadata_block_header.creatorLength == 0 && ctx->metadata_block_header.commentsLength == 0 &&
+       ctx->metadata_block_header.mediaManufacturerLength == 0 && ctx->metadata_block_header.mediaModelLength == 0 &&
+       ctx->metadata_block_header.mediaSerialNumberLength == 0 && ctx->metadata_block_header.mediaBarcodeLength == 0 &&
+       ctx->metadata_block_header.mediaPartNumberLength == 0 && ctx->metadata_block_header.driveModelLength == 0 &&
+       ctx->metadata_block_header.driveManufacturerLength == 0 &&
+       ctx->metadata_block_header.driveSerialNumberLength == 0 &&
+       ctx->metadata_block_header.driveFirmwareRevisionLength == 0)
+        ctx->metadata_block_header.identifier = 0;
+
+    TRACE("Exiting aaruf_clear_media_title() = AARUF_STATUS_OK");
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Clears the media manufacturer information from the image metadata.
+ *
+ * Removes the media manufacturer name string from the AaruFormat image's metadata block,
+ * freeing the associated memory and resetting the length field to zero. This removes
+ * any record of the company that manufactured the physical storage media. If this
+ * operation results in all metadata fields being empty, the entire metadata block is
+ * deinitialized.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, write-enabled image context).
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully cleared media manufacturer.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid.
+ * @retval AARUF_READ_ONLY (-13) The context is not opened for writing.
+ *
+ * @note Memory Management: Frees ctx->media_manufacturer if not NULL and sets pointer to NULL.
+ * @note Preservation Impact: Removes valuable information about media quality and lifespan characteristics.
+ * @note Use Cases: Anonymizing media source, removing commercial information, or correcting errors.
+ *
+ * @warning Loss of manufacturer information may affect preservation planning and media assessment.
+ * @warning Changes are only persisted during aaruf_close().
+ *
+ * @see aaruf_set_media_manufacturer() for setting media manufacturer information.
+ */
+AARU_EXPORT int32_t AARU_CALL aaruf_clear_media_manufacturer(void *context)
+{
+    TRACE("Entering aaruf_clear_media_manufacturer(%p)", context);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_media_manufacturer() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_media_manufacturer() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->is_writing)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_clear_media_manufacturer() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    if(ctx->metadata_block_header.identifier != MetadataBlock)
+    {
+        TRACE("Exiting aaruf_clear_media_manufacturer() = AARUF_STATUS_OK");
+        return AARUF_STATUS_OK;
+    }
+
+    if(ctx->media_manufacturer != NULL) free(ctx->media_manufacturer);
+
+    ctx->media_manufacturer                            = NULL;
+    ctx->metadata_block_header.mediaManufacturerLength = 0;
+
+    // Check if all metadata is clear
+    if(ctx->metadata_block_header.mediaSequence == 0 && ctx->metadata_block_header.lastMediaSequence == 0 &&
+       ctx->metadata_block_header.creatorLength == 0 && ctx->metadata_block_header.commentsLength == 0 &&
+       ctx->metadata_block_header.mediaTitleLength == 0 && ctx->metadata_block_header.mediaModelLength == 0 &&
+       ctx->metadata_block_header.mediaSerialNumberLength == 0 && ctx->metadata_block_header.mediaBarcodeLength == 0 &&
+       ctx->metadata_block_header.mediaPartNumberLength == 0 && ctx->metadata_block_header.driveModelLength == 0 &&
+       ctx->metadata_block_header.driveManufacturerLength == 0 &&
+       ctx->metadata_block_header.driveSerialNumberLength == 0 &&
+       ctx->metadata_block_header.driveFirmwareRevisionLength == 0)
+        ctx->metadata_block_header.identifier = 0;
+
+    TRACE("Exiting aaruf_clear_media_manufacturer() = AARUF_STATUS_OK");
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Clears the media model or product designation from the image metadata.
+ *
+ * Removes the media model string from the AaruFormat image's metadata block, freeing
+ * the associated memory and resetting the length field to zero. This removes any record
+ * of the specific model, product line, or type designation of the physical storage media.
+ * If this operation results in all metadata fields being empty, the entire metadata
+ * block is deinitialized.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, write-enabled image context).
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully cleared media model.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid.
+ * @retval AARUF_READ_ONLY (-13) The context is not opened for writing.
+ *
+ * @note Memory Management: Frees ctx->media_model if not NULL and sets pointer to NULL.
+ * @note Information Loss: Removes specific capacity, speed, and compatibility information.
+ * @note Use Cases: Removing product-specific details, generalizing metadata, or correcting errors.
+ *
+ * @warning Loss of model information may affect media compatibility assessments.
+ * @warning Changes are only persisted during aaruf_close().
+ *
+ * @see aaruf_set_media_model() for setting media model information.
+ */
+AARU_EXPORT int32_t AARU_CALL aaruf_clear_media_model(void *context)
+{
+    TRACE("Entering aaruf_clear_media_model(%p)", context);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_media_model() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_media_model() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->is_writing)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_clear_media_model() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    if(ctx->metadata_block_header.identifier != MetadataBlock)
+    {
+        TRACE("Exiting aaruf_clear_media_model() = AARUF_STATUS_OK");
+        return AARUF_STATUS_OK;
+    }
+
+    if(ctx->media_model != NULL) free(ctx->media_model);
+
+    ctx->media_model                            = NULL;
+    ctx->metadata_block_header.mediaModelLength = 0;
+
+    // Check if all metadata is clear
+    if(ctx->metadata_block_header.mediaSequence == 0 && ctx->metadata_block_header.lastMediaSequence == 0 &&
+       ctx->metadata_block_header.creatorLength == 0 && ctx->metadata_block_header.commentsLength == 0 &&
+       ctx->metadata_block_header.mediaTitleLength == 0 && ctx->metadata_block_header.mediaManufacturerLength == 0 &&
+       ctx->metadata_block_header.mediaSerialNumberLength == 0 && ctx->metadata_block_header.mediaBarcodeLength == 0 &&
+       ctx->metadata_block_header.mediaPartNumberLength == 0 && ctx->metadata_block_header.driveModelLength == 0 &&
+       ctx->metadata_block_header.driveManufacturerLength == 0 &&
+       ctx->metadata_block_header.driveSerialNumberLength == 0 &&
+       ctx->metadata_block_header.driveFirmwareRevisionLength == 0)
+        ctx->metadata_block_header.identifier = 0;
+
+    TRACE("Exiting aaruf_clear_media_model() = AARUF_STATUS_OK");
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Clears the media serial number from the image metadata.
+ *
+ * Removes the media serial number string from the AaruFormat image's metadata block,
+ * freeing the associated memory and resetting the length field to zero. This removes
+ * the unique identifier assigned to the specific piece of physical storage media by
+ * the manufacturer. If this operation results in all metadata fields being empty,
+ * the entire metadata block is deinitialized.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, write-enabled image context).
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully cleared media serial number.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid.
+ * @retval AARUF_READ_ONLY (-13) The context is not opened for writing.
+ *
+ * @note Memory Management: Frees ctx->media_serial_number if not NULL and sets pointer to NULL.
+ * @note Forensic Impact: Removes unique identification critical for chain of custody.
+ * @note Privacy: May be necessary for anonymizing specific media instances.
+ * @note Use Cases: Privacy compliance, removing tracking identifiers, or correcting errors.
+ *
+ * @warning Loss of serial number eliminates unique media instance identification.
+ * @warning May affect forensic chain of custody and authentication capabilities.
+ * @warning Changes are only persisted during aaruf_close().
+ *
+ * @see aaruf_set_media_serial_number() for setting media serial number information.
+ */
+AARU_EXPORT int32_t AARU_CALL aaruf_clear_media_serial_number(void *context)
+{
+    TRACE("Entering aaruf_clear_media_serial_number(%p)", context);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_media_serial_number() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_media_serial_number() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->is_writing)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_clear_media_serial_number() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    if(ctx->metadata_block_header.identifier != MetadataBlock)
+    {
+        TRACE("Exiting aaruf_clear_media_serial_number() = AARUF_STATUS_OK");
+        return AARUF_STATUS_OK;
+    }
+
+    if(ctx->media_serial_number != NULL) free(ctx->media_serial_number);
+
+    ctx->media_serial_number                           = NULL;
+    ctx->metadata_block_header.mediaSerialNumberLength = 0;
+
+    // Check if all metadata is clear
+    if(ctx->metadata_block_header.mediaSequence == 0 && ctx->metadata_block_header.lastMediaSequence == 0 &&
+       ctx->metadata_block_header.creatorLength == 0 && ctx->metadata_block_header.commentsLength == 0 &&
+       ctx->metadata_block_header.mediaTitleLength == 0 && ctx->metadata_block_header.mediaManufacturerLength == 0 &&
+       ctx->metadata_block_header.mediaModelLength == 0 && ctx->metadata_block_header.mediaBarcodeLength == 0 &&
+       ctx->metadata_block_header.mediaPartNumberLength == 0 && ctx->metadata_block_header.driveModelLength == 0 &&
+       ctx->metadata_block_header.driveManufacturerLength == 0 &&
+       ctx->metadata_block_header.driveSerialNumberLength == 0 &&
+       ctx->metadata_block_header.driveFirmwareRevisionLength == 0)
+        ctx->metadata_block_header.identifier = 0;
+
+    TRACE("Exiting aaruf_clear_media_serial_number() = AARUF_STATUS_OK");
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Clears the media barcode information from the image metadata.
+ *
+ * Removes the media barcode string from the AaruFormat image's metadata block, freeing
+ * the associated memory and resetting the length field to zero. This removes any record
+ * of the barcode affixed to the physical storage media or its packaging, typically used
+ * in professional archival and library inventory systems. If this operation results in
+ * all metadata fields being empty, the entire metadata block is deinitialized.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, write-enabled image context).
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully cleared media barcode.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid.
+ * @retval AARUF_READ_ONLY (-13) The context is not opened for writing.
+ *
+ * @note Memory Management: Frees ctx->media_barcode if not NULL and sets pointer to NULL.
+ * @note Inventory Impact: Removes correlation with physical media location systems.
+ * @note Use Cases: Anonymizing media, removing institutional tracking, or correcting errors.
+ * @note Archive Systems: May affect automated retrieval and inventory management.
+ *
+ * @warning Loss of barcode breaks links to physical inventory and asset management systems.
+ * @warning May affect robotic tape library operations and automated retrieval.
+ * @warning Changes are only persisted during aaruf_close().
+ *
+ * @see aaruf_set_media_barcode() for setting media barcode information.
+ */
+AARU_EXPORT int32_t AARU_CALL aaruf_clear_media_barcode(void *context)
+{
+    TRACE("Entering aaruf_clear_media_barcode(%p)", context);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_media_barcode() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_media_barcode() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->is_writing)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_clear_media_barcode() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    if(ctx->metadata_block_header.identifier != MetadataBlock)
+    {
+        TRACE("Exiting aaruf_clear_media_barcode() = AARUF_STATUS_OK");
+        return AARUF_STATUS_OK;
+    }
+
+    if(ctx->media_barcode != NULL) free(ctx->media_barcode);
+
+    ctx->media_barcode                            = NULL;
+    ctx->metadata_block_header.mediaBarcodeLength = 0;
+
+    // Check if all metadata is clear
+    if(ctx->metadata_block_header.mediaSequence == 0 && ctx->metadata_block_header.lastMediaSequence == 0 &&
+       ctx->metadata_block_header.creatorLength == 0 && ctx->metadata_block_header.commentsLength == 0 &&
+       ctx->metadata_block_header.mediaTitleLength == 0 && ctx->metadata_block_header.mediaManufacturerLength == 0 &&
+       ctx->metadata_block_header.mediaModelLength == 0 && ctx->metadata_block_header.mediaSerialNumberLength == 0 &&
+       ctx->metadata_block_header.mediaPartNumberLength == 0 && ctx->metadata_block_header.driveModelLength == 0 &&
+       ctx->metadata_block_header.driveManufacturerLength == 0 &&
+       ctx->metadata_block_header.driveSerialNumberLength == 0 &&
+       ctx->metadata_block_header.driveFirmwareRevisionLength == 0)
+        ctx->metadata_block_header.identifier = 0;
+
+    TRACE("Exiting aaruf_clear_media_barcode() = AARUF_STATUS_OK");
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Clears the media part number or model designation from the image metadata.
+ *
+ * Removes the media part number string from the AaruFormat image's metadata block,
+ * freeing the associated memory and resetting the length field to zero. This removes
+ * the manufacturer's part number or catalog designation used for procurement and exact
+ * product identification. If this operation results in all metadata fields being empty,
+ * the entire metadata block is deinitialized.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, write-enabled image context).
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully cleared media part number.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid.
+ * @retval AARUF_READ_ONLY (-13) The context is not opened for writing.
+ *
+ * @note Memory Management: Frees ctx->media_part_number if not NULL and sets pointer to NULL.
+ * @note Procurement Impact: Removes exact ordering and catalog reference information.
+ * @note Use Cases: Removing commercial details, generalizing metadata, or correcting errors.
+ * @note Documentation: May affect ability to source compatible replacement media.
+ *
+ * @warning Loss of part number affects precise product identification and procurement.
+ * @warning May impact ability to cross-reference with manufacturer specifications.
+ * @warning Changes are only persisted during aaruf_close().
+ *
+ * @see aaruf_set_media_part_number() for setting media part number information.
+ */
+AARU_EXPORT int32_t AARU_CALL aaruf_clear_media_part_number(void *context)
+{
+    TRACE("Entering aaruf_clear_media_part_number(%p)", context);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_media_part_number() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_media_part_number() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->is_writing)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_clear_media_part_number() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    if(ctx->metadata_block_header.identifier != MetadataBlock)
+    {
+        TRACE("Exiting aaruf_clear_media_part_number() = AARUF_STATUS_OK");
+        return AARUF_STATUS_OK;
+    }
+
+    if(ctx->media_part_number != NULL) free(ctx->media_part_number);
+
+    ctx->media_part_number                           = NULL;
+    ctx->metadata_block_header.mediaPartNumberLength = 0;
+
+    // Check if all metadata is clear
+    if(ctx->metadata_block_header.mediaSequence == 0 && ctx->metadata_block_header.lastMediaSequence == 0 &&
+       ctx->metadata_block_header.creatorLength == 0 && ctx->metadata_block_header.commentsLength == 0 &&
+       ctx->metadata_block_header.mediaTitleLength == 0 && ctx->metadata_block_header.mediaManufacturerLength == 0 &&
+       ctx->metadata_block_header.mediaModelLength == 0 && ctx->metadata_block_header.mediaSerialNumberLength == 0 &&
+       ctx->metadata_block_header.mediaBarcodeLength == 0 && ctx->metadata_block_header.driveModelLength == 0 &&
+       ctx->metadata_block_header.driveManufacturerLength == 0 &&
+       ctx->metadata_block_header.driveSerialNumberLength == 0 &&
+       ctx->metadata_block_header.driveFirmwareRevisionLength == 0)
+        ctx->metadata_block_header.identifier = 0;
+
+    TRACE("Exiting aaruf_clear_media_part_number() = AARUF_STATUS_OK");
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Clears the drive manufacturer information from the image metadata.
+ *
+ * Removes the drive manufacturer name string from the AaruFormat image's metadata block,
+ * freeing the associated memory and resetting the length field to zero. This removes
+ * any record of the company that manufactured the drive or device used to read or write
+ * the physical storage media during the imaging process. If this operation results in
+ * all metadata fields being empty, the entire metadata block is deinitialized.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, write-enabled image context).
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully cleared drive manufacturer.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid.
+ * @retval AARUF_READ_ONLY (-13) The context is not opened for writing.
+ *
+ * @note Memory Management: Frees ctx->drive_manufacturer if not NULL and sets pointer to NULL.
+ * @note Provenance Impact: Removes imaging equipment context from preservation metadata.
+ * @note Use Cases: Anonymizing imaging environment, removing commercial info, or correcting errors.
+ * @note Quality Assessment: May affect ability to evaluate imaging tool quality and reliability.
+ *
+ * @warning Loss of drive manufacturer information reduces imaging process documentation.
+ * @warning May affect forensic provenance and imaging environment reconstruction.
+ * @warning Changes are only persisted during aaruf_close().
+ *
+ * @see aaruf_set_drive_manufacturer() for setting drive manufacturer information.
+ */
+AARU_EXPORT int32_t AARU_CALL aaruf_clear_drive_manufacturer(void *context)
+{
+    TRACE("Entering aaruf_clear_drive_manufacturer(%p)", context);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_drive_manufacturer() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_drive_manufacturer() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->is_writing)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_clear_drive_manufacturer() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    if(ctx->metadata_block_header.identifier != MetadataBlock)
+    {
+        TRACE("Exiting aaruf_clear_drive_manufacturer() = AARUF_STATUS_OK");
+        return AARUF_STATUS_OK;
+    }
+
+    if(ctx->drive_manufacturer != NULL) free(ctx->drive_manufacturer);
+
+    ctx->drive_manufacturer                            = NULL;
+    ctx->metadata_block_header.driveManufacturerLength = 0;
+
+    // Check if all metadata is clear
+    if(ctx->metadata_block_header.mediaSequence == 0 && ctx->metadata_block_header.lastMediaSequence == 0 &&
+       ctx->metadata_block_header.creatorLength == 0 && ctx->metadata_block_header.commentsLength == 0 &&
+       ctx->metadata_block_header.mediaTitleLength == 0 && ctx->metadata_block_header.mediaManufacturerLength == 0 &&
+       ctx->metadata_block_header.mediaModelLength == 0 && ctx->metadata_block_header.mediaSerialNumberLength == 0 &&
+       ctx->metadata_block_header.mediaBarcodeLength == 0 && ctx->metadata_block_header.mediaPartNumberLength == 0 &&
+       ctx->metadata_block_header.driveModelLength == 0 && ctx->metadata_block_header.driveSerialNumberLength == 0 &&
+       ctx->metadata_block_header.driveFirmwareRevisionLength == 0)
+        ctx->metadata_block_header.identifier = 0;
+
+    TRACE("Exiting aaruf_clear_drive_manufacturer() = AARUF_STATUS_OK");
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Clears the drive model information from the image metadata.
+ *
+ * Removes the drive model string from the AaruFormat image's metadata block, freeing
+ * the associated memory and resetting the length field to zero. This removes any record
+ * of the specific model or product designation of the drive or device used to read or
+ * write the physical storage media during the imaging process. If this operation results
+ * in all metadata fields being empty, the entire metadata block is deinitialized.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, write-enabled image context).
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully cleared drive model.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid.
+ * @retval AARUF_READ_ONLY (-13) The context is not opened for writing.
+ *
+ * @note Memory Management: Frees ctx->drive_model if not NULL and sets pointer to NULL.
+ * @note Technical Context: Removes specific drive capability and feature information.
+ * @note Use Cases: Anonymizing imaging equipment, simplifying metadata, or correcting errors.
+ * @note Troubleshooting: May affect ability to diagnose model-specific imaging issues.
+ *
+ * @warning Loss of drive model information reduces imaging tool documentation completeness.
+ * @warning May affect understanding of drive-specific capabilities or limitations.
+ * @warning Important for reproducing imaging conditions or troubleshooting issues.
+ * @warning Changes are only persisted during aaruf_close().
+ *
+ * @see aaruf_set_drive_model() for setting drive model information.
+ */
+AARU_EXPORT int32_t AARU_CALL aaruf_clear_drive_model(void *context)
+{
+    TRACE("Entering aaruf_clear_drive_model(%p)", context);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_drive_model() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_drive_model() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->is_writing)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_clear_drive_model() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    if(ctx->metadata_block_header.identifier != MetadataBlock)
+    {
+        TRACE("Exiting aaruf_clear_drive_model() = AARUF_STATUS_OK");
+        return AARUF_STATUS_OK;
+    }
+
+    if(ctx->drive_model != NULL) free(ctx->drive_model);
+
+    ctx->drive_model                            = NULL;
+    ctx->metadata_block_header.driveModelLength = 0;
+
+    // Check if all metadata is clear
+    if(ctx->metadata_block_header.mediaSequence == 0 && ctx->metadata_block_header.lastMediaSequence == 0 &&
+       ctx->metadata_block_header.creatorLength == 0 && ctx->metadata_block_header.commentsLength == 0 &&
+       ctx->metadata_block_header.mediaTitleLength == 0 && ctx->metadata_block_header.mediaManufacturerLength == 0 &&
+       ctx->metadata_block_header.mediaModelLength == 0 && ctx->metadata_block_header.mediaSerialNumberLength == 0 &&
+       ctx->metadata_block_header.mediaBarcodeLength == 0 && ctx->metadata_block_header.mediaPartNumberLength == 0 &&
+       ctx->metadata_block_header.driveManufacturerLength == 0 &&
+       ctx->metadata_block_header.driveSerialNumberLength == 0 &&
+       ctx->metadata_block_header.driveFirmwareRevisionLength == 0)
+        ctx->metadata_block_header.identifier = 0;
+
+    TRACE("Exiting aaruf_clear_drive_model() = AARUF_STATUS_OK");
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Clears the drive serial number from the image metadata.
+ *
+ * Removes the drive serial number string from the AaruFormat image's metadata block,
+ * freeing the associated memory and resetting the length field to zero. This removes
+ * the unique identifier of the specific drive or device used to read or write the
+ * physical storage media during the imaging process. If this operation results in
+ * all metadata fields being empty, the entire metadata block is deinitialized.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, write-enabled image context).
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully cleared drive serial number.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid.
+ * @retval AARUF_READ_ONLY (-13) The context is not opened for writing.
+ *
+ * @note Memory Management: Frees ctx->drive_serial_number if not NULL and sets pointer to NULL.
+ * @note Forensic Impact: Removes unique hardware identification from imaging provenance.
+ * @note Privacy: May be necessary for anonymizing specific equipment instances.
+ * @note Use Cases: Privacy compliance, equipment anonymization, or correcting errors.
+ * @note Equipment Tracking: Breaks correlation with equipment maintenance and calibration records.
+ *
+ * @warning Loss of drive serial number eliminates unique hardware instance identification.
+ * @warning May affect forensic chain of custody documentation requirements.
+ * @warning Impacts ability to correlate images with specific equipment for quality analysis.
+ * @warning Removes equipment tracking capability for maintenance and workload management.
+ * @warning Changes are only persisted during aaruf_close().
+ *
+ * @see aaruf_set_drive_serial_number() for setting drive serial number information.
+ */
+AARU_EXPORT int32_t AARU_CALL aaruf_clear_drive_serial_number(void *context)
+{
+    TRACE("Entering aaruf_clear_drive_serial_number(%p)", context);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_drive_serial_number() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_drive_serial_number() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->is_writing)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_clear_drive_serial_number() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    if(ctx->metadata_block_header.identifier != MetadataBlock)
+    {
+        TRACE("Exiting aaruf_clear_drive_serial_number() = AARUF_STATUS_OK");
+        return AARUF_STATUS_OK;
+    }
+
+    if(ctx->drive_serial_number != NULL) free(ctx->drive_serial_number);
+
+    ctx->drive_serial_number                           = NULL;
+    ctx->metadata_block_header.driveSerialNumberLength = 0;
+
+    // Check if all metadata is clear
+    if(ctx->metadata_block_header.mediaSequence == 0 && ctx->metadata_block_header.lastMediaSequence == 0 &&
+       ctx->metadata_block_header.creatorLength == 0 && ctx->metadata_block_header.commentsLength == 0 &&
+       ctx->metadata_block_header.mediaTitleLength == 0 && ctx->metadata_block_header.mediaManufacturerLength == 0 &&
+       ctx->metadata_block_header.mediaModelLength == 0 && ctx->metadata_block_header.mediaSerialNumberLength == 0 &&
+       ctx->metadata_block_header.mediaBarcodeLength == 0 && ctx->metadata_block_header.mediaPartNumberLength == 0 &&
+       ctx->metadata_block_header.driveModelLength == 0 && ctx->metadata_block_header.driveManufacturerLength == 0 &&
+       ctx->metadata_block_header.driveFirmwareRevisionLength == 0)
+        ctx->metadata_block_header.identifier = 0;
+
+    TRACE("Exiting aaruf_clear_drive_serial_number() = AARUF_STATUS_OK");
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Clears the drive firmware revision from the image metadata.
+ *
+ * Removes the drive firmware revision string from the AaruFormat image's metadata block,
+ * freeing the associated memory and resetting the length field to zero. This removes
+ * any record of the firmware version or revision of the drive or device used to read
+ * or write the physical storage media during the imaging process. If this operation
+ * results in all metadata fields being empty, the entire metadata block is deinitialized.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, write-enabled image context).
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully cleared drive firmware revision.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid.
+ * @retval AARUF_READ_ONLY (-13) The context is not opened for writing.
+ *
+ * @note Memory Management: Frees ctx->drive_firmware_revision if not NULL and sets pointer to NULL.
+ * @note Technical Impact: Removes specific firmware behavior and capability documentation.
+ * @note Use Cases: Simplifying metadata, removing technical details, or correcting errors.
+ * @note Troubleshooting: May affect ability to diagnose firmware-specific issues.
+ * @note Reproducibility: Reduces ability to reproduce exact imaging conditions.
+ *
+ * @warning Loss of firmware revision information reduces imaging environment documentation.
+ * @warning Firmware versions significantly affect drive behavior and error handling.
+ * @warning May affect ability to identify firmware-related imaging issues or quirks.
+ * @warning Impacts scientific reproducibility and technical troubleshooting capabilities.
+ * @warning Changes are only persisted during aaruf_close().
+ *
+ * @see aaruf_set_drive_firmware_revision() for setting drive firmware revision information.
+ */
+AARU_EXPORT int32_t AARU_CALL aaruf_clear_drive_firmware_revision(void *context)
+{
+    TRACE("Entering aaruf_clear_drive_firmware_revision(%p)", context);
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_drive_firmware_revision() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_clear_drive_firmware_revision() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Check we are writing
+    if(!ctx->is_writing)
+    {
+        FATAL("Trying to write a read-only image");
+
+        TRACE("Exiting aaruf_clear_drive_firmware_revision() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    if(ctx->metadata_block_header.identifier != MetadataBlock)
+    {
+        TRACE("Exiting aaruf_clear_drive_firmware_revision() = AARUF_STATUS_OK");
+        return AARUF_STATUS_OK;
+    }
+
+    if(ctx->drive_firmware_revision != NULL) free(ctx->drive_firmware_revision);
+
+    ctx->drive_firmware_revision                           = NULL;
+    ctx->metadata_block_header.driveFirmwareRevisionLength = 0;
+
+    // Check if all metadata is clear
+    if(ctx->metadata_block_header.mediaSequence == 0 && ctx->metadata_block_header.lastMediaSequence == 0 &&
+       ctx->metadata_block_header.creatorLength == 0 && ctx->metadata_block_header.commentsLength == 0 &&
+       ctx->metadata_block_header.mediaTitleLength == 0 && ctx->metadata_block_header.mediaManufacturerLength == 0 &&
+       ctx->metadata_block_header.mediaModelLength == 0 && ctx->metadata_block_header.mediaSerialNumberLength == 0 &&
+       ctx->metadata_block_header.mediaBarcodeLength == 0 && ctx->metadata_block_header.mediaPartNumberLength == 0 &&
+       ctx->metadata_block_header.driveModelLength == 0 && ctx->metadata_block_header.driveManufacturerLength == 0 &&
+       ctx->metadata_block_header.driveSerialNumberLength == 0)
+        ctx->metadata_block_header.identifier = 0;
+
+    TRACE("Exiting aaruf_clear_drive_firmware_revision() = AARUF_STATUS_OK");
+    return AARUF_STATUS_OK;
+}
