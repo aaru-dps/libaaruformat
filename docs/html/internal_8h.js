@@ -6,6 +6,7 @@ var internal_8h =
     [ "decode_ddt_entry_v2", "internal_8h.html#a805d607b45bb8ad8a3e6b0bcfabe3265", null ],
     [ "decode_ddt_multi_level_v2", "internal_8h.html#a83aff4d408ab17f8f350cb03b0e12ef6", null ],
     [ "decode_ddt_single_level_v2", "internal_8h.html#a40c571bc4778040f22ac211cea670db1", null ],
+    [ "generate_random_bytes", "internal_8h.html#a7db9f44b931877b306de9cf7cd1deed2", null ],
     [ "get_filetime_uint64", "internal_8h.html#a36c1cca0e4cea9c2e0dffb582b836f6f", null ],
     [ "parse_options", "internal_8h.html#aaae42bff244df727b6c029f58d4957df", null ],
     [ "process_aaru_metadata_json_block", "internal_8h.html#a84003ec881425a7b28ec24cb48d19f02", null ],

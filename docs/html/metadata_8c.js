@@ -1,5 +1,18 @@
 var metadata_8c =
 [
+    [ "aaruf_clear_comments", "metadata_8c.html#a878605956a88a3371f4f6e490ee9e2b8", null ],
+    [ "aaruf_clear_creator", "metadata_8c.html#ac20c45113b5e1917fc550d1fb8342ba2", null ],
+    [ "aaruf_clear_drive_firmware_revision", "metadata_8c.html#a0d7349a92ffce2fa5515fae960c17b03", null ],
+    [ "aaruf_clear_drive_manufacturer", "metadata_8c.html#a62dc66d1bbbfacd41706bf4d87d11264", null ],
+    [ "aaruf_clear_drive_model", "metadata_8c.html#a43615f5e79107a192d383d230fa308e0", null ],
+    [ "aaruf_clear_drive_serial_number", "metadata_8c.html#aa6d7ceaf960a4e8d4494424f11815fcb", null ],
+    [ "aaruf_clear_media_barcode", "metadata_8c.html#a2b5ef51f1913c62139b90cae0f97a9a2", null ],
+    [ "aaruf_clear_media_manufacturer", "metadata_8c.html#a42e1c4b1876e6b28c774aae4de3c1f4e", null ],
+    [ "aaruf_clear_media_model", "metadata_8c.html#a938d3346f5347dc152b679e6cf619d94", null ],
+    [ "aaruf_clear_media_part_number", "metadata_8c.html#a8652ae4a4cdf400846621d7f497c8b60", null ],
+    [ "aaruf_clear_media_sequence", "metadata_8c.html#a02699c3490df86f9919ac8f22f303d9e", null ],
+    [ "aaruf_clear_media_serial_number", "metadata_8c.html#a21d65b63e9806deb6dd0eb9c0e69eaf0", null ],
+    [ "aaruf_clear_media_title", "metadata_8c.html#a41bf934e213aad15df933590e6343c3e", null ],
     [ "aaruf_get_aaru_json_metadata", "metadata_8c.html#a01cf0abe0b137236d4be0b91a29d4818", null ],
     [ "aaruf_get_cicm_metadata", "metadata_8c.html#a42f191c2ea4c70c9d7b373c19b59c812", null ],
     [ "aaruf_get_comments", "metadata_8c.html#a9628bcfd2642649a6bcbf1f46d6b6705", null ],

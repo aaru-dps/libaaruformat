@@ -103,7 +103,7 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a27af1bfabbc7650471a6010475116697" id="r_a27af1bfabbc7650471a6010475116697"><td class="memItemLeft" align="right" valign="top">uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a27af1bfabbc7650471a6010475116697">identifier</a></td></tr>
 <tr class="memdesc:a27af1bfabbc7650471a6010475116697"><td class="mdescLeft">&#160;</td><td class="mdescRight">File magic (AARU_MAGIC).  <br /></td></tr>
 <tr class="memitem:a0afcf9a5f565a9053351f44234c90dc3" id="r_a0afcf9a5f565a9053351f44234c90dc3"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0afcf9a5f565a9053351f44234c90dc3">application</a> [64]</td></tr>
-<tr class="memdesc:a0afcf9a5f565a9053351f44234c90dc3"><td class="mdescLeft">&#160;</td><td class="mdescRight">UTF-16LE creator application name (fixed 64 bytes).  <br /></td></tr>
+<tr class="memdesc:a0afcf9a5f565a9053351f44234c90dc3"><td class="mdescLeft">&#160;</td><td class="mdescRight">UTF-8 creator application name (fixed 64 bytes).  <br /></td></tr>
 <tr class="memitem:af79ca31bcd428d1a54ac25c30d09b7a7" id="r_af79ca31bcd428d1a54ac25c30d09b7a7"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af79ca31bcd428d1a54ac25c30d09b7a7">imageMajorVersion</a></td></tr>
 <tr class="memdesc:af79ca31bcd428d1a54ac25c30d09b7a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Container format major version.  <br /></td></tr>
 <tr class="memitem:ae2d6d3c7bc0a1956fb246cf7acbddeeb" id="r_ae2d6d3c7bc0a1956fb246cf7acbddeeb"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae2d6d3c7bc0a1956fb246cf7acbddeeb">imageMinorVersion</a></td></tr>
@@ -163,7 +163,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>UTF-16LE creator application name (fixed 64 bytes). </p>
+<p>UTF-8 creator application name (fixed 64 bytes). </p>
 
 <p class="definition">Definition at line <a class="el" href="header_8h_source.html#l00109">109</a> of file <a class="el" href="header_8h_source.html">header.h</a>.</p>
 
@@ -338,6 +338,8 @@ Data Fields</h2></td></tr>
 <p>128-bit image GUID (binary, not text); stable across children. </p>
 
 <p class="definition">Definition at line <a class="el" href="header_8h_source.html#l00118">118</a> of file <a class="el" href="header_8h_source.html">header.h</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>.</p>
 
 </div>
 </div>

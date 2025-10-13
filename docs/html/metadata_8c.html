@@ -171,8 +171,855 @@ Functions</h2></td></tr>
 <tr class="memdesc:aeeae64b120a10bac5e3d757a07a9691a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the number of overflow (post-gap) sectors in the AaruFormat image.  <br /></td></tr>
 <tr class="memitem:a65c73217edb9661accbbe3de4f555b62" id="r_a65c73217edb9661accbbe3de4f555b62"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a65c73217edb9661accbbe3de4f555b62">aaruf_get_image_info</a> (const void *context, <a class="el" href="structImageInfo.html">ImageInfo</a> *image_info)</td></tr>
 <tr class="memdesc:a65c73217edb9661accbbe3de4f555b62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves a deep copy of the <a class="el" href="structImageInfo.html" title="High-level summary of an opened Aaru image containing metadata and media characteristics.">ImageInfo</a> structure from the AaruFormat image.  <br /></td></tr>
+<tr class="memitem:a02699c3490df86f9919ac8f22f303d9e" id="r_a02699c3490df86f9919ac8f22f303d9e"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a02699c3490df86f9919ac8f22f303d9e">aaruf_clear_media_sequence</a> (void *context)</td></tr>
+<tr class="memdesc:a02699c3490df86f9919ac8f22f303d9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the media sequence information from the image metadata.  <br /></td></tr>
+<tr class="memitem:ac20c45113b5e1917fc550d1fb8342ba2" id="r_ac20c45113b5e1917fc550d1fb8342ba2"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac20c45113b5e1917fc550d1fb8342ba2">aaruf_clear_creator</a> (void *context)</td></tr>
+<tr class="memdesc:ac20c45113b5e1917fc550d1fb8342ba2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the creator (person/operator) information from the image metadata.  <br /></td></tr>
+<tr class="memitem:a878605956a88a3371f4f6e490ee9e2b8" id="r_a878605956a88a3371f4f6e490ee9e2b8"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a878605956a88a3371f4f6e490ee9e2b8">aaruf_clear_comments</a> (void *context)</td></tr>
+<tr class="memdesc:a878605956a88a3371f4f6e490ee9e2b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears user comments or notes from the image metadata.  <br /></td></tr>
+<tr class="memitem:a41bf934e213aad15df933590e6343c3e" id="r_a41bf934e213aad15df933590e6343c3e"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a41bf934e213aad15df933590e6343c3e">aaruf_clear_media_title</a> (void *context)</td></tr>
+<tr class="memdesc:a41bf934e213aad15df933590e6343c3e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the media title or label from the image metadata.  <br /></td></tr>
+<tr class="memitem:a42e1c4b1876e6b28c774aae4de3c1f4e" id="r_a42e1c4b1876e6b28c774aae4de3c1f4e"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a42e1c4b1876e6b28c774aae4de3c1f4e">aaruf_clear_media_manufacturer</a> (void *context)</td></tr>
+<tr class="memdesc:a42e1c4b1876e6b28c774aae4de3c1f4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the media manufacturer information from the image metadata.  <br /></td></tr>
+<tr class="memitem:a938d3346f5347dc152b679e6cf619d94" id="r_a938d3346f5347dc152b679e6cf619d94"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a938d3346f5347dc152b679e6cf619d94">aaruf_clear_media_model</a> (void *context)</td></tr>
+<tr class="memdesc:a938d3346f5347dc152b679e6cf619d94"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the media model or product designation from the image metadata.  <br /></td></tr>
+<tr class="memitem:a21d65b63e9806deb6dd0eb9c0e69eaf0" id="r_a21d65b63e9806deb6dd0eb9c0e69eaf0"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a21d65b63e9806deb6dd0eb9c0e69eaf0">aaruf_clear_media_serial_number</a> (void *context)</td></tr>
+<tr class="memdesc:a21d65b63e9806deb6dd0eb9c0e69eaf0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the media serial number from the image metadata.  <br /></td></tr>
+<tr class="memitem:a2b5ef51f1913c62139b90cae0f97a9a2" id="r_a2b5ef51f1913c62139b90cae0f97a9a2"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2b5ef51f1913c62139b90cae0f97a9a2">aaruf_clear_media_barcode</a> (void *context)</td></tr>
+<tr class="memdesc:a2b5ef51f1913c62139b90cae0f97a9a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the media barcode information from the image metadata.  <br /></td></tr>
+<tr class="memitem:a8652ae4a4cdf400846621d7f497c8b60" id="r_a8652ae4a4cdf400846621d7f497c8b60"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8652ae4a4cdf400846621d7f497c8b60">aaruf_clear_media_part_number</a> (void *context)</td></tr>
+<tr class="memdesc:a8652ae4a4cdf400846621d7f497c8b60"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the media part number or model designation from the image metadata.  <br /></td></tr>
+<tr class="memitem:a62dc66d1bbbfacd41706bf4d87d11264" id="r_a62dc66d1bbbfacd41706bf4d87d11264"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a62dc66d1bbbfacd41706bf4d87d11264">aaruf_clear_drive_manufacturer</a> (void *context)</td></tr>
+<tr class="memdesc:a62dc66d1bbbfacd41706bf4d87d11264"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the drive manufacturer information from the image metadata.  <br /></td></tr>
+<tr class="memitem:a43615f5e79107a192d383d230fa308e0" id="r_a43615f5e79107a192d383d230fa308e0"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a43615f5e79107a192d383d230fa308e0">aaruf_clear_drive_model</a> (void *context)</td></tr>
+<tr class="memdesc:a43615f5e79107a192d383d230fa308e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the drive model information from the image metadata.  <br /></td></tr>
+<tr class="memitem:aa6d7ceaf960a4e8d4494424f11815fcb" id="r_aa6d7ceaf960a4e8d4494424f11815fcb"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa6d7ceaf960a4e8d4494424f11815fcb">aaruf_clear_drive_serial_number</a> (void *context)</td></tr>
+<tr class="memdesc:aa6d7ceaf960a4e8d4494424f11815fcb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the drive serial number from the image metadata.  <br /></td></tr>
+<tr class="memitem:a0d7349a92ffce2fa5515fae960c17b03" id="r_a0d7349a92ffce2fa5515fae960c17b03"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0d7349a92ffce2fa5515fae960c17b03">aaruf_clear_drive_firmware_revision</a> (void *context)</td></tr>
+<tr class="memdesc:a0d7349a92ffce2fa5515fae960c17b03"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the drive firmware revision from the image metadata.  <br /></td></tr>
 </table>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
+<a id="a878605956a88a3371f4f6e490ee9e2b8" name="a878605956a88a3371f4f6e490ee9e2b8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a878605956a88a3371f4f6e490ee9e2b8">&#9670;&#160;</a></span>aaruf_clear_comments()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int32_t aaruf_clear_comments </td>
+          <td>(</td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clears user comments or notes from the image metadata. </p>
+<p>Removes the comments string from the AaruFormat image's metadata block, freeing the associated memory and resetting the length field to zero. This effectively removes any user-provided annotations, notes, or descriptions associated with the image. If this operation results in all metadata fields being empty, the entire metadata block is deinitialized to avoid writing an empty metadata block to the image file.</p>
+<p>This function is useful when removing outdated notes, clearing test comments before production deployment, sanitizing images for distribution, or resetting an image to a clean metadata state for repurposing.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to the aaruformat context (must be a valid, write-enabled image context).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns one of the following status codes: </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">AARUF_STATUS_OK</td><td>(0) Successfully cleared comments. This is returned when:<ul>
+<li>The context is valid and properly initialized</li>
+<li>The context is opened in write mode (ctx-&gt;isWriting is true)</li>
+<li>Either the metadata block was not initialized (early exit, nothing to clear)</li>
+<li>Or the comments string is freed (if it existed) and the pointer set to NULL</li>
+<li>The commentsLength field in the metadata block header is set to 0</li>
+<li>If all metadata fields are now empty, the metadata block identifier is cleared</li>
+</ul>
+</td></tr>
+    <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. This occurs when:<ul>
+<li>The context parameter is NULL</li>
+<li>The context magic number doesn't match AARU_MAGIC (invalid context type)</li>
+<li>The context was not properly initialized by <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+</ul>
+</td></tr>
+    <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
+<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The context's isWriting flag is false</li>
+<li>Attempting to modify a read-only image</li>
+</ul>
+</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Memory Management:<ul>
+<li>If ctx-&gt;comments is not NULL, the allocated memory is freed before clearing</li>
+<li>The ctx-&gt;comments pointer is set to NULL after freeing</li>
+<li>Safe to call even if comments were never set (NULL check protects against errors)</li>
+<li>No memory leaks occur when clearing previously set comments</li>
+</ul>
+</dd>
+<dd>
+Use Cases:<ul>
+<li>Removing temporary or development notes before production deployment</li>
+<li>Clearing outdated comments that no longer apply</li>
+<li>Sanitizing images for distribution by removing internal notes</li>
+<li>Resetting images for repurposing with new documentation</li>
+<li>Removing potentially sensitive information from comments</li>
+<li>Preparing images for archival with standardized, minimal metadata</li>
+</ul>
+</dd>
+<dd>
+Metadata Block State Management:<ul>
+<li>If the metadata block header is not initialized, function returns success immediately</li>
+<li>After clearing, checks if all metadata fields are empty</li>
+<li>If all fields empty, sets metadata block identifier to 0 (deinitialized)</li>
+<li>Prevents writing empty metadata blocks, optimizing storage efficiency</li>
+</ul>
+</dd>
+<dd>
+Information Loss Considerations:<ul>
+<li>Comments may contain valuable provenance or preservation information</li>
+<li>Consider archiving comments externally before clearing if they contain important data</li>
+<li>Comments might document imaging conditions, errors encountered, or quality notes</li>
+<li>Workflow history and processing information may be lost</li>
+</ul>
+</dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>The metadata changes are only written to the image file during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>. Changes made by this function are not immediately persisted to disk.</dd>
+<dd>
+After clearing, the comments are permanently lost unless:<ul>
+<li>The image file is not closed (context remains in memory)</li>
+<li>A backup of the original image exists</li>
+<li>The comments are documented in external metadata systems</li>
+</ul>
+</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="#ad24b15e067720825c47610e9477bfc2a" title="Sets user comments or notes for the image.">aaruf_set_comments()</a> for setting comment information. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04003">4003</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="context_8h_source.html#l00218">aaruformat_context::comments</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+
+</div>
+</div>
+<a id="ac20c45113b5e1917fc550d1fb8342ba2" name="ac20c45113b5e1917fc550d1fb8342ba2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac20c45113b5e1917fc550d1fb8342ba2">&#9670;&#160;</a></span>aaruf_clear_creator()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int32_t aaruf_clear_creator </td>
+          <td>(</td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clears the creator (person/operator) information from the image metadata. </p>
+<p>Removes the creator name string from the AaruFormat image's metadata block, freeing the associated memory and resetting the length field to zero. This effectively removes any record of who created the image. If this operation results in all metadata fields being empty, the entire metadata block is deinitialized to avoid writing an empty metadata block to the image file.</p>
+<p>This function is useful when anonymizing images for distribution, removing personally identifiable information for privacy compliance (e.g., GDPR), or correcting metadata that was set incorrectly during image creation.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to the aaruformat context (must be a valid, write-enabled image context).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns one of the following status codes: </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">AARUF_STATUS_OK</td><td>(0) Successfully cleared creator information. This is returned when:<ul>
+<li>The context is valid and properly initialized</li>
+<li>The context is opened in write mode (ctx-&gt;isWriting is true)</li>
+<li>Either the metadata block was not initialized (early exit, nothing to clear)</li>
+<li>Or the creator string is freed (if it existed) and the pointer set to NULL</li>
+<li>The creatorLength field in the metadata block header is set to 0</li>
+<li>If all metadata fields are now empty, the metadata block identifier is cleared</li>
+</ul>
+</td></tr>
+    <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. This occurs when:<ul>
+<li>The context parameter is NULL</li>
+<li>The context magic number doesn't match AARU_MAGIC (invalid context type)</li>
+<li>The context was not properly initialized by <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+</ul>
+</td></tr>
+    <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
+<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The context's isWriting flag is false</li>
+<li>Attempting to modify a read-only image</li>
+</ul>
+</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Memory Management:<ul>
+<li>If ctx-&gt;creator is not NULL, the allocated memory is freed before clearing</li>
+<li>The ctx-&gt;creator pointer is set to NULL after freeing</li>
+<li>Safe to call even if creator was never set (NULL check protects against errors)</li>
+<li>No memory leaks occur when clearing previously set creator information</li>
+</ul>
+</dd>
+<dd>
+Privacy and Anonymization:<ul>
+<li>Removes personally identifiable information from image metadata</li>
+<li>Important for GDPR compliance and privacy protection</li>
+<li>Consider clearing creator before distributing images publicly</li>
+<li>May be required by institutional privacy policies</li>
+</ul>
+</dd>
+<dd>
+Metadata Block State Management:<ul>
+<li>If the metadata block header is not initialized, function returns success immediately</li>
+<li>After clearing, checks if all metadata fields are empty</li>
+<li>If all fields empty, sets metadata block identifier to 0 (deinitialized)</li>
+<li>Prevents writing empty metadata blocks, saving storage space</li>
+</ul>
+</dd>
+<dd>
+Use Cases:<ul>
+<li>Anonymizing images for public distribution or research datasets</li>
+<li>Compliance with data protection regulations (GDPR, CCPA, etc.)</li>
+<li>Removing incorrect or outdated operator information</li>
+<li>Preparing images for archival with institutional rather than personal attribution</li>
+<li>Sanitizing test or development images before production use</li>
+</ul>
+</dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>The metadata changes are only written to the image file during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>. Changes made by this function are not immediately persisted to disk.</dd>
+<dd>
+After clearing, the creator information is permanently lost unless:<ul>
+<li>The image file is not closed (context remains in memory)</li>
+<li>A backup of the original image exists</li>
+<li>The information is reconstructed from external documentation</li>
+</ul>
+</dd>
+<dd>
+Clearing creator may affect:<ul>
+<li>Forensic chain of custody requirements</li>
+<li>Provenance documentation for archival purposes</li>
+<li>Accountability and quality assurance workflows</li>
+<li>Consider legal and institutional requirements before clearing</li>
+</ul>
+</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="#af28837461d12252d8258032e370585ae" title="Sets the creator (person/operator) information for the image.">aaruf_set_creator()</a> for setting creator information. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03874">3874</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="context_8h_source.html#l00216">aaruformat_context::creator</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+
+</div>
+</div>
+<a id="a0d7349a92ffce2fa5515fae960c17b03" name="a0d7349a92ffce2fa5515fae960c17b03"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0d7349a92ffce2fa5515fae960c17b03">&#9670;&#160;</a></span>aaruf_clear_drive_firmware_revision()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int32_t aaruf_clear_drive_firmware_revision </td>
+          <td>(</td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clears the drive firmware revision from the image metadata. </p>
+<p>Removes the drive firmware revision string from the AaruFormat image's metadata block, freeing the associated memory and resetting the length field to zero. This removes any record of the firmware version or revision of the drive or device used to read or write the physical storage media during the imaging process. If this operation results in all metadata fields being empty, the entire metadata block is deinitialized.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to the aaruformat context (must be a valid, write-enabled image context).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns one of the following status codes: </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">AARUF_STATUS_OK</td><td>(0) Successfully cleared drive firmware revision. </td></tr>
+    <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. </td></tr>
+    <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Memory Management: Frees ctx-&gt;drive_firmware_revision if not NULL and sets pointer to NULL. </dd>
+<dd>
+Technical Impact: Removes specific firmware behavior and capability documentation. </dd>
+<dd>
+Use Cases: Simplifying metadata, removing technical details, or correcting errors. </dd>
+<dd>
+Troubleshooting: May affect ability to diagnose firmware-specific issues. </dd>
+<dd>
+Reproducibility: Reduces ability to reproduce exact imaging conditions.</dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>Loss of firmware revision information reduces imaging environment documentation. </dd>
+<dd>
+Firmware versions significantly affect drive behavior and error handling. </dd>
+<dd>
+May affect ability to identify firmware-related imaging issues or quirks. </dd>
+<dd>
+Impacts scientific reproducibility and technical troubleshooting capabilities. </dd>
+<dd>
+Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>.</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="#adaa13a82dfc90987efd6c9a366904dc4" title="Sets the drive firmware revision for the image.">aaruf_set_drive_firmware_revision()</a> for setting drive firmware revision information. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04861">4861</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="context_8h_source.html#l00228">aaruformat_context::drive_firmware_revision</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+
+</div>
+</div>
+<a id="a62dc66d1bbbfacd41706bf4d87d11264" name="a62dc66d1bbbfacd41706bf4d87d11264"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a62dc66d1bbbfacd41706bf4d87d11264">&#9670;&#160;</a></span>aaruf_clear_drive_manufacturer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int32_t aaruf_clear_drive_manufacturer </td>
+          <td>(</td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clears the drive manufacturer information from the image metadata. </p>
+<p>Removes the drive manufacturer name string from the AaruFormat image's metadata block, freeing the associated memory and resetting the length field to zero. This removes any record of the company that manufactured the drive or device used to read or write the physical storage media during the imaging process. If this operation results in all metadata fields being empty, the entire metadata block is deinitialized.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to the aaruformat context (must be a valid, write-enabled image context).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns one of the following status codes: </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">AARUF_STATUS_OK</td><td>(0) Successfully cleared drive manufacturer. </td></tr>
+    <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. </td></tr>
+    <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Memory Management: Frees ctx-&gt;drive_manufacturer if not NULL and sets pointer to NULL. </dd>
+<dd>
+Provenance Impact: Removes imaging equipment context from preservation metadata. </dd>
+<dd>
+Use Cases: Anonymizing imaging environment, removing commercial info, or correcting errors. </dd>
+<dd>
+Quality Assessment: May affect ability to evaluate imaging tool quality and reliability.</dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>Loss of drive manufacturer information reduces imaging process documentation. </dd>
+<dd>
+May affect forensic provenance and imaging environment reconstruction. </dd>
+<dd>
+Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>.</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="#a223856fa226b26c466997800183c97c4" title="Sets the drive manufacturer information for the image.">aaruf_set_drive_manufacturer()</a> for setting drive manufacturer information. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04598">4598</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="context_8h_source.html#l00224">aaruformat_context::drive_manufacturer</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+
+</div>
+</div>
+<a id="a43615f5e79107a192d383d230fa308e0" name="a43615f5e79107a192d383d230fa308e0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a43615f5e79107a192d383d230fa308e0">&#9670;&#160;</a></span>aaruf_clear_drive_model()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int32_t aaruf_clear_drive_model </td>
+          <td>(</td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clears the drive model information from the image metadata. </p>
+<p>Removes the drive model string from the AaruFormat image's metadata block, freeing the associated memory and resetting the length field to zero. This removes any record of the specific model or product designation of the drive or device used to read or write the physical storage media during the imaging process. If this operation results in all metadata fields being empty, the entire metadata block is deinitialized.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to the aaruformat context (must be a valid, write-enabled image context).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns one of the following status codes: </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">AARUF_STATUS_OK</td><td>(0) Successfully cleared drive model. </td></tr>
+    <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. </td></tr>
+    <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Memory Management: Frees ctx-&gt;drive_model if not NULL and sets pointer to NULL. </dd>
+<dd>
+Technical Context: Removes specific drive capability and feature information. </dd>
+<dd>
+Use Cases: Anonymizing imaging equipment, simplifying metadata, or correcting errors. </dd>
+<dd>
+Troubleshooting: May affect ability to diagnose model-specific imaging issues.</dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>Loss of drive model information reduces imaging tool documentation completeness. </dd>
+<dd>
+May affect understanding of drive-specific capabilities or limitations. </dd>
+<dd>
+Important for reproducing imaging conditions or troubleshooting issues. </dd>
+<dd>
+Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>.</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="#a29b6c38ce4b3420368ecb84007d8738d" title="Sets the drive model information for the image.">aaruf_set_drive_model()</a> for setting drive model information. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04684">4684</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="context_8h_source.html#l00225">aaruformat_context::drive_model</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+
+</div>
+</div>
+<a id="aa6d7ceaf960a4e8d4494424f11815fcb" name="aa6d7ceaf960a4e8d4494424f11815fcb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa6d7ceaf960a4e8d4494424f11815fcb">&#9670;&#160;</a></span>aaruf_clear_drive_serial_number()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int32_t aaruf_clear_drive_serial_number </td>
+          <td>(</td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clears the drive serial number from the image metadata. </p>
+<p>Removes the drive serial number string from the AaruFormat image's metadata block, freeing the associated memory and resetting the length field to zero. This removes the unique identifier of the specific drive or device used to read or write the physical storage media during the imaging process. If this operation results in all metadata fields being empty, the entire metadata block is deinitialized.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to the aaruformat context (must be a valid, write-enabled image context).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns one of the following status codes: </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">AARUF_STATUS_OK</td><td>(0) Successfully cleared drive serial number. </td></tr>
+    <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. </td></tr>
+    <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Memory Management: Frees ctx-&gt;drive_serial_number if not NULL and sets pointer to NULL. </dd>
+<dd>
+Forensic Impact: Removes unique hardware identification from imaging provenance. </dd>
+<dd>
+Privacy: May be necessary for anonymizing specific equipment instances. </dd>
+<dd>
+Use Cases: Privacy compliance, equipment anonymization, or correcting errors. </dd>
+<dd>
+Equipment Tracking: Breaks correlation with equipment maintenance and calibration records.</dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>Loss of drive serial number eliminates unique hardware instance identification. </dd>
+<dd>
+May affect forensic chain of custody documentation requirements. </dd>
+<dd>
+Impacts ability to correlate images with specific equipment for quality analysis. </dd>
+<dd>
+Removes equipment tracking capability for maintenance and workload management. </dd>
+<dd>
+Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>.</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="#ae6b0a57476896bb90ee7bb8472e1078f" title="Sets the drive serial number for the image.">aaruf_set_drive_serial_number()</a> for setting drive serial number information. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04773">4773</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="context_8h_source.html#l00226">aaruformat_context::drive_serial_number</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+
+</div>
+</div>
+<a id="a2b5ef51f1913c62139b90cae0f97a9a2" name="a2b5ef51f1913c62139b90cae0f97a9a2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2b5ef51f1913c62139b90cae0f97a9a2">&#9670;&#160;</a></span>aaruf_clear_media_barcode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int32_t aaruf_clear_media_barcode </td>
+          <td>(</td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clears the media barcode information from the image metadata. </p>
+<p>Removes the media barcode string from the AaruFormat image's metadata block, freeing the associated memory and resetting the length field to zero. This removes any record of the barcode affixed to the physical storage media or its packaging, typically used in professional archival and library inventory systems. If this operation results in all metadata fields being empty, the entire metadata block is deinitialized.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to the aaruformat context (must be a valid, write-enabled image context).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns one of the following status codes: </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">AARUF_STATUS_OK</td><td>(0) Successfully cleared media barcode. </td></tr>
+    <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. </td></tr>
+    <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Memory Management: Frees ctx-&gt;media_barcode if not NULL and sets pointer to NULL. </dd>
+<dd>
+Inventory Impact: Removes correlation with physical media location systems. </dd>
+<dd>
+Use Cases: Anonymizing media, removing institutional tracking, or correcting errors. </dd>
+<dd>
+Archive Systems: May affect automated retrieval and inventory management.</dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>Loss of barcode breaks links to physical inventory and asset management systems. </dd>
+<dd>
+May affect robotic tape library operations and automated retrieval. </dd>
+<dd>
+Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>.</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="#a0e5be9ff6d87218a8f5b451a27e1b39b" title="Sets the media barcode information for the image.">aaruf_set_media_barcode()</a> for setting media barcode information. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04426">4426</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00222">aaruformat_context::media_barcode</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+
+</div>
+</div>
+<a id="a42e1c4b1876e6b28c774aae4de3c1f4e" name="a42e1c4b1876e6b28c774aae4de3c1f4e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a42e1c4b1876e6b28c774aae4de3c1f4e">&#9670;&#160;</a></span>aaruf_clear_media_manufacturer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int32_t aaruf_clear_media_manufacturer </td>
+          <td>(</td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clears the media manufacturer information from the image metadata. </p>
+<p>Removes the media manufacturer name string from the AaruFormat image's metadata block, freeing the associated memory and resetting the length field to zero. This removes any record of the company that manufactured the physical storage media. If this operation results in all metadata fields being empty, the entire metadata block is deinitialized.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to the aaruformat context (must be a valid, write-enabled image context).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns one of the following status codes: </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">AARUF_STATUS_OK</td><td>(0) Successfully cleared media manufacturer. </td></tr>
+    <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. </td></tr>
+    <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Memory Management: Frees ctx-&gt;media_manufacturer if not NULL and sets pointer to NULL. </dd>
+<dd>
+Preservation Impact: Removes valuable information about media quality and lifespan characteristics. </dd>
+<dd>
+Use Cases: Anonymizing media source, removing commercial information, or correcting errors.</dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>Loss of manufacturer information may affect preservation planning and media assessment. </dd>
+<dd>
+Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>.</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="#add92b8c91ede6a62dfda5f8980c3ce6d" title="Sets the media manufacturer information for the image.">aaruf_set_media_manufacturer()</a> for setting media manufacturer information. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04170">4170</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00219">aaruformat_context::media_manufacturer</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+
+</div>
+</div>
+<a id="a938d3346f5347dc152b679e6cf619d94" name="a938d3346f5347dc152b679e6cf619d94"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a938d3346f5347dc152b679e6cf619d94">&#9670;&#160;</a></span>aaruf_clear_media_model()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int32_t aaruf_clear_media_model </td>
+          <td>(</td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clears the media model or product designation from the image metadata. </p>
+<p>Removes the media model string from the AaruFormat image's metadata block, freeing the associated memory and resetting the length field to zero. This removes any record of the specific model, product line, or type designation of the physical storage media. If this operation results in all metadata fields being empty, the entire metadata block is deinitialized.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to the aaruformat context (must be a valid, write-enabled image context).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns one of the following status codes: </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">AARUF_STATUS_OK</td><td>(0) Successfully cleared media model. </td></tr>
+    <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. </td></tr>
+    <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Memory Management: Frees ctx-&gt;media_model if not NULL and sets pointer to NULL. </dd>
+<dd>
+Information Loss: Removes specific capacity, speed, and compatibility information. </dd>
+<dd>
+Use Cases: Removing product-specific details, generalizing metadata, or correcting errors.</dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>Loss of model information may affect media compatibility assessments. </dd>
+<dd>
+Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>.</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="#a0ed36b14e49f1e924906d9c4b26d6214" title="Sets the media model or product designation for the image.">aaruf_set_media_model()</a> for setting media model information. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04254">4254</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00220">aaruformat_context::media_model</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+
+</div>
+</div>
+<a id="a8652ae4a4cdf400846621d7f497c8b60" name="a8652ae4a4cdf400846621d7f497c8b60"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8652ae4a4cdf400846621d7f497c8b60">&#9670;&#160;</a></span>aaruf_clear_media_part_number()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int32_t aaruf_clear_media_part_number </td>
+          <td>(</td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clears the media part number or model designation from the image metadata. </p>
+<p>Removes the media part number string from the AaruFormat image's metadata block, freeing the associated memory and resetting the length field to zero. This removes the manufacturer's part number or catalog designation used for procurement and exact product identification. If this operation results in all metadata fields being empty, the entire metadata block is deinitialized.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to the aaruformat context (must be a valid, write-enabled image context).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns one of the following status codes: </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">AARUF_STATUS_OK</td><td>(0) Successfully cleared media part number. </td></tr>
+    <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. </td></tr>
+    <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Memory Management: Frees ctx-&gt;media_part_number if not NULL and sets pointer to NULL. </dd>
+<dd>
+Procurement Impact: Removes exact ordering and catalog reference information. </dd>
+<dd>
+Use Cases: Removing commercial details, generalizing metadata, or correcting errors. </dd>
+<dd>
+Documentation: May affect ability to source compatible replacement media.</dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>Loss of part number affects precise product identification and procurement. </dd>
+<dd>
+May impact ability to cross-reference with manufacturer specifications. </dd>
+<dd>
+Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>.</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="#ac7c87ae51a242428ceb6d2b0a75e0b70" title="Sets the media part number or model designation for the image.">aaruf_set_media_part_number()</a> for setting media part number information. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04512">4512</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00223">aaruformat_context::media_part_number</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+
+</div>
+</div>
+<a id="a02699c3490df86f9919ac8f22f303d9e" name="a02699c3490df86f9919ac8f22f303d9e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a02699c3490df86f9919ac8f22f303d9e">&#9670;&#160;</a></span>aaruf_clear_media_sequence()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int32_t aaruf_clear_media_sequence </td>
+          <td>(</td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clears the media sequence information from the image metadata. </p>
+<p>Removes the media sequence and last media sequence fields from the AaruFormat image's metadata block, effectively removing any indication that this media is part of a multi-volume set. Both the current sequence number and the total sequence count are reset to zero. If this operation results in all metadata fields being empty, the entire metadata block is deinitialized (identifier set to 0) to avoid writing an empty metadata block to the image file.</p>
+<p>This function is useful when repurposing an image that was originally part of a multi-disc set but is now being treated as standalone media, or when correcting metadata that was set incorrectly.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to the aaruformat context (must be a valid, write-enabled image context).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns one of the following status codes: </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">AARUF_STATUS_OK</td><td>(0) Successfully cleared media sequence information. This is returned when:<ul>
+<li>The context is valid and properly initialized</li>
+<li>The context is opened in write mode (ctx-&gt;isWriting is true)</li>
+<li>Either the metadata block was not initialized (early exit, nothing to clear)</li>
+<li>Or the mediaSequence and lastMediaSequence fields are set to 0</li>
+<li>If all metadata fields are now empty, the metadata block identifier is cleared</li>
+</ul>
+</td></tr>
+    <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. This occurs when:<ul>
+<li>The context parameter is NULL</li>
+<li>The context magic number doesn't match AARU_MAGIC (invalid context type)</li>
+<li>The context was not properly initialized by <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+</ul>
+</td></tr>
+    <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
+<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The context's isWriting flag is false</li>
+<li>Attempting to modify a read-only image</li>
+</ul>
+</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Metadata Block State Management:<ul>
+<li>If the metadata block header is not initialized (identifier != MetadataBlock), the function returns successfully without any action (nothing to clear)</li>
+<li>After clearing, if all metadata fields are empty, the metadata block header identifier is set to 0, preventing an empty block from being written</li>
+<li>This automatic cleanup ensures efficient storage and avoids unnecessary blocks</li>
+</ul>
+</dd>
+<dd>
+Sequence Field Reset:<ul>
+<li>Both mediaSequence and lastMediaSequence are set to 0</li>
+<li>Zero values typically indicate "not part of a sequence" or "unknown sequence"</li>
+<li>The function does not differentiate between never-set and explicitly-cleared</li>
+</ul>
+</dd>
+<dd>
+Use Cases:<ul>
+<li>Correcting incorrectly set sequence metadata</li>
+<li>Converting multi-volume images to standalone format</li>
+<li>Removing obsolete sequence information during image repurposing</li>
+<li>Cleaning up test or development images</li>
+</ul>
+</dd>
+<dd>
+Relationship to Other Metadata:<ul>
+<li>This function only affects sequence fields; other metadata is preserved</li>
+<li>Use <a class="el" href="#a10d528163caf65134a7cec4a0c0a33b8" title="Sets the media sequence information for multi-volume media sets.">aaruf_set_media_sequence()</a> to set new sequence values after clearing</li>
+<li>If reconstructing multi-volume metadata, set sequence before other fields</li>
+</ul>
+</dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>The metadata changes are only written to the image file during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>. Changes made by this function are not immediately persisted to disk.</dd>
+<dd>
+After clearing, the sequence information is permanently lost unless:<ul>
+<li>The image file is not closed (context remains in memory)</li>
+<li>A backup of the original image exists</li>
+<li>The information is reconstructed from external sources</li>
+</ul>
+</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="#a10d528163caf65134a7cec4a0c0a33b8" title="Sets the media sequence information for multi-volume media sets.">aaruf_set_media_sequence()</a> for setting sequence information. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03743">3743</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+
+</div>
+</div>
+<a id="a21d65b63e9806deb6dd0eb9c0e69eaf0" name="a21d65b63e9806deb6dd0eb9c0e69eaf0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a21d65b63e9806deb6dd0eb9c0e69eaf0">&#9670;&#160;</a></span>aaruf_clear_media_serial_number()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int32_t aaruf_clear_media_serial_number </td>
+          <td>(</td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clears the media serial number from the image metadata. </p>
+<p>Removes the media serial number string from the AaruFormat image's metadata block, freeing the associated memory and resetting the length field to zero. This removes the unique identifier assigned to the specific piece of physical storage media by the manufacturer. If this operation results in all metadata fields being empty, the entire metadata block is deinitialized.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to the aaruformat context (must be a valid, write-enabled image context).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns one of the following status codes: </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">AARUF_STATUS_OK</td><td>(0) Successfully cleared media serial number. </td></tr>
+    <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. </td></tr>
+    <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Memory Management: Frees ctx-&gt;media_serial_number if not NULL and sets pointer to NULL. </dd>
+<dd>
+Forensic Impact: Removes unique identification critical for chain of custody. </dd>
+<dd>
+Privacy: May be necessary for anonymizing specific media instances. </dd>
+<dd>
+Use Cases: Privacy compliance, removing tracking identifiers, or correcting errors.</dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>Loss of serial number eliminates unique media instance identification. </dd>
+<dd>
+May affect forensic chain of custody and authentication capabilities. </dd>
+<dd>
+Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>.</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="#ad06ae4d49d6de002ef565108c73451e1" title="Sets the media serial number for the image.">aaruf_set_media_serial_number()</a> for setting media serial number information. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04340">4340</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00221">aaruformat_context::media_serial_number</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+
+</div>
+</div>
+<a id="a41bf934e213aad15df933590e6343c3e" name="a41bf934e213aad15df933590e6343c3e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a41bf934e213aad15df933590e6343c3e">&#9670;&#160;</a></span>aaruf_clear_media_title()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int32_t aaruf_clear_media_title </td>
+          <td>(</td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clears the media title or label from the image metadata. </p>
+<p>Removes the media title string from the AaruFormat image's metadata block, freeing the associated memory and resetting the length field to zero. This effectively removes any record of the title, label, or name that was printed or written on the physical storage media. If this operation results in all metadata fields being empty, the entire metadata block is deinitialized.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to the aaruformat context (must be a valid, write-enabled image context).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns one of the following status codes: </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">AARUF_STATUS_OK</td><td>(0) Successfully cleared media title. </td></tr>
+    <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. </td></tr>
+    <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Memory Management: Frees ctx-&gt;media_title if not NULL and sets pointer to NULL. </dd>
+<dd>
+Metadata Block: If all fields become empty, the metadata block is deinitialized. </dd>
+<dd>
+Use Cases: Removing physical label information, anonymizing media, or correcting errors.</dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>. Lost unless backed up or not closed.</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="#a2f344544e412db0bfb46d3dfb509dd91" title="Sets the media title or label for the image.">aaruf_set_media_title()</a> for setting media title information. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04086">4086</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00217">aaruformat_context::media_title</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+
+</div>
+</div>
 <a id="a01cf0abe0b137236d4be0b91a29d4818" name="a01cf0abe0b137236d4be0b91a29d4818"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a01cf0abe0b137236d4be0b91a29d4818">&#9670;&#160;</a></span>aaruf_get_aaru_json_metadata()</h2>
 
