@@ -287,9 +287,9 @@ endif()
 # Check for math library
 include(CheckLibraryExists)
 
-check_library_exists(m log "" HAVE_LIB_M)
+check_library_exists(m cos "" HAVE_LIB_M)
 if(HAVE_LIB_M)
-  TARGET_LINK_LIBRARIES_WHOLE_ARCHIVE(aaruformat m)
+  target_link_libraries(aaruformat m)
 endif()
 
 # Find Doxygen for documentation generation
