@@ -54,56 +54,19 @@ int convert(const char *input_path, const char *output_path, bool use_long)
 
     printf("Input image has %llu sectors of %u bytes each.\n", total_sectors, sector_size);
 
-    // Convert application name from UTF-8 to UTF-16LE using libicu
-    const char *app_name_utf8      = "aaruformattool";
-    size_t      app_name_utf8_len  = strlen(app_name_utf8);
-    UErrorCode  status             = U_ZERO_ERROR;
-    int32_t     app_name_utf16_len = 0;
-    // Get required length for UTF-16
-    u_strFromUTF8(NULL, 0, &app_name_utf16_len, app_name_utf8, (int32_t)app_name_utf8_len, &status);
-    status                = U_ZERO_ERROR;
-    UChar *app_name_utf16 = (UChar *)malloc((app_name_utf16_len + 1) * sizeof(UChar));
-    if(app_name_utf16 == NULL)
-    {
-        printf("Error allocating memory for UTF-16 application name.\n");
-        aaruf_close(input_ctx);
-        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
-    }
-    u_strFromUTF8(app_name_utf16, app_name_utf16_len + 1, NULL, app_name_utf8, (int32_t)app_name_utf8_len, &status);
-    if(U_FAILURE(status))
-    {
-        printf("Error converting application name to UTF-16LE: %d\n", status);
-        free(app_name_utf16);
-        aaruf_close(input_ctx);
-        return status;
-    }
-    // Convert UChar (UTF-16, host endian) to raw UTF-16LE bytes
-    uint8_t *app_name_utf16le = (uint8_t *)malloc(app_name_utf16_len * 2);
-    if(app_name_utf16le == NULL)
-    {
-        printf("Error allocating memory for UTF-16LE application name.\n");
-        free(app_name_utf16);
-        aaruf_close(input_ctx);
-        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
-    }
-    for(int32_t i = 0; i < app_name_utf16_len; i++)
-    {
-        app_name_utf16le[i * 2]     = (uint8_t)(app_name_utf16[i] & 0xFF);
-        app_name_utf16le[i * 2 + 1] = (uint8_t)((app_name_utf16[i] >> 8) & 0xFF);
-    }
-    free(app_name_utf16);
+    const char *app_name_utf8     = "aaruformattool";
+    size_t      app_name_utf8_len = strlen(app_name_utf8);
 
     // Create output image
     output_ctx = aaruf_create(output_path, input_ctx->image_info.MediaType, sector_size, total_sectors,
                               0,     // negative sectors
                               0,     // overflow sectors
                               NULL,  // options
-                              app_name_utf16le,
-                              app_name_utf16_len * 2,  // application name length in bytes
-                              1,                       // major version
-                              0,                       // minor version
+                              app_name_utf8,
+                              app_name_utf8_len,  // application name length in bytes
+                              1,                  // major version
+                              0,                  // minor version
                               false);
-    free(app_name_utf16le);
 
     if(output_ctx == NULL)
     {
