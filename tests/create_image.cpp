@@ -56,14 +56,11 @@ TEST_F(CreateImageFixture, create_image_uncompresed_duplicated)
     fread(buffer, 1, 1048576, f);
     fclose(f);
 
-    // Static fake UTF-16LE hex string saying "gtest" with interlaced zeroes
-    static const uint8_t fake_utf16le_gtest[] = {0x67, 0x00, 0x74, 0x00, 0x65, 0x00, 0x73, 0x00, 0x74, 0x00};
-
     constexpr size_t total_sectors = 128 * 1024 * 1024 / 512;  // 128 MiB / 512 bytes
 
     // Create image
     void *context = aaruf_create("test.aif", 1, 512, total_sectors, 0, 0, "deduplicate=false;compress=false",
-                                 fake_utf16le_gtest, 10, 0, 0, false);
+                                 reinterpret_cast<const uint8_t *>("gtest"), 10, 0, 0, false);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to create test.aif";
@@ -152,14 +149,11 @@ TEST_F(CreateImageFixture, create_image_uncompresed_deduplicated)
     fread(buffer, 1, 1048576, f);
     fclose(f);
 
-    // Static fake UTF-16LE hex string saying "gtest" with interlaced zeroes
-    static const uint8_t fake_utf16le_gtest[] = {0x67, 0x00, 0x74, 0x00, 0x65, 0x00, 0x73, 0x00, 0x74, 0x00};
-
     constexpr size_t total_sectors = 128 * 1024 * 1024 / 512;  // 128 MiB / 512 bytes
 
     // Create image
     void *context = aaruf_create("test.aif", 1, 512, total_sectors, 0, 0, "deduplicate=true;compress=false",
-                                 fake_utf16le_gtest, 10, 0, 0, false);
+                                 reinterpret_cast<const uint8_t *>("gtest"), 10, 0, 0, false);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to create test.aif";
@@ -248,14 +242,11 @@ TEST_F(CreateImageFixture, create_image_compresed_duplicated)
     fread(buffer, 1, 1048576, f);
     fclose(f);
 
-    // Static fake UTF-16LE hex string saying "gtest" with interlaced zeroes
-    static const uint8_t fake_utf16le_gtest[] = {0x67, 0x00, 0x74, 0x00, 0x65, 0x00, 0x73, 0x00, 0x74, 0x00};
-
     constexpr size_t total_sectors = 128 * 1024 * 1024 / 512;  // 128 MiB / 512 bytes
 
     // Create image
     void *context = aaruf_create("test.aif", 1, 512, total_sectors, 0, 0, "deduplicate=false;compress=true",
-                                 fake_utf16le_gtest, 10, 0, 0, false);
+                                 reinterpret_cast<const uint8_t *>("gtest"), 10, 0, 0, false);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to create test.aif";
@@ -344,14 +335,11 @@ TEST_F(CreateImageFixture, create_image_compresed_deduplicated)
     fread(buffer, 1, 1048576, f);
     fclose(f);
 
-    // Static fake UTF-16LE hex string saying "gtest" with interlaced zeroes
-    static const uint8_t fake_utf16le_gtest[] = {0x67, 0x00, 0x74, 0x00, 0x65, 0x00, 0x73, 0x00, 0x74, 0x00};
-
     constexpr size_t total_sectors = 128 * 1024 * 1024 / 512;  // 128 MiB / 512 bytes
 
     // Create image
     void *context = aaruf_create("test.aif", 1, 512, total_sectors, 0, 0, "deduplicate=true;compress=true",
-                                 fake_utf16le_gtest, 10, 0, 0, false);
+                                 reinterpret_cast<const uint8_t *>("gtest"), 10, 0, 0, false);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to create test.aif";
@@ -440,14 +428,11 @@ TEST_F(CreateImageFixture, create_image_table_shift_9)
     fread(buffer, 1, 1048576, f);
     fclose(f);
 
-    // Static fake UTF-16LE hex string saying "gtest" with interlaced zeroes
-    static const uint8_t fake_utf16le_gtest[] = {0x67, 0x00, 0x74, 0x00, 0x65, 0x00, 0x73, 0x00, 0x74, 0x00};
-
     constexpr size_t total_sectors = 128 * 1024 * 1024 / 512;  // 128 MiB / 512 bytes
 
     // Create image
-    void *context =
-        aaruf_create("test.aif", 1, 512, total_sectors, 0, 0, "table_shift=9", fake_utf16le_gtest, 10, 0, 0, false);
+    void *context = aaruf_create("test.aif", 1, 512, total_sectors, 0, 0, "table_shift=9",
+                                 reinterpret_cast<const uint8_t *>("gtest"), 10, 0, 0, false);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to create test.aif";
