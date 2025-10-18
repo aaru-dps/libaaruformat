@@ -362,7 +362,7 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
             break;
         case CdSectorSubchannel:
             ctx->sector_subchannel                      = data;
-            ctx->readableSectorTags[CdSectorSubchannel] = true;
+            ctx->readableSectorTags[CdSectorSubchannelAaru] = true;
             break;
         case AppleProfileTag:
         case AppleSonyTag:
