@@ -298,7 +298,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
                 ctx->current_block_header.compression = None;
         }
 
-        uint32_t max_buffer_size = (1 << ctx->user_data_ddt_header.dataShift) * ctx->current_block_header.sectorSize;
+        uint32_t max_buffer_size = (1 << ctx->user_data_ddt_header.dataShift) * ctx->current_block_header.sectorSize * 2;
         TRACE("Setting max buffer size to %u bytes", max_buffer_size);
 
         TRACE("Allocating memory for writing buffer");
