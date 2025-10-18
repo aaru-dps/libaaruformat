@@ -99,7 +99,7 @@ $(function(){initNavTree('group__SectorTags.html','',''); });
 <tr class="heading"><td colspan="2"><h2 id="header-enum-members" class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
 <tr class="memitem:gaf863e81d172ce7a216d8687a8a23293a" id="r_gaf863e81d172ce7a216d8687a8a23293a"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gaf863e81d172ce7a216d8687a8a23293a">SectorTagType</a> { <br />
-&#160;&#160;<a class="el" href="#ggaf863e81d172ce7a216d8687a8a23293aacc1f837c03086c6835e55dab021211d1">AppleSectorTag</a> = 0
+&#160;&#160;<a class="el" href="#ggaf863e81d172ce7a216d8687a8a23293aaef910c709ff1ccc00e20d853ea02907a">AppleSonyTagAaru</a> = 0
 , <a class="el" href="#ggaf863e81d172ce7a216d8687a8a23293aae6cc37af9cad918edf7a402ecac48e9d">CdSectorSync</a> = 1
 , <a class="el" href="#ggaf863e81d172ce7a216d8687a8a23293aa1ed658dec0ed38565a2f1420dcdcc2db">CdSectorHeader</a> = 2
 , <a class="el" href="#ggaf863e81d172ce7a216d8687a8a23293aa7807c14140de3beeda2945e17fbf5310">CdSectorSubHeader</a> = 3
@@ -124,7 +124,9 @@ Enumerations</h2></td></tr>
 , <a class="el" href="#ggaf863e81d172ce7a216d8687a8a23293aa16bbf88cdbeb1c4bfe44244de7d16c3f">DvdSectorIedAaru</a> = 18
 , <a class="el" href="#ggaf863e81d172ce7a216d8687a8a23293aa6d377a28e58b9da5452ab66e90ea4457">DvdSectorEdcAaru</a> = 19
 , <br />
-&#160;&#160;<a class="el" href="#ggaf863e81d172ce7a216d8687a8a23293aa81dbcd4677b6377bce5351ad92fc4d64">MaxSectorTag</a> = DvdSectorEdcAaru
+&#160;&#160;<a class="el" href="#ggaf863e81d172ce7a216d8687a8a23293aaaa6bb40f3b26ce3df172cd3a1020eeb9">AppleProfileTagAaru</a> = 20
+, <a class="el" href="#ggaf863e81d172ce7a216d8687a8a23293aa9937ec92715558a3f5ce46c8700190ba">PriamDataTowerTagAaru</a> = 21
+, <a class="el" href="#ggaf863e81d172ce7a216d8687a8a23293aa81dbcd4677b6377bce5351ad92fc4d64">MaxSectorTag</a> = PriamDataTowerTagAaru
 <br />
  }</td></tr>
 </table>
@@ -144,7 +146,7 @@ Enumerations</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ggaf863e81d172ce7a216d8687a8a23293aacc1f837c03086c6835e55dab021211d1" name="ggaf863e81d172ce7a216d8687a8a23293aacc1f837c03086c6835e55dab021211d1"></a>AppleSectorTag&#160;</td><td class="fielddoc"><p>Apple's GCR sector tags, 12 bytes (address prolog + checksum) </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ggaf863e81d172ce7a216d8687a8a23293aaef910c709ff1ccc00e20d853ea02907a" name="ggaf863e81d172ce7a216d8687a8a23293aaef910c709ff1ccc00e20d853ea02907a"></a>AppleSonyTagAaru&#160;</td><td class="fielddoc"><p>Apple's Sony sector tags, 12 bytes (address prolog + checksum) </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ggaf863e81d172ce7a216d8687a8a23293aae6cc37af9cad918edf7a402ecac48e9d" name="ggaf863e81d172ce7a216d8687a8a23293aae6cc37af9cad918edf7a402ecac48e9d"></a>CdSectorSync&#160;</td><td class="fielddoc"><p>12-byte CD sync pattern (00 FF*10 00) </p>
 </td></tr>
@@ -183,6 +185,10 @@ Enumerations</h2></td></tr>
 <tr><td class="fieldname"><a id="ggaf863e81d172ce7a216d8687a8a23293aa16bbf88cdbeb1c4bfe44244de7d16c3f" name="ggaf863e81d172ce7a216d8687a8a23293aa16bbf88cdbeb1c4bfe44244de7d16c3f"></a>DvdSectorIedAaru&#160;</td><td class="fielddoc"><p>DVD sector ID error detection, 2 bytes. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ggaf863e81d172ce7a216d8687a8a23293aa6d377a28e58b9da5452ab66e90ea4457" name="ggaf863e81d172ce7a216d8687a8a23293aa6d377a28e58b9da5452ab66e90ea4457"></a>DvdSectorEdcAaru&#160;</td><td class="fielddoc"><p>DVD sector EDC, 4 bytes. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ggaf863e81d172ce7a216d8687a8a23293aaaa6bb40f3b26ce3df172cd3a1020eeb9" name="ggaf863e81d172ce7a216d8687a8a23293aaaa6bb40f3b26ce3df172cd3a1020eeb9"></a>AppleProfileTagAaru&#160;</td><td class="fielddoc"><p>Apple's Profile sector tags, 20 bytes. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ggaf863e81d172ce7a216d8687a8a23293aa9937ec92715558a3f5ce46c8700190ba" name="ggaf863e81d172ce7a216d8687a8a23293aa9937ec92715558a3f5ce46c8700190ba"></a>PriamDataTowerTagAaru&#160;</td><td class="fielddoc"><p>Priam DataTower sector tags, 24 bytes. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ggaf863e81d172ce7a216d8687a8a23293aa81dbcd4677b6377bce5351ad92fc4d64" name="ggaf863e81d172ce7a216d8687a8a23293aa81dbcd4677b6377bce5351ad92fc4d64"></a>MaxSectorTag&#160;</td><td class="fielddoc"></td></tr>
 </table>

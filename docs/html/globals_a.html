@@ -178,6 +178,8 @@ $(function(){initNavTree('globals_a.html','',''); });
 <li>aaruf_flac_decode_redbook_buffer()&#160;:&#160;<a class="el" href="decls_8h.html#af0ff6ad1495d50a8fa0ce0005be69471">decls.h</a>, <a class="el" href="flac_8c.html#af0ff6ad1495d50a8fa0ce0005be69471">flac.c</a></li>
 <li>aaruf_flac_encode_redbook_buffer()&#160;:&#160;<a class="el" href="decls_8h.html#a102023fe64e4bd24cd6d4124f0d74e54">decls.h</a>, <a class="el" href="flac_8c.html#a102023fe64e4bd24cd6d4124f0d74e54">flac.c</a></li>
 <li>aaruf_get_aaru_json_metadata()&#160;:&#160;<a class="el" href="decls_8h.html#a01cf0abe0b137236d4be0b91a29d4818">decls.h</a>, <a class="el" href="metadata_8c.html#a01cf0abe0b137236d4be0b91a29d4818">metadata.c</a></li>
+<li>aaruf_get_all_tape_files()&#160;:&#160;<a class="el" href="decls_8h.html#ad4f8c223fb7c48a03ac4120d12e657b3">decls.h</a>, <a class="el" href="tape_8c.html#ad4f8c223fb7c48a03ac4120d12e657b3">tape.c</a></li>
+<li>aaruf_get_all_tape_partitions()&#160;:&#160;<a class="el" href="decls_8h.html#a2c3aa323e7217e4d25b895a094a34cd0">decls.h</a>, <a class="el" href="tape_8c.html#a2c3aa323e7217e4d25b895a094a34cd0">tape.c</a></li>
 <li>aaruf_get_cicm_metadata()&#160;:&#160;<a class="el" href="decls_8h.html#a42f191c2ea4c70c9d7b373c19b59c812">decls.h</a>, <a class="el" href="metadata_8c.html#a42f191c2ea4c70c9d7b373c19b59c812">metadata.c</a></li>
 <li>aaruf_get_comments()&#160;:&#160;<a class="el" href="decls_8h.html#a9628bcfd2642649a6bcbf1f46d6b6705">decls.h</a>, <a class="el" href="metadata_8c.html#a9628bcfd2642649a6bcbf1f46d6b6705">metadata.c</a></li>
 <li>aaruf_get_creator()&#160;:&#160;<a class="el" href="decls_8h.html#a38d72be7e7854d6cb0bba89172e27b03">decls.h</a>, <a class="el" href="metadata_8c.html#a38d72be7e7854d6cb0bba89172e27b03">metadata.c</a></li>
@@ -199,6 +201,8 @@ $(function(){initNavTree('globals_a.html','',''); });
 <li>aaruf_get_media_title()&#160;:&#160;<a class="el" href="decls_8h.html#af1ca27c052c6cde38a8d6d71e10936db">decls.h</a>, <a class="el" href="metadata_8c.html#af1ca27c052c6cde38a8d6d71e10936db">metadata.c</a></li>
 <li>aaruf_get_negative_sectors()&#160;:&#160;<a class="el" href="decls_8h.html#a8e00d26a8e751fbd412868ac4f92a3c0">decls.h</a>, <a class="el" href="metadata_8c.html#a8e00d26a8e751fbd412868ac4f92a3c0">metadata.c</a></li>
 <li>aaruf_get_overflow_sectors()&#160;:&#160;<a class="el" href="decls_8h.html#aeeae64b120a10bac5e3d757a07a9691a">decls.h</a>, <a class="el" href="metadata_8c.html#aeeae64b120a10bac5e3d757a07a9691a">metadata.c</a></li>
+<li>aaruf_get_readable_media_tags()&#160;:&#160;<a class="el" href="decls_8h.html#a9cfc80d1cfa399bfea980b6ac4e2208a">decls.h</a>, <a class="el" href="blocks_2metadata_8c.html#a9cfc80d1cfa399bfea980b6ac4e2208a">metadata.c</a></li>
+<li>aaruf_get_readable_sector_tags()&#160;:&#160;<a class="el" href="decls_8h.html#aa9ed74c6988c035d9ba0d11965d5cf10">decls.h</a>, <a class="el" href="blocks_2metadata_8c.html#aa9ed74c6988c035d9ba0d11965d5cf10">metadata.c</a></li>
 <li>aaruf_get_tape_file()&#160;:&#160;<a class="el" href="decls_8h.html#a1c8d4faf14212a4c46c1fb47bf25ac1e">decls.h</a>, <a class="el" href="tape_8c.html#a6221f89b294ca55944944a04edb964e3">tape.c</a></li>
 <li>aaruf_get_tape_partition()&#160;:&#160;<a class="el" href="decls_8h.html#ab1ca1a092699df0f43ea050812f6c6b1">decls.h</a>, <a class="el" href="tape_8c.html#a91c40d91fdeb98193d6eeb95f16d8973">tape.c</a></li>
 <li>aaruf_get_tracks()&#160;:&#160;<a class="el" href="decls_8h.html#a2ce65757ca5209f17d467c51ba7d445d">decls.h</a>, <a class="el" href="optical_8c.html#a2ce65757ca5209f17d467c51ba7d445d">optical.c</a></li>
@@ -303,10 +307,11 @@ $(function(){initNavTree('globals_a.html','',''); });
 <li>AppleHD20&#160;:&#160;<a class="el" href="group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aab8fc3997a514404b7d4692a74fb87912">aaru.h</a></li>
 <li>AppleProfile&#160;:&#160;<a class="el" href="group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa0a8ba83da933d4ad284631784a991f19">aaru.h</a></li>
 <li>AppleProfileTag&#160;:&#160;<a class="el" href="enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a17075a1bffaf0da39e0baacabc84a0fe">enums.h</a></li>
-<li>AppleSectorTag&#160;:&#160;<a class="el" href="group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aacc1f837c03086c6835e55dab021211d1">aaru.h</a></li>
+<li>AppleProfileTagAaru&#160;:&#160;<a class="el" href="group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aaaa6bb40f3b26ce3df172cd3a1020eeb9">aaru.h</a></li>
 <li>AppleSonyDS&#160;:&#160;<a class="el" href="group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aae809315e2cd79c3fd74d1604c38f3ae6">aaru.h</a></li>
 <li>AppleSonySS&#160;:&#160;<a class="el" href="group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa3d003ea60d3ecb7018a671e1302938a0">aaru.h</a></li>
 <li>AppleSonyTag&#160;:&#160;<a class="el" href="enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a459369a1461803ec0cc998b606d53b07">enums.h</a></li>
+<li>AppleSonyTagAaru&#160;:&#160;<a class="el" href="group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aaef910c709ff1ccc00e20d853ea02907a">aaru.h</a></li>
 <li>AppleWidget&#160;:&#160;<a class="el" href="group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aacd42dba7780092d737e7d51a3819cb4b">aaru.h</a></li>
 <li>Apricot_35&#160;:&#160;<a class="el" href="group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa925b760123c53b79c9bb17fe94401c6d">aaru.h</a></li>
 <li>ATA_IDENTIFY&#160;:&#160;<a class="el" href="group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea67902436f41ef62eb2404a0642e4ba26">aaru.h</a></li>

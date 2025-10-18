@@ -74,6 +74,7 @@ var group__MediaTags =
       [ "MiniDiscD5", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea07d05a8c30e7516139ae761ac9eaefc1", null ],
       [ "MiniDiscUTOC", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea7d3b34c3cd93d13905a87b466859b2a7", null ],
       [ "MiniDiscDTOC", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea05624139ec685ba219acbc9ea0e49100", null ],
-      [ "DVD_DiscKey_Decrypted", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea109296d460fd5fc05446914dad9a0834", null ]
+      [ "DVD_DiscKey_Decrypted", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea109296d460fd5fc05446914dad9a0834", null ],
+      [ "MaxMediaTag", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebeacd570dfe827abf5d93ff1c36b44efa33", null ]
     ] ]
 ];

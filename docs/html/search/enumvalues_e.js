@@ -19,10 +19,11 @@ var searchData=
   ['pocketzip_16',['PocketZip',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa58ee4dca871ec1f01260f0888621993b',1,'aaru.h']]],
   ['priamdatatower_17',['PriamDataTower',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aab933939a09397f9311004f3dd137226d',1,'aaru.h']]],
   ['priamdatatowertag_18',['PriamDataTowerTag',['../enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a6ed24283290264c28e919adf5a273f99',1,'enums.h']]],
-  ['ps1cd_19',['PS1CD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa59c572262681092c6da3188135ae944f',1,'aaru.h']]],
-  ['ps2cd_20',['PS2CD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aafa77828f2ea2ff692992611a19307d9f',1,'aaru.h']]],
-  ['ps2dvd_21',['PS2DVD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa8dccd9aa3702e0112d3c4d6f3388820e',1,'aaru.h']]],
-  ['ps3bd_22',['PS3BD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa626b10297c3bc07fbff69cf639208453',1,'aaru.h']]],
-  ['ps3dvd_23',['PS3DVD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa727f071d5dd887fd6645e112cfcab197',1,'aaru.h']]],
-  ['ps4bd_24',['PS4BD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaafd24844aa48e831be04f4a6446c9e48',1,'aaru.h']]]
+  ['priamdatatowertagaaru_19',['PriamDataTowerTagAaru',['../group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aa9937ec92715558a3f5ce46c8700190ba',1,'aaru.h']]],
+  ['ps1cd_20',['PS1CD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa59c572262681092c6da3188135ae944f',1,'aaru.h']]],
+  ['ps2cd_21',['PS2CD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aafa77828f2ea2ff692992611a19307d9f',1,'aaru.h']]],
+  ['ps2dvd_22',['PS2DVD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa8dccd9aa3702e0112d3c4d6f3388820e',1,'aaru.h']]],
+  ['ps3bd_23',['PS3BD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa626b10297c3bc07fbff69cf639208453',1,'aaru.h']]],
+  ['ps3dvd_24',['PS3DVD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa727f071d5dd887fd6645e112cfcab197',1,'aaru.h']]],
+  ['ps4bd_25',['PS4BD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaafd24844aa48e831be04f4a6446c9e48',1,'aaru.h']]]
 ];

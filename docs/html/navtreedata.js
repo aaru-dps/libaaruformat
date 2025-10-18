@@ -25,7 +25,6 @@
 var NAVTREE =
 [
   [ "libaaruformat", "index.html", [
-    [ "libaaruformat", "md_README.html", null ],
     [ "Topics", "topics.html", "topics" ],
     [ "Data Structures", "annotated.html", [
       [ "Data Structures", "annotated.html", "annotated_dup" ],
@@ -53,13 +52,14 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "aaru_8h.html",
-"decls_8h.html#aeeae64b120a10bac5e3d757a07a9691a",
-"functions.html",
-"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa1da82b907193d0fd3a38e6d7eb7d1d90",
-"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa9c7b877e9f1f874f159a353799e0dc40",
-"index__v3_8c.html#ac85ad03ba0f06b8799d7fe056b87a18e",
-"spamsum_8c.html#a6fe74704e44be7adfaa2ce676f3c3de4",
-"structTrackEntry.html#aa82e4a2aa2cfecee9891f117e9494cdf"
+"decls_8h.html#add7cede9e5544ae12ae2b22eaf48e54c",
+"flac_8c.html#ad65b9acb1c0c9401aacf5e711c2c6cf7",
+"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa1b8a80048f7587ea99d571ce9dcace4f",
+"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa9942e74f56903efd79052f5c612a7cc2",
+"index__v1_8c.html",
+"simd_8h.html#a536de9a55f7c7eed4d2ad767e76f8f2c",
+"structTapePartitionHeader.html#a85cd855dac694aa7cf12177844d8b43e",
+"write_8c.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronization';

@@ -111,8 +111,177 @@ Functions</h2></td></tr>
 <tr class="memdesc:a5e0397faed8aea27c5a6a3881875de54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Processes a CICM XML metadata block from the image stream.  <br /></td></tr>
 <tr class="memitem:a84003ec881425a7b28ec24cb48d19f02" id="r_a84003ec881425a7b28ec24cb48d19f02"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a84003ec881425a7b28ec24cb48d19f02">process_aaru_metadata_json_block</a> (<a class="el" href="structaaruformat__context.html">aaruformat_context</a> *ctx, const <a class="el" href="structIndexEntry.html">IndexEntry</a> *entry)</td></tr>
 <tr class="memdesc:a84003ec881425a7b28ec24cb48d19f02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Processes an Aaru metadata JSON block from the image stream during image opening.  <br /></td></tr>
+<tr class="memitem:aa9ed74c6988c035d9ba0d11965d5cf10" id="r_aa9ed74c6988c035d9ba0d11965d5cf10"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa9ed74c6988c035d9ba0d11965d5cf10">aaruf_get_readable_sector_tags</a> (const void *context, uint8_t *buffer, size_t *length)</td></tr>
+<tr class="memdesc:aa9ed74c6988c035d9ba0d11965d5cf10"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves which sector tags are readable in the AaruFormat image.  <br /></td></tr>
+<tr class="memitem:a9cfc80d1cfa399bfea980b6ac4e2208a" id="r_a9cfc80d1cfa399bfea980b6ac4e2208a"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9cfc80d1cfa399bfea980b6ac4e2208a">aaruf_get_readable_media_tags</a> (const void *context, uint8_t *buffer, size_t *length)</td></tr>
+<tr class="memdesc:a9cfc80d1cfa399bfea980b6ac4e2208a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves which media tags are present in the AaruFormat image.  <br /></td></tr>
 </table>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
+<a id="a9cfc80d1cfa399bfea980b6ac4e2208a" name="a9cfc80d1cfa399bfea980b6ac4e2208a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9cfc80d1cfa399bfea980b6ac4e2208a">&#9670;&#160;</a></span>aaruf_get_readable_media_tags()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int32_t aaruf_get_readable_media_tags </td>
+          <td>(</td>
+          <td class="paramtype">const void *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t *</td>          <td class="paramname"><span class="paramname"><em>buffer</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t *</td>          <td class="paramname"><span class="paramname"><em>length</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Retrieves which media tags are present in the AaruFormat image. </p>
+<p>Returns an array of booleans indicating the presence of each <a class="el" href="group__MediaTags.html#gabdd09c559df8f34ae68fcb2ff1892ebe">MediaTagType</a> in the image. The array is indexed by <a class="el" href="group__MediaTags.html#gabdd09c559df8f34ae68fcb2ff1892ebe">MediaTagType</a> enum values (0 to MaxMediaTag), where each boolean is true if the corresponding media tag exists in the image's mediaTags hash table.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to the aaruformat context (must be a valid, opened image context). </td></tr>
+    <tr><td class="paramname">buffer</td><td>Pointer to a buffer to store the boolean array. Can be NULL to query required length. </td></tr>
+    <tr><td class="paramname">length</td><td>Pointer to the buffer length. On input, contains buffer size; on output, contains required size.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns one of the following status codes: </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">AARUF_STATUS_OK</td><td>(0) Successfully retrieved readable media tags. This is returned when:<ul>
+<li>The context is valid and properly initialized</li>
+<li>The buffer is large enough to hold all <a class="el" href="group__MediaTags.html#gabdd09c559df8f34ae68fcb2ff1892ebe">MediaTagType</a> values (0 to MaxMediaTag)</li>
+<li>The output array has been populated with true/false for each <a class="el" href="group__MediaTags.html#gabdd09c559df8f34ae68fcb2ff1892ebe">MediaTagType</a></li>
+</ul>
+</td></tr>
+    <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. This occurs when:<ul>
+<li>The context parameter is NULL</li>
+<li>The context magic number doesn't match AARU_MAGIC (invalid context type)</li>
+</ul>
+</td></tr>
+    <tr><td class="paramname">AARUF_ERROR_BUFFER_TOO_SMALL</td><td>(-10) The buffer is too small. This occurs when:<ul>
+<li>The buffer parameter is NULL</li>
+<li>The length parameter is NULL</li>
+<li>The provided buffer is smaller than required (size = MaxMediaTag + 1 bytes)</li>
+<li>The length output will contain the required buffer size</li>
+</ul>
+</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Buffer Size: The buffer must be at least (MaxMediaTag + 1) bytes, where each byte represents whether the corresponding <a class="el" href="group__MediaTags.html#gabdd09c559df8f34ae68fcb2ff1892ebe">MediaTagType</a> is present in the image.</dd>
+<dd>
+Query Mode: To query the required buffer size, pass buffer == NULL or *length &lt; required. The function will return AARUF_ERROR_BUFFER_TOO_SMALL and set *length to required size.</dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>The output parameters are only modified on success (AARUF_STATUS_OK). On error, their values remain unchanged. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="blocks_2metadata_8c_source.html#l00706">706</a> of file <a class="el" href="blocks_2metadata_8c_source.html">metadata.c</a>.</p>
+
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00049">AARUF_ERROR_BUFFER_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="aaru_8h_source.html#l01011">MaxMediaTag</a>, <a class="el" href="context_8h_source.html#l00264">aaruformat_context::mediaTags</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+
+</div>
+</div>
+<a id="aa9ed74c6988c035d9ba0d11965d5cf10" name="aa9ed74c6988c035d9ba0d11965d5cf10"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa9ed74c6988c035d9ba0d11965d5cf10">&#9670;&#160;</a></span>aaruf_get_readable_sector_tags()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int32_t aaruf_get_readable_sector_tags </td>
+          <td>(</td>
+          <td class="paramtype">const void *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t *</td>          <td class="paramname"><span class="paramname"><em>buffer</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t *</td>          <td class="paramname"><span class="paramname"><em>length</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Retrieves which sector tags are readable in the AaruFormat image. </p>
+<p>Returns an array of booleans indicating whether each <a class="el" href="group__SectorTags.html#gaf863e81d172ce7a216d8687a8a23293a">SectorTagType</a> was successfully read from the image. The array is indexed by <a class="el" href="group__SectorTags.html#gaf863e81d172ce7a216d8687a8a23293a">SectorTagType</a> enum values (0 to MaxSectorTag), where each boolean is true if the corresponding sector tag data is present and readable in the image. Sector tags contain per-sector metadata such as sync headers, ECC/EDC codes, subchannels, and other sector-level information essential for exact media reconstruction.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to the aaruformat context (must be a valid, opened image context). </td></tr>
+    <tr><td class="paramname">buffer</td><td>Pointer to a buffer to store the boolean array. Can be NULL to query required length. </td></tr>
+    <tr><td class="paramname">length</td><td>Pointer to the buffer length. On input, contains buffer size; on output, contains required size.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns one of the following status codes: </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">AARUF_STATUS_OK</td><td>(0) Successfully retrieved readable sector tags. This is returned when:<ul>
+<li>The context is valid and properly initialized</li>
+<li>The readableSectorTags array is populated in the context</li>
+<li>The buffer is large enough to hold all <a class="el" href="group__SectorTags.html#gaf863e81d172ce7a216d8687a8a23293a">SectorTagType</a> values (0 to MaxSectorTag)</li>
+<li>The output array has been successfully copied from the internal readableSectorTags</li>
+</ul>
+</td></tr>
+    <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. This occurs when:<ul>
+<li>The context parameter is NULL</li>
+<li>The context magic number doesn't match AARU_MAGIC (invalid context type)</li>
+<li>The context was not properly initialized by <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+</ul>
+</td></tr>
+    <tr><td class="paramname">AARUF_ERROR_METADATA_NOT_PRESENT</td><td>(-30) The sector tags array is not available. This occurs when:<ul>
+<li>The readableSectorTags array is NULL (not initialized in the context)</li>
+<li>The image was created without sector tag support</li>
+<li>The image format does not support or require sector tags</li>
+</ul>
+</td></tr>
+    <tr><td class="paramname">AARUF_ERROR_BUFFER_TOO_SMALL</td><td>(-10) The buffer is too small. This occurs when:<ul>
+<li>The buffer parameter is NULL</li>
+<li>The length parameter is NULL</li>
+<li>The provided buffer is smaller than required (size = (MaxSectorTag + 1) * sizeof(bool))</li>
+<li>The length output will contain the required buffer size in bytes</li>
+</ul>
+</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Buffer Size: The buffer must be at least (MaxSectorTag + 1) bytes, where each byte represents whether the corresponding <a class="el" href="group__SectorTags.html#gaf863e81d172ce7a216d8687a8a23293a">SectorTagType</a> data was successfully read in the image. On most systems, sizeof(bool) == 1, so the required size is (MaxSectorTag + 1) bytes.</dd>
+<dd>
+Sector Tag Types: Sector tags preserve on-disk structures not part of main user data. Examples include:<ul>
+<li>CD sector sync/header information (CdSectorSync, CdSectorHeader)</li>
+<li>CD subheaders and ECC/EDC codes (CdSectorSubHeader, CdSectorEcc, CdSectorEdc)</li>
+<li>DVD sector numbers and IED (DvdSectorNumber)</li>
+<li>Media-specific proprietary tags (AppleProfileTagAaru, PriamDataTowerTagAaru)</li>
+</ul>
+</dd>
+<dd>
+Query Mode: To query the required buffer size, pass buffer == NULL or *length &lt; required. The function will return AARUF_ERROR_BUFFER_TOO_SMALL and set *length to required size. This allows allocation of properly sized buffers without prior knowledge of MaxSectorTag.</dd>
+<dd>
+Data Interpretation: A true value (non-zero) at buffer[i] indicates sector tag type i was readable. A false value (zero) at buffer[i] indicates that sector tag type i is either not present or was not successfully read from the image during opening. The readableSectorTags array is populated during image opening/processing in data blocks.</dd>
+<dd>
+Image Opening Context: The readableSectorTags array is initialized during <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a> and populated as data blocks are processed. It reflects what was actually present and readable in the image file, not what theoretically could be present for the media type.</dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>The output parameters are only modified on success (AARUF_STATUS_OK). On error, their values remain unchanged. Initialize them before calling if default values are needed on failure.</dd>
+<dd>
+If readableSectorTags is NULL in the context, AARUF_ERROR_NOT_FOUND is returned. This typically indicates the image format does not support sector-level tags, rather than indicating an error state. Check return value to distinguish.</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__SectorTags.html#gaf863e81d172ce7a216d8687a8a23293a">SectorTagType</a> for enumeration of all available sector tag types </dd>
+<dd>
+<a class="el" href="decls_8h.html#ae5a85524a6e27339c02c4a5791e0db57" title="Reads a specific sector tag from the AaruFormat image.">aaruf_read_sector_tag()</a> for reading individual sector tag data </dd>
+<dd>
+<a class="el" href="decls_8h.html#a6a8994cd006711347fb03cec465eafa6" title="Writes per-sector tag data (auxiliary metadata) for a specific sector.">aaruf_write_sector_tag()</a> for writing sector tags during image creation </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="blocks_2metadata_8c_source.html#l00618">618</a> of file <a class="el" href="blocks_2metadata_8c_source.html">metadata.c</a>.</p>
+
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00049">AARUF_ERROR_BUFFER_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00069">AARUF_ERROR_METADATA_NOT_PRESENT</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="aaru_8h_source.html#l00918">MaxSectorTag</a>, <a class="el" href="context_8h_source.html#l00263">aaruformat_context::readableSectorTags</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+
+</div>
+</div>
 <a id="a84003ec881425a7b28ec24cb48d19f02" name="a84003ec881425a7b28ec24cb48d19f02"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a84003ec881425a7b28ec24cb48d19f02">&#9670;&#160;</a></span>process_aaru_metadata_json_block()</h2>
 

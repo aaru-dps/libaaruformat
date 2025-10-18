@@ -75,7 +75,8 @@ var aaru_8h =
       [ "MiniDiscD5", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea07d05a8c30e7516139ae761ac9eaefc1", null ],
       [ "MiniDiscUTOC", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea7d3b34c3cd93d13905a87b466859b2a7", null ],
       [ "MiniDiscDTOC", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea05624139ec685ba219acbc9ea0e49100", null ],
-      [ "DVD_DiscKey_Decrypted", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea109296d460fd5fc05446914dad9a0834", null ]
+      [ "DVD_DiscKey_Decrypted", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea109296d460fd5fc05446914dad9a0834", null ],
+      [ "MaxMediaTag", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebeacd570dfe827abf5d93ff1c36b44efa33", null ]
     ] ],
     [ "MediaType", "group__MediaTypes.html#ga1499e9f8a76cb81b43b7a4b0dbe7e44a", [
       [ "UnknownMedia", "group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa44b97367fe7b98fbdd658b6147bb6de5", null ],
@@ -561,7 +562,7 @@ var aaru_8h =
       [ "VideoNowXp", "group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa9685c678a93fbc28a9b4dbfee8759405", null ]
     ] ],
     [ "SectorTagType", "group__SectorTags.html#gaf863e81d172ce7a216d8687a8a23293a", [
-      [ "AppleSectorTag", "group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aacc1f837c03086c6835e55dab021211d1", null ],
+      [ "AppleSonyTagAaru", "group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aaef910c709ff1ccc00e20d853ea02907a", null ],
       [ "CdSectorSync", "group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aae6cc37af9cad918edf7a402ecac48e9d", null ],
       [ "CdSectorHeader", "group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aa1ed658dec0ed38565a2f1420dcdcc2db", null ],
       [ "CdSectorSubHeader", "group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aa7807c14140de3beeda2945e17fbf5310", null ],
@@ -581,6 +582,8 @@ var aaru_8h =
       [ "DvdSectorNumber", "group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aa82265a5d640ce9474f8b357c54cc0440", null ],
       [ "DvdSectorIedAaru", "group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aa16bbf88cdbeb1c4bfe44244de7d16c3f", null ],
       [ "DvdSectorEdcAaru", "group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aa6d377a28e58b9da5452ab66e90ea4457", null ],
+      [ "AppleProfileTagAaru", "group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aaaa6bb40f3b26ce3df172cd3a1020eeb9", null ],
+      [ "PriamDataTowerTagAaru", "group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aa9937ec92715558a3f5ce46c8700190ba", null ],
       [ "MaxSectorTag", "group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aa81dbcd4677b6377bce5351ad92fc4d64", null ]
     ] ]
 ];

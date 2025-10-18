@@ -111,8 +111,167 @@ Functions</h2></td></tr>
 <tr class="memdesc:a91c40d91fdeb98193d6eeb95f16d8973"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the block range for a specific tape partition from an Aaru tape image.  <br /></td></tr>
 <tr class="memitem:aa16d4457093df66246ce5622c3565a17" id="r_aa16d4457093df66246ce5622c3565a17"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa16d4457093df66246ce5622c3565a17">aaruf_set_tape_partition</a> (void *context, const uint8_t partition, const uint64_t starting_block, const uint64_t ending_block)</td></tr>
 <tr class="memdesc:aa16d4457093df66246ce5622c3565a17"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets or updates the block range for a specific tape partition in an Aaru tape image.  <br /></td></tr>
+<tr class="memitem:ad4f8c223fb7c48a03ac4120d12e657b3" id="r_ad4f8c223fb7c48a03ac4120d12e657b3"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad4f8c223fb7c48a03ac4120d12e657b3">aaruf_get_all_tape_files</a> (const void *context, uint8_t *buffer, size_t *length)</td></tr>
+<tr class="memdesc:ad4f8c223fb7c48a03ac4120d12e657b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves all tape file entries from the image.  <br /></td></tr>
+<tr class="memitem:a2c3aa323e7217e4d25b895a094a34cd0" id="r_a2c3aa323e7217e4d25b895a094a34cd0"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2c3aa323e7217e4d25b895a094a34cd0">aaruf_get_all_tape_partitions</a> (const void *context, uint8_t *buffer, size_t *length)</td></tr>
+<tr class="memdesc:a2c3aa323e7217e4d25b895a094a34cd0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves all tape partition entries from the image.  <br /></td></tr>
 </table>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
+<a id="ad4f8c223fb7c48a03ac4120d12e657b3" name="ad4f8c223fb7c48a03ac4120d12e657b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad4f8c223fb7c48a03ac4120d12e657b3">&#9670;&#160;</a></span>aaruf_get_all_tape_files()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int32_t aaruf_get_all_tape_files </td>
+          <td>(</td>
+          <td class="paramtype">const void *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t *</td>          <td class="paramname"><span class="paramname"><em>buffer</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t *</td>          <td class="paramname"><span class="paramname"><em>length</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Retrieves all tape file entries from the image. </p>
+<p>Extracts the complete set of tape file metadata entries from an Aaru tape image, returning an array of <a class="el" href="structTapeFileEntry.html" title="Describes a single logical file on a tape medium.">TapeFileEntry</a> structures. Tape files represent logical file divisions on sequential access media (magnetic tapes) where data is organized into numbered files within numbered partitions. Each file entry defines a contiguous range of tape blocks (FirstBlock to LastBlock inclusive) that comprise one logical file unit on the tape medium.</p>
+<p>Tape file organization is hierarchical:</p><ul>
+<li><b>Partition</b>: Physical or logical division of the tape (0-255)</li>
+<li><b>File</b>: Numbered file within a partition (0-4,294,967,295)</li>
+<li><b>Block Range</b>: Contiguous sequence of tape blocks containing the file data</li>
+</ul>
+<p>This function is essential for applications that need to:</p><ul>
+<li>Enumerate all logical files stored on a tape image</li>
+<li>Build file system catalogs or directory structures for tape media</li>
+<li>Implement tape navigation and seeking operations</li>
+<li>Extract individual files from multi-file tape archives</li>
+<li>Verify tape image completeness and structure</li>
+<li>Generate tape content manifests for archival documentation</li>
+</ul>
+<p>The function supports a two-call pattern for buffer size determination:</p><ol type="1">
+<li>First call with NULL buffer or insufficient length returns AARUF_ERROR_BUFFER_TOO_SMALL and sets *length to the required size (entry_count × sizeof(TapeFileEntry))</li>
+<li>Second call with properly sized buffer retrieves all file entries</li>
+</ol>
+<p>Alternatively, if the caller knows or pre-allocates sufficient buffer space, a single call will succeed and populate the buffer with all tape file entries.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to the aaruformat context (must be a valid, opened tape image context). </td></tr>
+    <tr><td class="paramname">buffer</td><td>Pointer to a buffer that will receive the array of <a class="el" href="structTapeFileEntry.html" title="Describes a single logical file on a tape medium.">TapeFileEntry</a> structures. May be NULL to query the required buffer size without retrieving data. </td></tr>
+    <tr><td class="paramname">length</td><td>Pointer to a size_t that serves dual purpose:<ul>
+<li>On input: size of the provided buffer in bytes (ignored if buffer is NULL)</li>
+<li>On output: actual size required/used for all entries in bytes</li>
+</ul>
+</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns one of the following status codes: </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">AARUF_STATUS_OK</td><td>(0) Successfully retrieved all tape file entries. </td></tr>
+    <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. </td></tr>
+    <tr><td class="paramname">AARUF_ERROR_TAPE_FILE_NOT_FOUND</td><td>(-19) No tape file metadata exists. </td></tr>
+    <tr><td class="paramname">AARUF_ERROR_BUFFER_TOO_SMALL</td><td>(-12) The provided buffer is insufficient.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="#a6221f89b294ca55944944a04edb964e3" title="Retrieves the block range for a specific tape file from an Aaru tape image.">aaruf_get_tape_file()</a> to retrieve a specific file's block range </dd>
+<dd>
+<a class="el" href="#a03d080a18e07adc52a654dc31b26eea0" title="Sets or updates the block range for a specific tape file in an Aaru tape image.">aaruf_set_tape_file()</a> to define or update a tape file entry </dd>
+<dd>
+<a class="el" href="#a2c3aa323e7217e4d25b895a094a34cd0" title="Retrieves all tape partition entries from the image.">aaruf_get_all_tape_partitions()</a> to retrieve partition boundaries </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="tape_8c_source.html#l01314">1314</a> of file <a class="el" href="tape_8c_source.html">tape.c</a>.</p>
+
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00049">AARUF_ERROR_BUFFER_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00067">AARUF_ERROR_TAPE_FILE_NOT_FOUND</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="context_8h_source.html#l00129">TapeFileHashEntry::fileEntry</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00302">aaruformat_context::tape_files</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+
+</div>
+</div>
+<a id="a2c3aa323e7217e4d25b895a094a34cd0" name="a2c3aa323e7217e4d25b895a094a34cd0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2c3aa323e7217e4d25b895a094a34cd0">&#9670;&#160;</a></span>aaruf_get_all_tape_partitions()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int32_t aaruf_get_all_tape_partitions </td>
+          <td>(</td>
+          <td class="paramtype">const void *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t *</td>          <td class="paramname"><span class="paramname"><em>buffer</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t *</td>          <td class="paramname"><span class="paramname"><em>length</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Retrieves all tape partition entries from the image. </p>
+<p>Extracts the complete set of tape partition metadata entries from an Aaru tape image, returning an array of <a class="el" href="structTapePartitionEntry.html" title="Describes a single physical partition on a tape medium.">TapePartitionEntry</a> structures. Tape partitions represent physical or logical divisions of sequential access media (magnetic tapes) that segment the tape into independent data regions. Each partition entry defines a contiguous range of tape blocks (FirstBlock to LastBlock inclusive) that comprise one partition on the tape medium.</p>
+<p>Tape partitions enable:</p><ul>
+<li><b>Multi-partition tapes</b>: Modern tape formats (LTO-5+, SDLT) support multiple partitions</li>
+<li><b>Data organization</b>: Separating metadata, indexes, and data into distinct partitions</li>
+<li><b>Fast access</b>: Partition switching is faster than sequential seeking across the entire tape</li>
+<li><b>Logical separation</b>: Isolating different data sets or file systems on the same tape</li>
+</ul>
+<p>This function is essential for applications that need to:</p><ul>
+<li>Enumerate all partitions on a multi-partition tape image</li>
+<li>Determine partition boundaries and sizes for navigation</li>
+<li>Implement partition-aware file system drivers or extraction tools</li>
+<li>Validate tape structure and partition layout integrity</li>
+<li>Generate tape structure documentation for archival purposes</li>
+</ul>
+<p>The function supports a two-call pattern for buffer size determination:</p><ol type="1">
+<li>First call with NULL buffer or insufficient length returns AARUF_ERROR_BUFFER_TOO_SMALL and sets *length to the required size (partition_count × sizeof(TapePartitionEntry))</li>
+<li>Second call with properly sized buffer retrieves all partition entries</li>
+</ol>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to the aaruformat context (must be a valid, opened tape image context). </td></tr>
+    <tr><td class="paramname">buffer</td><td>Pointer to a buffer that will receive the array of <a class="el" href="structTapePartitionEntry.html" title="Describes a single physical partition on a tape medium.">TapePartitionEntry</a> structures. May be NULL to query the required buffer size without retrieving data. </td></tr>
+    <tr><td class="paramname">length</td><td>Pointer to a size_t that serves dual purpose:<ul>
+<li>On input: size of the provided buffer in bytes (ignored if buffer is NULL)</li>
+<li>On output: actual size required/used for all entries in bytes</li>
+</ul>
+</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns one of the following status codes: </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">AARUF_STATUS_OK</td><td>(0) Successfully retrieved all tape partition entries. </td></tr>
+    <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. </td></tr>
+    <tr><td class="paramname">AARUF_ERROR_TAPE_PARTITION_NOT_FOUND</td><td>(-20) No tape partition metadata exists. </td></tr>
+    <tr><td class="paramname">AARUF_ERROR_BUFFER_TOO_SMALL</td><td>(-12) The provided buffer is insufficient.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="#a91c40d91fdeb98193d6eeb95f16d8973" title="Retrieves the block range for a specific tape partition from an Aaru tape image.">aaruf_get_tape_partition()</a> to retrieve a specific partition's block range </dd>
+<dd>
+<a class="el" href="#aa16d4457093df66246ce5622c3565a17" title="Sets or updates the block range for a specific tape partition in an Aaru tape image.">aaruf_set_tape_partition()</a> to define or update a tape partition entry </dd>
+<dd>
+<a class="el" href="#ad4f8c223fb7c48a03ac4120d12e657b3" title="Retrieves all tape file entries from the image.">aaruf_get_all_tape_files()</a> to retrieve all tape file entries </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="tape_8c_source.html#l01416">1416</a> of file <a class="el" href="tape_8c_source.html">tape.c</a>.</p>
+
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00049">AARUF_ERROR_BUFFER_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00068">AARUF_ERROR_TAPE_PARTITION_NOT_FOUND</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00136">TapePartitionHashEntry::partitionEntry</a>, <a class="el" href="context_8h_source.html#l00303">aaruformat_context::tape_partitions</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+
+</div>
+</div>
 <a id="a6221f89b294ca55944944a04edb964e3" name="a6221f89b294ca55944944a04edb964e3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6221f89b294ca55944944a04edb964e3">&#9670;&#160;</a></span>aaruf_get_tape_file()</h2>
 
