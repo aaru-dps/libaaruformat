@@ -539,6 +539,82 @@ void process_aaru_metadata_json_block(aaruformat_context *ctx, const IndexEntry 
     TRACE("Exiting process_aaru_metadata_json_block()");
 }
 
+/**
+ * @brief Retrieves which sector tags are readable in the AaruFormat image.
+ *
+ * Returns an array of booleans indicating whether each SectorTagType was successfully read
+ * from the image. The array is indexed by SectorTagType enum values (0 to MaxSectorTag),
+ * where each boolean is true if the corresponding sector tag data is present and readable
+ * in the image. Sector tags contain per-sector metadata such as sync headers, ECC/EDC codes,
+ * subchannels, and other sector-level information essential for exact media reconstruction.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, opened image context).
+ * @param buffer Pointer to a buffer to store the boolean array. Can be NULL to query required length.
+ * @param length Pointer to the buffer length. On input, contains buffer size; on output, contains required size.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully retrieved readable sector tags. This is returned when:
+ *         - The context is valid and properly initialized
+ *         - The readableSectorTags array is populated in the context
+ *         - The buffer is large enough to hold all SectorTagType values (0 to MaxSectorTag)
+ *         - The output array has been successfully copied from the internal readableSectorTags
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
+ *         - The context was not properly initialized by aaruf_open() or aaruf_create()
+ *
+ * @retval AARUF_ERROR_METADATA_NOT_PRESENT (-30) The sector tags array is not available. This occurs when:
+ *         - The readableSectorTags array is NULL (not initialized in the context)
+ *         - The image was created without sector tag support
+ *         - The image format does not support or require sector tags
+ *
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-10) The buffer is too small. This occurs when:
+ *         - The buffer parameter is NULL
+ *         - The length parameter is NULL
+ *         - The provided buffer is smaller than required (size = (MaxSectorTag + 1) * sizeof(bool))
+ *         - The length output will contain the required buffer size in bytes
+ *
+ * @note Buffer Size:
+ *       The buffer must be at least (MaxSectorTag + 1) bytes, where each byte represents
+ *       whether the corresponding SectorTagType data was successfully read in the image.
+ *       On most systems, sizeof(bool) == 1, so the required size is (MaxSectorTag + 1) bytes.
+ *
+ * @note Sector Tag Types:
+ *       Sector tags preserve on-disk structures not part of main user data. Examples include:
+ *       - CD sector sync/header information (CdSectorSync, CdSectorHeader)
+ *       - CD subheaders and ECC/EDC codes (CdSectorSubHeader, CdSectorEcc, CdSectorEdc)
+ *       - DVD sector numbers and IED (DvdSectorNumber)
+ *       - Media-specific proprietary tags (AppleProfileTagAaru, PriamDataTowerTagAaru)
+ *
+ * @note Query Mode:
+ *       To query the required buffer size, pass buffer == NULL or *length < required.
+ *       The function will return AARUF_ERROR_BUFFER_TOO_SMALL and set *length to required size.
+ *       This allows allocation of properly sized buffers without prior knowledge of MaxSectorTag.
+ *
+ * @note Data Interpretation:
+ *       A true value (non-zero) at buffer[i] indicates sector tag type i was readable.
+ *       A false value (zero) at buffer[i] indicates that sector tag type i is either not present
+ *       or was not successfully read from the image during opening.
+ *       The readableSectorTags array is populated during image opening/processing in data blocks.
+ *
+ * @note Image Opening Context:
+ *       The readableSectorTags array is initialized during aaruf_open() or aaruf_create()
+ *       and populated as data blocks are processed. It reflects what was actually present
+ *       and readable in the image file, not what theoretically could be present for the media type.
+ *
+ * @warning The output parameters are only modified on success (AARUF_STATUS_OK).
+ *          On error, their values remain unchanged. Initialize them before calling
+ *          if default values are needed on failure.
+ *
+ * @warning If readableSectorTags is NULL in the context, AARUF_ERROR_NOT_FOUND is returned.
+ *          This typically indicates the image format does not support sector-level tags,
+ *          rather than indicating an error state. Check return value to distinguish.
+ *
+ * @see SectorTagType for enumeration of all available sector tag types
+ * @see aaruf_read_sector_tag() for reading individual sector tag data
+ * @see aaruf_write_sector_tag() for writing sector tags during image creation
+ */
 AARU_EXPORT int32_t AARU_CALL aaruf_get_readable_sector_tags(const void *context, uint8_t *buffer, size_t *length)
 {
     TRACE("Entering aaruf_get_readable_sector_tags(%p, %p, %zu)", context, buffer, (length ? *length : 0));
@@ -576,8 +652,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_readable_sector_tags(const void *context
     if(buffer == NULL || length == NULL || *length < required_length)
     {
         if(length) *length = required_length;
-
         TRACE("Buffer too small for readable sector tags, required %zu bytes", required_length);
+
         TRACE("Exiting aaruf_get_readable_sector_tags() = AARUF_ERROR_BUFFER_TOO_SMALL");
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
@@ -586,5 +662,101 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_readable_sector_tags(const void *context
     *length = required_length;
 
     TRACE("Exiting aaruf_get_readable_sector_tags(%p, %p, %zu) = AARUF_STATUS_OK", context, buffer, *length);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Retrieves which media tags are present in the AaruFormat image.
+ *
+ * Returns an array of booleans indicating the presence of each MediaTagType in the image.
+ * The array is indexed by MediaTagType enum values (0 to MaxMediaTag), where each boolean
+ * is true if the corresponding media tag exists in the image's mediaTags hash table.
+ *
+ * @param context Pointer to the aaruformat context (must be a valid, opened image context).
+ * @param buffer Pointer to a buffer to store the boolean array. Can be NULL to query required length.
+ * @param length Pointer to the buffer length. On input, contains buffer size; on output, contains required size.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully retrieved readable media tags. This is returned when:
+ *         - The context is valid and properly initialized
+ *         - The buffer is large enough to hold all MediaTagType values (0 to MaxMediaTag)
+ *         - The output array has been populated with true/false for each MediaTagType
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid. This occurs when:
+ *         - The context parameter is NULL
+ *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
+ *
+ * @retval AARUF_ERROR_BUFFER_TOO_SMALL (-10) The buffer is too small. This occurs when:
+ *         - The buffer parameter is NULL
+ *         - The length parameter is NULL
+ *         - The provided buffer is smaller than required (size = MaxMediaTag + 1 bytes)
+ *         - The length output will contain the required buffer size
+ *
+ * @note Buffer Size:
+ *       The buffer must be at least (MaxMediaTag + 1) bytes, where each byte represents
+ *       whether the corresponding MediaTagType is present in the image.
+ *
+ * @note Query Mode:
+ *       To query the required buffer size, pass buffer == NULL or *length < required.
+ *       The function will return AARUF_ERROR_BUFFER_TOO_SMALL and set *length to required size.
+ *
+ * @warning The output parameters are only modified on success (AARUF_STATUS_OK).
+ *          On error, their values remain unchanged.
+ */
+AARU_EXPORT int32_t AARU_CALL aaruf_get_readable_media_tags(const void *context, uint8_t *buffer, size_t *length)
+{
+    TRACE("Entering aaruf_get_readable_media_tags(%p, %p, %zu)", context, buffer, (length ? *length : 0));
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_readable_media_tags() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_readable_media_tags() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Required size: one byte for each MediaTagType (0 to MaxMediaTag)
+    size_t required_length = MaxMediaTag + 1;
+
+    if(buffer == NULL || length == NULL || *length < required_length)
+    {
+        if(length) *length = required_length;
+        TRACE("Buffer too small for readable media tags, required %zu bytes", required_length);
+
+        TRACE("Exiting aaruf_get_readable_media_tags() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    // Initialize all bytes to false (0)
+    memset(buffer, 0, required_length);
+
+    // Iterate through all media tag types and mark present ones as true
+    for(int32_t tag_type = 0; tag_type <= MaxMediaTag; tag_type++)
+    {
+        mediaTagEntry *item = NULL;
+        HASH_FIND_INT(ctx->mediaTags, &tag_type, item);
+
+        if(item != NULL)
+        {
+            buffer[tag_type] = 1;
+            TRACE("Media tag type %d is present", tag_type);
+        }
+    }
+
+    *length = required_length;
+
+    TRACE("Exiting aaruf_get_readable_media_tags(%p, %p, %zu) = AARUF_STATUS_OK", context, buffer, *length);
     return AARUF_STATUS_OK;
 }
