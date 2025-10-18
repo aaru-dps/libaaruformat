@@ -117,7 +117,7 @@ TEST_F(CreateImageFixture, create_image_uncompresed_duplicated)
     for(int i = 0; i < total_sectors; i++)
     {
         uint8_t  sector_buffer[512];
-        uint32_t length = sizeof(sector_buffer);
+        uint32_t length        = sizeof(sector_buffer);
         uint8_t  sector_status = 0;
 
         const int32_t read_result = aaruf_read_sector(context, i, false, sector_buffer, &length, &sector_status);
@@ -213,7 +213,7 @@ TEST_F(CreateImageFixture, create_image_uncompresed_deduplicated)
     for(int i = 0; i < total_sectors; i++)
     {
         uint8_t  sector_buffer[512];
-        uint32_t length = sizeof(sector_buffer);
+        uint32_t length        = sizeof(sector_buffer);
         uint8_t  sector_status = 0;
 
         const int32_t read_result = aaruf_read_sector(context, i, false, sector_buffer, &length, &sector_status);
@@ -309,7 +309,7 @@ TEST_F(CreateImageFixture, create_image_compresed_duplicated)
     for(int i = 0; i < total_sectors; i++)
     {
         uint8_t  sector_buffer[512];
-        uint32_t length = sizeof(sector_buffer);
+        uint32_t length        = sizeof(sector_buffer);
         uint8_t  sector_status = 0;
 
         const int32_t read_result = aaruf_read_sector(context, i, false, sector_buffer, &length, &sector_status);
@@ -405,7 +405,7 @@ TEST_F(CreateImageFixture, create_image_compresed_deduplicated)
     for(int i = 0; i < total_sectors; i++)
     {
         uint8_t  sector_buffer[512];
-        uint32_t length = sizeof(sector_buffer);
+        uint32_t length        = sizeof(sector_buffer);
         uint8_t  sector_status = 0;
 
         const int32_t read_result = aaruf_read_sector(context, i, false, sector_buffer, &length, &sector_status);
@@ -446,8 +446,8 @@ TEST_F(CreateImageFixture, create_image_table_shift_9)
     constexpr size_t total_sectors = 128 * 1024 * 1024 / 512;  // 128 MiB / 512 bytes
 
     // Create image
-    void *context = aaruf_create("test.aif", 1, 512, total_sectors, 0, 0, "table_shift=9",
-                                 fake_utf16le_gtest, 10, 0, 0, false);
+    void *context =
+        aaruf_create("test.aif", 1, 512, total_sectors, 0, 0, "table_shift=9", fake_utf16le_gtest, 10, 0, 0, false);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to create test.aif";
@@ -501,13 +501,134 @@ TEST_F(CreateImageFixture, create_image_table_shift_9)
     for(int i = 0; i < total_sectors; i++)
     {
         uint8_t  sector_buffer[512];
-        uint32_t length = sizeof(sector_buffer);
+        uint32_t length        = sizeof(sector_buffer);
         uint8_t  sector_status = 0;
 
         const int32_t read_result = aaruf_read_sector(context, i, false, sector_buffer, &length, &sector_status);
         EXPECT_EQ(read_result, AARUF_STATUS_OK) << "Failed to read sector " << i;
         EXPECT_EQ(length, 512U) << "Unexpected length for sector " << i;
         aaruf_crc64_update(ctx, sector_buffer, 512);
+    }
+
+    aaruf_crc64_final(ctx, &crc);
+    aaruf_crc64_free(ctx);
+
+    ASSERT_EQ(crc, generated_crc) << "Unexpected CRC64 for image data";
+
+    // Close the image
+    close_result = aaruf_close(context);
+    EXPECT_EQ(close_result, AARUF_STATUS_OK) << "Failed to close image";
+}
+
+TEST_F(CreateImageFixture, create_audio_image)
+{
+    char path[PATH_MAX];
+    char filename[PATH_MAX];
+
+    getcwd(path, PATH_MAX);
+    snprintf(filename, PATH_MAX, "%s/data/audio.bin", path);
+
+    // Open audio file
+    FILE *f = fopen(filename, "rb");
+    ASSERT_NE(f, nullptr) << "Failed to open audio.bin data file";
+
+    // Get file size
+    fseek(f, 0, SEEK_END);
+    const long audio_size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    // Read entire audio file into buffer
+    uint8_t *buffer = static_cast<uint8_t *>(malloc(audio_size));
+    ASSERT_NE(buffer, nullptr) << "Failed to allocate memory for audio data";
+
+    size_t bytes_read = fread(buffer, 1, audio_size, f);
+    fclose(f);
+    ASSERT_EQ(bytes_read, static_cast<size_t>(audio_size)) << "Failed to read complete audio data";
+
+    // Calculate total size: three times the audio.bin size
+    const size_t total_size = audio_size * 3;
+
+    // Create image with default options (NULL for options means defaults)
+    void *context = aaruf_create("test_audio.aif", 11, 2352, total_size / 2352, 0, 0, NULL,
+                                 reinterpret_cast<const uint8_t *>("gtest"), 10, 0, 0, false);
+
+    // Verify that the file was successfully opened
+    ASSERT_NE(context, nullptr) << "Failed to create test_audio.aif";
+
+    // Set up a single audio track spanning the entire media
+    TrackEntry track;
+    memset(&track, 0, sizeof(TrackEntry));
+    track.sequence = 1;                            // Track 1
+    track.type     = Audio;                        // Audio track type (0)
+    track.start    = 0;                            // Start at sector 0
+    track.end      = (audio_size * 3 / 2352) - 1;  // End at last sector (inclusive)
+    track.pregap   = 0;                            // No pregap
+    track.session  = 1;                            // Session 1
+    memset(track.isrc, 0, 13);                     // No ISRC
+    track.flags = 0;                               // No special flags
+
+    int32_t track_result = aaruf_set_tracks(context, &track, 1);
+    ASSERT_EQ(track_result, AARUF_STATUS_OK) << "Failed to set tracks";
+
+    crc64_ctx *ctx           = aaruf_crc64_init();
+    uint64_t   generated_crc = 0;
+
+    // Write audio data three times using write_sector_long
+    size_t total_sectors = total_size / 2352;
+
+    for(size_t sector = 0; sector < total_sectors; ++sector)
+    {
+        // Calculate offset in the original audio buffer (wrap around after each iteration)
+        const size_t  buffer_offset = (sector * 2352) % audio_size;
+        const int32_t write_result =
+            aaruf_write_sector_long(context, sector, false, buffer + buffer_offset, SectorStatusDumped, 2352);
+        ASSERT_EQ(write_result, AARUF_STATUS_OK) << "Failed to write sector " << sector;
+
+        aaruf_crc64_update(ctx, buffer + buffer_offset, 2352);
+    }
+
+    aaruf_crc64_final(ctx, &generated_crc);
+    aaruf_crc64_free(ctx);
+
+    // Close the image
+    int32_t close_result = aaruf_close(context);
+    ASSERT_EQ(close_result, AARUF_STATUS_OK) << "Failed to close image";
+    free(buffer);
+
+    // Reopen the image
+    context = aaruf_open("test_audio.aif");
+    ASSERT_NE(context, nullptr) << "Failed to open test_audio.aif";
+
+    // Get image info to verify it's a valid image
+    ImageInfo     image_info;
+    const int32_t result = aaruf_get_image_info(context, &image_info);
+
+    ASSERT_EQ(result, AARUF_STATUS_OK) << "Failed to get image info";
+
+    // Basic sanity checks on the image info
+    ASSERT_EQ(image_info.HasPartitions, true) << "Image should not have partitions";
+    ASSERT_EQ(image_info.HasSessions, true) << "Image should not have sessions";
+    ASSERT_EQ(image_info.Sectors, total_sectors) << "Unexpected number of sectors";
+    ASSERT_EQ(image_info.SectorSize, 2352) << "Unexpected sector size";
+    ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
+    ASSERT_STREQ(image_info.Application, "gtest") << "Unexpected application name";
+    ASSERT_STREQ(image_info.ApplicationVersion, "0.0") << "Unexpected application version";
+    ASSERT_EQ(image_info.MediaType, 11) << "Unexpected media type";
+    ASSERT_EQ(image_info.MetadataMediaType, 0) << "Unexpected metadata media type";
+
+    ctx          = aaruf_crc64_init();
+    uint64_t crc = 0;
+
+    for(size_t i = 0; i < total_sectors; i++)
+    {
+        uint8_t  sector_buffer[2352];
+        uint32_t length        = sizeof(sector_buffer);
+        uint8_t  sector_status = 0;
+
+        const int32_t read_result = aaruf_read_sector_long(context, i, false, sector_buffer, &length, &sector_status);
+        EXPECT_EQ(read_result, AARUF_STATUS_OK) << "Failed to read sector " << i;
+        EXPECT_EQ(length, 2352U) << "Unexpected length for sector " << i;
+        aaruf_crc64_update(ctx, sector_buffer, 2352);
     }
 
     aaruf_crc64_final(ctx, &crc);
