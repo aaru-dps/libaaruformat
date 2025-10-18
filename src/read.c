@@ -1769,7 +1769,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
             memcpy(buffer, ctx->sector_decrypted_title_key + corrected_sector_address * 5, 5);
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case AppleSectorTag:
+        case AppleSonyTagAaru:
             if(ctx->image_info.MetadataMediaType != BlockMedia)
             {
                 FATAL("Invalid media type for tag");
@@ -1795,7 +1795,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
             memcpy(buffer, ctx->sector_subchannel + corrected_sector_address * 12, 12);
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case AppleProfileTag:
+        case AppleProfileTagAaru:
             if(ctx->image_info.MetadataMediaType != BlockMedia)
             {
                 FATAL("Invalid media type for tag");
@@ -1821,7 +1821,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
             memcpy(buffer, ctx->sector_subchannel + corrected_sector_address * 20, 20);
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case PriamDataTowerTag:
+        case PriamDataTowerTagAaru:
             if(ctx->image_info.MetadataMediaType != BlockMedia)
             {
                 FATAL("Invalid media type for tag");

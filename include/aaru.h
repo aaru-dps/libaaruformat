@@ -893,7 +893,7 @@ typedef struct ImageInfo  // NOLINT
 // NOLINTBEGIN(readability-identifier-naming)
 typedef enum
 {
-    AppleSectorTag         = 0,   ///< Apple's GCR sector tags, 12 bytes (address prolog + checksum)
+    AppleSonyTagAaru       = 0,   ///< Apple's Sony sector tags, 12 bytes (address prolog + checksum)
     CdSectorSync           = 1,   ///< 12-byte CD sync pattern (00 FF*10 00)
     CdSectorHeader         = 2,   ///< 4-byte CD header (minute, second, frame, mode)
     CdSectorSubHeader      = 3,   ///< Mode 2 Form subheader (8 bytes: copy, submode, channel)
@@ -913,6 +913,8 @@ typedef enum
     DvdSectorNumber        = 17,  ///< DVD sector number, 3 bytes
     DvdSectorIedAaru       = 18,  ///< DVD sector ID error detection, 2 bytes
     DvdSectorEdcAaru       = 19,  ///< DVD sector EDC, 4 bytes
+    AppleProfileTagAaru    = 20,  ///< Apple's Profile sector tags, 20 bytes
+    PriamDataTowerTagAaru  = 21,  ///< Priam DataTower sector tags, 24 bytes
     MaxSectorTag           = DvdSectorEdcAaru
 } SectorTagType;
 
