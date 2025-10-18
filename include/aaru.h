@@ -915,7 +915,7 @@ typedef enum
     DvdSectorEdcAaru       = 19,  ///< DVD sector EDC, 4 bytes
     AppleProfileTagAaru    = 20,  ///< Apple's Profile sector tags, 20 bytes
     PriamDataTowerTagAaru  = 21,  ///< Priam DataTower sector tags, 24 bytes
-    MaxSectorTag           = DvdSectorEdcAaru
+    MaxSectorTag           = PriamDataTowerTagAaru
 } SectorTagType;
 
 /** @} */ /* end of SectorTags group */

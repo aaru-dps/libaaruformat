@@ -195,6 +195,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_clear_drive_manufacturer(void *context);
 AARU_EXPORT int32_t AARU_CALL aaruf_clear_drive_model(void *context);
 AARU_EXPORT int32_t AARU_CALL aaruf_clear_drive_serial_number(void *context);
 AARU_EXPORT int32_t AARU_CALL aaruf_clear_drive_firmware_revision(void *context);
+AARU_EXPORT int32_t AARU_CALL aaruf_get_readable_sector_tags(const void *context, uint8_t *buffer, size_t *length);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_get_tape_file(const void *context, uint8_t partition, uint32_t file,
                                                   uint64_t *starting_block, uint64_t *ending_block);

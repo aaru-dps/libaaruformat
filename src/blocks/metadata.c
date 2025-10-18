@@ -538,3 +538,53 @@ void process_aaru_metadata_json_block(aaruformat_context *ctx, const IndexEntry 
 
     TRACE("Exiting process_aaru_metadata_json_block()");
 }
+
+AARU_EXPORT int32_t AARU_CALL aaruf_get_readable_sector_tags(const void *context, uint8_t *buffer, size_t *length)
+{
+    TRACE("Entering aaruf_get_readable_sector_tags(%p, %p, %zu)", context, buffer, (length ? *length : 0));
+
+    // Check context is correct AaruFormat context
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_readable_sector_tags() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    const aaruformat_context *ctx = context;
+
+    // Not a libaaruformat context
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+
+        TRACE("Exiting aaruf_get_readable_sector_tags() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->readableSectorTags == NULL)
+    {
+        FATAL("Image contains no readable sector tags");
+
+        TRACE("Exiting aaruf_get_readable_sector_tags() = AARUF_ERROR_METADATA_NOT_PRESENT");
+        return AARUF_ERROR_METADATA_NOT_PRESENT;
+    }
+
+    size_t required_length = sizeof(bool) * (MaxSectorTag + 1);
+
+    if(buffer == NULL || length == NULL || *length < required_length)
+    {
+        if(length) *length = required_length;
+
+        TRACE("Buffer too small for readable sector tags, required %zu bytes", required_length);
+        TRACE("Exiting aaruf_get_readable_sector_tags() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    memcpy(buffer, ctx->readableSectorTags, required_length);
+    *length = required_length;
+
+    TRACE("Exiting aaruf_get_readable_sector_tags(%p, %p, %zu) = AARUF_STATUS_OK", context, buffer, *length);
+    return AARUF_STATUS_OK;
+}
