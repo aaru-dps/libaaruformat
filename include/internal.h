@@ -39,6 +39,8 @@ void      process_dumphw_block(aaruformat_context *ctx, const IndexEntry *entry)
 void      process_checksum_block(aaruformat_context *ctx, const IndexEntry *entry);
 void      process_tape_files_block(aaruformat_context *ctx, const IndexEntry *entry);
 void      process_tape_partitions_block(aaruformat_context *ctx, const IndexEntry *entry);
+void      process_flux_data_block(aaruformat_context *ctx, const IndexEntry *entry);
+int32_t   flux_map_rebuild_from_entries(aaruformat_context *ctx);
 int32_t decode_ddt_entry_v1(aaruformat_context *ctx, uint64_t sector_address, uint64_t *offset, uint64_t *block_offset,
                             uint8_t *sector_status);
 int32_t decode_ddt_entry_v2(aaruformat_context *ctx, uint64_t sector_address, bool negative, uint64_t *offset,

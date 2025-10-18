@@ -130,7 +130,9 @@ typedef enum
     DvdSectorEdc                     = 85,  ///< DVD Error Detection Code (EDC)
     DvdSectorEccPi                   = 86,  ///< DVD Error Correction Code (ECC) Parity of Inner Code (PI)
     DvdEccBlockPo                    = 87,  ///< DVD Error Correction Code (ECC) Parity of Outer Code (PO)
-    DvdPfi2ndLayer                   = 88   ///< DVD Physical Format Information for the second layer
+    DvdPfi2ndLayer                   = 88,  ///< DVD Physical Format Information for the second layer
+    FluxData                         = 89,  ///< Flux data.
+    BitstreamData                    = 90   ///< Bitstream data.
 } DataType;
 
 /**
@@ -158,7 +160,9 @@ typedef enum
     DumpHardwareBlock            = 0x2A504D44,  ///< Block containing an array of hardware used to create the image.
     TapeFileBlock                = 0x454C4654,  ///< Block containing list of files for a tape image.
     TapePartitionBlock           = 0x54425054,  ///< Block containing list of partitions for a tape image.
-    AaruMetadataJsonBlock        = 0x444D534A   ///< Block containing JSON version of Aaru Metadata
+    AaruMetadataJsonBlock        = 0x444D534A,  ///< Block containing JSON version of Aaru Metadata
+    FluxDataBlock                = 0x58554C46,  ///< Block containing flux data metadata.
+    DataStreamPayloadBlock       = 0x4C505344   ///< Block containing compressed data stream payload (e.g., flux data, bitstreams).
 } BlockType;
 
 /**

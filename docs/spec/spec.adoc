@@ -118,6 +118,10 @@ include::blocks/flux.adoc[]
 
 <<<
 
+include::blocks/datastream_payload.adoc[]
+
+<<<
+
 include::blocks/bitstream.adoc[]
 
 <<<

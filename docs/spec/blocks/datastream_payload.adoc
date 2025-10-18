@@ -1,0 +1,77 @@
+=== Data Stream Payload Block (`DSPL`)
+
+This block contains a generic data stream payload. Can be used for data streams such as bitstreams or flux data.
+Each `DataStreamPayloadBlock` stores a compressed or uncompressed stream of binary data of variable length.
+The block may be compressed using LZMA compression if compression is enabled for the image.
+
+For flux captures, the payload data consists of:
+* Data buffer: Raw flux transition timing data
+* Index buffer: Index structure mapping logical positions to offsets within the data buffer
+
+These two buffers are concatenated: `[data_buffer][index_buffer]` before compression and storage.
+For other data types, the payload layout is specific to the data type.
+
+==== Structure Definition
+
+[source,c]
+#define DATA_STREAM_PAYLOAD_MAGIC 0x4C505344
+/** Data stream payload block header */
+typedef struct DataStreamPayloadHeader
+{
+    uint32_t identifier;  ///< Block identifier, must be BlockType::DataStreamPayloadBlock (0x4C505344).
+    uint16_t compression; ///< Compression type (0 = None, 1 = Lzma).
+    uint32_t cmpLength;   ///< Compressed length in bytes (includes LZMA properties if compressed).
+    uint32_t length;      ///< Uncompressed length in bytes.
+    uint64_t cmpCrc64;    ///< CRC64-ECMA checksum of the compressed payload (or same as crc64 if uncompressed).
+    uint64_t crc64;       ///< CRC64-ECMA checksum of the uncompressed payload.
+} DataStreamPayloadHeader;
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|identifier
+|The data stream payload block identifier, always `DSPL` (`0x4C505344`)
+
+|uint16_t
+|2 bytes
+|compression
+|Compression type: 0 = None, 1 = Lzma
+
+|uint32_t
+|4 bytes
+|cmpLength
+|Compressed length in bytes (includes LZMA properties if compression = Lzma)
+
+|uint32_t
+|4 bytes
+|length
+|Uncompressed length in bytes (for flux captures: total of data buffer + index buffer)
+
+|uint64_t
+|8 bytes
+|cmpCrc64
+|CRC64-ECMA checksum of the compressed payload data
+
+|uint64_t
+|8 bytes
+|crc64
+|CRC64-ECMA checksum of the uncompressed payload data (for flux captures: data + index buffers)
+|===
+
+==== Payload Data
+
+The payload data immediately follows the `DataStreamPayloadHeader`. If compression is Lzma, the first 5 bytes contain LZMA properties, followed by the compressed data. If compression is None, the payload data is stored uncompressed.
+
+For flux captures, the uncompressed payload consists of:
+* Data buffer: `length - indexOffset` bytes of flux transition timing data
+* Index buffer: `indexOffset` bytes of index structure data
+
+The `indexOffset` value from the corresponding `FluxEntry` indicates where the index buffer starts within the payload. For other data types, the payload layout is specific to the data type.

@@ -39,6 +39,7 @@
 #include "structs/optical.h"
 #include "structs/options.h"
 #include "structs/tape.h"
+#include "structs/flux.h"
 
 #endif  // LIBAARUFORMAT_STRUCTS_H
 

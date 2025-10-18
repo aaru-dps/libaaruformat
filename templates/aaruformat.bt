@@ -701,7 +701,9 @@ enum <ushort> DataType
     DvdSectorEdc                     = 85,
     DvdSectorEccPi                   = 86,
     DvdEccBlockPo                    = 87,
-    DvdPfi2ndLayer                   = 88
+    DvdPfi2ndLayer                   = 88,
+    FluxData                         = 89,
+    BitstreamData                    = 90
 };
 
 enum <uint> BlockType

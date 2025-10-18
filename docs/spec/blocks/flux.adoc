@@ -1,6 +1,6 @@
 === Flux Data Block (`FLUX`)
 
-This block lists all known flux captures.
+This block contains metadata for all flux captures in the image.
 Certain hardware devices, such as Kryoflux, Pauline, and Applesauce, read magnetic media at the flux transition level.
 
 Flux transition reads are digital representations of the analog properties of the media, and cannot be reliably interpreted on a sector-by-sector basis without further processing.
@@ -14,13 +14,24 @@ Flux data is represented as an array of `uint8_t` bytes.
 Each byte stores the tick count since the last flux transition.
 If no transition is detected within a byte's range, the value `0xFF` is used, and counting resumes in the next byte with ticks accumulated.
 
-Flux data is stored in `DataBlocks` of the flux data type, referenced from a deduplication table of the same type.
-Only one flux-type deduplication table is allowed per image, and it must have exactly one level.
+The flux capture system uses two block types:
+* `FluxDataBlock` (`FLUX` / `0x58554C46`): Contains metadata entries that describe all flux captures in the image
+* `DataStreamPayloadBlock` (`DSPL` / `0x4C505344`): Contains the actual flux data payload (data and index buffers) for individual captures. This is a generic block type that can also be used for other data streams.
+
+Each flux capture has one entry in the `FluxDataBlock` and one corresponding `DataStreamPayloadBlock` containing its data.
+The `FluxEntry` structure in the data block contains a `payloadOffset` field that points to the file offset where the corresponding `DataStreamPayloadBlock` is stored.
 
 ==== Structure Definition
 
 [source,c]
-/* Undefined */
+#define FLUX_DATA_MAGIC 0x58554C46
+/** Flux data block header */
+typedef struct FluxHeader
+{
+    uint32_t identifier;  ///< Block identifier, must be BlockType::FluxDataBlock (0x58554C46).
+    uint16_t entries;     ///< Number of FluxEntry records following this header.
+    uint64_t crc64;       ///< CRC64-ECMA checksum of the FluxEntry array (header excluded).
+} FluxHeader;
 
 ==== Field Descriptions
 
@@ -34,23 +45,34 @@ Only one flux-type deduplication table is allowed per image, and it must have ex
 |uint32_t
 |4 bytes
 |identifier
-|The flux data block identifier, always `FLUX`
+|The flux data block identifier, always `FLUX` (`0x58554C46`)
 
 |uint16_t
 |2 bytes
 |entries
-|The number of entries following this header
+|The number of flux entry records following this header
 
 |uint64_t
 |8 bytes
 |crc64
-|The CRC64-ECMA checksum of the data following this header
+|The CRC64-ECMA checksum of the FluxEntry array following this header
 |===
 
 ==== Flux entries
 
 [source,c]
-/* Undefined */
+/** Flux capture entry, describes one flux capture in the image */
+typedef struct FluxEntry
+{
+    uint32_t head;          ///< Head number the capture corresponds to.
+    uint16_t track;          ///< Track number the capture corresponds to.
+    uint8_t  subtrack;      ///< Subtrack number the capture corresponds to.
+    uint32_t captureIndex;  ///< Capture index, allows multiple captures for the same location.
+    uint64_t indexResolution; ///< Resolution in picoseconds for the index stream.
+    uint64_t dataResolution;  ///< Resolution in picoseconds for the data stream.
+    uint64_t indexOffset;      ///< Byte offset within the payload where the index buffer starts.
+    uint64_t payloadOffset;   ///< File offset where the DataStreamPayloadBlock for this capture is stored.
+} FluxEntry;
 
 ==== Field Descriptions
 
@@ -64,25 +86,40 @@ Only one flux-type deduplication table is allowed per image, and it must have ex
 |uint32_t
 |4 bytes
 |head
-|Head the data corresponds to.
+|Head number the flux capture corresponds to.
 
 |uint16_t
 |2 bytes
 |track
-|Track the data corresponds to.
+|Track number the flux capture corresponds to.
 
 |uint8_t
 |1 byte
 |subtrack
-|Substep of a track that the data corresponds to.
+|Subtrack number the flux capture corresponds to.
+
+|uint32_t
+|4 bytes
+|captureIndex
+|Capture index, allows multiple captures for the same head/track/subtrack combination.
 
 |uint64_t
 |8 bytes
-|resolution
-|Number of picoseconds at which the sampling was performed.
+|indexResolution
+|Resolution in picoseconds at which the index stream was sampled.
 
 |uint64_t
 |8 bytes
-|tableEntry
-|Entry number in the deduplication table where the data corresponding to this flux entry is stored
+|dataResolution
+|Resolution in picoseconds at which the data stream was sampled.
+
+|uint64_t
+|8 bytes
+|indexOffset
+|Byte offset within the payload block where the index buffer starts (equals data_length).
+
+|uint64_t
+|8 bytes
+|payloadOffset
+|File offset where the DataStreamPayloadBlock containing this capture's data is stored.
 |===

@@ -855,6 +855,10 @@ int info(const char *path)
         draw_box_bottom(COLOR_HEADER);
     }
 
+    if(ctx->flux_data_header.entries > 0) {
+        printf("Image contains %d flux captures.\n", ctx->flux_data_header.entries);
+    }
+
     // Checksums Section
     bool hasChecksums =
         ctx->checksums.hasMd5 || ctx->checksums.hasSha1 || ctx->checksums.hasSha256 || ctx->checksums.hasSpamSum;
