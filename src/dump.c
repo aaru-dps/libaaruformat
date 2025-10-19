@@ -620,17 +620,20 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_dumphw(void *context, uint8_t *data, siz
 
     size_t pos = sizeof(DumpHardwareHeader);
 
-#define COPY_STRING_FIELD(field)                                      \
-    do {                                                              \
-        const size_t field##_length = copy[e].entry.field##Length;    \
-        if(field##_length > 0)                                        \
-        {                                                             \
-            if(field##_length > length - pos) goto invalid_data;      \
-            copy[e].field = (uint8_t *)calloc(1, field##_length + 1); \
-            if(copy[e].field == NULL) goto free_copy_and_error;       \
-            memcpy(copy[e].field, data + pos, field##_length);        \
-            pos += field##_length;                                    \
-        }                                                             \
+#define COPY_STRING_FIELD(field)                                                    \
+    do {                                                                            \
+        const size_t field##_length = copy[e].entry.field##Length;                  \
+        if(field##_length > 0)                                                      \
+        {                                                                           \
+            if(field##_length > length - pos) goto invalid_data;                    \
+            /* Allocate only field##_length bytes, since input is NUL-terminated */ \
+            copy[e].field = (uint8_t *)calloc(1, field##_length);                   \
+            if(copy[e].field == NULL) goto free_copy_and_error;                     \
+            memcpy(copy[e].field, data + pos, field##_length);                      \
+            /* Ensure NUL-termination in case input is malformed */                 \
+            copy[e].field[field##_length - 1] = '\0';                               \
+            pos += field##_length;                                                  \
+        }                                                                           \
     } while(0)
 
     for(uint32_t e = 0; e < header.entries; e++)
