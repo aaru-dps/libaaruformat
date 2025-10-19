@@ -249,7 +249,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_dumphw(void *context, uint8_t *buffer, s
     *length = required_length;
 
     // Start to iterate and copy the data
-    size_t offset = 0;
+    size_t offset = sizeof(DumpHardwareHeader);
     for(uint32_t i = 0; i < ctx->dump_hardware_header.entries; i++)
     {
         size_t entry_size = sizeof(DumpHardwareEntry);
