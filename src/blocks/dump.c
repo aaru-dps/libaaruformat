@@ -61,19 +61,19 @@ static void reset_dump_hardware_context(aaruformat_context *ctx)
     memset(&ctx->dump_hardware_header, 0, sizeof(ctx->dump_hardware_header));
 }
 
-static bool read_dump_string(FILE *stream, const char *field_name, uint32_t length, uint32_t *remaining,
+static bool read_dump_string(FILE *stream, const char *field_name, const uint32_t length, uint32_t *remaining,
                              uint8_t **destination)
 {
     if(length == 0) return true;
 
-    if(remaining == NULL || *remaining < length)
+    if(*remaining < length)
     {
         TRACE("Dump hardware %s length %u exceeds remaining payload %u", field_name, length,
               remaining == NULL ? 0 : *remaining);
         return false;
     }
 
-    uint8_t *buffer = (uint8_t *)malloc((size_t)length + 1);
+    uint8_t *buffer = malloc(length);
 
     if(buffer == NULL)
     {
@@ -81,7 +81,7 @@ static bool read_dump_string(FILE *stream, const char *field_name, uint32_t leng
         return false;
     }
 
-    size_t bytes_read = fread(buffer, 1, length, stream);
+    const size_t bytes_read = fread(buffer, 1, length, stream);
 
     if(bytes_read != length)
     {
@@ -90,7 +90,6 @@ static bool read_dump_string(FILE *stream, const char *field_name, uint32_t leng
         return false;
     }
 
-    buffer[length] = 0;
     *remaining -= length;
     *destination = buffer;
 
@@ -125,7 +124,7 @@ void process_dumphw_block(aaruformat_context *ctx, const IndexEntry *entry)
         return;
     }
 
-    if(fseek(ctx->imageStream, (long)entry->offset, SEEK_SET) < 0 || ftell(ctx->imageStream) != entry->offset)
+    if(fseek(ctx->imageStream, entry->offset, SEEK_SET) < 0 || ftell(ctx->imageStream) != entry->offset)
     {
         FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
         reset_dump_hardware_context(ctx);
@@ -166,7 +165,7 @@ void process_dumphw_block(aaruformat_context *ctx, const IndexEntry *entry)
 
     if(payload_length > 0)
     {
-        uint8_t *payload = (uint8_t *)malloc(payload_length);
+        uint8_t *payload = malloc(payload_length);
 
         if(payload == NULL)
         {
@@ -230,8 +229,7 @@ void process_dumphw_block(aaruformat_context *ctx, const IndexEntry *entry)
         return;
     }
 
-    DumpHardwareEntriesWithData *entries =
-        (DumpHardwareEntriesWithData *)calloc(header.entries, sizeof(DumpHardwareEntriesWithData));
+    DumpHardwareEntriesWithData *entries = calloc(header.entries, sizeof(DumpHardwareEntriesWithData));
 
     if(entries == NULL)
     {
