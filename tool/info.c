@@ -89,13 +89,7 @@ int info(const char *path)
     printf("Library version: %d.%d\n", ctx->library_major_version, ctx->library_minor_version);
     printf("AaruFormat header:\n");
     printf("\tIdentifier: %8.8s\n", (char *)&ctx->header.identifier);
-
-    strBuffer = malloc(65);
-    memset(strBuffer, 0, 65);
-    ucnv_convert(NULL, "UTF-16LE", strBuffer, 64, ctx->header.application, 64, &u_error_code);
-    if(u_error_code == U_ZERO_ERROR) printf("\tApplication: %s\n", strBuffer);
-    free(strBuffer);
-
+    printf("\tApplication: %s\n", ctx->header.application);
     printf("\tApplication version: %d.%d\n", ctx->header.applicationMajorVersion, ctx->header.applicationMinorVersion);
     printf("\tImage format version: %d.%d\n", ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
     printf("\tMedia type: %u (%s)\n", ctx->header.mediaType, media_type_to_string(ctx->header.mediaType));
