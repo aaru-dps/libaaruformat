@@ -1645,6 +1645,8 @@ static void write_sector_subchannel(const aaruformat_context *ctx)
     else
         subchannel_block.cmpCrc64 = aaruf_crc64_data(buffer, subchannel_block.cmpLength);
 
+    if(subchannel_block.compression != None) subchannel_block.cmpLength += LZMA_PROPERTIES_LENGTH;
+
     // Write header
     if(fwrite(&subchannel_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
     {
