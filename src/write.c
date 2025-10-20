@@ -150,19 +150,24 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
     {
         if(sector_address <= ctx->last_written_block)
         {
-            TRACE("Rewinded");
-            ctx->rewinded = true;
+            if(sector_address == 0 && !ctx->block_zero_written)
+                ctx->block_zero_written = true;
+            else
+            {
+                TRACE("Rewinded");
+                ctx->rewinded = true;
 
-            // Disable MD5 calculation
-            if(ctx->calculating_md5) ctx->calculating_md5 = false;
-            // Disable SHA1 calculation
-            if(ctx->calculating_sha1) ctx->calculating_sha1 = false;
-            // Disable SHA256 calculation
-            if(ctx->calculating_sha256) ctx->calculating_sha256 = false;
-            // Disable SpamSum calculation
-            if(ctx->calculating_spamsum) ctx->calculating_spamsum = false;
-            // Disable BLAKE3 calculation
-            if(ctx->calculating_blake3) ctx->calculating_blake3 = false;
+                // Disable MD5 calculation
+                if(ctx->calculating_md5) ctx->calculating_md5 = false;
+                // Disable SHA1 calculation
+                if(ctx->calculating_sha1) ctx->calculating_sha1 = false;
+                // Disable SHA256 calculation
+                if(ctx->calculating_sha256) ctx->calculating_sha256 = false;
+                // Disable SpamSum calculation
+                if(ctx->calculating_spamsum) ctx->calculating_spamsum = false;
+                // Disable BLAKE3 calculation
+                if(ctx->calculating_blake3) ctx->calculating_blake3 = false;
+            }
         }
         else
             ctx->last_written_block = sector_address;
@@ -642,19 +647,24 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
             {
                 if(sector_address <= ctx->last_written_block)
                 {
-                    TRACE("Rewinded");
-                    ctx->rewinded = true;
+                    if(sector_address == 0 && !ctx->block_zero_written)
+                        ctx->block_zero_written = true;
+                    else
+                    {
+                        TRACE("Rewinded");
+                        ctx->rewinded = true;
 
-                    // Disable MD5 calculation
-                    if(ctx->calculating_md5) ctx->calculating_md5 = false;
-                    // Disable SHA1 calculation
-                    if(ctx->calculating_sha1) ctx->calculating_sha1 = false;
-                    // Disable SHA256 calculation
-                    if(ctx->calculating_sha256) ctx->calculating_sha256 = false;
-                    // Disable SpamSum calculation
-                    if(ctx->calculating_spamsum) ctx->calculating_spamsum = false;
-                    // Disable BLAKE3 calculation
-                    if(ctx->calculating_blake3) ctx->calculating_blake3 = false;
+                        // Disable MD5 calculation
+                        if(ctx->calculating_md5) ctx->calculating_md5 = false;
+                        // Disable SHA1 calculation
+                        if(ctx->calculating_sha1) ctx->calculating_sha1 = false;
+                        // Disable SHA256 calculation
+                        if(ctx->calculating_sha256) ctx->calculating_sha256 = false;
+                        // Disable SpamSum calculation
+                        if(ctx->calculating_spamsum) ctx->calculating_spamsum = false;
+                        // Disable BLAKE3 calculation
+                        if(ctx->calculating_blake3) ctx->calculating_blake3 = false;
+                    }
                 }
                 else
                     ctx->last_written_block = sector_address;

@@ -292,6 +292,7 @@ typedef struct aaruformat_context
     bool        is_writing;          ///< True if context opened/created for writing.
     bool        rewinded;            ///< True if stream has been rewound after open (write path).
     bool        writing_long;        ///< True if writing long sectors
+    bool        block_zero_written;  ///< True if block zero has been written (writing path).
 
     /* Options */
     uint32_t lzma_dict_size;       ///< LZMA dictionary size (writing path).
