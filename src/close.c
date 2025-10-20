@@ -3458,7 +3458,7 @@ static void write_dumphw_block(aaruformat_context *ctx)
     if(buffer == NULL) return;
 
     // Start to iterate and copy the data
-    size_t offset = 0;
+    size_t offset = sizeof(DumpHardwareHeader);
     for(int i = 0; i < ctx->dump_hardware_header.entries; i++)
     {
         size_t entry_size = sizeof(DumpHardwareEntry) +
