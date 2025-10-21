@@ -257,7 +257,7 @@ AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath, const bool resume_m
 
     TRACE("Opening file %s", filepath);
     if(resume_mode)
-        ctx->imageStream = fopen(filepath, "a+b");
+        ctx->imageStream = fopen(filepath, "r+b");
     else
         ctx->imageStream = fopen(filepath, "rb");
 
