@@ -417,7 +417,7 @@ int compare(const char *path1, const char *path2)
     // Open first image
     tb_printf(2, 2, TB_WHITE | TB_BOLD, TB_BLUE, "Opening image...");
     tb_present();
-    ctx1 = aaruf_open(path1);
+    ctx1 = aaruf_open(path1, false, NULL);
     if(ctx1 == NULL)
     {
         tb_printf(2, 3, TB_RED | TB_BOLD, TB_BLUE, "Error opening image");
@@ -430,7 +430,7 @@ int compare(const char *path1, const char *path2)
     // Open second image
     tb_printf(state.mid_x + 2, 2, TB_WHITE | TB_BOLD, TB_BLUE, "Opening image...");
     tb_present();
-    ctx2 = aaruf_open(path2);
+    ctx2 = aaruf_open(path2, false, NULL);
     if(ctx2 == NULL)
     {
         tb_printf(state.mid_x + 2, 3, TB_RED | TB_BOLD, TB_BLUE, "Error opening image");

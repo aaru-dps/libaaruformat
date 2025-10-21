@@ -32,7 +32,7 @@ int read(const unsigned long long sector_no, const char *path)
     uint8_t            *data          = NULL;
     uint8_t             sector_status = 0;
 
-    ctx = aaruf_open(path);
+    ctx = aaruf_open(path, false, NULL);
 
     if(ctx == NULL)
     {
@@ -85,7 +85,7 @@ int read_long(const unsigned long long sector_no, const char *path)
     uint8_t            *data          = NULL;
     uint8_t             sector_status = 0;
 
-    ctx = aaruf_open(path);
+    ctx = aaruf_open(path, false, NULL);
 
     if(ctx == NULL)
     {

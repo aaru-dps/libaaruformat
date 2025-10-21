@@ -44,7 +44,7 @@ int cli_compare(const char *path1, const char *path2, bool use_long)
     uint8_t             sector_status2    = 0;
 
     printf("Opening first image: %s\n", path1);
-    ctx1 = aaruf_open(path1);
+    ctx1 = aaruf_open(path1, false, NULL);
     if(ctx1 == NULL)
     {
         fprintf(stderr, "Error: Could not open first image '%s'\n", path1);
@@ -52,7 +52,7 @@ int cli_compare(const char *path1, const char *path2, bool use_long)
     }
 
     printf("Opening second image: %s\n", path2);
-    ctx2 = aaruf_open(path2);
+    ctx2 = aaruf_open(path2, false, NULL);
     if(ctx2 == NULL)
     {
         fprintf(stderr, "Error: Could not open second image '%s'\n", path2);

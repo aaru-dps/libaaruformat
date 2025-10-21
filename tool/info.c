@@ -76,7 +76,7 @@ int info(const char *path)
     mediaTagEntry const *mediaTag     = NULL;
     mediaTagEntry const *tmpMediaTag  = NULL;
 
-    ctx = aaruf_open(path);
+    ctx = aaruf_open(path, false, NULL);
 
     if(ctx == NULL)
     {

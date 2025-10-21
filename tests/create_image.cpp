@@ -88,7 +88,7 @@ TEST_F(CreateImageFixture, create_image_uncompresed_duplicated)
     free(buffer);
 
     // Reopen the image
-    context = aaruf_open("test.aif");
+    context = aaruf_open("test.aif", false, NULL);
     ASSERT_NE(context, nullptr) << "Failed to open test.aif";
 
     // Get image info to verify it's a valid image
@@ -181,7 +181,7 @@ TEST_F(CreateImageFixture, create_image_uncompresed_deduplicated)
     free(buffer);
 
     // Reopen the image
-    context = aaruf_open("test.aif");
+    context = aaruf_open("test.aif", false, NULL);
     ASSERT_NE(context, nullptr) << "Failed to open test.aif";
 
     // Get image info to verify it's a valid image
@@ -274,7 +274,7 @@ TEST_F(CreateImageFixture, create_image_compresed_duplicated)
     free(buffer);
 
     // Reopen the image
-    context = aaruf_open("test.aif");
+    context = aaruf_open("test.aif", false, NULL);
     ASSERT_NE(context, nullptr) << "Failed to open test.aif";
 
     // Get image info to verify it's a valid image
@@ -367,7 +367,7 @@ TEST_F(CreateImageFixture, create_image_compresed_deduplicated)
     free(buffer);
 
     // Reopen the image
-    context = aaruf_open("test.aif");
+    context = aaruf_open("test.aif", false, NULL);
     ASSERT_NE(context, nullptr) << "Failed to open test.aif";
 
     // Get image info to verify it's a valid image
@@ -460,7 +460,7 @@ TEST_F(CreateImageFixture, create_image_table_shift_9)
     free(buffer);
 
     // Reopen the image
-    context = aaruf_open("test.aif");
+    context = aaruf_open("test.aif", false, NULL);
     ASSERT_NE(context, nullptr) << "Failed to open test.aif";
 
     // Get image info to verify it's a valid image
@@ -581,7 +581,7 @@ TEST_F(CreateImageFixture, create_audio_image)
     free(buffer);
 
     // Reopen the image
-    context = aaruf_open("test_audio.aif");
+    context = aaruf_open("test_audio.aif", false, NULL);
     ASSERT_NE(context, nullptr) << "Failed to open test_audio.aif";
 
     // Get image info to verify it's a valid image

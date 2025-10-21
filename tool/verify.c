@@ -29,7 +29,7 @@ int verify(const char *path)
     aaruformat_context *ctx = NULL;
     uint32_t            res = 0;
 
-    ctx = aaruf_open(path);
+    ctx = aaruf_open(path, false, NULL);
 
     if(ctx == NULL)
     {
@@ -56,7 +56,7 @@ int verify_sectors(const char *path)
     uint32_t            buffer_len     = 2352;
     int32_t             res            = 0;
     CdEccContext       *cd_ecc_context = NULL;
-    ctx                                = aaruf_open(path);
+    ctx                                = aaruf_open(path, false, NULL);
     bool     verify_result             = false;
     bool     has_edc = false, has_ecc_p = false, ecc_p_correct = false, has_ecc_q = false, ecc_q_correct = false;
     bool     edc_correct = false;

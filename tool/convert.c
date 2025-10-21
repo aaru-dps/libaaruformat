@@ -41,7 +41,7 @@ int convert(const char *input_path, const char *output_path, bool use_long)
     printf("Converting image from %s to %s%s...\n", input_path, output_path, use_long ? " (long mode)" : "");
 
     // Open input image
-    input_ctx = aaruf_open(input_path);
+    input_ctx = aaruf_open(input_path, false, NULL);
     if(input_ctx == NULL)
     {
         printf("Error %d when opening input AaruFormat image.\n", errno);

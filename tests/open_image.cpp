@@ -49,7 +49,7 @@ TEST_F(OpenImageFixture, open_mf2hd_v1)
     snprintf(filename, PATH_MAX, "%s/data/mf2hd_v1.aif", path);
 
     // Attempt to open the image file
-    void *context = aaruf_open(filename);
+    void *context = aaruf_open(filename, false, NULL);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to open mf2hd_v1.aif";
@@ -108,7 +108,7 @@ TEST_F(OpenImageFixture, open_mf2hd_v2)
     snprintf(filename, PATH_MAX, "%s/data/mf2hd.aif", path);
 
     // Attempt to open the image file
-    void *context = aaruf_open(filename);
+    void *context = aaruf_open(filename, false, NULL);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to open mf2hd.aif";
@@ -167,7 +167,7 @@ TEST_F(OpenImageFixture, open_floptical_v1)
     snprintf(filename, PATH_MAX, "%s/data/floptical_v1.aif", path);
 
     // Attempt to open the image file
-    void *context = aaruf_open(filename);
+    void *context = aaruf_open(filename, false, NULL);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to open floptical_v1.aif";
@@ -226,7 +226,7 @@ TEST_F(OpenImageFixture, open_floptical_v2)
     snprintf(filename, PATH_MAX, "%s/data/floptical.aif", path);
 
     // Attempt to open the image file
-    void *context = aaruf_open(filename);
+    void *context = aaruf_open(filename, false, NULL);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to open floptical.aif";
@@ -285,7 +285,7 @@ TEST_F(OpenImageFixture, open_gigamo_v1)
     snprintf(filename, PATH_MAX, "%s/data/gigamo_v1.aif", path);
 
     // Attempt to open the image file
-    void *context = aaruf_open(filename);
+    void *context = aaruf_open(filename, false, NULL);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to open gigamo_v1.aif";
@@ -344,7 +344,7 @@ TEST_F(OpenImageFixture, open_gigamo_v2)
     snprintf(filename, PATH_MAX, "%s/data/gigamo.aif", path);
 
     // Attempt to open the image file
-    void *context = aaruf_open(filename);
+    void *context = aaruf_open(filename, false, NULL);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to open gigamo.aif";
@@ -403,7 +403,7 @@ TEST_F(OpenImageFixture, open_hifd_v1)
     snprintf(filename, PATH_MAX, "%s/data/hifd_v1.aif", path);
 
     // Attempt to open the image file
-    void *context = aaruf_open(filename);
+    void *context = aaruf_open(filename, false, NULL);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to open hifd_v1.aif";
@@ -462,7 +462,7 @@ TEST_F(OpenImageFixture, open_hifd_v2)
     snprintf(filename, PATH_MAX, "%s/data/hifd.aif", path);
 
     // Attempt to open the image file
-    void *context = aaruf_open(filename);
+    void *context = aaruf_open(filename, false, NULL);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to open hifd.aif";
@@ -521,7 +521,7 @@ TEST_F(OpenImageFixture, open_mo540_v1)
     snprintf(filename, PATH_MAX, "%s/data/mo540_v1.aif", path);
 
     // Attempt to open the image file
-    void *context = aaruf_open(filename);
+    void *context = aaruf_open(filename, false, NULL);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to open mo540_v1.aif";
@@ -580,7 +580,7 @@ TEST_F(OpenImageFixture, open_mo540_v2)
     snprintf(filename, PATH_MAX, "%s/data/mo540.aif", path);
 
     // Attempt to open the image file
-    void *context = aaruf_open(filename);
+    void *context = aaruf_open(filename, false, NULL);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to open mo540.aif";
@@ -639,7 +639,7 @@ TEST_F(OpenImageFixture, open_mo640_v1)
     snprintf(filename, PATH_MAX, "%s/data/mo640_v1.aif", path);
 
     // Attempt to open the image file
-    void *context = aaruf_open(filename);
+    void *context = aaruf_open(filename, false, NULL);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to open mo640_v1.aif";
@@ -698,7 +698,7 @@ TEST_F(OpenImageFixture, open_mo640_v2)
     snprintf(filename, PATH_MAX, "%s/data/mo640.aif", path);
 
     // Attempt to open the image file
-    void *context = aaruf_open(filename);
+    void *context = aaruf_open(filename, false, NULL);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to open mo640.aif";
@@ -757,7 +757,7 @@ TEST_F(OpenImageFixture, open_cdmode1_v1)
     snprintf(filename, PATH_MAX, "%s/data/cdmode1_v1.aif", path);
 
     // Attempt to open the image file
-    void *context = aaruf_open(filename);
+    void *context = aaruf_open(filename, false, NULL);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to open cdmode1_v1.aif";
@@ -819,7 +819,7 @@ TEST_F(OpenImageFixture, open_cdmode1_v2)
     snprintf(filename, PATH_MAX, "%s/data/cdmode1.aif", path);
 
     // Attempt to open the image file
-    void *context = aaruf_open(filename);
+    void *context = aaruf_open(filename, false, NULL);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to open cdmode1.aif";
@@ -881,7 +881,7 @@ TEST_F(OpenImageFixture, open_cdmode2_v1)
     snprintf(filename, PATH_MAX, "%s/data/cdmode2_v1.aif", path);
 
     // Attempt to open the image file
-    void *context = aaruf_open(filename);
+    void *context = aaruf_open(filename, false, NULL);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to open cdmode2_v1.aif";
@@ -943,7 +943,7 @@ TEST_F(OpenImageFixture, open_cdmode2_v2)
     snprintf(filename, PATH_MAX, "%s/data/cdmode2.aif", path);
 
     // Attempt to open the image file
-    void *context = aaruf_open(filename);
+    void *context = aaruf_open(filename, false, NULL);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to open cdmode2.aif";
@@ -999,7 +999,7 @@ TEST_F(OpenImageFixture, open_cdmode2_v2)
 // Test opening a non-existent file
 TEST_F(OpenImageFixture, OpenNonExistentFile)
 {
-    const void *context = aaruf_open("/nonexistent/path/to/file.aif");
+    const void *context = aaruf_open("/nonexistent/path/to/file.aif", false, NULL);
 
     // Should return NULL for non-existent files
     EXPECT_EQ(context, nullptr) << "Opening non-existent file should return NULL";
@@ -1008,7 +1008,7 @@ TEST_F(OpenImageFixture, OpenNonExistentFile)
 // Test opening with NULL path
 TEST_F(OpenImageFixture, OpenNullPath)
 {
-    const void *context = aaruf_open(nullptr);
+    const void *context = aaruf_open(nullptr, false, NULL);
 
     // Should return NULL for NULL path
     EXPECT_EQ(context, nullptr) << "Opening NULL path should return NULL";
