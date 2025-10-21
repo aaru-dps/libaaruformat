@@ -439,7 +439,7 @@ AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath)  // NOLINT(readabil
         }
     }
 
-    utarray_free(index_entries);
+    ctx->index_entries = index_entries;
 
     if(!found_user_data_ddt)
     {
