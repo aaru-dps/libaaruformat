@@ -464,11 +464,11 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
  *         - Context isWriting flag is false
  *         - Image was opened without write permissions
  *
- * @retval AARUF_ERROR_SECTOR_OUT_OF_BOUNDS (-7) Sector address outside valid ranges. This occurs when:
+ * @retval AARUF_ERROR_SECTOR_OUT_OF_BOUNDS (-5) Sector address outside valid ranges. This occurs when:
  *         - negative=true and sector_address >= negative region size
  *         - negative=false and sector_address >= (Sectors + overflow region size)
  *
- * @retval AARUF_ERROR_INCORRECT_DATA_SIZE (-8) Invalid sector size for media type. This occurs when:
+ * @retval AARUF_ERROR_INCORRECT_DATA_SIZE (-26) Invalid sector size for media type. This occurs when:
  *         - length != 2352 for optical disc media
  *         - length not in {512, 524, 532, 536} for supported block media types
  *
@@ -480,7 +480,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
  *         - Failed to allocate subchannel buffer (sector_subchannel)
  *         - System out of memory during buffer reallocation
  *
- * @retval AARUF_ERROR_INCORRECT_MEDIA_TYPE (-26) Unsupported media type for long sectors. This occurs when:
+ * @retval AARUF_ERROR_INCORRECT_MEDIA_TYPE (-12) Unsupported media type for long sectors. This occurs when:
  *         - Media type is not OpticalDisc or supported BlockMedia variant
  *         - Block media type does not support the provided tag format
  *
@@ -1744,7 +1744,7 @@ int32_t aaruf_close_current_block(aaruformat_context *ctx)
  *         - Image was opened with aaruf_open() instead of aaruf_create()
  *         - Context is in read-only mode and modifications are not permitted
  *
- * @retval AARUF_ERROR_INCORRECT_DATA_SIZE (-8) Invalid data or length parameters. This occurs when:
+ * @retval AARUF_ERROR_INCORRECT_DATA_SIZE (-26) Invalid data or length parameters. This occurs when:
  *         - data parameter is NULL (no tag data provided)
  *         - length parameter is zero (no data to write)
  *         - Parameters indicate invalid or empty tag data
@@ -1985,28 +1985,28 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_media_tag(void *context, const uint8_t
  *         - The context's isWriting flag is false
  *         - Attempting to modify a read-only image
  *
- * @retval AARUF_ERROR_SECTOR_OUT_OF_BOUNDS (-4) Sector address is invalid. This occurs when:
+ * @retval AARUF_ERROR_SECTOR_OUT_OF_BOUNDS (-5) Sector address is invalid. This occurs when:
  *         - negative is true and sector_address > negative-1
  *         - negative is false and sector_address > Sectors+overflow-1
  *         - Attempting to write beyond the image boundaries
  *
- * @retval AARUF_ERROR_INCORRECT_DATA_SIZE (-11) Invalid data or length. This occurs when:
+ * @retval AARUF_ERROR_INCORRECT_DATA_SIZE (-26) Invalid data or length. This occurs when:
  *         - The data parameter is NULL
  *         - The length parameter is 0
  *         - The length doesn't match the required size for the tag type
  *         - Tag size validation failed
  *
- * @retval AARUF_ERROR_INCORRECT_MEDIA_TYPE (-26) Invalid media type for tag. This occurs when:
+ * @retval AARUF_ERROR_INCORRECT_MEDIA_TYPE (-12) Invalid media type for tag. This occurs when:
  *         - Attempting to write optical disc tags (CD/DVD) to block media
  *         - Attempting to write block media tags to optical disc
  *         - Tag type is incompatible with ctx->imageInfo.XmlMediaType
  *
- * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-8) Memory allocation failed. This occurs when:
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
  *         - calloc() failed to allocate buffer for tag data
  *         - System is out of memory or memory is severely fragmented
  *         - Buffer allocation is required but cannot be satisfied
  *
- * @retval AARUF_ERROR_TRACK_NOT_FOUND (-25) Track not found for sector. This occurs when:
+ * @retval AARUF_ERROR_TRACK_NOT_FOUND (-13) Track not found for sector. This occurs when:
  *         - Writing CdTrackFlags or CdTrackIsrc tags
  *         - The specified sector is not contained within any defined track
  *         - Track metadata has not been initialized

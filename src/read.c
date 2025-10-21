@@ -178,7 +178,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_media_tag(void *context, uint8_t *data,
  *         - The context parameter is NULL
  *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
  *
- * @retval AARUF_ERROR_SECTOR_OUT_OF_BOUNDS (-8) The sector address exceeds image bounds. This occurs when:
+ * @retval AARUF_ERROR_SECTOR_OUT_OF_BOUNDS (-5) The sector address exceeds image bounds. This occurs when:
  *         - sector_address is greater than or equal to ctx->imageInfo.Sectors
  *         - Attempting to read beyond the logical extent of the imaged medium
  *
@@ -210,7 +210,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_media_tag(void *context, uint8_t *data,
  *         - Decompressed data size doesn't match the expected block length
  *         - Compression algorithm encounters corrupted or invalid compressed data
  *
- * @retval AARUF_ERROR_UNSUPPORTED_COMPRESSION (-13) Unsupported compression algorithm. This occurs when:
+ * @retval AARUF_ERROR_UNSUPPORTED_COMPRESSION (-8) Unsupported compression algorithm. This occurs when:
  *         - The block header specifies a compression type not supported by this library
  *         - Future compression algorithms not implemented in this version
  *
@@ -628,20 +628,20 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
  *         - ctx->imageInfo.XmlMediaType is not OpticalDisc
  *         - This function is only applicable to CD, DVD, BD, and other optical disc formats
  *
- * @retval AARUF_ERROR_TRACK_NOT_FOUND (-12) The specified track does not exist. This occurs when:
+ * @retval AARUF_ERROR_TRACK_NOT_FOUND (-13) The specified track does not exist. This occurs when:
  *         - No track in ctx->dataTracks[] has a sequence number matching the requested track
  *         - The track may not contain data or may not have been imaged
  *         - Only data tracks are searched; audio-only tracks are not included
  *
  * @retval All other error codes from aaruf_read_sector() may be returned:
  *         - AARUF_STATUS_SECTOR_NOT_DUMPED (1) - Sector was not dumped during imaging
- *         - AARUF_ERROR_SECTOR_OUT_OF_BOUNDS (-8) - Calculated absolute sector address exceeds image bounds
+ *         - AARUF_ERROR_SECTOR_OUT_OF_BOUNDS (-5) - Calculated absolute sector address exceeds image bounds
  *         - AARUF_ERROR_BUFFER_TOO_SMALL (-10) - Data buffer is NULL or insufficient size
  *         - AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) - Memory allocation fails during sector reading
  *         - AARUF_ERROR_CANNOT_READ_HEADER (-6) - Block header cannot be read from image stream
  *         - AARUF_ERROR_CANNOT_READ_BLOCK (-7) - Block data cannot be read from image stream
  *         - AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK (-17) - LZMA or FLAC decompression fails
- *         - AARUF_ERROR_UNSUPPORTED_COMPRESSION (-13) - Block uses unsupported compression
+ *         - AARUF_ERROR_UNSUPPORTED_COMPRESSION (-8) - Block uses unsupported compression
  *
  * @note Track-Relative Addressing:
  *       - The sector_address parameter is relative to the start of the specified track
@@ -772,7 +772,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_track_sector(void *context, uint8_t *da
  *         - Cannot allocate memory for user data during block media processing
  *         - Memory allocation fails in underlying aaruf_read_sector() calls
  *
- * @retval AARUF_ERROR_TRACK_NOT_FOUND (-12) Cannot locate the sector's track. This occurs when:
+ * @retval AARUF_ERROR_TRACK_NOT_FOUND (-13) Cannot locate the sector's track. This occurs when:
  *         - For optical discs: the sector address doesn't fall within any data track boundaries
  *         - No track contains the specified sector address (address not in any track.start to track.end range)
  *         - The track list is empty or corrupted
@@ -787,11 +787,11 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_track_sector(void *context, uint8_t *da
  *         - Indicates potential image corruption or library bug
  *
  * @retval All error codes from aaruf_read_sector() may be propagated:
- *         - AARUF_ERROR_SECTOR_OUT_OF_BOUNDS (-8) - Calculated sector address exceeds image bounds
+ *         - AARUF_ERROR_SECTOR_OUT_OF_BOUNDS (-5) - Calculated sector address exceeds image bounds
  *         - AARUF_ERROR_CANNOT_READ_HEADER (-6) - Block header cannot be read
  *         - AARUF_ERROR_CANNOT_READ_BLOCK (-7) - Block data cannot be read
  *         - AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK (-17) - Decompression fails
- *         - AARUF_ERROR_UNSUPPORTED_COMPRESSION (-13) - Compression algorithm not supported
+ *         - AARUF_ERROR_UNSUPPORTED_COMPRESSION (-8) - Compression algorithm not supported
  *
  * @note Optical Disc Sector Reconstruction:
  *       - Creates full 2352-byte sectors from separate user data, sync, header, and ECC/EDC components

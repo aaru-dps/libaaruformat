@@ -51,7 +51,7 @@
  *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
  *         - The context was not properly initialized by aaruf_open() or aaruf_create()
  *
- * @retval AARUF_ERROR_CANNOT_READ_BLOCK (-6) The geometry block is not present. This occurs when:
+ * @retval AARUF_ERROR_CANNOT_READ_BLOCK (-7) The geometry block is not present. This occurs when:
  *         - The image was created without geometry information
  *         - The geometryBlock.identifier field doesn't equal GeometryBlock
  *         - The geometry block was not found during image opening
@@ -438,7 +438,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_media_sequence(void *context, const int3
  *         - The context's isWriting flag is false
  *         - Attempting to modify a read-only image
  *
- * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-8) Memory allocation failed. This occurs when:
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
  *         - malloc() failed to allocate the required memory for the creator string
  *         - System is out of memory or memory is severely fragmented
  *         - The requested allocation size is too large
@@ -579,7 +579,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_creator(void *context, const uint8_t *da
  *         - The context's isWriting flag is false
  *         - Attempting to modify a read-only image
  *
- * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-8) Memory allocation failed. This occurs when:
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
  *         - malloc() failed to allocate the required memory for the comments string
  *         - System is out of memory or memory is severely fragmented
  *         - The requested allocation size is too large
@@ -692,7 +692,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_comments(void *context, const uint8_t *d
  *         - The context's isWriting flag is false
  *         - Attempting to modify a read-only image
  *
- * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-8) Memory allocation failed. This occurs when:
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
  *         - malloc() failed to allocate the required memory for the media title string
  *         - System is out of memory or memory is severely fragmented
  *         - The requested allocation size is too large
@@ -805,7 +805,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_media_title(void *context, const uint8_t
  *         - The context's isWriting flag is false
  *         - Attempting to modify a read-only image
  *
- * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-8) Memory allocation failed. This occurs when:
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
  *         - malloc() failed to allocate the required memory for the media manufacturer string
  *         - System is out of memory or memory is severely fragmented
  *         - The requested allocation size is too large
@@ -918,7 +918,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_media_manufacturer(void *context, const 
  *         - The context's isWriting flag is false
  *         - Attempting to modify a read-only image
  *
- * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-8) Memory allocation failed. This occurs when:
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
  *         - malloc() failed to allocate the required memory for the media model string
  *         - System is out of memory or memory is severely fragmented
  *         - The requested allocation size is too large
@@ -1025,7 +1025,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_media_model(void *context, const uint8_t
  *         - The context's isWriting flag is false
  *         - Attempting to modify a read-only image
  *
- * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-8) Memory allocation failed. This occurs when:
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
  *         - malloc() failed to allocate the required memory for the media serial number string
  *         - System is out of memory or memory is severely fragmented
  *         - The requested allocation size is too large
@@ -1140,7 +1140,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_media_serial_number(void *context, const
  *         - The context's isWriting flag is false
  *         - Attempting to modify a read-only image
  *
- * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-8) Memory allocation failed. This occurs when:
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
  *         - malloc() failed to allocate the required memory for the media barcode string
  *         - System is out of memory or memory is severely fragmented
  *         - The requested allocation size is too large
@@ -1263,7 +1263,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_media_barcode(void *context, const uint8
  *         - The context's isWriting flag is false
  *         - Attempting to modify a read-only image
  *
- * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-8) Memory allocation failed. This occurs when:
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
  *         - malloc() failed to allocate the required memory for the media part number string
  *         - System is out of memory or memory is severely fragmented
  *         - The requested allocation size is too large
@@ -1383,7 +1383,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_media_part_number(void *context, const u
  *         - The context's isWriting flag is false
  *         - Attempting to modify a read-only image
  *
- * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-8) Memory allocation failed. This occurs when:
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
  *         - malloc() failed to allocate the required memory for the drive manufacturer string
  *         - System is out of memory or memory is severely fragmented
  *         - The requested allocation size is too large
@@ -1499,7 +1499,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_drive_manufacturer(void *context, const 
  *         - The context's isWriting flag is false
  *         - Attempting to modify a read-only image
  *
- * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-8) Memory allocation failed. This occurs when:
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
  *         - malloc() failed to allocate the required memory for the drive model string
  *         - System is out of memory or memory is severely fragmented
  *         - The requested allocation size is too large
@@ -1621,7 +1621,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_drive_model(void *context, const uint8_t
  *         - The context's isWriting flag is false
  *         - Attempting to modify a read-only image
  *
- * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-8) Memory allocation failed. This occurs when:
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
  *         - malloc() failed to allocate the required memory for the drive serial number string
  *         - System is out of memory or memory is severely fragmented
  *         - The requested allocation size is too large
@@ -1746,7 +1746,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_drive_serial_number(void *context, const
  *         - The context's isWriting flag is false
  *         - Attempting to modify a read-only image
  *
- * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-8) Memory allocation failed. This occurs when:
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
  *         - malloc() failed to allocate the required memory for the drive firmware revision string
  *         - System is out of memory or memory is severely fragmented
  *         - The requested allocation size is too large
@@ -1888,7 +1888,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_drive_firmware_revision(void *context, c
  *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
  *         - The context was not properly initialized by aaruf_open() or aaruf_create()
  *
- * @retval AARUF_ERROR_CANNOT_READ_BLOCK (-6) The CICM block is not present. This occurs when:
+ * @retval AARUF_ERROR_CANNOT_READ_BLOCK (-7) The CICM block is not present. This occurs when:
  *         - The image was created without CICM XML metadata
  *         - ctx->cicmBlock is NULL (no data loaded)
  *         - ctx->cicmBlockHeader.length is 0 (empty metadata)
@@ -2035,7 +2035,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_cicm_metadata(const void *context, uint8
  *         - The context magic number doesn't match AARU_MAGIC (invalid context type)
  *         - The context was not properly initialized by aaruf_open() or aaruf_create()
  *
- * @retval AARUF_ERROR_CANNOT_READ_BLOCK (-6) The Aaru JSON block is not present. This occurs when:
+ * @retval AARUF_ERROR_CANNOT_READ_BLOCK (-7) The Aaru JSON block is not present. This occurs when:
  *         - The image was created without Aaru metadata JSON
  *         - ctx->jsonBlock is NULL (no data loaded)
  *         - ctx->jsonBlockHeader.length is 0 (empty metadata)
@@ -2194,7 +2194,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_aaru_json_metadata(const void *context, 
  *         - The context's isWriting flag is false
  *         - Attempting to modify a read-only image
  *
- * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-8) Memory allocation failed. This occurs when:
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
  *         - malloc() failed to allocate the required memory for the JSON data
  *         - System is out of memory or memory is severely fragmented
  *         - The requested allocation size is too large

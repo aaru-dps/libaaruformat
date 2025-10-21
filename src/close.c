@@ -543,11 +543,11 @@ static int32_t write_single_level_ddt(aaruformat_context *ctx)
  *         - ctx->is_tape is false
  *         - This function was called for a disk/optical image instead of tape
  *
- * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-6) Memory allocation failed. This occurs when:
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed. This occurs when:
  *         - calloc() fails to allocate the userDataDdtBig array
  *         - Insufficient system memory for (max_key + 1) * 4 bytes
  *
- * @retval AARUF_ERROR_CANNOT_WRITE_HEADER (-8) Writing the DDT failed. This can occur when:
+ * @retval AARUF_ERROR_CANNOT_WRITE_HEADER (-21) Writing the DDT failed. This can occur when:
  *         - write_single_level_ddt() fails to write the DDT header
  *         - File I/O errors prevent writing the DDT data
  *         - Disk full or other storage errors
