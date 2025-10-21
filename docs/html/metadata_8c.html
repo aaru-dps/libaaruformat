@@ -242,7 +242,7 @@ Functions</h2></td></tr>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -342,7 +342,7 @@ After clearing, the comments are permanently lost unless:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -870,7 +870,7 @@ Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -1077,10 +1077,10 @@ Use Cases: Removing physical label information, anonymizing media, or correcting
     <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. This occurs when:<ul>
 <li>The context parameter is NULL</li>
 <li>The context magic number doesn't match AARU_MAGIC (invalid context type)</li>
-<li>The context was not properly initialized by <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The context was not properly initialized by <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_CANNOT_READ_BLOCK</td><td>(-6) The Aaru JSON block is not present. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_CANNOT_READ_BLOCK</td><td>(-7) The Aaru JSON block is not present. This occurs when:<ul>
 <li>The image was created without Aaru metadata JSON</li>
 <li>ctx-&gt;jsonBlock is NULL (no data loaded)</li>
 <li>ctx-&gt;jsonBlockHeader.length is 0 (empty metadata)</li>
@@ -1143,7 +1143,7 @@ Distinction from CICM XML:<ul>
 <li>Different tools and workflows may prefer one format over the other</li>
 </ul>
 </dd></dl>
-<dl class="section warning"><dt>Warning</dt><dd>This function reads from the in-memory Aaru JSON block loaded during <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a>. It does not perform file I/O operations. The entire JSON is kept in memory for the lifetime of the context.</dd>
+<dl class="section warning"><dt>Warning</dt><dd>This function reads from the in-memory Aaru JSON block loaded during <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a>. It does not perform file I/O operations. The entire JSON is kept in memory for the lifetime of the context.</dd>
 <dd>
 The buffer parameter must be valid and large enough to hold the JSON data. Passing a buffer smaller than the required size will result in AARUF_ERROR_BUFFER_TOO_SMALL with no partial data copied.</dd>
 <dd>
@@ -1217,10 +1217,10 @@ This function does not validate JSON syntax or schema. Corrupted JSON data will 
     <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. This occurs when:<ul>
 <li>The context parameter is NULL</li>
 <li>The context magic number doesn't match AARU_MAGIC (invalid context type)</li>
-<li>The context was not properly initialized by <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The context was not properly initialized by <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_CANNOT_READ_BLOCK</td><td>(-6) The CICM block is not present. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_CANNOT_READ_BLOCK</td><td>(-7) The CICM block is not present. This occurs when:<ul>
 <li>The image was created without CICM XML metadata</li>
 <li>ctx-&gt;cicmBlock is NULL (no data loaded)</li>
 <li>ctx-&gt;cicmBlockHeader.length is 0 (empty metadata)</li>
@@ -1276,7 +1276,7 @@ Data Availability:<ul>
 </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The XML data may contain sensitive information about the imaging environment, personnel, locations, or media content. Handle appropriately for your use case.</dd>
 <dd>
-This function reads from the in-memory CICM block loaded during <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a>. It does not perform file I/O operations. The entire CICM XML is kept in memory for the lifetime of the context.</dd>
+This function reads from the in-memory CICM block loaded during <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a>. It does not perform file I/O operations. The entire CICM XML is kept in memory for the lifetime of the context.</dd>
 <dd>
 The buffer parameter must be valid and large enough to hold the XML data. Passing a buffer smaller than the required size will result in AARUF_ERROR_BUFFER_TOO_SMALL with no partial data copied.</dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="structCicmMetadataBlock.html" title="Header for a CICM XML metadata block (identifier == BlockType::CicmBlock).">CicmMetadataBlock</a> for the on-disk structure definition. </dd>
@@ -1317,7 +1317,7 @@ aaruf_set_cicm_metadata() for embedding CICM XML during image creation. </dd></d
 <p>Provides access to the UTF-16LE encoded comments associated with the image. Comments are often used for provenance notes, imaging details, or curator remarks. The function follows the same two-call buffer sizing pattern used by other metadata retrieval APIs: the caller may probe the required size before allocating memory.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">context</td><td>Pointer to a valid aaruformat context opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a>. </td></tr>
+    <tr><td class="paramname">context</td><td>Pointer to a valid aaruformat context opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a>. </td></tr>
     <tr><td class="paramname">buffer</td><td>Destination buffer that receives the comments data. May be NULL when probing size. </td></tr>
     <tr><td class="paramname">length</td><td>Pointer to an int32_t. On input it contains the size of <code class="param">buffer</code> in bytes; on output it is updated with the actual comments length.</td></tr>
   </table>
@@ -1658,10 +1658,10 @@ The function does not allocate memory. Callers are responsible for ensuring <cod
     <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. This occurs when:<ul>
 <li>The context parameter is NULL</li>
 <li>The context magic number doesn't match AARU_MAGIC (invalid context type)</li>
-<li>The context was not properly initialized by <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The context was not properly initialized by <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_CANNOT_READ_BLOCK</td><td>(-6) The geometry block is not present. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_CANNOT_READ_BLOCK</td><td>(-7) The geometry block is not present. This occurs when:<ul>
 <li>The image was created without geometry information</li>
 <li>The geometryBlock.identifier field doesn't equal GeometryBlock</li>
 <li>The geometry block was not found during image opening</li>
@@ -1703,7 +1703,7 @@ Parameter Validation:<ul>
 </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The output parameters are only modified on success (AARUF_STATUS_OK). On error, their values remain unchanged. Initialize them before calling if default values are needed on failure.</dd>
 <dd>
-This function reads from the in-memory geometry block loaded during <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a>. It does not perform file I/O operations.</dd>
+This function reads from the in-memory geometry block loaded during <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a>. It does not perform file I/O operations.</dd>
 <dd>
 Geometry values may not accurately represent physical device geometry, especially for modern drives with zone-based recording or flash storage. </dd></dl>
 
@@ -1775,7 +1775,7 @@ This function performs a complete deep copy using memcpy, copying all fields inc
 The caller is responsible for allocating the <a class="el" href="structImageInfo.html" title="High-level summary of an opened Aaru image containing metadata and media characteristics.">ImageInfo</a> structure before calling this function. The structure is not dynamically allocated by this function.</dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The image_info parameter must point to valid, allocated memory of at least sizeof(ImageInfo) bytes. Passing NULL or invalid pointers will result in undefined behavior.</dd>
 <dd>
-This function reads from the in-memory image_info loaded during <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or populated during <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a>. It does not perform file I/O operations. </dd></dl>
+This function reads from the in-memory image_info loaded during <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or populated during <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a>. It does not perform file I/O operations. </dd></dl>
 
 <p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03637">3637</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
@@ -2016,7 +2016,7 @@ This function reads from the in-memory image_info loaded during <a class="el" hr
 </div><div class="memdoc">
 
 <p>Retrieves the media sequence metadata for multi-volume image sets. </p>
-<p>Reads the media sequence fields stored in the MetadataBlock header and returns the current media number together with the final media number for the complete set. This information indicates the position of the imaged medium within a multi-volume collection (for example, "disc 2 of 5"). The function operates entirely on in-memory structures populated during <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a>; no additional disk I/O is performed.</p>
+<p>Reads the media sequence fields stored in the MetadataBlock header and returns the current media number together with the final media number for the complete set. This information indicates the position of the imaged medium within a multi-volume collection (for example, "disc 2 of 5"). The function operates entirely on in-memory structures populated during <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a>; no additional disk I/O is performed.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">context</td><td>Pointer to an initialized aaruformat context opened for reading or writing. </td></tr>
@@ -2192,7 +2192,7 @@ The function does not validate logical consistency (e.g., whether sequence &lt;=
     <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. This occurs when:<ul>
 <li>The context parameter is NULL</li>
 <li>The context magic number doesn't match AARU_MAGIC (invalid context type)</li>
-<li>The context was not properly initialized by <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The context was not properly initialized by <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 </ul>
 </td></tr>
   </table>
@@ -2235,7 +2235,7 @@ DDT Header Source:<ul>
 <li>The value is retrieved from ctx-&gt;user_data_ddt_header.negative</li>
 <li>The DDT (Deduplication and Data Table) header tracks all sector allocation</li>
 <li>This field is populated during image creation with <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
-<li>The value is fixed for read-only images opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a></li>
+<li>The value is fixed for read-only images opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a></li>
 <li>Maximum representable value is 65,535 (uint16_t)</li>
 </ul>
 </dd>
@@ -2261,7 +2261,7 @@ Relationship to Image Creation:<ul>
 </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The sectors parameter is only modified on success (AARUF_STATUS_OK). On error, its value remains unchanged. Initialize it before calling if a default value is needed on failure.</dd>
 <dd>
-This function reads from the in-memory DDT header loaded during <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or set during <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a>. It does not perform file I/O operations and executes quickly.</dd>
+This function reads from the in-memory DDT header loaded during <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or set during <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a>. It does not perform file I/O operations and executes quickly.</dd>
 <dd>
 The maximum negative sector count is 65,535 due to the uint16_t storage type. If imaging optical media with larger lead-in areas, some data may not be representable. This limit is generally sufficient for most practical cases.</dd>
 <dd>
@@ -2317,7 +2317,7 @@ Negative sector data may contain copy-protected or encrypted content (e.g., CSS 
     <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. This occurs when:<ul>
 <li>The context parameter is NULL</li>
 <li>The context magic number doesn't match AARU_MAGIC (invalid context type)</li>
-<li>The context was not properly initialized by <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The context was not properly initialized by <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 </ul>
 </td></tr>
   </table>
@@ -2360,7 +2360,7 @@ DDT Header Source:<ul>
 <li>The value is retrieved from ctx-&gt;user_data_ddt_header.overflow</li>
 <li>The DDT (Deduplication and Data Table) header tracks all sector allocation</li>
 <li>This field is populated during image creation with <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
-<li>The value is fixed for read-only images opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a></li>
+<li>The value is fixed for read-only images opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a></li>
 <li>Maximum representable value is 65,535 (uint16_t)</li>
 </ul>
 </dd>
@@ -2396,7 +2396,7 @@ Forensic Imaging Considerations:<ul>
 </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The sectors parameter is only modified on success (AARUF_STATUS_OK). On error, its value remains unchanged. Initialize it before calling if a default value is needed on failure.</dd>
 <dd>
-This function reads from the in-memory DDT header loaded during <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or set during <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a>. It does not perform file I/O operations and executes quickly.</dd>
+This function reads from the in-memory DDT header loaded during <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or set during <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a>. It does not perform file I/O operations and executes quickly.</dd>
 <dd>
 The maximum overflow sector count is 65,535 due to the uint16_t storage type. If imaging optical media with larger lead-out areas or extensive overburn regions, some data may not be representable. This limit is generally sufficient for most practical cases.</dd>
 <dd>
@@ -2452,7 +2452,7 @@ Overflow sector data may be difficult or impossible to read on some drives, as i
     <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. This occurs when:<ul>
 <li>The context parameter is NULL</li>
 <li>The context magic number doesn't match AARU_MAGIC (invalid context type)</li>
-<li>The context was not properly initialized by <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The context was not properly initialized by <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 </ul>
 </td></tr>
   </table>
@@ -2480,7 +2480,7 @@ DDT Header Source:<ul>
 <li>The value is retrieved from ctx-&gt;user_data_ddt_header.blocks</li>
 <li>The DDT (Deduplication and Data Table) header tracks sector allocation</li>
 <li>This field is populated during image creation with <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
-<li>The value is fixed for read-only images opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a></li>
+<li>The value is fixed for read-only images opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a></li>
 <li>For write-enabled images, this represents the allocated capacity</li>
 </ul>
 </dd>
@@ -2566,12 +2566,12 @@ Addressing and I/O Operations:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-8) Memory allocation failed. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-9) Memory allocation failed. This occurs when:<ul>
 <li>malloc() failed to allocate the required memory for the JSON data</li>
 <li>System is out of memory or memory is severely fragmented</li>
 <li>The requested allocation size is too large</li>
@@ -2711,12 +2711,12 @@ The function accepts any length value:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-8) Memory allocation failed. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-9) Memory allocation failed. This occurs when:<ul>
 <li>malloc() failed to allocate the required memory for the comments string</li>
 <li>System is out of memory or memory is severely fragmented</li>
 <li>The requested allocation size is too large</li>
@@ -2811,12 +2811,12 @@ Memory Management:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-8) Memory allocation failed. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-9) Memory allocation failed. This occurs when:<ul>
 <li>malloc() failed to allocate the required memory for the creator string</li>
 <li>System is out of memory or memory is severely fragmented</li>
 <li>The requested allocation size is too large</li>
@@ -2945,12 +2945,12 @@ The metadata block is only written to the image file during <a class="el" href="
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-8) Memory allocation failed. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-9) Memory allocation failed. This occurs when:<ul>
 <li>malloc() failed to allocate the required memory for the drive firmware revision string</li>
 <li>System is out of memory or memory is severely fragmented</li>
 <li>The requested allocation size is too large</li>
@@ -3070,12 +3070,12 @@ Firmware revisions are device-specific and format varies widely:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-8) Memory allocation failed. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-9) Memory allocation failed. This occurs when:<ul>
 <li>malloc() failed to allocate the required memory for the drive manufacturer string</li>
 <li>System is out of memory or memory is severely fragmented</li>
 <li>The requested allocation size is too large</li>
@@ -3171,12 +3171,12 @@ Forensic and Provenance Value:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-8) Memory allocation failed. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-9) Memory allocation failed. This occurs when:<ul>
 <li>malloc() failed to allocate the required memory for the drive model string</li>
 <li>System is out of memory or memory is severely fragmented</li>
 <li>The requested allocation size is too large</li>
@@ -3280,12 +3280,12 @@ Historical and Research Value:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-8) Memory allocation failed. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-9) Memory allocation failed. This occurs when:<ul>
 <li>malloc() failed to allocate the required memory for the drive serial number string</li>
 <li>System is out of memory or memory is severely fragmented</li>
 <li>The requested allocation size is too large</li>
@@ -3396,7 +3396,7 @@ Quality Assurance:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -3538,12 +3538,12 @@ Some image formats and use cases don't require CHS geometry:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-8) Memory allocation failed. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-9) Memory allocation failed. This occurs when:<ul>
 <li>malloc() failed to allocate the required memory for the media barcode string</li>
 <li>System is out of memory or memory is severely fragmented</li>
 <li>The requested allocation size is too large</li>
@@ -3648,12 +3648,12 @@ Preservation Context:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-8) Memory allocation failed. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-9) Memory allocation failed. This occurs when:<ul>
 <li>malloc() failed to allocate the required memory for the media manufacturer string</li>
 <li>System is out of memory or memory is severely fragmented</li>
 <li>The requested allocation size is too large</li>
@@ -3747,12 +3747,12 @@ Preservation Value:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-8) Memory allocation failed. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-9) Memory allocation failed. This occurs when:<ul>
 <li>malloc() failed to allocate the required memory for the media model string</li>
 <li>System is out of memory or memory is severely fragmented</li>
 <li>The requested allocation size is too large</li>
@@ -3838,12 +3838,12 @@ Model Information Usage:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-8) Memory allocation failed. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-9) Memory allocation failed. This occurs when:<ul>
 <li>malloc() failed to allocate the required memory for the media part number string</li>
 <li>System is out of memory or memory is severely fragmented</li>
 <li>The requested allocation size is too large</li>
@@ -3945,7 +3945,7 @@ Documentation and Compliance:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -4084,12 +4084,12 @@ Incorrect sequence information may prevent proper reconstruction:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-8) Memory allocation failed. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-9) Memory allocation failed. This occurs when:<ul>
 <li>malloc() failed to allocate the required memory for the media serial number string</li>
 <li>System is out of memory or memory is severely fragmented</li>
 <li>The requested allocation size is too large</li>
@@ -4185,12 +4185,12 @@ Format Considerations:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-8) Memory allocation failed. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_NOT_ENOUGH_MEMORY</td><td>(-9) Memory allocation failed. This occurs when:<ul>
 <li>malloc() failed to allocate the required memory for the media title string</li>
 <li>System is out of memory or memory is severely fragmented</li>
 <li>The requested allocation size is too large</li>

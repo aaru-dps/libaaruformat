@@ -3,6 +3,7 @@ var structaaruformat__context =
     [ "blake3_context", "structaaruformat__context.html#a8b89a7e0e6369dad38e23dabaf4b49a4", null ],
     [ "block_cache", "structaaruformat__context.html#a58359ec8607d1d10e0af8699be238e77", null ],
     [ "block_header_cache", "structaaruformat__context.html#a3a12addf4a338cc04471709604d48ae1", null ],
+    [ "block_zero_written", "structaaruformat__context.html#aabd695fe8ff334cd96711bf085d4cf9f", null ],
     [ "cached_ddt_offset", "structaaruformat__context.html#a4bbf867b2c93fdbf959ce6e1a5f0d0a4", null ],
     [ "cached_ddt_position", "structaaruformat__context.html#ae32b62ecd08a309c5848a5503b020689", null ],
     [ "cached_secondary_ddt2", "structaaruformat__context.html#a9dbc317eb6fb1f8ece6305c47f5a3e89", null ],

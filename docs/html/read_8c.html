@@ -290,7 +290,7 @@ Media tag data is stored as-is from the original medium. No format conversion or
 <li>The context magic number doesn't match AARU_MAGIC (invalid context type)</li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_SECTOR_OUT_OF_BOUNDS</td><td>(-8) The sector address exceeds image bounds. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_SECTOR_OUT_OF_BOUNDS</td><td>(-5) The sector address exceeds image bounds. This occurs when:<ul>
 <li>sector_address is greater than or equal to ctx-&gt;imageInfo.Sectors</li>
 <li>Attempting to read beyond the logical extent of the imaged medium</li>
 </ul>
@@ -328,7 +328,7 @@ Media tag data is stored as-is from the original medium. No format conversion or
 <li>Compression algorithm encounters corrupted or invalid compressed data</li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_UNSUPPORTED_COMPRESSION</td><td>(-13) Unsupported compression algorithm. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_UNSUPPORTED_COMPRESSION</td><td>(-8) Unsupported compression algorithm. This occurs when:<ul>
 <li>The block header specifies a compression type not supported by this library</li>
 <li>Future compression algorithms not implemented in this version</li>
 </ul>
@@ -477,7 +477,7 @@ Sector addresses are zero-based. The maximum valid address is ctx-&gt;imageInfo.
 <li>Memory allocation fails in underlying <a class="el" href="#a6feebf672750fc129fe2802ab738d563" title="Reads a sector from the AaruFormat image.">aaruf_read_sector()</a> calls</li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_TRACK_NOT_FOUND</td><td>(-12) Cannot locate the sector's track. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_TRACK_NOT_FOUND</td><td>(-13) Cannot locate the sector's track. This occurs when:<ul>
 <li>For optical discs: the sector address doesn't fall within any data track boundaries</li>
 <li>No track contains the specified sector address (address not in any track.start to track.end range)</li>
 <li>The track list is empty or corrupted</li>
@@ -495,11 +495,11 @@ Sector addresses are zero-based. The maximum valid address is ctx-&gt;imageInfo.
 </ul>
 </td></tr>
     <tr><td class="paramname">All</td><td>error codes from <a class="el" href="#a6feebf672750fc129fe2802ab738d563" title="Reads a sector from the AaruFormat image.">aaruf_read_sector()</a> may be propagated:<ul>
-<li>AARUF_ERROR_SECTOR_OUT_OF_BOUNDS (-8) - Calculated sector address exceeds image bounds</li>
+<li>AARUF_ERROR_SECTOR_OUT_OF_BOUNDS (-5) - Calculated sector address exceeds image bounds</li>
 <li>AARUF_ERROR_CANNOT_READ_HEADER (-6) - Block header cannot be read</li>
 <li>AARUF_ERROR_CANNOT_READ_BLOCK (-7) - Block data cannot be read</li>
 <li>AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK (-17) - Decompression fails</li>
-<li>AARUF_ERROR_UNSUPPORTED_COMPRESSION (-13) - Compression algorithm not supported</li>
+<li>AARUF_ERROR_UNSUPPORTED_COMPRESSION (-8) - Compression algorithm not supported</li>
 </ul>
 </td></tr>
   </table>
@@ -795,7 +795,7 @@ Some tags contain binary data without string termination (e.g., ISRC). Do not tr
 <li>This function is only applicable to CD, DVD, BD, and other optical disc formats</li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">AARUF_ERROR_TRACK_NOT_FOUND</td><td>(-12) The specified track does not exist. This occurs when:<ul>
+    <tr><td class="paramname">AARUF_ERROR_TRACK_NOT_FOUND</td><td>(-13) The specified track does not exist. This occurs when:<ul>
 <li>No track in ctx-&gt;dataTracks[] has a sequence number matching the requested track</li>
 <li>The track may not contain data or may not have been imaged</li>
 <li>Only data tracks are searched; audio-only tracks are not included</li>
@@ -803,13 +803,13 @@ Some tags contain binary data without string termination (e.g., ISRC). Do not tr
 </td></tr>
     <tr><td class="paramname">All</td><td>other error codes from <a class="el" href="#a6feebf672750fc129fe2802ab738d563" title="Reads a sector from the AaruFormat image.">aaruf_read_sector()</a> may be returned:<ul>
 <li>AARUF_STATUS_SECTOR_NOT_DUMPED (1) - Sector was not dumped during imaging</li>
-<li>AARUF_ERROR_SECTOR_OUT_OF_BOUNDS (-8) - Calculated absolute sector address exceeds image bounds</li>
+<li>AARUF_ERROR_SECTOR_OUT_OF_BOUNDS (-5) - Calculated absolute sector address exceeds image bounds</li>
 <li>AARUF_ERROR_BUFFER_TOO_SMALL (-10) - Data buffer is NULL or insufficient size</li>
 <li>AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) - Memory allocation fails during sector reading</li>
 <li>AARUF_ERROR_CANNOT_READ_HEADER (-6) - Block header cannot be read from image stream</li>
 <li>AARUF_ERROR_CANNOT_READ_BLOCK (-7) - Block data cannot be read from image stream</li>
 <li>AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK (-17) - LZMA or FLAC decompression fails</li>
-<li>AARUF_ERROR_UNSUPPORTED_COMPRESSION (-13) - Block uses unsupported compression</li>
+<li>AARUF_ERROR_UNSUPPORTED_COMPRESSION (-8) - Block uses unsupported compression</li>
 </ul>
 </td></tr>
   </table>

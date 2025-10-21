@@ -12,9 +12,10 @@ var searchData=
   ['block_5falignment_9',['block_alignment',['../structaaru__options.html#aea2e536712f73ad12dcca704b47dc48c',1,'aaru_options']]],
   ['block_5fcache_10',['block_cache',['../structaaruformat__context.html#a58359ec8607d1d10e0af8699be238e77',1,'aaruformat_context']]],
   ['block_5fheader_5fcache_11',['block_header_cache',['../structaaruformat__context.html#a3a12addf4a338cc04471709604d48ae1',1,'aaruformat_context']]],
-  ['blockalignmentshift_12',['blockAlignmentShift',['../structDdtHeader2.html#aa67b097c3a20f926ede495d27152f1c0',1,'DdtHeader2::blockAlignmentShift'],['../structAaruHeaderV2.html#ac55c9959435ff7b62a72ec8243ebe1c8',1,'AaruHeaderV2::blockAlignmentShift']]],
-  ['blocks_13',['blocks',['../structDdtHeader2.html#a9571c1d556e33537935bab1edba31135',1,'DdtHeader2']]],
-  ['blocksize_14',['blockSize',['../structMetadataBlockHeader.html#a3d1affce1a6ce2bda81aeaf85435b885',1,'MetadataBlockHeader']]],
-  ['blocktype_15',['blockType',['../structIndexEntry.html#a4b5c7115ac83019c3f77c6f047e5f75e',1,'IndexEntry']]],
-  ['buffer_16',['buffer',['../structmd5__ctx.html#a72256766fb1a364fe9398dcacff6bb63',1,'md5_ctx::buffer'],['../structsha1__ctx.html#a7d619177109240d16be88c5b03c464ad',1,'sha1_ctx::buffer'],['../structsha256__ctx.html#a992c56715c7da465ec39b11ca5e659f2',1,'sha256_ctx::buffer']]]
+  ['block_5fzero_5fwritten_12',['block_zero_written',['../structaaruformat__context.html#aabd695fe8ff334cd96711bf085d4cf9f',1,'aaruformat_context']]],
+  ['blockalignmentshift_13',['blockAlignmentShift',['../structDdtHeader2.html#aa67b097c3a20f926ede495d27152f1c0',1,'DdtHeader2::blockAlignmentShift'],['../structAaruHeaderV2.html#ac55c9959435ff7b62a72ec8243ebe1c8',1,'AaruHeaderV2::blockAlignmentShift']]],
+  ['blocks_14',['blocks',['../structDdtHeader2.html#a9571c1d556e33537935bab1edba31135',1,'DdtHeader2']]],
+  ['blocksize_15',['blockSize',['../structMetadataBlockHeader.html#a3d1affce1a6ce2bda81aeaf85435b885',1,'MetadataBlockHeader']]],
+  ['blocktype_16',['blockType',['../structIndexEntry.html#a4b5c7115ac83019c3f77c6f047e5f75e',1,'IndexEntry']]],
+  ['buffer_17',['buffer',['../structmd5__ctx.html#a72256766fb1a364fe9398dcacff6bb63',1,'md5_ctx::buffer'],['../structsha1__ctx.html#a7d619177109240d16be88c5b03c464ad',1,'sha1_ctx::buffer'],['../structsha256__ctx.html#a992c56715c7da465ec39b11ca5e659f2',1,'sha256_ctx::buffer']]]
 ];

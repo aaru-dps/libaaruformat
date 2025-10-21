@@ -107,12 +107,12 @@ $(function(){initNavTree('open_8c.html','',''); });
 <tr class="heading"><td colspan="2"><h2 id="header-func-members" class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a356a7467b41a2929a27a6639cd3a2b50" id="r_a356a7467b41a2929a27a6639cd3a2b50"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a356a7467b41a2929a27a6639cd3a2b50">cleanup_open_failure</a> (<a class="el" href="structaaruformat__context.html">aaruformat_context</a> *ctx)</td></tr>
-<tr class="memitem:afc4932cdc795ffb2ef3a33d5b8c57656" id="r_afc4932cdc795ffb2ef3a33d5b8c57656"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afc4932cdc795ffb2ef3a33d5b8c57656">aaruf_open</a> (const char *filepath)</td></tr>
-<tr class="memdesc:afc4932cdc795ffb2ef3a33d5b8c57656"><td class="mdescLeft">&#160;</td><td class="mdescRight">Opens an existing AaruFormat image file.  <br /></td></tr>
+<tr class="memitem:ad8f06110e0937555873119f7c05d3379" id="r_ad8f06110e0937555873119f7c05d3379"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad8f06110e0937555873119f7c05d3379">aaruf_open</a> (const char *filepath, const bool resume_mode, const char *options)</td></tr>
+<tr class="memdesc:ad8f06110e0937555873119f7c05d3379"><td class="mdescLeft">&#160;</td><td class="mdescRight">Opens an existing AaruFormat image file.  <br /></td></tr>
 </table>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
-<a id="afc4932cdc795ffb2ef3a33d5b8c57656" name="afc4932cdc795ffb2ef3a33d5b8c57656"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afc4932cdc795ffb2ef3a33d5b8c57656">&#9670;&#160;</a></span>aaruf_open()</h2>
+<a id="ad8f06110e0937555873119f7c05d3379" name="ad8f06110e0937555873119f7c05d3379"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad8f06110e0937555873119f7c05d3379">&#9670;&#160;</a></span>aaruf_open()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -120,17 +120,71 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">void * aaruf_open </td>
           <td>(</td>
-          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>filepath</em></span></td><td>)</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>filepath</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">const bool</td>          <td class="paramname"><span class="paramname"><em>resume_mode</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>options</em></span>&#160;)</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 <p>Opens an existing AaruFormat image file. </p>
-<p>Opens the specified image file and returns a pointer to the initialized aaruformat context. This function performs comprehensive validation of the image file format, reads and processes all index entries, initializes data structures for reading operations, and sets up caches for optimal performance. It supports multiple AaruFormat versions and handles various block types including data blocks, deduplication tables, metadata, and checksums.</p>
+<p>Opens the specified image file and returns a pointer to the initialized aaruformat context. This function performs comprehensive validation of the image file format, reads and processes all index entries, initializes data structures for reading (and optionally writing in resume mode), and sets up caches for optimal performance. It supports multiple AaruFormat versions and handles various block types including data blocks, deduplication tables, metadata, and checksums.</p>
+<p><b>Operational Modes:</b></p>
+<p><b>Read-Only Mode (resume_mode = false):</b></p><ul>
+<li>Validates and reads existing image in read-only mode</li>
+<li>Loads all index entries, DDT, and metadata structures</li>
+<li>Initializes block and header caches for efficient reading</li>
+<li>Suitable for accessing, extracting, or verifying completed AaruFormat images</li>
+<li>File is opened in binary read mode; no modifications possible</li>
+<li>Requires valid user data DDT to be present in the image</li>
+</ul>
+<p><b>Resume/Write Mode (resume_mode = true):</b></p><ul>
+<li>Validates and opens an existing image for continued writing (resume operations)</li>
+<li>Loads all existing index entries, DDT, and metadata</li>
+<li>Prepares context for additional write operations to incomplete images</li>
+<li>Suitable for resuming interrupted image creation or appending to images</li>
+<li>File is opened in binary read/write mode for additional data/blocks</li>
+<li>Requires the image to be in a valid resumable state (proper headers, valid index, DDT present)</li>
+<li>Requires image to be in AaruFormat version 2.0 or later (version 1.x images cannot be resumed)</li>
+<li>Options string is parsed to configure writing parameters</li>
+<li>Checksum contexts are reinitialized based on options if checksums are present</li>
+</ul>
+<p><b>Index and Block Processing:</b> The function processes all indexed blocks from the image:</p><ul>
+<li>Data blocks: User and negative/overflow sectors with deduplication references</li>
+<li>DDT blocks: Deduplication table entries mapping sectors to physical block locations</li>
+<li>Geometry blocks: Cylinder-head-sector information for certain media types</li>
+<li>Metadata blocks: CICM XML, Aaru JSON, and other format-specific metadata</li>
+<li>Track blocks: CD/DVD track information and sector maps</li>
+<li>Dump hardware blocks: Recording device specifications and configuration</li>
+<li>Checksum blocks: Media tags and image-level checksums (MD5, SHA-1, SHA-256, BLAKE3, SpamSum)</li>
+</ul>
+<p>Non-critical block processing errors are logged but don't prevent opening (logging only). Critical errors (especially DDT processing failures) cause the open operation to fail. Unknown block types are logged but silently ignored for forward compatibility.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">filepath</td><td>Path to the image file to open.</td></tr>
+    <tr><td class="paramname">filepath</td><td>Path to the image file to open. Must be a valid readable path. When opening in resume mode (resume_mode=true), the file must also be writable. The file must contain a valid AaruFormat header and index.</td></tr>
+    <tr><td class="paramname">resume_mode</td><td>Boolean flag controlling the operational mode:<ul>
+<li>false: Open in read-only mode for accessing completed images. File is opened read-only; no modifications can be made. Suitable for extraction, analysis, and verification. Supports both AaruFormat version 1.x and 2.x images.</li>
+<li>true: Open in resume/write mode for continuing interrupted image creation. File is opened read/write for additional operations. Requires existing valid image structure. IMPORTANT: Only AaruFormat version 2.x or later images can be opened in resume mode. Version 1.x images cannot be resumed and will fail with AARUF_ERROR_INCOMPATIBLE_VERSION. Write operations are handled as if resuming an incomplete creation. Options string is parsed for write configuration.</li>
+</ul>
+</td></tr>
+    <tr><td class="paramname">options</td><td>String with opening/resume options in key=value format, semicolon-separated. Used primarily in resume mode to configure checksum and compression parameters. Supported options (resume mode only):<ul>
+<li>"deduplicate=true|false": Enable/disable sector deduplication (if supported in image)</li>
+<li>"md5=true|false": Recalculate MD5 checksum during resume operations</li>
+<li>"sha1=true|false": Recalculate SHA-1 checksum during resume operations</li>
+<li>"sha256=true|false": Recalculate SHA-256 checksum during resume operations</li>
+<li>"spamsum=true|false": Recalculate SpamSum fuzzy hash during resume operations</li>
+<li>"blake3=true|false": Recalculate BLAKE3 checksum during resume operations</li>
+<li>"compress=true|false": Use compression for new data blocks in resume operations Example: "deduplicate=true;md5=true;sha1=true" In read-only mode (resume_mode=false), this parameter is typically NULL or ignored.</li>
+</ul>
+</td></tr>
   </table>
   </dd>
 </dl>
@@ -142,9 +196,10 @@ Functions</h2></td></tr>
 <li>Processed index entries with all discoverable blocks</li>
 <li>Loaded deduplication tables (DDT) for efficient sector access</li>
 <li>Initialized block and header caches for performance</li>
-<li>Open file stream ready for reading operations</li>
+<li>Open file stream (read-only or read/write depending on mode)</li>
 <li>Populated image information and geometry data</li>
 <li>ECC context initialized for error correction support</li>
+<li>In resume mode: Write context and checksum contexts initialized from options</li>
 </ul>
 </td></tr>
     <tr><td class="paramname">NULL</td><td>Opening failed. The specific error can be determined by checking errno, which will be set to:<ul>
@@ -153,11 +208,14 @@ Functions</h2></td></tr>
 <li>Readable sector tags bitmap allocation</li>
 <li>Application version string allocation</li>
 <li>Image version string allocation</li>
+<li>Index entries array allocation</li>
+<li>DDT processing structures</li>
 </ul>
 </li>
 <li>AARUF_ERROR_FILE_TOO_SMALL (-2) when file reading fails:<ul>
 <li>Cannot read the AaruFormat header (file too small or corrupted)</li>
 <li>Cannot read the extended header for version 2+ formats</li>
+<li>Cannot seek to or read the index block</li>
 </ul>
 </li>
 <li>AARUF_ERROR_NOT_AARUFORMAT (-1) when format validation fails:<ul>
@@ -168,6 +226,8 @@ Functions</h2></td></tr>
 <li>AARUF_ERROR_INCOMPATIBLE_VERSION (-3) when:<ul>
 <li>Image major version exceeds the maximum supported version</li>
 <li>Future format versions that cannot be read by this library</li>
+<li>Version 1.x images are opened in resume mode (only version 2.x+ can be resumed)</li>
+<li>Other version incompatibility issues with resume mode requirements</li>
 </ul>
 </li>
 <li>AARUF_ERROR_CANNOT_READ_INDEX (-4) when index processing fails:<ul>
@@ -179,8 +239,9 @@ Functions</h2></td></tr>
 </li>
 <li>Other error codes may be propagated from block processing functions:<ul>
 <li>Data block processing errors</li>
-<li>DDT processing errors</li>
-<li>Metadata processing errors</li>
+<li>DDT processing errors (critical failure)</li>
+<li>Metadata processing errors (non-critical, logging only)</li>
+<li>File I/O errors in resume mode</li>
 </ul>
 </li>
 </ul>
@@ -193,6 +254,7 @@ Functions</h2></td></tr>
 <li>Automatically detects and handles different index formats (v1, v2, v3)</li>
 <li>Backwards compatible with older DIC format identifiers</li>
 <li>Handles both small and large deduplication tables</li>
+<li>Supports optional user data DDT, necessary for sector access</li>
 </ul>
 </dd>
 <dd>
@@ -200,7 +262,8 @@ Block Processing:<ul>
 <li>Processes all indexed blocks including data, DDT, geometry, metadata, tracks, CICM, dump hardware, and checksums</li>
 <li>Non-critical block processing errors are logged but don't prevent opening</li>
 <li>Critical errors (DDT processing failures) cause opening to fail</li>
-<li>Unknown block types are logged but ignored</li>
+<li>Unknown block types are logged but ignored for future compatibility</li>
+<li>Block processing is the same in both read-only and resume modes</li>
 </ul>
 </dd>
 <dd>
@@ -208,6 +271,7 @@ Memory Management:<ul>
 <li>Allocates memory for various context structures and caches</li>
 <li>On failure, all previously allocated memory is properly cleaned up</li>
 <li>The returned context must be freed using <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a></li>
+<li>In resume mode, additional write buffers may be allocated based on options</li>
 </ul>
 </dd>
 <dd>
@@ -215,20 +279,52 @@ Performance Optimization:<ul>
 <li>Initializes block and header caches based on sector size and available memory</li>
 <li>Cache sizes are calculated to optimize memory usage and access patterns</li>
 <li>ECC context is pre-initialized for Compact Disc support</li>
+<li>Cache strategies may differ between read-only and resume modes</li>
+</ul>
+</dd>
+<dd>
+Resume Mode Considerations:<ul>
+<li>Image must be in a valid state for resume operations</li>
+<li>Image MUST be in AaruFormat version 2.0 or later (version 1.x images cannot be resumed)</li>
+<li>Opening a version 1.x image with resume_mode=true will fail immediately with AARUF_ERROR_INCOMPATIBLE_VERSION</li>
+<li>Partial or corrupted images may fail to open in resume mode</li>
+<li>Options are parsed to reconfigure checksums and compression if needed</li>
+<li>Write position is calculated based on existing data and index entries</li>
+<li>Deduplication hash maps are reconstructed from existing DDT entries</li>
+<li>Some checksums (MD5, SHA-1, SHA-256) may need to be recalculated from scratch if resuming</li>
 </ul>
 </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The function requires a valid user data deduplication table to be present. Images without a DDT will fail to open even if otherwise valid.</dd>
 <dd>
-File access is performed in binary read mode. The file must be accessible and not locked by other processes.</dd>
+File access permissions must be appropriate for the selected mode:<ul>
+<li>Read-only mode: File must be readable</li>
+<li>Resume mode: File must be readable AND writable The file must not be locked by other processes in resume mode.</li>
+</ul>
+</dd>
 <dd>
-Some memory allocations (version strings) are optional and failure doesn't prevent opening, but may affect functionality that depends on version information. </dd></dl>
+Resume mode has additional validation requirements:<ul>
+<li>Image must not be finalized (index must not be marked as complete)</li>
+<li>Image MUST be AaruFormat version 2.x or later (version 1.x images are not supported in resume mode)</li>
+<li>Image must have a valid, reconstructible DDT</li>
+<li>File I/O errors in resume mode may leave the image in an inconsistent state</li>
+</ul>
+</dd>
+<dd>
+Some memory allocations (version strings, checksum contexts) are optional. Failure in optional allocations doesn't prevent opening but may affect functionality that depends on checksums or version information.</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a> for proper context cleanup and image finalization </dd>
+<dd>
+<a class="el" href="decls_8h.html#a2297e89619ba11cb0a0779a985fc1c34" title="Reads a sector from the AaruFormat image.">aaruf_read_sector()</a> for reading sectors from opened images </dd>
+<dd>
+<a class="el" href="decls_8h.html#a4b8cd2bb5fd9e2c670a0a13695c6f9e3" title="Writes a sector to the AaruFormat image.">aaruf_write_sector()</a> for writing sectors in resume mode </dd>
+<dd>
+<a class="el" href="decls_8h.html#a74c444fbd394f58aefd2fabff221231b" title="Identifies a file as an AaruFormat image using a file path.">aaruf_identify()</a> for identifying image type before opening </dd></dl>
 <p>&lt; Size in bytes (UTF-16LE) of application name field (32 UTF-16 code units).</p>
 <p>&lt; Size in bytes (UTF-16LE) of application name field (32 UTF-16 code units).</p>
 <p>&lt; Size in bytes (UTF-16LE) of application name field (32 UTF-16 code units).</p>
 
-<p class="definition">Definition at line <a class="el" href="open_8c_source.html#l00125">125</a> of file <a class="el" href="open_8c_source.html">open.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="open_8c_source.html#l00223">223</a> of file <a class="el" href="open_8c_source.html">open.c</a>.</p>
 
-<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="header_8h_source.html#l00059">AARU_HEADER_APP_NAME_LEN</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="ecc__cd_8c_source.html#l00035">aaruf_ecc_cd_init()</a>, <a class="el" href="errors_8h_source.html#l00043">AARUF_ERROR_CANNOT_READ_INDEX</a>, <a class="el" href="errors_8h_source.html#l00041">AARUF_ERROR_FILE_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00042">AARUF_ERROR_INCOMPATIBLE_VERSION</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00048">AARUF_ERROR_NOT_ENOUGH_MEMORY</a>, <a class="el" href="helpers_8c_source.html#l00347">aaruf_get_xml_mediatype()</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="consts_8h_source.html#l00068">AARUF_VERSION</a>, <a class="el" href="consts_8h_source.html#l00075">AARUF_VERSION_V2</a>, <a class="el" href="enums_8h_source.html#l00159">AaruMetadataJsonBlock</a>, <a class="el" href="aaru_8h_source.html#l00877">ImageInfo::Application</a>, <a class="el" href="header_8h_source.html#l00109">AaruHeaderV2::application</a>, <a class="el" href="header_8h_source.html#l00112">AaruHeaderV2::applicationMajorVersion</a>, <a class="el" href="header_8h_source.html#l00113">AaruHeaderV2::applicationMinorVersion</a>, <a class="el" href="aaru_8h_source.html#l00878">ImageInfo::ApplicationVersion</a>, <a class="el" href="context_8h_source.html#l00257">aaruformat_context::block_cache</a>, <a class="el" href="context_8h_source.html#l00256">aaruformat_context::block_header_cache</a>, <a class="el" href="enums_8h_source.html#l00219">BlockMedia</a>, <a class="el" href="index_8h_source.html#l00110">IndexEntry::blockType</a>, <a class="el" href="lru_8h_source.html#l00048">CacheHeader::cache</a>, <a class="el" href="enums_8h_source.html#l00152">ChecksumBlock</a>, <a class="el" href="enums_8h_source.html#l00151">CicmBlock</a>, <a class="el" href="open_8c_source.html#l00031">cleanup_open_failure()</a>, <a class="el" href="aaru_8h_source.html#l00879">ImageInfo::CreationTime</a>, <a class="el" href="header_8h_source.html#l00116">AaruHeaderV2::creationTime</a>, <a class="el" href="context_8h_source.html#l00234">aaruformat_context::cylinders</a>, <a class="el" href="enums_8h_source.html#l00141">DataBlock</a>, <a class="el" href="index_8h_source.html#l00111">IndexEntry::dataType</a>, <a class="el" href="enums_8h_source.html#l00142">DeDuplicationTable</a>, <a class="el" href="enums_8h_source.html#l00143">DeDuplicationTable2</a>, <a class="el" href="consts_8h_source.html#l00061">DIC_MAGIC</a>, <a class="el" href="enums_8h_source.html#l00156">DumpHardwareBlock</a>, <a class="el" href="context_8h_source.html#l00248">aaruformat_context::ecc_cd_context</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="context_8h_source.html#l00229">aaruformat_context::geometry_block</a>, <a class="el" href="enums_8h_source.html#l00148">GeometryBlock</a>, <a class="el" href="context_8h_source.html#l00175">aaruformat_context::header</a>, <a class="el" href="context_8h_source.html#l00235">aaruformat_context::heads</a>, <a class="el" href="header_8h_source.html#l00108">AaruHeaderV2::identifier</a>, <a class="el" href="data_8h_source.html#l00092">GeometryBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00260">aaruformat_context::image_info</a>, <a class="el" href="header_8h_source.html#l00110">AaruHeaderV2::imageMajorVersion</a>, <a class="el" href="header_8h_source.html#l00111">AaruHeaderV2::imageMinorVersion</a>, <a class="el" href="aaru_8h_source.html#l00873">ImageInfo::ImageSize</a>, <a class="el" href="context_8h_source.html#l00176">aaruformat_context::imageStream</a>, <a class="el" href="enums_8h_source.html#l00145">IndexBlock</a>, <a class="el" href="enums_8h_source.html#l00146">IndexBlock2</a>, <a class="el" href="enums_8h_source.html#l00147">IndexBlock3</a>, <a class="el" href="header_8h_source.html#l00115">AaruHeaderV2::indexOffset</a>, <a class="el" href="aaru_8h_source.html#l00880">ImageInfo::LastModificationTime</a>, <a class="el" href="header_8h_source.html#l00117">AaruHeaderV2::lastWrittenTime</a>, <a class="el" href="aaruformat_8h_source.html#l00022">LIBAARUFORMAT_MAJOR_VERSION</a>, <a class="el" href="aaruformat_8h_source.html#l00023">LIBAARUFORMAT_MINOR_VERSION</a>, <a class="el" href="context_8h_source.html#l00177">aaruformat_context::library_major_version</a>, <a class="el" href="context_8h_source.html#l00178">aaruformat_context::library_minor_version</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="consts_8h_source.html#l00079">MAX_CACHE_SIZE</a>, <a class="el" href="lru_8h_source.html#l00047">CacheHeader::max_items</a>, <a class="el" href="aaru_8h_source.html#l00918">MaxSectorTag</a>, <a class="el" href="aaru_8h_source.html#l00881">ImageInfo::MediaType</a>, <a class="el" href="header_8h_source.html#l00114">AaruHeaderV2::mediaType</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, <a class="el" href="aaru_8h_source.html#l00882">ImageInfo::MetadataMediaType</a>, <a class="el" href="index_8h_source.html#l00112">IndexEntry::offset</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00470">process_aaru_metadata_json_block()</a>, <a class="el" href="checksum_8c_source.html#l00039">process_checksum_block()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00306">process_cicm_block()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, <a class="el" href="ddt__v1_8c_source.html#l00085">process_ddt_v1()</a>, <a class="el" href="ddt__v2_8c_source.html#l00096">process_ddt_v2()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00108">process_dumphw_block()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00246">process_geometry_block()</a>, <a class="el" href="index__v1_8c_source.html#l00079">process_index_v1()</a>, <a class="el" href="index__v2_8c_source.html#l00081">process_index_v2()</a>, <a class="el" href="index__v3_8c_source.html#l00098">process_index_v3()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, <a class="el" href="tape_8c_source.html#l00126">process_tape_files_block()</a>, <a class="el" href="tape_8c_source.html#l00346">process_tape_partitions_block()</a>, <a class="el" href="optical_8c_source.html#l00111">process_tracks_block()</a>, <a class="el" href="context_8h_source.html#l00263">aaruformat_context::readableSectorTags</a>, <a class="el" href="aaru_8h_source.html#l00874">ImageInfo::Sectors</a>, <a class="el" href="context_8h_source.html#l00236">aaruformat_context::sectors_per_track</a>, <a class="el" href="aaru_8h_source.html#l00875">ImageInfo::SectorSize</a>, <a class="el" href="context_8h_source.html#l00195">aaruformat_context::shift</a>, <a class="el" href="enums_8h_source.html#l00157">TapeFileBlock</a>, <a class="el" href="enums_8h_source.html#l00158">TapePartitionBlock</a>, <a class="el" href="log_8h_source.html#l00025">TRACE</a>, <a class="el" href="enums_8h_source.html#l00150">TracksBlock</a>, and <a class="el" href="aaru_8h_source.html#l00876">ImageInfo::Version</a>.</p>
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="header_8h_source.html#l00059">AARU_HEADER_APP_NAME_LEN</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="ecc__cd_8c_source.html#l00035">aaruf_ecc_cd_init()</a>, <a class="el" href="errors_8h_source.html#l00058">AARUF_ERROR_CANNOT_CREATE_FILE</a>, <a class="el" href="errors_8h_source.html#l00043">AARUF_ERROR_CANNOT_READ_INDEX</a>, <a class="el" href="errors_8h_source.html#l00041">AARUF_ERROR_FILE_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00042">AARUF_ERROR_INCOMPATIBLE_VERSION</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00048">AARUF_ERROR_NOT_ENOUGH_MEMORY</a>, <a class="el" href="helpers_8c_source.html#l00347">aaruf_get_xml_mediatype()</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="consts_8h_source.html#l00068">AARUF_VERSION</a>, <a class="el" href="consts_8h_source.html#l00075">AARUF_VERSION_V2</a>, <a class="el" href="enums_8h_source.html#l00159">AaruMetadataJsonBlock</a>, <a class="el" href="aaru_8h_source.html#l00877">ImageInfo::Application</a>, <a class="el" href="header_8h_source.html#l00109">AaruHeaderV2::application</a>, <a class="el" href="header_8h_source.html#l00112">AaruHeaderV2::applicationMajorVersion</a>, <a class="el" href="header_8h_source.html#l00113">AaruHeaderV2::applicationMinorVersion</a>, <a class="el" href="aaru_8h_source.html#l00878">ImageInfo::ApplicationVersion</a>, <a class="el" href="context_8h_source.html#l00257">aaruformat_context::block_cache</a>, <a class="el" href="context_8h_source.html#l00256">aaruformat_context::block_header_cache</a>, <a class="el" href="ddt_8h_source.html#l00154">DdtHeader2::blockAlignmentShift</a>, <a class="el" href="enums_8h_source.html#l00219">BlockMedia</a>, <a class="el" href="ddt_8h_source.html#l00150">DdtHeader2::blocks</a>, <a class="el" href="index_8h_source.html#l00110">IndexEntry::blockType</a>, <a class="el" href="lru_8h_source.html#l00048">CacheHeader::cache</a>, <a class="el" href="enums_8h_source.html#l00152">ChecksumBlock</a>, <a class="el" href="enums_8h_source.html#l00151">CicmBlock</a>, <a class="el" href="open_8c_source.html#l00031">cleanup_open_failure()</a>, <a class="el" href="options_8h_source.html#l00218">aaru_options::compress</a>, <a class="el" href="context_8h_source.html#l00300">aaruformat_context::compression_enabled</a>, <a class="el" href="hash__map_8c_source.html#l00049">create_map()</a>, <a class="el" href="aaru_8h_source.html#l00879">ImageInfo::CreationTime</a>, <a class="el" href="header_8h_source.html#l00116">AaruHeaderV2::creationTime</a>, <a class="el" href="context_8h_source.html#l00234">aaruformat_context::cylinders</a>, <a class="el" href="enums_8h_source.html#l00141">DataBlock</a>, <a class="el" href="index_8h_source.html#l00111">IndexEntry::dataType</a>, <a class="el" href="options_8h_source.html#l00219">aaru_options::deduplicate</a>, <a class="el" href="context_8h_source.html#l00299">aaruformat_context::deduplicate</a>, <a class="el" href="enums_8h_source.html#l00142">DeDuplicationTable</a>, <a class="el" href="enums_8h_source.html#l00143">DeDuplicationTable2</a>, <a class="el" href="consts_8h_source.html#l00061">DIC_MAGIC</a>, <a class="el" href="options_8h_source.html#l00221">aaru_options::dictionary</a>, <a class="el" href="enums_8h_source.html#l00156">DumpHardwareBlock</a>, <a class="el" href="context_8h_source.html#l00248">aaruformat_context::ecc_cd_context</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="context_8h_source.html#l00229">aaruformat_context::geometry_block</a>, <a class="el" href="enums_8h_source.html#l00148">GeometryBlock</a>, <a class="el" href="time_8c_source.html#l00045">get_filetime_uint64()</a>, <a class="el" href="context_8h_source.html#l00175">aaruformat_context::header</a>, <a class="el" href="context_8h_source.html#l00235">aaruformat_context::heads</a>, <a class="el" href="header_8h_source.html#l00108">AaruHeaderV2::identifier</a>, <a class="el" href="data_8h_source.html#l00092">GeometryBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00260">aaruformat_context::image_info</a>, <a class="el" href="header_8h_source.html#l00110">AaruHeaderV2::imageMajorVersion</a>, <a class="el" href="header_8h_source.html#l00111">AaruHeaderV2::imageMinorVersion</a>, <a class="el" href="aaru_8h_source.html#l00873">ImageInfo::ImageSize</a>, <a class="el" href="context_8h_source.html#l00176">aaruformat_context::imageStream</a>, <a class="el" href="context_8h_source.html#l00252">aaruformat_context::index_entries</a>, <a class="el" href="enums_8h_source.html#l00145">IndexBlock</a>, <a class="el" href="enums_8h_source.html#l00146">IndexBlock2</a>, <a class="el" href="enums_8h_source.html#l00147">IndexBlock3</a>, <a class="el" href="header_8h_source.html#l00115">AaruHeaderV2::indexOffset</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="aaru_8h_source.html#l00880">ImageInfo::LastModificationTime</a>, <a class="el" href="header_8h_source.html#l00117">AaruHeaderV2::lastWrittenTime</a>, <a class="el" href="aaruformat_8h_source.html#l00022">LIBAARUFORMAT_MAJOR_VERSION</a>, <a class="el" href="aaruformat_8h_source.html#l00023">LIBAARUFORMAT_MINOR_VERSION</a>, <a class="el" href="context_8h_source.html#l00177">aaruformat_context::library_major_version</a>, <a class="el" href="context_8h_source.html#l00178">aaruformat_context::library_minor_version</a>, <a class="el" href="context_8h_source.html#l00298">aaruformat_context::lzma_dict_size</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="consts_8h_source.html#l00079">MAX_CACHE_SIZE</a>, <a class="el" href="lru_8h_source.html#l00047">CacheHeader::max_items</a>, <a class="el" href="aaru_8h_source.html#l00918">MaxSectorTag</a>, <a class="el" href="aaru_8h_source.html#l00881">ImageInfo::MediaType</a>, <a class="el" href="header_8h_source.html#l00114">AaruHeaderV2::mediaType</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, <a class="el" href="aaru_8h_source.html#l00882">ImageInfo::MetadataMediaType</a>, <a class="el" href="context_8h_source.html#l00282">aaruformat_context::next_block_position</a>, <a class="el" href="index_8h_source.html#l00112">IndexEntry::offset</a>, <a class="el" href="options_8c_source.html#l00038">parse_options()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00470">process_aaru_metadata_json_block()</a>, <a class="el" href="checksum_8c_source.html#l00039">process_checksum_block()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00306">process_cicm_block()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, <a class="el" href="ddt__v1_8c_source.html#l00085">process_ddt_v1()</a>, <a class="el" href="ddt__v2_8c_source.html#l00096">process_ddt_v2()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00246">process_geometry_block()</a>, <a class="el" href="index__v1_8c_source.html#l00079">process_index_v1()</a>, <a class="el" href="index__v2_8c_source.html#l00081">process_index_v2()</a>, <a class="el" href="index__v3_8c_source.html#l00098">process_index_v3()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, <a class="el" href="tape_8c_source.html#l00126">process_tape_files_block()</a>, <a class="el" href="tape_8c_source.html#l00346">process_tape_partitions_block()</a>, <a class="el" href="optical_8c_source.html#l00111">process_tracks_block()</a>, <a class="el" href="context_8h_source.html#l00263">aaruformat_context::readableSectorTags</a>, <a class="el" href="context_8h_source.html#l00293">aaruformat_context::rewinded</a>, <a class="el" href="context_8h_source.html#l00253">aaruformat_context::sector_hash_map</a>, <a class="el" href="aaru_8h_source.html#l00874">ImageInfo::Sectors</a>, <a class="el" href="context_8h_source.html#l00236">aaruformat_context::sectors_per_track</a>, <a class="el" href="aaru_8h_source.html#l00875">ImageInfo::SectorSize</a>, <a class="el" href="context_8h_source.html#l00195">aaruformat_context::shift</a>, <a class="el" href="enums_8h_source.html#l00157">TapeFileBlock</a>, <a class="el" href="enums_8h_source.html#l00158">TapePartitionBlock</a>, <a class="el" href="log_8h_source.html#l00025">TRACE</a>, <a class="el" href="enums_8h_source.html#l00150">TracksBlock</a>, <a class="el" href="context_8h_source.html#l00189">aaruformat_context::user_data_ddt_header</a>, and <a class="el" href="aaru_8h_source.html#l00876">ImageInfo::Version</a>.</p>
 
 </div>
 </div>
@@ -259,7 +355,7 @@ Some memory allocations (version strings) are optional and failure doesn't preve
 
 <p class="reference">References <a class="el" href="context_8h_source.html#l00176">aaruformat_context::imageStream</a>, and <a class="el" href="context_8h_source.html#l00263">aaruformat_context::readableSectorTags</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="open_8c_source.html#l00125">aaruf_open()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>.</p>
 
 </div>
 </div>

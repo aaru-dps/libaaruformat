@@ -292,6 +292,8 @@ Data Fields</h2></td></tr>
 <tr class="memdesc:a551d4fb5a3213106d01d369e98bdf3c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if stream has been rewound after open (write path).  <br /></td></tr>
 <tr class="memitem:ae867f128af265e78c6ef2da6baa9069a" id="r_ae867f128af265e78c6ef2da6baa9069a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae867f128af265e78c6ef2da6baa9069a">writing_long</a></td></tr>
 <tr class="memdesc:ae867f128af265e78c6ef2da6baa9069a"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if writing long sectors.  <br /></td></tr>
+<tr class="memitem:aabd695fe8ff334cd96711bf085d4cf9f" id="r_aabd695fe8ff334cd96711bf085d4cf9f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aabd695fe8ff334cd96711bf085d4cf9f">block_zero_written</a></td></tr>
+<tr class="memdesc:aabd695fe8ff334cd96711bf085d4cf9f"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if block zero has been written (writing path).  <br /></td></tr>
 <tr class="memitem:adc67f6a6ef1602648bb064d47eb1fe88" id="r_adc67f6a6ef1602648bb064d47eb1fe88"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adc67f6a6ef1602648bb064d47eb1fe88">lzma_dict_size</a></td></tr>
 <tr class="memdesc:adc67f6a6ef1602648bb064d47eb1fe88"><td class="mdescLeft">&#160;</td><td class="mdescRight">LZMA dictionary size (writing path).  <br /></td></tr>
 <tr class="memitem:a0d4e1977913ce67e85bced41c58e5dd2" id="r_a0d4e1977913ce67e85bced41c58e5dd2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0d4e1977913ce67e85bced41c58e5dd2">deduplicate</a></td></tr>
@@ -342,7 +344,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00268">268</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, <a class="el" href="create_8c_source.html#l00030">cleanup_failed_create()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, <a class="el" href="create_8c_source.html#l00030">cleanup_failed_create()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
 
 </div>
 </div>
@@ -362,7 +364,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00257">257</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00125">aaruf_open()</a>, and <a class="el" href="read_8c_source.html#l00253">aaruf_read_sector()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, and <a class="el" href="read_8c_source.html#l00253">aaruf_read_sector()</a>.</p>
 
 </div>
 </div>
@@ -382,7 +384,27 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00256">256</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00125">aaruf_open()</a>, and <a class="el" href="read_8c_source.html#l00253">aaruf_read_sector()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, and <a class="el" href="read_8c_source.html#l00253">aaruf_read_sector()</a>.</p>
+
+</div>
+</div>
+<a id="aabd695fe8ff334cd96711bf085d4cf9f" name="aabd695fe8ff334cd96711bf085d4cf9f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aabd695fe8ff334cd96711bf085d4cf9f">&#9670;&#160;</a></span>block_zero_written</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool aaruformat_context::block_zero_written</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>True if block zero has been written (writing path). </p>
+
+<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00295">295</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, and <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>.</p>
 
 </div>
 </div>
@@ -462,7 +484,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00277">277</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
 
 </div>
 </div>
@@ -482,7 +504,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00273">273</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
 
 </div>
 </div>
@@ -502,7 +524,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00274">274</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
 
 </div>
 </div>
@@ -522,7 +544,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00275">275</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
 
 </div>
 </div>
@@ -542,7 +564,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00276">276</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
 
 </div>
 </div>
@@ -562,7 +584,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00269">269</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="checksum_8c_source.html#l00039">process_checksum_block()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="checksum_8c_source.html#l00039">process_checksum_block()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
 
 </div>
 </div>
@@ -582,7 +604,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00214">214</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="metadata_8c_source.html#l01947">aaruf_get_cicm_metadata()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00306">process_cicm_block()</a>, and <a class="el" href="close_8c_source.html#l03675">write_cicm_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="metadata_8c_source.html#l01947">aaruf_get_cicm_metadata()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00306">process_cicm_block()</a>, and <a class="el" href="close_8c_source.html#l03677">write_cicm_block()</a>.</p>
 
 </div>
 </div>
@@ -602,7 +624,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00231">231</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l01947">aaruf_get_cicm_metadata()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00306">process_cicm_block()</a>, and <a class="el" href="close_8c_source.html#l03675">write_cicm_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l01947">aaruf_get_cicm_metadata()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00306">process_cicm_block()</a>, and <a class="el" href="close_8c_source.html#l03677">write_cicm_block()</a>.</p>
 
 </div>
 </div>
@@ -622,7 +644,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00218">218</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04003">aaruf_clear_comments()</a>, <a class="el" href="metadata_8c_source.html#l02479">aaruf_get_comments()</a>, <a class="el" href="metadata_8c_source.html#l00609">aaruf_set_comments()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03162">write_metadata_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04003">aaruf_clear_comments()</a>, <a class="el" href="metadata_8c_source.html#l02479">aaruf_get_comments()</a>, <a class="el" href="metadata_8c_source.html#l00609">aaruf_set_comments()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03164">write_metadata_block()</a>.</p>
 
 </div>
 </div>
@@ -640,9 +662,9 @@ Data Fields</h2></td></tr>
 
 <p>True if block compression enabled (writing path). </p>
 
-<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00299">299</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00300">300</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="ddt__v2_8c_source.html#l01092">set_ddt_multi_level_v2()</a>, <a class="el" href="close_8c_source.html#l00077">write_cached_secondary_ddt()</a>, <a class="el" href="close_8c_source.html#l01808">write_dvd_long_sector_blocks()</a>, <a class="el" href="close_8c_source.html#l02245">write_dvd_title_key_decrypted_block()</a>, <a class="el" href="close_8c_source.html#l02409">write_media_tags()</a>, <a class="el" href="close_8c_source.html#l00850">write_mode2_subheaders_block()</a>, <a class="el" href="close_8c_source.html#l00966">write_sector_prefix()</a>, <a class="el" href="close_8c_source.html#l01206">write_sector_prefix_ddt()</a>, <a class="el" href="close_8c_source.html#l01508">write_sector_subchannel()</a>, <a class="el" href="close_8c_source.html#l01088">write_sector_suffix()</a>, <a class="el" href="close_8c_source.html#l01350">write_sector_suffix_ddt()</a>, <a class="el" href="close_8c_source.html#l00369">write_single_level_ddt()</a>, and <a class="el" href="close_8c_source.html#l00596">write_tape_ddt()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="ddt__v2_8c_source.html#l01092">set_ddt_multi_level_v2()</a>, <a class="el" href="close_8c_source.html#l00077">write_cached_secondary_ddt()</a>, <a class="el" href="close_8c_source.html#l01810">write_dvd_long_sector_blocks()</a>, <a class="el" href="close_8c_source.html#l02247">write_dvd_title_key_decrypted_block()</a>, <a class="el" href="close_8c_source.html#l02411">write_media_tags()</a>, <a class="el" href="close_8c_source.html#l00850">write_mode2_subheaders_block()</a>, <a class="el" href="close_8c_source.html#l00966">write_sector_prefix()</a>, <a class="el" href="close_8c_source.html#l01206">write_sector_prefix_ddt()</a>, <a class="el" href="close_8c_source.html#l01508">write_sector_subchannel()</a>, <a class="el" href="close_8c_source.html#l01088">write_sector_suffix()</a>, <a class="el" href="close_8c_source.html#l01350">write_sector_suffix_ddt()</a>, <a class="el" href="close_8c_source.html#l00369">write_single_level_ddt()</a>, and <a class="el" href="close_8c_source.html#l00596">write_tape_ddt()</a>.</p>
 
 </div>
 </div>
@@ -662,7 +684,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00249">249</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l01393">aaruf_close_current_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l01403">aaruf_close_current_block()</a>.</p>
 
 </div>
 </div>
@@ -682,7 +704,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00216">216</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l03874">aaruf_clear_creator()</a>, <a class="el" href="metadata_8c_source.html#l02407">aaruf_get_creator()</a>, <a class="el" href="metadata_8c_source.html#l00495">aaruf_set_creator()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03162">write_metadata_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l03874">aaruf_clear_creator()</a>, <a class="el" href="metadata_8c_source.html#l02407">aaruf_get_creator()</a>, <a class="el" href="metadata_8c_source.html#l00495">aaruf_set_creator()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03164">write_metadata_block()</a>.</p>
 
 </div>
 </div>
@@ -702,7 +724,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00281">281</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l01393">aaruf_close_current_block()</a>, and <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l01403">aaruf_close_current_block()</a>, and <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>.</p>
 
 </div>
 </div>
@@ -722,7 +744,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00288">288</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l01393">aaruf_close_current_block()</a>, and <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l01403">aaruf_close_current_block()</a>, and <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>.</p>
 
 </div>
 </div>
@@ -762,7 +784,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00234">234</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="open_8c_source.html#l00125">aaruf_open()</a>, <a class="el" href="metadata_8c_source.html#l00230">aaruf_set_geometry()</a>, and <a class="el" href="blocks_2metadata_8c_source.html#l00246">process_geometry_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="metadata_8c_source.html#l00230">aaruf_set_geometry()</a>, and <a class="el" href="blocks_2metadata_8c_source.html#l00246">process_geometry_block()</a>.</p>
 
 </div>
 </div>
@@ -820,9 +842,9 @@ Data Fields</h2></td></tr>
 
 <p>Storage deduplication active (duplicates coalesce). </p>
 
-<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00298">298</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00299">299</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, and <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, and <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>.</p>
 
 </div>
 </div>
@@ -842,7 +864,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00228">228</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04861">aaruf_clear_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l03181">aaruf_get_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l01795">aaruf_set_drive_firmware_revision()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03162">write_metadata_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04861">aaruf_clear_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l03181">aaruf_get_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l01795">aaruf_set_drive_firmware_revision()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03164">write_metadata_block()</a>.</p>
 
 </div>
 </div>
@@ -862,7 +884,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00224">224</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04598">aaruf_clear_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l02971">aaruf_get_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l01414">aaruf_set_drive_manufacturer()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03162">write_metadata_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04598">aaruf_clear_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l02971">aaruf_get_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l01414">aaruf_set_drive_manufacturer()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03164">write_metadata_block()</a>.</p>
 
 </div>
 </div>
@@ -882,7 +904,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00225">225</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04684">aaruf_clear_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l03041">aaruf_get_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l01536">aaruf_set_drive_model()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03162">write_metadata_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04684">aaruf_clear_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l03041">aaruf_get_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l01536">aaruf_set_drive_model()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03164">write_metadata_block()</a>.</p>
 
 </div>
 </div>
@@ -902,7 +924,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00226">226</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04773">aaruf_clear_drive_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l03111">aaruf_get_drive_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l01660">aaruf_set_drive_serial_number()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03162">write_metadata_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04773">aaruf_clear_drive_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l03111">aaruf_get_drive_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l01660">aaruf_set_drive_serial_number()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03164">write_metadata_block()</a>.</p>
 
 </div>
 </div>
@@ -922,7 +944,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00212">212</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="dump_8c_source.html#l00531">aaruf_set_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00108">process_dumphw_block()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00054">reset_dump_hardware_context()</a>, and <a class="el" href="close_8c_source.html#l03445">write_dumphw_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="dump_8c_source.html#l00531">aaruf_set_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00054">reset_dump_hardware_context()</a>, and <a class="el" href="close_8c_source.html#l03447">write_dumphw_block()</a>.</p>
 
 </div>
 </div>
@@ -942,7 +964,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00232">232</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="dump_8c_source.html#l00531">aaruf_set_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00108">process_dumphw_block()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00054">reset_dump_hardware_context()</a>, and <a class="el" href="close_8c_source.html#l03445">write_dumphw_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="dump_8c_source.html#l00531">aaruf_set_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00054">reset_dump_hardware_context()</a>, and <a class="el" href="close_8c_source.html#l03447">write_dumphw_block()</a>.</p>
 
 </div>
 </div>
@@ -962,7 +984,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00248">248</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00125">aaruf_open()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, and <a class="el" href="create_8c_source.html#l00030">cleanup_failed_create()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, and <a class="el" href="create_8c_source.html#l00030">cleanup_failed_create()</a>.</p>
 
 </div>
 </div>
@@ -982,7 +1004,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00229">229</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l00094">aaruf_get_geometry()</a>, <a class="el" href="open_8c_source.html#l00125">aaruf_open()</a>, <a class="el" href="metadata_8c_source.html#l00230">aaruf_set_geometry()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00246">process_geometry_block()</a>, and <a class="el" href="close_8c_source.html#l03026">write_geometry_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l00094">aaruf_get_geometry()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="metadata_8c_source.html#l00230">aaruf_set_geometry()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00246">process_geometry_block()</a>, and <a class="el" href="close_8c_source.html#l03028">write_geometry_block()</a>.</p>
 
 </div>
 </div>
@@ -1002,7 +1024,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00175">175</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00125">aaruf_open()</a>, <a class="el" href="verify_8c_source.html#l00130">aaruf_verify_image()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00108">process_dumphw_block()</a>, <a class="el" href="index__v1_8c_source.html#l00079">process_index_v1()</a>, <a class="el" href="index__v2_8c_source.html#l00081">process_index_v2()</a>, <a class="el" href="index__v3_8c_source.html#l00098">process_index_v3()</a>, <a class="el" href="optical_8c_source.html#l00111">process_tracks_block()</a>, <a class="el" href="index__v1_8c_source.html#l00225">verify_index_v1()</a>, <a class="el" href="index__v2_8c_source.html#l00227">verify_index_v2()</a>, <a class="el" href="index__v3_8c_source.html#l00408">verify_index_v3()</a>, <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>, and <a class="el" href="close_8c_source.html#l03862">write_index_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="verify_8c_source.html#l00130">aaruf_verify_image()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, <a class="el" href="index__v1_8c_source.html#l00079">process_index_v1()</a>, <a class="el" href="index__v2_8c_source.html#l00081">process_index_v2()</a>, <a class="el" href="index__v3_8c_source.html#l00098">process_index_v3()</a>, <a class="el" href="optical_8c_source.html#l00111">process_tracks_block()</a>, <a class="el" href="index__v1_8c_source.html#l00225">verify_index_v1()</a>, <a class="el" href="index__v2_8c_source.html#l00227">verify_index_v2()</a>, <a class="el" href="index__v3_8c_source.html#l00408">verify_index_v3()</a>, <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>, and <a class="el" href="close_8c_source.html#l03864">write_index_block()</a>.</p>
 
 </div>
 </div>
@@ -1022,7 +1044,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00235">235</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="open_8c_source.html#l00125">aaruf_open()</a>, <a class="el" href="metadata_8c_source.html#l00230">aaruf_set_geometry()</a>, and <a class="el" href="blocks_2metadata_8c_source.html#l00246">process_geometry_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="metadata_8c_source.html#l00230">aaruf_set_geometry()</a>, and <a class="el" href="blocks_2metadata_8c_source.html#l00246">process_geometry_block()</a>.</p>
 
 </div>
 </div>
@@ -1042,7 +1064,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00260">260</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="metadata_8c_source.html#l03637">aaruf_get_image_info()</a>, <a class="el" href="open_8c_source.html#l00125">aaruf_open()</a>, <a class="el" href="read_8c_source.html#l00253">aaruf_read_sector()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="read_8c_source.html#l00670">aaruf_read_track_sector()</a>, <a class="el" href="optical_8c_source.html#l00392">aaruf_set_tracks()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, <a class="el" href="write_8c_source.html#l02059">aaruf_write_sector_tag()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00470">process_aaru_metadata_json_block()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00306">process_cicm_block()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, <a class="el" href="ddt__v1_8c_source.html#l00085">process_ddt_v1()</a>, <a class="el" href="ddt__v2_8c_source.html#l00096">process_ddt_v2()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00246">process_geometry_block()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, <a class="el" href="tape_8c_source.html#l00126">process_tape_files_block()</a>, <a class="el" href="tape_8c_source.html#l00346">process_tape_partitions_block()</a>, <a class="el" href="optical_8c_source.html#l00111">process_tracks_block()</a>, <a class="el" href="close_8c_source.html#l01808">write_dvd_long_sector_blocks()</a>, <a class="el" href="close_8c_source.html#l02245">write_dvd_title_key_decrypted_block()</a>, <a class="el" href="close_8c_source.html#l00850">write_mode2_subheaders_block()</a>, <a class="el" href="close_8c_source.html#l01206">write_sector_prefix_ddt()</a>, <a class="el" href="close_8c_source.html#l01508">write_sector_subchannel()</a>, and <a class="el" href="close_8c_source.html#l01350">write_sector_suffix_ddt()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="metadata_8c_source.html#l03637">aaruf_get_image_info()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="read_8c_source.html#l00253">aaruf_read_sector()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="read_8c_source.html#l00670">aaruf_read_track_sector()</a>, <a class="el" href="optical_8c_source.html#l00392">aaruf_set_tracks()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, <a class="el" href="write_8c_source.html#l02069">aaruf_write_sector_tag()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00470">process_aaru_metadata_json_block()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00306">process_cicm_block()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, <a class="el" href="ddt__v1_8c_source.html#l00085">process_ddt_v1()</a>, <a class="el" href="ddt__v2_8c_source.html#l00096">process_ddt_v2()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00246">process_geometry_block()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, <a class="el" href="tape_8c_source.html#l00126">process_tape_files_block()</a>, <a class="el" href="tape_8c_source.html#l00346">process_tape_partitions_block()</a>, <a class="el" href="optical_8c_source.html#l00111">process_tracks_block()</a>, <a class="el" href="close_8c_source.html#l01810">write_dvd_long_sector_blocks()</a>, <a class="el" href="close_8c_source.html#l02247">write_dvd_title_key_decrypted_block()</a>, <a class="el" href="close_8c_source.html#l00850">write_mode2_subheaders_block()</a>, <a class="el" href="close_8c_source.html#l01206">write_sector_prefix_ddt()</a>, <a class="el" href="close_8c_source.html#l01508">write_sector_subchannel()</a>, and <a class="el" href="close_8c_source.html#l01350">write_sector_suffix_ddt()</a>.</p>
 
 </div>
 </div>
@@ -1062,7 +1084,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00176">176</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="write_8c_source.html#l01393">aaruf_close_current_block()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00125">aaruf_open()</a>, <a class="el" href="read_8c_source.html#l00253">aaruf_read_sector()</a>, <a class="el" href="verify_8c_source.html#l00130">aaruf_verify_image()</a>, <a class="el" href="index__v3_8c_source.html#l00247">add_subindex_entries()</a>, <a class="el" href="create_8c_source.html#l00030">cleanup_failed_create()</a>, <a class="el" href="open_8c_source.html#l00031">cleanup_open_failure()</a>, <a class="el" href="ddt__v1_8c_source.html#l00405">decode_ddt_entry_v1()</a>, <a class="el" href="ddt__v2_8c_source.html#l00507">decode_ddt_entry_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l00724">decode_ddt_multi_level_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l00581">decode_ddt_single_level_v2()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00470">process_aaru_metadata_json_block()</a>, <a class="el" href="checksum_8c_source.html#l00039">process_checksum_block()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00306">process_cicm_block()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, <a class="el" href="ddt__v1_8c_source.html#l00085">process_ddt_v1()</a>, <a class="el" href="ddt__v2_8c_source.html#l00096">process_ddt_v2()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00108">process_dumphw_block()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00246">process_geometry_block()</a>, <a class="el" href="index__v1_8c_source.html#l00079">process_index_v1()</a>, <a class="el" href="index__v2_8c_source.html#l00081">process_index_v2()</a>, <a class="el" href="index__v3_8c_source.html#l00098">process_index_v3()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, <a class="el" href="tape_8c_source.html#l00126">process_tape_files_block()</a>, <a class="el" href="tape_8c_source.html#l00346">process_tape_partitions_block()</a>, <a class="el" href="optical_8c_source.html#l00111">process_tracks_block()</a>, <a class="el" href="ddt__v2_8c_source.html#l00988">set_ddt_entry_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l01092">set_ddt_multi_level_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l01023">set_ddt_single_level_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l01768">set_ddt_tape()</a>, <a class="el" href="index__v1_8c_source.html#l00225">verify_index_v1()</a>, <a class="el" href="index__v2_8c_source.html#l00227">verify_index_v2()</a>, <a class="el" href="index__v3_8c_source.html#l00408">verify_index_v3()</a>, <a class="el" href="close_8c_source.html#l03812">write_aaru_json_block()</a>, <a class="el" href="close_8c_source.html#l00077">write_cached_secondary_ddt()</a>, <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>, <a class="el" href="close_8c_source.html#l03675">write_cicm_block()</a>, <a class="el" href="close_8c_source.html#l03445">write_dumphw_block()</a>, <a class="el" href="close_8c_source.html#l01808">write_dvd_long_sector_blocks()</a>, <a class="el" href="close_8c_source.html#l02245">write_dvd_title_key_decrypted_block()</a>, <a class="el" href="close_8c_source.html#l03026">write_geometry_block()</a>, <a class="el" href="close_8c_source.html#l03862">write_index_block()</a>, <a class="el" href="close_8c_source.html#l02409">write_media_tags()</a>, <a class="el" href="close_8c_source.html#l03162">write_metadata_block()</a>, <a class="el" href="close_8c_source.html#l00850">write_mode2_subheaders_block()</a>, <a class="el" href="close_8c_source.html#l00283">write_primary_ddt()</a>, <a class="el" href="close_8c_source.html#l00966">write_sector_prefix()</a>, <a class="el" href="close_8c_source.html#l01206">write_sector_prefix_ddt()</a>, <a class="el" href="close_8c_source.html#l01508">write_sector_subchannel()</a>, <a class="el" href="close_8c_source.html#l01088">write_sector_suffix()</a>, <a class="el" href="close_8c_source.html#l01350">write_sector_suffix_ddt()</a>, <a class="el" href="close_8c_source.html#l00369">write_single_level_ddt()</a>, <a class="el" href="close_8c_source.html#l02669">write_tape_file_block()</a>, <a class="el" href="close_8c_source.html#l02901">write_tape_partition_block()</a>, and <a class="el" href="close_8c_source.html#l00798">write_tracks_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="write_8c_source.html#l01403">aaruf_close_current_block()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="read_8c_source.html#l00253">aaruf_read_sector()</a>, <a class="el" href="verify_8c_source.html#l00130">aaruf_verify_image()</a>, <a class="el" href="index__v3_8c_source.html#l00247">add_subindex_entries()</a>, <a class="el" href="create_8c_source.html#l00030">cleanup_failed_create()</a>, <a class="el" href="open_8c_source.html#l00031">cleanup_open_failure()</a>, <a class="el" href="ddt__v1_8c_source.html#l00405">decode_ddt_entry_v1()</a>, <a class="el" href="ddt__v2_8c_source.html#l00507">decode_ddt_entry_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l00724">decode_ddt_multi_level_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l00581">decode_ddt_single_level_v2()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00470">process_aaru_metadata_json_block()</a>, <a class="el" href="checksum_8c_source.html#l00039">process_checksum_block()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00306">process_cicm_block()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, <a class="el" href="ddt__v1_8c_source.html#l00085">process_ddt_v1()</a>, <a class="el" href="ddt__v2_8c_source.html#l00096">process_ddt_v2()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00246">process_geometry_block()</a>, <a class="el" href="index__v1_8c_source.html#l00079">process_index_v1()</a>, <a class="el" href="index__v2_8c_source.html#l00081">process_index_v2()</a>, <a class="el" href="index__v3_8c_source.html#l00098">process_index_v3()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, <a class="el" href="tape_8c_source.html#l00126">process_tape_files_block()</a>, <a class="el" href="tape_8c_source.html#l00346">process_tape_partitions_block()</a>, <a class="el" href="optical_8c_source.html#l00111">process_tracks_block()</a>, <a class="el" href="ddt__v2_8c_source.html#l00988">set_ddt_entry_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l01092">set_ddt_multi_level_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l01023">set_ddt_single_level_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l01768">set_ddt_tape()</a>, <a class="el" href="index__v1_8c_source.html#l00225">verify_index_v1()</a>, <a class="el" href="index__v2_8c_source.html#l00227">verify_index_v2()</a>, <a class="el" href="index__v3_8c_source.html#l00408">verify_index_v3()</a>, <a class="el" href="close_8c_source.html#l03814">write_aaru_json_block()</a>, <a class="el" href="close_8c_source.html#l00077">write_cached_secondary_ddt()</a>, <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>, <a class="el" href="close_8c_source.html#l03677">write_cicm_block()</a>, <a class="el" href="close_8c_source.html#l03447">write_dumphw_block()</a>, <a class="el" href="close_8c_source.html#l01810">write_dvd_long_sector_blocks()</a>, <a class="el" href="close_8c_source.html#l02247">write_dvd_title_key_decrypted_block()</a>, <a class="el" href="close_8c_source.html#l03028">write_geometry_block()</a>, <a class="el" href="close_8c_source.html#l03864">write_index_block()</a>, <a class="el" href="close_8c_source.html#l02411">write_media_tags()</a>, <a class="el" href="close_8c_source.html#l03164">write_metadata_block()</a>, <a class="el" href="close_8c_source.html#l00850">write_mode2_subheaders_block()</a>, <a class="el" href="close_8c_source.html#l00283">write_primary_ddt()</a>, <a class="el" href="close_8c_source.html#l00966">write_sector_prefix()</a>, <a class="el" href="close_8c_source.html#l01206">write_sector_prefix_ddt()</a>, <a class="el" href="close_8c_source.html#l01508">write_sector_subchannel()</a>, <a class="el" href="close_8c_source.html#l01088">write_sector_suffix()</a>, <a class="el" href="close_8c_source.html#l01350">write_sector_suffix_ddt()</a>, <a class="el" href="close_8c_source.html#l00369">write_single_level_ddt()</a>, <a class="el" href="close_8c_source.html#l02671">write_tape_file_block()</a>, <a class="el" href="close_8c_source.html#l02903">write_tape_partition_block()</a>, and <a class="el" href="close_8c_source.html#l00798">write_tracks_block()</a>.</p>
 
 </div>
 </div>
@@ -1082,7 +1104,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00196">196</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="ddt__v1_8c_source.html#l00085">process_ddt_v1()</a>, and <a class="el" href="ddt__v2_8c_source.html#l00096">process_ddt_v2()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="ddt__v1_8c_source.html#l00085">process_ddt_v1()</a>, and <a class="el" href="ddt__v2_8c_source.html#l00096">process_ddt_v2()</a>.</p>
 
 </div>
 </div>
@@ -1102,7 +1124,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00252">252</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="write_8c_source.html#l01393">aaruf_close_current_block()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="create_8c_source.html#l00030">cleanup_failed_create()</a>, <a class="el" href="ddt__v2_8c_source.html#l01092">set_ddt_multi_level_v2()</a>, <a class="el" href="close_8c_source.html#l03812">write_aaru_json_block()</a>, <a class="el" href="close_8c_source.html#l00077">write_cached_secondary_ddt()</a>, <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>, <a class="el" href="close_8c_source.html#l03675">write_cicm_block()</a>, <a class="el" href="close_8c_source.html#l03445">write_dumphw_block()</a>, <a class="el" href="close_8c_source.html#l01808">write_dvd_long_sector_blocks()</a>, <a class="el" href="close_8c_source.html#l02245">write_dvd_title_key_decrypted_block()</a>, <a class="el" href="close_8c_source.html#l03026">write_geometry_block()</a>, <a class="el" href="close_8c_source.html#l03862">write_index_block()</a>, <a class="el" href="close_8c_source.html#l02409">write_media_tags()</a>, <a class="el" href="close_8c_source.html#l03162">write_metadata_block()</a>, <a class="el" href="close_8c_source.html#l00850">write_mode2_subheaders_block()</a>, <a class="el" href="close_8c_source.html#l00283">write_primary_ddt()</a>, <a class="el" href="close_8c_source.html#l00966">write_sector_prefix()</a>, <a class="el" href="close_8c_source.html#l01206">write_sector_prefix_ddt()</a>, <a class="el" href="close_8c_source.html#l01508">write_sector_subchannel()</a>, <a class="el" href="close_8c_source.html#l01088">write_sector_suffix()</a>, <a class="el" href="close_8c_source.html#l01350">write_sector_suffix_ddt()</a>, <a class="el" href="close_8c_source.html#l00369">write_single_level_ddt()</a>, <a class="el" href="close_8c_source.html#l02669">write_tape_file_block()</a>, <a class="el" href="close_8c_source.html#l02901">write_tape_partition_block()</a>, and <a class="el" href="close_8c_source.html#l00798">write_tracks_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="write_8c_source.html#l01403">aaruf_close_current_block()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="create_8c_source.html#l00030">cleanup_failed_create()</a>, <a class="el" href="ddt__v2_8c_source.html#l01092">set_ddt_multi_level_v2()</a>, <a class="el" href="close_8c_source.html#l03814">write_aaru_json_block()</a>, <a class="el" href="close_8c_source.html#l00077">write_cached_secondary_ddt()</a>, <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>, <a class="el" href="close_8c_source.html#l03677">write_cicm_block()</a>, <a class="el" href="close_8c_source.html#l03447">write_dumphw_block()</a>, <a class="el" href="close_8c_source.html#l01810">write_dvd_long_sector_blocks()</a>, <a class="el" href="close_8c_source.html#l02247">write_dvd_title_key_decrypted_block()</a>, <a class="el" href="close_8c_source.html#l03028">write_geometry_block()</a>, <a class="el" href="close_8c_source.html#l03864">write_index_block()</a>, <a class="el" href="close_8c_source.html#l02411">write_media_tags()</a>, <a class="el" href="close_8c_source.html#l03164">write_metadata_block()</a>, <a class="el" href="close_8c_source.html#l00850">write_mode2_subheaders_block()</a>, <a class="el" href="close_8c_source.html#l00283">write_primary_ddt()</a>, <a class="el" href="close_8c_source.html#l00966">write_sector_prefix()</a>, <a class="el" href="close_8c_source.html#l01206">write_sector_prefix_ddt()</a>, <a class="el" href="close_8c_source.html#l01508">write_sector_subchannel()</a>, <a class="el" href="close_8c_source.html#l01088">write_sector_suffix()</a>, <a class="el" href="close_8c_source.html#l01350">write_sector_suffix_ddt()</a>, <a class="el" href="close_8c_source.html#l00369">write_single_level_ddt()</a>, <a class="el" href="close_8c_source.html#l02671">write_tape_file_block()</a>, <a class="el" href="close_8c_source.html#l02903">write_tape_partition_block()</a>, and <a class="el" href="close_8c_source.html#l00798">write_tracks_block()</a>.</p>
 
 </div>
 </div>
@@ -1120,9 +1142,9 @@ Data Fields</h2></td></tr>
 
 <p>True if the image is a tape image. </p>
 
-<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00304">304</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00305">305</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="ddt__v2_8c_source.html#l01768">set_ddt_tape()</a>, and <a class="el" href="close_8c_source.html#l00596">write_tape_ddt()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="ddt__v2_8c_source.html#l01768">set_ddt_tape()</a>, and <a class="el" href="close_8c_source.html#l00596">write_tape_ddt()</a>.</p>
 
 </div>
 </div>
@@ -1142,7 +1164,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00292">292</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04003">aaruf_clear_comments()</a>, <a class="el" href="metadata_8c_source.html#l03874">aaruf_clear_creator()</a>, <a class="el" href="metadata_8c_source.html#l04861">aaruf_clear_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l04598">aaruf_clear_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l04684">aaruf_clear_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l04773">aaruf_clear_drive_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l04426">aaruf_clear_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l04170">aaruf_clear_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l04254">aaruf_clear_media_model()</a>, <a class="el" href="metadata_8c_source.html#l04512">aaruf_clear_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l03743">aaruf_clear_media_sequence()</a>, <a class="el" href="metadata_8c_source.html#l04340">aaruf_clear_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l04086">aaruf_clear_media_title()</a>, <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="write_8c_source.html#l01393">aaruf_close_current_block()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="metadata_8c_source.html#l02261">aaruf_set_aaru_json_metadata()</a>, <a class="el" href="metadata_8c_source.html#l00609">aaruf_set_comments()</a>, <a class="el" href="metadata_8c_source.html#l00495">aaruf_set_creator()</a>, <a class="el" href="metadata_8c_source.html#l01795">aaruf_set_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l01414">aaruf_set_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l01536">aaruf_set_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l01660">aaruf_set_drive_serial_number()</a>, <a class="el" href="dump_8c_source.html#l00531">aaruf_set_dumphw()</a>, <a class="el" href="metadata_8c_source.html#l00230">aaruf_set_geometry()</a>, <a class="el" href="metadata_8c_source.html#l01178">aaruf_set_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l00834">aaruf_set_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l00941">aaruf_set_media_model()</a>, <a class="el" href="metadata_8c_source.html#l01299">aaruf_set_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l00364">aaruf_set_media_sequence()</a>, <a class="el" href="metadata_8c_source.html#l01056">aaruf_set_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l00722">aaruf_set_media_title()</a>, <a class="el" href="tape_8c_source.html#l00770">aaruf_set_tape_file()</a>, <a class="el" href="tape_8c_source.html#l01196">aaruf_set_tape_partition()</a>, <a class="el" href="write_8c_source.html#l01790">aaruf_write_media_tag()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, and <a class="el" href="write_8c_source.html#l02059">aaruf_write_sector_tag()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04003">aaruf_clear_comments()</a>, <a class="el" href="metadata_8c_source.html#l03874">aaruf_clear_creator()</a>, <a class="el" href="metadata_8c_source.html#l04861">aaruf_clear_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l04598">aaruf_clear_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l04684">aaruf_clear_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l04773">aaruf_clear_drive_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l04426">aaruf_clear_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l04170">aaruf_clear_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l04254">aaruf_clear_media_model()</a>, <a class="el" href="metadata_8c_source.html#l04512">aaruf_clear_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l03743">aaruf_clear_media_sequence()</a>, <a class="el" href="metadata_8c_source.html#l04340">aaruf_clear_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l04086">aaruf_clear_media_title()</a>, <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="write_8c_source.html#l01403">aaruf_close_current_block()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="metadata_8c_source.html#l02261">aaruf_set_aaru_json_metadata()</a>, <a class="el" href="metadata_8c_source.html#l00609">aaruf_set_comments()</a>, <a class="el" href="metadata_8c_source.html#l00495">aaruf_set_creator()</a>, <a class="el" href="metadata_8c_source.html#l01795">aaruf_set_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l01414">aaruf_set_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l01536">aaruf_set_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l01660">aaruf_set_drive_serial_number()</a>, <a class="el" href="dump_8c_source.html#l00531">aaruf_set_dumphw()</a>, <a class="el" href="metadata_8c_source.html#l00230">aaruf_set_geometry()</a>, <a class="el" href="metadata_8c_source.html#l01178">aaruf_set_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l00834">aaruf_set_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l00941">aaruf_set_media_model()</a>, <a class="el" href="metadata_8c_source.html#l01299">aaruf_set_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l00364">aaruf_set_media_sequence()</a>, <a class="el" href="metadata_8c_source.html#l01056">aaruf_set_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l00722">aaruf_set_media_title()</a>, <a class="el" href="tape_8c_source.html#l00770">aaruf_set_tape_file()</a>, <a class="el" href="tape_8c_source.html#l01196">aaruf_set_tape_partition()</a>, <a class="el" href="write_8c_source.html#l01800">aaruf_write_media_tag()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, and <a class="el" href="write_8c_source.html#l02069">aaruf_write_sector_tag()</a>.</p>
 
 </div>
 </div>
@@ -1162,7 +1184,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00215">215</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l02102">aaruf_get_aaru_json_metadata()</a>, <a class="el" href="metadata_8c_source.html#l02261">aaruf_set_aaru_json_metadata()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00470">process_aaru_metadata_json_block()</a>, and <a class="el" href="close_8c_source.html#l03812">write_aaru_json_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l02102">aaruf_get_aaru_json_metadata()</a>, <a class="el" href="metadata_8c_source.html#l02261">aaruf_set_aaru_json_metadata()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00470">process_aaru_metadata_json_block()</a>, and <a class="el" href="close_8c_source.html#l03814">write_aaru_json_block()</a>.</p>
 
 </div>
 </div>
@@ -1182,7 +1204,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00233">233</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l02102">aaruf_get_aaru_json_metadata()</a>, <a class="el" href="metadata_8c_source.html#l02261">aaruf_set_aaru_json_metadata()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00470">process_aaru_metadata_json_block()</a>, and <a class="el" href="close_8c_source.html#l03812">write_aaru_json_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l02102">aaruf_get_aaru_json_metadata()</a>, <a class="el" href="metadata_8c_source.html#l02261">aaruf_set_aaru_json_metadata()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00470">process_aaru_metadata_json_block()</a>, and <a class="el" href="close_8c_source.html#l03814">write_aaru_json_block()</a>.</p>
 
 </div>
 </div>
@@ -1222,7 +1244,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00283">283</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, and <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, and <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>.</p>
 
 </div>
 </div>
@@ -1242,7 +1264,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00177">177</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, and <a class="el" href="open_8c_source.html#l00125">aaruf_open()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, and <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>.</p>
 
 </div>
 </div>
@@ -1262,7 +1284,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00178">178</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, and <a class="el" href="open_8c_source.html#l00125">aaruf_open()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, and <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>.</p>
 
 </div>
 </div>
@@ -1280,9 +1302,9 @@ Data Fields</h2></td></tr>
 
 <p>LZMA dictionary size (writing path). </p>
 
-<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00297">297</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00298">298</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l01393">aaruf_close_current_block()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="ddt__v2_8c_source.html#l01092">set_ddt_multi_level_v2()</a>, <a class="el" href="close_8c_source.html#l00077">write_cached_secondary_ddt()</a>, <a class="el" href="close_8c_source.html#l01808">write_dvd_long_sector_blocks()</a>, <a class="el" href="close_8c_source.html#l02245">write_dvd_title_key_decrypted_block()</a>, <a class="el" href="close_8c_source.html#l02409">write_media_tags()</a>, <a class="el" href="close_8c_source.html#l00850">write_mode2_subheaders_block()</a>, <a class="el" href="close_8c_source.html#l00966">write_sector_prefix()</a>, <a class="el" href="close_8c_source.html#l01206">write_sector_prefix_ddt()</a>, <a class="el" href="close_8c_source.html#l01508">write_sector_subchannel()</a>, <a class="el" href="close_8c_source.html#l01088">write_sector_suffix()</a>, <a class="el" href="close_8c_source.html#l01350">write_sector_suffix_ddt()</a>, and <a class="el" href="close_8c_source.html#l00369">write_single_level_ddt()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l01403">aaruf_close_current_block()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="ddt__v2_8c_source.html#l01092">set_ddt_multi_level_v2()</a>, <a class="el" href="close_8c_source.html#l00077">write_cached_secondary_ddt()</a>, <a class="el" href="close_8c_source.html#l01810">write_dvd_long_sector_blocks()</a>, <a class="el" href="close_8c_source.html#l02247">write_dvd_title_key_decrypted_block()</a>, <a class="el" href="close_8c_source.html#l02411">write_media_tags()</a>, <a class="el" href="close_8c_source.html#l00850">write_mode2_subheaders_block()</a>, <a class="el" href="close_8c_source.html#l00966">write_sector_prefix()</a>, <a class="el" href="close_8c_source.html#l01206">write_sector_prefix_ddt()</a>, <a class="el" href="close_8c_source.html#l01508">write_sector_subchannel()</a>, <a class="el" href="close_8c_source.html#l01088">write_sector_suffix()</a>, <a class="el" href="close_8c_source.html#l01350">write_sector_suffix_ddt()</a>, and <a class="el" href="close_8c_source.html#l00369">write_single_level_ddt()</a>.</p>
 
 </div>
 </div>
@@ -1302,7 +1324,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00174">174</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04003">aaruf_clear_comments()</a>, <a class="el" href="metadata_8c_source.html#l03874">aaruf_clear_creator()</a>, <a class="el" href="metadata_8c_source.html#l04861">aaruf_clear_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l04598">aaruf_clear_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l04684">aaruf_clear_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l04773">aaruf_clear_drive_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l04426">aaruf_clear_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l04170">aaruf_clear_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l04254">aaruf_clear_media_model()</a>, <a class="el" href="metadata_8c_source.html#l04512">aaruf_clear_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l03743">aaruf_clear_media_sequence()</a>, <a class="el" href="metadata_8c_source.html#l04340">aaruf_clear_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l04086">aaruf_clear_media_title()</a>, <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="write_8c_source.html#l01393">aaruf_close_current_block()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="metadata_8c_source.html#l02102">aaruf_get_aaru_json_metadata()</a>, <a class="el" href="tape_8c_source.html#l01314">aaruf_get_all_tape_files()</a>, <a class="el" href="tape_8c_source.html#l01416">aaruf_get_all_tape_partitions()</a>, <a class="el" href="metadata_8c_source.html#l01947">aaruf_get_cicm_metadata()</a>, <a class="el" href="metadata_8c_source.html#l02479">aaruf_get_comments()</a>, <a class="el" href="metadata_8c_source.html#l02407">aaruf_get_creator()</a>, <a class="el" href="metadata_8c_source.html#l03181">aaruf_get_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l02971">aaruf_get_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l03041">aaruf_get_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l03111">aaruf_get_drive_serial_number()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="metadata_8c_source.html#l00094">aaruf_get_geometry()</a>, <a class="el" href="metadata_8c_source.html#l03637">aaruf_get_image_info()</a>, <a class="el" href="metadata_8c_source.html#l02828">aaruf_get_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l02619">aaruf_get_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l02689">aaruf_get_media_model()</a>, <a class="el" href="metadata_8c_source.html#l02899">aaruf_get_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l02340">aaruf_get_media_sequence()</a>, <a class="el" href="metadata_8c_source.html#l02759">aaruf_get_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l02549">aaruf_get_media_title()</a>, <a class="el" href="metadata_8c_source.html#l03420">aaruf_get_negative_sectors()</a>, <a class="el" href="metadata_8c_source.html#l03555">aaruf_get_overflow_sectors()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00706">aaruf_get_readable_media_tags()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00618">aaruf_get_readable_sector_tags()</a>, <a class="el" href="tape_8c_source.html#l00569">aaruf_get_tape_file()</a>, <a class="el" href="tape_8c_source.html#l00982">aaruf_get_tape_partition()</a>, <a class="el" href="optical_8c_source.html#l00281">aaruf_get_tracks()</a>, <a class="el" href="metadata_8c_source.html#l03295">aaruf_get_user_sectors()</a>, <a class="el" href="open_8c_source.html#l00125">aaruf_open()</a>, <a class="el" href="read_8c_source.html#l00085">aaruf_read_media_tag()</a>, <a class="el" href="read_8c_source.html#l00253">aaruf_read_sector()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="read_8c_source.html#l00670">aaruf_read_track_sector()</a>, <a class="el" href="metadata_8c_source.html#l02261">aaruf_set_aaru_json_metadata()</a>, <a class="el" href="metadata_8c_source.html#l00609">aaruf_set_comments()</a>, <a class="el" href="metadata_8c_source.html#l00495">aaruf_set_creator()</a>, <a class="el" href="metadata_8c_source.html#l01795">aaruf_set_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l01414">aaruf_set_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l01536">aaruf_set_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l01660">aaruf_set_drive_serial_number()</a>, <a class="el" href="dump_8c_source.html#l00531">aaruf_set_dumphw()</a>, <a class="el" href="metadata_8c_source.html#l00230">aaruf_set_geometry()</a>, <a class="el" href="metadata_8c_source.html#l01178">aaruf_set_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l00834">aaruf_set_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l00941">aaruf_set_media_model()</a>, <a class="el" href="metadata_8c_source.html#l01299">aaruf_set_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l00364">aaruf_set_media_sequence()</a>, <a class="el" href="metadata_8c_source.html#l01056">aaruf_set_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l00722">aaruf_set_media_title()</a>, <a class="el" href="tape_8c_source.html#l00770">aaruf_set_tape_file()</a>, <a class="el" href="tape_8c_source.html#l01196">aaruf_set_tape_partition()</a>, <a class="el" href="optical_8c_source.html#l00392">aaruf_set_tracks()</a>, <a class="el" href="verify_8c_source.html#l00130">aaruf_verify_image()</a>, <a class="el" href="write_8c_source.html#l01790">aaruf_write_media_tag()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, and <a class="el" href="write_8c_source.html#l02059">aaruf_write_sector_tag()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04003">aaruf_clear_comments()</a>, <a class="el" href="metadata_8c_source.html#l03874">aaruf_clear_creator()</a>, <a class="el" href="metadata_8c_source.html#l04861">aaruf_clear_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l04598">aaruf_clear_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l04684">aaruf_clear_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l04773">aaruf_clear_drive_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l04426">aaruf_clear_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l04170">aaruf_clear_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l04254">aaruf_clear_media_model()</a>, <a class="el" href="metadata_8c_source.html#l04512">aaruf_clear_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l03743">aaruf_clear_media_sequence()</a>, <a class="el" href="metadata_8c_source.html#l04340">aaruf_clear_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l04086">aaruf_clear_media_title()</a>, <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="write_8c_source.html#l01403">aaruf_close_current_block()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="metadata_8c_source.html#l02102">aaruf_get_aaru_json_metadata()</a>, <a class="el" href="tape_8c_source.html#l01314">aaruf_get_all_tape_files()</a>, <a class="el" href="tape_8c_source.html#l01416">aaruf_get_all_tape_partitions()</a>, <a class="el" href="metadata_8c_source.html#l01947">aaruf_get_cicm_metadata()</a>, <a class="el" href="metadata_8c_source.html#l02479">aaruf_get_comments()</a>, <a class="el" href="metadata_8c_source.html#l02407">aaruf_get_creator()</a>, <a class="el" href="metadata_8c_source.html#l03181">aaruf_get_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l02971">aaruf_get_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l03041">aaruf_get_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l03111">aaruf_get_drive_serial_number()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="metadata_8c_source.html#l00094">aaruf_get_geometry()</a>, <a class="el" href="metadata_8c_source.html#l03637">aaruf_get_image_info()</a>, <a class="el" href="metadata_8c_source.html#l02828">aaruf_get_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l02619">aaruf_get_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l02689">aaruf_get_media_model()</a>, <a class="el" href="metadata_8c_source.html#l02899">aaruf_get_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l02340">aaruf_get_media_sequence()</a>, <a class="el" href="metadata_8c_source.html#l02759">aaruf_get_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l02549">aaruf_get_media_title()</a>, <a class="el" href="metadata_8c_source.html#l03420">aaruf_get_negative_sectors()</a>, <a class="el" href="metadata_8c_source.html#l03555">aaruf_get_overflow_sectors()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00706">aaruf_get_readable_media_tags()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00618">aaruf_get_readable_sector_tags()</a>, <a class="el" href="tape_8c_source.html#l00569">aaruf_get_tape_file()</a>, <a class="el" href="tape_8c_source.html#l00982">aaruf_get_tape_partition()</a>, <a class="el" href="optical_8c_source.html#l00281">aaruf_get_tracks()</a>, <a class="el" href="metadata_8c_source.html#l03295">aaruf_get_user_sectors()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="read_8c_source.html#l00085">aaruf_read_media_tag()</a>, <a class="el" href="read_8c_source.html#l00253">aaruf_read_sector()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="read_8c_source.html#l00670">aaruf_read_track_sector()</a>, <a class="el" href="metadata_8c_source.html#l02261">aaruf_set_aaru_json_metadata()</a>, <a class="el" href="metadata_8c_source.html#l00609">aaruf_set_comments()</a>, <a class="el" href="metadata_8c_source.html#l00495">aaruf_set_creator()</a>, <a class="el" href="metadata_8c_source.html#l01795">aaruf_set_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l01414">aaruf_set_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l01536">aaruf_set_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l01660">aaruf_set_drive_serial_number()</a>, <a class="el" href="dump_8c_source.html#l00531">aaruf_set_dumphw()</a>, <a class="el" href="metadata_8c_source.html#l00230">aaruf_set_geometry()</a>, <a class="el" href="metadata_8c_source.html#l01178">aaruf_set_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l00834">aaruf_set_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l00941">aaruf_set_media_model()</a>, <a class="el" href="metadata_8c_source.html#l01299">aaruf_set_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l00364">aaruf_set_media_sequence()</a>, <a class="el" href="metadata_8c_source.html#l01056">aaruf_set_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l00722">aaruf_set_media_title()</a>, <a class="el" href="tape_8c_source.html#l00770">aaruf_set_tape_file()</a>, <a class="el" href="tape_8c_source.html#l01196">aaruf_set_tape_partition()</a>, <a class="el" href="optical_8c_source.html#l00392">aaruf_set_tracks()</a>, <a class="el" href="verify_8c_source.html#l00130">aaruf_verify_image()</a>, <a class="el" href="write_8c_source.html#l01800">aaruf_write_media_tag()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, and <a class="el" href="write_8c_source.html#l02069">aaruf_write_sector_tag()</a>.</p>
 
 </div>
 </div>
@@ -1322,7 +1344,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00193">193</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, and <a class="el" href="ddt__v1_8c_source.html#l00085">process_ddt_v1()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, and <a class="el" href="ddt__v1_8c_source.html#l00085">process_ddt_v1()</a>.</p>
 
 </div>
 </div>
@@ -1342,7 +1364,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00270">270</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
 
 </div>
 </div>
@@ -1362,7 +1384,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00222">222</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04426">aaruf_clear_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l02828">aaruf_get_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l01178">aaruf_set_media_barcode()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03162">write_metadata_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04426">aaruf_clear_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l02828">aaruf_get_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l01178">aaruf_set_media_barcode()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03164">write_metadata_block()</a>.</p>
 
 </div>
 </div>
@@ -1382,7 +1404,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00219">219</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04170">aaruf_clear_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l02619">aaruf_get_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l00834">aaruf_set_media_manufacturer()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03162">write_metadata_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04170">aaruf_clear_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l02619">aaruf_get_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l00834">aaruf_set_media_manufacturer()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03164">write_metadata_block()</a>.</p>
 
 </div>
 </div>
@@ -1402,7 +1424,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00220">220</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04254">aaruf_clear_media_model()</a>, <a class="el" href="metadata_8c_source.html#l02689">aaruf_get_media_model()</a>, <a class="el" href="metadata_8c_source.html#l00941">aaruf_set_media_model()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03162">write_metadata_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04254">aaruf_clear_media_model()</a>, <a class="el" href="metadata_8c_source.html#l02689">aaruf_get_media_model()</a>, <a class="el" href="metadata_8c_source.html#l00941">aaruf_set_media_model()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03164">write_metadata_block()</a>.</p>
 
 </div>
 </div>
@@ -1422,7 +1444,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00223">223</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04512">aaruf_clear_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l02899">aaruf_get_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l01299">aaruf_set_media_part_number()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03162">write_metadata_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04512">aaruf_clear_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l02899">aaruf_get_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l01299">aaruf_set_media_part_number()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03164">write_metadata_block()</a>.</p>
 
 </div>
 </div>
@@ -1462,7 +1484,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00221">221</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04340">aaruf_clear_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l02759">aaruf_get_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l01056">aaruf_set_media_serial_number()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03162">write_metadata_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04340">aaruf_clear_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l02759">aaruf_get_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l01056">aaruf_set_media_serial_number()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03164">write_metadata_block()</a>.</p>
 
 </div>
 </div>
@@ -1482,7 +1504,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00217">217</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04086">aaruf_clear_media_title()</a>, <a class="el" href="metadata_8c_source.html#l02549">aaruf_get_media_title()</a>, <a class="el" href="metadata_8c_source.html#l00722">aaruf_set_media_title()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03162">write_metadata_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04086">aaruf_clear_media_title()</a>, <a class="el" href="metadata_8c_source.html#l02549">aaruf_get_media_title()</a>, <a class="el" href="metadata_8c_source.html#l00722">aaruf_set_media_title()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03164">write_metadata_block()</a>.</p>
 
 </div>
 </div>
@@ -1502,7 +1524,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00264">264</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00706">aaruf_get_readable_media_tags()</a>, <a class="el" href="read_8c_source.html#l00085">aaruf_read_media_tag()</a>, <a class="el" href="write_8c_source.html#l01790">aaruf_write_media_tag()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l02409">write_media_tags()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00706">aaruf_get_readable_media_tags()</a>, <a class="el" href="read_8c_source.html#l00085">aaruf_read_media_tag()</a>, <a class="el" href="write_8c_source.html#l01800">aaruf_write_media_tag()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l02411">write_media_tags()</a>.</p>
 
 </div>
 </div>
@@ -1522,7 +1544,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00213">213</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, and <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, and <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>.</p>
 
 </div>
 </div>
@@ -1542,7 +1564,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00230">230</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04003">aaruf_clear_comments()</a>, <a class="el" href="metadata_8c_source.html#l03874">aaruf_clear_creator()</a>, <a class="el" href="metadata_8c_source.html#l04861">aaruf_clear_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l04598">aaruf_clear_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l04684">aaruf_clear_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l04773">aaruf_clear_drive_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l04426">aaruf_clear_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l04170">aaruf_clear_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l04254">aaruf_clear_media_model()</a>, <a class="el" href="metadata_8c_source.html#l04512">aaruf_clear_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l03743">aaruf_clear_media_sequence()</a>, <a class="el" href="metadata_8c_source.html#l04340">aaruf_clear_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l04086">aaruf_clear_media_title()</a>, <a class="el" href="metadata_8c_source.html#l02479">aaruf_get_comments()</a>, <a class="el" href="metadata_8c_source.html#l02407">aaruf_get_creator()</a>, <a class="el" href="metadata_8c_source.html#l03181">aaruf_get_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l02971">aaruf_get_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l03041">aaruf_get_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l03111">aaruf_get_drive_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l02828">aaruf_get_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l02619">aaruf_get_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l02689">aaruf_get_media_model()</a>, <a class="el" href="metadata_8c_source.html#l02899">aaruf_get_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l02340">aaruf_get_media_sequence()</a>, <a class="el" href="metadata_8c_source.html#l02759">aaruf_get_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l02549">aaruf_get_media_title()</a>, <a class="el" href="metadata_8c_source.html#l00609">aaruf_set_comments()</a>, <a class="el" href="metadata_8c_source.html#l00495">aaruf_set_creator()</a>, <a class="el" href="metadata_8c_source.html#l01795">aaruf_set_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l01414">aaruf_set_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l01536">aaruf_set_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l01660">aaruf_set_drive_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l01178">aaruf_set_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l00834">aaruf_set_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l00941">aaruf_set_media_model()</a>, <a class="el" href="metadata_8c_source.html#l01299">aaruf_set_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l00364">aaruf_set_media_sequence()</a>, <a class="el" href="metadata_8c_source.html#l01056">aaruf_set_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l00722">aaruf_set_media_title()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03162">write_metadata_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="metadata_8c_source.html#l04003">aaruf_clear_comments()</a>, <a class="el" href="metadata_8c_source.html#l03874">aaruf_clear_creator()</a>, <a class="el" href="metadata_8c_source.html#l04861">aaruf_clear_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l04598">aaruf_clear_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l04684">aaruf_clear_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l04773">aaruf_clear_drive_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l04426">aaruf_clear_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l04170">aaruf_clear_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l04254">aaruf_clear_media_model()</a>, <a class="el" href="metadata_8c_source.html#l04512">aaruf_clear_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l03743">aaruf_clear_media_sequence()</a>, <a class="el" href="metadata_8c_source.html#l04340">aaruf_clear_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l04086">aaruf_clear_media_title()</a>, <a class="el" href="metadata_8c_source.html#l02479">aaruf_get_comments()</a>, <a class="el" href="metadata_8c_source.html#l02407">aaruf_get_creator()</a>, <a class="el" href="metadata_8c_source.html#l03181">aaruf_get_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l02971">aaruf_get_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l03041">aaruf_get_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l03111">aaruf_get_drive_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l02828">aaruf_get_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l02619">aaruf_get_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l02689">aaruf_get_media_model()</a>, <a class="el" href="metadata_8c_source.html#l02899">aaruf_get_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l02340">aaruf_get_media_sequence()</a>, <a class="el" href="metadata_8c_source.html#l02759">aaruf_get_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l02549">aaruf_get_media_title()</a>, <a class="el" href="metadata_8c_source.html#l00609">aaruf_set_comments()</a>, <a class="el" href="metadata_8c_source.html#l00495">aaruf_set_creator()</a>, <a class="el" href="metadata_8c_source.html#l01795">aaruf_set_drive_firmware_revision()</a>, <a class="el" href="metadata_8c_source.html#l01414">aaruf_set_drive_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l01536">aaruf_set_drive_model()</a>, <a class="el" href="metadata_8c_source.html#l01660">aaruf_set_drive_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l01178">aaruf_set_media_barcode()</a>, <a class="el" href="metadata_8c_source.html#l00834">aaruf_set_media_manufacturer()</a>, <a class="el" href="metadata_8c_source.html#l00941">aaruf_set_media_model()</a>, <a class="el" href="metadata_8c_source.html#l01299">aaruf_set_media_part_number()</a>, <a class="el" href="metadata_8c_source.html#l00364">aaruf_set_media_sequence()</a>, <a class="el" href="metadata_8c_source.html#l01056">aaruf_set_media_serial_number()</a>, <a class="el" href="metadata_8c_source.html#l00722">aaruf_set_media_title()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00035">process_metadata_block()</a>, and <a class="el" href="close_8c_source.html#l03164">write_metadata_block()</a>.</p>
 
 </div>
 </div>
@@ -1562,7 +1584,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00204">204</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l00850">write_mode2_subheaders_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l00850">write_mode2_subheaders_block()</a>.</p>
 
 </div>
 </div>
@@ -1582,7 +1604,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00282">282</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l01393">aaruf_close_current_block()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, and <a class="el" href="ddt__v2_8c_source.html#l01092">set_ddt_multi_level_v2()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l01403">aaruf_close_current_block()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, and <a class="el" href="ddt__v2_8c_source.html#l01092">set_ddt_multi_level_v2()</a>.</p>
 
 </div>
 </div>
@@ -1642,7 +1664,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00263">263</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00618">aaruf_get_readable_sector_tags()</a>, <a class="el" href="open_8c_source.html#l00125">aaruf_open()</a>, <a class="el" href="create_8c_source.html#l00030">cleanup_failed_create()</a>, <a class="el" href="open_8c_source.html#l00031">cleanup_open_failure()</a>, and <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="blocks_2metadata_8c_source.html#l00618">aaruf_get_readable_sector_tags()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="create_8c_source.html#l00030">cleanup_failed_create()</a>, <a class="el" href="open_8c_source.html#l00031">cleanup_open_failure()</a>, and <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>.</p>
 
 </div>
 </div>
@@ -1662,7 +1684,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00293">293</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, and <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, and <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>.</p>
 
 </div>
 </div>
@@ -1682,7 +1704,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00207">207</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, <a class="el" href="write_8c_source.html#l02059">aaruf_write_sector_tag()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l01808">write_dvd_long_sector_blocks()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, <a class="el" href="write_8c_source.html#l02069">aaruf_write_sector_tag()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l01810">write_dvd_long_sector_blocks()</a>.</p>
 
 </div>
 </div>
@@ -1702,7 +1724,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00209">209</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="write_8c_source.html#l02059">aaruf_write_sector_tag()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l02245">write_dvd_title_key_decrypted_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="write_8c_source.html#l02069">aaruf_write_sector_tag()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l02247">write_dvd_title_key_decrypted_block()</a>.</p>
 
 </div>
 </div>
@@ -1722,7 +1744,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00208">208</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, <a class="el" href="write_8c_source.html#l02059">aaruf_write_sector_tag()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l01808">write_dvd_long_sector_blocks()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, <a class="el" href="write_8c_source.html#l02069">aaruf_write_sector_tag()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l01810">write_dvd_long_sector_blocks()</a>.</p>
 
 </div>
 </div>
@@ -1742,7 +1764,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00253">253</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, and <a class="el" href="create_8c_source.html#l00030">cleanup_failed_create()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, and <a class="el" href="create_8c_source.html#l00030">cleanup_failed_create()</a>.</p>
 
 </div>
 </div>
@@ -1762,7 +1784,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00205">205</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, <a class="el" href="write_8c_source.html#l02059">aaruf_write_sector_tag()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l01808">write_dvd_long_sector_blocks()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, <a class="el" href="write_8c_source.html#l02069">aaruf_write_sector_tag()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l01810">write_dvd_long_sector_blocks()</a>.</p>
 
 </div>
 </div>
@@ -1782,7 +1804,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00206">206</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, <a class="el" href="write_8c_source.html#l02059">aaruf_write_sector_tag()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l01808">write_dvd_long_sector_blocks()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, <a class="el" href="write_8c_source.html#l02069">aaruf_write_sector_tag()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l01810">write_dvd_long_sector_blocks()</a>.</p>
 
 </div>
 </div>
@@ -1802,7 +1824,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00199">199</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l00966">write_sector_prefix()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l00966">write_sector_prefix()</a>.</p>
 
 </div>
 </div>
@@ -1822,7 +1844,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00200">200</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, and <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, and <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>.</p>
 
 </div>
 </div>
@@ -1842,7 +1864,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00183">183</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, and <a class="el" href="ddt__v1_8c_source.html#l00085">process_ddt_v1()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, and <a class="el" href="ddt__v1_8c_source.html#l00085">process_ddt_v1()</a>.</p>
 
 </div>
 </div>
@@ -1862,7 +1884,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00185">185</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, <a class="el" href="ddt__v2_8c_source.html#l00096">process_ddt_v2()</a>, and <a class="el" href="close_8c_source.html#l01206">write_sector_prefix_ddt()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, <a class="el" href="ddt__v2_8c_source.html#l00096">process_ddt_v2()</a>, and <a class="el" href="close_8c_source.html#l01206">write_sector_prefix_ddt()</a>.</p>
 
 </div>
 </div>
@@ -1882,7 +1904,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00284">284</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>.</p>
 
 </div>
 </div>
@@ -1902,7 +1924,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00286">286</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l00966">write_sector_prefix()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l00966">write_sector_prefix()</a>.</p>
 
 </div>
 </div>
@@ -1922,7 +1944,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00203">203</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, <a class="el" href="write_8c_source.html#l02059">aaruf_write_sector_tag()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l01508">write_sector_subchannel()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, <a class="el" href="write_8c_source.html#l02069">aaruf_write_sector_tag()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l01508">write_sector_subchannel()</a>.</p>
 
 </div>
 </div>
@@ -1942,7 +1964,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00201">201</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l01088">write_sector_suffix()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>, and <a class="el" href="close_8c_source.html#l01088">write_sector_suffix()</a>.</p>
 
 </div>
 </div>
@@ -1962,7 +1984,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00202">202</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, and <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, and <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>.</p>
 
 </div>
 </div>
@@ -1982,7 +2004,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00184">184</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, and <a class="el" href="ddt__v1_8c_source.html#l00085">process_ddt_v1()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, and <a class="el" href="ddt__v1_8c_source.html#l00085">process_ddt_v1()</a>.</p>
 
 </div>
 </div>
@@ -2002,7 +2024,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00186">186</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, <a class="el" href="ddt__v2_8c_source.html#l00096">process_ddt_v2()</a>, and <a class="el" href="close_8c_source.html#l01350">write_sector_suffix_ddt()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, <a class="el" href="ddt__v2_8c_source.html#l00096">process_ddt_v2()</a>, and <a class="el" href="close_8c_source.html#l01350">write_sector_suffix_ddt()</a>.</p>
 
 </div>
 </div>
@@ -2022,7 +2044,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00285">285</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>.</p>
 
 </div>
 </div>
@@ -2042,7 +2064,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00287">287</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l01088">write_sector_suffix()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l01088">write_sector_suffix()</a>.</p>
 
 </div>
 </div>
@@ -2062,7 +2084,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00236">236</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="open_8c_source.html#l00125">aaruf_open()</a>, <a class="el" href="metadata_8c_source.html#l00230">aaruf_set_geometry()</a>, and <a class="el" href="blocks_2metadata_8c_source.html#l00246">process_geometry_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="metadata_8c_source.html#l00230">aaruf_set_geometry()</a>, and <a class="el" href="blocks_2metadata_8c_source.html#l00246">process_geometry_block()</a>.</p>
 
 </div>
 </div>
@@ -2082,7 +2104,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00271">271</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
 
 </div>
 </div>
@@ -2102,7 +2124,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00272">272</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
 
 </div>
 </div>
@@ -2122,7 +2144,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00195">195</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00125">aaruf_open()</a>, <a class="el" href="ddt__v1_8c_source.html#l00405">decode_ddt_entry_v1()</a>, and <a class="el" href="ddt__v1_8c_source.html#l00085">process_ddt_v1()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="ddt__v1_8c_source.html#l00405">decode_ddt_entry_v1()</a>, and <a class="el" href="ddt__v1_8c_source.html#l00085">process_ddt_v1()</a>.</p>
 
 </div>
 </div>
@@ -2142,7 +2164,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00267">267</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, <a class="el" href="create_8c_source.html#l00030">cleanup_failed_create()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, <a class="el" href="create_8c_source.html#l00030">cleanup_failed_create()</a>, and <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>.</p>
 
 </div>
 </div>
@@ -2180,9 +2202,9 @@ Data Fields</h2></td></tr>
 
 <p>Hash table root for tape files. </p>
 
-<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00302">302</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00303">303</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="tape_8c_source.html#l01314">aaruf_get_all_tape_files()</a>, <a class="el" href="tape_8c_source.html#l00569">aaruf_get_tape_file()</a>, <a class="el" href="tape_8c_source.html#l00770">aaruf_set_tape_file()</a>, <a class="el" href="tape_8c_source.html#l00126">process_tape_files_block()</a>, and <a class="el" href="close_8c_source.html#l02669">write_tape_file_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="tape_8c_source.html#l01314">aaruf_get_all_tape_files()</a>, <a class="el" href="tape_8c_source.html#l00569">aaruf_get_tape_file()</a>, <a class="el" href="tape_8c_source.html#l00770">aaruf_set_tape_file()</a>, <a class="el" href="tape_8c_source.html#l00126">process_tape_files_block()</a>, and <a class="el" href="close_8c_source.html#l02671">write_tape_file_block()</a>.</p>
 
 </div>
 </div>
@@ -2200,9 +2222,9 @@ Data Fields</h2></td></tr>
 
 <p>Hash table root for tape partitions. </p>
 
-<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00303">303</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00304">304</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="tape_8c_source.html#l01416">aaruf_get_all_tape_partitions()</a>, <a class="el" href="tape_8c_source.html#l00982">aaruf_get_tape_partition()</a>, <a class="el" href="tape_8c_source.html#l01196">aaruf_set_tape_partition()</a>, <a class="el" href="tape_8c_source.html#l00346">process_tape_partitions_block()</a>, and <a class="el" href="close_8c_source.html#l02901">write_tape_partition_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="tape_8c_source.html#l01416">aaruf_get_all_tape_partitions()</a>, <a class="el" href="tape_8c_source.html#l00982">aaruf_get_tape_partition()</a>, <a class="el" href="tape_8c_source.html#l01196">aaruf_set_tape_partition()</a>, <a class="el" href="tape_8c_source.html#l00346">process_tape_partitions_block()</a>, and <a class="el" href="close_8c_source.html#l02903">write_tape_partition_block()</a>.</p>
 
 </div>
 </div>
@@ -2222,7 +2244,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00242">242</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="optical_8c_source.html#l00281">aaruf_get_tracks()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="optical_8c_source.html#l00392">aaruf_set_tracks()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, <a class="el" href="write_8c_source.html#l02059">aaruf_write_sector_tag()</a>, <a class="el" href="optical_8c_source.html#l00111">process_tracks_block()</a>, and <a class="el" href="close_8c_source.html#l00798">write_tracks_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="optical_8c_source.html#l00281">aaruf_get_tracks()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="optical_8c_source.html#l00392">aaruf_set_tracks()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, <a class="el" href="write_8c_source.html#l02069">aaruf_write_sector_tag()</a>, <a class="el" href="optical_8c_source.html#l00111">process_tracks_block()</a>, and <a class="el" href="close_8c_source.html#l00798">write_tracks_block()</a>.</p>
 
 </div>
 </div>
@@ -2242,7 +2264,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00244">244</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="optical_8c_source.html#l00281">aaruf_get_tracks()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="optical_8c_source.html#l00392">aaruf_set_tracks()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, <a class="el" href="write_8c_source.html#l02059">aaruf_write_sector_tag()</a>, <a class="el" href="optical_8c_source.html#l00111">process_tracks_block()</a>, and <a class="el" href="close_8c_source.html#l00798">write_tracks_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="optical_8c_source.html#l00281">aaruf_get_tracks()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="optical_8c_source.html#l00392">aaruf_set_tracks()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, <a class="el" href="write_8c_source.html#l02069">aaruf_write_sector_tag()</a>, <a class="el" href="optical_8c_source.html#l00111">process_tracks_block()</a>, and <a class="el" href="close_8c_source.html#l00798">write_tracks_block()</a>.</p>
 
 </div>
 </div>
@@ -2262,7 +2284,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00181">181</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="ddt__v1_8c_source.html#l00405">decode_ddt_entry_v1()</a>, and <a class="el" href="ddt__v1_8c_source.html#l00085">process_ddt_v1()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="ddt__v1_8c_source.html#l00405">decode_ddt_entry_v1()</a>, and <a class="el" href="ddt__v1_8c_source.html#l00085">process_ddt_v1()</a>.</p>
 
 </div>
 </div>
@@ -2302,7 +2324,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00189">189</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l01393">aaruf_close_current_block()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="metadata_8c_source.html#l03420">aaruf_get_negative_sectors()</a>, <a class="el" href="metadata_8c_source.html#l03555">aaruf_get_overflow_sectors()</a>, <a class="el" href="metadata_8c_source.html#l03295">aaruf_get_user_sectors()</a>, <a class="el" href="read_8c_source.html#l00253">aaruf_read_sector()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>, <a class="el" href="write_8c_source.html#l02059">aaruf_write_sector_tag()</a>, <a class="el" href="ddt__v2_8c_source.html#l00507">decode_ddt_entry_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l00724">decode_ddt_multi_level_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l00581">decode_ddt_single_level_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l00096">process_ddt_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l00988">set_ddt_entry_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l01092">set_ddt_multi_level_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l01023">set_ddt_single_level_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l01768">set_ddt_tape()</a>, <a class="el" href="close_8c_source.html#l03812">write_aaru_json_block()</a>, <a class="el" href="close_8c_source.html#l00077">write_cached_secondary_ddt()</a>, <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>, <a class="el" href="close_8c_source.html#l03675">write_cicm_block()</a>, <a class="el" href="close_8c_source.html#l03445">write_dumphw_block()</a>, <a class="el" href="close_8c_source.html#l01808">write_dvd_long_sector_blocks()</a>, <a class="el" href="close_8c_source.html#l02245">write_dvd_title_key_decrypted_block()</a>, <a class="el" href="close_8c_source.html#l03026">write_geometry_block()</a>, <a class="el" href="close_8c_source.html#l03862">write_index_block()</a>, <a class="el" href="close_8c_source.html#l02409">write_media_tags()</a>, <a class="el" href="close_8c_source.html#l03162">write_metadata_block()</a>, <a class="el" href="close_8c_source.html#l00850">write_mode2_subheaders_block()</a>, <a class="el" href="close_8c_source.html#l00283">write_primary_ddt()</a>, <a class="el" href="close_8c_source.html#l00966">write_sector_prefix()</a>, <a class="el" href="close_8c_source.html#l01206">write_sector_prefix_ddt()</a>, <a class="el" href="close_8c_source.html#l01508">write_sector_subchannel()</a>, <a class="el" href="close_8c_source.html#l01088">write_sector_suffix()</a>, <a class="el" href="close_8c_source.html#l01350">write_sector_suffix_ddt()</a>, <a class="el" href="close_8c_source.html#l00369">write_single_level_ddt()</a>, <a class="el" href="close_8c_source.html#l00596">write_tape_ddt()</a>, <a class="el" href="close_8c_source.html#l02669">write_tape_file_block()</a>, <a class="el" href="close_8c_source.html#l02901">write_tape_partition_block()</a>, and <a class="el" href="close_8c_source.html#l00798">write_tracks_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l01403">aaruf_close_current_block()</a>, <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="metadata_8c_source.html#l03420">aaruf_get_negative_sectors()</a>, <a class="el" href="metadata_8c_source.html#l03555">aaruf_get_overflow_sectors()</a>, <a class="el" href="metadata_8c_source.html#l03295">aaruf_get_user_sectors()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="read_8c_source.html#l00253">aaruf_read_sector()</a>, <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>, <a class="el" href="read_8c_source.html#l01474">aaruf_read_sector_tag()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>, <a class="el" href="write_8c_source.html#l02069">aaruf_write_sector_tag()</a>, <a class="el" href="ddt__v2_8c_source.html#l00507">decode_ddt_entry_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l00724">decode_ddt_multi_level_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l00581">decode_ddt_single_level_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l00096">process_ddt_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l00988">set_ddt_entry_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l01092">set_ddt_multi_level_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l01023">set_ddt_single_level_v2()</a>, <a class="el" href="ddt__v2_8c_source.html#l01768">set_ddt_tape()</a>, <a class="el" href="close_8c_source.html#l03814">write_aaru_json_block()</a>, <a class="el" href="close_8c_source.html#l00077">write_cached_secondary_ddt()</a>, <a class="el" href="close_8c_source.html#l00654">write_checksum_block()</a>, <a class="el" href="close_8c_source.html#l03677">write_cicm_block()</a>, <a class="el" href="close_8c_source.html#l03447">write_dumphw_block()</a>, <a class="el" href="close_8c_source.html#l01810">write_dvd_long_sector_blocks()</a>, <a class="el" href="close_8c_source.html#l02247">write_dvd_title_key_decrypted_block()</a>, <a class="el" href="close_8c_source.html#l03028">write_geometry_block()</a>, <a class="el" href="close_8c_source.html#l03864">write_index_block()</a>, <a class="el" href="close_8c_source.html#l02411">write_media_tags()</a>, <a class="el" href="close_8c_source.html#l03164">write_metadata_block()</a>, <a class="el" href="close_8c_source.html#l00850">write_mode2_subheaders_block()</a>, <a class="el" href="close_8c_source.html#l00283">write_primary_ddt()</a>, <a class="el" href="close_8c_source.html#l00966">write_sector_prefix()</a>, <a class="el" href="close_8c_source.html#l01206">write_sector_prefix_ddt()</a>, <a class="el" href="close_8c_source.html#l01508">write_sector_subchannel()</a>, <a class="el" href="close_8c_source.html#l01088">write_sector_suffix()</a>, <a class="el" href="close_8c_source.html#l01350">write_sector_suffix_ddt()</a>, <a class="el" href="close_8c_source.html#l00369">write_single_level_ddt()</a>, <a class="el" href="close_8c_source.html#l00596">write_tape_ddt()</a>, <a class="el" href="close_8c_source.html#l02671">write_tape_file_block()</a>, <a class="el" href="close_8c_source.html#l02903">write_tape_partition_block()</a>, and <a class="el" href="close_8c_source.html#l00798">write_tracks_block()</a>.</p>
 
 </div>
 </div>
@@ -2322,7 +2344,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00280">280</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03995">aaruf_close()</a>, <a class="el" href="write_8c_source.html#l01393">aaruf_close_current_block()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, and <a class="el" href="ddt__v2_8c_source.html#l01092">set_ddt_multi_level_v2()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l03997">aaruf_close()</a>, <a class="el" href="write_8c_source.html#l01403">aaruf_close_current_block()</a>, <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, and <a class="el" href="ddt__v2_8c_source.html#l01092">set_ddt_multi_level_v2()</a>.</p>
 
 </div>
 </div>
@@ -2342,7 +2364,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00289">289</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l01393">aaruf_close_current_block()</a>, and <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l01403">aaruf_close_current_block()</a>, and <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>.</p>
 
 </div>
 </div>
@@ -2362,7 +2384,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00294">294</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, and <a class="el" href="write_8c_source.html#l00532">aaruf_write_sector_long()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>, and <a class="el" href="write_8c_source.html#l00537">aaruf_write_sector_long()</a>.</p>
 
 </div>
 </div>

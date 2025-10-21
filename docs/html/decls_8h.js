@@ -79,7 +79,7 @@ var decls_8h =
     [ "aaruf_md5_final", "decls_8h.html#a6b98055d07ba51f0daef5b03ce2fe725", null ],
     [ "aaruf_md5_init", "decls_8h.html#a1e614476485ba9f46e3ac79858210f63", null ],
     [ "aaruf_md5_update", "decls_8h.html#a6e19e853bea5db901de83fa2fa29055c", null ],
-    [ "aaruf_open", "decls_8h.html#afc4932cdc795ffb2ef3a33d5b8c57656", null ],
+    [ "aaruf_open", "decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7", null ],
     [ "aaruf_read_media_tag", "decls_8h.html#a48f93ec154d0aed7cb713391a7717b46", null ],
     [ "aaruf_read_sector", "decls_8h.html#a2297e89619ba11cb0a0779a985fc1c34", null ],
     [ "aaruf_read_sector_long", "decls_8h.html#aed40c9ebc6d963b2a8ed5ebec1fed3c5", null ],

@@ -14,7 +14,7 @@ var searchData=
   ['rdx320_11',['RDX320',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aada9b451a931bf03d4d0f75c0997fa72f',1,'aaru.h']]],
   ['read_2ec_12',['read.c',['../read_8c.html',1,'']]],
   ['read_5fcallback_13',['read_callback',['../flac_8c.html#a4ae2146e619c2a746b41c778f71f2e8c',1,'flac.c']]],
-  ['read_5fdump_5fstring_14',['read_dump_string',['../blocks_2dump_8c.html#aa79263803528183e28811dfb50e9bdad',1,'dump.c']]],
+  ['read_5fdump_5fstring_14',['read_dump_string',['../blocks_2dump_8c.html#aff8ea771002a521b511e11ce1ff8b3d3',1,'dump.c']]],
   ['readablesectortags_15',['readableSectorTags',['../structaaruformat__context.html#ad3d5494e23b07418e9fbd22c3771e534',1,'aaruformat_context']]],
   ['readme_2emd_16',['README.md',['../README_8md.html',1,'']]],
   ['rel_5fpage_17',['rel_page',['../structsony__tag.html#a4b1f11f947f58e55639d6563281916e5',1,'sony_tag::rel_page'],['../structprofile__tag.html#a11feeafd02854a66a97531a5794cf1db',1,'profile_tag::rel_page'],['../structpriam__tag.html#afe0cce49a23353f9d6e5f665278e158f',1,'priam_tag::rel_page']]],
