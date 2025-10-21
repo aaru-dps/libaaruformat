@@ -198,6 +198,15 @@ AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath, const bool resume_m
         return NULL;
     }
 
+    if(ctx->header.imageMajorVersion < AARUF_VERSION_V2 && resume_mode)
+    {
+        TRACE("Cannot write to old images");
+        cleanup_open_failure(ctx);
+        errno = AARUF_ERROR_INCOMPATIBLE_VERSION;
+        TRACE("Exiting aaruf_open() = NULL");
+        return NULL;
+    }
+
     // Read new header version
     if(ctx->header.imageMajorVersion >= AARUF_VERSION_V2)
     {
