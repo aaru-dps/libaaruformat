@@ -334,6 +334,18 @@ static int32_t write_primary_ddt(aaruformat_context *ctx)
         TRACE("Successfully wrote primary DDT header and table to file (%" PRIu64 " entries, %zu bytes)",
               ctx->user_data_ddt_header.entries, primary_table_size);
 
+        // Remove any previously existing index entries of the same type before adding
+        TRACE("Removing any previously existing primary DDT index entries");
+        for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+        {
+            const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+            if(entry && entry->blockType == DeDuplicationTable2 && entry->dataType == UserData)
+            {
+                TRACE("Found existing primary DDT index entry at position %d, removing", k);
+                utarray_erase(ctx->index_entries, k, 1);
+            }
+        }
+
         // Add primary DDT to index
         TRACE("Adding primary DDT to index");
         IndexEntry primary_ddt_entry;
@@ -469,6 +481,18 @@ static int32_t write_single_level_ddt(aaruformat_context *ctx)
         TRACE("Successfully wrote single-level DDT header and table to file (%" PRIu64
               " entries, %zu bytes, %zu compressed bytes)",
               ctx->user_data_ddt_header.entries, ctx->user_data_ddt_header.length, ctx->user_data_ddt_header.cmpLength);
+
+        // Remove any previously existing index entries of the same type before adding
+        TRACE("Removing any previously existing single-level DDT index entries");
+        for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+        {
+            const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+            if(entry && entry->blockType == DeDuplicationTable2 && entry->dataType == UserData)
+            {
+                TRACE("Found existing single-level DDT index entry at position %d, removing", k);
+                utarray_erase(ctx->index_entries, k, 1);
+            }
+        }
 
         // Add single-level DDT to index
         TRACE("Adding single-level DDT to index");
