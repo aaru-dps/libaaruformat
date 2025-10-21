@@ -122,7 +122,8 @@ static void cleanup_open_failure(aaruformat_context *ctx)
  * @warning Some memory allocations (version strings) are optional and failure doesn't
  *          prevent opening, but may affect functionality that depends on version information.
  */
-AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath)  // NOLINT(readability-function-size)
+AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath, const bool resume_mode,
+                                       const char *options)  // NOLINT(readability-function-size)
 {
     aaruformat_context *ctx           = NULL;
     int                 error_no      = 0;
@@ -157,7 +158,10 @@ AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath)  // NOLINT(readabil
     memset(ctx, 0, sizeof(aaruformat_context));
 
     TRACE("Opening file %s", filepath);
-    ctx->imageStream = fopen(filepath, "rb");
+    if(resume_mode)
+        ctx->imageStream = fopen(filepath, "a+b");
+    else
+        ctx->imageStream = fopen(filepath, "rb");
 
     if(ctx->imageStream == NULL)
     {
@@ -488,6 +492,51 @@ AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath)  // NOLINT(readabil
     ctx->library_major_version = LIBAARUFORMAT_MAJOR_VERSION;
     ctx->library_minor_version = LIBAARUFORMAT_MINOR_VERSION;
 
+    if(!resume_mode)
+    {
+        TRACE("Exiting aaruf_open() = %p", ctx);
+        return ctx;
+    }
+
+    // Parse the options
+    TRACE("Parsing options");
+    const aaru_options parsed_options = parse_options(options);
+
+    ctx->header.lastWrittenTime          = get_filetime_uint64();
+    ctx->image_info.LastModificationTime = ctx->header.lastWrittenTime;
+
+    // Calculate aligned next block position
+    fseek(ctx->imageStream, 0, SEEK_END);
+    const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
+    ctx->next_block_position      = ftell(ctx->imageStream);  // Start just after the header
+    ctx->next_block_position      = ctx->next_block_position + alignment_mask & ~alignment_mask;
+
+    TRACE("Data blocks will start at position %" PRIu64, ctx->next_block_position);
+
+    // Position file pointer at the data start position
+    if(fseek(ctx->imageStream, ctx->next_block_position, SEEK_SET) != 0)
+    {
+        FATAL("Could not seek to data start position");
+        errno = AARUF_ERROR_CANNOT_CREATE_FILE;
+        TRACE("Exiting aaruf_open() = NULL");
+        cleanup_open_failure(ctx);
+        return NULL;
+    }
+
+    // Apply applicable options (we cannot change table or alignment options resuming)
+    ctx->compression_enabled = parsed_options.compress;
+    ctx->lzma_dict_size      = parsed_options.dictionary;
+    ctx->deduplicate         = parsed_options.deduplicate;
+    if(ctx->deduplicate)
+        ctx->sector_hash_map = create_map(ctx->user_data_ddt_header.blocks * 25 / 100);  // 25% of total sectors
+
+    // Cannot checksum a resumed file
+    ctx->rewinded = true;
+
+    // Is writing
+    ctx->is_writing = true;
+
     TRACE("Exiting aaruf_open() = %p", ctx);
+    // Return context
     return ctx;
 }

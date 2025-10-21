@@ -67,7 +67,7 @@ AARU_EXPORT int AARU_CALL aaruf_identify(const char *filename);
 
 AARU_EXPORT int AARU_CALL aaruf_identify_stream(FILE *image_stream);
 
-AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath);
+AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, bool resume_mode, char *options);
 
 AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, uint32_t media_type, uint32_t sector_size,
                                          uint64_t user_sectors, uint64_t negative_sectors, uint64_t overflow_sectors,
