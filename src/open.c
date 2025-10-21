@@ -49,11 +49,74 @@ static void cleanup_open_failure(aaruformat_context *ctx)
  *
  * Opens the specified image file and returns a pointer to the initialized aaruformat context.
  * This function performs comprehensive validation of the image file format, reads and processes
- * all index entries, initializes data structures for reading operations, and sets up caches
- * for optimal performance. It supports multiple AaruFormat versions and handles various block
- * types including data blocks, deduplication tables, metadata, and checksums.
+ * all index entries, initializes data structures for reading (and optionally writing in resume mode),
+ * and sets up caches for optimal performance. It supports multiple AaruFormat versions and handles
+ * various block types including data blocks, deduplication tables, metadata, and checksums.
  *
- * @param filepath Path to the image file to open.
+ * **Operational Modes:**
+ *
+ * **Read-Only Mode (resume_mode = false):**
+ * - Validates and reads existing image in read-only mode
+ * - Loads all index entries, DDT, and metadata structures
+ * - Initializes block and header caches for efficient reading
+ * - Suitable for accessing, extracting, or verifying completed AaruFormat images
+ * - File is opened in binary read mode; no modifications possible
+ * - Requires valid user data DDT to be present in the image
+ *
+ * **Resume/Write Mode (resume_mode = true):**
+ * - Validates and opens an existing image for continued writing (resume operations)
+ * - Loads all existing index entries, DDT, and metadata
+ * - Prepares context for additional write operations to incomplete images
+ * - Suitable for resuming interrupted image creation or appending to images
+ * - File is opened in binary read/write mode for additional data/blocks
+ * - Requires the image to be in a valid resumable state (proper headers, valid index, DDT present)
+ * - Requires image to be in AaruFormat version 2.0 or later (version 1.x images cannot be resumed)
+ * - Options string is parsed to configure writing parameters
+ * - Checksum contexts are reinitialized based on options if checksums are present
+ *
+ * **Index and Block Processing:**
+ * The function processes all indexed blocks from the image:
+ * - Data blocks: User and negative/overflow sectors with deduplication references
+ * - DDT blocks: Deduplication table entries mapping sectors to physical block locations
+ * - Geometry blocks: Cylinder-head-sector information for certain media types
+ * - Metadata blocks: CICM XML, Aaru JSON, and other format-specific metadata
+ * - Track blocks: CD/DVD track information and sector maps
+ * - Dump hardware blocks: Recording device specifications and configuration
+ * - Checksum blocks: Media tags and image-level checksums (MD5, SHA-1, SHA-256, BLAKE3, SpamSum)
+ *
+ * Non-critical block processing errors are logged but don't prevent opening (logging only).
+ * Critical errors (especially DDT processing failures) cause the open operation to fail.
+ * Unknown block types are logged but silently ignored for forward compatibility.
+ *
+ * @param filepath Path to the image file to open. Must be a valid readable path.
+ *                 When opening in resume mode (resume_mode=true), the file must also be writable.
+ *                 The file must contain a valid AaruFormat header and index.
+ *
+ * @param resume_mode Boolean flag controlling the operational mode:
+ *                    - false: Open in read-only mode for accessing completed images.
+ *                            File is opened read-only; no modifications can be made.
+ *                            Suitable for extraction, analysis, and verification.
+ *                            Supports both AaruFormat version 1.x and 2.x images.
+ *                    - true: Open in resume/write mode for continuing interrupted image creation.
+ *                           File is opened read/write for additional operations.
+ *                           Requires existing valid image structure.
+ *                           IMPORTANT: Only AaruFormat version 2.x or later images can be opened in resume mode.
+ *                                      Version 1.x images cannot be resumed and will fail with AARUF_ERROR_INCOMPATIBLE_VERSION.
+ *                           Write operations are handled as if resuming an incomplete creation.
+ *                           Options string is parsed for write configuration.
+ *
+ * @param options String with opening/resume options in key=value format, semicolon-separated.
+ *                Used primarily in resume mode to configure checksum and compression parameters.
+ *                Supported options (resume mode only):
+ *                - "deduplicate=true|false": Enable/disable sector deduplication (if supported in image)
+ *                - "md5=true|false": Recalculate MD5 checksum during resume operations
+ *                - "sha1=true|false": Recalculate SHA-1 checksum during resume operations
+ *                - "sha256=true|false": Recalculate SHA-256 checksum during resume operations
+ *                - "spamsum=true|false": Recalculate SpamSum fuzzy hash during resume operations
+ *                - "blake3=true|false": Recalculate BLAKE3 checksum during resume operations
+ *                - "compress=true|false": Use compression for new data blocks in resume operations
+ *                Example: "deduplicate=true;md5=true;sha1=true"
+ *                In read-only mode (resume_mode=false), this parameter is typically NULL or ignored.
  *
  * @return Returns one of the following:
  * @retval aaruformatContext* Successfully opened and initialized context. The returned pointer contains:
@@ -61,9 +124,10 @@ static void cleanup_open_failure(aaruformat_context *ctx)
  *         - Processed index entries with all discoverable blocks
  *         - Loaded deduplication tables (DDT) for efficient sector access
  *         - Initialized block and header caches for performance
- *         - Open file stream ready for reading operations
+ *         - Open file stream (read-only or read/write depending on mode)
  *         - Populated image information and geometry data
  *         - ECC context initialized for error correction support
+ *         - In resume mode: Write context and checksum contexts initialized from options
  *
  * @retval NULL Opening failed. The specific error can be determined by checking errno, which will be set to:
  *         - AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) when memory allocation fails for:
@@ -71,15 +135,20 @@ static void cleanup_open_failure(aaruformat_context *ctx)
  *           * Readable sector tags bitmap allocation
  *           * Application version string allocation
  *           * Image version string allocation
+ *           * Index entries array allocation
+ *           * DDT processing structures
  *         - AARUF_ERROR_FILE_TOO_SMALL (-2) when file reading fails:
  *           * Cannot read the AaruFormat header (file too small or corrupted)
  *           * Cannot read the extended header for version 2+ formats
+ *           * Cannot seek to or read the index block
  *         - AARUF_ERROR_NOT_AARUFORMAT (-1) when format validation fails:
  *           * File identifier doesn't match DIC_MAGIC or AARU_MAGIC
  *           * File is not a valid AaruFormat image
  *         - AARUF_ERROR_INCOMPATIBLE_VERSION (-3) when:
  *           * Image major version exceeds the maximum supported version
  *           * Future format versions that cannot be read by this library
+ *           * Version 1.x images are opened in resume mode (only version 2.x+ can be resumed)
+ *           * Other version incompatibility issues with resume mode requirements
  *         - AARUF_ERROR_CANNOT_READ_INDEX (-4) when index processing fails:
  *           * Cannot seek to the index offset specified in the header
  *           * Cannot read the index signature
@@ -87,40 +156,69 @@ static void cleanup_open_failure(aaruformat_context *ctx)
  *           * Index processing functions return NULL (corrupted index)
  *         - Other error codes may be propagated from block processing functions:
  *           * Data block processing errors
- *           * DDT processing errors
- *           * Metadata processing errors
+ *           * DDT processing errors (critical failure)
+ *           * Metadata processing errors (non-critical, logging only)
+ *           * File I/O errors in resume mode
  *
  * @note Format Support:
  *       - Supports AaruFormat versions 1.x and 2.x
  *       - Automatically detects and handles different index formats (v1, v2, v3)
  *       - Backwards compatible with older DIC format identifiers
  *       - Handles both small and large deduplication tables
+ *       - Supports optional user data DDT, necessary for sector access
  *
  * @note Block Processing:
  *       - Processes all indexed blocks including data, DDT, geometry, metadata, tracks, CICM, dump hardware, and
  * checksums
  *       - Non-critical block processing errors are logged but don't prevent opening
  *       - Critical errors (DDT processing failures) cause opening to fail
- *       - Unknown block types are logged but ignored
+ *       - Unknown block types are logged but ignored for future compatibility
+ *       - Block processing is the same in both read-only and resume modes
  *
  * @note Memory Management:
  *       - Allocates memory for various context structures and caches
  *       - On failure, all previously allocated memory is properly cleaned up
  *       - The returned context must be freed using aaruf_close()
+ *       - In resume mode, additional write buffers may be allocated based on options
  *
  * @note Performance Optimization:
  *       - Initializes block and header caches based on sector size and available memory
  *       - Cache sizes are calculated to optimize memory usage and access patterns
  *       - ECC context is pre-initialized for Compact Disc support
+ *       - Cache strategies may differ between read-only and resume modes
+ *
+ * @note Resume Mode Considerations:
+ *       - Image must be in a valid state for resume operations
+ *       - Image MUST be in AaruFormat version 2.0 or later (version 1.x images cannot be resumed)
+ *       - Opening a version 1.x image with resume_mode=true will fail immediately with AARUF_ERROR_INCOMPATIBLE_VERSION
+ *       - Partial or corrupted images may fail to open in resume mode
+ *       - Options are parsed to reconfigure checksums and compression if needed
+ *       - Write position is calculated based on existing data and index entries
+ *       - Deduplication hash maps are reconstructed from existing DDT entries
+ *       - Some checksums (MD5, SHA-1, SHA-256) may need to be recalculated from scratch if resuming
  *
  * @warning The function requires a valid user data deduplication table to be present.
  *          Images without a DDT will fail to open even if otherwise valid.
  *
- * @warning File access is performed in binary read mode. The file must be accessible
- *          and not locked by other processes.
+ * @warning File access permissions must be appropriate for the selected mode:
+ *          - Read-only mode: File must be readable
+ *          - Resume mode: File must be readable AND writable
+ *          The file must not be locked by other processes in resume mode.
  *
- * @warning Some memory allocations (version strings) are optional and failure doesn't
- *          prevent opening, but may affect functionality that depends on version information.
+ * @warning Resume mode has additional validation requirements:
+ *          - Image must not be finalized (index must not be marked as complete)
+ *          - Image MUST be AaruFormat version 2.x or later (version 1.x images are not supported in resume mode)
+ *          - Image must have a valid, reconstructible DDT
+ *          - File I/O errors in resume mode may leave the image in an inconsistent state
+ *
+ * @warning Some memory allocations (version strings, checksum contexts) are optional.
+ *          Failure in optional allocations doesn't prevent opening but may affect functionality
+ *          that depends on checksums or version information.
+ *
+ * @see aaruf_close() for proper context cleanup and image finalization
+ * @see aaruf_read_sector() for reading sectors from opened images
+ * @see aaruf_write_sector() for writing sectors in resume mode
+ * @see aaruf_identify() for identifying image type before opening
  */
 AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath, const bool resume_mode,
                                        const char *options)  // NOLINT(readability-function-size)
