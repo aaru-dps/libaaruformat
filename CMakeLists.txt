@@ -277,7 +277,7 @@ if(USE_SLOG)
   target_compile_definitions(aaruformat PRIVATE ENABLE_TRACE ENABLE_FATAL USE_SLOG)
 
   # Link slog
-  target_link_libraries(aaruformat PRIVATE slog)
+  target_link_libraries(aaruformat slog)
 
   message(STATUS "slog logging enabled")
 else()
