@@ -1062,9 +1062,11 @@ bool set_ddt_single_level_v2(aaruformat_context *ctx, uint64_t sector_address, c
             TRACE("Exiting set_ddt_single_level_v2() = false");
             return false;
         }
-
-        *ddt_entry |= (uint64_t)sector_status << 60;
     }
+
+    // Sector status can be different from previous deduplicated sector
+    *ddt_entry &= 0x0FFFFFFFFFFFFFFF;
+    *ddt_entry |= (uint64_t)sector_status << 60;
 
     TRACE("Setting big single-level DDT entry %d to %ull", sector_address, (uint64_t)*ddt_entry);
     ctx->user_data_ddt2[sector_address] = *ddt_entry;
@@ -1154,9 +1156,11 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
                 TRACE("Exiting set_ddt_multi_level_v2() = false");
                 return false;
             }
-
-            *ddt_entry |= (uint64_t)sector_status << 60;
         }
+
+        // Sector status can be different from previous deduplicated sector
+        *ddt_entry &= 0x0FFFFFFFFFFFFFFF;
+        *ddt_entry |= (uint64_t)sector_status << 60;
 
         TRACE("Setting small secondary DDT entry %d to %ull", sector_address % items_per_ddt_entry,
               (uint64_t)*ddt_entry);
@@ -1637,9 +1641,11 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             TRACE("Exiting set_ddt_multi_level_v2() = false");
             return false;
         }
-
-        *ddt_entry |= (uint64_t)sector_status << 60;
     }
+
+    // Sector status can be different from previous deduplicated sector
+    *ddt_entry &= 0x0FFFFFFFFFFFFFFF;
+    *ddt_entry |= (uint64_t)sector_status << 60;
 
     TRACE("Setting big secondary DDT entry %d to %ull", sector_address % items_per_ddt_entry, (uint64_t)*ddt_entry);
     ctx->cached_secondary_ddt2[sector_address % items_per_ddt_entry] = *ddt_entry;
