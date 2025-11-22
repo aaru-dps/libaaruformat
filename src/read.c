@@ -888,7 +888,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
 
     // Calculate positive or negative sector
     if(negative)
-        corrected_sector_address -= ctx->user_data_ddt_header.negative;
+        corrected_sector_address = ctx->user_data_ddt_header.negative - sector_address;
     else
         corrected_sector_address += ctx->user_data_ddt_header.negative;
 
@@ -1529,7 +1529,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
 
     // Calculate positive or negative sector
     if(negative)
-        corrected_sector_address -= ctx->user_data_ddt_header.negative;
+        corrected_sector_address = ctx->user_data_ddt_header.negative - sector_address;
     else
         corrected_sector_address += ctx->user_data_ddt_header.negative;
 

@@ -605,7 +605,7 @@ int32_t decode_ddt_single_level_v2(aaruformat_context *ctx, uint64_t sector_addr
 
     // Calculate positive or negative sector
     if(negative)
-        sector_address -= ctx->user_data_ddt_header.negative;
+        sector_address = ctx->user_data_ddt_header.negative - sector_address;
     else
         sector_address += ctx->user_data_ddt_header.negative;
 
@@ -757,7 +757,7 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
 
     // Calculate positive or negative sector
     if(negative)
-        sector_address -= ctx->user_data_ddt_header.negative;
+        sector_address = ctx->user_data_ddt_header.negative - sector_address;
     else
         sector_address += ctx->user_data_ddt_header.negative;
 
@@ -1045,7 +1045,7 @@ bool set_ddt_single_level_v2(aaruformat_context *ctx, uint64_t sector_address, c
 
     // Calculate positive or negative sector
     if(negative)
-        sector_address -= ctx->user_data_ddt_header.negative;
+        sector_address = ctx->user_data_ddt_header.negative - sector_address;
     else
         sector_address += ctx->user_data_ddt_header.negative;
 
@@ -1125,7 +1125,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
 
     // Calculate positive or negative sector
     if(negative)
-        sector_address -= ctx->user_data_ddt_header.negative;
+        sector_address = ctx->user_data_ddt_header.negative - sector_address;
     else
         sector_address += ctx->user_data_ddt_header.negative;
 
