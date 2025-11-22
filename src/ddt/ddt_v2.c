@@ -985,7 +985,7 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
  * @return Returns one of the following status codes:
  * @retval true if the entry was set successfully, false otherwise.
  */
-bool set_ddt_entry_v2(aaruformat_context *ctx, const uint64_t sector_address, bool negative, const uint64_t offset,
+bool set_ddt_entry_v2(aaruformat_context *ctx, const uint64_t sector_address, const bool negative, const uint64_t offset,
                       const uint64_t block_offset, const uint8_t sector_status, uint64_t *ddt_entry)
 {
     TRACE("Entering set_ddt_entry_v2(%p, %" PRIu64 ", %d, %llu, %llu, %d)", ctx, sector_address, negative, offset,
@@ -999,9 +999,9 @@ bool set_ddt_entry_v2(aaruformat_context *ctx, const uint64_t sector_address, bo
     }
 
     if(ctx->user_data_ddt_header.tableShift > 0)
-        return set_ddt_multi_level_v2(ctx, sector_address, false, offset, block_offset, sector_status, ddt_entry);
+        return set_ddt_multi_level_v2(ctx, sector_address, negative, offset, block_offset, sector_status, ddt_entry);
 
-    return set_ddt_single_level_v2(ctx, sector_address, false, offset, block_offset, sector_status, ddt_entry);
+    return set_ddt_single_level_v2(ctx, sector_address, negative, offset, block_offset, sector_status, ddt_entry);
 }
 
 /**
