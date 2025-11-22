@@ -704,7 +704,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_track_sector(void *context, uint8_t *da
 
     if(ctx->image_info.MetadataMediaType != OpticalDisc)
     {
-        FATAL("Incorrect media type %d, expected OpticalDisc", ctx->imageInfo.XmlMediaType);
+        FATAL("Incorrect media type %d, expected OpticalDisc", ctx->image_info.MetadataMediaType);
 
         TRACE("Exiting aaruf_read_track_sector() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
         return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
@@ -1282,7 +1282,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                             tag_length = 24;
                             break;
                         default:
-                            FATAL("Unsupported media type %d", ctx->imageInfo.MediaType);
+                            FATAL("Unsupported media type %d", ctx->image_info.MediaType);
 
                             TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
                             return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
@@ -1339,13 +1339,13 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                     TRACE("Exiting aaruf_read_sector_long() = AARUF_STATUS_OK");
                     return AARUF_STATUS_OK;
                 default:
-                    FATAL("Incorrect media type %d for long sector reading", ctx->imageInfo.MediaType);
+                    FATAL("Incorrect media type %d for long sector reading", ctx->image_info.MediaType);
 
                     TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
                     return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
             }
         default:
-            FATAL("Incorrect media type %d for long sector reading", ctx->imageInfo.MediaType);
+            FATAL("Incorrect media type %d for long sector reading", ctx->image_info.MediaType);
 
             TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
             return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
