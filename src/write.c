@@ -130,7 +130,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
         return AARUF_READ_ONLY;
     }
 
-    if(negative && sector_address > ctx->user_data_ddt_header.negative - 1)
+    if(negative && sector_address > ctx->user_data_ddt_header.negative)
     {
         FATAL("Sector address out of bounds");
 
@@ -569,7 +569,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
         return AARUF_READ_ONLY;
     }
 
-    if(negative && sector_address > ctx->user_data_ddt_header.negative - 1)
+    if(negative && sector_address > ctx->user_data_ddt_header.negative)
     {
         FATAL("Sector address out of bounds");
 
@@ -2101,7 +2101,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
         return AARUF_READ_ONLY;
     }
 
-    if(negative && sector_address > ctx->user_data_ddt_header.negative - 1)
+    if(negative && sector_address > ctx->user_data_ddt_header.negative)
     {
         FATAL("Sector address out of bounds");
 
