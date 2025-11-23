@@ -225,195 +225,242 @@ AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context)
         goto cleanup;
     }
 
+    uint64_t crc_length;
+    const unsigned int entry_count = utarray_len(index_entries);
+
+    for(unsigned int i = 0; i < entry_count; i++)
     {
-        const unsigned int entry_count = utarray_len(index_entries);
+        IndexEntry *entry = utarray_eltptr(index_entries, i);
+        TRACE("Checking block with type %4.4s at position %" PRIu64, (char *)&entry->blockType, entry->offset);
 
-        for(unsigned int i = 0; i < entry_count; i++)
+        if(fseek(ctx->imageStream, entry->offset, SEEK_SET) != 0)
         {
-            IndexEntry *entry = utarray_eltptr(index_entries, i);
-            TRACE("Checking block with type %4.4s at position %" PRIu64, (char *)&entry->blockType, entry->offset);
+            FATAL("Could not seek to block at offset %" PRIu64, entry->offset);
+            status = AARUF_ERROR_CANNOT_READ_BLOCK;
+            goto cleanup;
+        }
 
-            if(fseek(ctx->imageStream, entry->offset, SEEK_SET) != 0)
-            {
-                FATAL("Could not seek to block at offset %" PRIu64, entry->offset);
-                status = AARUF_ERROR_CANNOT_READ_BLOCK;
-                goto cleanup;
-            }
-
-            switch(entry->blockType)
-            {
-                case DataBlock:
-                    read_bytes = fread(&block_header, 1, sizeof(BlockHeader), ctx->imageStream);
-                    if(read_bytes != sizeof(BlockHeader))
-                    {
-                        FATAL("Could not read block header");
-                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
-                        goto cleanup;
-                    }
-
-                    crc64_context = aaruf_crc64_init();
-                    if(crc64_context == NULL)
-                    {
-                        FATAL("Could not initialize CRC64 context");
-                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
-                        goto cleanup;
-                    }
-
-                    status = update_crc64_from_stream(ctx->imageStream, block_header.cmpLength, buffer, VERIFY_SIZE,
-                                                      crc64_context, "data block");
-                    if(status != AARUF_STATUS_OK) goto cleanup;
-
-                    if(aaruf_crc64_final(crc64_context, &crc64) != 0)
-                    {
-                        FATAL("Could not finalize CRC64 for data block");
-                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
-                        goto cleanup;
-                    }
-
-                    if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
-
-                    if(crc64 != block_header.cmpCrc64)
-                    {
-                        FATAL("Expected block CRC 0x%16llX but got 0x%16llX", block_header.cmpCrc64, crc64);
-                        status = AARUF_ERROR_INVALID_BLOCK_CRC;
-                        goto cleanup;
-                    }
-
-                    aaruf_crc64_free(crc64_context);
-                    crc64_context = NULL;
-                    break;
-                case DeDuplicationTable:
-                    read_bytes = fread(&ddt_header, 1, sizeof(DdtHeader), ctx->imageStream);
-                    if(read_bytes != sizeof(DdtHeader))
-                    {
-                        FATAL("Could not read DDT header");
-                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
-                        goto cleanup;
-                    }
-
-                    crc64_context = aaruf_crc64_init();
-                    if(crc64_context == NULL)
-                    {
-                        FATAL("Could not initialize CRC64 context");
-                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
-                        goto cleanup;
-                    }
-
-                    status = update_crc64_from_stream(ctx->imageStream, ddt_header.cmpLength, buffer, VERIFY_SIZE,
-                                                      crc64_context, "DDT block");
-                    if(status != AARUF_STATUS_OK) goto cleanup;
-
-                    if(aaruf_crc64_final(crc64_context, &crc64) != 0)
-                    {
-                        FATAL("Could not finalize CRC64 for DDT block");
-                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
-                        goto cleanup;
-                    }
-
-                    if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
-
-                    if(crc64 != ddt_header.cmpCrc64)
-                    {
-                        FATAL("Expected DDT CRC 0x%16llX but got 0x%16llX", ddt_header.cmpCrc64, crc64);
-                        status = AARUF_ERROR_INVALID_BLOCK_CRC;
-                        goto cleanup;
-                    }
-
-                    aaruf_crc64_free(crc64_context);
-                    crc64_context = NULL;
-                    break;
-                case DeDuplicationTable2:
-                    read_bytes = fread(&ddt2_header, 1, sizeof(DdtHeader2), ctx->imageStream);
-                    if(read_bytes != sizeof(DdtHeader2))
-                    {
-                        FATAL("Could not read DDT2 header");
-                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
-                        goto cleanup;
-                    }
-
-                    crc64_context = aaruf_crc64_init();
-                    if(crc64_context == NULL)
-                    {
-                        FATAL("Could not initialize CRC64 context");
-                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
-                        goto cleanup;
-                    }
-
-                    status = update_crc64_from_stream(ctx->imageStream, ddt2_header.cmpLength, buffer, VERIFY_SIZE,
-                                                      crc64_context, "DDT2 block");
-                    if(status != AARUF_STATUS_OK) goto cleanup;
-
-                    if(aaruf_crc64_final(crc64_context, &crc64) != 0)
-                    {
-                        FATAL("Could not finalize CRC64 for DDT2 block");
-                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
-                        goto cleanup;
-                    }
-
-                    if(crc64 != ddt2_header.cmpCrc64)
-                    {
-                        FATAL("Expected DDT2 CRC 0x%16llX but got 0x%16llX", ddt2_header.cmpCrc64, crc64);
-                        status = AARUF_ERROR_INVALID_BLOCK_CRC;
-                        goto cleanup;
-                    }
-
-                    aaruf_crc64_free(crc64_context);
-                    crc64_context = NULL;
-                    break;
-                case TracksBlock:
+        switch(entry->blockType)
+        {
+            case DataBlock:
+                read_bytes = fread(&block_header, 1, sizeof(BlockHeader), ctx->imageStream);
+                if(read_bytes != sizeof(BlockHeader))
                 {
-                    read_bytes = fread(&tracks_header, 1, sizeof(TracksHeader), ctx->imageStream);
-                    if(read_bytes != sizeof(TracksHeader))
-                    {
-                        FATAL("Could not read tracks header");
-                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
-                        goto cleanup;
-                    }
-
-                    const uint64_t tracks_bytes = (uint64_t)tracks_header.entries * sizeof(TrackEntry);
-                    if(tracks_header.entries != 0 && tracks_bytes / sizeof(TrackEntry) != tracks_header.entries)
-                    {
-                        FATAL("Tracks header length overflow (entries=%u)", tracks_header.entries);
-                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
-                        goto cleanup;
-                    }
-
-                    crc64_context = aaruf_crc64_init();
-                    if(crc64_context == NULL)
-                    {
-                        FATAL("Could not initialize CRC64 context");
-                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
-                        goto cleanup;
-                    }
-
-                    status = update_crc64_from_stream(ctx->imageStream, tracks_bytes, buffer, VERIFY_SIZE,
-                                                      crc64_context, "tracks block");
-                    if(status != AARUF_STATUS_OK) goto cleanup;
-
-                    if(aaruf_crc64_final(crc64_context, &crc64) != 0)
-                    {
-                        FATAL("Could not finalize CRC64 for tracks block");
-                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
-                        goto cleanup;
-                    }
-
-                    if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
-
-                    if(crc64 != tracks_header.crc64)
-                    {
-                        FATAL("Expected tracks CRC 0x%16llX but got 0x%16llX", tracks_header.crc64, crc64);
-                        status = AARUF_ERROR_INVALID_BLOCK_CRC;
-                        goto cleanup;
-                    }
-
-                    aaruf_crc64_free(crc64_context);
-                    crc64_context = NULL;
-                    break;
+                    FATAL("Could not read block header");
+                    status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                    goto cleanup;
                 }
-                default:
-                    TRACE("Ignoring block type %4.4s", (char *)&entry->blockType);
-                    break;
+
+                crc64_context = aaruf_crc64_init();
+                if(crc64_context == NULL)
+                {
+                    FATAL("Could not initialize CRC64 context");
+                    status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                    goto cleanup;
+                }
+
+                // For LZMA compression, skip the 5-byte properties header
+                crc_length = block_header.cmpLength;
+                if(block_header.compression == Lzma || block_header.compression == LzmaClauniaSubchannelTransform)
+                {
+                    // Skip LZMA properties
+                    uint8_t props[LZMA_PROPERTIES_LENGTH];
+                    size_t  read_props = fread(props, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
+                    if(read_props != LZMA_PROPERTIES_LENGTH)
+                    {
+                        FATAL("Could not read LZMA properties");
+                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                        goto cleanup;
+                    }
+                    crc_length -= LZMA_PROPERTIES_LENGTH;
+                }
+
+                status = update_crc64_from_stream(ctx->imageStream, crc_length, buffer, VERIFY_SIZE, crc64_context,
+                                                  "data block");
+                if(status != AARUF_STATUS_OK) goto cleanup;
+
+                if(aaruf_crc64_final(crc64_context, &crc64) != 0)
+                {
+                    FATAL("Could not finalize CRC64 for data block");
+                    status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                    goto cleanup;
+                }
+
+                if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
+
+                if(crc64 != block_header.cmpCrc64)
+                {
+                    FATAL("Expected block CRC 0x%16llX but got 0x%16llX", block_header.cmpCrc64, crc64);
+                    status = AARUF_ERROR_INVALID_BLOCK_CRC;
+                    goto cleanup;
+                }
+
+                aaruf_crc64_free(crc64_context);
+                crc64_context = NULL;
+                break;
+            case DeDuplicationTable:
+                read_bytes = fread(&ddt_header, 1, sizeof(DdtHeader), ctx->imageStream);
+                if(read_bytes != sizeof(DdtHeader))
+                {
+                    FATAL("Could not read DDT header");
+                    status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                    goto cleanup;
+                }
+
+                crc64_context = aaruf_crc64_init();
+                if(crc64_context == NULL)
+                {
+                    FATAL("Could not initialize CRC64 context");
+                    status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                    goto cleanup;
+                }
+
+                // For LZMA compression, skip the 5-byte properties header
+                crc_length = ddt_header.cmpLength;
+                if(ddt_header.compression == Lzma || ddt_header.compression == LzmaClauniaSubchannelTransform)
+                {
+                    // Skip LZMA properties
+                    uint8_t props[LZMA_PROPERTIES_LENGTH];
+                    size_t  read_props = fread(props, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
+                    if(read_props != LZMA_PROPERTIES_LENGTH)
+                    {
+                        FATAL("Could not read LZMA properties");
+                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                        goto cleanup;
+                    }
+                    crc_length -= LZMA_PROPERTIES_LENGTH;
+                }
+
+                status = update_crc64_from_stream(ctx->imageStream, crc_length, buffer, VERIFY_SIZE, crc64_context,
+                                                  "data block");
+                if(status != AARUF_STATUS_OK) goto cleanup;
+
+                if(aaruf_crc64_final(crc64_context, &crc64) != 0)
+                {
+                    FATAL("Could not finalize CRC64 for DDT block");
+                    status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                    goto cleanup;
+                }
+
+                if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
+
+                if(crc64 != ddt_header.cmpCrc64)
+                {
+                    FATAL("Expected DDT CRC 0x%16llX but got 0x%16llX", ddt_header.cmpCrc64, crc64);
+                    status = AARUF_ERROR_INVALID_BLOCK_CRC;
+                    goto cleanup;
+                }
+
+                aaruf_crc64_free(crc64_context);
+                crc64_context = NULL;
+                break;
+            case DeDuplicationTable2:
+                read_bytes = fread(&ddt2_header, 1, sizeof(DdtHeader2), ctx->imageStream);
+                if(read_bytes != sizeof(DdtHeader2))
+                {
+                    FATAL("Could not read DDT2 header");
+                    status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                    goto cleanup;
+                }
+
+                crc64_context = aaruf_crc64_init();
+                if(crc64_context == NULL)
+                {
+                    FATAL("Could not initialize CRC64 context");
+                    status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                    goto cleanup;
+                }
+
+                // For LZMA compression, skip the 5-byte properties header
+                crc_length = ddt2_header.cmpLength;
+                if(ddt2_header.compression == Lzma || ddt2_header.compression == LzmaClauniaSubchannelTransform)
+                {
+                    // Skip LZMA properties
+                    uint8_t props[LZMA_PROPERTIES_LENGTH];
+                    size_t  read_props = fread(props, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
+                    if(read_props != LZMA_PROPERTIES_LENGTH)
+                    {
+                        FATAL("Could not read LZMA properties");
+                        status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                        goto cleanup;
+                    }
+                    crc_length -= LZMA_PROPERTIES_LENGTH;
+                }
+
+                status = update_crc64_from_stream(ctx->imageStream, crc_length, buffer, VERIFY_SIZE, crc64_context,
+                                                  "data block");
+                if(status != AARUF_STATUS_OK) goto cleanup;
+
+                if(aaruf_crc64_final(crc64_context, &crc64) != 0)
+                {
+                    FATAL("Could not finalize CRC64 for DDT2 block");
+                    status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                    goto cleanup;
+                }
+
+                if(crc64 != ddt2_header.cmpCrc64)
+                {
+                    FATAL("Expected DDT2 CRC 0x%16llX but got 0x%16llX", ddt2_header.cmpCrc64, crc64);
+                    status = AARUF_ERROR_INVALID_BLOCK_CRC;
+                    goto cleanup;
+                }
+
+                aaruf_crc64_free(crc64_context);
+                crc64_context = NULL;
+                break;
+            case TracksBlock:
+            {
+                read_bytes = fread(&tracks_header, 1, sizeof(TracksHeader), ctx->imageStream);
+                if(read_bytes != sizeof(TracksHeader))
+                {
+                    FATAL("Could not read tracks header");
+                    status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                    goto cleanup;
+                }
+
+                const uint64_t tracks_bytes = (uint64_t)tracks_header.entries * sizeof(TrackEntry);
+                if(tracks_header.entries != 0 && tracks_bytes / sizeof(TrackEntry) != tracks_header.entries)
+                {
+                    FATAL("Tracks header length overflow (entries=%u)", tracks_header.entries);
+                    status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                    goto cleanup;
+                }
+
+                crc64_context = aaruf_crc64_init();
+                if(crc64_context == NULL)
+                {
+                    FATAL("Could not initialize CRC64 context");
+                    status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                    goto cleanup;
+                }
+
+                status = update_crc64_from_stream(ctx->imageStream, tracks_bytes, buffer, VERIFY_SIZE, crc64_context,
+                                                  "tracks block");
+                if(status != AARUF_STATUS_OK) goto cleanup;
+
+                if(aaruf_crc64_final(crc64_context, &crc64) != 0)
+                {
+                    FATAL("Could not finalize CRC64 for tracks block");
+                    status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                    goto cleanup;
+                }
+
+                if(ctx->header.imageMajorVersion <= AARUF_VERSION_V1) crc64 = bswap_64(crc64);
+
+                if(crc64 != tracks_header.crc64)
+                {
+                    FATAL("Expected tracks CRC 0x%16llX but got 0x%16llX", tracks_header.crc64, crc64);
+                    status = AARUF_ERROR_INVALID_BLOCK_CRC;
+                    goto cleanup;
+                }
+
+                aaruf_crc64_free(crc64_context);
+                crc64_context = NULL;
+                break;
             }
+            default:
+                TRACE("Ignoring block type %4.4s", (char *)&entry->blockType);
+                break;
         }
     }
 
