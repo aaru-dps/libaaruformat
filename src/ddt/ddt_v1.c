@@ -217,26 +217,26 @@ int32_t process_ddt_v1(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
                 break;
             // TODO: Check CRC
             case None:
-#ifdef __linux__
-                TRACE("Memory mapping deduplication table at position %" PRIu64, entry->offset + sizeof(ddt_header));
-                ctx->mapped_memory_ddt_size = sizeof(uint64_t) * ddt_header.entries;
-                ctx->user_data_ddt          = mmap(NULL, ctx->mapped_memory_ddt_size, PROT_READ, MAP_SHARED,
-                                                   fileno(ctx->imageStream), entry->offset + sizeof(ddt_header));
-
-                if(ctx->user_data_ddt == MAP_FAILED)
+                ctx->user_data_ddt = (uint64_t *)malloc(ddt_header.length);
+                if(ctx->user_data_ddt == NULL)
                 {
-                    *found_user_data_ddt = false;
-                    FATAL("Could not read map deduplication table.");
+                    TRACE("Cannot allocate memory for DDT, continuing...");
                     break;
                 }
 
-                ctx->in_memory_ddt = false;
+                read_bytes = fread(ctx->user_data_ddt, 1, ddt_header.entries * sizeof(uint64_t), ctx->imageStream);
+
+                if(read_bytes != ddt_header.entries * sizeof(uint64_t))
+                {
+                    free(ctx->user_data_ddt);
+                    TRACE("Could not read deduplication table, continuing...");
+                    break;
+                }
+
+                ctx->in_memory_ddt   = true;
+                *found_user_data_ddt = true;
+
                 break;
-#else  // TODO: Implement
-                TRACE("Uncompressed DDT not yet implemented...");
-                *found_user_data_ddt = false;
-                break;
-#endif
             default:
                 TRACE("Found unknown compression type %d, continuing...", ddt_header.compression);
                 *found_user_data_ddt = false;
