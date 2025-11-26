@@ -576,16 +576,8 @@ int info(const char *path)
     printf("\tImage contains %llu sectors\n", ctx->image_info.Sectors);
     printf("\tBiggest sector is %d bytes\n", ctx->image_info.SectorSize);
     printf("\tImage version: %s\n", ctx->image_info.Version);
-
     if(ctx->image_info.Application != NULL)
-    {
-        strBuffer = malloc(65);
-        memset(strBuffer, 0, 65);
-        ucnv_convert(NULL, "UTF-16LE", strBuffer, 64, (const char *)ctx->image_info.Application, 64, &u_error_code);
-        if(u_error_code == U_ZERO_ERROR) printf("\tApplication: %s\n", strBuffer);
-        free(strBuffer);
-    }
-
+        printf("\tApplication: %s\n", ctx->image_info.Application);
     if(ctx->image_info.ApplicationVersion != NULL)
         printf("\tApplication version: %s\n", ctx->image_info.ApplicationVersion);
     printf("\tCreation time: %s\n", format_filetime(ctx->image_info.CreationTime));
