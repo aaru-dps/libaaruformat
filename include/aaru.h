@@ -771,7 +771,59 @@ typedef enum
     VideoNow      = 740,  ///< Hasbro VideoNow 85 mm proprietary video disc
     VideoNowColor = 741,  ///< Hasbro VideoNow Color disc
     VideoNowXp    = 742   ///< Hasbro VideoNow XP higher capacity disc
-    //
+    // VideoNow, types 740 to 749
+
+    // Iomega, types 750 to 759
+    Bernoulli10  = 750,  ///< 8"x11" Bernoulli Box disk with 10Mb capacity
+    ///< 8"x11" Bernoulli Box disk with 20Mb capacity
+    Bernoulli20      = 751,
+    ///< 5⅓" Bernoulli Box II disk with 20Mb capacity
+    BernoulliBox2_20 = 752,
+    // Iomega, types 750 to 759
+
+    // Kodak, types 760 to 769
+    KodakVerbatim3  = 760,  ///< Kodak/Verbatim (3Mb)
+    KodakVerbatim6  = 761,  ///< Kodak/Verbatim (6Mb)
+    KodakVerbatim12 = 762,  ///< Kodak/Verbatim (12Mb)
+    // Kodak, types 760 to 769
+
+    // Sony and Panasonic Blu-ray derived, types 770 to 799
+    ProfessionalDisc       = 770,  ///< Professional Disc for video, single layer, rewritable, 23Gb
+    ProfessionalDiscDual   = 771,  ///< Professional Disc for video, dual layer, rewritable, 50Gb
+    ProfessionalDiscTriple = 772,  ///< Professional Disc for video, triple layer, rewritable, 100Gb
+    ProfessionalDiscQuad   = 773,  ///< Professional Disc for video, quad layer, write once, 128Gb
+    PDD                    = 774,  ///< Professional Disc for DATA, single layer, rewritable, 23Gb
+    PDD_WORM               = 775,  ///< Professional Disc for DATA, single layer, write once, 23Gb
+    ArchivalDisc           = 776,  ///< Archival Disc, 1st gen., 300Gb
+    ArchivalDisc2          = 777,  ///< Archival Disc, 2nd gen., 500Gb
+    ArchivalDisc3          = 778,  ///< Archival Disc, 3rd gen., 1Tb
+    ODC300R                = 779,  ///< Optical Disc archive, 1st gen., write once, 300Gb
+    ODC300RE               = 780,  ///< Optical Disc archive, 1st gen., rewritable, 300Gb
+    ODC600R                = 781,  ///< Optical Disc archive, 2nd gen., write once, 600Gb
+    ODC600RE               = 782,  ///< Optical Disc archive, 2nd gen., rewritable, 600Gb
+    ODC1200RE              = 783,  ///< Optical Disc archive, 3rd gen., rewritable, 1200Gb
+    ODC1500R               = 784,  ///< Optical Disc archive, 3rd gen., write once, 1500Gb
+    ODC3300R               = 785,  ///< Optical Disc archive, 4th gen., write once, 3300Gb
+    ODC5500R               = 786,  ///< Optical Disc archive, 5th gen., write once, 5500Gb
+    // Sony and Panasonic Blu-ray derived, types 770 to 799
+
+    // Magneto-optical, types 800 to 819
+    ECMA_322_1k   = 800,  ///< 5,25", M.O., 4383356 sectors, 1024 bytes/sector, ECMA-322, ISO 22092, 9.1Gb/cart
+    ECMA_322_512  = 801,  ///< 5,25", M.O., ??????? sectors, 512 bytes/sector, ECMA-322, ISO 22092, 9.1Gb/cart
+    ISO_14517     = 802,  ///< 5,25", M.O., 1273011 sectors, 1024 bytes/sector, ISO 14517, 2.6Gb/cart
+    ISO_14517_512 = 803,  ///< 5,25", M.O., 2244958 sectors, 512 bytes/sector, ISO 14517, 2.3Gb/cart
+    ISO_15041_512 = 804,  ///< 3,5", M.O., 1041500 sectors, 512 bytes/sector, ISO 15041, 540Mb/cart
+    HSM650        = 805,  ///< 3,5", M.O., ??????? sectors, proprietary, 650Mb/cart, Sony HyperStorage
+    // Magneto-optical, types 800 to 819
+
+    // More floppy formats, types 820 to deprecated
+    MetaFloppy_Mod_I = 820,  ///< 5.25", SS, DD, 35 tracks, 16 spt, 256 bytes/sector, MFM, 48 tpi, ???rpm
+    HF12 = 823,  ///< HyperFlex (12Mb), 5.25", DS, 301 tracks, 78 spt, 256 bytes/sector, MFM, 333 tpi, 600rpm
+    HF24 = 824,  ///< HyperFlex (24Mb), 5.25", DS, 506 tracks, 78 spt, 256 bytes/sector, MFM, 666 tpi, 720rpm
+    // More floppy formats, types 820 to deprecated
+
+    AtariLynxCard        = 821,  ///< Atari Lynx card
+    AtariJaguarCartridge = 822   ///< Atari Jaguar cartridge
 } MediaType;
 
 /** @} */ /* end of MediaTypes group */
@@ -1008,7 +1060,7 @@ typedef enum
     MiniDiscUTOC = 71,  ///< User TOC, contains fragments, track names, and can be from 1 to 3 sectors of 2336 bytes
     MiniDiscDTOC = 72,  ///< Not entirely clear kind of TOC that only appears on MD-DATA discs
     DVD_DiscKey_Decrypted = 73,  ///< Decrypted DVD disc key,
-    MaxMediaTag                   = DVD_DiscKey_Decrypted
+    MaxMediaTag           = DVD_DiscKey_Decrypted
 } MediaTagType;
 
 /** @} */ /* end of MediaTags group */

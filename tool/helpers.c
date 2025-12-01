@@ -24,14 +24,14 @@
 char *byte_array_to_hex_string(const unsigned char *array, int array_size)
 {
     char *hex_string = NULL;
-    int j = 0;
+    int   j          = 0;
 
     hex_string = malloc(array_size * 2 + 1);
 
     if(hex_string == NULL) return NULL;
 
     j = 0;
-    for (int i = 0; i < array_size; i++)
+    for(int i = 0; i < array_size; i++)
     {
         hex_string[j] = (array[i] >> 4) + '0';
         if(hex_string[j] > '9') hex_string[j] += 0x7;
@@ -1109,6 +1109,84 @@ const char *media_type_to_string(MediaType type)
         case VideoNowXp:
             return "VideoNow XP";
 
+        // Iomega, types 750 to 759
+        case Bernoulli10:
+            return "Bernoulli Box (10Mb)";
+        case Bernoulli20:
+            return "Bernoulli Box (20Mb)";
+        case BernoulliBox2_20:
+            return "Bernoulli Box II (20Mb)";
+
+        // Kodak, types 760 to 769
+        case KodakVerbatim3:
+            return "Kodak/Verbatim (3Mb)";
+        case KodakVerbatim6:
+            return "Kodak/Verbatim (6Mb)";
+        case KodakVerbatim12:
+            return "Kodak/Verbatim (12Mb)";
+
+        // Sony and Panasonic Blu-ray derived, types 770 to 799
+        case ProfessionalDisc:
+            return "Professional Disc for video";
+        case ProfessionalDiscDual:
+            return "Professional Disc for video";
+        case ProfessionalDiscTriple:
+            return "Professional Disc for video";
+        case ProfessionalDiscQuad:
+            return "Professional Disc for video";
+        case PDD:
+            return "Professional Disc for DATA";
+        case PDD_WORM:
+            return "Professional Disc for DATA";
+        case ArchivalDisc:
+            return "Archival Disc";
+        case ArchivalDisc2:
+            return "Archival Disc";
+        case ArchivalDisc3:
+            return "Archival Disc";
+        case ODC300R:
+            return "Optical Disc archive";
+        case ODC300RE:
+            return "Optical Disc archive";
+        case ODC600R:
+            return "Optical Disc archive";
+        case ODC600RE:
+            return "Optical Disc archive";
+        case ODC1200RE:
+            return "Optical Disc archive";
+        case ODC1500R:
+            return "Optical Disc archive";
+        case ODC3300R:
+            return "Optical Disc archive";
+        case ODC5500R:
+            return "Optical Disc archive";
+
+        // Magneto-optical, types 800 to 819
+        case ECMA_322_1k:
+            return "5,25\", M.O., 4383356 sectors, 1024 bytes/sector, ECMA-322, ISO 22092, 9.1Gb/cart";
+        case ECMA_322_512:
+            return "5,25\", M.O., ??????? sectors, 512 bytes/sector, ECMA-322, ISO 22092, 9.1Gb/cart";
+        case ISO_14517:
+            return "5,25\", M.O., 1273011 sectors, 1024 bytes/sector, ISO 14517, 2.6Gb/cart";
+        case ISO_14517_512:
+            return "5,25\", M.O., 2244958 sectors, 512 bytes/sector, ISO 14517, 2.3Gb/cart";
+        case ISO_15041_512:
+            return "3,5\", M.O., 1041500 sectors, 512 bytes/sector, ISO 15041, 540Mb/cart";
+        case HSM650:
+            return "Sony HyperStorage";
+
+        // More floppy formats, types 820 to deprecated
+        case MetaFloppy_Mod_I:
+            return "5.25\", SS, DD, 35 tracks, 16 spt, 256 bytes/sector, MFM, 48 tpi, ???rpm";
+        case HF12:
+            return "HyperFlex (12Mb)";
+        case HF24:
+            return "HyperFlex (24Mb)";
+
+        case AtariLynxCard:
+            return "Atari Lynx card";
+        case AtariJaguarCartridge:
+            return "Atari Jaguar cartridge";
         default:
             return "Unknown Media Type";
     }

@@ -544,6 +544,7 @@ For the most accurate and up-to-date list, refer to the `libaaruformat` source.
 |ISO_14517|802|5.25", M.O., 1273011 sectors, 1024 bytes/sector, ISO 14517, 2.6Gb/cart
 |ISO_14517_512|803|5.25", M.O., 2244958 sectors, 512 bytes/sector, ISO 14517, 2.3Gb/cart
 |ISO_15041_512|804|3.5", M.O., 1041500 sectors, 512 bytes/sector, ISO 15041, 540Mb/cart
+|HSM650|805|3,5", M.O., ??????? sectors, proprietary, 650Mb/cart, Sony HyperStorage
 |MetaFloppy_Mod_I|820|5.25", SS, DD, 35 tracks, 16 spt, 256 bytes/sector, MFM, 48 tpi, ???rpm
 |AtariLynxCard|821|
 |AtariJaguarCartridge|822|

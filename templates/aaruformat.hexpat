@@ -576,7 +576,18 @@ enum MediaType : u32
     ODC1200RE              = 783,
     ODC1500R               = 784,
     ODC3300R               = 785,
-    ODC5500R               = 786
+    ODC5500R               = 786,
+
+    ECMA_322_1k = 800,
+    ECMA_322_512 = 801,
+    ISO_14517 = 802,
+    ISO_14517_512 = 803,
+    ISO_15041_512 = 804,
+    HSM650 = 805,
+
+    MetaFloppy_Mod_I = 820,
+    HF12 = 823,
+    HF24 = 824,
 };
 
 enum CompressionType : u16
