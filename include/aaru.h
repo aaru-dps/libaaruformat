@@ -770,7 +770,7 @@ typedef enum
     // VideoNow, types 740 to 749
     VideoNow      = 740,  ///< Hasbro VideoNow 85 mm proprietary video disc
     VideoNowColor = 741,  ///< Hasbro VideoNow Color disc
-    VideoNowXp    = 742   ///< Hasbro VideoNow XP higher capacity disc
+    VideoNowXp    = 742,   ///< Hasbro VideoNow XP higher capacity disc
     // VideoNow, types 740 to 749
 
     // Iomega, types 750 to 759
