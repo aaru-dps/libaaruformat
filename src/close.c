@@ -3304,6 +3304,8 @@ static void write_metadata_block(aaruformat_context *ctx)
         block_position = aligned_position;
     }
 
+    memcpy(buffer, &ctx->metadata_block_header, sizeof(MetadataBlockHeader));
+
     TRACE("Writing metadata block at position %ld", block_position);
 
     if(fwrite(buffer, ctx->metadata_block_header.blockSize, 1, ctx->imageStream) == 1)
