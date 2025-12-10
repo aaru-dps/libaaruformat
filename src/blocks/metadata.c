@@ -81,7 +81,7 @@ void process_metadata_block(aaruformat_context *ctx, const IndexEntry *entry)
 
     ctx->image_info.ImageSize += ctx->metadata_block_header.blockSize;
 
-    ctx->metadata_block = (uint8_t *)malloc(ctx->metadata_block_header.blockSize);
+    ctx->metadata_block = (uint8_t *)malloc(ctx->metadata_block_header.blockSize + sizeof(MetadataBlockHeader));
 
     if(ctx->metadata_block == NULL)
     {
@@ -104,6 +104,8 @@ void process_metadata_block(aaruformat_context *ctx, const IndexEntry *entry)
         memset(&ctx->metadata_block_header, 0, sizeof(MetadataBlockHeader));
         free(ctx->metadata_block);
         FATAL("Could not read metadata block, continuing...");
+
+        return;
     }
 
     if(ctx->metadata_block_header.mediaSequence > 0 && ctx->metadata_block_header.lastMediaSequence > 0)
