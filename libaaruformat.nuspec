@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>libaaruformat</id>
-        <version>1.0.0-alpha.15</version>
+        <version>1.0.0-alpha.16</version>
         <description>Library for management of AaruFormat images.</description>
         <authors>claunia</authors>
         <projectUrl>https://github.com/aaru-dps/libaaruformat</projectUrl>
