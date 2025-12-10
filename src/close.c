@@ -939,6 +939,7 @@ static void write_mode2_subheaders_block(aaruformat_context *ctx)
     else
         subheaders_block.cmpCrc64 = aaruf_crc64_data(buffer, subheaders_block.cmpLength);
 
+    const size_t length_to_write = subheaders_block.cmpLength;
     if(subheaders_block.compression == Lzma) subheaders_block.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write header
@@ -947,7 +948,7 @@ static void write_mode2_subheaders_block(aaruformat_context *ctx)
         if(subheaders_block.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
 
         // Write data
-        size_t written_bytes = fwrite(buffer, subheaders_block.cmpLength, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, length_to_write, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote MODE 2 subheaders block (%" PRIu64 " bytes)", subheaders_block.cmpLength);
@@ -1052,6 +1053,7 @@ static void write_sector_prefix(aaruformat_context *ctx)
     else
         prefix_block.cmpCrc64 = aaruf_crc64_data(buffer, prefix_block.cmpLength);
 
+    const size_t length_to_write = prefix_block.cmpLength;
     if(prefix_block.compression == Lzma) prefix_block.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write header
@@ -1060,7 +1062,7 @@ static void write_sector_prefix(aaruformat_context *ctx)
         if(prefix_block.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
 
         // Write data
-        const size_t written_bytes = fwrite(buffer, prefix_block.cmpLength, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, length_to_write, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote CD sector prefix block (%" PRIu64 " bytes)", prefix_block.cmpLength);
@@ -1174,6 +1176,7 @@ static void write_sector_suffix(aaruformat_context *ctx)
     else
         suffix_block.cmpCrc64 = aaruf_crc64_data(buffer, suffix_block.cmpLength);
 
+    const size_t length_to_write = suffix_block.cmpLength;
     if(suffix_block.compression == Lzma) suffix_block.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write header
@@ -1182,7 +1185,7 @@ static void write_sector_suffix(aaruformat_context *ctx)
         if(suffix_block.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
 
         // Write data
-        const size_t written_bytes = fwrite(buffer, suffix_block.cmpLength, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, length_to_write, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote CD sector suffix block (%" PRIu64 " bytes)", suffix_block.cmpLength);
@@ -1302,6 +1305,7 @@ static void write_sector_prefix_ddt(aaruformat_context *ctx)
     else
         ddt_header2.cmpCrc64 = aaruf_crc64_data(buffer, (uint32_t)ddt_header2.cmpLength);
 
+    const size_t length_to_write = ddt_header2.cmpLength;
     if(ddt_header2.compression == Lzma) ddt_header2.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write header
@@ -1310,7 +1314,7 @@ static void write_sector_prefix_ddt(aaruformat_context *ctx)
         if(ddt_header2.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
 
         // Write data
-        const size_t written_bytes = fwrite(buffer, ddt_header2.cmpLength, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, length_to_write, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote sector prefix DDT v2 (%" PRIu64 " bytes)", ddt_header2.cmpLength);
@@ -1446,6 +1450,7 @@ static void write_sector_suffix_ddt(aaruformat_context *ctx)
     else
         ddt_header2.cmpCrc64 = aaruf_crc64_data(buffer, (uint32_t)ddt_header2.cmpLength);
 
+    const size_t length_to_write = ddt_header2.cmpLength;
     if(ddt_header2.compression == Lzma) ddt_header2.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write header
@@ -1454,7 +1459,7 @@ static void write_sector_suffix_ddt(aaruformat_context *ctx)
         if(ddt_header2.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
 
         // Write data
-        const size_t written_bytes = fwrite(buffer, ddt_header2.cmpLength, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, length_to_write, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote sector suffix DDT v2 (%" PRIu64 " bytes)", ddt_header2.cmpLength);
@@ -1669,6 +1674,7 @@ static void write_sector_subchannel(const aaruformat_context *ctx)
     else
         subchannel_block.cmpCrc64 = aaruf_crc64_data(buffer, subchannel_block.cmpLength);
 
+    const size_t length_to_write = subchannel_block.cmpLength;
     if(subchannel_block.compression != None) subchannel_block.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write header
@@ -1677,7 +1683,7 @@ static void write_sector_subchannel(const aaruformat_context *ctx)
         if(subchannel_block.compression != None) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
 
         // Write data
-        const size_t written_bytes = fwrite(buffer, subchannel_block.cmpLength, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, length_to_write, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote sector subchannel block (%" PRIu64 " bytes)", subchannel_block.cmpLength);
@@ -1899,6 +1905,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
     else
         id_block.cmpCrc64 = aaruf_crc64_data(buffer, id_block.cmpLength);
 
+    size_t length_to_write = id_block.cmpLength;
     if(id_block.compression == Lzma) id_block.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write header
@@ -1907,7 +1914,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         if(id_block.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
 
         // Write data
-        const size_t written_bytes = fwrite(buffer, id_block.cmpLength, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, length_to_write, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote DVD sector ID block (%" PRIu64 " bytes)", id_block.cmpLength);
@@ -1981,6 +1988,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
     else
         ied_block.cmpCrc64 = aaruf_crc64_data(buffer, ied_block.cmpLength);
 
+    length_to_write = ied_block.cmpLength;
     if(ied_block.compression == Lzma) ied_block.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write header
@@ -1989,7 +1997,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         if(ied_block.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
 
         // Write data
-        const size_t written_bytes = fwrite(buffer, ied_block.cmpLength, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, length_to_write, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote DVD sector IED block (%" PRIu64 " bytes)", ied_block.cmpLength);
@@ -2063,6 +2071,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
     else
         cpr_mai_block.cmpCrc64 = aaruf_crc64_data(buffer, cpr_mai_block.cmpLength);
 
+    length_to_write = cpr_mai_block.cmpLength;
     if(cpr_mai_block.compression == Lzma) cpr_mai_block.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write header
@@ -2071,7 +2080,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         if(cpr_mai_block.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
 
         // Write data
-        const size_t written_bytes = fwrite(buffer, cpr_mai_block.cmpLength, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, length_to_write, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote DVD sector CPR/MAI block (%" PRIu64 " bytes)", cpr_mai_block.cmpLength);
@@ -2145,6 +2154,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
     else
         edc_block.cmpCrc64 = aaruf_crc64_data(buffer, edc_block.cmpLength);
 
+    length_to_write = edc_block.cmpLength;
     if(edc_block.compression == Lzma) edc_block.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write header
@@ -2153,7 +2163,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         if(edc_block.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
 
         // Write data
-        const size_t written_bytes = fwrite(buffer, edc_block.cmpLength, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, length_to_write, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote DVD sector EDC block (%" PRIu64 " bytes)", edc_block.cmpLength);
@@ -2333,6 +2343,7 @@ static void write_dvd_title_key_decrypted_block(const aaruformat_context *ctx)
     else
         decrypted_title_key_block.cmpCrc64 = aaruf_crc64_data(buffer, decrypted_title_key_block.cmpLength);
 
+    const size_t length_to_write = decrypted_title_key_block.cmpLength;
     if(decrypted_title_key_block.compression == Lzma) decrypted_title_key_block.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write header
@@ -2342,7 +2353,7 @@ static void write_dvd_title_key_decrypted_block(const aaruformat_context *ctx)
             fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
 
         // Write data
-        const size_t written_bytes = fwrite(buffer, decrypted_title_key_block.cmpLength, 1, ctx->imageStream);
+        const size_t written_bytes = fwrite(buffer, length_to_write, 1, ctx->imageStream);
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote DVD decrypted title key block (%" PRIu64 " bytes)",
@@ -2502,6 +2513,7 @@ static void write_media_tags(const aaruformat_context *ctx)
         else
             tag_block.cmpCrc64 = aaruf_crc64_data(buffer, tag_block.cmpLength);
 
+        const size_t length_to_write = tag_block.cmpLength;
         if(tag_block.compression == Lzma) tag_block.cmpLength += LZMA_PROPERTIES_LENGTH;
 
         // Write header
@@ -2510,7 +2522,7 @@ static void write_media_tags(const aaruformat_context *ctx)
             if(tag_block.compression == Lzma)
                 fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);  // Write data
 
-            const size_t written_bytes = fwrite(buffer, tag_block.cmpLength, 1, ctx->imageStream);
+            const size_t written_bytes = fwrite(buffer, length_to_write, 1, ctx->imageStream);
             if(written_bytes == 1)
             {
                 TRACE("Successfully wrote media tag block type %d (%" PRIu64 " bytes)", tag_block.type,
