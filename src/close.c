@@ -1558,14 +1558,13 @@ static void write_sector_subchannel(const aaruformat_context *ctx)
     bool     owns_buffer                             = false;
     uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
 
-    subchannel_block.cmpLength = subchannel_block.length;
-
     if(ctx->image_info.MetadataMediaType == OpticalDisc)
     {
         subchannel_block.type   = CdSectorSubchannel;
         subchannel_block.length = (uint32_t)(ctx->user_data_ddt_header.negative + ctx->image_info.Sectors +
                                              ctx->user_data_ddt_header.overflow) *
                                   96;
+        subchannel_block.cmpLength = subchannel_block.length;
 
         if(ctx->compression_enabled)
         {
@@ -1632,6 +1631,7 @@ static void write_sector_subchannel(const aaruformat_context *ctx)
                 TRACE("Incorrect media type, not writing sector subchannel block");
                 return;  // Incorrect media type
         }
+        subchannel_block.cmpLength   = subchannel_block.length;
         subchannel_block.compression = Lzma;
 
         uint8_t *dst_buffer = malloc(subchannel_block.length);
