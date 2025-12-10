@@ -48,7 +48,10 @@ static const char *format_filetime(uint64_t filetime)
         snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute,
                  st.wSecond);
     }
-    else { snprintf(buf, sizeof(buf), "%llu", filetime); }
+    else
+    {
+        snprintf(buf, sizeof(buf), "%llu", filetime);
+    }
     return buf;
 #else
     time_t    t;
@@ -132,285 +135,272 @@ int info(const char *path)
     int32_t sequence     = 0;
     int32_t lastSequence = 0;
 
+    printf("Metadata block:\n");
     if(aaruf_get_media_sequence(ctx, &sequence, &lastSequence) == AARUF_STATUS_OK && sequence > 0)
     {
-        printf("Metadata block:\n");
         printf("\tMedia is no. %d in a set of %d media\n", sequence, lastSequence);
-
-        int32_t length = 0;
-        if(aaruf_get_creator(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    }
+    int32_t length = 0;
+    if(aaruf_get_creator(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    {
+        uint8_t *utf16Buffer = malloc(length);
+        if(utf16Buffer != NULL)
         {
-            uint8_t *utf16Buffer = malloc(length);
-            if(utf16Buffer != NULL)
+            if(aaruf_get_creator(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
             {
-                if(aaruf_get_creator(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                strBuffer = malloc(length + 1);
+                if(strBuffer != NULL)
                 {
-                    strBuffer = malloc(length + 1);
-                    if(strBuffer != NULL)
-                    {
-                        memset(strBuffer, 0, length + 1);
-                        u_error_code = U_ZERO_ERROR;
-                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
-                                     &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("\tCreator: %s\n", strBuffer);
-                        free(strBuffer);
-                    }
+                    memset(strBuffer, 0, length + 1);
+                    u_error_code = U_ZERO_ERROR;
+                    ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length, &u_error_code);
+                    if(u_error_code == U_ZERO_ERROR) printf("\tCreator: %s\n", strBuffer);
+                    free(strBuffer);
                 }
-                free(utf16Buffer);
             }
+            free(utf16Buffer);
         }
+    }
 
-        length = 0;
-        if(aaruf_get_comments(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    length = 0;
+    if(aaruf_get_comments(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    {
+        uint8_t *utf16Buffer = malloc(length);
+        if(utf16Buffer != NULL)
         {
-            uint8_t *utf16Buffer = malloc(length);
-            if(utf16Buffer != NULL)
+            if(aaruf_get_comments(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
             {
-                if(aaruf_get_comments(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                strBuffer = malloc(length + 1);
+                if(strBuffer != NULL)
                 {
-                    strBuffer = malloc(length + 1);
-                    if(strBuffer != NULL)
-                    {
-                        memset(strBuffer, 0, length + 1);
-                        u_error_code = U_ZERO_ERROR;
-                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
-                                     &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("\tComments: %s\n", strBuffer);
-                        free(strBuffer);
-                    }
+                    memset(strBuffer, 0, length + 1);
+                    u_error_code = U_ZERO_ERROR;
+                    ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length, &u_error_code);
+                    if(u_error_code == U_ZERO_ERROR) printf("\tComments: %s\n", strBuffer);
+                    free(strBuffer);
                 }
-                free(utf16Buffer);
             }
+            free(utf16Buffer);
         }
+    }
 
-        length = 0;
-        if(aaruf_get_media_title(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    length = 0;
+    if(aaruf_get_media_title(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    {
+        uint8_t *utf16Buffer = malloc(length);
+        if(utf16Buffer != NULL)
         {
-            uint8_t *utf16Buffer = malloc(length);
-            if(utf16Buffer != NULL)
+            if(aaruf_get_media_title(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
             {
-                if(aaruf_get_media_title(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                strBuffer = malloc(length + 1);
+                if(strBuffer != NULL)
                 {
-                    strBuffer = malloc(length + 1);
-                    if(strBuffer != NULL)
-                    {
-                        memset(strBuffer, 0, length + 1);
-                        u_error_code = U_ZERO_ERROR;
-                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
-                                     &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("\tMedia title: %s\n", strBuffer);
-                        free(strBuffer);
-                    }
+                    memset(strBuffer, 0, length + 1);
+                    u_error_code = U_ZERO_ERROR;
+                    ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length, &u_error_code);
+                    if(u_error_code == U_ZERO_ERROR) printf("\tMedia title: %s\n", strBuffer);
+                    free(strBuffer);
                 }
-                free(utf16Buffer);
             }
+            free(utf16Buffer);
         }
+    }
 
-        length = 0;
-        if(aaruf_get_media_manufacturer(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    length = 0;
+    if(aaruf_get_media_manufacturer(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    {
+        uint8_t *utf16Buffer = malloc(length);
+        if(utf16Buffer != NULL)
         {
-            uint8_t *utf16Buffer = malloc(length);
-            if(utf16Buffer != NULL)
+            if(aaruf_get_media_manufacturer(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
             {
-                if(aaruf_get_media_manufacturer(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                strBuffer = malloc(length + 1);
+                if(strBuffer != NULL)
                 {
-                    strBuffer = malloc(length + 1);
-                    if(strBuffer != NULL)
-                    {
-                        memset(strBuffer, 0, length + 1);
-                        u_error_code = U_ZERO_ERROR;
-                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
-                                     &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("\tMedia manufacturer: %s\n", strBuffer);
-                        free(strBuffer);
-                    }
+                    memset(strBuffer, 0, length + 1);
+                    u_error_code = U_ZERO_ERROR;
+                    ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length, &u_error_code);
+                    if(u_error_code == U_ZERO_ERROR) printf("\tMedia manufacturer: %s\n", strBuffer);
+                    free(strBuffer);
                 }
-                free(utf16Buffer);
             }
+            free(utf16Buffer);
         }
+    }
 
-        length = 0;
-        if(aaruf_get_media_model(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    length = 0;
+    if(aaruf_get_media_model(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    {
+        uint8_t *utf16Buffer = malloc(length);
+        if(utf16Buffer != NULL)
         {
-            uint8_t *utf16Buffer = malloc(length);
-            if(utf16Buffer != NULL)
+            if(aaruf_get_media_model(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
             {
-                if(aaruf_get_media_model(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                strBuffer = malloc(length + 1);
+                if(strBuffer != NULL)
                 {
-                    strBuffer = malloc(length + 1);
-                    if(strBuffer != NULL)
-                    {
-                        memset(strBuffer, 0, length + 1);
-                        u_error_code = U_ZERO_ERROR;
-                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
-                                     &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("\tMedia model: %s\n", strBuffer);
-                        free(strBuffer);
-                    }
+                    memset(strBuffer, 0, length + 1);
+                    u_error_code = U_ZERO_ERROR;
+                    ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length, &u_error_code);
+                    if(u_error_code == U_ZERO_ERROR) printf("\tMedia model: %s\n", strBuffer);
+                    free(strBuffer);
                 }
-                free(utf16Buffer);
             }
+            free(utf16Buffer);
         }
+    }
 
-        length = 0;
-        if(aaruf_get_media_serial_number(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    length = 0;
+    if(aaruf_get_media_serial_number(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    {
+        uint8_t *utf16Buffer = malloc(length);
+        if(utf16Buffer != NULL)
         {
-            uint8_t *utf16Buffer = malloc(length);
-            if(utf16Buffer != NULL)
+            if(aaruf_get_media_serial_number(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
             {
-                if(aaruf_get_media_serial_number(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                strBuffer = malloc(length + 1);
+                if(strBuffer != NULL)
                 {
-                    strBuffer = malloc(length + 1);
-                    if(strBuffer != NULL)
-                    {
-                        memset(strBuffer, 0, length + 1);
-                        u_error_code = U_ZERO_ERROR;
-                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
-                                     &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("\tMedia serial number: %s\n", strBuffer);
-                        free(strBuffer);
-                    }
+                    memset(strBuffer, 0, length + 1);
+                    u_error_code = U_ZERO_ERROR;
+                    ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length, &u_error_code);
+                    if(u_error_code == U_ZERO_ERROR) printf("\tMedia serial number: %s\n", strBuffer);
+                    free(strBuffer);
                 }
-                free(utf16Buffer);
             }
+            free(utf16Buffer);
         }
+    }
 
-        length = 0;
-        if(aaruf_get_media_barcode(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    length = 0;
+    if(aaruf_get_media_barcode(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    {
+        uint8_t *utf16Buffer = malloc(length);
+        if(utf16Buffer != NULL)
         {
-            uint8_t *utf16Buffer = malloc(length);
-            if(utf16Buffer != NULL)
+            if(aaruf_get_media_barcode(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
             {
-                if(aaruf_get_media_barcode(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                strBuffer = malloc(length + 1);
+                if(strBuffer != NULL)
                 {
-                    strBuffer = malloc(length + 1);
-                    if(strBuffer != NULL)
-                    {
-                        memset(strBuffer, 0, length + 1);
-                        u_error_code = U_ZERO_ERROR;
-                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
-                                     &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("\tMedia barcode: %s\n", strBuffer);
-                        free(strBuffer);
-                    }
+                    memset(strBuffer, 0, length + 1);
+                    u_error_code = U_ZERO_ERROR;
+                    ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length, &u_error_code);
+                    if(u_error_code == U_ZERO_ERROR) printf("\tMedia barcode: %s\n", strBuffer);
+                    free(strBuffer);
                 }
-                free(utf16Buffer);
             }
+            free(utf16Buffer);
         }
+    }
 
-        length = 0;
-        if(aaruf_get_media_part_number(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    length = 0;
+    if(aaruf_get_media_part_number(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    {
+        uint8_t *utf16Buffer = malloc(length);
+        if(utf16Buffer != NULL)
         {
-            uint8_t *utf16Buffer = malloc(length);
-            if(utf16Buffer != NULL)
+            if(aaruf_get_media_part_number(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
             {
-                if(aaruf_get_media_part_number(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                strBuffer = malloc(length + 1);
+                if(strBuffer != NULL)
                 {
-                    strBuffer = malloc(length + 1);
-                    if(strBuffer != NULL)
-                    {
-                        memset(strBuffer, 0, length + 1);
-                        u_error_code = U_ZERO_ERROR;
-                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
-                                     &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("\tMedia part number: %s\n", strBuffer);
-                        free(strBuffer);
-                    }
+                    memset(strBuffer, 0, length + 1);
+                    u_error_code = U_ZERO_ERROR;
+                    ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length, &u_error_code);
+                    if(u_error_code == U_ZERO_ERROR) printf("\tMedia part number: %s\n", strBuffer);
+                    free(strBuffer);
                 }
-                free(utf16Buffer);
             }
+            free(utf16Buffer);
         }
+    }
 
-        length = 0;
-        if(aaruf_get_drive_manufacturer(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    length = 0;
+    if(aaruf_get_drive_manufacturer(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    {
+        uint8_t *utf16Buffer = malloc(length);
+        if(utf16Buffer != NULL)
         {
-            uint8_t *utf16Buffer = malloc(length);
-            if(utf16Buffer != NULL)
+            if(aaruf_get_drive_manufacturer(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
             {
-                if(aaruf_get_drive_manufacturer(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                strBuffer = malloc(length + 1);
+                if(strBuffer != NULL)
                 {
-                    strBuffer = malloc(length + 1);
-                    if(strBuffer != NULL)
-                    {
-                        memset(strBuffer, 0, length + 1);
-                        u_error_code = U_ZERO_ERROR;
-                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
-                                     &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("\tDrive manufacturer: %s\n", strBuffer);
-                        free(strBuffer);
-                    }
+                    memset(strBuffer, 0, length + 1);
+                    u_error_code = U_ZERO_ERROR;
+                    ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length, &u_error_code);
+                    if(u_error_code == U_ZERO_ERROR) printf("\tDrive manufacturer: %s\n", strBuffer);
+                    free(strBuffer);
                 }
-                free(utf16Buffer);
             }
+            free(utf16Buffer);
         }
+    }
 
-        length = 0;
-        if(aaruf_get_drive_model(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    length = 0;
+    if(aaruf_get_drive_model(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    {
+        uint8_t *utf16Buffer = malloc(length);
+        if(utf16Buffer != NULL)
         {
-            uint8_t *utf16Buffer = malloc(length);
-            if(utf16Buffer != NULL)
+            if(aaruf_get_drive_model(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
             {
-                if(aaruf_get_drive_model(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                strBuffer = malloc(length + 1);
+                if(strBuffer != NULL)
                 {
-                    strBuffer = malloc(length + 1);
-                    if(strBuffer != NULL)
-                    {
-                        memset(strBuffer, 0, length + 1);
-                        u_error_code = U_ZERO_ERROR;
-                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
-                                     &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("\tDrive model: %s\n", strBuffer);
-                        free(strBuffer);
-                    }
+                    memset(strBuffer, 0, length + 1);
+                    u_error_code = U_ZERO_ERROR;
+                    ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length, &u_error_code);
+                    if(u_error_code == U_ZERO_ERROR) printf("\tDrive model: %s\n", strBuffer);
+                    free(strBuffer);
                 }
-                free(utf16Buffer);
             }
+            free(utf16Buffer);
         }
+    }
 
-        length = 0;
-        if(aaruf_get_drive_serial_number(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    length = 0;
+    if(aaruf_get_drive_serial_number(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    {
+        uint8_t *utf16Buffer = malloc(length);
+        if(utf16Buffer != NULL)
         {
-            uint8_t *utf16Buffer = malloc(length);
-            if(utf16Buffer != NULL)
+            if(aaruf_get_drive_serial_number(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
             {
-                if(aaruf_get_drive_serial_number(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                strBuffer = malloc(length + 1);
+                if(strBuffer != NULL)
                 {
-                    strBuffer = malloc(length + 1);
-                    if(strBuffer != NULL)
-                    {
-                        memset(strBuffer, 0, length + 1);
-                        u_error_code = U_ZERO_ERROR;
-                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
-                                     &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("\tDrive serial number: %s\n", strBuffer);
-                        free(strBuffer);
-                    }
+                    memset(strBuffer, 0, length + 1);
+                    u_error_code = U_ZERO_ERROR;
+                    ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length, &u_error_code);
+                    if(u_error_code == U_ZERO_ERROR) printf("\tDrive serial number: %s\n", strBuffer);
+                    free(strBuffer);
                 }
-                free(utf16Buffer);
             }
+            free(utf16Buffer);
         }
+    }
 
-        length = 0;
-        if(aaruf_get_drive_firmware_revision(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    length = 0;
+    if(aaruf_get_drive_firmware_revision(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL && length > 0)
+    {
+        uint8_t *utf16Buffer = malloc(length);
+        if(utf16Buffer != NULL)
         {
-            uint8_t *utf16Buffer = malloc(length);
-            if(utf16Buffer != NULL)
+            if(aaruf_get_drive_firmware_revision(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
             {
-                if(aaruf_get_drive_firmware_revision(ctx, utf16Buffer, &length) == AARUF_STATUS_OK)
+                strBuffer = malloc(length + 1);
+                if(strBuffer != NULL)
                 {
-                    strBuffer = malloc(length + 1);
-                    if(strBuffer != NULL)
-                    {
-                        memset(strBuffer, 0, length + 1);
-                        u_error_code = U_ZERO_ERROR;
-                        ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
-                                     &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("\tDrive firmware revision: %s\n", strBuffer);
-                        free(strBuffer);
-                    }
+                    memset(strBuffer, 0, length + 1);
+                    u_error_code = U_ZERO_ERROR;
+                    ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length, &u_error_code);
+                    if(u_error_code == U_ZERO_ERROR) printf("\tDrive firmware revision: %s\n", strBuffer);
+                    free(strBuffer);
                 }
-                free(utf16Buffer);
             }
+            free(utf16Buffer);
         }
     }
 
@@ -576,8 +566,7 @@ int info(const char *path)
     printf("\tImage contains %llu sectors\n", ctx->image_info.Sectors);
     printf("\tBiggest sector is %d bytes\n", ctx->image_info.SectorSize);
     printf("\tImage version: %s\n", ctx->image_info.Version);
-    if(ctx->image_info.Application != NULL)
-        printf("\tApplication: %s\n", ctx->image_info.Application);
+    if(ctx->image_info.Application != NULL) printf("\tApplication: %s\n", ctx->image_info.Application);
     if(ctx->image_info.ApplicationVersion != NULL)
         printf("\tApplication version: %s\n", ctx->image_info.ApplicationVersion);
     printf("\tCreation time: %s\n", format_filetime(ctx->image_info.CreationTime));
@@ -612,9 +601,7 @@ int info(const char *path)
     {
         printf("Media tags:\n");
         HASH_ITER(hh, ctx->mediaTags, mediaTag, tmpMediaTag)
-        {
-            printf("\tType %d is %d bytes long.\n", mediaTag->type, mediaTag->length);
-        }
+        { printf("\tType %d is %d bytes long.\n", mediaTag->type, mediaTag->length); }
     }
 
     aaruf_close(ctx);
