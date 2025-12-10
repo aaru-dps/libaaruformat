@@ -92,11 +92,14 @@ void process_metadata_block(aaruformat_context *ctx, const IndexEntry *entry)
         return;
     }
 
-    TRACE("Reading metadata block of size %u at position %" PRIu64, ctx->metadata_block_header.blockSize,
-          entry->offset + sizeof(MetadataBlockHeader));
-    read_bytes = fread(ctx->metadata_block, 1, ctx->metadata_block_header.blockSize, ctx->imageStream);
+    TRACE("Reading metadata block of size %u at position %" PRIu64,
+          ctx->metadata_block_header.blockSize + sizeof(MetadataBlockHeader), entry->offset);
 
-    if(read_bytes != ctx->metadata_block_header.blockSize)
+    fseek(ctx->imageStream, entry->offset, SEEK_SET);
+    read_bytes = fread(ctx->metadata_block, 1, ctx->metadata_block_header.blockSize + sizeof(MetadataBlockHeader),
+                       ctx->imageStream);
+
+    if(read_bytes != ctx->metadata_block_header.blockSize + sizeof(MetadataBlockHeader))
     {
         memset(&ctx->metadata_block_header, 0, sizeof(MetadataBlockHeader));
         free(ctx->metadata_block);
