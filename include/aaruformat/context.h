@@ -303,6 +303,31 @@ typedef struct aaruformat_context
     tapeFileHashEntry      *tape_files;       ///< Hash table root for tape files
     TapePartitionHashEntry *tape_partitions;  ///< Hash table root for tape partitions
     bool                    is_tape;          ///< True if the image is a tape image
+
+    /* Dirty flags (controls write behavior in close.c) */
+    bool dirty_secondary_ddt;                  ///< True if secondary DDT tables should be written during close
+    bool dirty_primary_ddt;                    ///< True if primary DDT table should be written during close
+    bool dirty_single_level_ddt;               ///< True if single-level DDT should be written during close
+    bool dirty_checksum_block;                 ///< True if checksum block should be written during close
+    bool dirty_tracks_block;                   ///< True if tracks block should be written during close
+    bool dirty_mode2_subheaders_block;         ///< True if MODE2 subheader block should be written during close
+    bool dirty_sector_prefix_block;            ///< True if sector prefix block should be written during close
+    bool dirty_sector_prefix_ddt;              ///< True if sector prefix DDT should be written during close
+    bool dirty_sector_suffix_block;            ///< True if sector suffix block should be written during close
+    bool dirty_sector_suffix_ddt;              ///< True if sector suffix DDT should be written during close
+    bool dirty_sector_subchannel_block;        ///< True if subchannel block should be written during close
+    bool dirty_dvd_long_sector_blocks;         ///< True if DVD long sector blocks should be written during close
+    bool dirty_dvd_title_key_decrypted_block;  ///< True if decrypted title key block should be written during close
+    bool dirty_media_tags;                     ///< True if media tags should be written during close
+    bool dirty_tape_ddt;                       ///< True if tape DDT should be written during close
+    bool dirty_tape_file_block;                ///< True if tape file block should be written during close
+    bool dirty_tape_partition_block;           ///< True if tape partition block should be written during close
+    bool dirty_geometry_block;                 ///< True if geometry block should be written during close
+    bool dirty_metadata_block;                 ///< True if metadata block should be written during close
+    bool dirty_dumphw_block;                   ///< True if dump hardware block should be written during close
+    bool dirty_cicm_block;                     ///< True if CICM metadata block should be written during close
+    bool dirty_json_block;                     ///< True if JSON metadata block should be written during close
+    bool dirty_index_block;                    ///< True if index block should be written during close
 } aaruformat_context;
 
 /** \struct DumpHardwareEntriesWithData

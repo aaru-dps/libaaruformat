@@ -621,7 +621,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_dumphw(void *context, uint8_t *data, siz
     size_t pos = sizeof(DumpHardwareHeader);
 
 #define COPY_STRING_FIELD(field)                                                    \
-    do {                                                                            \
+    do                                                                              \
+    {                                                                               \
         const size_t field##_length = copy[e].entry.field##Length;                  \
         if(field##_length > 0)                                                      \
         {                                                                           \
@@ -680,6 +681,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_dumphw(void *context, uint8_t *data, siz
     free_dump_hardware_entries(ctx->dump_hardware_entries_with_data, ctx->dump_hardware_header.entries);
     ctx->dump_hardware_entries_with_data = copy;
     ctx->dump_hardware_header            = header;
+    ctx->dirty_dumphw_block              = true;  // Mark dump hardware block as dirty
 
     TRACE("Exiting aaruf_set_dumphw() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;

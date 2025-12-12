@@ -225,6 +225,7 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
             new_ddt_entry.offset    = end_of_file;
 
             utarray_push_back(ctx->index_entries, &new_ddt_entry);
+            ctx->dirty_index_block = true;
             TRACE("Added new DDT index entry at offset %" PRIu64, end_of_file);
 
             // Write the updated primary table back to its original position in the file
@@ -354,6 +355,7 @@ static int32_t write_primary_ddt(aaruformat_context *ctx)
         primary_ddt_entry.offset    = ctx->primary_ddt_offset;
 
         utarray_push_back(ctx->index_entries, &primary_ddt_entry);
+        ctx->dirty_index_block = true;
         TRACE("Added primary DDT index entry at offset %" PRIu64, ctx->primary_ddt_offset);
     }
     else
@@ -502,6 +504,7 @@ static int32_t write_single_level_ddt(aaruformat_context *ctx)
         single_ddt_entry.offset    = ddt_position;
 
         utarray_push_back(ctx->index_entries, &single_ddt_entry);
+        ctx->dirty_index_block = true;
         TRACE("Added single-level DDT index entry at offset %" PRIu64, ddt_position);
     }
     else
@@ -806,6 +809,7 @@ static void write_checksum_block(aaruformat_context *ctx)
     checksum_index_entry.offset    = checksum_position;
 
     utarray_push_back(ctx->index_entries, &checksum_index_entry);
+    ctx->dirty_index_block = true;
     TRACE("Added checksum block index entry at offset %" PRIu64, checksum_position);
 }
 
@@ -854,6 +858,7 @@ static void write_tracks_block(aaruformat_context *ctx)
             tracks_index_entry.dataType  = 0;
             tracks_index_entry.offset    = tracks_position;
             utarray_push_back(ctx->index_entries, &tracks_index_entry);
+            ctx->dirty_index_block = true;
             TRACE("Added tracks block index entry at offset %" PRIu64, tracks_position);
         }
     }
@@ -959,6 +964,7 @@ static void write_mode2_subheaders_block(aaruformat_context *ctx)
             mode2_subheaders_index_entry.dataType  = CompactDiscMode2Subheader;
             mode2_subheaders_index_entry.offset    = mode2_subheaders_position;
             utarray_push_back(ctx->index_entries, &mode2_subheaders_index_entry);
+            ctx->dirty_index_block = true;
             TRACE("Added MODE 2 subheaders block index entry at offset %" PRIu64, mode2_subheaders_position);
         }
     }
@@ -1073,6 +1079,7 @@ static void write_sector_prefix(aaruformat_context *ctx)
             prefix_index_entry.dataType  = CdSectorPrefix;
             prefix_index_entry.offset    = prefix_position;
             utarray_push_back(ctx->index_entries, &prefix_index_entry);
+            ctx->dirty_index_block = true;
             TRACE("Added CD sector prefix block index entry at offset %" PRIu64, prefix_position);
         }
     }
@@ -1196,6 +1203,7 @@ static void write_sector_suffix(aaruformat_context *ctx)
             suffix_index_entry.dataType  = CdSectorSuffix;
             suffix_index_entry.offset    = suffix_position;
             utarray_push_back(ctx->index_entries, &suffix_index_entry);
+            ctx->dirty_index_block = true;
             TRACE("Added CD sector suffix block index entry at offset %" PRIu64, suffix_position);
         }
     }
@@ -1325,6 +1333,7 @@ static void write_sector_prefix_ddt(aaruformat_context *ctx)
             prefix_ddt_index_entry.dataType  = CdSectorPrefix;
             prefix_ddt_index_entry.offset    = prefix_ddt_position;
             utarray_push_back(ctx->index_entries, &prefix_ddt_index_entry);
+            ctx->dirty_index_block = true;
             TRACE("Added sector prefix DDT v2 index entry at offset %" PRIu64, prefix_ddt_position);
         }
     }
@@ -1470,6 +1479,7 @@ static void write_sector_suffix_ddt(aaruformat_context *ctx)
             suffix_ddt_index_entry.dataType  = CdSectorSuffix;
             suffix_ddt_index_entry.offset    = suffix_ddt_position;
             utarray_push_back(ctx->index_entries, &suffix_ddt_index_entry);
+            ctx->dirty_index_block = true;
             TRACE("Added sector suffix DDT v2 index entry at offset %" PRIu64, suffix_ddt_position);
         }
     }
@@ -1534,7 +1544,7 @@ static void write_sector_suffix_ddt(aaruformat_context *ctx)
  *
  * @internal
  */
-static void write_sector_subchannel(const aaruformat_context *ctx)
+static void write_sector_subchannel(aaruformat_context *ctx)
 {
     if(ctx->sector_subchannel == NULL) return;
 
@@ -1694,6 +1704,7 @@ static void write_sector_subchannel(const aaruformat_context *ctx)
             subchannel_index_entry.dataType  = subchannel_block.type;
             subchannel_index_entry.offset    = block_position;
             utarray_push_back(ctx->index_entries, &subchannel_index_entry);
+            ctx->dirty_index_block = true;
             TRACE("Added sector subchannel block index entry at offset %" PRIu64, block_position);
         }
     }
@@ -1925,6 +1936,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
             id_index_entry.dataType  = DvdSectorId;
             id_index_entry.offset    = id_position;
             utarray_push_back(ctx->index_entries, &id_index_entry);
+            ctx->dirty_index_block = true;
             TRACE("Added DVD sector ID block index entry at offset %" PRIu64, id_position);
         }
     }
@@ -2008,6 +2020,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
             ied_index_entry.dataType  = DvdSectorIed;
             ied_index_entry.offset    = ied_position;
             utarray_push_back(ctx->index_entries, &ied_index_entry);
+            ctx->dirty_index_block = true;
             TRACE("Added DVD sector IED block index entry at offset %" PRIu64, ied_position);
         }
     }
@@ -2091,6 +2104,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
             cpr_mai_index_entry.dataType  = DvdSectorCprMai;
             cpr_mai_index_entry.offset    = cpr_mai_position;
             utarray_push_back(ctx->index_entries, &cpr_mai_index_entry);
+            ctx->dirty_index_block = true;
             TRACE("Added DVD sector CPR/MAI block index entry at offset %" PRIu64, cpr_mai_position);
         }
     }
@@ -2174,6 +2188,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
             edc_index_entry.dataType  = DvdSectorEdc;
             edc_index_entry.offset    = edc_position;
             utarray_push_back(ctx->index_entries, &edc_index_entry);
+            ctx->dirty_index_block = true;
             TRACE("Added DVD sector EDC block index entry at offset %" PRIu64, edc_position);
         }
     }
@@ -2278,7 +2293,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
  *
  * @internal
  */
-static void write_dvd_title_key_decrypted_block(const aaruformat_context *ctx)
+static void write_dvd_title_key_decrypted_block(aaruformat_context *ctx)
 {
     if(ctx->sector_decrypted_title_key == NULL) return;
 
@@ -2365,6 +2380,7 @@ static void write_dvd_title_key_decrypted_block(const aaruformat_context *ctx)
             decrypted_title_key_index_entry.dataType  = DvdSectorTitleKeyDecrypted;
             decrypted_title_key_index_entry.offset    = block_position;
             utarray_push_back(ctx->index_entries, &decrypted_title_key_index_entry);
+            ctx->dirty_index_block = true;
             TRACE("Added DVD decrypted title key block index entry at offset %" PRIu64, block_position);
         }
     }
@@ -2443,7 +2459,7 @@ static void write_dvd_title_key_decrypted_block(const aaruformat_context *ctx)
  *
  * @internal
  */
-static void write_media_tags(const aaruformat_context *ctx)
+static void write_media_tags(aaruformat_context *ctx)
 {
     if(ctx->mediaTags == NULL) return;
 
@@ -2534,6 +2550,7 @@ static void write_media_tags(const aaruformat_context *ctx)
                 tag_index_entry.dataType  = tag_block.type;
                 tag_index_entry.offset    = tag_position;
                 utarray_push_back(ctx->index_entries, &tag_index_entry);
+                ctx->dirty_index_block = true;
                 TRACE("Added media tag block type %d index entry at offset %" PRIu64, tag_block.type, tag_position);
             }
         }
@@ -2704,7 +2721,7 @@ static void write_media_tags(const aaruformat_context *ctx)
  *
  * @internal
  */
-static void write_tape_file_block(const aaruformat_context *ctx)
+static void write_tape_file_block(aaruformat_context *ctx)
 {
     if(ctx->tape_files == NULL) return;
 
@@ -2761,6 +2778,7 @@ static void write_tape_file_block(const aaruformat_context *ctx)
             index_entry.dataType  = 0;
             index_entry.offset    = block_position;
             utarray_push_back(ctx->index_entries, &index_entry);
+            ctx->dirty_index_block = true;
             TRACE("Added tape file block index entry at offset %" PRIu64, block_position);
         }
     }
@@ -2936,7 +2954,7 @@ static void write_tape_file_block(const aaruformat_context *ctx)
  *
  * @internal
  */
-static void write_tape_partition_block(const aaruformat_context *ctx)
+static void write_tape_partition_block(aaruformat_context *ctx)
 {
     if(ctx->tape_partitions == NULL) return;
 
@@ -2993,6 +3011,7 @@ static void write_tape_partition_block(const aaruformat_context *ctx)
             index_entry.dataType  = 0;
             index_entry.offset    = block_position;
             utarray_push_back(ctx->index_entries, &index_entry);
+            ctx->dirty_index_block = true;
             TRACE("Added tape partition block index entry at offset %" PRIu64, block_position);
         }
     }
@@ -3061,7 +3080,7 @@ static void write_tape_partition_block(const aaruformat_context *ctx)
  * @see GeometryBlockHeader
  * @see aaruf_set_geometry() for setting geometry values before closing.
  */
-static void write_geometry_block(const aaruformat_context *ctx)
+static void write_geometry_block(aaruformat_context *ctx)
 {
     if(ctx->geometry_block.identifier != GeometryBlock) return;
 
@@ -3089,6 +3108,7 @@ static void write_geometry_block(const aaruformat_context *ctx)
         index_entry.dataType  = 0;
         index_entry.offset    = block_position;
         utarray_push_back(ctx->index_entries, &index_entry);
+        ctx->dirty_index_block = true;
         TRACE("Added geometry block index entry at offset %" PRIu64, block_position);
     }
 }
@@ -3331,6 +3351,7 @@ static void write_metadata_block(aaruformat_context *ctx)
         index_entry.dataType  = 0;
         index_entry.offset    = block_position;
         utarray_push_back(ctx->index_entries, &index_entry);
+        ctx->dirty_index_block = true;
         TRACE("Added metadata block index entry at offset %" PRIu64, block_position);
     }
 
@@ -3612,6 +3633,7 @@ static void write_dumphw_block(aaruformat_context *ctx)
         index_entry.dataType  = 0;
         index_entry.offset    = block_position;
         utarray_push_back(ctx->index_entries, &index_entry);
+        ctx->dirty_index_block = true;
         TRACE("Added dump hardware block index entry at offset %" PRIu64, block_position);
     }
 
@@ -3712,7 +3734,7 @@ static void write_dumphw_block(aaruformat_context *ctx)
  *
  * @internal
  */
-static void write_cicm_block(const aaruformat_context *ctx)
+static void write_cicm_block(aaruformat_context *ctx)
 {
     if(ctx->cicm_block == NULL || ctx->cicm_block_header.length == 0 || ctx->cicm_block_header.identifier != CicmBlock)
         return;
@@ -3741,6 +3763,7 @@ static void write_cicm_block(const aaruformat_context *ctx)
             index_entry.dataType  = 0;
             index_entry.offset    = block_position;
             utarray_push_back(ctx->index_entries, &index_entry);
+            ctx->dirty_index_block = true;
             TRACE("Added CICM XML block index entry at offset %" PRIu64, block_position);
         }
 }
@@ -3849,7 +3872,7 @@ static void write_cicm_block(const aaruformat_context *ctx)
  *
  * @internal
  */
-static void write_aaru_json_block(const aaruformat_context *ctx)
+static void write_aaru_json_block(aaruformat_context *ctx)
 {
     if(ctx->json_block == NULL || ctx->json_block_header.length == 0 ||
        ctx->json_block_header.identifier != AaruMetadataJsonBlock)
@@ -3879,6 +3902,7 @@ static void write_aaru_json_block(const aaruformat_context *ctx)
             index_entry.dataType  = 0;
             index_entry.offset    = block_position;
             utarray_push_back(ctx->index_entries, &index_entry);
+            ctx->dirty_index_block = true;
             TRACE("Added Aaru metadata JSON block index entry at offset %" PRIu64, block_position);
         }
 }
@@ -4086,81 +4110,96 @@ AARU_EXPORT int AARU_CALL aaruf_close(void *context)
         if(ctx->is_tape)
         {
             // Write tape DDT
-            res = write_tape_ddt(ctx);
-            if(res != AARUF_STATUS_OK) return res;
+            if(ctx->dirty_tape_ddt)
+            {
+                res = write_tape_ddt(ctx);
+                if(res != AARUF_STATUS_OK) return res;
+            }
         }
         else
         {
             // Write cached secondary DDT table if any
-            res = write_cached_secondary_ddt(ctx);
-            if(res != AARUF_STATUS_OK) return res;
+            if(ctx->dirty_secondary_ddt)
+            {
+                res = write_cached_secondary_ddt(ctx);
+                if(res != AARUF_STATUS_OK) return res;
+            }
 
             // Write primary DDT table (multi-level) if applicable
-            res = write_primary_ddt(ctx);
-            if(res != AARUF_STATUS_OK) return res;
+            if(ctx->dirty_primary_ddt)
+            {
+                res = write_primary_ddt(ctx);
+                if(res != AARUF_STATUS_OK) return res;
+            }
 
             // Write single-level DDT table if applicable
-            res = write_single_level_ddt(ctx);
-            if(res != AARUF_STATUS_OK) return res;
+            if(ctx->dirty_single_level_ddt)
+            {
+                res = write_single_level_ddt(ctx);
+                if(res != AARUF_STATUS_OK) return res;
+            }
         }
 
         // Finalize checksums and write checksum block
-        write_checksum_block(ctx);
+        if(ctx->dirty_checksum_block) write_checksum_block(ctx);
 
         // Write tracks block
-        write_tracks_block(ctx);
+        if(ctx->dirty_tracks_block) write_tracks_block(ctx);
 
         // Write MODE 2 subheader data block
-        write_mode2_subheaders_block(ctx);
+        if(ctx->dirty_mode2_subheaders_block) write_mode2_subheaders_block(ctx);
 
         // Write CD sector prefix data block
-        write_sector_prefix(ctx);
+        if(ctx->dirty_sector_prefix_block) write_sector_prefix(ctx);
 
         // Write sector prefix DDT (statuses + optional indexes)
-        write_sector_prefix_ddt(ctx);
+        if(ctx->dirty_sector_prefix_ddt) write_sector_prefix_ddt(ctx);
 
         // Write CD sector suffix data block (EDC/ECC captures)
-        write_sector_suffix(ctx);
+        if(ctx->dirty_sector_suffix_block) write_sector_suffix(ctx);
 
         // Write sector prefix DDT (EDC/ECC captures)
-        write_sector_suffix_ddt(ctx);
+        if(ctx->dirty_sector_suffix_ddt) write_sector_suffix_ddt(ctx);
 
         // Write sector subchannel data block
-        write_sector_subchannel(ctx);
+        if(ctx->dirty_sector_subchannel_block) write_sector_subchannel(ctx);
 
         // Write DVD long sector data blocks
-        write_dvd_long_sector_blocks(ctx);
+        if(ctx->dirty_dvd_long_sector_blocks) write_dvd_long_sector_blocks(ctx);
 
         // Write DVD decrypted title keys
-        write_dvd_title_key_decrypted_block(ctx);
+        if(ctx->dirty_dvd_title_key_decrypted_block) write_dvd_title_key_decrypted_block(ctx);
 
         // Write media tags data blocks
-        write_media_tags(ctx);
+        if(ctx->dirty_media_tags) write_media_tags(ctx);
 
         // Write tape files
-        write_tape_file_block(ctx);
+        if(ctx->dirty_tape_file_block) write_tape_file_block(ctx);
 
         // Write tape partitions
-        write_tape_partition_block(ctx);
+        if(ctx->dirty_tape_partition_block) write_tape_partition_block(ctx);
 
         // Write geometry block if any
-        write_geometry_block(ctx);
+        if(ctx->dirty_geometry_block) write_geometry_block(ctx);
 
         // Write metadata block
-        write_metadata_block(ctx);
+        if(ctx->dirty_metadata_block) write_metadata_block(ctx);
 
         // Write dump hardware block if any
-        write_dumphw_block(ctx);
+        if(ctx->dirty_dumphw_block) write_dumphw_block(ctx);
 
         // Write CICM XML block if any
-        write_cicm_block(ctx);
+        if(ctx->dirty_cicm_block) write_cicm_block(ctx);
 
         // Write Aaru metadata JSON block if any
-        write_aaru_json_block(ctx);
+        if(ctx->dirty_json_block) write_aaru_json_block(ctx);
 
         // Write the complete index at the end of the file
-        res = write_index_block(ctx);
-        if(res != AARUF_STATUS_OK) return res;
+        if(ctx->dirty_index_block)
+        {
+            res = write_index_block(ctx);
+            if(res != AARUF_STATUS_OK) return res;
+        }
 
         if(ctx->deduplicate && ctx->sector_hash_map != NULL)
         {

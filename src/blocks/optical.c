@@ -452,6 +452,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_tracks(void *context, TrackEntry *tracks
 
     ctx->image_info.HasPartitions = true;
     ctx->image_info.HasSessions   = true;
+    ctx->dirty_tracks_block       = true;  // Mark tracks block as dirty
 
     free(ctx->data_tracks);
     ctx->data_tracks = NULL;

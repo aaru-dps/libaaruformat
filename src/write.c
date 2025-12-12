@@ -189,6 +189,12 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
     if(ctx->calculating_blake3 && !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long)
         blake3_hasher_update(ctx->blake3_context, data, length);
 
+    // Mark checksum block as dirty if any checksums are being calculated
+    if((ctx->calculating_md5 || ctx->calculating_sha1 || ctx->calculating_sha256 || ctx->calculating_spamsum ||
+        ctx->calculating_blake3) &&
+       !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long)
+        ctx->dirty_checksum_block = true;
+
     // Close current block first
     if(ctx->writing_buffer != NULL &&
        // When sector size changes or block reaches maximum size
@@ -303,7 +309,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
                 ctx->current_block_header.compression = None;
         }
 
-        uint32_t max_buffer_size = (1 << ctx->user_data_ddt_header.dataShift) * ctx->current_block_header.sectorSize * 2;
+        uint32_t max_buffer_size =
+            (1 << ctx->user_data_ddt_header.dataShift) * ctx->current_block_header.sectorSize * 2;
         TRACE("Setting max buffer size to %u bytes", max_buffer_size);
 
         TRACE("Allocating memory for writing buffer");
@@ -772,6 +779,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                     {
                         ctx->sector_prefix_ddt2[corrected_sector_address] = SectorStatusNotDumped;
                         ctx->sector_suffix_ddt2[corrected_sector_address] = SectorStatusNotDumped;
+                        ctx->dirty_sector_prefix_ddt                      = true;  // Mark prefix DDT as dirty
+                        ctx->dirty_sector_suffix_ddt                      = true;  // Mark suffix DDT as dirty
                         return aaruf_write_sector(context, sector_address, negative, data + 16, SectorStatusNotDumped,
                                                   2048);
                     }
@@ -802,6 +811,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                         ctx->sector_prefix_ddt2[corrected_sector_address] = (uint64_t)(ctx->sector_prefix_offset / 16);
                         ctx->sector_prefix_ddt2[corrected_sector_address] |= (uint64_t)SectorStatusErrored << 60;
                         ctx->sector_prefix_offset += 16;
+                        ctx->dirty_sector_prefix_block = true;  // Mark prefix block as dirty
 
                         // Grow prefix buffer if needed
                         if(ctx->sector_prefix_offset >= ctx->sector_prefix_length)
@@ -818,6 +828,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                             }
                         }
                     }
+                    ctx->dirty_sector_prefix_ddt = true;  // Mark prefix DDT as dirty
 
                     const bool suffix_correct = aaruf_ecc_cd_is_suffix_correct(ctx->ecc_cd_context, data);
 
@@ -830,6 +841,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                         ctx->sector_suffix_ddt2[corrected_sector_address] = (uint64_t)(ctx->sector_suffix_offset / 288);
                         ctx->sector_suffix_ddt2[corrected_sector_address] |= (uint64_t)SectorStatusErrored << 60;
                         ctx->sector_suffix_offset += 288;
+                        ctx->dirty_sector_suffix_block = true;  // Mark suffix block as dirty
 
                         // Grow suffix buffer if needed
                         if(ctx->sector_suffix_offset >= ctx->sector_suffix_length)
@@ -846,6 +858,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                             }
                         }
                     }
+                    ctx->dirty_sector_suffix_ddt = true;  // Mark suffix DDT as dirty
 
                     return aaruf_write_sector(context, sector_address, negative, data + 16, SectorStatusMode1Correct,
                                               2048);
@@ -961,6 +974,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                         ctx->sector_prefix_ddt2[corrected_sector_address] = (uint32_t)(ctx->sector_prefix_offset / 16);
                         ctx->sector_prefix_ddt2[corrected_sector_address] |= (uint64_t)SectorStatusErrored << 60;
                         ctx->sector_prefix_offset += 16;
+                        ctx->dirty_sector_prefix_block = true;  // Mark prefix block as dirty
 
                         // Grow prefix buffer if needed
                         if(ctx->sector_prefix_offset >= ctx->sector_prefix_length)
@@ -977,6 +991,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                             }
                         }
                     }
+                    ctx->dirty_sector_prefix_ddt = true;  // Mark prefix DDT as dirty
 
                     if(ctx->mode2_subheaders == NULL)
                     {
@@ -1014,6 +1029,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                                 (uint64_t)(ctx->sector_suffix_offset / 288);
                             ctx->sector_suffix_ddt2[corrected_sector_address] |= (uint64_t)SectorStatusErrored << 60;
                             ctx->sector_suffix_offset += 288;
+                            ctx->dirty_sector_suffix_block = true;  // Mark suffix block as dirty
 
                             // Grow suffix buffer if needed
                             if(ctx->sector_suffix_offset >= ctx->sector_suffix_length)
@@ -1033,6 +1049,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
 
                         // Copy subheader from data buffer to subheader buffer
                         memcpy(ctx->mode2_subheaders + corrected_sector_address * 8, data + 0x10, 8);
+                        ctx->dirty_sector_prefix_ddt      = true;
+                        ctx->dirty_sector_suffix_ddt      = true;
+                        ctx->dirty_mode2_subheaders_block = true;
                         return aaruf_write_sector(context, sector_address, negative, data + 24,
                                                   edc == 0      ? SectorStatusMode2Form2NoCrc
                                                   : correct_edc ? SectorStatusMode2Form2Ok
@@ -1055,6 +1074,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                         ctx->sector_suffix_ddt2[corrected_sector_address] = (uint64_t)(ctx->sector_suffix_offset / 288);
                         ctx->sector_suffix_ddt2[corrected_sector_address] |= (uint64_t)SectorStatusErrored << 60;
                         ctx->sector_suffix_offset += 288;
+                        ctx->dirty_sector_suffix_block = true;  // Mark suffix block as dirty
 
                         // Grow suffix buffer if needed
                         if(ctx->sector_suffix_offset >= ctx->sector_suffix_length)
@@ -1074,6 +1094,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
 
                     // Copy subheader from data buffer to subheader buffer
                     memcpy(ctx->mode2_subheaders + corrected_sector_address * 8, data + 0x10, 8);
+                    ctx->dirty_sector_prefix_ddt      = true;
+                    ctx->dirty_sector_suffix_ddt      = true;
+                    ctx->dirty_mode2_subheaders_block = true;
                     return aaruf_write_sector(
                         context, sector_address, negative, data + 24,
                         correct_edc && correct_ecc ? SectorStatusMode2Form1Ok : SectorStatusErrored, 2048);
@@ -1202,6 +1225,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                     }
 
                     memcpy(ctx->sector_subchannel + sector_address * newTagSize, newTag, newTagSize);
+                    ctx->dirty_sector_subchannel_block = true;  // Mark subchannel block as dirty
                     free(newTag);
 
                     return aaruf_write_sector(context, sector_address, negative, data, sector_status, 512);
@@ -1498,6 +1522,7 @@ int32_t aaruf_close_current_block(aaruformat_context *ctx)
     index_entry.offset    = ctx->next_block_position;
 
     utarray_push_back(ctx->index_entries, &index_entry);
+    ctx->dirty_index_block = true;  // Mark index block as dirty
     TRACE("Block added to index at offset %" PRIu64, index_entry.offset);
 
     // Write block header to file
@@ -1872,6 +1897,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_media_tag(void *context, const uint8_t
         old_media_tag = NULL;
     }
 
+    ctx->dirty_media_tags = true;  // Mark media tags as dirty
     TRACE("Exiting aaruf_write_media_tag() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
 }
@@ -2155,6 +2181,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
                 if(sector_address >= ctx->track_entries[i].start && sector_address <= ctx->track_entries[i].end)
                 {
                     ctx->track_entries[i].flags = data[0];
+                    ctx->dirty_tracks_block     = true;  // Mark tracks block as dirty
                     TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
                     return AARUF_STATUS_OK;
                 }
@@ -2180,6 +2207,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
                 if(sector_address >= ctx->track_entries[i].start && sector_address <= ctx->track_entries[i].end)
                 {
                     memcpy(ctx->track_entries[i].isrc, data, 12);
+                    ctx->dirty_tracks_block = true;  // Mark tracks block as dirty
                     TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
                     return AARUF_STATUS_OK;
                 }
@@ -2212,6 +2240,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             }
 
             memcpy(ctx->sector_subchannel + corrected_sector_address * 96, data, 96);
+            ctx->dirty_sector_subchannel_block = true;  // Mark subchannel block as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdCmi:
@@ -2240,6 +2269,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             }
 
             memcpy(ctx->sector_cpr_mai + corrected_sector_address * 6, data, 1);
+            ctx->dirty_dvd_long_sector_blocks = true;  // Mark DVD long sector blocks as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdSectorInformation:
@@ -2296,6 +2326,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             }
 
             memcpy(ctx->sector_id + corrected_sector_address * 4 + 1, data, 3);
+            ctx->dirty_dvd_long_sector_blocks = true;  // Mark DVD long sector blocks as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdSectorIedAaru:
@@ -2324,6 +2355,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             }
 
             memcpy(ctx->sector_ied + corrected_sector_address * 2, data, 2);
+            ctx->dirty_dvd_long_sector_blocks = true;  // Mark DVD long sector blocks as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdSectorEdcAaru:
@@ -2352,6 +2384,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             }
 
             memcpy(ctx->sector_edc + corrected_sector_address * 4, data, 4);
+            ctx->dirty_dvd_long_sector_blocks = true;  // Mark DVD long sector blocks as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case DvdTitleKeyDecrypted:
@@ -2380,6 +2413,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             }
 
             memcpy(ctx->sector_decrypted_title_key + corrected_sector_address * 5, data, 5);
+            ctx->dirty_dvd_title_key_decrypted_block = true;  // Mark title key block as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case AppleSonyTagAaru:
@@ -2408,6 +2442,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             }
 
             memcpy(ctx->sector_subchannel + corrected_sector_address * 12, data, 12);
+            ctx->dirty_sector_subchannel_block = true;  // Mark subchannel block as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case AppleProfileTagAaru:
@@ -2436,6 +2471,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             }
 
             memcpy(ctx->sector_subchannel + corrected_sector_address * 20, data, 20);
+            ctx->dirty_sector_subchannel_block = true;  // Mark subchannel block as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case PriamDataTowerTagAaru:
@@ -2464,6 +2500,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             }
 
             memcpy(ctx->sector_subchannel + corrected_sector_address * 24, data, 24);
+            ctx->dirty_sector_subchannel_block = true;  // Mark subchannel block as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         default:

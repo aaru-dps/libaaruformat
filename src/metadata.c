@@ -269,6 +269,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_geometry(void *context, const uint32_t c
     ctx->cylinders                      = cylinders;
     ctx->heads                          = heads;
     ctx->sectors_per_track              = sectors_per_track;
+    ctx->dirty_geometry_block           = true;  // Mark geometry block as dirty
 
     TRACE("Exiting aaruf_set_geometry(%p, %u, %u, %u) = AARUF_STATUS_OK", context, cylinders, heads, sectors_per_track);
     return AARUF_STATUS_OK;
@@ -768,6 +769,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_media_title(void *context, const uint8_t
     if(ctx->media_title != NULL) free(ctx->media_title);
     ctx->media_title                            = copy;
     ctx->metadata_block_header.mediaTitleLength = length;
+    ctx->dirty_metadata_block                   = true;  // Mark metadata block as dirty
 
     TRACE("Exiting aaruf_set_media_title(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
     return AARUF_STATUS_OK;
@@ -2305,6 +2307,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_aaru_json_metadata(void *context, uint8_
     ctx->json_block                   = copy;
     ctx->json_block_header.identifier = AaruMetadataJsonBlock;
     ctx->json_block_header.length     = (uint32_t)length;
+    ctx->dirty_json_block             = true;  // Mark JSON block as dirty
 
     TRACE("Exiting aaruf_set_aaru_json_metadata(%p, %p, %d) = AARUF_STATUS_OK", context, data, length);
     return AARUF_STATUS_OK;

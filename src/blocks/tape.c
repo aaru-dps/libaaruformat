@@ -208,6 +208,7 @@ void process_tape_files_block(aaruformat_context *ctx, const IndexEntry *entry)
         // Replace if exists, add if new
         tapeFileHashEntry *old_entry = NULL;
         HASH_REPLACE(hh, ctx->tape_files, key, sizeof(uint64_t), hash_entry, old_entry);
+        ctx->dirty_tape_file_block = true;  // Mark tape file block as dirty
 
         // Free old entry if it was replaced
         if(old_entry != NULL)
@@ -428,6 +429,7 @@ void process_tape_partitions_block(aaruformat_context *ctx, const IndexEntry *en
         // Replace if exists, add if new
         TapePartitionHashEntry *old_entry = NULL;
         HASH_REPLACE(hh, ctx->tape_partitions, key, sizeof(uint8_t), hash_entry, old_entry);
+        ctx->dirty_tape_partition_block = true;  // Mark tape partition block as dirty
 
         // Free old entry if it was replaced
         if(old_entry != NULL)
@@ -825,6 +827,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_tape_file(void *context, const uint8_t p
     // Replace if exists, add if new
     tapeFileHashEntry *old_entry = NULL;
     HASH_REPLACE(hh, ctx->tape_files, key, sizeof(uint64_t), hash_entry, old_entry);
+    ctx->dirty_tape_file_block = true;  // Mark tape file block as dirty
 
     // Free old entry if it was replaced
     if(old_entry != NULL)
@@ -1249,6 +1252,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_tape_partition(void *context, const uint
     // Replace if exists, add if new
     TapePartitionHashEntry *old_entry = NULL;
     HASH_REPLACE(hh, ctx->tape_partitions, key, sizeof(uint8_t), hash_entry, old_entry);
+    ctx->dirty_tape_partition_block = true;  // Mark tape partition block as dirty
 
     // Free old entry if it was replaced
     if(old_entry != NULL)

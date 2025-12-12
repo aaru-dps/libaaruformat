@@ -562,6 +562,31 @@ AARU_EXPORT void AARU_CALL *aaruf_create(const char *filepath, const uint32_t me
     // Is writing
     ctx->is_writing = true;
 
+    // Initialize dirty flags - all true by default for new images
+    ctx->dirty_secondary_ddt                 = true;
+    ctx->dirty_primary_ddt                   = true;
+    ctx->dirty_single_level_ddt              = true;
+    ctx->dirty_checksum_block                = true;
+    ctx->dirty_tracks_block                  = true;
+    ctx->dirty_mode2_subheaders_block        = true;
+    ctx->dirty_sector_prefix_block           = true;
+    ctx->dirty_sector_prefix_ddt             = true;
+    ctx->dirty_sector_suffix_block           = true;
+    ctx->dirty_sector_suffix_ddt             = true;
+    ctx->dirty_sector_subchannel_block       = true;
+    ctx->dirty_dvd_long_sector_blocks        = true;
+    ctx->dirty_dvd_title_key_decrypted_block = true;
+    ctx->dirty_media_tags                    = true;
+    ctx->dirty_tape_ddt                      = true;
+    ctx->dirty_tape_file_block               = true;
+    ctx->dirty_tape_partition_block          = true;
+    ctx->dirty_geometry_block                = true;
+    ctx->dirty_metadata_block                = true;
+    ctx->dirty_dumphw_block                  = true;
+    ctx->dirty_cicm_block                    = true;
+    ctx->dirty_json_block                    = true;
+    ctx->dirty_index_block                   = true;
+
     TRACE("Exiting aaruf_create() = %p", ctx);
     // Return context
     return ctx;

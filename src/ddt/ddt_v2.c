@@ -985,8 +985,9 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
  * @return Returns one of the following status codes:
  * @retval true if the entry was set successfully, false otherwise.
  */
-bool set_ddt_entry_v2(aaruformat_context *ctx, const uint64_t sector_address, const bool negative, const uint64_t offset,
-                      const uint64_t block_offset, const uint8_t sector_status, uint64_t *ddt_entry)
+bool set_ddt_entry_v2(aaruformat_context *ctx, const uint64_t sector_address, const bool negative,
+                      const uint64_t offset, const uint64_t block_offset, const uint8_t sector_status,
+                      uint64_t *ddt_entry)
 {
     TRACE("Entering set_ddt_entry_v2(%p, %" PRIu64 ", %d, %llu, %llu, %d)", ctx, sector_address, negative, offset,
           block_offset, sector_status);
@@ -1070,6 +1071,7 @@ bool set_ddt_single_level_v2(aaruformat_context *ctx, uint64_t sector_address, c
 
     TRACE("Setting big single-level DDT entry %d to %ull", sector_address, (uint64_t)*ddt_entry);
     ctx->user_data_ddt2[sector_address] = *ddt_entry;
+    ctx->dirty_single_level_ddt         = true;  // Mark single-level DDT as dirty
 
     TRACE("Exiting set_ddt_single_level_v2() = true");
     return true;
@@ -1165,6 +1167,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
         TRACE("Setting small secondary DDT entry %d to %ull", sector_address % items_per_ddt_entry,
               (uint64_t)*ddt_entry);
         ctx->cached_secondary_ddt2[sector_address % items_per_ddt_entry] = *ddt_entry;
+        ctx->dirty_secondary_ddt                                         = true;  // Mark secondary DDT as dirty
 
         TRACE("Updated cached secondary DDT entry at position %" PRIu64, sector_address % items_per_ddt_entry);
         TRACE("Exiting set_ddt_multi_level_v2() = true");
@@ -1304,12 +1307,14 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             new_ddt_entry.offset    = end_of_file;
 
             utarray_push_back(ctx->index_entries, &new_ddt_entry);
+            ctx->dirty_index_block = true;
             TRACE("Added new DDT index entry for never-written table at offset %" PRIu64, end_of_file);
 
             // Update the primary level table entry to point to the new location of the secondary table
             uint64_t new_secondary_table_block_offset = end_of_file >> ctx->user_data_ddt_header.blockAlignmentShift;
 
             ctx->user_data_ddt2[ctx->cached_ddt_position] = new_secondary_table_block_offset;
+            ctx->dirty_primary_ddt                        = true;  // Mark primary DDT as dirty
 
             // Write the updated primary table back to its original position in the file
             long saved_pos = ftell(ctx->imageStream);
@@ -1501,6 +1506,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
         new_ddt_entry.offset    = end_of_file;
 
         utarray_push_back(ctx->index_entries, &new_ddt_entry);
+        ctx->dirty_index_block = true;
         TRACE("Added new DDT index entry at offset %" PRIu64, end_of_file);
 
         // Step 4: Update the primary level table entry and flush it back to file
@@ -1510,6 +1516,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
         // Use ddtPosition which was calculated from sectorAddress, not cachedDdtOffset
 
         ctx->user_data_ddt2[ddt_position] = new_secondary_table_block_offset;
+        ctx->dirty_primary_ddt            = true;  // Mark primary DDT as dirty
 
         // Write the updated primary table back to its original position in the file
         long saved_pos = ftell(ctx->imageStream);
@@ -1649,6 +1656,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
 
     TRACE("Setting big secondary DDT entry %d to %ull", sector_address % items_per_ddt_entry, (uint64_t)*ddt_entry);
     ctx->cached_secondary_ddt2[sector_address % items_per_ddt_entry] = *ddt_entry;
+    ctx->dirty_secondary_ddt                                         = true;
 
     TRACE("Updated secondary DDT entry at position %" PRIu64, sector_address % items_per_ddt_entry);
     TRACE("Exiting set_ddt_multi_level_v2() = true");
@@ -1826,6 +1834,7 @@ bool set_ddt_tape(aaruformat_context *ctx, uint64_t sector_address, const uint64
 
     // Insert entry into tape DDT
     HASH_REPLACE(hh, ctx->tape_ddt, key, sizeof(uint64_t), new_entry, old_entry);
+    ctx->dirty_tape_ddt = true;  // Mark tape DDT as dirty
     if(old_entry) free(old_entry);
 
     TRACE("Exiting set_ddt_tape() = true");
