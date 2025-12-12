@@ -1,25 +1,6 @@
 var searchData=
 [
-  ['ld_0',['LD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa24a5a956f8abcaacbde751c49c7d5001',1,'aaru.h']]],
-  ['ldrom_1',['LDROM',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaaeb95cfb92ff05358a9b84a7413566c5',1,'aaru.h']]],
-  ['ldrom2_2',['LDROM2',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaf4798e7a7578b9ecbdb4f952e807c3e8',1,'aaru.h']]],
-  ['linearmedia_3',['LinearMedia',['../enums_8h.html#abaa37b51ab0a4cc3d5d1a0b4820c8466ad7ed6261e5a619889a8d6d8e686e4d29',1,'enums.h']]],
-  ['ls120_4',['LS120',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aafd74db0cd680a761348cb49343cada8c',1,'aaru.h']]],
-  ['ls240_5',['LS240',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaa63e8439ae8da0a01357f01ab3b55387',1,'aaru.h']]],
-  ['lt1_6',['LT1',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaec1cb4509dde5be8e137d163ac77f0ec',1,'aaru.h']]],
-  ['lto_7',['LTO',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa6aabc225213d7e700b757f0276834e59',1,'aaru.h']]],
-  ['lto2_8',['LTO2',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa6f2bfeadc066b63b7a837e221ab170aa',1,'aaru.h']]],
-  ['lto3_9',['LTO3',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaf3c7d7240021f5a138dff359af5f8bed',1,'aaru.h']]],
-  ['lto3worm_10',['LTO3WORM',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa351aa3972af28aaf9b0d2cab1ce3c9b7',1,'aaru.h']]],
-  ['lto4_11',['LTO4',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aac2f94ffbe0b397608d59dd5196c4424f',1,'aaru.h']]],
-  ['lto4worm_12',['LTO4WORM',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa1e20a868404f401a0bb27664a493cacc',1,'aaru.h']]],
-  ['lto5_13',['LTO5',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa96d7163098b2f36a824abfc66f0cfc45',1,'aaru.h']]],
-  ['lto5worm_14',['LTO5WORM',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa8e9a0113a8ee17cc4edb8152db7fc008',1,'aaru.h']]],
-  ['lto6_15',['LTO6',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa42ce3d986ca7507ab314c7824d371206',1,'aaru.h']]],
-  ['lto6worm_16',['LTO6WORM',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa5e301457517e12fe8832c90eb9c053fc',1,'aaru.h']]],
-  ['lto7_17',['LTO7',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aab0a82fc1dd86af5c361d7c549b001f6b',1,'aaru.h']]],
-  ['lto7worm_18',['LTO7WORM',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa7d3400fe55bbbb17b6ec7612a7092453',1,'aaru.h']]],
-  ['lvrom_19',['LVROM',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aadcf43ad5c010a9983baca9265c7cc4ae',1,'aaru.h']]],
-  ['lzma_20',['Lzma',['../enums_8h.html#affec749ed88365143745313ae9168263a002db7938c70152bf9af1797cb87c32f',1,'enums.h']]],
-  ['lzmaclauniasubchanneltransform_21',['LzmaClauniaSubchannelTransform',['../enums_8h.html#affec749ed88365143745313ae9168263ab6147cfb5a7f96c11a4e4aafd9cc8ce0',1,'enums.h']]]
+  ['kodakverbatim12_0',['KodakVerbatim12',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa8b0ef0cc3f1e1eee7a1094ca26ec9809',1,'aaru.h']]],
+  ['kodakverbatim3_1',['KodakVerbatim3',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aabe1baf0e1645ed6288a3f05688264238',1,'aaru.h']]],
+  ['kodakverbatim6_2',['KodakVerbatim6',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa6d5b4c138431f22c561025f38393ef1b',1,'aaru.h']]]
 ];

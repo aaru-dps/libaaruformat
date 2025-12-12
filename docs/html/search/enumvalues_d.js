@@ -1,6 +1,23 @@
 var searchData=
 [
-  ['opticaldisc_0',['OpticalDisc',['../enums_8h.html#abaa37b51ab0a4cc3d5d1a0b4820c8466aaf46f69508c3a90e5588c71f410a7f12',1,'enums.h']]],
-  ['orb_1',['Orb',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa50682a652359e42ba7cd14ccbff91fc5',1,'aaru.h']]],
-  ['orb5_2',['Orb5',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa401ebddb57c769497832259b49907a66',1,'aaru.h']]]
+  ['n64dd_0',['N64DD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aae04a5d4c84dbdb402b1fb2ca81706dd4',1,'aaru.h']]],
+  ['n64gamepak_1',['N64GamePak',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa7b1b823420a55f6c243db8be1d09a74c',1,'aaru.h']]],
+  ['nec_5f35_5fhd_5f15_2',['NEC_35_HD_15',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa16792ebd5fa617354ca314746163053b',1,'aaru.h']]],
+  ['nec_5f35_5fhd_5f8_3',['NEC_35_HD_8',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa13d2bbca1f3dff0af02f428d2b8f8c86',1,'aaru.h']]],
+  ['nec_5f35_5ftd_4',['NEC_35_TD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa529b682990d62f58e66b719b00e43b0a',1,'aaru.h']]],
+  ['nec_5f525_5fds_5',['NEC_525_DS',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaebb002437c463903e73779aa24e512a4',1,'aaru.h']]],
+  ['nec_5f525_5fhd_6',['NEC_525_HD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa018f18706ace2392d77dd8312a3d5ce9',1,'aaru.h']]],
+  ['nec_5f525_5fss_7',['NEC_525_SS',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa64629ce0276e0945b44e358eb403b590',1,'aaru.h']]],
+  ['nec_5f8_5fdd_8',['NEC_8_DD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa5a79f25c38d19b0719508573302f38f7',1,'aaru.h']]],
+  ['nec_5f8_5fsd_9',['NEC_8_SD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aafbc409413b4cc2bb573880f78ec5b707',1,'aaru.h']]],
+  ['neogeocd_10',['NeoGeoCD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa4a70111c4d3c373a1997911bf718dddc',1,'aaru.h']]],
+  ['nesgamepak_11',['NESGamePak',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aafb8177a285680259bc8c3b2b53a0d984',1,'aaru.h']]],
+  ['nintendo3dsgamecard_12',['Nintendo3DSGameCard',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aab61f89abbda06c12237c7a4728f6321f',1,'aaru.h']]],
+  ['nintendodiskcard_13',['NintendoDiskCard',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aab7736e1bdc9cb153900086bba46c3e06',1,'aaru.h']]],
+  ['nintendodsgamecard_14',['NintendoDSGameCard',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa3d2a7b0cb27faa50e558f5dfcc4c52d5',1,'aaru.h']]],
+  ['nintendodsigamecard_15',['NintendoDSiGameCard',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaab027fb2aa926f3ca765562d1fd09696',1,'aaru.h']]],
+  ['nodata_16',['NoData',['../enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a7f6b1dc06a7ab741e7f56df8050b05b6',1,'enums.h']]],
+  ['none_17',['None',['../enums_8h.html#affec749ed88365143745313ae9168263ac9d3e887722f2bc482bcca9d41c512af',1,'enums.h']]],
+  ['notdumped_18',['NotDumped',['../enums_8h.html#ab72dc399e3946b3c40a5ad8c8e3254b7ab3fac5cd103786d64f7ee67bcb9ac458',1,'enums.h']]],
+  ['nuon_19',['Nuon',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aad730786bd592903cc42ad7f5a5847171',1,'aaru.h']]]
 ];

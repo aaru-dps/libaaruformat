@@ -242,7 +242,7 @@ Functions</h2></td></tr>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -293,7 +293,7 @@ After clearing, the comments are permanently lost unless:<ul>
 </dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="#ad24b15e067720825c47610e9477bfc2a" title="Sets user comments or notes for the image.">aaruf_set_comments()</a> for setting comment information. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04003">4003</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04006">4006</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="context_8h_source.html#l00218">aaruformat_context::comments</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -342,7 +342,7 @@ After clearing, the comments are permanently lost unless:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -400,7 +400,7 @@ Clearing creator may affect:<ul>
 </dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="#af28837461d12252d8258032e370585ae" title="Sets the creator (person/operator) information for the image.">aaruf_set_creator()</a> for setting creator information. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03874">3874</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03877">3877</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="context_8h_source.html#l00216">aaruformat_context::creator</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -458,7 +458,7 @@ Impacts scientific reproducibility and technical troubleshooting capabilities. <
 Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>.</dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="#adaa13a82dfc90987efd6c9a366904dc4" title="Sets the drive firmware revision for the image.">aaruf_set_drive_firmware_revision()</a> for setting drive firmware revision information. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04861">4861</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04864">4864</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="context_8h_source.html#l00228">aaruformat_context::drive_firmware_revision</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -510,7 +510,7 @@ May affect forensic provenance and imaging environment reconstruction. </dd>
 Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>.</dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="#a223856fa226b26c466997800183c97c4" title="Sets the drive manufacturer information for the image.">aaruf_set_drive_manufacturer()</a> for setting drive manufacturer information. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04598">4598</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04601">4601</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="context_8h_source.html#l00224">aaruformat_context::drive_manufacturer</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -564,7 +564,7 @@ Important for reproducing imaging conditions or troubleshooting issues. </dd>
 Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>.</dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="#a29b6c38ce4b3420368ecb84007d8738d" title="Sets the drive model information for the image.">aaruf_set_drive_model()</a> for setting drive model information. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04684">4684</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04687">4687</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="context_8h_source.html#l00225">aaruformat_context::drive_model</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -622,7 +622,7 @@ Removes equipment tracking capability for maintenance and workload management. <
 Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>.</dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="#ae6b0a57476896bb90ee7bb8472e1078f" title="Sets the drive serial number for the image.">aaruf_set_drive_serial_number()</a> for setting drive serial number information. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04773">4773</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04776">4776</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="context_8h_source.html#l00226">aaruformat_context::drive_serial_number</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -674,7 +674,7 @@ May affect robotic tape library operations and automated retrieval. </dd>
 Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>.</dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="#a0e5be9ff6d87218a8f5b451a27e1b39b" title="Sets the media barcode information for the image.">aaruf_set_media_barcode()</a> for setting media barcode information. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04426">4426</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04429">4429</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00222">aaruformat_context::media_barcode</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -722,7 +722,7 @@ Use Cases: Anonymizing media source, removing commercial information, or correct
 Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>.</dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="#add92b8c91ede6a62dfda5f8980c3ce6d" title="Sets the media manufacturer information for the image.">aaruf_set_media_manufacturer()</a> for setting media manufacturer information. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04170">4170</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04173">4173</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00219">aaruformat_context::media_manufacturer</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -770,7 +770,7 @@ Use Cases: Removing product-specific details, generalizing metadata, or correcti
 Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>.</dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="#a0ed36b14e49f1e924906d9c4b26d6214" title="Sets the media model or product designation for the image.">aaruf_set_media_model()</a> for setting media model information. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04254">4254</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04257">4257</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00220">aaruformat_context::media_model</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -822,7 +822,7 @@ May impact ability to cross-reference with manufacturer specifications. </dd>
 Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>.</dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="#ac7c87ae51a242428ceb6d2b0a75e0b70" title="Sets the media part number or model designation for the image.">aaruf_set_media_part_number()</a> for setting media part number information. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04512">4512</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04515">4515</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00223">aaruformat_context::media_part_number</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -870,7 +870,7 @@ Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -916,7 +916,7 @@ After clearing, the sequence information is permanently lost unless:<ul>
 </dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="#a10d528163caf65134a7cec4a0c0a33b8" title="Sets the media sequence information for multi-volume media sets.">aaruf_set_media_sequence()</a> for setting sequence information. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03743">3743</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03746">3746</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -968,7 +968,7 @@ May affect forensic chain of custody and authentication capabilities. </dd>
 Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>.</dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="#ad06ae4d49d6de002ef565108c73451e1" title="Sets the media serial number for the image.">aaruf_set_media_serial_number()</a> for setting media serial number information. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04340">4340</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04343">4343</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00221">aaruformat_context::media_serial_number</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -1014,7 +1014,7 @@ Use Cases: Removing physical label information, anonymizing media, or correcting
 <dl class="section warning"><dt>Warning</dt><dd>Changes are only persisted during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>. Lost unless backed up or not closed.</dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="#a2f344544e412db0bfb46d3dfb509dd91" title="Sets the media title or label for the image.">aaruf_set_media_title()</a> for setting media title information. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04086">4086</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l04089">4089</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00217">aaruformat_context::media_title</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -1077,7 +1077,7 @@ Use Cases: Removing physical label information, anonymizing media, or correcting
     <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. This occurs when:<ul>
 <li>The context parameter is NULL</li>
 <li>The context magic number doesn't match AARU_MAGIC (invalid context type)</li>
-<li>The context was not properly initialized by <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The context was not properly initialized by <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_ERROR_CANNOT_READ_BLOCK</td><td>(-7) The Aaru JSON block is not present. This occurs when:<ul>
@@ -1143,7 +1143,7 @@ Distinction from CICM XML:<ul>
 <li>Different tools and workflows may prefer one format over the other</li>
 </ul>
 </dd></dl>
-<dl class="section warning"><dt>Warning</dt><dd>This function reads from the in-memory Aaru JSON block loaded during <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a>. It does not perform file I/O operations. The entire JSON is kept in memory for the lifetime of the context.</dd>
+<dl class="section warning"><dt>Warning</dt><dd>This function reads from the in-memory Aaru JSON block loaded during <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a>. It does not perform file I/O operations. The entire JSON is kept in memory for the lifetime of the context.</dd>
 <dd>
 The buffer parameter must be valid and large enough to hold the JSON data. Passing a buffer smaller than the required size will result in AARUF_ERROR_BUFFER_TOO_SMALL with no partial data copied.</dd>
 <dd>
@@ -1154,7 +1154,7 @@ This function does not validate JSON syntax or schema. Corrupted JSON data will 
 <dd>
 <a class="el" href="blocks_2metadata_8c.html#a84003ec881425a7b28ec24cb48d19f02" title="Processes an Aaru metadata JSON block from the image stream during image opening.">process_aaru_metadata_json_block()</a> for the loading process during image opening. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02102">2102</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02104">2104</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00049">AARUF_ERROR_BUFFER_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00046">AARUF_ERROR_CANNOT_READ_BLOCK</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="enums_8h_source.html#l00159">AaruMetadataJsonBlock</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00121">AaruMetadataJsonBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00215">aaruformat_context::json_block</a>, <a class="el" href="context_8h_source.html#l00233">aaruformat_context::json_block_header</a>, <a class="el" href="metadata_8h_source.html#l00122">AaruMetadataJsonBlockHeader::length</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -1217,7 +1217,7 @@ This function does not validate JSON syntax or schema. Corrupted JSON data will 
     <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. This occurs when:<ul>
 <li>The context parameter is NULL</li>
 <li>The context magic number doesn't match AARU_MAGIC (invalid context type)</li>
-<li>The context was not properly initialized by <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The context was not properly initialized by <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_ERROR_CANNOT_READ_BLOCK</td><td>(-7) The CICM block is not present. This occurs when:<ul>
@@ -1276,14 +1276,14 @@ Data Availability:<ul>
 </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The XML data may contain sensitive information about the imaging environment, personnel, locations, or media content. Handle appropriately for your use case.</dd>
 <dd>
-This function reads from the in-memory CICM block loaded during <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a>. It does not perform file I/O operations. The entire CICM XML is kept in memory for the lifetime of the context.</dd>
+This function reads from the in-memory CICM block loaded during <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a>. It does not perform file I/O operations. The entire CICM XML is kept in memory for the lifetime of the context.</dd>
 <dd>
 The buffer parameter must be valid and large enough to hold the XML data. Passing a buffer smaller than the required size will result in AARUF_ERROR_BUFFER_TOO_SMALL with no partial data copied.</dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="structCicmMetadataBlock.html" title="Header for a CICM XML metadata block (identifier == BlockType::CicmBlock).">CicmMetadataBlock</a> for the on-disk structure definition. </dd>
 <dd>
 aaruf_set_cicm_metadata() for embedding CICM XML during image creation. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l01947">1947</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l01949">1949</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00049">AARUF_ERROR_BUFFER_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00046">AARUF_ERROR_CANNOT_READ_BLOCK</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="context_8h_source.html#l00214">aaruformat_context::cicm_block</a>, <a class="el" href="context_8h_source.html#l00231">aaruformat_context::cicm_block_header</a>, <a class="el" href="enums_8h_source.html#l00151">CicmBlock</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00109">CicmMetadataBlock::identifier</a>, <a class="el" href="metadata_8h_source.html#l00110">CicmMetadataBlock::length</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -1317,7 +1317,7 @@ aaruf_set_cicm_metadata() for embedding CICM XML during image creation. </dd></d
 <p>Provides access to the UTF-16LE encoded comments associated with the image. Comments are often used for provenance notes, imaging details, or curator remarks. The function follows the same two-call buffer sizing pattern used by other metadata retrieval APIs: the caller may probe the required size before allocating memory.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">context</td><td>Pointer to a valid aaruformat context opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a>. </td></tr>
+    <tr><td class="paramname">context</td><td>Pointer to a valid aaruformat context opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a>. </td></tr>
     <tr><td class="paramname">buffer</td><td>Destination buffer that receives the comments data. May be NULL when probing size. </td></tr>
     <tr><td class="paramname">length</td><td>Pointer to an int32_t. On input it contains the size of <code class="param">buffer</code> in bytes; on output it is updated with the actual comments length.</td></tr>
   </table>
@@ -1335,7 +1335,7 @@ aaruf_set_cicm_metadata() for embedding CICM XML during image creation. </dd></d
 </dl>
 <dl class="section note"><dt>Note</dt><dd>Comments are stored exactly as provided during image creation and may include multi-line text or other control characters. No validation or normalization is applied by the library. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02479">2479</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02482">2482</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00049">AARUF_ERROR_BUFFER_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00069">AARUF_ERROR_METADATA_NOT_PRESENT</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="context_8h_source.html#l00218">aaruformat_context::comments</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -1389,7 +1389,7 @@ aaruf_set_cicm_metadata() for embedding CICM XML during image creation. </dd></d
 <dd>
 The function does not allocate memory. Callers are responsible for ensuring <code class="param">buffer</code> is large enough before requesting the data. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02407">2407</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02410">2410</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00049">AARUF_ERROR_BUFFER_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00069">AARUF_ERROR_METADATA_NOT_PRESENT</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="context_8h_source.html#l00216">aaruformat_context::creator</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -1441,7 +1441,7 @@ The function does not allocate memory. Callers are responsible for ensuring <cod
 </dl>
 <dl class="section note"><dt>Note</dt><dd>Firmware revision formats vary between manufacturers (e.g., numeric, alphanumeric, dot-separated). The library stores the data verbatim without attempting normalization. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03181">3181</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03184">3184</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00049">AARUF_ERROR_BUFFER_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00069">AARUF_ERROR_METADATA_NOT_PRESENT</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="context_8h_source.html#l00228">aaruformat_context::drive_firmware_revision</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -1493,7 +1493,7 @@ The function does not allocate memory. Callers are responsible for ensuring <cod
 </dl>
 <dl class="section note"><dt>Note</dt><dd>The returned manufacturer string corresponds to the value recorded by <a class="el" href="#a223856fa226b26c466997800183c97c4" title="Sets the drive manufacturer information for the image.">aaruf_set_drive_manufacturer()</a> and may include branding or OEM designations. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02971">2971</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02974">2974</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00049">AARUF_ERROR_BUFFER_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00069">AARUF_ERROR_METADATA_NOT_PRESENT</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="context_8h_source.html#l00224">aaruformat_context::drive_manufacturer</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -1545,7 +1545,7 @@ The function does not allocate memory. Callers are responsible for ensuring <cod
 </dl>
 <dl class="section note"><dt>Note</dt><dd>Model strings can include firmware suffixes, interface hints, or OEM variations. Consume the data verbatim to maintain accurate provenance records. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03041">3041</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03044">3044</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00049">AARUF_ERROR_BUFFER_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00069">AARUF_ERROR_METADATA_NOT_PRESENT</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="context_8h_source.html#l00225">aaruformat_context::drive_model</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -1597,7 +1597,7 @@ The function does not allocate memory. Callers are responsible for ensuring <cod
 </dl>
 <dl class="section note"><dt>Note</dt><dd>Serial numbers are stored exactly as returned by the imaging hardware and may include leading zeros or spacing that should be preserved. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03111">3111</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03114">3114</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00049">AARUF_ERROR_BUFFER_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00069">AARUF_ERROR_METADATA_NOT_PRESENT</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="context_8h_source.html#l00226">aaruformat_context::drive_serial_number</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -1658,7 +1658,7 @@ The function does not allocate memory. Callers are responsible for ensuring <cod
     <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. This occurs when:<ul>
 <li>The context parameter is NULL</li>
 <li>The context magic number doesn't match AARU_MAGIC (invalid context type)</li>
-<li>The context was not properly initialized by <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The context was not properly initialized by <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_ERROR_CANNOT_READ_BLOCK</td><td>(-7) The geometry block is not present. This occurs when:<ul>
@@ -1703,7 +1703,7 @@ Parameter Validation:<ul>
 </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The output parameters are only modified on success (AARUF_STATUS_OK). On error, their values remain unchanged. Initialize them before calling if default values are needed on failure.</dd>
 <dd>
-This function reads from the in-memory geometry block loaded during <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a>. It does not perform file I/O operations.</dd>
+This function reads from the in-memory geometry block loaded during <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a>. It does not perform file I/O operations.</dd>
 <dd>
 Geometry values may not accurately represent physical device geometry, especially for modern drives with zone-based recording or flash storage. </dd></dl>
 
@@ -1775,9 +1775,9 @@ This function performs a complete deep copy using memcpy, copying all fields inc
 The caller is responsible for allocating the <a class="el" href="structImageInfo.html" title="High-level summary of an opened Aaru image containing metadata and media characteristics.">ImageInfo</a> structure before calling this function. The structure is not dynamically allocated by this function.</dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The image_info parameter must point to valid, allocated memory of at least sizeof(ImageInfo) bytes. Passing NULL or invalid pointers will result in undefined behavior.</dd>
 <dd>
-This function reads from the in-memory image_info loaded during <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or populated during <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a>. It does not perform file I/O operations. </dd></dl>
+This function reads from the in-memory image_info loaded during <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or populated during <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a>. It does not perform file I/O operations. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03637">3637</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03640">3640</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00065">AARUF_ERROR_INCORRECT_DATA_SIZE</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="context_8h_source.html#l00260">aaruformat_context::image_info</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -1829,7 +1829,7 @@ This function reads from the in-memory image_info loaded during <a class="el" hr
 </dl>
 <dl class="section note"><dt>Note</dt><dd>Barcode values can be strict alphanumeric codes (e.g., LTO cartridge IDs) or full strings from custom labeling systems. Preserve the returned string exactly for catalog interoperability. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02828">2828</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02831">2831</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00049">AARUF_ERROR_BUFFER_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00069">AARUF_ERROR_METADATA_NOT_PRESENT</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00222">aaruformat_context::media_barcode</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -1881,7 +1881,7 @@ This function reads from the in-memory image_info loaded during <a class="el" hr
 </dl>
 <dl class="section note"><dt>Note</dt><dd>Values may include trailing spaces or vendor-specific capitalization. Treat the returned data as authoritative and avoid trimming unless required by the consuming application. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02619">2619</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02622">2622</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00049">AARUF_ERROR_BUFFER_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00069">AARUF_ERROR_METADATA_NOT_PRESENT</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00219">aaruformat_context::media_manufacturer</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -1933,7 +1933,7 @@ This function reads from the in-memory image_info loaded during <a class="el" hr
 </dl>
 <dl class="section note"><dt>Note</dt><dd>Model strings often contain performance ratings (e.g., "16x", "LTO-7"). The data is opaque and should be handled without modification unless necessary. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02689">2689</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02692">2692</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00049">AARUF_ERROR_BUFFER_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00069">AARUF_ERROR_METADATA_NOT_PRESENT</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00220">aaruformat_context::media_model</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -1985,7 +1985,7 @@ This function reads from the in-memory image_info loaded during <a class="el" hr
 </dl>
 <dl class="section note"><dt>Note</dt><dd>Part numbers may include manufacturer-specific formatting such as hyphens or suffix letters. The library stores and returns the data verbatim. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02899">2899</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02902">2902</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00049">AARUF_ERROR_BUFFER_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00069">AARUF_ERROR_METADATA_NOT_PRESENT</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00223">aaruformat_context::media_part_number</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -2016,7 +2016,7 @@ This function reads from the in-memory image_info loaded during <a class="el" hr
 </div><div class="memdoc">
 
 <p>Retrieves the media sequence metadata for multi-volume image sets. </p>
-<p>Reads the media sequence fields stored in the MetadataBlock header and returns the current media number together with the final media number for the complete set. This information indicates the position of the imaged medium within a multi-volume collection (for example, "disc 2 of 5"). The function operates entirely on in-memory structures populated during <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a>; no additional disk I/O is performed.</p>
+<p>Reads the media sequence fields stored in the MetadataBlock header and returns the current media number together with the final media number for the complete set. This information indicates the position of the imaged medium within a multi-volume collection (for example, "disc 2 of 5"). The function operates entirely on in-memory structures populated during <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a>; no additional disk I/O is performed.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">context</td><td>Pointer to an initialized aaruformat context opened for reading or writing. </td></tr>
@@ -2038,7 +2038,7 @@ This function reads from the in-memory image_info loaded during <a class="el" hr
 <dd>
 The function does not validate logical consistency (e.g., whether sequence &lt;= last_sequence); it simply returns the values stored in the image header. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02340">2340</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02343">2343</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00069">AARUF_ERROR_METADATA_NOT_PRESENT</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -2090,7 +2090,7 @@ The function does not validate logical consistency (e.g., whether sequence &lt;=
 </dl>
 <dl class="section note"><dt>Note</dt><dd>Serial numbers may contain spaces, hyphens, or alphanumeric characters. The library does not normalize or validate these strings. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02759">2759</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02762">2762</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00049">AARUF_ERROR_BUFFER_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00069">AARUF_ERROR_METADATA_NOT_PRESENT</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00221">aaruformat_context::media_serial_number</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -2142,7 +2142,7 @@ The function does not validate logical consistency (e.g., whether sequence &lt;=
 </dl>
 <dl class="section note"><dt>Note</dt><dd>Titles may contain international characters, control codes, or mixed casing. The library does not attempt to sanitize or interpret the string. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02549">2549</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02552">2552</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00049">AARUF_ERROR_BUFFER_TOO_SMALL</a>, <a class="el" href="errors_8h_source.html#l00069">AARUF_ERROR_METADATA_NOT_PRESENT</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00217">aaruformat_context::media_title</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -2192,7 +2192,7 @@ The function does not validate logical consistency (e.g., whether sequence &lt;=
     <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. This occurs when:<ul>
 <li>The context parameter is NULL</li>
 <li>The context magic number doesn't match AARU_MAGIC (invalid context type)</li>
-<li>The context was not properly initialized by <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The context was not properly initialized by <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 </ul>
 </td></tr>
   </table>
@@ -2235,7 +2235,7 @@ DDT Header Source:<ul>
 <li>The value is retrieved from ctx-&gt;user_data_ddt_header.negative</li>
 <li>The DDT (Deduplication and Data Table) header tracks all sector allocation</li>
 <li>This field is populated during image creation with <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
-<li>The value is fixed for read-only images opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a></li>
+<li>The value is fixed for read-only images opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a></li>
 <li>Maximum representable value is 65,535 (uint16_t)</li>
 </ul>
 </dd>
@@ -2261,13 +2261,13 @@ Relationship to Image Creation:<ul>
 </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The sectors parameter is only modified on success (AARUF_STATUS_OK). On error, its value remains unchanged. Initialize it before calling if a default value is needed on failure.</dd>
 <dd>
-This function reads from the in-memory DDT header loaded during <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or set during <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a>. It does not perform file I/O operations and executes quickly.</dd>
+This function reads from the in-memory DDT header loaded during <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or set during <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a>. It does not perform file I/O operations and executes quickly.</dd>
 <dd>
 The maximum negative sector count is 65,535 due to the uint16_t storage type. If imaging optical media with larger lead-in areas, some data may not be representable. This limit is generally sufficient for most practical cases.</dd>
 <dd>
 Negative sector data may contain copy-protected or encrypted content (e.g., CSS on DVDs, AACS on Blu-rays). Handle this data according to applicable laws and licensing agreements. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03420">3420</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03423">3423</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="ddt_8h_source.html#l00149">DdtHeader2::negative</a>, <a class="el" href="log_8h_source.html#l00025">TRACE</a>, and <a class="el" href="context_8h_source.html#l00189">aaruformat_context::user_data_ddt_header</a>.</p>
 
@@ -2317,7 +2317,7 @@ Negative sector data may contain copy-protected or encrypted content (e.g., CSS 
     <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. This occurs when:<ul>
 <li>The context parameter is NULL</li>
 <li>The context magic number doesn't match AARU_MAGIC (invalid context type)</li>
-<li>The context was not properly initialized by <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The context was not properly initialized by <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 </ul>
 </td></tr>
   </table>
@@ -2360,7 +2360,7 @@ DDT Header Source:<ul>
 <li>The value is retrieved from ctx-&gt;user_data_ddt_header.overflow</li>
 <li>The DDT (Deduplication and Data Table) header tracks all sector allocation</li>
 <li>This field is populated during image creation with <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
-<li>The value is fixed for read-only images opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a></li>
+<li>The value is fixed for read-only images opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a></li>
 <li>Maximum representable value is 65,535 (uint16_t)</li>
 </ul>
 </dd>
@@ -2396,13 +2396,13 @@ Forensic Imaging Considerations:<ul>
 </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The sectors parameter is only modified on success (AARUF_STATUS_OK). On error, its value remains unchanged. Initialize it before calling if a default value is needed on failure.</dd>
 <dd>
-This function reads from the in-memory DDT header loaded during <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or set during <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a>. It does not perform file I/O operations and executes quickly.</dd>
+This function reads from the in-memory DDT header loaded during <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or set during <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a>. It does not perform file I/O operations and executes quickly.</dd>
 <dd>
 The maximum overflow sector count is 65,535 due to the uint16_t storage type. If imaging optical media with larger lead-out areas or extensive overburn regions, some data may not be representable. This limit is generally sufficient for most practical cases.</dd>
 <dd>
 Overflow sector data may be difficult or impossible to read on some drives, as it often resides in lead-out areas or beyond rated capacity. The presence of overflow sectors in an image indicates the imaging drive was capable of reading these extended areas, but other drives may not be able to access them. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03555">3555</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03558">3558</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="ddt_8h_source.html#l00151">DdtHeader2::overflow</a>, <a class="el" href="log_8h_source.html#l00025">TRACE</a>, and <a class="el" href="context_8h_source.html#l00189">aaruformat_context::user_data_ddt_header</a>.</p>
 
@@ -2452,7 +2452,7 @@ Overflow sector data may be difficult or impossible to read on some drives, as i
     <tr><td class="paramname">AARUF_ERROR_NOT_AARUFORMAT</td><td>(-1) The context is invalid. This occurs when:<ul>
 <li>The context parameter is NULL</li>
 <li>The context magic number doesn't match AARU_MAGIC (invalid context type)</li>
-<li>The context was not properly initialized by <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The context was not properly initialized by <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> or <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 </ul>
 </td></tr>
   </table>
@@ -2480,7 +2480,7 @@ DDT Header Source:<ul>
 <li>The value is retrieved from ctx-&gt;user_data_ddt_header.blocks</li>
 <li>The DDT (Deduplication and Data Table) header tracks sector allocation</li>
 <li>This field is populated during image creation with <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
-<li>The value is fixed for read-only images opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a></li>
+<li>The value is fixed for read-only images opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a></li>
 <li>For write-enabled images, this represents the allocated capacity</li>
 </ul>
 </dd>
@@ -2505,7 +2505,7 @@ Addressing and I/O Operations:<ul>
 </ul>
 </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03295">3295</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l03298">3298</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="ddt_8h_source.html#l00150">DdtHeader2::blocks</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="log_8h_source.html#l00025">TRACE</a>, and <a class="el" href="context_8h_source.html#l00189">aaruformat_context::user_data_ddt_header</a>.</p>
 
@@ -2566,7 +2566,7 @@ Addressing and I/O Operations:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -2649,11 +2649,11 @@ The function accepts any length value:<ul>
 <dd>
 <a class="el" href="#a01cf0abe0b137236d4be0b91a29d4818" title="Retrieves the embedded Aaru metadata JSON from the image.">aaruf_get_aaru_json_metadata()</a> for retrieving Aaru JSON from opened images. </dd>
 <dd>
-<a class="el" href="close_8c.html#adbc2790344fae0327f55d751b79dd800" title="Serialize the Aaru metadata JSON block to the image file.">write_aaru_json_block()</a> for the serialization process during image closing. </dd></dl>
+<a class="el" href="close_8c.html#ad94331170e773c67845daa357c6ecb42" title="Serialize the Aaru metadata JSON block to the image file.">write_aaru_json_block()</a> for the serialization process during image closing. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02261">2261</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l02263">2263</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
-<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00048">AARUF_ERROR_NOT_ENOUGH_MEMORY</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="enums_8h_source.html#l00159">AaruMetadataJsonBlock</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00121">AaruMetadataJsonBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="context_8h_source.html#l00215">aaruformat_context::json_block</a>, <a class="el" href="context_8h_source.html#l00233">aaruformat_context::json_block_header</a>, <a class="el" href="metadata_8h_source.html#l00122">AaruMetadataJsonBlockHeader::length</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00048">AARUF_ERROR_NOT_ENOUGH_MEMORY</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="enums_8h_source.html#l00159">AaruMetadataJsonBlock</a>, <a class="el" href="context_8h_source.html#l00329">aaruformat_context::dirty_json_block</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00121">AaruMetadataJsonBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="context_8h_source.html#l00215">aaruformat_context::json_block</a>, <a class="el" href="context_8h_source.html#l00233">aaruformat_context::json_block_header</a>, <a class="el" href="metadata_8h_source.html#l00122">AaruMetadataJsonBlockHeader::length</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
 </div>
 </div>
@@ -2711,7 +2711,7 @@ The function accepts any length value:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -2751,7 +2751,7 @@ Memory Management:<ul>
 </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The metadata block is only written to the image file during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>. Changes made by this function are not immediately persisted. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l00609">609</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l00610">610</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00048">AARUF_ERROR_NOT_ENOUGH_MEMORY</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="context_8h_source.html#l00218">aaruformat_context::comments</a>, <a class="el" href="metadata_8h_source.html#l00078">MetadataBlockHeader::commentsLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -2811,7 +2811,7 @@ Memory Management:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -2885,7 +2885,7 @@ Invalid UTF-16LE encoding may cause issues when reading the metadata:<ul>
 <dd>
 The metadata block is only written to the image file during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>. Changes made by this function are not immediately persisted. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l00495">495</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l00496">496</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00048">AARUF_ERROR_NOT_ENOUGH_MEMORY</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="context_8h_source.html#l00216">aaruformat_context::creator</a>, <a class="el" href="metadata_8h_source.html#l00076">MetadataBlockHeader::creatorLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -2945,7 +2945,7 @@ The metadata block is only written to the image file during <a class="el" href="
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -3010,7 +3010,7 @@ Firmware revisions are device-specific and format varies widely:<ul>
 </ul>
 </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l01795">1795</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l01797">1797</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00048">AARUF_ERROR_NOT_ENOUGH_MEMORY</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="context_8h_source.html#l00228">aaruformat_context::drive_firmware_revision</a>, <a class="el" href="metadata_8h_source.html#l00098">MetadataBlockHeader::driveFirmwareRevisionLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -3070,7 +3070,7 @@ Firmware revisions are device-specific and format varies widely:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -3111,7 +3111,7 @@ Forensic and Provenance Value:<ul>
 </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The metadata block is only written to the image file during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>. Changes made by this function are not immediately persisted. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l01414">1414</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l01416">1416</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00048">AARUF_ERROR_NOT_ENOUGH_MEMORY</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="context_8h_source.html#l00224">aaruformat_context::drive_manufacturer</a>, <a class="el" href="metadata_8h_source.html#l00092">MetadataBlockHeader::driveManufacturerLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -3171,7 +3171,7 @@ Forensic and Provenance Value:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -3220,7 +3220,7 @@ Historical and Research Value:<ul>
 </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The metadata block is only written to the image file during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>. Changes made by this function are not immediately persisted. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l01536">1536</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l01538">1538</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00048">AARUF_ERROR_NOT_ENOUGH_MEMORY</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="context_8h_source.html#l00225">aaruformat_context::drive_model</a>, <a class="el" href="metadata_8h_source.html#l00094">MetadataBlockHeader::driveModelLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -3280,7 +3280,7 @@ Historical and Research Value:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -3331,7 +3331,7 @@ Quality Assurance:<ul>
 </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The metadata block is only written to the image file during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>. Changes made by this function are not immediately persisted. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l01660">1660</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l01662">1662</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00048">AARUF_ERROR_NOT_ENOUGH_MEMORY</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="context_8h_source.html#l00226">aaruformat_context::drive_serial_number</a>, <a class="el" href="metadata_8h_source.html#l00096">MetadataBlockHeader::driveSerialNumberLength</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -3396,7 +3396,7 @@ Quality Assurance:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -3480,7 +3480,7 @@ Some image formats and use cases don't require CHS geometry:<ul>
 
 <p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l00230">230</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
-<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="context_8h_source.html#l00234">aaruformat_context::cylinders</a>, <a class="el" href="data_8h_source.html#l00093">GeometryBlockHeader::cylinders</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="context_8h_source.html#l00229">aaruformat_context::geometry_block</a>, <a class="el" href="enums_8h_source.html#l00148">GeometryBlock</a>, <a class="el" href="context_8h_source.html#l00235">aaruformat_context::heads</a>, <a class="el" href="data_8h_source.html#l00094">GeometryBlockHeader::heads</a>, <a class="el" href="data_8h_source.html#l00092">GeometryBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00236">aaruformat_context::sectors_per_track</a>, <a class="el" href="data_8h_source.html#l00095">GeometryBlockHeader::sectorsPerTrack</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="context_8h_source.html#l00234">aaruformat_context::cylinders</a>, <a class="el" href="data_8h_source.html#l00093">GeometryBlockHeader::cylinders</a>, <a class="el" href="context_8h_source.html#l00325">aaruformat_context::dirty_geometry_block</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="context_8h_source.html#l00229">aaruformat_context::geometry_block</a>, <a class="el" href="enums_8h_source.html#l00148">GeometryBlock</a>, <a class="el" href="context_8h_source.html#l00235">aaruformat_context::heads</a>, <a class="el" href="data_8h_source.html#l00094">GeometryBlockHeader::heads</a>, <a class="el" href="data_8h_source.html#l00092">GeometryBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00236">aaruformat_context::sectors_per_track</a>, <a class="el" href="data_8h_source.html#l00095">GeometryBlockHeader::sectorsPerTrack</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
 </div>
 </div>
@@ -3538,7 +3538,7 @@ Some image formats and use cases don't require CHS geometry:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -3588,7 +3588,7 @@ Preservation Context:<ul>
 </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The metadata block is only written to the image file during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>. Changes made by this function are not immediately persisted. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l01178">1178</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l01180">1180</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00048">AARUF_ERROR_NOT_ENOUGH_MEMORY</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00222">aaruformat_context::media_barcode</a>, <a class="el" href="metadata_8h_source.html#l00088">MetadataBlockHeader::mediaBarcodeLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -3648,7 +3648,7 @@ Preservation Context:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -3687,7 +3687,7 @@ Preservation Value:<ul>
 </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The metadata block is only written to the image file during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>. Changes made by this function are not immediately persisted. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l00834">834</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l00836">836</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00048">AARUF_ERROR_NOT_ENOUGH_MEMORY</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00219">aaruformat_context::media_manufacturer</a>, <a class="el" href="metadata_8h_source.html#l00082">MetadataBlockHeader::mediaManufacturerLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -3747,7 +3747,7 @@ Preservation Value:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -3778,7 +3778,7 @@ Model Information Usage:<ul>
 </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The metadata block is only written to the image file during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>. Changes made by this function are not immediately persisted. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l00941">941</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l00943">943</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00048">AARUF_ERROR_NOT_ENOUGH_MEMORY</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00220">aaruformat_context::media_model</a>, <a class="el" href="metadata_8h_source.html#l00084">MetadataBlockHeader::mediaModelLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -3838,7 +3838,7 @@ Model Information Usage:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -3886,7 +3886,7 @@ Documentation and Compliance:<ul>
 </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The metadata block is only written to the image file during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>. Changes made by this function are not immediately persisted. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l01299">1299</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l01301">1301</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00048">AARUF_ERROR_NOT_ENOUGH_MEMORY</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00223">aaruformat_context::media_part_number</a>, <a class="el" href="metadata_8h_source.html#l00090">MetadataBlockHeader::mediaPartNumberLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -3945,7 +3945,7 @@ Documentation and Compliance:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -4024,7 +4024,7 @@ Incorrect sequence information may prevent proper reconstruction:<ul>
 </ul>
 </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l00364">364</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l00365">365</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="metadata_8h_source.html#l00074">MetadataBlockHeader::lastMediaSequence</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="metadata_8h_source.html#l00072">MetadataBlockHeader::mediaSequence</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -4084,7 +4084,7 @@ Incorrect sequence information may prevent proper reconstruction:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -4125,7 +4125,7 @@ Format Considerations:<ul>
 </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The metadata block is only written to the image file during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>. Changes made by this function are not immediately persisted. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l01056">1056</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l01058">1058</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00048">AARUF_ERROR_NOT_ENOUGH_MEMORY</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00221">aaruformat_context::media_serial_number</a>, <a class="el" href="metadata_8h_source.html#l00086">MetadataBlockHeader::mediaSerialNumberLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
@@ -4185,7 +4185,7 @@ Format Considerations:<ul>
 </ul>
 </td></tr>
     <tr><td class="paramname">AARUF_READ_ONLY</td><td>(-13) The context is not opened for writing. This occurs when:<ul>
-<li>The image was opened with <a class="el" href="decls_8h.html#aefe69fae905b957bb4349ac59fad9bc7">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
+<li>The image was opened with <a class="el" href="decls_8h.html#a5cea94dcb9c08a646f7f7160ec8418de" title="Opens an existing AaruFormat image file.">aaruf_open()</a> instead of <a class="el" href="decls_8h.html#a7065a9fefcaabfecc4184528f01ef013" title="Creates a new AaruFormat image file.">aaruf_create()</a></li>
 <li>The context's isWriting flag is false</li>
 <li>Attempting to modify a read-only image</li>
 </ul>
@@ -4225,9 +4225,9 @@ UTF-16LE Encoding:<ul>
 </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The metadata block is only written to the image file during <a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49" title="Close an Aaru image context, flushing pending data structures and releasing resources.">aaruf_close()</a>. Changes made by this function are not immediately persisted. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l00722">722</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metadata_8c_source.html#l00723">723</a> of file <a class="el" href="metadata_8c_source.html">metadata.c</a>.</p>
 
-<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00048">AARUF_ERROR_NOT_ENOUGH_MEMORY</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00217">aaruformat_context::media_title</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="errors_8h_source.html#l00040">AARUF_ERROR_NOT_AARUFORMAT</a>, <a class="el" href="errors_8h_source.html#l00048">AARUF_ERROR_NOT_ENOUGH_MEMORY</a>, <a class="el" href="errors_8h_source.html#l00061">AARUF_READ_ONLY</a>, <a class="el" href="errors_8h_source.html#l00075">AARUF_STATUS_OK</a>, <a class="el" href="context_8h_source.html#l00326">aaruformat_context::dirty_metadata_block</a>, <a class="el" href="log_8h_source.html#l00040">FATAL</a>, <a class="el" href="metadata_8h_source.html#l00070">MetadataBlockHeader::identifier</a>, <a class="el" href="context_8h_source.html#l00292">aaruformat_context::is_writing</a>, <a class="el" href="context_8h_source.html#l00174">aaruformat_context::magic</a>, <a class="el" href="context_8h_source.html#l00217">aaruformat_context::media_title</a>, <a class="el" href="metadata_8h_source.html#l00080">MetadataBlockHeader::mediaTitleLength</a>, <a class="el" href="context_8h_source.html#l00230">aaruformat_context::metadata_block_header</a>, <a class="el" href="enums_8h_source.html#l00149">MetadataBlock</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
 </div>
 </div>
