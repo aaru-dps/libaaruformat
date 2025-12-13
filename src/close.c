@@ -801,6 +801,18 @@ static void write_checksum_block(aaruformat_context *ctx)
     TRACE("Writing checksum header");
     fwrite(&checksum_header, sizeof(ChecksumHeader), 1, ctx->imageStream);
 
+    // Remove any previously existing index entries of the same type before adding
+    TRACE("Removing any previously existing checksum block index entries");
+    for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+    {
+        const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+        if(entry && entry->blockType == ChecksumBlock && entry->dataType == 0)
+        {
+            TRACE("Found existing checksum block index entry at position %d, removing", k);
+            utarray_erase(ctx->index_entries, k, 1);
+        }
+    }
+
     // Add checksum block to index
     TRACE("Adding checksum block to index");
     IndexEntry checksum_index_entry;
@@ -850,6 +862,19 @@ static void write_tracks_block(aaruformat_context *ctx)
         if(written_entries == ctx->tracks_header.entries)
         {
             TRACE("Successfully wrote tracks block with %u entries", ctx->tracks_header.entries);
+
+            // Remove any previously existing index entries of the same type before adding
+            TRACE("Removing any previously existing tracks block index entries");
+            for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+            {
+                const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+                if(entry && entry->blockType == TracksBlock && entry->dataType == 0)
+                {
+                    TRACE("Found existing tracks block index entry at position %d, removing", k);
+                    utarray_erase(ctx->index_entries, k, 1);
+                }
+            }
+
             // Add tracks block to index
             TRACE("Adding tracks block to index");
 
@@ -957,6 +982,19 @@ static void write_mode2_subheaders_block(aaruformat_context *ctx)
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote MODE 2 subheaders block (%" PRIu64 " bytes)", subheaders_block.cmpLength);
+
+            // Remove any previously existing index entries of the same type before adding
+            TRACE("Removing any previously existing MODE 2 subheaders block index entries");
+            for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+            {
+                const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+                if(entry && entry->blockType == DataBlock && entry->dataType == CompactDiscMode2Subheader)
+                {
+                    TRACE("Found existing MODE 2 subheaders block index entry at position %d, removing", k);
+                    utarray_erase(ctx->index_entries, k, 1);
+                }
+            }
+
             // Add MODE 2 subheaders block to index
             TRACE("Adding MODE 2 subheaders block to index");
             IndexEntry mode2_subheaders_index_entry;
@@ -1072,6 +1110,19 @@ static void write_sector_prefix(aaruformat_context *ctx)
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote CD sector prefix block (%" PRIu64 " bytes)", prefix_block.cmpLength);
+
+            // Remove any previously existing index entries of the same type before adding
+            TRACE("Removing any previously existing CD sector prefix block index entries");
+            for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+            {
+                const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+                if(entry && entry->blockType == DataBlock && entry->dataType == CdSectorPrefix)
+                {
+                    TRACE("Found existing CD sector prefix block index entry at position %d, removing", k);
+                    utarray_erase(ctx->index_entries, k, 1);
+                }
+            }
+
             // Add prefix block to index
             TRACE("Adding CD sector prefix block to index");
             IndexEntry prefix_index_entry;
@@ -1196,6 +1247,19 @@ static void write_sector_suffix(aaruformat_context *ctx)
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote CD sector suffix block (%" PRIu64 " bytes)", suffix_block.cmpLength);
+
+            // Remove any previously existing index entries of the same type before adding
+            TRACE("Removing any previously existing CD sector suffix block index entries");
+            for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+            {
+                const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+                if(entry && entry->blockType == DataBlock && entry->dataType == CdSectorSuffix)
+                {
+                    TRACE("Found existing CD sector suffix block index entry at position %d, removing", k);
+                    utarray_erase(ctx->index_entries, k, 1);
+                }
+            }
+
             // Add suffix block to index
             TRACE("Adding CD sector suffix block to index");
             IndexEntry suffix_index_entry;
@@ -1326,6 +1390,19 @@ static void write_sector_prefix_ddt(aaruformat_context *ctx)
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote sector prefix DDT v2 (%" PRIu64 " bytes)", ddt_header2.cmpLength);
+
+            // Remove any previously existing index entries of the same type before adding
+            TRACE("Removing any previously existing sector prefix DDT v2 index entries");
+            for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+            {
+                const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+                if(entry && entry->blockType == DeDuplicationTable2 && entry->dataType == CdSectorPrefix)
+                {
+                    TRACE("Found existing sector prefix DDT v2 index entry at position %d, removing", k);
+                    utarray_erase(ctx->index_entries, k, 1);
+                }
+            }
+
             // Add prefix block to index
             TRACE("Adding sector prefix DDT v2 to index");
             IndexEntry prefix_ddt_index_entry;
@@ -1472,6 +1549,19 @@ static void write_sector_suffix_ddt(aaruformat_context *ctx)
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote sector suffix DDT v2 (%" PRIu64 " bytes)", ddt_header2.cmpLength);
+
+            // Remove any previously existing index entries of the same type before adding
+            TRACE("Removing any previously existing sector suffix DDT v2 block index entries");
+            for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+            {
+                const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+                if(entry && entry->blockType == DeDuplicationTable2 && entry->dataType == CdSectorSuffix)
+                {
+                    TRACE("Found existing sector suffix DDT v2 index entry at position %d, removing", k);
+                    utarray_erase(ctx->index_entries, k, 1);
+                }
+            }
+
             // Add suffix block to index
             TRACE("Adding sector suffix DDT v2 to index");
             IndexEntry suffix_ddt_index_entry;
@@ -1697,6 +1787,19 @@ static void write_sector_subchannel(aaruformat_context *ctx)
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote sector subchannel block (%" PRIu64 " bytes)", subchannel_block.cmpLength);
+
+            // Remove any previously existing index entries of the same type before adding
+            TRACE("Removing any previously existing subchannel block index entries");
+            for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+            {
+                const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+                if(entry && entry->blockType == DataBlock && entry->dataType == subchannel_block.type)
+                {
+                    TRACE("Found existing subchannel block index entry at position %d, removing", k);
+                    utarray_erase(ctx->index_entries, k, 1);
+                }
+            }
+
             // Add subchannel block to index
             TRACE("Adding sector subchannel block to index");
             IndexEntry subchannel_index_entry;
@@ -1929,6 +2032,19 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote DVD sector ID block (%" PRIu64 " bytes)", id_block.cmpLength);
+
+            // Remove any previously existing index entries of the same type before adding
+            TRACE("Removing any previously existing DVD sector ID block index entries");
+            for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+            {
+                const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+                if(entry && entry->blockType == DataBlock && entry->dataType == DvdSectorId)
+                {
+                    TRACE("Found existing DVD sector ID block index entry at position %d, removing", k);
+                    utarray_erase(ctx->index_entries, k, 1);
+                }
+            }
+
             // Add ID block to index
             TRACE("Adding DVD sector ID block to index");
             IndexEntry id_index_entry;
@@ -2013,6 +2129,19 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote DVD sector IED block (%" PRIu64 " bytes)", ied_block.cmpLength);
+
+            // Remove any previously existing index entries of the same type before adding
+            TRACE("Removing any previously existing DVD sector IED block index entries");
+            for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+            {
+                const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+                if(entry && entry->blockType == DataBlock && entry->dataType == DvdSectorIed)
+                {
+                    TRACE("Found existing DVD sector IED block index entry at position %d, removing", k);
+                    utarray_erase(ctx->index_entries, k, 1);
+                }
+            }
+
             // Add IED block to index
             TRACE("Adding DVD sector IED block to index");
             IndexEntry ied_index_entry;
@@ -2097,6 +2226,19 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote DVD sector CPR/MAI block (%" PRIu64 " bytes)", cpr_mai_block.cmpLength);
+
+            // Remove any previously existing index entries of the same type before adding
+            TRACE("Removing any previously existing DVD sector CPR/MAI block index entries");
+            for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+            {
+                const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+                if(entry && entry->blockType == DataBlock && entry->dataType == DvdSectorCprMai)
+                {
+                    TRACE("Found existing DVD sector CPR/MAI block index entry at position %d, removing", k);
+                    utarray_erase(ctx->index_entries, k, 1);
+                }
+            }
+
             // Add CPR/MAI block to index
             TRACE("Adding DVD sector CPR/MAI block to index");
             IndexEntry cpr_mai_index_entry;
@@ -2181,6 +2323,19 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote DVD sector EDC block (%" PRIu64 " bytes)", edc_block.cmpLength);
+
+            // Remove any previously existing index entries of the same type before adding
+            TRACE("Removing any previously existing DVD sector EDC block index entries");
+            for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+            {
+                const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+                if(entry && entry->blockType == DataBlock && entry->dataType == DvdSectorEdc)
+                {
+                    TRACE("Found existing DVD sector EDC block index entry at position %d, removing", k);
+                    utarray_erase(ctx->index_entries, k, 1);
+                }
+            }
+
             // Add EDC block to index
             TRACE("Adding DVD sector EDC block to index");
             IndexEntry edc_index_entry;
@@ -2373,6 +2528,19 @@ static void write_dvd_title_key_decrypted_block(aaruformat_context *ctx)
         {
             TRACE("Successfully wrote DVD decrypted title key block (%" PRIu64 " bytes)",
                   decrypted_title_key_block.cmpLength);
+
+            // Remove any previously existing index entries of the same type before adding
+            TRACE("Removing any previously existing DVD decrypted title key block index entries");
+            for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+            {
+                const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+                if(entry && entry->blockType == DataBlock && entry->dataType == DvdSectorTitleKeyDecrypted)
+                {
+                    TRACE("Found existing DVD decrypted title key block index entry at position %d, removing", k);
+                    utarray_erase(ctx->index_entries, k, 1);
+                }
+            }
+
             // Add decrypted title key block to index
             TRACE("Adding DVD decrypted title key block to index");
             IndexEntry decrypted_title_key_index_entry;
@@ -2543,6 +2711,20 @@ static void write_media_tags(aaruformat_context *ctx)
             {
                 TRACE("Successfully wrote media tag block type %d (%" PRIu64 " bytes)", tag_block.type,
                       tag_block.cmpLength);
+
+                // Remove any previously existing index entries of the same type before adding
+                TRACE("Removing any previously existing media tag type %d block index entries", tag_block.type);
+                for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+                {
+                    const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+                    if(entry && entry->blockType == DataBlock && entry->dataType == tag_block.type)
+                    {
+                        TRACE("Found existing media tag type %d block index entry at position %d, removing",
+                              tag_block.type, k);
+                        utarray_erase(ctx->index_entries, k, 1);
+                    }
+                }
+
                 // Add media tag block to index
                 TRACE("Adding media tag type %d block to index", tag_block.type);
                 IndexEntry tag_index_entry;
@@ -2771,6 +2953,19 @@ static void write_tape_file_block(aaruformat_context *ctx)
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote tape file block (%" PRIu64 " bytes)", tape_file_block.length);
+
+            // Remove any previously existing index entries of the same type before adding
+            TRACE("Removing any previously existing tape file block index entries");
+            for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+            {
+                const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+                if(entry && entry->blockType == TapeFileBlock && entry->dataType == 0)
+                {
+                    TRACE("Found existing tape file block index entry at position %d, removing", k);
+                    utarray_erase(ctx->index_entries, k, 1);
+                }
+            }
+
             // Add tape file block to index
             TRACE("Adding tape file block to index");
             IndexEntry index_entry;
@@ -3004,6 +3199,19 @@ static void write_tape_partition_block(aaruformat_context *ctx)
         if(written_bytes == 1)
         {
             TRACE("Successfully wrote tape partition block (%" PRIu64 " bytes)", tape_partition_block.length);
+
+            // Remove any previously existing index entries of the same type before adding
+            TRACE("Removing any previously existing tape partition block index entries");
+            for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+            {
+                const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+                if(entry && entry->blockType == TapePartitionBlock && entry->dataType == 0)
+                {
+                    TRACE("Found existing tape partition block index entry at position %d, removing", k);
+                    utarray_erase(ctx->index_entries, k, 1);
+                }
+            }
+
             // Add tape partition block to index
             TRACE("Adding tape partition block to index");
             IndexEntry index_entry;
@@ -3100,6 +3308,18 @@ static void write_geometry_block(aaruformat_context *ctx)
     if(fwrite(&ctx->geometry_block, sizeof(GeometryBlockHeader), 1, ctx->imageStream) == 1)
     {
         TRACE("Successfully wrote geometry block");
+
+        // Remove any previously existing index entries of the same type before adding
+        TRACE("Removing any previously existing geometry block index entries");
+        for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+        {
+            const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+            if(entry && entry->blockType == GeometryBlock && entry->dataType == 0)
+            {
+                TRACE("Found existing geometry block index entry at position %d, removing", k);
+                utarray_erase(ctx->index_entries, k, 1);
+            }
+        }
 
         // Add geometry block to index
         TRACE("Adding geometry block to index");
@@ -3343,6 +3563,18 @@ static void write_metadata_block(aaruformat_context *ctx)
     if(fwrite(buffer, ctx->metadata_block_header.blockSize, 1, ctx->imageStream) == 1)
     {
         TRACE("Successfully wrote metadata block");
+
+        // Remove any previously existing index entries of the same type before adding
+        TRACE("Removing any previously existing metadata block index entries");
+        for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+        {
+            const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+            if(entry && entry->blockType == MetadataBlock && entry->dataType == 0)
+            {
+                TRACE("Found existing metadata block index entry at position %d, removing", k);
+                utarray_erase(ctx->index_entries, k, 1);
+            }
+        }
 
         // Add metadata block to index
         TRACE("Adding metadata block to index");
@@ -3626,6 +3858,18 @@ static void write_dumphw_block(aaruformat_context *ctx)
     {
         TRACE("Successfully wrote dump hardware block");
 
+        // Remove any previously existing index entries of the same type before adding
+        TRACE("Removing any previously existing dump hardware block index entries");
+        for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+        {
+            const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+            if(entry && entry->blockType == DumpHardwareBlock && entry->dataType == 0)
+            {
+                TRACE("Found existing dump hardware block index entry at position %d, removing", k);
+                utarray_erase(ctx->index_entries, k, 1);
+            }
+        }
+
         // Add dump hardware block to index
         TRACE("Adding dump hardware block to index");
         IndexEntry index_entry;
@@ -3751,21 +3995,33 @@ static void write_cicm_block(aaruformat_context *ctx)
     }
 
     TRACE("Writing CICM XML block at position %ld", block_position);
-    if(fwrite(&ctx->cicm_block_header, sizeof(CicmMetadataBlock), 1, ctx->imageStream) == 1)
-        if(fwrite(ctx->cicm_block, ctx->cicm_block_header.length, 1, ctx->imageStream) == 1)
-        {
-            TRACE("Successfully wrote CICM XML block");
+    if(fwrite(&ctx->cicm_block_header, sizeof(CicmMetadataBlock), 1, ctx->imageStream) == 1 &&
+       fwrite(ctx->cicm_block, ctx->cicm_block_header.length, 1, ctx->imageStream) == 1)
+    {
+        TRACE("Successfully wrote CICM XML block");
 
-            // Add CICM block to index
-            TRACE("Adding CICM XML block to index");
-            IndexEntry index_entry;
-            index_entry.blockType = CicmBlock;
-            index_entry.dataType  = 0;
-            index_entry.offset    = block_position;
-            utarray_push_back(ctx->index_entries, &index_entry);
-            ctx->dirty_index_block = true;
-            TRACE("Added CICM XML block index entry at offset %" PRIu64, block_position);
+        // Remove any previously existing index entries of the same type before adding
+        TRACE("Removing any previously existing CICM XML block index entries");
+        for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+        {
+            const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+            if(entry && entry->blockType == CicmBlock && entry->dataType == 0)
+            {
+                TRACE("Found existing CICM XML block index entry at position %d, removing", k);
+                utarray_erase(ctx->index_entries, k, 1);
+            }
         }
+
+        // Add CICM block to index
+        TRACE("Adding CICM XML block to index");
+        IndexEntry index_entry;
+        index_entry.blockType = CicmBlock;
+        index_entry.dataType  = 0;
+        index_entry.offset    = block_position;
+        utarray_push_back(ctx->index_entries, &index_entry);
+        ctx->dirty_index_block = true;
+        TRACE("Added CICM XML block index entry at offset %" PRIu64, block_position);
+    }
 }
 
 /**
@@ -3890,21 +4146,33 @@ static void write_aaru_json_block(aaruformat_context *ctx)
     }
 
     TRACE("Writing Aaru metadata JSON block at position %ld", block_position);
-    if(fwrite(&ctx->json_block_header, sizeof(AaruMetadataJsonBlockHeader), 1, ctx->imageStream) == 1)
-        if(fwrite(ctx->json_block, ctx->json_block_header.length, 1, ctx->imageStream) == 1)
-        {
-            TRACE("Successfully wrote Aaru metadata JSON block");
+    if(fwrite(&ctx->json_block_header, sizeof(AaruMetadataJsonBlockHeader), 1, ctx->imageStream) == 1 &&
+       fwrite(ctx->json_block, ctx->json_block_header.length, 1, ctx->imageStream) == 1)
+    {
+        TRACE("Successfully wrote Aaru metadata JSON block");
 
-            // Add Aaru metadata JSON block to index
-            TRACE("Adding Aaru metadata JSON block to index");
-            IndexEntry index_entry;
-            index_entry.blockType = AaruMetadataJsonBlock;
-            index_entry.dataType  = 0;
-            index_entry.offset    = block_position;
-            utarray_push_back(ctx->index_entries, &index_entry);
-            ctx->dirty_index_block = true;
-            TRACE("Added Aaru metadata JSON block index entry at offset %" PRIu64, block_position);
+        // Remove any previously existing index entries of the same type before adding
+        TRACE("Removing any previously existing Aaru metadata JSON block index entries");
+        for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+        {
+            const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+            if(entry && entry->blockType == AaruMetadataJsonBlock && entry->dataType == 0)
+            {
+                TRACE("Found existing Aaru metadata JSON block index entry at position %d, removing", k);
+                utarray_erase(ctx->index_entries, k, 1);
+            }
         }
+
+        // Add Aaru metadata JSON block to index
+        TRACE("Adding Aaru metadata JSON block to index");
+        IndexEntry index_entry;
+        index_entry.blockType = AaruMetadataJsonBlock;
+        index_entry.dataType  = 0;
+        index_entry.offset    = block_position;
+        utarray_push_back(ctx->index_entries, &index_entry);
+        ctx->dirty_index_block = true;
+        TRACE("Added Aaru metadata JSON block index entry at offset %" PRIu64, block_position);
+    }
 }
 
 /**
