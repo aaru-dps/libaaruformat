@@ -133,7 +133,8 @@ var enums_8h =
       [ "DvdSectorIed", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a3340d65528decaa438460aaf53f2febe", null ],
       [ "DvdSectorEdc", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a9761d07be6a71826f3f0146d091f2176", null ],
       [ "DvdSectorEccPi", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6abb62769f9eb8d50d3fe96c2eccfe82de", null ],
-      [ "DvdEccBlockPo", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a9773bd9f1ecc63ab9b38641c4637ba44", null ]
+      [ "DvdEccBlockPo", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a9773bd9f1ecc63ab9b38641c4637ba44", null ],
+      [ "DvdPfi2ndLayer", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a0346ddff75651daf77c3f75c39ad24e0", null ]
     ] ],
     [ "FeaturesCompatible", "enums_8h.html#af104aa102cdba100b9f245bef4abd42d", [
       [ "AARU_FEATURE_RW_BLAKE3", "enums_8h.html#af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4", null ]

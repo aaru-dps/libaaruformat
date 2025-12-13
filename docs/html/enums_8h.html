@@ -213,6 +213,8 @@ Enumerations</h2></td></tr>
 , <a class="el" href="#ad8ed01ff3ff33333d8e19db4d2818bb6a9761d07be6a71826f3f0146d091f2176">DvdSectorEdc</a> = 85
 , <a class="el" href="#ad8ed01ff3ff33333d8e19db4d2818bb6abb62769f9eb8d50d3fe96c2eccfe82de">DvdSectorEccPi</a> = 86
 , <a class="el" href="#ad8ed01ff3ff33333d8e19db4d2818bb6a9773bd9f1ecc63ab9b38641c4637ba44">DvdEccBlockPo</a> = 87
+, <br />
+&#160;&#160;<a class="el" href="#ad8ed01ff3ff33333d8e19db4d2818bb6a0346ddff75651daf77c3f75c39ad24e0">DvdPfi2ndLayer</a> = 88
 <br />
  }</td></tr>
 <tr class="memdesc:ad8ed01ff3ff33333d8e19db4d2818bb6"><td class="mdescLeft">&#160;</td><td class="mdescRight">List of known data types stored within an Aaru image.  <a href="#ad8ed01ff3ff33333d8e19db4d2818bb6">More...</a><br /></td></tr>
@@ -324,7 +326,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00207">207</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00208">208</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -382,7 +384,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00139">139</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00140">140</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -412,7 +414,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00180">180</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00181">181</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -444,7 +446,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00166">166</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00167">167</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -666,6 +668,8 @@ Enumerations</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="ad8ed01ff3ff33333d8e19db4d2818bb6a9773bd9f1ecc63ab9b38641c4637ba44" name="ad8ed01ff3ff33333d8e19db4d2818bb6a9773bd9f1ecc63ab9b38641c4637ba44"></a>DvdEccBlockPo&#160;</td><td class="fielddoc"><p>DVD Error Correction Code (ECC) Parity of Outer Code (PO) </p>
 </td></tr>
+<tr><td class="fieldname"><a id="ad8ed01ff3ff33333d8e19db4d2818bb6a0346ddff75651daf77c3f75c39ad24e0" name="ad8ed01ff3ff33333d8e19db4d2818bb6a0346ddff75651daf77c3f75c39ad24e0"></a>DvdPfi2ndLayer&#160;</td><td class="fielddoc"><p>DVD Physical Format Information for the second layer. </p>
+</td></tr>
 </table>
 
 <p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00043">43</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
@@ -691,14 +695,14 @@ Enumerations</h2></td></tr>
 <div class="line">{</div>
 <div class="line">    <span class="comment">// Image contains BLAKE3 checksums; enable BLAKE3 verification path.</span></div>
 <div class="line">}</div>
-<div class="ttc" id="aenums_8h_html_af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4"><div class="ttname"><a href="#af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4">AARU_FEATURE_RW_BLAKE3</a></div><div class="ttdeci">@ AARU_FEATURE_RW_BLAKE3</div><div class="ttdoc">BLAKE3 checksum is present (read/write support for BLAKE3 hashes).</div><div class="ttdef"><b>Definition</b> <a href="enums_8h_source.html#l00265">enums.h:265</a></div></div>
+<div class="ttc" id="aenums_8h_html_af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4"><div class="ttname"><a href="#af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4">AARU_FEATURE_RW_BLAKE3</a></div><div class="ttdeci">@ AARU_FEATURE_RW_BLAKE3</div><div class="ttdoc">BLAKE3 checksum is present (read/write support for BLAKE3 hashes).</div><div class="ttdef"><b>Definition</b> <a href="enums_8h_source.html#l00266">enums.h:266</a></div></div>
 </div><!-- fragment --><p>Future compatible features SHALL use the next available bit (1ULL &lt;&lt; n). </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4" name="af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4"></a>AARU_FEATURE_RW_BLAKE3&#160;</td><td class="fielddoc"><p>BLAKE3 checksum is present (read/write support for BLAKE3 hashes). </p>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00263">263</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00264">264</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -740,7 +744,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00228">228</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00229">229</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -772,7 +776,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00193">193</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00194">194</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -800,7 +804,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00216">216</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00217">217</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>

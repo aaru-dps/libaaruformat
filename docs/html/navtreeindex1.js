@@ -111,6 +111,7 @@ var NAVTREEINDEX1 =
 "enums_8h.html#ad80740dd555f7d3688d2c4d9f44d3b04aff99910681f4abb6ac45b08562b2797e":[3,0,0,0,6,8,3],
 "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6":[3,0,0,0,6,5],
 "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a00532938ab561a501dd27181f9f6f419":[3,0,0,0,6,5,10],
+"enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a0346ddff75651daf77c3f75c39ad24e0":[3,0,0,0,6,5,88],
 "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a03663fbb4ba4732a9d8d1248a8ec648e":[3,0,0,0,6,5,3],
 "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a03e6afb5f49a132381fad890ec374881":[3,0,0,0,6,5,21],
 "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a04bf8ba63a86c8537f0df0184e6ceac1":[3,0,0,0,6,5,44],
@@ -248,6 +249,5 @@ var NAVTREEINDEX1 =
 "files.html":[3,0],
 "flac_8c.html":[3,0,1,2,1],
 "flac_8c.html#a102023fe64e4bd24cd6d4124f0d74e54":[3,0,1,2,1,1],
-"flac_8c.html#a4ae2146e619c2a746b41c778f71f2e8c":[3,0,1,2,1,4],
-"flac_8c.html#a4c8139a16dc0f340140a71a2322f9c26":[3,0,1,2,1,2]
+"flac_8c.html#a4ae2146e619c2a746b41c778f71f2e8c":[3,0,1,2,1,4]
 };

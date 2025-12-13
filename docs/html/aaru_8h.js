@@ -76,6 +76,7 @@ var aaru_8h =
       [ "MiniDiscUTOC", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea7d3b34c3cd93d13905a87b466859b2a7", null ],
       [ "MiniDiscDTOC", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea05624139ec685ba219acbc9ea0e49100", null ],
       [ "DVD_DiscKey_Decrypted", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea109296d460fd5fc05446914dad9a0834", null ],
+      [ "DVD_PFI_2ndLayer", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea38bbe74d629332f276346639802f5f53", null ],
       [ "MaxMediaTag", "group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebeacd570dfe827abf5d93ff1c36b44efa33", null ]
     ] ],
     [ "MediaType", "group__MediaTypes.html#ga1499e9f8a76cb81b43b7a4b0dbe7e44a", [
