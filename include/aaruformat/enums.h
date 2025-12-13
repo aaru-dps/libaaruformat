@@ -129,7 +129,8 @@ typedef enum
     DvdSectorIed                     = 84,  ///< DVD ID Error Detection Code (IED)
     DvdSectorEdc                     = 85,  ///< DVD Error Detection Code (EDC)
     DvdSectorEccPi                   = 86,  ///< DVD Error Correction Code (ECC) Parity of Inner Code (PI)
-    DvdEccBlockPo                    = 87   ///< DVD Error Correction Code (ECC) Parity of Outer Code (PO)
+    DvdEccBlockPo                    = 87,  ///< DVD Error Correction Code (ECC) Parity of Outer Code (PO)
+    DvdPfi2ndLayer                   = 88   ///< DVD Physical Format Information for the second layer
 } DataType;
 
 /**

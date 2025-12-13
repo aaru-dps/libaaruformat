@@ -774,7 +774,7 @@ typedef enum
     // VideoNow, types 740 to 749
 
     // Iomega, types 750 to 759
-    Bernoulli10  = 750,  ///< 8"x11" Bernoulli Box disk with 10Mb capacity
+    Bernoulli10      = 750,  ///< 8"x11" Bernoulli Box disk with 10Mb capacity
     ///< 8"x11" Bernoulli Box disk with 20Mb capacity
     Bernoulli20      = 751,
     ///< 5⅓" Bernoulli Box II disk with 20Mb capacity
@@ -1060,7 +1060,8 @@ typedef enum
     MiniDiscUTOC = 71,  ///< User TOC, contains fragments, track names, and can be from 1 to 3 sectors of 2336 bytes
     MiniDiscDTOC = 72,  ///< Not entirely clear kind of TOC that only appears on MD-DATA discs
     DVD_DiscKey_Decrypted = 73,  ///< Decrypted DVD disc key,
-    MaxMediaTag           = DVD_DiscKey_Decrypted
+    DVD_PFI_2ndLayer      = 74,  ///< DVD Physical Format Information for the second layer
+    MaxMediaTag           = DVD_PFI_2ndLayer
 } MediaTagType;
 
 /** @} */ /* end of MediaTags group */

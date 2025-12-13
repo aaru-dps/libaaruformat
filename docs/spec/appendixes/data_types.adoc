@@ -94,6 +94,9 @@ The most current and authoritative list is always maintained in the `libaaruform
 |80 |DVD Disc Key (decrypted)
 |81 |DVD CPI_MAI
 |82 |DVD Title Key (decrypted)
-|83 |Flux data
-|84 |Bitstream data
-|===
+|83 |DVD Identification Data (ID)
+|84 |DVD ID Error Detection Code (IED)
+|85 |DVD Error Detection Code (EDC)
+|86 |DVD Error Correction Code (ECC) Parity of Inner Code (PI)
+|87 |DVD Error Correction Code (ECC) Parity of Outer Code (PO)
+|88 |DVD Physical Format Information for the second layer
