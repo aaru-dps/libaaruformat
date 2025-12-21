@@ -48,6 +48,9 @@
  */
 hash_map_t *create_map(size_t size)
 {
+    // Enforce minimum size to prevent division by zero in modulo operations
+    if(size < INITIAL_SIZE) size = INITIAL_SIZE;
+
     hash_map_t *map = malloc(sizeof(hash_map_t));
     map->table      = calloc(size, sizeof(kv_pair_t));
     map->size       = size;
