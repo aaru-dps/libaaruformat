@@ -85,7 +85,8 @@ static void flux_map_clear(aaruformat_context *ctx)
 {
     if(ctx->flux_map == NULL) return;
 
-    FluxCaptureMapEntry *entry, *tmp;
+    FluxCaptureMapEntry *entry;
+    FluxCaptureMapEntry *tmp;
     HASH_ITER(hh, ctx->flux_map, entry, tmp)
     {
         HASH_DEL(ctx->flux_map, entry);
@@ -448,7 +449,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_flux_captures(void *context, uint8_t *bu
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    aaruformat_context *ctx = context;
+    const aaruformat_context *ctx = context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
@@ -466,11 +467,17 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_flux_captures(void *context, uint8_t *bu
 
     size_t required_length = ctx->flux_data_header.entries * sizeof(FluxCaptureMeta);
 
-    if(buffer == NULL || length == NULL || *length < required_length)
+    if(length == NULL)
     {
-        if(length) *length = required_length;
         TRACE("Buffer too small for flux captures, required %zu bytes", required_length);
+        TRACE("Exiting aaruf_get_flux_captures() = AARUF_ERROR_BUFFER_TOO_SMALL");
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
 
+    if(buffer == NULL || *length < required_length)
+    {
+        *length = required_length;
+        TRACE("Buffer too small for flux captures, required %zu bytes", required_length);
         TRACE("Exiting aaruf_get_flux_captures() = AARUF_ERROR_BUFFER_TOO_SMALL");
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
@@ -752,6 +759,307 @@ AARU_EXPORT int32_t AARU_CALL aaruf_clear_flux_captures(void *context)
 }
 
 /**
+ * @brief Find a flux entry by its identifier key.
+ *
+ * @param ctx Pointer to the aaruformat context containing flux data. Must not be NULL.
+ * @param key Pointer to the FluxCaptureKey identifying the flux capture. Must not be NULL.
+ * @return Pointer to the matching FluxEntry, or NULL if not found.
+ * @internal
+ */
+static const FluxEntry *find_flux_entry_by_key(const aaruformat_context *ctx, const FluxCaptureKey *key)
+{
+    // Try lookup map first (O(1))
+    if(ctx->flux_map != NULL)
+    {
+        FluxCaptureMapEntry *map_entry = NULL;
+        HASH_FIND(hh, ctx->flux_map, key, sizeof(FluxCaptureKey), map_entry);
+        if(map_entry != NULL && map_entry->index < ctx->flux_data_header.entries)
+            return &ctx->flux_entries[map_entry->index];
+    }
+
+    // Fall back to linear search (O(n))
+    for(uint32_t i = 0; i < ctx->flux_data_header.entries; i++)
+    {
+        const FluxEntry *entry = &ctx->flux_entries[i];
+        if(entry->head == key->head && entry->track == key->track && entry->subtrack == key->subtrack &&
+           entry->captureIndex == key->captureIndex)
+            return entry;
+    }
+
+    return NULL;
+}
+
+/**
+ * @brief Read and validate a flux payload block header from the image stream.
+ *
+ * @param ctx Pointer to the aaruformat context. Must not be NULL.
+ * @param payload_offset File offset where the payload block starts.
+ * @param header Output parameter for the read header. Must not be NULL.
+ * @return AARUF_STATUS_OK on success, or an error code on failure.
+ * @internal
+ */
+static int32_t read_flux_payload_header(const aaruformat_context *ctx, uint64_t payload_offset,
+                                        DataStreamPayloadHeader *header)
+{
+    if(fseek(ctx->imageStream, payload_offset, SEEK_SET) < 0)
+    {
+        FATAL("Could not seek to flux payload at offset %" PRIu64, payload_offset);
+        TRACE("Exiting read_flux_payload_header() = AARUF_ERROR_CANNOT_READ_BLOCK\n");
+        return AARUF_ERROR_CANNOT_READ_BLOCK;
+    }
+
+    long file_position = ftell(ctx->imageStream);
+    if(file_position < 0 || (uint64_t)file_position != payload_offset)
+    {
+        FATAL("Invalid flux payload position (expected %" PRIu64 ", got %ld)", payload_offset, file_position);
+        TRACE("Exiting read_flux_payload_header() = AARUF_ERROR_CANNOT_READ_BLOCK\n");
+        return AARUF_ERROR_CANNOT_READ_BLOCK;
+    }
+
+    size_t read_bytes = fread(header, 1, sizeof(DataStreamPayloadHeader), ctx->imageStream);
+    if(read_bytes != sizeof(DataStreamPayloadHeader))
+    {
+        FATAL("Could not read flux payload header at offset %" PRIu64, payload_offset);
+        TRACE("Exiting read_flux_payload_header() = AARUF_ERROR_CANNOT_READ_BLOCK\n");
+        return AARUF_ERROR_CANNOT_READ_BLOCK;
+    }
+
+    if(header->identifier != DataStreamPayloadBlock)
+    {
+        FATAL("Incorrect identifier 0x%08" PRIx32 " for flux payload at offset %" PRIu64, header->identifier,
+              payload_offset);
+        TRACE("Exiting read_flux_payload_header() = AARUF_ERROR_CANNOT_READ_BLOCK\n");
+        return AARUF_ERROR_CANNOT_READ_BLOCK;
+    }
+
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Read an uncompressed flux payload from the image stream.
+ *
+ * @param ctx Pointer to the aaruformat context. Must not be NULL.
+ * @param cmp_length Compressed length (should equal raw_length for uncompressed).
+ * @param raw_length Uncompressed length.
+ * @param cmp_buffer Output parameter for compressed buffer pointer (caller must free). Can be NULL if allocation fails.
+ * @param payload Output parameter for payload buffer pointer (same as cmp_buffer for uncompressed).
+ * @return AARUF_STATUS_OK on success, or an error code on failure.
+ * @internal
+ */
+static int32_t read_uncompressed_payload(const aaruformat_context *ctx, size_t cmp_length, size_t raw_length,
+                                         uint8_t **cmp_buffer, uint8_t **payload)
+{
+    if(cmp_length != raw_length)
+    {
+        FATAL("Flux payload lengths mismatch for uncompressed block (cmp=%zu, raw=%zu)", cmp_length, raw_length);
+        TRACE("Exiting read_uncompressed_payload() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK\n");
+        return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+    }
+
+    if(cmp_length == 0)
+    {
+        *cmp_buffer = NULL;
+        *payload     = NULL;
+        return AARUF_STATUS_OK;
+    }
+
+    *cmp_buffer = (uint8_t *)malloc(cmp_length);
+    if(*cmp_buffer == NULL)
+    {
+        FATAL("Could not allocate %zu bytes for flux payload", cmp_length);
+        TRACE("Exiting read_uncompressed_payload() = AARUF_ERROR_NOT_ENOUGH_MEMORY\n");
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    size_t read_bytes = fread(*cmp_buffer, 1, cmp_length, ctx->imageStream);
+    if(read_bytes != cmp_length)
+    {
+        FATAL("Could not read %zu bytes of flux payload", cmp_length);
+        free(*cmp_buffer);
+        *cmp_buffer = NULL;
+        TRACE("Exiting read_uncompressed_payload() = AARUF_ERROR_CANNOT_READ_BLOCK\n");
+        return AARUF_ERROR_CANNOT_READ_BLOCK;
+    }
+
+    *payload = *cmp_buffer;
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Read and decompress an LZMA-compressed flux payload from the image stream.
+ *
+ * @param ctx Pointer to the aaruformat context. Must not be NULL.
+ * @param cmp_length Compressed length including LZMA properties.
+ * @param raw_length Expected uncompressed length.
+ * @param cmp_buffer Output parameter for compressed buffer pointer (caller must free). Can be NULL if allocation fails.
+ * @param payload Output parameter for decompressed payload buffer pointer (caller must free). Can be NULL if allocation fails.
+ * @return AARUF_STATUS_OK on success, or an error code on failure.
+ * @internal
+ */
+static int32_t read_lzma_compressed_payload(const aaruformat_context *ctx, size_t cmp_length, size_t raw_length,
+                                            uint8_t **cmp_buffer, uint8_t **payload)
+{
+    if(cmp_length <= LZMA_PROPERTIES_LENGTH)
+    {
+        FATAL("Flux payload compressed length %zu too small for LZMA", cmp_length);
+        TRACE("Exiting read_lzma_compressed_payload() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK\n");
+        return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+    }
+
+    *cmp_buffer = (uint8_t *)malloc(cmp_length);
+    if(*cmp_buffer == NULL)
+    {
+        FATAL("Could not allocate %zu bytes for flux payload", cmp_length);
+        TRACE("Exiting read_lzma_compressed_payload() = AARUF_ERROR_NOT_ENOUGH_MEMORY\n");
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    size_t read_bytes = fread(*cmp_buffer, 1, cmp_length, ctx->imageStream);
+    if(read_bytes != cmp_length)
+    {
+        FATAL("Could not read %zu bytes of flux payload", cmp_length);
+        free(*cmp_buffer);
+        *cmp_buffer = NULL;
+        TRACE("Exiting read_lzma_compressed_payload() = AARUF_ERROR_CANNOT_READ_BLOCK\n");
+        return AARUF_ERROR_CANNOT_READ_BLOCK;
+    }
+
+    if(raw_length == 0)
+    {
+        *payload = NULL;
+        return AARUF_STATUS_OK;
+    }
+
+    *payload = (uint8_t *)malloc(raw_length);
+    if(*payload == NULL)
+    {
+        FATAL("Could not allocate %zu bytes for decompressed flux payload", raw_length);
+        free(*cmp_buffer);
+        *cmp_buffer = NULL;
+        TRACE("Exiting read_lzma_compressed_payload() = AARUF_ERROR_NOT_ENOUGH_MEMORY\n");
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    size_t         cmp_stream_len = cmp_length - LZMA_PROPERTIES_LENGTH;
+    size_t         dst_len        = raw_length;
+    size_t         src_len        = cmp_stream_len;
+    const uint8_t *cmp_props      = *cmp_buffer;
+    const uint8_t *cmp_stream     = *cmp_buffer + LZMA_PROPERTIES_LENGTH;
+    int32_t        error_no =
+        aaruf_lzma_decode_buffer(*payload, &dst_len, cmp_stream, &src_len, cmp_props, LZMA_PROPERTIES_LENGTH);
+    if(error_no != 0 || dst_len != raw_length)
+    {
+        FATAL("LZMA decompression failed for flux payload (err=%d, dst=%zu/%zu)", error_no, dst_len, raw_length);
+        free(*payload);
+        free(*cmp_buffer);
+        *payload  = NULL;
+        *cmp_buffer = NULL;
+        TRACE("Exiting read_lzma_compressed_payload() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK\n");
+        return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+    }
+
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Validate CRC64 checksums for a flux payload block.
+ *
+ * @param cmp_buffer Compressed buffer to validate. Can be NULL if cmp_length is 0.
+ * @param cmp_length Compressed length.
+ * @param payload Uncompressed payload buffer to validate. Can be NULL if raw_length is 0.
+ * @param raw_length Uncompressed length.
+ * @param expected_cmp_crc Expected CRC64 of compressed data.
+ * @param expected_raw_crc Expected CRC64 of uncompressed data.
+ * @return AARUF_STATUS_OK on success, or AARUF_ERROR_INVALID_BLOCK_CRC on mismatch.
+ * @internal
+ */
+static int32_t validate_flux_payload_crcs(const uint8_t *cmp_buffer, size_t cmp_length, const uint8_t *payload,
+                                          size_t raw_length, uint64_t expected_cmp_crc, uint64_t expected_raw_crc)
+{
+    uint64_t cmp_crc = 0;
+    if(cmp_length != 0 && cmp_buffer != NULL) cmp_crc = aaruf_crc64_data(cmp_buffer, cmp_length);
+
+    if(cmp_crc != expected_cmp_crc)
+    {
+        FATAL("Flux payload compressed CRC mismatch (expected 0x%" PRIx64 ", got 0x%" PRIx64 ")", expected_cmp_crc,
+              cmp_crc);
+        TRACE("Exiting validate_flux_payload_crcs() = AARUF_ERROR_INVALID_BLOCK_CRC\n");
+        return AARUF_ERROR_INVALID_BLOCK_CRC;
+    }
+
+    uint64_t raw_crc = 0;
+    if(raw_length != 0 && payload != NULL) raw_crc = aaruf_crc64_data(payload, raw_length);
+
+    if(raw_crc != expected_raw_crc)
+    {
+        FATAL("Flux payload raw CRC mismatch (expected 0x%" PRIx64 ", got 0x%" PRIx64 ")", expected_raw_crc, raw_crc);
+        TRACE("Exiting validate_flux_payload_crcs() = AARUF_ERROR_INVALID_BLOCK_CRC\n");
+        return AARUF_ERROR_INVALID_BLOCK_CRC;
+    }
+
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Extract data and index buffers from decompressed payload and copy to output buffers.
+ *
+ * @param flux_entry Pointer to the flux entry containing index offset information. Must not be NULL.
+ * @param payload Pointer to the decompressed payload buffer. Can be NULL if raw_length is 0.
+ * @param raw_length Length of the decompressed payload.
+ * @param data_data Output buffer for data portion. Can be NULL for size query.
+ * @param data_length Input/output parameter for data buffer size/required size. Must not be NULL.
+ * @param index_data Output buffer for index portion. Can be NULL for size query.
+ * @param index_length Input/output parameter for index buffer size/required size. Must not be NULL.
+ * @return AARUF_STATUS_OK on success, or an error code on failure.
+ * @internal
+ */
+static int32_t extract_flux_data_buffers(const FluxEntry *flux_entry, const uint8_t *payload, size_t raw_length,
+                                         uint8_t *data_data, uint32_t *data_length, uint8_t *index_data,
+                                         uint32_t *index_length)
+{
+    if(flux_entry->indexOffset > raw_length)
+    {
+        FATAL("Flux index offset %" PRIu64 " beyond payload length %zu", flux_entry->indexOffset, raw_length);
+        TRACE("Exiting extract_flux_data_buffers() = AARUF_ERROR_INVALID_BLOCK_CRC\n");
+        return AARUF_ERROR_INVALID_BLOCK_CRC;
+    }
+
+    uint64_t data_length_required64  = flux_entry->indexOffset;
+    uint64_t index_length_required64 = raw_length - flux_entry->indexOffset;
+
+    if(data_length_required64 > UINT32_MAX || index_length_required64 > UINT32_MAX)
+    {
+        FATAL("Flux payload section length exceeds 32-bit limits (data=%" PRIu64 ", index=%" PRIu64 ")",
+              data_length_required64, index_length_required64);
+        TRACE("Exiting extract_flux_data_buffers() = AARUF_ERROR_INCORRECT_DATA_SIZE\n");
+        return AARUF_ERROR_INCORRECT_DATA_SIZE;
+    }
+
+    uint32_t data_required  = (uint32_t)data_length_required64;
+    uint32_t index_required = (uint32_t)index_length_required64;
+
+    uint32_t data_capacity  = *data_length;
+    uint32_t index_capacity = *index_length;
+
+    *data_length  = data_required;
+    *index_length = index_required;
+
+    if(data_data == NULL || index_data == NULL || data_capacity < data_required || index_capacity < index_required)
+    {
+        TRACE("Returning required flux capture sizes (data=%u, index=%u)\n", data_required, index_required);
+        return AARUF_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    const uint8_t *index_ptr = payload ? payload + data_length_required64 : NULL;
+    const uint8_t *data_ptr  = payload;
+
+    if(data_required != 0 && data_ptr != NULL) memcpy(data_data, data_ptr, data_required);
+    if(index_required != 0 && index_ptr != NULL) memcpy(index_data, index_ptr, index_required);
+
+    return AARUF_STATUS_OK;
+}
+
+/**
  * @brief Read a specific flux capture's data and index buffers from the image.
  *
  * This function retrieves the actual flux data and index buffers for a specific
@@ -853,33 +1161,15 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_flux_capture(void *context, uint32_t he
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
-    const FluxEntry *flux_entry = NULL;
-    FluxCaptureKey   key        = {head, track, subtrack, capture_index};
-
-    // Find the flux entry in the map.
-    if(ctx->flux_map != NULL)
+    if(ctx->imageStream == NULL)
     {
-        FluxCaptureMapEntry *map_entry = NULL;
-        HASH_FIND(hh, ctx->flux_map, &key, sizeof(FluxCaptureKey), map_entry);
-        if(map_entry != NULL && map_entry->index < ctx->flux_data_header.entries)
-            flux_entry = &ctx->flux_entries[map_entry->index];
+        FATAL("Invalid image stream");
+        TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_NOT_AARUFORMAT\n");
+        return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    // If the flux entry is not found in the map, search the entries array for a match.
-    if(flux_entry == NULL)
-    {
-        for(uint32_t i = 0; i < ctx->flux_data_header.entries; i++)
-        {
-            const FluxEntry *candidate = &ctx->flux_entries[i];
-            if(candidate->head == head && candidate->track == track && candidate->subtrack == subtrack &&
-               candidate->captureIndex == capture_index)
-            {
-                flux_entry = candidate;
-                break;
-            }
-        }
-    }
-
+    FluxCaptureKey        key        = {head, track, subtrack, capture_index};
+    const FluxEntry      *flux_entry = find_flux_entry_by_key(ctx, &key);
     if(flux_entry == NULL)
     {
         TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_FLUX_DATA_NOT_FOUND\n");
@@ -890,44 +1180,12 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_flux_capture(void *context, uint32_t he
           flux_entry->head, flux_entry->track, flux_entry->subtrack, flux_entry->captureIndex,
           flux_entry->payloadOffset);
 
-    if(ctx->imageStream == NULL)
-    {
-        FATAL("Invalid image stream");
-        TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_NOT_AARUFORMAT\n");
-        return AARUF_ERROR_NOT_AARUFORMAT;
-    }
-
-    if(fseek(ctx->imageStream, flux_entry->payloadOffset, SEEK_SET) < 0)
-    {
-        FATAL("Could not seek to flux payload at offset %" PRIu64, flux_entry->payloadOffset);
-        TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_CANNOT_READ_BLOCK\n");
-        return AARUF_ERROR_CANNOT_READ_BLOCK;
-    }
-
-    long file_position = ftell(ctx->imageStream);
-    if(file_position < 0 || (uint64_t)file_position != flux_entry->payloadOffset)
-    {
-        FATAL("Invalid flux payload position (expected %" PRIu64 ", got %ld)", flux_entry->payloadOffset,
-              file_position);
-        TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_CANNOT_READ_BLOCK\n");
-        return AARUF_ERROR_CANNOT_READ_BLOCK;
-    }
-
     DataStreamPayloadHeader payload_header;
-    size_t            read_bytes = fread(&payload_header, 1, sizeof(DataStreamPayloadHeader), ctx->imageStream);
-    if(read_bytes != sizeof(DataStreamPayloadHeader))
+    int32_t                 res = read_flux_payload_header(ctx, flux_entry->payloadOffset, &payload_header);
+    if(res != AARUF_STATUS_OK)
     {
-        FATAL("Could not read flux payload header at offset %" PRIu64, flux_entry->payloadOffset);
-        TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_CANNOT_READ_BLOCK\n");
-        return AARUF_ERROR_CANNOT_READ_BLOCK;
-    }
-
-    if(payload_header.identifier != DataStreamPayloadBlock)
-    {
-        FATAL("Incorrect identifier 0x%08" PRIx32 " for flux payload at offset %" PRIu64, payload_header.identifier,
-              flux_entry->payloadOffset);
-        TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_CANNOT_READ_BLOCK\n");
-        return AARUF_ERROR_CANNOT_READ_BLOCK;
+        TRACE("Exiting aaruf_read_flux_capture() = %d\n", res);
+        return res;
     }
 
     const CompressionType compression = (CompressionType)payload_header.compression;
@@ -938,90 +1196,11 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_flux_capture(void *context, uint32_t he
 
     if(compression == None)
     {
-        if(cmp_length != raw_length)
-        {
-            FATAL("Flux payload lengths mismatch for uncompressed block (cmp=%u, raw=%u)", payload_header.cmpLength,
-                  payload_header.length);
-            TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK\n");
-            return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
-        }
-
-        if(cmp_length != 0)
-        {
-            cmp_buffer = (uint8_t *)malloc(cmp_length);
-            if(cmp_buffer == NULL)
-            {
-                FATAL("Could not allocate %zu bytes for flux payload", cmp_length);
-                TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_NOT_ENOUGH_MEMORY\n");
-                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
-            }
-
-            read_bytes = fread(cmp_buffer, 1, cmp_length, ctx->imageStream);
-            if(read_bytes != cmp_length)
-            {
-                FATAL("Could not read %zu bytes of flux payload", cmp_length);
-                free(cmp_buffer);
-                TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_CANNOT_READ_BLOCK\n");
-                return AARUF_ERROR_CANNOT_READ_BLOCK;
-            }
-
-            payload = cmp_buffer;
-        }
+        res = read_uncompressed_payload(ctx, cmp_length, raw_length, &cmp_buffer, &payload);
     }
     else if(compression == Lzma)
     {
-        if(cmp_length <= LZMA_PROPERTIES_LENGTH)
-        {
-            FATAL("Flux payload compressed length %u too small for LZMA", payload_header.cmpLength);
-            TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK\n");
-            return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
-        }
-
-        cmp_buffer = (uint8_t *)malloc(cmp_length);
-        if(cmp_buffer == NULL)
-        {
-            FATAL("Could not allocate %zu bytes for flux payload", cmp_length);
-            TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_NOT_ENOUGH_MEMORY\n");
-            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
-        }
-
-        read_bytes = fread(cmp_buffer, 1, cmp_length, ctx->imageStream);
-        if(read_bytes != cmp_length)
-        {
-            FATAL("Could not read %zu bytes of flux payload", cmp_length);
-            free(cmp_buffer);
-            TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_CANNOT_READ_BLOCK\n");
-            return AARUF_ERROR_CANNOT_READ_BLOCK;
-        }
-
-        if(raw_length != 0)
-        {
-            payload = (uint8_t *)malloc(raw_length);
-            if(payload == NULL)
-            {
-                FATAL("Could not allocate %zu bytes for decompressed flux payload", raw_length);
-                free(cmp_buffer);
-                TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_NOT_ENOUGH_MEMORY\n");
-                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
-            }
-
-            size_t         cmp_stream_len = cmp_length - LZMA_PROPERTIES_LENGTH;
-            size_t         dst_len        = raw_length;
-            size_t         src_len        = cmp_stream_len;
-            const uint8_t *cmp_props      = cmp_buffer;
-            const uint8_t *cmp_stream     = cmp_buffer + LZMA_PROPERTIES_LENGTH;
-            int32_t        error_no =
-                aaruf_lzma_decode_buffer(payload, &dst_len, cmp_stream, &src_len, cmp_props, LZMA_PROPERTIES_LENGTH);
-            if(error_no != 0 || dst_len != raw_length)
-            {
-                FATAL("LZMA decompression failed for flux payload (err=%d, dst=%zu/%zu)", error_no, dst_len,
-                      raw_length);
-                free(payload);
-                free(cmp_buffer);
-                TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK\n");
-                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
-            }
-        }
+        res = read_lzma_compressed_payload(ctx, cmp_length, raw_length, &cmp_buffer, &payload);
     }
     else
     {
@@ -1030,78 +1209,31 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_flux_capture(void *context, uint32_t he
         return AARUF_ERROR_UNSUPPORTED_COMPRESSION;
     }
 
-    uint64_t cmp_crc = 0;
-    if(cmp_length != 0 && cmp_buffer != NULL) cmp_crc = aaruf_crc64_data(cmp_buffer, cmp_length);
-    if(cmp_length == 0) cmp_crc = 0;
-
-    if(cmp_crc != payload_header.cmpCrc64)
+    if(res != AARUF_STATUS_OK)
     {
-        FATAL("Flux payload compressed CRC mismatch (expected 0x%" PRIx64 ", got 0x%" PRIx64 ")",
-              payload_header.cmpCrc64, cmp_crc);
-        if(payload != NULL && payload != cmp_buffer) free(payload);
-        if(cmp_buffer != NULL) free(cmp_buffer);
-        TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_INVALID_BLOCK_CRC\n");
-        return AARUF_ERROR_INVALID_BLOCK_CRC;
+        TRACE("Exiting aaruf_read_flux_capture() = %d\n", res);
+        return res;
     }
 
-    uint64_t raw_crc = 0;
-    if(raw_length != 0 && payload != NULL) raw_crc = aaruf_crc64_data(payload, raw_length);
-    if(raw_length == 0) raw_crc = 0;
-
-    if(raw_crc != payload_header.crc64)
+    res = validate_flux_payload_crcs(cmp_buffer, cmp_length, payload, raw_length, payload_header.cmpCrc64,
+                                      payload_header.crc64);
+    if(res != AARUF_STATUS_OK)
     {
-        FATAL("Flux payload raw CRC mismatch (expected 0x%" PRIx64 ", got 0x%" PRIx64 ")", payload_header.crc64,
-              raw_crc);
         if(payload != NULL && payload != cmp_buffer) free(payload);
         if(cmp_buffer != NULL) free(cmp_buffer);
-        TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_INVALID_BLOCK_CRC\n");
-        return AARUF_ERROR_INVALID_BLOCK_CRC;
+        TRACE("Exiting aaruf_read_flux_capture() = %d\n", res);
+        return res;
     }
 
-    if(flux_entry->indexOffset > raw_length)
+    res = extract_flux_data_buffers(flux_entry, payload, raw_length, data_data, data_length, index_data,
+                                    index_length);
+    if(res != AARUF_STATUS_OK)
     {
-        FATAL("Flux index offset %" PRIu64 " beyond payload length %zu", flux_entry->indexOffset, raw_length);
         if(payload != NULL && payload != cmp_buffer) free(payload);
         if(cmp_buffer != NULL) free(cmp_buffer);
-        TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_INVALID_BLOCK_CRC\n");
-        return AARUF_ERROR_INVALID_BLOCK_CRC;
+        TRACE("Exiting aaruf_read_flux_capture() = %d\n", res);
+        return res;
     }
-
-    uint64_t data_length_required64  = flux_entry->indexOffset;
-    uint64_t index_length_required64 = raw_length - flux_entry->indexOffset;
-
-    if(data_length_required64 > UINT32_MAX || index_length_required64 > UINT32_MAX)
-    {
-        FATAL("Flux payload section length exceeds 32-bit limits (data=%" PRIu64 ", index=%" PRIu64 ")",
-              data_length_required64, index_length_required64);
-        if(payload != NULL && payload != cmp_buffer) free(payload);
-        if(cmp_buffer != NULL) free(cmp_buffer);
-        TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_INCORRECT_DATA_SIZE\n");
-        return AARUF_ERROR_INCORRECT_DATA_SIZE;
-    }
-
-    uint32_t data_required  = (uint32_t)data_length_required64;
-    uint32_t index_required = (uint32_t)index_length_required64;
-
-    uint32_t data_capacity  = *data_length;
-    uint32_t index_capacity = *index_length;
-
-    *data_length  = data_required;
-    *index_length = index_required;
-
-    if(data_data == NULL || index_data == NULL || data_capacity < data_required || index_capacity < index_required)
-    {
-        TRACE("Returning required flux capture sizes (data=%u, index=%u)\n", data_required, index_required);
-        if(payload != NULL && payload != cmp_buffer) free(payload);
-        if(cmp_buffer != NULL) free(cmp_buffer);
-        return AARUF_ERROR_BUFFER_TOO_SMALL;
-    }
-
-    uint8_t *index_ptr = payload ? payload + data_length_required64 : NULL;
-    uint8_t *data_ptr  = payload;
-
-    if(data_required != 0 && data_ptr != NULL) memcpy(data_data, data_ptr, data_required);
-    if(index_required != 0 && index_ptr != NULL) memcpy(index_data, index_ptr, index_required);
 
     if(payload != NULL && payload != cmp_buffer) free(payload);
     if(cmp_buffer != NULL) free(cmp_buffer);

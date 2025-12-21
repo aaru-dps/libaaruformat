@@ -1305,12 +1305,12 @@ int convert(const char *input_path, const char *output_path, bool use_long)
         res = aaruf_get_flux_captures(input_ctx, flux_captures, &flux_captures_length);
         if(res == AARUF_STATUS_OK)
         {
-            size_t              capture_count = flux_captures_length / sizeof(FluxCaptureMeta);
-            FluxCaptureMeta    *captures      = (FluxCaptureMeta *)flux_captures;
-            uint8_t            *index_data    = NULL;
-            uint8_t            *data_data      = NULL;
-            uint32_t            index_length   = 0;
-            uint32_t            data_length    = 0;
+            size_t                 capture_count = flux_captures_length / sizeof(FluxCaptureMeta);
+            const FluxCaptureMeta *captures      = (FluxCaptureMeta *)flux_captures;
+            uint8_t               *index_data    = NULL;
+            uint8_t               *data_data     = NULL;
+            uint32_t               index_length  = 0;
+            uint32_t               data_length   = 0;
 
             printf("Copying %zu flux captures...\n", capture_count);
 

@@ -4380,7 +4380,7 @@ static int32_t write_flux_capture_payload(aaruformat_context *ctx, FluxCaptureRe
     uint8_t *raw_buffer = NULL;
     if(raw_length != 0)
     {
-        raw_buffer = malloc((size_t)raw_length);
+        raw_buffer = malloc(raw_length);
         if(raw_buffer == NULL)
         {
             FATAL("Could not allocate %" PRIu64 " bytes for flux serialization", raw_length);
@@ -4392,7 +4392,7 @@ static int32_t write_flux_capture_payload(aaruformat_context *ctx, FluxCaptureRe
             memcpy(raw_buffer + data_length, record->index_buffer, index_length);
     }
 
-    uint64_t raw_crc = raw_length != 0 && raw_buffer != NULL ? aaruf_crc64_data(raw_buffer, (size_t)raw_length) : 0;
+    uint64_t raw_crc = raw_length != 0 && raw_buffer != NULL ? aaruf_crc64_data(raw_buffer, raw_length) : 0;
 
     CompressionType compression = ctx->compression_enabled ? Lzma : None;
 
@@ -4402,7 +4402,7 @@ static int32_t write_flux_capture_payload(aaruformat_context *ctx, FluxCaptureRe
 
     if(compression == Lzma)
     {
-        size_t cmp_capacity = raw_length ? (size_t)raw_length * 2 + 65536 : LZMA_PROPERTIES_LENGTH + 16;
+        size_t cmp_capacity = raw_length ? raw_length * 2 + 65536 : LZMA_PROPERTIES_LENGTH + 16;
         if(cmp_capacity < raw_length + LZMA_PROPERTIES_LENGTH) cmp_capacity = raw_length + LZMA_PROPERTIES_LENGTH;
 
         uint8_t *cmp_stream = malloc(cmp_capacity);
@@ -4416,7 +4416,7 @@ static int32_t write_flux_capture_payload(aaruformat_context *ctx, FluxCaptureRe
         size_t  dst_size                           = cmp_capacity;
         uint8_t lzma_props[LZMA_PROPERTIES_LENGTH] = {0};
         size_t  props_size                         = LZMA_PROPERTIES_LENGTH;
-        int32_t error_no = aaruf_lzma_encode_buffer(cmp_stream, &dst_size, raw_buffer, (size_t)raw_length, lzma_props,
+        int32_t error_no = aaruf_lzma_encode_buffer(cmp_stream, &dst_size, raw_buffer, raw_length, lzma_props,
                                                     &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
 
         if(error_no != 0 || props_size != LZMA_PROPERTIES_LENGTH || dst_size >= raw_length)
@@ -4482,15 +4482,13 @@ static int32_t write_flux_capture_payload(aaruformat_context *ctx, FluxCaptureRe
         return AARUF_ERROR_CANNOT_WRITE_BLOCK_HEADER;
     }
 
-    if(cmp_length != 0 && compressed_buffer != NULL)
+    if(cmp_length != 0 && compressed_buffer != NULL &&
+       fwrite(compressed_buffer, cmp_length, 1, ctx->imageStream) != 1)
     {
-        if(fwrite(compressed_buffer, cmp_length, 1, ctx->imageStream) != 1)
-        {
-            free(compressed_buffer);
-            free(raw_buffer);
-            FATAL("Could not write flux payload data");
-            return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
-        }
+        free(compressed_buffer);
+        free(raw_buffer);
+        FATAL("Could not write flux payload data");
+        return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
     }
 
     IndexEntry payload_entry;
