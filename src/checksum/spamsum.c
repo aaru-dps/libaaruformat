@@ -1,6 +1,6 @@
 /*
  * This file is part of the Aaru Data Preservation Suite.
- * Copyright (c) 2019-2025 Natalia Portillo.
+ * Copyright (c) 2019-2026 Natalia Portillo.
  * Copyright (C) 2002 Andrew Tridgell <tridge@samba.org>
  * Copyright (C) 2006 ManTech International Corporation
  * Copyright (C) 2013 Helmut Grohne <helmut@subdivi.de>

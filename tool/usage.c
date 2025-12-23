@@ -1,6 +1,6 @@
 /*
  * This file is part of the Aaru Data Preservation Suite.
- * Copyright (c) 2019-2025 Natalia Portillo.
+ * Copyright (c) 2019-2026 Natalia Portillo.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,7 +26,7 @@
 void print_banner()
 {
     printf("AaruFormat Tool version %d.%d\n", AARUFORMAT_TOOL_MAJOR_VERSION, AARUFORMAT_TOOL_MINOR_VERSION);
-    printf("Copyright (C) 2019-2022 Natalia Portillo\n");
+    printf("Copyright (C) 2019-2026 Natalia Portillo\n");
     printf("libaaruformat version %d.%d\n\n", LIBAARUFORMAT_MAJOR_VERSION, LIBAARUFORMAT_MINOR_VERSION);
 }
 
