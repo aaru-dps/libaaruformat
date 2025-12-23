@@ -25,7 +25,6 @@
 var NAVTREE =
 [
   [ "libaaruformat", "index.html", [
-    [ "libaaruformat", "md_README.html", null ],
     [ "Topics", "topics.html", "topics" ],
     [ "Data Structures", "annotated.html", [
       [ "Data Structures", "annotated.html", "annotated_dup" ],
@@ -58,9 +57,9 @@ var NAVTREEINDEX =
 "group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa1773f94257858d5cdb89790bffda5d48",
 "group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa925b760123c53b79c9bb17fe94401c6d",
 "hash__map_8c.html#a40958a1382463445e451148e3a93e049",
-"sha1_8c.html",
-"structMetadataBlockHeader.html#acb4e827848c2525a0fa5fcc6cfcf2887",
-"structprofile__tag.html#a714de92b9e7c69f8a10feeb3b10cde25"
+"sha1_8c.html#a1e8667b4e2bc168a5411d9671a44a73c",
+"structMetadataBlockHeader.html#ae4561c1f946fe76239810f29a237dfbc",
+"structprofile__tag.html#a7a37964d066590592e45df1c7f32e02c"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronization';
