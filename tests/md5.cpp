@@ -1,6 +1,6 @@
 /*
  * This file is part of the Aaru Data Preservation Suite.
- * Copyright (c) 2019-2025 Natalia Portillo.
+ * Copyright (c) 2019-2026 Natalia Portillo.
  *
  * Standalone MD5 test for the file 'random'.
  * Expected MD5: d78f0eec417be386219b21b700044b95

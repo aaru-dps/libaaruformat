@@ -1,6 +1,6 @@
 /*
  * This file is part of the Aaru Data Preservation Suite.
- * Copyright (c) 2019-2025 Natalia Portillo.
+ * Copyright (c) 2019-2026 Natalia Portillo.
  *
  * Internal SHA-256 tests (no OpenSSL dependency).
  * Validates implementation against standard FIPS 180-4 test vectors and the bundled random file.
