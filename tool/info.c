@@ -601,7 +601,9 @@ int info(const char *path)
     {
         printf("Media tags:\n");
         HASH_ITER(hh, ctx->mediaTags, mediaTag, tmpMediaTag)
-        { printf("\tType %d is %d bytes long.\n", mediaTag->type, mediaTag->length); }
+        {
+            printf("\t%s (%d bytes)\n", media_tag_type_to_string(mediaTag->type), mediaTag->length);
+        }
     }
 
     aaruf_close(ctx);

@@ -50,6 +50,165 @@ char *byte_array_to_hex_string(const unsigned char *array, int array_size)
     return hex_string;
 }
 
+const char *media_tag_type_to_string(int32_t type)
+{
+    switch(type)
+    {
+        case CD_TOC:
+            return "CD Table of Contents";
+        case CD_SessionInfo:
+            return "CD Session Information";
+        case CD_FullTOC:
+            return "CD Full TOC (multi-session)";
+        case CD_PMA:
+            return "CD Program Memory Area";
+        case CD_ATIP:
+            return "CD Absolute Time in Pregroove";
+        case CD_TEXT:
+            return "CD-Text";
+        case CD_MCN:
+            return "CD Media Catalogue Number";
+        case DVD_PFI:
+            return "DVD Physical Format Information";
+        case DVD_CMI:
+            return "DVD Copyright Management Information";
+        case DVD_DiscKey:
+            return "DVD Disc Key";
+        case DVD_BCA:
+            return "DVD Burst Cutting Area";
+        case DVD_DMI:
+            return "DVD Disc Manufacturing Information";
+        case DVD_MediaIdentifier:
+            return "DVD Media Identifier";
+        case DVD_MKB:
+            return "DVD Media Key Block";
+        case DVDRAM_DDS:
+            return "DVD-RAM Defect Data Structure";
+        case DVDRAM_MediumStatus:
+            return "DVD-RAM Medium Status";
+        case DVDRAM_SpareArea:
+            return "DVD-RAM Spare Area";
+        case DVDR_RMD:
+            return "DVD-R Recording Management Data";
+        case DVDR_PreRecordedInfo:
+            return "DVD-R Pre-recorded Information";
+        case DVDR_MediaIdentifier:
+            return "DVD-R Media Identifier";
+        case DVDR_PFI:
+            return "DVD-R Physical Format Information";
+        case DVD_ADIP:
+            return "DVD Address in Pregroove";
+        case HDDVD_CPI:
+            return "HD DVD Content Protection Information";
+        case HDDVD_MediumStatus:
+            return "HD DVD Medium Status";
+        case DVDDL_LayerCapacity:
+            return "DVD Dual Layer - Layer Capacity";
+        case DVDDL_MiddleZoneAddress:
+            return "DVD Dual Layer - Middle Zone Address";
+        case DVDDL_JumpIntervalSize:
+            return "DVD Dual Layer - Jump Interval Size";
+        case DVDDL_ManualLayerJumpLBA:
+            return "DVD Dual Layer - Manual Layer Jump LBA";
+        case BD_DI:
+            return "Blu-ray Disc Information";
+        case BD_BCA:
+            return "Blu-ray Burst Cutting Area";
+        case BD_DDS:
+            return "Blu-ray Disc Definition Structure";
+        case BD_CartridgeStatus:
+            return "Blu-ray Cartridge Status";
+        case BD_SpareArea:
+            return "Blu-ray Spare Area";
+        case AACS_VolumeIdentifier:
+            return "AACS Volume Identifier";
+        case AACS_SerialNumber:
+            return "AACS Serial Number";
+        case AACS_MediaIdentifier:
+            return "AACS Media Identifier";
+        case AACS_MKB:
+            return "AACS Media Key Block";
+        case AACS_DataKeys:
+            return "AACS Data Keys";
+        case AACS_LBAExtents:
+            return "AACS LBA Extents";
+        case AACS_CPRM_MKB:
+            return "CPRM Media Key Block";
+        case Hybrid_RecognizedLayers:
+            return "Hybrid Disc - Recognized Layers";
+        case MMC_WriteProtection:
+            return "MMC Write Protection Status";
+        case MMC_DiscInformation:
+            return "MMC Disc Information";
+        case MMC_TrackResourcesInformation:
+            return "MMC Track Resources Information";
+        case MMC_POWResourcesInformation:
+            return "MMC POW Resources Information";
+        case SCSI_INQUIRY:
+            return "SCSI INQUIRY Data";
+        case SCSI_MODEPAGE_2A:
+            return "SCSI Mode Page 2Ah (CD/DVD Capabilities)";
+        case ATA_IDENTIFY:
+            return "ATA IDENTIFY DEVICE";
+        case ATAPI_IDENTIFY:
+            return "ATAPI IDENTIFY DEVICE";
+        case PCMCIA_CIS:
+            return "PCMCIA Card Information Structure";
+        case SD_CID:
+            return "Secure Digital Card ID";
+        case SD_CSD:
+            return "Secure Digital Card Specific Data";
+        case SD_SCR:
+            return "Secure Digital Configuration Register";
+        case SD_OCR:
+            return "Secure Digital Operation Conditions";
+        case MMC_CID:
+            return "MultiMediaCard Card ID";
+        case MMC_CSD:
+            return "MultiMediaCard Card Specific Data";
+        case MMC_OCR:
+            return "MultiMediaCard Operation Conditions";
+        case MMC_ExtendedCSD:
+            return "MultiMediaCard Extended CSD";
+        case Xbox_SecuritySector:
+            return "Xbox Security Sector";
+        case Floppy_LeadOut:
+            return "Floppy Lead-out";
+        case DiscControlBlock:
+            return "DVD Disc Control Block";
+        case CD_FirstTrackPregap:
+            return "CD First Track Pre-gap";
+        case CD_LeadOut:
+            return "CD Lead-out";
+        case SCSI_MODESENSE_6:
+            return "SCSI MODE SENSE (6)";
+        case SCSI_MODESENSE_10:
+            return "SCSI MODE SENSE (10)";
+        case USB_Descriptors:
+            return "USB Descriptors";
+        case Xbox_DMI:
+            return "Xbox Disc Manufacturing Information";
+        case Xbox_PFI:
+            return "Xbox Physical Format Information";
+        case CD_LeadIn:
+            return "CD Lead-in";
+        case MiniDiscType:
+            return "MiniDisc Type";
+        case MiniDiscD5:
+            return "MiniDisc D5h Response";
+        case MiniDiscUTOC:
+            return "MiniDisc User TOC";
+        case MiniDiscDTOC:
+            return "MiniDisc Data TOC";
+        case DVD_DiscKey_Decrypted:
+            return "DVD Disc Key (decrypted)";
+        case DVD_PFI_2ndLayer:
+            return "DVD Physical Format Information (2nd layer)";
+        default:
+            return "Unknown Media Tag";
+    }
+}
+
 const char *data_type_to_string(uint16_t type)
 {
     switch(type)
