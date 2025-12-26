@@ -38,5 +38,6 @@ bool        check_cd_sector_channel(CdEccContext *context, const uint8_t *sector
 int         compare(const char *path1, const char *path2);
 int         cli_compare(const char *path1, const char *path2, bool use_long);
 int         convert(const char *input_path, const char *output_path, bool use_long);
+int         upgrade_ddt_to_alpha21(const char *path);
 
 #endif  // LIBAARUFORMAT_TOOL_AARUFORMATTOOL_H_

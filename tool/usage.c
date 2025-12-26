@@ -43,7 +43,8 @@ void usage()
     printf("  verify_sectors   Verifies the integrity of all sectors in an image.\n");
     printf("  compare          Compares two AaruFormat images.\n");
     printf("  cli-compare      Compares two AaruFormat images sector by sector (CLI mode).\n");
-    printf("  convert          Converts an AaruFormat image to another AaruFormat image.\n\n");
+    printf("  convert          Converts an AaruFormat image to another AaruFormat image.\n");
+    printf("  upgrade-ddt-to-alpha21  Upgrades a DDT image to alpha21 format.\n\n");
     printf("For help with any verb, run:\n");
     printf("  aaruformattool <verb> --help\n");
 }
@@ -136,4 +137,13 @@ void usage_convert()
     printf("  <output>         Path to output image file.\n");
     printf("Options:\n");
     printf("  -l               Use long sector read/write (includes tags and metadata).\n");
+}
+
+void usage_upgrade_ddt_to_alpha21()
+{
+    printf("\nUsage:\n");
+    printf("  aaruformattool upgrade-ddt-to-alpha21 <filename>\n\n");
+    printf("Upgrades a DDT image to alpha21 format.\n");
+    printf("Arguments:\n");
+    printf("  <filename>       Path to the DDT image file to upgrade.\n");
 }

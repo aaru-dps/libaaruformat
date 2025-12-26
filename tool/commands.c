@@ -175,16 +175,36 @@ int cmd_convert(int argc, char *argv[])
     return result;
 }
 
+int cmd_upgrade_ddt_to_alpha21(int argc, char *argv[])
+{
+    struct arg_str *filename   = arg_str1(NULL, NULL, "<filename>", "Image to upgrade");
+    struct arg_end *end        = arg_end(10);
+    void           *argtable[] = {filename, end};
+
+    if(arg_parse(argc, argv, argtable) > 0)
+    {
+        arg_print_errors(stderr, end, "upgrade-ddt-to-alpha21");
+        usage_upgrade_ddt_to_alpha21();
+        arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
+        return -1;
+    }
+
+    const int result = upgrade_ddt_to_alpha21(filename->sval[0]);
+    arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
+    return result;
+}
+
 Command commands[] = {
-    {      "identify",       cmd_identify},
-    {          "info",           cmd_info},
-    {          "read",           cmd_read},
-    {     "read_long",      cmd_read_long},
-    {        "verify",         cmd_verify},
-    {"verify_sectors", cmd_verify_sectors},
-    {       "compare",        cmd_compare},
-    {   "cli-compare",    cmd_cli_compare},
-    {       "convert",        cmd_convert},
+    {              "identify",               cmd_identify},
+    {                  "info",                   cmd_info},
+    {                  "read",                   cmd_read},
+    {             "read_long",              cmd_read_long},
+    {                "verify",                 cmd_verify},
+    {        "verify_sectors",         cmd_verify_sectors},
+    {               "compare",                cmd_compare},
+    {           "cli-compare",            cmd_cli_compare},
+    {               "convert",                cmd_convert},
+    {"upgrade-ddt-to-alpha21", cmd_upgrade_ddt_to_alpha21},
 };
 
 const size_t num_commands = sizeof(commands) / sizeof(commands[0]);

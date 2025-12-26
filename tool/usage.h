@@ -31,5 +31,6 @@ void usage_verify_sectors();
 void usage_compare();
 void usage_cli_compare();
 void usage_convert();
+void usage_upgrade_ddt_to_alpha21();
 
 #endif  // LIBAARUFORMAT_USAGE_H
