@@ -187,6 +187,9 @@ typedef enum
     MD      = 91,  ///< Sony MiniDisc
     MDData  = 92,  ///< MiniDisc DATA (HiFD style data-only variant)
     MDData2 = 93,  ///< High-capacity MiniDisc DATA 2
+    MD60    = 94,  ///< Sony MiniDisc, 60 minutes, formatted with Hi-MD format
+    MD74    = 95,  ///< Sony MiniDisc, 74 minutes, formatted with Hi-MD format
+    MD80    = 96,  ///< Sony MiniDisc, 80 minutes, formatted with Hi-MD format
     // MiniDisc based, types 90 to 99
 
     // Plasmon UDO, types 100 to 109
@@ -408,7 +411,14 @@ typedef enum
     ZIP100     = 350,
     ZIP250     = 351,
     ZIP750     = 352,
-    // Iomega, types 340 to 359
+  Bernoulli35 = 353,///< 5⅓" Bernoulli Box II disk with 35Mb capacity
+  Bernoulli44 = 354,///< 5⅓" Bernoulli Box II disk with 44Mb capacity
+  Bernoulli65 = 355,///< 5⅓" Bernoulli Box II disk with 65Mb capacity
+  Bernoulli90 = 356,///< 5⅓" Bernoulli Box II disk with 90Mb capacity
+  Bernoulli105 = 357,///< 5⅓" Bernoulli Box II disk with 105Mb capacity
+  Bernoulli150 = 358,///< 5⅓" Bernoulli Box II disk with 150Mb capacity
+  Bernoulli230 = 359,///< 5⅓" Bernoulli Box II disk with 230Mb capacity
+  // Iomega, types 340 to 359
 
     // Audio or video media, types 360 to 369
     CompactCassette = 360,
