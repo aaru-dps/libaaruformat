@@ -13,7 +13,7 @@
 //     Parses AaruFormat files.
 //
 // --[ History ] --------------------------------------------------------------
-//     
+//
 //     1.00: Initial release.
 //
 // --[ License ] --------------------------------------------------------------
@@ -619,7 +619,7 @@ enum MediaType : u32
     ODC1500R = 784,
     ODC3300R = 785,
     ODC5500R = 786,
-    
+
     ECMA_322_1k   = 800,
     ECMA_322_512  = 801,
     ISO_14517     = 802,
@@ -782,28 +782,31 @@ using Index;
 struct AaruHeader
 {
     char            identifier[8];
-    
+
+    // Skip application name
     $ = 0x48;
-    
+
     u8              imageMajorVersion;
     u8              imageMinorVersion;
-    
+
+    // Go back to read application name
     $ = 0x08;
-    
+
     if(imageMajorVersion >= 2)
         char        application[64];
     else
         char16      application[32];
-    
+
+    // Move to after image version
     $ = 0x4A;
-    
+
     u8              applicationMajorVersion;
     u8              applicationMinorVersion;
     MediaType       mediaType;
     Index          *indexOffset : u64;
     type::FILETIME  creationTime;
     type::FILETIME  lastWrittenTime;
-    
+
     if(imageMajorVersion >= 2)
     {
         type::GUID  guid;
@@ -827,7 +830,7 @@ struct DdtHeader
     type::Size<u64> length;
     type::Hex<u64>  cmpCrc64;
     type::Hex<u64>  crc64;
-    
+
     // TODO: Decompress ?
     if(compression == CompressionType::None)
         u64 ddt[entries];
@@ -873,7 +876,7 @@ struct DdtHeader2
     type::Hex<u64> cmpCrc64;
     /**CRC64-ECMA of the uncompressed DDT */
     type::Hex<u64> crc64;
-    
+
     // TODO: Decompress ?
     if(compression == CompressionType::None)
         u64 ddt[entries];
@@ -892,7 +895,7 @@ struct BlockHeader
     type::Size<u32> length;
     type::Hex<u64>  cmpCrc64;
     type::Hex<u64>  crc64;
-    
+
     // Makes parsing terribly slow
     // u8 data[cmpLength];
 };
@@ -937,40 +940,40 @@ struct MetadataBlock
     u32             driveSerialNumberLength;
     u32             driveFirmwareRevisionOffset;
     u32             driveFirmwareRevisionLength;
-    
+
     if(creatorOffset > 0)
         char16 creator[creatorLength / 2] @ blockStart + creatorOffset;
-    
+
     if(commentsOffset > 0)
         char16 comments[commentsLength / 2] @ blockStart + commentsOffset;
-    
+
     if(mediaTitleOffset > 0)
         char16 mediaTitle[mediaTitleLength / 2] @ blockStart + mediaTitleOffset;
-    
+
     if(mediaManufacturerOffset > 0)
         char16 mediaManufacturer[mediaManufacturerLength / 2] @ blockStart + mediaManufacturerOffset;
-    
+
     if(mediaModelOffset > 0)
         char16 mediaModel[mediaModelLength / 2] @ blockStart + mediaModelOffset;
-    
+
     if(mediaSerialNumberOffset > 0)
         char16 mediaSerialNumber[mediaSerialNumberLength / 2] @ blockStart + mediaSerialNumberOffset;
-    
+
     if(mediaBarcodeOffset > 0)
         char16 mediaBarcode[mediaBarcodeLength / 2] @ blockStart + mediaBarcodeOffset;
-    
+
     if(mediaPartNumberOffset > 0)
         char16 mediaPartNumber[mediaPartNumberLength / 2] @ blockStart + mediaPartNumberOffset;
-    
+
     if(driveManufacturerOffset > 0)
         char16 driveManufacturer[driveManufacturerLength / 2] @ blockStart + driveManufacturerOffset;
-    
+
     if(driveModelOffset > 0)
         char16 driveModel[driveModelLength / 2] @ blockStart + driveModelOffset;
-    
+
     if(driveSerialNumberOffset > 0)
         char16 driveSerialNumber[driveSerialNumberLength / 2] @ blockStart + driveSerialNumberOffset;
-    
+
     if(driveFirmwareRevisionOffset > 0)
         char16 driveFirmwareRevision[driveFirmwareRevisionLength / 2] @ blockStart + driveFirmwareRevisionOffset;
 };
@@ -999,7 +1002,7 @@ struct CicmMetadataBlock
 {
     BlockType       identifier;
     type::Size<u32> length;
-    
+
     #ifdef __IMHEX__
         u8 xml[length];
         hex::core::add_virtual_file("metadata.xml", xml);
@@ -1013,7 +1016,7 @@ struct JsonMetadataBlock
 {
     BlockType       identifier;
     type::Size<u32> length;
-    
+
     #ifdef __IMHEX__
         u8 json[length];
         hex::core::add_virtual_file("metadata.json", json);
@@ -1134,7 +1137,7 @@ struct IndexEntry
 {
     BlockType blockType;
     DataType    dataType;
-    
+
     match(blockType)
     {
         (BlockType::DataBlock):                    BlockHeader             *dataBlock           : u64 [[inline]];
@@ -1158,14 +1161,14 @@ struct IndexEntry
 struct Index
 {
     BlockType identifier;
-    
+
     if(identifier == BlockType::Index)
         u16 entries;
     else if(identifier == BlockType::Index2 || identifier == BlockType::Index3)
         u64 entries;
     else
         return;
-    
+
     type::Hex<u64> crc64;
     if(identifier == BlockType::Index3)
         u64 previous;
