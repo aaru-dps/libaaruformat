@@ -51,20 +51,28 @@ set(TEST_DATA_FILES
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/data)
 
 # Copy test data files at build time (not configure time)
-foreach(data_file ${TEST_DATA_FILES})
-  add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/data/${data_file}
-    COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_CURRENT_SOURCE_DIR}/data/${data_file}
-            ${CMAKE_CURRENT_BINARY_DIR}/data/${data_file}
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/data/${data_file}
-    COMMENT "Copying test data file: ${data_file}"
-  )
-  list(APPEND TEST_DATA_OUTPUTS ${CMAKE_CURRENT_BINARY_DIR}/data/${data_file})
-endforeach()
+# Only copy if source and destination are different (out-of-tree builds)
+if(NOT "${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
+  foreach(data_file ${TEST_DATA_FILES})
+    add_custom_command(
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/data/${data_file}
+      COMMAND ${CMAKE_COMMAND} -E copy
+              ${CMAKE_CURRENT_SOURCE_DIR}/data/${data_file}
+              ${CMAKE_CURRENT_BINARY_DIR}/data/${data_file}
+      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/data/${data_file}
+      COMMENT "Copying test data file: ${data_file}"
+    )
+    list(APPEND TEST_DATA_OUTPUTS ${CMAKE_CURRENT_BINARY_DIR}/data/${data_file})
+  endforeach()
 
-# Add custom target to ensure data files are copied
-add_custom_target(copy_test_data ALL DEPENDS ${TEST_DATA_OUTPUTS})
+  # Add custom target to ensure data files are copied
+  add_custom_target(copy_test_data ALL DEPENDS ${TEST_DATA_OUTPUTS})
+else()
+  # For in-tree builds, just create a dummy target
+  add_custom_target(copy_test_data ALL
+    COMMENT "In-tree build detected - test data files already in place"
+  )
+endif()
 
 # Test executable (all unit tests)
 add_executable(tests_run
