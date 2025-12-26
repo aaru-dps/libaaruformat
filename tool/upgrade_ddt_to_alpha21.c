@@ -279,109 +279,235 @@ int upgrade_ddt_to_alpha21(const char *path)
 
     printf("Found %llu DDT v2 blocks to upgrade\n", (unsigned long long)ddt_count);
 
-    // Process DDT blocks - find and process the userdata DDT2 block
-    ddt_v2_header_alpha20 *old_ddt_header      = NULL;
-    uint8_t               *ddt_payload         = NULL;
-    uint64_t               userdata_ddt_offset = 0;
+    if(ddt_count == 0)
+    {
+        printf("WARNING: No DDT v2 blocks found in index\n");
+        printf("         Nothing to upgrade.\n");
 
+        // Clean up
+        HASH_ITER(hh, index_hash, current, tmp)
+        {
+            HASH_DEL(index_hash, current);
+            free(current);
+        }
+        free(entries);
+        fclose(fp);
+        return 0;
+    }
+
+    // Arrays to store all DDT blocks that need upgrading
+    typedef struct
+    {
+        ddt_v2_header_alpha20 *old_header;
+        uint8_t               *payload;
+        uint64_t               old_offset;
+        uint64_t               new_offset;
+        uint16_t               dataType;
+    } DdtUpgradeInfo;
+
+    DdtUpgradeInfo *ddt_upgrades = (DdtUpgradeInfo *)calloc(ddt_count, sizeof(DdtUpgradeInfo));
+    if(ddt_upgrades == NULL)
+    {
+        printf("ERROR: Failed to allocate memory for DDT upgrade tracking\n");
+        HASH_ITER(hh, index_hash, current, tmp)
+        {
+            HASH_DEL(index_hash, current);
+            free(current);
+        }
+        free(entries);
+        fclose(fp);
+        return ENOMEM;
+    }
+
+    // Process all DDT2 blocks
+    uint64_t processed_count = 0;
     HASH_ITER(hh, index_hash, current, tmp)
     {
         if(current->blockType == DeDuplicationTable2)
         {
-            // Check if this is the userdata DDT (others don't need upgrade)
-            if(current->dataType == UserData)
+            printf("Processing DDT v2 block (dataType=%s) at offset %llu...\n", data_type_to_string(current->dataType),
+                   (unsigned long long)current->offset);
+
+            DdtUpgradeInfo *info = &ddt_upgrades[processed_count];
+            info->old_offset     = current->offset;
+            info->dataType       = current->dataType;
+
+            // Seek to the DDT block
+            if(fseek(fp, current->offset, SEEK_SET) != 0)
             {
-                printf("Processing userdata DDT v2 block at offset %llu...\n", (unsigned long long)current->offset);
-                userdata_ddt_offset = current->offset;
-
-                // Seek to the DDT block
-                if(fseek(fp, current->offset, SEEK_SET) != 0)
+                printf("ERROR: Failed to seek to DDT block at offset %llu: %s\n", (unsigned long long)current->offset,
+                       strerror(errno));
+                // Clean up already processed DDTs
+                for(uint64_t i = 0; i < processed_count; i++)
                 {
-                    printf("ERROR: Failed to seek to DDT block at offset %llu: %s\n",
-                           (unsigned long long)current->offset, strerror(errno));
-                    free(entries);
-                    fclose(fp);
-                    return EIO;
+                    free(ddt_upgrades[i].old_header);
+                    free(ddt_upgrades[i].payload);
                 }
-
-                // Allocate and read the old DDT header
-                old_ddt_header = (ddt_v2_header_alpha20 *)malloc(sizeof(ddt_v2_header_alpha20));
-                if(old_ddt_header == NULL)
+                free(ddt_upgrades);
+                HASH_ITER(hh, index_hash, current, tmp)
                 {
-                    printf("ERROR: Failed to allocate memory for old DDT header\n");
-                    free(entries);
-                    fclose(fp);
-                    return ENOMEM;
+                    HASH_DEL(index_hash, current);
+                    free(current);
                 }
-
-                read_bytes = fread(old_ddt_header, 1, sizeof(ddt_v2_header_alpha20), fp);
-                if(read_bytes != sizeof(ddt_v2_header_alpha20))
-                {
-                    printf("ERROR: Failed to read old DDT header (read %zu bytes, expected %zu)\n", read_bytes,
-                           sizeof(ddt_v2_header_alpha20));
-                    free(old_ddt_header);
-                    free(entries);
-                    fclose(fp);
-                    return EIO;
-                }
-
-                printf("  Old DDT header read successfully\n");
-                printf("    Identifier: 0x%08X\n", old_ddt_header->identifier);
-                printf("    Type: %u\n", old_ddt_header->type);
-                printf("    Compression: %u\n", old_ddt_header->compression);
-                printf("    Entries: %llu\n", (unsigned long long)old_ddt_header->entries);
-                printf("    Compressed length: %llu bytes\n", (unsigned long long)old_ddt_header->cmpLength);
-                printf("    Uncompressed length: %llu bytes\n", (unsigned long long)old_ddt_header->length);
-
-                // Allocate memory for the compressed DDT payload
-                ddt_payload = (uint8_t *)malloc(old_ddt_header->cmpLength);
-                if(ddt_payload == NULL)
-                {
-                    printf("ERROR: Failed to allocate %llu bytes for DDT payload\n",
-                           (unsigned long long)old_ddt_header->cmpLength);
-                    free(old_ddt_header);
-                    free(entries);
-                    fclose(fp);
-                    return ENOMEM;
-                }
-
-                // Read the DDT payload
-                read_bytes = fread(ddt_payload, 1, old_ddt_header->cmpLength, fp);
-                if(read_bytes != old_ddt_header->cmpLength)
-                {
-                    printf("ERROR: Failed to read DDT payload (read %zu bytes, expected %llu)\n", read_bytes,
-                           (unsigned long long)old_ddt_header->cmpLength);
-                    free(ddt_payload);
-                    free(old_ddt_header);
-                    free(entries);
-                    fclose(fp);
-                    return EIO;
-                }
-
-                printf("  DDT payload read successfully (%llu bytes)\n", (unsigned long long)old_ddt_header->cmpLength);
-
-                // Remove this entry from the index hash
-                printf("  Removing userdata DDT entry from index...\n");
-                HASH_DEL(index_hash, current);
-                free(current);
-
-                printf("  Userdata DDT block processed and removed from index\n");
-                break;  // Only process the first userdata DDT found
+                free(entries);
+                fclose(fp);
+                return EIO;
             }
-            else
+
+            // Allocate and read the old DDT header
+            info->old_header = (ddt_v2_header_alpha20 *)malloc(sizeof(ddt_v2_header_alpha20));
+            if(info->old_header == NULL)
             {
-                printf("Skipping non-userdata DDT v2 block (dataType=%u) at offset %llu\n", current->dataType,
-                       (unsigned long long)current->offset);
+                printf("ERROR: Failed to allocate memory for old DDT header\n");
+                // Clean up
+                for(uint64_t i = 0; i < processed_count; i++)
+                {
+                    free(ddt_upgrades[i].old_header);
+                    free(ddt_upgrades[i].payload);
+                }
+                free(ddt_upgrades);
+                HASH_ITER(hh, index_hash, current, tmp)
+                {
+                    HASH_DEL(index_hash, current);
+                    free(current);
+                }
+                free(entries);
+                fclose(fp);
+                return ENOMEM;
             }
+
+            read_bytes = fread(info->old_header, 1, sizeof(ddt_v2_header_alpha20), fp);
+            if(read_bytes != sizeof(ddt_v2_header_alpha20))
+            {
+                printf("ERROR: Failed to read old DDT header (read %zu bytes, expected %zu)\n", read_bytes,
+                       sizeof(ddt_v2_header_alpha20));
+                free(info->old_header);
+                // Clean up
+                for(uint64_t i = 0; i < processed_count; i++)
+                {
+                    free(ddt_upgrades[i].old_header);
+                    free(ddt_upgrades[i].payload);
+                }
+                free(ddt_upgrades);
+                HASH_ITER(hh, index_hash, current, tmp)
+                {
+                    HASH_DEL(index_hash, current);
+                    free(current);
+                }
+                free(entries);
+                fclose(fp);
+                return EIO;
+            }
+
+            printf("  Old DDT header read successfully\n");
+            printf("    Identifier: 0x%08X\n", info->old_header->identifier);
+            printf("    Type: %u\n", info->old_header->type);
+            printf("    Compression: %u\n", info->old_header->compression);
+            printf("    Entries: %llu\n", (unsigned long long)info->old_header->entries);
+            printf("    Compressed length: %llu bytes\n", (unsigned long long)info->old_header->cmpLength);
+            printf("    Uncompressed length: %llu bytes\n", (unsigned long long)info->old_header->length);
+
+            // Allocate memory for the compressed DDT payload
+            info->payload = (uint8_t *)malloc(info->old_header->cmpLength);
+            if(info->payload == NULL)
+            {
+                printf("ERROR: Failed to allocate %llu bytes for DDT payload\n",
+                       (unsigned long long)info->old_header->cmpLength);
+                free(info->old_header);
+                // Clean up
+                for(uint64_t i = 0; i < processed_count; i++)
+                {
+                    free(ddt_upgrades[i].old_header);
+                    free(ddt_upgrades[i].payload);
+                }
+                free(ddt_upgrades);
+                HASH_ITER(hh, index_hash, current, tmp)
+                {
+                    HASH_DEL(index_hash, current);
+                    free(current);
+                }
+                free(entries);
+                fclose(fp);
+                return ENOMEM;
+            }
+
+            // Read the DDT payload
+            read_bytes = fread(info->payload, 1, info->old_header->cmpLength, fp);
+            if(read_bytes != info->old_header->cmpLength)
+            {
+                printf("ERROR: Failed to read DDT payload (read %zu bytes, expected %llu)\n", read_bytes,
+                       (unsigned long long)info->old_header->cmpLength);
+                free(info->payload);
+                free(info->old_header);
+                // Clean up
+                for(uint64_t i = 0; i < processed_count; i++)
+                {
+                    free(ddt_upgrades[i].old_header);
+                    free(ddt_upgrades[i].payload);
+                }
+                free(ddt_upgrades);
+                HASH_ITER(hh, index_hash, current, tmp)
+                {
+                    HASH_DEL(index_hash, current);
+                    free(current);
+                }
+                free(entries);
+                fclose(fp);
+                return EIO;
+            }
+
+            printf("  DDT payload read successfully (%llu bytes)\n", (unsigned long long)info->old_header->cmpLength);
+
+            // Remove this entry from the index hash
+            printf("  Removing DDT entry from index...\n");
+            HASH_DEL(index_hash, current);
+            free(current);
+
+            printf("  DDT block processed and removed from index\n\n");
+            processed_count++;
         }
     }
 
-    if(old_ddt_header == NULL)
+    if(processed_count == 0)
     {
-        printf("ERROR: No userdata DDT v2 block found in index\n");
-        printf("       This image does not contain a userdata DDT block that needs upgrading.\n");
+        printf("ERROR: No DDT v2 blocks were processed\n");
+        free(ddt_upgrades);
+        HASH_ITER(hh, index_hash, current, tmp)
+        {
+            HASH_DEL(index_hash, current);
+            free(current);
+        }
+        free(entries);
+        fclose(fp);
+        return EINVAL;
+    }
+
+    printf("Processed %llu DDT v2 block(s)\n", (unsigned long long)processed_count);
+
+    // Find UserData DDT for media type checks (if it exists)
+    ddt_v2_header_alpha20 *userdata_ddt_header = NULL;
+    for(uint64_t i = 0; i < processed_count; i++)
+    {
+        if(ddt_upgrades[i].dataType == UserData)
+        {
+            userdata_ddt_header = ddt_upgrades[i].old_header;
+            break;
+        }
+    }
+
+    if(userdata_ddt_header == NULL)
+    {
+        printf("ERROR: No UserData DDT v2 block found in this image.\n");
+        printf("       Images without a UserData DDT are invalid/corrupted.\n");
+        printf("       Cannot proceed with upgrade.\n");
 
         // Clean up
+        for(uint64_t i = 0; i < processed_count; i++)
+        {
+            free(ddt_upgrades[i].old_header);
+            free(ddt_upgrades[i].payload);
+        }
+        free(ddt_upgrades);
         HASH_ITER(hh, index_hash, current, tmp)
         {
             HASH_DEL(index_hash, current);
@@ -396,46 +522,23 @@ int upgrade_ddt_to_alpha21(const char *path)
     printf("                          DDT UPGRADE PROCESSING\n");
     printf("================================================================================\n\n");
 
-    // Create new DDT header and copy fields from old one
-    DdtHeader2 new_ddt_header;
-    memset(&new_ddt_header, 0, sizeof(DdtHeader2));
-
-    new_ddt_header.identifier          = old_ddt_header->identifier;
-    new_ddt_header.type                = old_ddt_header->type;
-    new_ddt_header.compression         = old_ddt_header->compression;
-    new_ddt_header.levels              = old_ddt_header->levels;
-    new_ddt_header.tableLevel          = old_ddt_header->tableLevel;
-    new_ddt_header.previousLevelOffset = old_ddt_header->previousLevelOffset;
-    new_ddt_header.negative            = old_ddt_header->negative;
-    new_ddt_header.blocks              = old_ddt_header->blocks;
-    new_ddt_header.overflow            = old_ddt_header->overflow;
-    new_ddt_header.start               = old_ddt_header->start;
-    new_ddt_header.blockAlignmentShift = old_ddt_header->blockAlignmentShift;
-    new_ddt_header.dataShift           = old_ddt_header->dataShift;
-    new_ddt_header.tableShift          = old_ddt_header->tableShift;
-    new_ddt_header.entries             = old_ddt_header->entries;
-    new_ddt_header.cmpLength           = old_ddt_header->cmpLength;
-    new_ddt_header.length              = old_ddt_header->length;
-    new_ddt_header.cmpCrc64            = old_ddt_header->cmpCrc64;
-    new_ddt_header.crc64               = old_ddt_header->crc64;
-
-    printf("Copied old DDT header fields to new header structure\n");
-
     // Check for DVD media types with specific negative/overflow configuration
+    // Only check on UserData DDT if one exists
     bool is_dvd_type = (header.mediaType == DVDROM || header.mediaType == DVDR || header.mediaType == DVDRW ||
                         header.mediaType == DVDPR || header.mediaType == DVDPRW || header.mediaType == DVDPRWDL ||
                         header.mediaType == DVDRDL || header.mediaType == DVDPRDL || header.mediaType == DVDRWDL ||
                         header.mediaType == DVDDownload || header.mediaType == PS2DVD || header.mediaType == PS3DVD ||
                         header.mediaType == Nuon);
 
-    if(is_dvd_type && new_ddt_header.negative == 0 && new_ddt_header.overflow == 15000)
+    if(userdata_ddt_header && is_dvd_type && userdata_ddt_header->negative == 0 &&
+       userdata_ddt_header->overflow == 15000)
     {
         printf("\n*** INVALID BLOCK COUNT DETECTED ***\n");
         printf("Media type: %u (%s)\n", header.mediaType, media_type_to_string(header.mediaType));
-        printf("Current values:\n");
-        printf("  negative sectors: %u\n", new_ddt_header.negative);
-        printf("  overflow sectors: %u\n", new_ddt_header.overflow);
-        printf("  blocks: %llu\n", (unsigned long long)new_ddt_header.blocks);
+        printf("Current values (from UserData DDT):\n");
+        printf("  negative sectors: %u\n", userdata_ddt_header->negative);
+        printf("  overflow sectors: %u\n", userdata_ddt_header->overflow);
+        printf("  blocks: %llu\n", (unsigned long long)userdata_ddt_header->blocks);
         printf("\nThis configuration is invalid for DVD media.\n");
         printf("To fix: overflow should be 0, and blocks should be reduced by 0x30000 + 15000\n\n");
         printf("Do you want to fix the block count? (yes/no): ");
@@ -445,8 +548,12 @@ int upgrade_ddt_to_alpha21(const char *path)
         if(fgets(response, sizeof(response), stdin) == NULL)
         {
             printf("\nERROR: Failed to read user input\n");
-            free(ddt_payload);
-            free(old_ddt_header);
+            for(uint64_t i = 0; i < processed_count; i++)
+            {
+                free(ddt_upgrades[i].old_header);
+                free(ddt_upgrades[i].payload);
+            }
+            free(ddt_upgrades);
             HASH_ITER(hh, index_hash, current, tmp)
             {
                 HASH_DEL(index_hash, current);
@@ -464,8 +571,12 @@ int upgrade_ddt_to_alpha21(const char *path)
            strcmp(response, "Y") != 0)
         {
             printf("\nUser declined to fix block count. Upgrade cancelled.\n");
-            free(ddt_payload);
-            free(old_ddt_header);
+            for(uint64_t i = 0; i < processed_count; i++)
+            {
+                free(ddt_upgrades[i].old_header);
+                free(ddt_upgrades[i].payload);
+            }
+            free(ddt_upgrades);
             HASH_ITER(hh, index_hash, current, tmp)
             {
                 HASH_DEL(index_hash, current);
@@ -476,14 +587,28 @@ int upgrade_ddt_to_alpha21(const char *path)
             return 0;
         }
 
-        // Fix the block count
-        new_ddt_header.overflow = 0;
-        new_ddt_header.blocks   = new_ddt_header.blocks - 0x30000 - 15000;
+        // Fix the block count on ALL DDT blocks
+        printf("\nApplying block count fix to all DDT blocks:\n");
+        for(uint64_t i = 0; i < processed_count; i++)
+        {
+            ddt_v2_header_alpha20 *ddt_hdr = ddt_upgrades[i].old_header;
 
-        printf("\nFixed block count:\n");
-        printf("  negative sectors: %u\n", new_ddt_header.negative);
-        printf("  overflow sectors: %u\n", new_ddt_header.overflow);
-        printf("  blocks: %llu\n\n", (unsigned long long)new_ddt_header.blocks);
+            // Only update if the fields are not 0
+            if(ddt_hdr->blocks != 0 || ddt_hdr->negative != 0 || ddt_hdr->overflow != 0)
+            {
+                printf("  DDT block %llu (dataType=%s):\n", (unsigned long long)(i + 1),
+                       data_type_to_string(ddt_upgrades[i].dataType));
+                printf("    Before: blocks=%llu, negative=%u, overflow=%u\n", (unsigned long long)ddt_hdr->blocks,
+                       ddt_hdr->negative, ddt_hdr->overflow);
+
+                if(ddt_hdr->overflow != 0) ddt_hdr->overflow = 0;
+                if(ddt_hdr->blocks != 0) ddt_hdr->blocks = ddt_hdr->blocks - 0x30000 - 15000;
+
+                printf("    After:  blocks=%llu, negative=%u, overflow=%u\n", (unsigned long long)ddt_hdr->blocks,
+                       ddt_hdr->negative, ddt_hdr->overflow);
+            }
+        }
+        printf("\n");
     }
 
     // Check for DVD-RAM
@@ -491,8 +616,12 @@ int upgrade_ddt_to_alpha21(const char *path)
     {
         printf("\nERROR: Cannot upgrade DVD-RAM media type\n");
         printf("       DVD-RAM images cannot be upgraded with this tool.\n");
-        free(ddt_payload);
-        free(old_ddt_header);
+        for(uint64_t i = 0; i < processed_count; i++)
+        {
+            free(ddt_upgrades[i].old_header);
+            free(ddt_upgrades[i].payload);
+        }
+        free(ddt_upgrades);
         HASH_ITER(hh, index_hash, current, tmp)
         {
             HASH_DEL(index_hash, current);
@@ -503,16 +632,20 @@ int upgrade_ddt_to_alpha21(const char *path)
         return EINVAL;
     }
 
-    // Check for negative=0 and overflow>0 (other than the DVD case handled above)
-    if(new_ddt_header.negative == 0 && new_ddt_header.overflow > 0 && !is_dvd_type)
+    // Check for negative=0 and overflow>0 on UserData DDT (other than the DVD case handled above)
+    if(userdata_ddt_header && userdata_ddt_header->negative == 0 && userdata_ddt_header->overflow > 0 && !is_dvd_type)
     {
-        printf("\nERROR: Invalid sector configuration\n");
-        printf("       negative sectors: %u\n", new_ddt_header.negative);
-        printf("       overflow sectors: %u\n", new_ddt_header.overflow);
+        printf("\nERROR: Invalid sector configuration (from UserData DDT)\n");
+        printf("       negative sectors: %u\n", userdata_ddt_header->negative);
+        printf("       overflow sectors: %u\n", userdata_ddt_header->overflow);
         printf("\n       When negative sectors is 0 and overflow sectors is > 0,\n");
         printf("       the image cannot be reliably upgraded.\n");
-        free(ddt_payload);
-        free(old_ddt_header);
+        for(uint64_t i = 0; i < processed_count; i++)
+        {
+            free(ddt_upgrades[i].old_header);
+            free(ddt_upgrades[i].payload);
+        }
+        free(ddt_upgrades);
         HASH_ITER(hh, index_hash, current, tmp)
         {
             HASH_DEL(index_hash, current);
@@ -523,12 +656,16 @@ int upgrade_ddt_to_alpha21(const char *path)
         return EINVAL;
     }
 
-    // Get current file size to determine where to write new DDT
+    // Get current file size to determine where to write new DDTs
     if(fseek(fp, 0, SEEK_END) != 0)
     {
         printf("ERROR: Failed to seek to end of file: %s\n", strerror(errno));
-        free(ddt_payload);
-        free(old_ddt_header);
+        for(uint64_t i = 0; i < processed_count; i++)
+        {
+            free(ddt_upgrades[i].old_header);
+            free(ddt_upgrades[i].payload);
+        }
+        free(ddt_upgrades);
         HASH_ITER(hh, index_hash, current, tmp)
         {
             HASH_DEL(index_hash, current);
@@ -543,8 +680,12 @@ int upgrade_ddt_to_alpha21(const char *path)
     if(file_size < 0)
     {
         printf("ERROR: Failed to get file size: %s\n", strerror(errno));
-        free(ddt_payload);
-        free(old_ddt_header);
+        for(uint64_t i = 0; i < processed_count; i++)
+        {
+            free(ddt_upgrades[i].old_header);
+            free(ddt_upgrades[i].payload);
+        }
+        free(ddt_upgrades);
         HASH_ITER(hh, index_hash, current, tmp)
         {
             HASH_DEL(index_hash, current);
@@ -555,14 +696,8 @@ int upgrade_ddt_to_alpha21(const char *path)
         return EIO;
     }
 
-    // Calculate aligned position for new DDT block
-    uint64_t alignment      = 1ULL << header.blockAlignmentShift;
-    uint64_t new_ddt_offset = ((uint64_t)file_size + alignment - 1) & ~(alignment - 1);
-
-    printf("Writing new DDT block:\n");
-    printf("  Current file size: %lld bytes\n", (long long)file_size);
-    printf("  Block alignment: %llu bytes (2^%u)\n", (unsigned long long)alignment, header.blockAlignmentShift);
-    printf("  New DDT offset: %llu bytes\n", (unsigned long long)new_ddt_offset);
+    // Calculate alignment
+    uint64_t alignment = 1ULL << header.blockAlignmentShift;
 
     // Reopen file in read-write mode for appending
     fclose(fp);
@@ -570,8 +705,12 @@ int upgrade_ddt_to_alpha21(const char *path)
     if(fp == NULL)
     {
         printf("ERROR: Failed to reopen file in write mode: %s\n", strerror(errno));
-        free(ddt_payload);
-        free(old_ddt_header);
+        for(uint64_t i = 0; i < processed_count; i++)
+        {
+            free(ddt_upgrades[i].old_header);
+            free(ddt_upgrades[i].payload);
+        }
+        free(ddt_upgrades);
         HASH_ITER(hh, index_hash, current, tmp)
         {
             HASH_DEL(index_hash, current);
@@ -581,91 +720,189 @@ int upgrade_ddt_to_alpha21(const char *path)
         return errno;
     }
 
-    // Seek to aligned position
-    if(fseek(fp, new_ddt_offset, SEEK_SET) != 0)
+    printf("\nWriting upgraded DDT blocks:\n");
+
+    // Write all DDT blocks at aligned positions
+    for(uint64_t i = 0; i < processed_count; i++)
     {
-        printf("ERROR: Failed to seek to new DDT position: %s\n", strerror(errno));
-        free(ddt_payload);
-        free(old_ddt_header);
-        HASH_ITER(hh, index_hash, current, tmp)
+        DdtUpgradeInfo *info = &ddt_upgrades[i];
+
+        // Get current file size for this DDT
+        if(fseek(fp, 0, SEEK_END) != 0)
         {
-            HASH_DEL(index_hash, current);
-            free(current);
+            printf("ERROR: Failed to seek to end of file: %s\n", strerror(errno));
+            for(uint64_t j = 0; j < processed_count; j++)
+            {
+                free(ddt_upgrades[j].old_header);
+                free(ddt_upgrades[j].payload);
+            }
+            free(ddt_upgrades);
+            HASH_ITER(hh, index_hash, current, tmp)
+            {
+                HASH_DEL(index_hash, current);
+                free(current);
+            }
+            free(entries);
+            fclose(fp);
+            return EIO;
         }
-        free(entries);
-        fclose(fp);
-        return EIO;
+
+        file_size = ftell(fp);
+        if(file_size < 0)
+        {
+            printf("ERROR: Failed to get file size: %s\n", strerror(errno));
+            for(uint64_t j = 0; j < processed_count; j++)
+            {
+                free(ddt_upgrades[j].old_header);
+                free(ddt_upgrades[j].payload);
+            }
+            free(ddt_upgrades);
+            HASH_ITER(hh, index_hash, current, tmp)
+            {
+                HASH_DEL(index_hash, current);
+                free(current);
+            }
+            free(entries);
+            fclose(fp);
+            return EIO;
+        }
+
+        // Calculate aligned position for this DDT block
+        uint64_t new_ddt_offset = ((uint64_t)file_size + alignment - 1) & ~(alignment - 1);
+        info->new_offset        = new_ddt_offset;
+
+        printf("  DDT block %llu (dataType=%s):\n", (unsigned long long)(i + 1), data_type_to_string(info->dataType));
+        printf("    Old offset: %llu bytes\n", (unsigned long long)info->old_offset);
+        printf("    New offset: %llu bytes\n", (unsigned long long)new_ddt_offset);
+
+        // Seek to aligned position
+        if(fseek(fp, new_ddt_offset, SEEK_SET) != 0)
+        {
+            printf("ERROR: Failed to seek to new DDT position: %s\n", strerror(errno));
+            for(uint64_t j = 0; j < processed_count; j++)
+            {
+                free(ddt_upgrades[j].old_header);
+                free(ddt_upgrades[j].payload);
+            }
+            free(ddt_upgrades);
+            HASH_ITER(hh, index_hash, current, tmp)
+            {
+                HASH_DEL(index_hash, current);
+                free(current);
+            }
+            free(entries);
+            fclose(fp);
+            return EIO;
+        }
+
+        // Create new DDT header from old one
+        DdtHeader2 new_ddt_header;
+        memset(&new_ddt_header, 0, sizeof(DdtHeader2));
+
+        new_ddt_header.identifier          = info->old_header->identifier;
+        new_ddt_header.type                = info->old_header->type;
+        new_ddt_header.compression         = info->old_header->compression;
+        new_ddt_header.levels              = info->old_header->levels;
+        new_ddt_header.tableLevel          = info->old_header->tableLevel;
+        new_ddt_header.previousLevelOffset = info->old_header->previousLevelOffset;
+        new_ddt_header.negative            = info->old_header->negative;
+        new_ddt_header.blocks              = info->old_header->blocks;
+        new_ddt_header.overflow            = info->old_header->overflow;
+        new_ddt_header.start               = info->old_header->start;
+        new_ddt_header.blockAlignmentShift = info->old_header->blockAlignmentShift;
+        new_ddt_header.dataShift           = info->old_header->dataShift;
+        new_ddt_header.tableShift          = info->old_header->tableShift;
+        new_ddt_header.entries             = info->old_header->entries;
+        new_ddt_header.cmpLength           = info->old_header->cmpLength;
+        new_ddt_header.length              = info->old_header->length;
+        new_ddt_header.cmpCrc64            = info->old_header->cmpCrc64;
+        new_ddt_header.crc64               = info->old_header->crc64;
+
+        // Write new DDT header
+        size_t written = fwrite(&new_ddt_header, 1, sizeof(DdtHeader2), fp);
+        if(written != sizeof(DdtHeader2))
+        {
+            printf("ERROR: Failed to write new DDT header (wrote %zu bytes, expected %zu)\n", written,
+                   sizeof(DdtHeader2));
+            for(uint64_t j = 0; j < processed_count; j++)
+            {
+                free(ddt_upgrades[j].old_header);
+                free(ddt_upgrades[j].payload);
+            }
+            free(ddt_upgrades);
+            HASH_ITER(hh, index_hash, current, tmp)
+            {
+                HASH_DEL(index_hash, current);
+                free(current);
+            }
+            free(entries);
+            fclose(fp);
+            return EIO;
+        }
+
+        // Write DDT payload (unchanged)
+        written = fwrite(info->payload, 1, info->old_header->cmpLength, fp);
+        if(written != info->old_header->cmpLength)
+        {
+            printf("ERROR: Failed to write DDT payload (wrote %zu bytes, expected %llu)\n", written,
+                   (unsigned long long)info->old_header->cmpLength);
+            for(uint64_t j = 0; j < processed_count; j++)
+            {
+                free(ddt_upgrades[j].old_header);
+                free(ddt_upgrades[j].payload);
+            }
+            free(ddt_upgrades);
+            HASH_ITER(hh, index_hash, current, tmp)
+            {
+                HASH_DEL(index_hash, current);
+                free(current);
+            }
+            free(entries);
+            fclose(fp);
+            return EIO;
+        }
+
+        printf("    Header written: %zu bytes\n", sizeof(DdtHeader2));
+        printf("    Payload written: %llu bytes\n", (unsigned long long)info->old_header->cmpLength);
+
+        // Add new DDT entry to index hash
+        IndexEntryHash *new_entry = (IndexEntryHash *)malloc(sizeof(IndexEntryHash));
+        if(new_entry == NULL)
+        {
+            printf("ERROR: Failed to allocate memory for new index entry\n");
+            for(uint64_t j = 0; j < processed_count; j++)
+            {
+                free(ddt_upgrades[j].old_header);
+                free(ddt_upgrades[j].payload);
+            }
+            free(ddt_upgrades);
+            HASH_ITER(hh, index_hash, current, tmp)
+            {
+                HASH_DEL(index_hash, current);
+                free(current);
+            }
+            free(entries);
+            fclose(fp);
+            return ENOMEM;
+        }
+
+        new_entry->offset    = new_ddt_offset;
+        new_entry->blockType = DeDuplicationTable2;
+        new_entry->dataType  = info->dataType;
+
+        HASH_ADD(hh, index_hash, offset, sizeof(uint64_t), new_entry);
+        printf("    Added to index\n\n");
     }
 
-    // Write new DDT header
-    size_t written = fwrite(&new_ddt_header, 1, sizeof(DdtHeader2), fp);
-    if(written != sizeof(DdtHeader2))
+    printf("All %llu DDT block(s) upgraded successfully\n", (unsigned long long)processed_count);
+
+    // Clean up DDT upgrade tracking
+    for(uint64_t i = 0; i < processed_count; i++)
     {
-        printf("ERROR: Failed to write new DDT header (wrote %zu bytes, expected %zu)\n", written, sizeof(DdtHeader2));
-        free(ddt_payload);
-        free(old_ddt_header);
-        HASH_ITER(hh, index_hash, current, tmp)
-        {
-            HASH_DEL(index_hash, current);
-            free(current);
-        }
-        free(entries);
-        fclose(fp);
-        return EIO;
+        free(ddt_upgrades[i].old_header);
+        free(ddt_upgrades[i].payload);
     }
-
-    printf("  New DDT header written (%zu bytes)\n", written);
-
-    // Write DDT payload (unchanged)
-    written = fwrite(ddt_payload, 1, old_ddt_header->cmpLength, fp);
-    if(written != old_ddt_header->cmpLength)
-    {
-        printf("ERROR: Failed to write DDT payload (wrote %zu bytes, expected %llu)\n", written,
-               (unsigned long long)old_ddt_header->cmpLength);
-        free(ddt_payload);
-        free(old_ddt_header);
-        HASH_ITER(hh, index_hash, current, tmp)
-        {
-            HASH_DEL(index_hash, current);
-            free(current);
-        }
-        free(entries);
-        fclose(fp);
-        return EIO;
-    }
-
-    printf("  DDT payload written (%zu bytes)\n", written);
-
-    // Add new DDT entry to index hash
-    IndexEntryHash *new_entry = (IndexEntryHash *)malloc(sizeof(IndexEntryHash));
-    if(new_entry == NULL)
-    {
-        printf("ERROR: Failed to allocate memory for new index entry\n");
-        free(ddt_payload);
-        free(old_ddt_header);
-        HASH_ITER(hh, index_hash, current, tmp)
-        {
-            HASH_DEL(index_hash, current);
-            free(current);
-        }
-        free(entries);
-        fclose(fp);
-        return ENOMEM;
-    }
-
-    new_entry->offset    = new_ddt_offset;
-    new_entry->blockType = DeDuplicationTable2;
-    new_entry->dataType  = UserData;
-
-    HASH_ADD(hh, index_hash, offset, sizeof(uint64_t), new_entry);
-
-    printf("  New DDT entry added to index at offset %llu\n", (unsigned long long)new_ddt_offset);
-
-    printf("\nNew DDT header details:\n");
-    printf("  Structure size: %zu bytes (vs alpha20: %zu bytes)\n", sizeof(DdtHeader2), sizeof(ddt_v2_header_alpha20));
-    printf("  negative: %u (32-bit)\n", new_ddt_header.negative);
-    printf("  blocks: %llu\n", (unsigned long long)new_ddt_header.blocks);
-    printf("  overflow: %u (32-bit)\n", new_ddt_header.overflow);
+    free(ddt_upgrades);
 
     // Count entries in updated index hash
     uint64_t updated_entry_count = HASH_COUNT(index_hash);
@@ -679,8 +916,6 @@ int upgrade_ddt_to_alpha21(const char *path)
     if(updated_entries == NULL)
     {
         printf("ERROR: Failed to allocate memory for updated index entries\n");
-        free(ddt_payload);
-        free(old_ddt_header);
         HASH_ITER(hh, index_hash, current, tmp)
         {
             HASH_DEL(index_hash, current);
@@ -706,8 +941,6 @@ int upgrade_ddt_to_alpha21(const char *path)
     {
         printf("ERROR: Failed to seek to end of file: %s\n", strerror(errno));
         free(updated_entries);
-        free(ddt_payload);
-        free(old_ddt_header);
         HASH_ITER(hh, index_hash, current, tmp)
         {
             HASH_DEL(index_hash, current);
@@ -723,8 +956,6 @@ int upgrade_ddt_to_alpha21(const char *path)
     {
         printf("ERROR: Failed to get file size: %s\n", strerror(errno));
         free(updated_entries);
-        free(ddt_payload);
-        free(old_ddt_header);
         HASH_ITER(hh, index_hash, current, tmp)
         {
             HASH_DEL(index_hash, current);
@@ -748,8 +979,6 @@ int upgrade_ddt_to_alpha21(const char *path)
     {
         printf("ERROR: Failed to seek to new index position: %s\n", strerror(errno));
         free(updated_entries);
-        free(ddt_payload);
-        free(old_ddt_header);
         HASH_ITER(hh, index_hash, current, tmp)
         {
             HASH_DEL(index_hash, current);
@@ -771,7 +1000,7 @@ int upgrade_ddt_to_alpha21(const char *path)
     if(index_crc64_context != NULL && updated_entry_count > 0)
     {
         size_t index_data_size = updated_entry_count * sizeof(IndexEntry);
-        aaruf_crc64_update(index_crc64_context, updated_entries, index_data_size);
+        aaruf_crc64_update(index_crc64_context, (const uint8_t *)updated_entries, index_data_size);
         aaruf_crc64_final(index_crc64_context, &new_index_header.crc64);
         printf("  Calculated index CRC64: 0x%016llX\n", (unsigned long long)new_index_header.crc64);
     }
@@ -782,14 +1011,12 @@ int upgrade_ddt_to_alpha21(const char *path)
     }
 
     // Write new index header
-    written = fwrite(&new_index_header, 1, sizeof(IndexHeader3), fp);
+    size_t written = fwrite(&new_index_header, 1, sizeof(IndexHeader3), fp);
     if(written != sizeof(IndexHeader3))
     {
         printf("ERROR: Failed to write new index header (wrote %zu bytes, expected %zu)\n", written,
                sizeof(IndexHeader3));
         free(updated_entries);
-        free(ddt_payload);
-        free(old_ddt_header);
         HASH_ITER(hh, index_hash, current, tmp)
         {
             HASH_DEL(index_hash, current);
@@ -809,8 +1036,6 @@ int upgrade_ddt_to_alpha21(const char *path)
         printf("ERROR: Failed to write index entries (wrote %zu, expected %llu)\n", written,
                (unsigned long long)updated_entry_count);
         free(updated_entries);
-        free(ddt_payload);
-        free(old_ddt_header);
         HASH_ITER(hh, index_hash, current, tmp)
         {
             HASH_DEL(index_hash, current);
@@ -839,8 +1064,6 @@ int upgrade_ddt_to_alpha21(const char *path)
     {
         printf("ERROR: Failed to seek to start of file: %s\n", strerror(errno));
         free(updated_entries);
-        free(ddt_payload);
-        free(old_ddt_header);
         HASH_ITER(hh, index_hash, current, tmp)
         {
             HASH_DEL(index_hash, current);
@@ -858,8 +1081,6 @@ int upgrade_ddt_to_alpha21(const char *path)
         printf("ERROR: Failed to write updated header (wrote %zu bytes, expected %zu)\n", written,
                sizeof(AaruHeaderV2));
         free(updated_entries);
-        free(ddt_payload);
-        free(old_ddt_header);
         HASH_ITER(hh, index_hash, current, tmp)
         {
             HASH_DEL(index_hash, current);
@@ -877,8 +1098,6 @@ int upgrade_ddt_to_alpha21(const char *path)
 
     // Clean up
     free(updated_entries);
-    free(ddt_payload);
-    free(old_ddt_header);
     HASH_ITER(hh, index_hash, current, tmp)
     {
         HASH_DEL(index_hash, current);
@@ -891,8 +1110,7 @@ int upgrade_ddt_to_alpha21(const char *path)
     printf("                    UPGRADE COMPLETED SUCCESSFULLY\n");
     printf("================================================================================\n\n");
     printf("Summary of changes:\n");
-    printf("  1. New DDT v2 block written at offset %llu (%zu + %llu bytes)\n", (unsigned long long)new_ddt_offset,
-           sizeof(DdtHeader2), (unsigned long long)old_ddt_header->cmpLength);
+    printf("  1. %llu DDT v2 block(s) upgraded and written\n", (unsigned long long)processed_count);
     printf("  2. Updated index written at offset %llu (%zu + %zu bytes)\n", (unsigned long long)new_index_offset,
            sizeof(IndexHeader3), updated_entry_count * sizeof(IndexEntry));
     printf("  3. File header updated with new index offset\n");
