@@ -11,7 +11,7 @@ var searchData=
   ['nec_5f525_5fss_8',['NEC_525_SS',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa64629ce0276e0945b44e358eb403b590',1,'aaru.h']]],
   ['nec_5f8_5fdd_9',['NEC_8_DD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa5a79f25c38d19b0719508573302f38f7',1,'aaru.h']]],
   ['nec_5f8_5fsd_10',['NEC_8_SD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aafbc409413b4cc2bb573880f78ec5b707',1,'aaru.h']]],
-  ['negative_11',['negative',['../structDdtHeader2.html#aa4b1416ac0e0585f436513cacf9ebd74',1,'DdtHeader2']]],
+  ['negative_11',['negative',['../structDdtHeader2.html#ac48b4ceb64b05b5e7da2ca3df063ac99',1,'DdtHeader2']]],
   ['neogeocd_12',['NeoGeoCD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa4a70111c4d3c373a1997911bf718dddc',1,'aaru.h']]],
   ['nesgamepak_13',['NESGamePak',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aafb8177a285680259bc8c3b2b53a0d984',1,'aaru.h']]],
   ['next_5fblock_14',['next_block',['../structsony__tag.html#a5c4139de7da6916ae395b8fe39b94ec4',1,'sony_tag::next_block'],['../structprofile__tag.html#a714de92b9e7c69f8a10feeb3b10cde25',1,'profile_tag::next_block'],['../structpriam__tag.html#a1d864775d5525ccee02efaa8f408f13f',1,'priam_tag::next_block']]],

@@ -112,12 +112,12 @@ Data Fields</h2></td></tr>
 <tr class="memdesc:ac8ec7921a5651b5107eda4e99b488798"><td class="mdescLeft">&#160;</td><td class="mdescRight">Zero-based level index of this table (0 = root, increases downward).  <br /></td></tr>
 <tr class="memitem:af71423c2a8c7fa89dfd2313b456c57a2" id="r_af71423c2a8c7fa89dfd2313b456c57a2"><td class="memItemLeft" align="right" valign="top">uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af71423c2a8c7fa89dfd2313b456c57a2">previousLevelOffset</a></td></tr>
 <tr class="memdesc:af71423c2a8c7fa89dfd2313b456c57a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Absolute byte offset of the parent (previous) level table; 0 if root.  <br /></td></tr>
-<tr class="memitem:aa4b1416ac0e0585f436513cacf9ebd74" id="r_aa4b1416ac0e0585f436513cacf9ebd74"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa4b1416ac0e0585f436513cacf9ebd74">negative</a></td></tr>
-<tr class="memdesc:aa4b1416ac0e0585f436513cacf9ebd74"><td class="mdescLeft">&#160;</td><td class="mdescRight">Leading negative LBA count; added to external L to build internal index.  <br /></td></tr>
+<tr class="memitem:ac48b4ceb64b05b5e7da2ca3df063ac99" id="r_ac48b4ceb64b05b5e7da2ca3df063ac99"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac48b4ceb64b05b5e7da2ca3df063ac99">negative</a></td></tr>
+<tr class="memdesc:ac48b4ceb64b05b5e7da2ca3df063ac99"><td class="mdescLeft">&#160;</td><td class="mdescRight">Leading negative LBA count; added to external L to build internal index.  <br /></td></tr>
 <tr class="memitem:a9571c1d556e33537935bab1edba31135" id="r_a9571c1d556e33537935bab1edba31135"><td class="memItemLeft" align="right" valign="top">uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9571c1d556e33537935bab1edba31135">blocks</a></td></tr>
 <tr class="memdesc:a9571c1d556e33537935bab1edba31135"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total internal span (negative + usable + overflow) in logical sectors.  <br /></td></tr>
-<tr class="memitem:a2bfa558d9d778ae6b86d52520e278b66" id="r_a2bfa558d9d778ae6b86d52520e278b66"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2bfa558d9d778ae6b86d52520e278b66">overflow</a></td></tr>
-<tr class="memdesc:a2bfa558d9d778ae6b86d52520e278b66"><td class="mdescLeft">&#160;</td><td class="mdescRight">Trailing dumped sectors beyond user area (overflow range), still mapped with entries.  <br /></td></tr>
+<tr class="memitem:ac41f345c4d5db0c249ff171c85992482" id="r_ac41f345c4d5db0c249ff171c85992482"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac41f345c4d5db0c249ff171c85992482">overflow</a></td></tr>
+<tr class="memdesc:ac41f345c4d5db0c249ff171c85992482"><td class="mdescLeft">&#160;</td><td class="mdescRight">Trailing dumped sectors beyond user area (overflow range), still mapped with entries.  <br /></td></tr>
 <tr class="memitem:a238a2ca31ce0f60af3e59a1cb3e2e73c" id="r_a238a2ca31ce0f60af3e59a1cb3e2e73c"><td class="memItemLeft" align="right" valign="top">uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a238a2ca31ce0f60af3e59a1cb3e2e73c">start</a></td></tr>
 <tr class="memdesc:a238a2ca31ce0f60af3e59a1cb3e2e73c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base internal index covered by this table (used for secondary tables; currently informational).  <br /></td></tr>
 <tr class="memitem:aa67b097c3a20f926ede495d27152f1c0" id="r_aa67b097c3a20f926ede495d27152f1c0"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa67b097c3a20f926ede495d27152f1c0">blockAlignmentShift</a></td></tr>
@@ -395,14 +395,14 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
-<a id="aa4b1416ac0e0585f436513cacf9ebd74" name="aa4b1416ac0e0585f436513cacf9ebd74"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa4b1416ac0e0585f436513cacf9ebd74">&#9670;&#160;</a></span>negative</h2>
+<a id="ac48b4ceb64b05b5e7da2ca3df063ac99" name="ac48b4ceb64b05b5e7da2ca3df063ac99"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac48b4ceb64b05b5e7da2ca3df063ac99">&#9670;&#160;</a></span>negative</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">uint16_t DdtHeader2::negative</td>
+          <td class="memname">uint32_t DdtHeader2::negative</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -415,14 +415,14 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
-<a id="a2bfa558d9d778ae6b86d52520e278b66" name="a2bfa558d9d778ae6b86d52520e278b66"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2bfa558d9d778ae6b86d52520e278b66">&#9670;&#160;</a></span>overflow</h2>
+<a id="ac41f345c4d5db0c249ff171c85992482" name="ac41f345c4d5db0c249ff171c85992482"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac41f345c4d5db0c249ff171c85992482">&#9670;&#160;</a></span>overflow</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">uint16_t DdtHeader2::overflow</td>
+          <td class="memname">uint32_t DdtHeader2::overflow</td>
         </tr>
       </table>
 </div><div class="memdoc">
