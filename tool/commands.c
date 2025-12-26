@@ -120,7 +120,7 @@ int cmd_read_common(int argc, char *argv[], bool long_mode)
     }
 
     const int result =
-        long_mode ? read_long(sector->ival[0], filename->sval[0]) : read(sector->ival[0], filename->sval[0]);
+        long_mode ? read_long(sector->ival[0], filename->sval[0]) : read_sector(sector->ival[0], filename->sval[0]);
 
     arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
     return result;

@@ -4,6 +4,7 @@ project(aaruformattool C CXX)
 # Find required dependencies
 find_package(ICU COMPONENTS uc REQUIRED)
 find_package(Argtable3 CONFIG REQUIRED)
+find_package(Curses REQUIRED)
 
 # Tool executable
 add_executable(aaruformattool
@@ -32,7 +33,7 @@ add_executable(aaruformattool
 set_target_properties(aaruformattool PROPERTIES LINKER_LANGUAGE C)
 
 # Set up include directories
-target_include_directories(aaruformattool PRIVATE ${ICU_INCLUDE_DIRS})
+target_include_directories(aaruformattool PRIVATE ${ICU_INCLUDE_DIRS} ${CURSES_INCLUDE_DIRS})
 
 # Link libraries
 target_link_libraries(aaruformattool
@@ -40,6 +41,7 @@ target_link_libraries(aaruformattool
                       aaruformat
                       argtable3::argtable3
                       ICU::uc
+                      ${CURSES_LIBRARIES}
 )
 
 # On Linux, enable GNU/POSIX feature test macros so functions like strerror_r

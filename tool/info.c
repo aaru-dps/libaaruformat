@@ -19,9 +19,13 @@
 
 #include <errno.h>
 #include <locale.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <unicode/ucnv.h>
 #include <unicode/ustring.h>
+#include <unistd.h>
 
 #include <aaruformat.h>
 #include <sys/types.h>
@@ -31,6 +35,145 @@
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #endif
+
+// ANSI color codes
+#define ANSI_RESET  "\033[0m"
+#define ANSI_BOLD   "\033[1m"
+#define ANSI_CYAN   "\033[36m"
+#define ANSI_YELLOW "\033[33m"
+#define ANSI_WHITE  "\033[37m"
+#define ANSI_BLUE   "\033[34m"
+#define ANSI_GREEN  "\033[32m"
+#define ANSI_RED    "\033[31m"
+
+// Color pair definitions
+#define COLOR_HEADER  1
+#define COLOR_LABEL   2
+#define COLOR_VALUE   3
+#define COLOR_BOX     4
+#define COLOR_TITLE   5
+#define COLOR_ERROR   6
+#define COLOR_SUCCESS 7
+
+// Check if we're in a terminal that supports colors
+static bool use_colors = false;
+
+// Initialize color support
+static void init_display(void)
+{
+    // Check if stdout is a terminal and TERM is set
+    if(isatty(STDOUT_FILENO))
+    {
+        const char *term = getenv("TERM");
+        // Enable colors if we have a terminal that likely supports them
+        // If TERM is not set but we're in a TTY, assume color support (common on macOS)
+        if(term == NULL)
+        {
+            // Default to enabling colors if we're in a TTY
+            use_colors = true;
+        }
+        else if(strstr(term, "color") != NULL || strstr(term, "xterm") != NULL || strstr(term, "screen") != NULL ||
+                strstr(term, "tmux") != NULL || strcmp(term, "linux") == 0 || strcmp(term, "vt100") == 0)
+        {
+            use_colors = true;
+        }
+        // Check for explicit no-color requests
+        if(getenv("NO_COLOR") != NULL) { use_colors = false; }
+    }
+}
+
+// Cleanup display (no-op for ANSI colors)
+static void cleanup_display(void)
+{
+    // Reset colors on exit
+    if(use_colors)
+    {
+        printf(ANSI_RESET);
+        fflush(stdout);
+    }
+}
+
+// Draw box top border with title
+static void draw_box_top(const char *title, int color_pair)
+{
+    if(use_colors)
+    {
+        // Select color based on color pair
+        switch(color_pair)
+        {
+            case COLOR_HEADER:
+                printf(ANSI_CYAN ANSI_BOLD);
+                break;
+            case COLOR_BOX:
+                printf(ANSI_BLUE ANSI_BOLD);
+                break;
+            default:
+                printf(ANSI_BOLD);
+                break;
+        }
+    }
+
+    printf("┌─ %s ", title);
+
+    // Calculate padding needed
+    int title_len = strlen(title);
+    int padding   = 80 - 5 - title_len - 1;  // 5 = "┌─ " + " ", -1 for "┐"
+
+    for(int i = 0; i < padding; i++) { printf("─"); }
+    printf("┐\n");
+
+    if(use_colors) { printf(ANSI_RESET); }
+}
+
+// Draw box bottom border
+static void draw_box_bottom(int color_pair)
+{
+    if(use_colors)
+    {
+        // Select color based on color pair
+        switch(color_pair)
+        {
+            case COLOR_HEADER:
+                printf(ANSI_CYAN ANSI_BOLD);
+                break;
+            case COLOR_BOX:
+                printf(ANSI_BLUE ANSI_BOLD);
+                break;
+            default:
+                printf(ANSI_BOLD);
+                break;
+        }
+    }
+
+    printf("└");
+    for(int i = 0; i < 77; i++) { printf("─"); }
+    printf("┘\n\n");
+
+    if(use_colors) { printf(ANSI_RESET); }
+}
+
+// Print a formatted field with label and value, with proper padding
+static void print_field(const char *label, const char *value, int label_width)
+{
+    char line[78];
+    snprintf(line, sizeof(line), "%-*s %s", label_width, label, value);
+
+    if(use_colors)
+    {
+        printf(ANSI_BLUE "│ " ANSI_RESET);
+        printf(ANSI_YELLOW "%-*s" ANSI_RESET, label_width, label);
+        printf(" ");
+
+        int value_width = 76 - label_width - 1;  // 76 = 78 - 2 (borders), -1 for space
+        printf(ANSI_WHITE "%-*s" ANSI_RESET, value_width, value);
+
+        printf(ANSI_BLUE "│\n" ANSI_RESET);
+    }
+    else
+    {
+        printf("│ %-76s │\n", line);
+    }
+}
 
 // Converts Windows FILETIME (100ns intervals since 1601-01-01) to time_t (seconds since 1970-01-01)
 static const char *format_filetime(uint64_t filetime)
@@ -79,61 +222,108 @@ int info(const char *path)
     mediaTagEntry const *mediaTag     = NULL;
     mediaTagEntry const *tmpMediaTag  = NULL;
 
+    // Initialize ncurses and colors
+    init_display();
+
     ctx = aaruf_open(path, false, NULL);
 
     if(ctx == NULL)
     {
-        printf("\n❌ Error: Cannot open AaruFormat image (error code: %d)\n\n", errno);
+        if(use_colors)
+        {
+            printf(ANSI_RED "\n❌ Error: Cannot open AaruFormat image (error code: %d)\n\n" ANSI_RESET, errno);
+        }
+        else
+        {
+            printf("\n❌ Error: Cannot open AaruFormat image (error code: %d)\n\n", errno);
+        }
+        cleanup_display();
         return errno;
     }
 
     printf("\n");
-    printf("================================================================================\n");
-    printf("                        AARUFORMAT IMAGE INFORMATION\n");
-    printf("================================================================================\n\n");
+
+    if(use_colors)
+    {
+        printf(ANSI_GREEN ANSI_BOLD);
+        printf("================================================================================\n");
+        printf("                        AARUFORMAT IMAGE INFORMATION\n");
+        printf("================================================================================\n\n");
+        printf(ANSI_RESET);
+    }
+    else
+    {
+        printf("================================================================================\n");
+        printf("                        AARUFORMAT IMAGE INFORMATION\n");
+        printf("================================================================================\n\n");
+    }
 
     // Image Format Section
-    printf("┌─ IMAGE FORMAT ─────────────────────────────────────────────────────────────┐\n");
-    printf("│ Magic:               %8.8s                                              │\n", (char *)&ctx->magic);
-    printf("│ Format Version:      %d.%d                                                   │\n",
-           ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
-    printf("│ Library Version:     %d.%d                                                   │\n",
-           ctx->library_major_version, ctx->library_minor_version);
-    printf("│ Identifier:          %8.8s                                              │\n",
-           (char *)&ctx->header.identifier);
-    printf("└────────────────────────────────────────────────────────────────────────────┘\n\n");
+    draw_box_top("IMAGE FORMAT", COLOR_BOX);
+
+    char magic_str[9];
+    snprintf(magic_str, sizeof(magic_str), "%8.8s", (char *)&ctx->magic);
+    print_field("Magic:", magic_str, 20);
+
+    char version_str[32];
+    snprintf(version_str, sizeof(version_str), "%d.%d", ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
+    print_field("Format Version:", version_str, 20);
+
+    snprintf(version_str, sizeof(version_str), "%d.%d", ctx->library_major_version, ctx->library_minor_version);
+    print_field("Library Version:", version_str, 20);
+
+    char identifier_str[9];
+    snprintf(identifier_str, sizeof(identifier_str), "%8.8s", (char *)&ctx->header.identifier);
+    print_field("Identifier:", identifier_str, 20);
+
+    draw_box_bottom(COLOR_BOX);
 
     // Creator Application Section
-    printf("┌─ CREATOR APPLICATION ──────────────────────────────────────────────────────┐\n");
-    printf("│ Application:         %-53s │\n", (char *)ctx->header.application);
-    printf("│ Version:             %d.%d                                                   │\n",
-           ctx->header.applicationMajorVersion, ctx->header.applicationMinorVersion);
-    printf("│ Created:             %-53s │\n", format_filetime(ctx->header.creationTime));
-    printf("│ Last Modified:       %-53s │\n", format_filetime(ctx->header.lastWrittenTime));
-    printf("└────────────────────────────────────────────────────────────────────────────┘\n\n");
+    draw_box_top("CREATOR APPLICATION", COLOR_HEADER);
+
+    print_field("Application:", (char *)ctx->header.application, 20);
+
+    char app_version[32];
+    snprintf(app_version, sizeof(app_version), "%d.%d", ctx->header.applicationMajorVersion,
+             ctx->header.applicationMinorVersion);
+    print_field("Version:", app_version, 20);
+
+    print_field("Created:", format_filetime(ctx->header.creationTime), 20);
+    print_field("Last Modified:", format_filetime(ctx->header.lastWrittenTime), 20);
+
+    draw_box_bottom(COLOR_HEADER);
 
     // Media Information Section
-    printf("┌─ MEDIA INFORMATION ────────────────────────────────────────────────────────┐\n");
-    printf("│ Media Type:          %-53s │\n", media_type_to_string(ctx->header.mediaType));
+    draw_box_top("MEDIA INFORMATION", COLOR_HEADER);
+
+    print_field("Media Type:", media_type_to_string(ctx->header.mediaType), 20);
 
     uint32_t cylinders       = 0;
     uint32_t heads           = 0;
     uint32_t sectorsPerTrack = 0;
     if(aaruf_get_geometry(ctx, &cylinders, &heads, &sectorsPerTrack) == AARUF_STATUS_OK)
     {
-        printf("│ Geometry:            C:%u / H:%u / S:%u                                     │\n", cylinders, heads,
-               sectorsPerTrack);
+        char geometry[64];
+        snprintf(geometry, sizeof(geometry), "C:%u / H:%u / S:%u", cylinders, heads, sectorsPerTrack);
+        print_field("Geometry:", geometry, 20);
     }
 
-    char image_size[78];
+    char image_size[64];
     snprintf(image_size, sizeof(image_size), "%llu bytes", ctx->image_info.ImageSize);
-    printf("│ Image Size:          %-53s │\n", image_size);
-    printf("│ Total Sectors:       %-53llu │\n", ctx->image_info.Sectors);
-    printf("│ Sector Size:         %d bytes                                            │\n",
-           ctx->image_info.SectorSize);
-    printf("│ Has Partitions:      %-53s │\n", ctx->image_info.HasPartitions ? "Yes" : "No");
-    printf("│ Has Sessions:        %-53s │\n", ctx->image_info.HasSessions ? "Yes" : "No");
-    printf("└────────────────────────────────────────────────────────────────────────────┘\n\n");
+    print_field("Image Size:", image_size, 20);
+
+    char sectors[32];
+    snprintf(sectors, sizeof(sectors), "%llu", ctx->image_info.Sectors);
+    print_field("Total Sectors:", sectors, 20);
+
+    char sector_size[32];
+    snprintf(sector_size, sizeof(sector_size), "%d bytes", ctx->image_info.SectorSize);
+    print_field("Sector Size:", sector_size, 20);
+
+    print_field("Has Partitions:", ctx->image_info.HasPartitions ? "Yes" : "No", 20);
+    print_field("Has Sessions:", ctx->image_info.HasSessions ? "Yes" : "No", 20);
+
+    draw_box_bottom(COLOR_HEADER);
 
     // Metadata Section
     int32_t sequence     = 0;
@@ -161,12 +351,13 @@ int info(const char *path)
 
     if(hasMetadata)
     {
-        printf("┌─ METADATA ─────────────────────────────────────────────────────────────────┐\n");
+        draw_box_top("METADATA", COLOR_HEADER);
 
         if(aaruf_get_media_sequence(ctx, &sequence, &lastSequence) == AARUF_STATUS_OK && sequence > 0)
         {
-            printf("│ Media Sequence:      %d of %d                                               │\n", sequence,
-                   lastSequence);
+            char seq_str[32];
+            snprintf(seq_str, sizeof(seq_str), "%d of %d", sequence, lastSequence);
+            print_field("Media Sequence:", seq_str, 20);
         }
 
         length = 0;
@@ -184,7 +375,7 @@ int info(const char *path)
                         u_error_code = U_ZERO_ERROR;
                         ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
                                      &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("│ Creator:             %-52s │\n", strBuffer);
+                        if(u_error_code == U_ZERO_ERROR) print_field("Creator:", strBuffer, 20);
                         free(strBuffer);
                     }
                 }
@@ -207,7 +398,7 @@ int info(const char *path)
                         u_error_code = U_ZERO_ERROR;
                         ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
                                      &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("│ Comments:            %-52s │\n", strBuffer);
+                        if(u_error_code == U_ZERO_ERROR) print_field("Comments:", strBuffer, 20);
                         free(strBuffer);
                     }
                 }
@@ -230,7 +421,7 @@ int info(const char *path)
                         u_error_code = U_ZERO_ERROR;
                         ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
                                      &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("│ Media Title:         %-52s │\n", strBuffer);
+                        if(u_error_code == U_ZERO_ERROR) print_field("Media Title:", strBuffer, 20);
                         free(strBuffer);
                     }
                 }
@@ -253,7 +444,7 @@ int info(const char *path)
                         u_error_code = U_ZERO_ERROR;
                         ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
                                      &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("│ Media Manufacturer:  %-52s │\n", strBuffer);
+                        if(u_error_code == U_ZERO_ERROR) print_field("Media Manufacturer:", strBuffer, 20);
                         free(strBuffer);
                     }
                 }
@@ -276,7 +467,7 @@ int info(const char *path)
                         u_error_code = U_ZERO_ERROR;
                         ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
                                      &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("│ Media Model:         %-52s │\n", strBuffer);
+                        if(u_error_code == U_ZERO_ERROR) print_field("Media Model:", strBuffer, 20);
                         free(strBuffer);
                     }
                 }
@@ -299,7 +490,7 @@ int info(const char *path)
                         u_error_code = U_ZERO_ERROR;
                         ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
                                      &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("│ Media Serial:        %-52s │\n", strBuffer);
+                        if(u_error_code == U_ZERO_ERROR) print_field("Media Serial:", strBuffer, 20);
                         free(strBuffer);
                     }
                 }
@@ -322,7 +513,7 @@ int info(const char *path)
                         u_error_code = U_ZERO_ERROR;
                         ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
                                      &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("│ Media Barcode:       %-52s │\n", strBuffer);
+                        if(u_error_code == U_ZERO_ERROR) print_field("Media Barcode:", strBuffer, 20);
                         free(strBuffer);
                     }
                 }
@@ -345,7 +536,7 @@ int info(const char *path)
                         u_error_code = U_ZERO_ERROR;
                         ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
                                      &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("│ Media Part Number:   %-52s │\n", strBuffer);
+                        if(u_error_code == U_ZERO_ERROR) print_field("Media Part Number:", strBuffer, 20);
                         free(strBuffer);
                     }
                 }
@@ -368,7 +559,7 @@ int info(const char *path)
                         u_error_code = U_ZERO_ERROR;
                         ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
                                      &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("│ Drive Manufacturer:  %-52s │\n", strBuffer);
+                        if(u_error_code == U_ZERO_ERROR) print_field("Drive Manufacturer:", strBuffer, 20);
                         free(strBuffer);
                     }
                 }
@@ -391,7 +582,7 @@ int info(const char *path)
                         u_error_code = U_ZERO_ERROR;
                         ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
                                      &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("│ Drive Model:         %-52s │\n", strBuffer);
+                        if(u_error_code == U_ZERO_ERROR) print_field("Drive Model:", strBuffer, 20);
                         free(strBuffer);
                     }
                 }
@@ -414,7 +605,7 @@ int info(const char *path)
                         u_error_code = U_ZERO_ERROR;
                         ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
                                      &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("│ Drive Serial:        %-52s │\n", strBuffer);
+                        if(u_error_code == U_ZERO_ERROR) print_field("Drive Serial:", strBuffer, 20);
                         free(strBuffer);
                     }
                 }
@@ -437,7 +628,7 @@ int info(const char *path)
                         u_error_code = U_ZERO_ERROR;
                         ucnv_convert(NULL, "UTF-16LE", strBuffer, length, (const char *)utf16Buffer, length,
                                      &u_error_code);
-                        if(u_error_code == U_ZERO_ERROR) printf("│ Drive Firmware:      %-52s │\n", strBuffer);
+                        if(u_error_code == U_ZERO_ERROR) print_field("Drive Firmware:", strBuffer, 20);
                         free(strBuffer);
                     }
                 }
@@ -445,40 +636,45 @@ int info(const char *path)
             }
         }
 
-        printf("└────────────────────────────────────────────────────────────────────────────┘\n\n");
+        draw_box_bottom(COLOR_HEADER);
     }
 
     // Tracks Section
     if(ctx->tracks_header.identifier == TracksBlock && ctx->tracks_header.entries > 0)
     {
-        printf("┌─ TRACKS (%u total) ─────────────────────────────────────────────────────────┐\n",
-               ctx->tracks_header.entries);
+        char title[64];
+        snprintf(title, sizeof(title), "TRACKS (%u total)", ctx->tracks_header.entries);
+        draw_box_top(title, COLOR_HEADER);
+
         for(i = 0; i < ctx->tracks_header.entries && i < 20; i++)  // Limit to first 20 tracks
         {
-            char track_info[78];
+            char track_info[128];
             snprintf(track_info, sizeof(track_info), "Track #%-2d: Seq=%d Type=%d Start=%lld End=%lld Session=%d",
                      i + 1, ctx->track_entries[i].sequence, ctx->track_entries[i].type, ctx->track_entries[i].start,
                      ctx->track_entries[i].end, ctx->track_entries[i].session);
-            printf("│ %-74s │\n", track_info);
+            print_field("", track_info, 0);
         }
         if(ctx->tracks_header.entries > 20)
         {
-            char more_info[78];
+            char more_info[64];
             snprintf(more_info, sizeof(more_info), "... and %u more track(s)", ctx->tracks_header.entries - 20);
-            printf("│ %-74s │\n", more_info);
+            print_field("", more_info, 0);
         }
-        printf("└────────────────────────────────────────────────────────────────────────────┘\n\n");
+        draw_box_bottom(COLOR_HEADER);
     }
 
     // Dump Hardware Section
     if(ctx->dump_hardware_header.identifier == DumpHardwareBlock && ctx->dump_hardware_header.entries > 0)
     {
-        printf("┌─ DUMP HARDWARE (%u device(s)) ──────────────────────────────────────────────┐\n",
-               ctx->dump_hardware_header.entries);
+        char title[64];
+        snprintf(title, sizeof(title), "DUMP HARDWARE (%u device(s))", ctx->dump_hardware_header.entries);
+        draw_box_top(title, COLOR_HEADER);
 
         for(i = 0; i < ctx->dump_hardware_header.entries; i++)
         {
-            printf("│ Device #%d:                                                                 │\n", i + 1);
+            char device_label[32];
+            snprintf(device_label, sizeof(device_label), "Device #%d:", i + 1);
+            print_field(device_label, "", 20);
 
             if(ctx->dump_hardware_entries_with_data[i].entry.manufacturerLength > 0)
             {
@@ -488,7 +684,7 @@ int info(const char *path)
                              (int)ctx->dump_hardware_entries_with_data[i].entry.manufacturerLength,
                              (char *)ctx->dump_hardware_entries_with_data[i].manufacturer,
                              (int)ctx->dump_hardware_entries_with_data[i].entry.manufacturerLength, &u_error_code);
-                printf("│   Manufacturer: %-58s │\n", strBuffer);
+                print_field("  Manufacturer:", strBuffer, 20);
                 free(strBuffer);
             }
 
@@ -499,7 +695,7 @@ int info(const char *path)
                 ucnv_convert(NULL, "UTF-8", strBuffer, (int)ctx->dump_hardware_entries_with_data[i].entry.modelLength,
                              (char *)ctx->dump_hardware_entries_with_data[i].model,
                              (int)ctx->dump_hardware_entries_with_data[i].entry.modelLength, &u_error_code);
-                printf("│   Model: %-65s │\n", strBuffer);
+                print_field("  Model:", strBuffer, 20);
                 free(strBuffer);
             }
 
@@ -511,7 +707,7 @@ int info(const char *path)
                              (int)ctx->dump_hardware_entries_with_data[i].entry.softwareNameLength,
                              (char *)ctx->dump_hardware_entries_with_data[i].softwareName,
                              (int)ctx->dump_hardware_entries_with_data[i].entry.softwareNameLength, &u_error_code);
-                printf("│   Software: %-62s │\n", strBuffer);
+                print_field("  Software:", strBuffer, 20);
                 free(strBuffer);
             }
 
@@ -524,7 +720,7 @@ int info(const char *path)
                     snprintf(extent_str, sizeof(extent_str), "%llu - %llu",
                              ctx->dump_hardware_entries_with_data[i].extents[j].start,
                              ctx->dump_hardware_entries_with_data[i].extents[j].end);
-                    printf("│   Extent: %-64s │\n", extent_str);
+                    print_field("  Extent:", extent_str, 20);
                 }
             }
             else if(ctx->dump_hardware_entries_with_data[i].entry.extents > 3)
@@ -532,10 +728,10 @@ int info(const char *path)
                 char extent_str[80];
                 snprintf(extent_str, sizeof(extent_str), "%u extent(s)",
                          ctx->dump_hardware_entries_with_data[i].entry.extents);
-                printf("│   Extents: %-65s │\n", extent_str);
+                print_field("  Extents:", extent_str, 20);
             }
         }
-        printf("└────────────────────────────────────────────────────────────────────────────┘\n\n");
+        draw_box_bottom(COLOR_HEADER);
     }
 
     // Checksums Section
@@ -544,66 +740,71 @@ int info(const char *path)
 
     if(hasChecksums)
     {
-        printf("┌─ CHECKSUMS ────────────────────────────────────────────────────────────────┐\n");
+        draw_box_top("CHECKSUMS", COLOR_HEADER);
 
         if(ctx->checksums.hasMd5)
         {
             strBuffer = byte_array_to_hex_string(ctx->checksums.md5, MD5_DIGEST_LENGTH);
-            printf("│ MD5:     %s                                         │\n", strBuffer);
+            print_field("MD5:", strBuffer, 20);
             free(strBuffer);
         }
 
         if(ctx->checksums.hasSha1)
         {
             strBuffer = byte_array_to_hex_string(ctx->checksums.sha1, SHA1_DIGEST_LENGTH);
-            printf("│ SHA-1:   %s                                 │\n", strBuffer);
+            print_field("SHA-1:", strBuffer, 20);
             free(strBuffer);
         }
 
         if(ctx->checksums.hasSha256)
         {
             strBuffer = byte_array_to_hex_string(ctx->checksums.sha256, SHA256_DIGEST_LENGTH);
-            printf("│ SHA-256: %-64s │\n", strBuffer);
+            print_field("SHA-256:", strBuffer, 20);
             free(strBuffer);
         }
 
-        if(ctx->checksums.hasSpamSum) { printf("│ SpamSum: %-64s │\n", ctx->checksums.spamsum); }
+        if(ctx->checksums.hasSpamSum) { print_field("SpamSum:", (char *)ctx->checksums.spamsum, 20); }
 
-        printf("└────────────────────────────────────────────────────────────────────────────┘\n\n");
+        draw_box_bottom(COLOR_HEADER);
     }
 
     // Media Tags Section
     if(ctx->mediaTags != NULL)
     {
         uint32_t tag_count = HASH_COUNT(ctx->mediaTags);
-        printf("┌─ MEDIA TAGS (%u total) ─────────────────────────────────────────────────────┐\n", tag_count);
+        char     title[64];
+        snprintf(title, sizeof(title), "MEDIA TAGS (%u total)", tag_count);
+        draw_box_top(title, COLOR_HEADER);
 
         uint32_t displayed = 0;
         HASH_ITER(hh, ctx->mediaTags, mediaTag, tmpMediaTag)
         {
             if(displayed < 20)  // Limit display to first 20 tags
             {
-                char tag_info[78];
+                char tag_info[128];
                 snprintf(tag_info, sizeof(tag_info), "%s (%d bytes)", data_type_to_string((uint16_t)mediaTag->type),
                          mediaTag->length);
-                printf("│ %-74s │\n", tag_info);
+                print_field("", tag_info, 0);
                 displayed++;
             }
         }
 
         if(tag_count > 20)
         {
-            char more_info[78];
+            char more_info[64];
             snprintf(more_info, sizeof(more_info), "... and %u more tag(s)", tag_count - 20);
-            printf("│ %-76s │\n", more_info);
+            print_field("", more_info, 0);
         }
 
-        printf("└────────────────────────────────────────────────────────────────────────────┘\n\n");
+        draw_box_bottom(COLOR_HEADER);
     }
 
     printf("================================================================================\n\n");
 
     aaruf_close(ctx);
+
+    // Cleanup ncurses
+    cleanup_display();
 
     return 0;
 }
