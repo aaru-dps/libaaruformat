@@ -18,6 +18,7 @@
  */
 
 #include <aaru.h>
+#include <aaruformat/enums.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -47,6 +48,189 @@ char *byte_array_to_hex_string(const unsigned char *array, int array_size)
     hex_string[j] = 0;
 
     return hex_string;
+}
+
+const char *data_type_to_string(uint16_t type)
+{
+    switch(type)
+    {
+        case UserData:
+            return "User Data";
+        case CompactDiscPartialToc:
+            return "CD Partial TOC";
+        case CompactDiscSessionInfo:
+            return "CD Session Information";
+        case CompactDiscToc:
+            return "CD Table of Contents";
+        case CompactDiscPma:
+            return "CD Power Management Area";
+        case CompactDiscAtip:
+            return "CD Absolute Time in Pregroove";
+        case CompactDiscLeadInCdText:
+            return "CD Lead-in CD-TEXT";
+        case DvdPfi:
+            return "DVD Physical Format Information";
+        case DvdLeadInCmi:
+            return "DVD Lead-in Copyright Management Information";
+        case DvdDiscKey:
+            return "DVD Disc Key";
+        case DvdBca:
+            return "DVD Burst Cutting Area";
+        case DvdDmi:
+            return "DVD Disc Manufacturing Information";
+        case DvdMediaIdentifier:
+            return "DVD Media Identifier";
+        case DvdMediaKeyBlock:
+            return "DVD Media Key Block";
+        case DvdRamDds:
+            return "DVD-RAM Disc Definition Structure";
+        case DvdRamMediumStatus:
+            return "DVD-RAM Medium Status";
+        case DvdRamSpareArea:
+            return "DVD-RAM Spare Area Information";
+        case DvdRRmd:
+            return "DVD-R Recording Management Data";
+        case DvdRPrerecordedInfo:
+            return "DVD-R Pre-recorded Information";
+        case DvdRMediaIdentifier:
+            return "DVD-R Media Identifier";
+        case DvdRPfi:
+            return "DVD-R Physical Format Information";
+        case DvdAdip:
+            return "DVD Address in Pregroove";
+        case HdDvdCpi:
+            return "HD DVD Content Protection Information";
+        case HdDvdMediumStatus:
+            return "HD DVD Medium Status";
+        case DvdDlLayerCapacity:
+            return "DVD Dual Layer - Layer Capacity";
+        case DvdDlMiddleZoneAddress:
+            return "DVD Dual Layer - Middle Zone Address";
+        case DvdDlJumpIntervalSize:
+            return "DVD Dual Layer - Jump Interval Size";
+        case DvdDlManualLayerJumpLba:
+            return "DVD Dual Layer - Manual Layer Jump LBA";
+        case BlurayDi:
+            return "Blu-ray Disc Information";
+        case BlurayBca:
+            return "Blu-ray Burst Cutting Area";
+        case BlurayDds:
+            return "Blu-ray Disc Definition Structure";
+        case BlurayCartridgeStatus:
+            return "Blu-ray Cartridge Status";
+        case BluraySpareArea:
+            return "Blu-ray Spare Area Information";
+        case AacsVolumeIdentifier:
+            return "AACS Volume Identifier";
+        case AacsMediaIdentifier:
+            return "AACS Media Identifier";
+        case AacsMediaKeyBlock:
+            return "AACS Media Key Block";
+        case AacsDataKeys:
+            return "AACS Data Keys";
+        case AacsLbaExtents:
+            return "AACS LBA Extents";
+        case CprmMediaKeyBlock:
+            return "CPRM Media Key Block";
+        case HybridRecognizedLayers:
+            return "Hybrid Disc - Recognized Layers";
+        case ScsiMmcWriteProtection:
+            return "SCSI MMC Write Protection";
+        case ScsiMmcDiscInformation:
+            return "SCSI MMC Disc Information";
+        case ScsiMmcTrackResourcesInformation:
+            return "SCSI MMC Track Resources Information";
+        case ScsiMmcPowResourcesInformation:
+            return "SCSI MMC POW Resources Information";
+        case ScsiInquiry:
+            return "SCSI INQUIRY Response";
+        case ScsiModePage2A:
+            return "SCSI MODE PAGE 2Ah";
+        case AtaIdentify:
+            return "ATA IDENTIFY DEVICE";
+        case AtapiIdentify:
+            return "ATAPI IDENTIFY PACKET DEVICE";
+        case PcmciaCis:
+            return "PCMCIA Card Information Structure";
+        case SecureDigitalCid:
+            return "Secure Digital CID Register";
+        case SecureDigitalCsd:
+            return "Secure Digital CSD Register";
+        case SecureDigitalScr:
+            return "Secure Digital SCR Register";
+        case SecureDigitalOcr:
+            return "Secure Digital OCR Register";
+        case MultiMediaCardCid:
+            return "MultiMediaCard CID Register";
+        case MultiMediaCardCsd:
+            return "MultiMediaCard CSD Register";
+        case MultiMediaCardExtendedCsd:
+            return "MultiMediaCard Extended CSD Register";
+        case MultiMediaCardOcr:
+            return "MultiMediaCard OCR Register";
+        case XboxSecuritySector:
+            return "Xbox Security Sector";
+        case FloppyLeadOut:
+            return "Floppy Lead-out";
+        case DvdDiscControlBlock:
+            return "DVD Disc Control Block";
+        case CompactDiscFirstTrackPregap:
+            return "CD First Track Pre-gap";
+        case CompactDiscLeadOut:
+            return "CD Lead-out";
+        case ScsiModeSense6:
+            return "SCSI MODE SENSE (6)";
+        case ScsiModeSense10:
+            return "SCSI MODE SENSE (10)";
+        case UsbDescriptors:
+            return "USB Descriptors";
+        case XboxDmi:
+            return "Xbox Disc Manufacturing Information";
+        case XboxPfi:
+            return "Xbox Physical Format Information";
+        case CdSectorPrefix:
+            return "CD Sector Prefix (sync + header)";
+        case CdSectorSuffix:
+            return "CD Sector Suffix (EDC + ECC)";
+        case CdSectorSubchannel:
+            return "CD Sector Subchannel";
+        case AppleProfileTag:
+            return "Apple Profile Tag";
+        case AppleSonyTag:
+            return "Apple Sony Tag";
+        case PriamDataTowerTag:
+            return "Priam DataTower Tag";
+        case CompactDiscMediaCatalogueNumber:
+            return "CD Media Catalogue Number";
+        case CdSectorPrefixCorrected:
+            return "CD Sector Prefix (corrected)";
+        case CdSectorSuffixCorrected:
+            return "CD Sector Suffix (corrected)";
+        case CompactDiscMode2Subheader:
+            return "CD Mode 2 Subheader";
+        case CompactDiscLeadIn:
+            return "CD Lead-in";
+        case DvdDiscKeyDecrypted:
+            return "DVD Disc Key (decrypted)";
+        case DvdSectorCprMai:
+            return "DVD Sector Copyright Management Info";
+        case DvdSectorTitleKeyDecrypted:
+            return "DVD Title Key (decrypted)";
+        case DvdSectorId:
+            return "DVD Sector ID";
+        case DvdSectorIed:
+            return "DVD Sector ID Error Detection";
+        case DvdSectorEdc:
+            return "DVD Sector Error Detection Code";
+        case DvdSectorEccPi:
+            return "DVD Sector ECC Parity Inner";
+        case DvdEccBlockPo:
+            return "DVD ECC Block Parity Outer";
+        case DvdPfi2ndLayer:
+            return "DVD Physical Format Info (2nd layer)";
+        default:
+            return "Unknown Data Type";
+    }
 }
 
 const char *media_type_to_string(MediaType type)
