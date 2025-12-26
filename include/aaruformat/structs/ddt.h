@@ -146,9 +146,9 @@ typedef struct DdtHeader2
     uint8_t  levels;               ///< Total number of hierarchy levels (root depth); > 0.
     uint8_t  tableLevel;           ///< Zero-based level index of this table (0 = root, increases downward).
     uint64_t previousLevelOffset;  ///< Absolute byte offset of the parent (previous) level table; 0 if root.
-    uint16_t negative;             ///< Leading negative LBA count; added to external L to build internal index.
+    uint32_t negative;             ///< Leading negative LBA count; added to external L to build internal index.
     uint64_t blocks;               ///< Total internal span (negative + usable + overflow) in logical sectors.
-    uint16_t overflow;  ///< Trailing dumped sectors beyond user area (overflow range), still mapped with entries.
+    uint32_t overflow;  ///< Trailing dumped sectors beyond user area (overflow range), still mapped with entries.
     uint64_t
             start;  ///< Base internal index covered by this table (used for secondary tables; currently informational).
     uint8_t blockAlignmentShift;  ///< 2^blockAlignmentShift = block alignment boundary in bytes.

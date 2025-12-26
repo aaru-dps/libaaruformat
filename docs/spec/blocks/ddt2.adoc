@@ -12,9 +12,9 @@ typedef struct DdtHeader2
     uint8_t  levels;               ///< Total number of hierarchy levels (root depth); > 0.
     uint8_t  tableLevel;           ///< Zero-based level index of this table (0 = root, increases downward).
     uint64_t previousLevelOffset;  ///< Absolute byte offset of the parent (previous) level table; 0 if root.
-    uint16_t negative;             ///< Leading negative LBA count; added to external L to build internal index.
+    uint32_t negative;             ///< Leading negative LBA count; added to external L to build internal index.
     uint64_t blocks;               ///< Total internal span (negative + usable + overflow) in logical sectors.
-    uint16_t overflow;  ///< Trailing dumped sectors beyond user area (overflow range), still mapped with entries.
+    uint32_t overflow;  ///< Trailing dumped sectors beyond user area (overflow range), still mapped with entries.
     uint64_t
             start;  ///< Base internal index covered by this table (used for secondary tables; currently informational).
     uint8_t blockAlignmentShift;  ///< 2^blockAlignmentShift = block alignment boundary in bytes.
@@ -67,8 +67,8 @@ typedef struct DdtHeader2
 |previousLevel
 |Pointer to absolute byte offset in the image file where the previous table level resides
 
-|uint16_t
-|2 bytes
+|uint32_t
+|4 bytes
 |negative
 |The negative displacement of LBA numbers. For media that can have negative LBAs, this establishes the number to substract to the table entry number
 
@@ -77,8 +77,8 @@ typedef struct DdtHeader2
 |blocks
 |The number of blocks in the media. This includes all blocks in the media, including the ones represented by the negative displacement as well as overflow displacement.
 
-|uint16_t
-|2 bytes
+|uint32_t
+|4 bytes
 |overflow
 |The positive overflow displacement of LBA numbers. For media that can have blocks beyond the end of the user area, this is the number of how many such blocks there are in the image.
 
