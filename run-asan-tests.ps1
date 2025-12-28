@@ -49,12 +49,21 @@ Write-Host "Build completed successfully!" -ForegroundColor Green
 Write-Host ""
 
 # Set up ASan options
+# Priority: 1) Command line parameter, 2) Existing ASAN_OPTIONS env var, 3) Default
 if ($AsanOptions -ne "") {
     $env:ASAN_OPTIONS = $AsanOptions
-    Write-Host "Using custom ASAN_OPTIONS: $env:ASAN_OPTIONS" -ForegroundColor Yellow
+    Write-Host "Using ASAN_OPTIONS from command line: $env:ASAN_OPTIONS" -ForegroundColor Yellow
+}
+elseif ($env:ASAN_OPTIONS) {
+    Write-Host "Using ASAN_OPTIONS from environment: $env:ASAN_OPTIONS" -ForegroundColor Yellow
+    # Add print_stats=1 if not already specified
+    if ($env:ASAN_OPTIONS -notmatch "print_stats") {
+        $env:ASAN_OPTIONS = "$env:ASAN_OPTIONS`:print_stats=1"
+        Write-Host "Added print_stats=1 to your options" -ForegroundColor Yellow
+    }
 }
 else {
-    # Default options: detect leaks (if supported), print stats
+    # Default options: print stats (leak detection often not supported on Windows)
     $env:ASAN_OPTIONS = "print_stats=1"
     Write-Host "Using default ASAN_OPTIONS: $env:ASAN_OPTIONS" -ForegroundColor Yellow
 }

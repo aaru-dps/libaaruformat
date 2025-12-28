@@ -48,9 +48,17 @@ echo -e "${GREEN}Build completed successfully!${NC}"
 echo ""
 
 # Set up ASan options
+# Priority: 1) Command line arg, 2) Existing ASAN_OPTIONS env var, 3) Platform-specific defaults
 if [ -n "$1" ]; then
     export ASAN_OPTIONS="$1"
-    echo -e "${YELLOW}Using custom ASAN_OPTIONS: $ASAN_OPTIONS${NC}"
+    echo -e "${YELLOW}Using ASAN_OPTIONS from command line: $ASAN_OPTIONS${NC}"
+elif [ -n "$ASAN_OPTIONS" ]; then
+    echo -e "${YELLOW}Using ASAN_OPTIONS from environment: $ASAN_OPTIONS${NC}"
+    # Add print_stats=1 if not already specified
+    if [[ ! "$ASAN_OPTIONS" =~ print_stats ]]; then
+        export ASAN_OPTIONS="${ASAN_OPTIONS}:print_stats=1"
+        echo -e "${YELLOW}Added print_stats=1 to your options${NC}"
+    fi
 else
     # Default options: print stats, use colors
     # Note: detect_leaks is not supported on macOS, so we don't enable it by default
@@ -60,7 +68,7 @@ else
         echo -e "${YELLOW}Note: leak detection not supported on macOS${NC}"
     else
         export ASAN_OPTIONS="detect_leaks=1:print_stats=1:color=always"
-        echo -e "${YELLOW}Using default ASAN_OPTIONS: $ASAN_OPTIONS${NC}"
+        echo -e "${YELLOW}Using default ASAN_OPTIONS (Linux): $ASAN_OPTIONS${NC}"
     fi
 fi
 

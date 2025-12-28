@@ -125,18 +125,22 @@ include(GoogleTest)
 
 # Configure test discovery with proper ASAN_OPTIONS
 if(USE_ASAN)
-  # On macOS, leak detection is not supported and causes abort
-  # Set ASAN_OPTIONS for test discovery to avoid this
+  # On macOS, leak detection is not supported and causes abort during test discovery
+  # We need to set ASAN_OPTIONS only for the discovery phase, not for actual test execution
+  # The discovery phase runs during CMake configuration
   if(APPLE)
-    set(DISCOVERY_ASAN_OPTIONS "print_stats=0")
+    set(ENV{ASAN_OPTIONS} "print_stats=0")
   else()
-    set(DISCOVERY_ASAN_OPTIONS "detect_leaks=0:print_stats=0")
+    set(ENV{ASAN_OPTIONS} "detect_leaks=0:print_stats=0")
   endif()
 
+  # Discover tests - this runs with the ASAN_OPTIONS we just set
   gtest_discover_tests(tests_run
     DISCOVERY_TIMEOUT 30
-    PROPERTIES ENVIRONMENT "ASAN_OPTIONS=${DISCOVERY_ASAN_OPTIONS}"
   )
+
+  # Clear the environment variable so it doesn't affect the actual test runs
+  unset(ENV{ASAN_OPTIONS})
 else()
   gtest_discover_tests(tests_run)
 endif()
