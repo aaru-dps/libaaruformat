@@ -110,6 +110,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_cst_untransform(const uint8_t *sequential, u
 
 AARU_EXPORT void *AARU_CALL aaruf_ecc_cd_init();
 
+AARU_EXPORT void AARU_CALL aaruf_ecc_cd_free(void *context);
+
 AARU_EXPORT bool AARU_CALL aaruf_ecc_cd_is_suffix_correct(void *context, const uint8_t *sector);
 
 AARU_EXPORT bool AARU_CALL aaruf_ecc_cd_is_suffix_correct_mode2(void *context, const uint8_t *sector);

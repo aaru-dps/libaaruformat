@@ -4568,7 +4568,7 @@ AARU_EXPORT int AARU_CALL aaruf_close(void *context)
     free(ctx->readableSectorTags);
     ctx->readableSectorTags = NULL;
 
-    free(ctx->ecc_cd_context);
+    aaruf_ecc_cd_free(ctx->ecc_cd_context);
     ctx->ecc_cd_context = NULL;
 
     free(ctx->checksums.spamsum);

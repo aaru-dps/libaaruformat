@@ -92,6 +92,23 @@ AARU_EXPORT void *AARU_CALL aaruf_ecc_cd_init()
 }
 
 /**
+ * @brief Frees a Compact Disc ECC context and its internal tables.
+ *
+ * @param ctx Pointer to the CdEccContext to free.
+ */
+AARU_EXPORT void AARU_CALL aaruf_ecc_cd_free(void *ctx)
+{
+    if(!ctx) return;
+
+    CdEccContext *context = (CdEccContext *)ctx;
+
+    free(context->ecc_f_table);
+    free(context->ecc_b_table);
+    free(context->edc_table);
+    free(context);
+}
+
+/**
  * @brief Checks if the suffix (EDC/ECC) of a CD sector is correct (Mode 1).
  *
  * @param context Pointer to the ECC context.
