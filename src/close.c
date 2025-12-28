@@ -4581,6 +4581,10 @@ AARU_EXPORT int AARU_CALL aaruf_close(void *context)
     free(ctx->sector_cpr_mai);
     free(ctx->sector_edc);
 
+    // Free DDT allocations (v1 and v2)
+    free(ctx->user_data_ddt);   // Legacy v1 DDT
+    free(ctx->user_data_ddt2);  // v2 DDT primary/secondary
+
     // Free LRU caches (uses cache->free_func to free cached values)
     free_cache(&ctx->block_header_cache);
     free_cache(&ctx->block_cache);
