@@ -4536,6 +4536,8 @@ AARU_EXPORT int AARU_CALL aaruf_close(void *context)
     ctx->metadata_block = NULL;
     free(ctx->track_entries);
     ctx->track_entries = NULL;
+    free(ctx->data_tracks);
+    ctx->data_tracks = NULL;
     free(ctx->cicm_block);
     ctx->cicm_block = NULL;
 
