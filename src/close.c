@@ -516,6 +516,10 @@ static int32_t write_single_level_ddt(aaruformat_context *ctx)
     else
         TRACE("Failed to write single-level DDT table data to file");
 
+    // Free compression buffer if it was allocated
+    if(ctx->user_data_ddt_header.compression != None && cmp_buffer != (uint8_t *)ctx->user_data_ddt2)
+        free(cmp_buffer);
+
     return AARUF_STATUS_OK;
 }
 
