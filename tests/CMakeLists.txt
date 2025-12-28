@@ -102,10 +102,42 @@ target_include_directories(tests_run
 # Link libraries
 target_link_libraries(tests_run PRIVATE gtest gtest_main aaruformat)
 
+# Apply address sanitizer flags to tests if enabled
+if(USE_ASAN)
+  if("${CMAKE_C_COMPILER_ID}" MATCHES "MSVC")
+    # MSVC address sanitizer flags for tests
+    target_compile_options(tests_run PRIVATE /fsanitize=address)
+    target_link_options(tests_run PRIVATE /fsanitize=address)
+  else()
+    # GCC/Clang address sanitizer flags for tests
+    target_compile_options(tests_run PRIVATE -fsanitize=address -fno-omit-frame-pointer -g)
+    target_link_options(tests_run PRIVATE -fsanitize=address)
+  endif()
+  message(STATUS "Address sanitizer enabled for tests")
+endif()
+
 # Ensure test data is copied before running tests
 add_dependencies(tests_run copy_test_data)
 
 # Integrate with CTest (per-test reporting)
 enable_testing()
 include(GoogleTest)
-gtest_discover_tests(tests_run)
+
+# Configure test discovery with proper ASAN_OPTIONS
+if(USE_ASAN)
+  # On macOS, leak detection is not supported and causes abort
+  # Set ASAN_OPTIONS for test discovery to avoid this
+  if(APPLE)
+    set(DISCOVERY_ASAN_OPTIONS "print_stats=0")
+  else()
+    set(DISCOVERY_ASAN_OPTIONS "detect_leaks=0:print_stats=0")
+  endif()
+
+  gtest_discover_tests(tests_run
+    DISCOVERY_TIMEOUT 30
+    PROPERTIES ENVIRONMENT "ASAN_OPTIONS=${DISCOVERY_ASAN_OPTIONS}"
+  )
+else()
+  gtest_discover_tests(tests_run)
+endif()
+

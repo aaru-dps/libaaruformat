@@ -58,6 +58,9 @@ project(libaaruformat C)
 # Option to enable slog logging (disabled by default)
 option(USE_SLOG "Enable slog logging" OFF)
 
+# Option to enable address sanitizer (disabled by default)
+option(USE_ASAN "Enable address sanitizer" OFF)
+
 # Set C standard
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -139,6 +142,23 @@ if("${CMAKE_BUILD_TYPE}" MATCHES "Release")
       endif()
     endif()
   endif()
+endif()
+
+# Address sanitizer configuration
+if(USE_ASAN)
+  message(STATUS "Address sanitizer enabled")
+
+  if("${CMAKE_C_COMPILER_ID}" MATCHES "MSVC")
+    # MSVC address sanitizer flags
+    add_compile_options(/fsanitize=address)
+    add_link_options(/fsanitize=address)
+  else()
+    # GCC/Clang address sanitizer flags
+    add_compile_options(-fsanitize=address -fno-omit-frame-pointer -g)
+    add_link_options(-fsanitize=address)
+  endif()
+else()
+  message(STATUS "Address sanitizer disabled (enable with -DUSE_ASAN=ON)")
 endif()
 
 add_library(aaruformat SHARED

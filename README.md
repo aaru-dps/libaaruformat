@@ -43,3 +43,42 @@ Things to be implemented not in the C# version (maybe):
 - Snapshots
 - Parent images
 - Data positioning measurements
+
+## Building and Testing
+
+### Standard Build
+
+```bash
+mkdir build
+cd build
+cmake ..
+cmake --build .
+```
+
+### Running Tests
+
+```bash
+cd build
+ctest --verbose
+```
+
+### Building with Address Sanitizer
+
+For debugging memory issues, you can build with Address Sanitizer enabled:
+
+```bash
+mkdir build-asan
+cd build-asan
+cmake -DUSE_ASAN=ON -DCMAKE_BUILD_TYPE=Debug ..
+cmake --build .
+ctest --verbose
+```
+
+For detailed information on using Address Sanitizer to detect memory issues,
+see [docs/ASAN_USAGE.md](docs/ASAN_USAGE.md).
+
+### Other Build Options
+
+- `-DUSE_SLOG=ON` - Enable slog logging for debugging
+- `-DUSE_ASAN=ON` - Enable Address Sanitizer for memory error detection
+
