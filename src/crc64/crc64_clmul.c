@@ -21,6 +21,7 @@
 
 #include <inttypes.h>
 #include <smmintrin.h>
+#include <string.h>
 #include <wmmintrin.h>
 
 #include "log.h"
@@ -192,7 +193,21 @@ AARU_EXPORT CLMUL uint64_t AARU_CALL aaruf_crc64_clmul(const uint64_t crc, const
         else
         {
             const __m128i end0 = _mm_xor_si128(accumulator, _mm_load_si128(aligned_data));
-            const __m128i end1 = _mm_load_si128(aligned_data + 1);
+
+            // For the second block, safely handle the case where it extends past the actual data
+            // Always use safe copy approach to avoid ASan buffer overflow detection
+            uint8_t temp[16] __attribute__((aligned(16))) = {0};
+            const uint8_t *next_block_addr = (const uint8_t *)(aligned_data + 1);
+
+            // Only copy bytes that are actually within the original buffer
+            if(next_block_addr < end)
+            {
+                size_t available = (size_t)(end - next_block_addr);
+                if(available > 16) available = 16;
+                memcpy(temp, next_block_addr, available);
+            }
+
+            const __m128i end1 = _mm_load_si128((const __m128i *)temp);
 
             __m128i a_reg, b_reg, c_reg, d_reg;
             shiftRight128(end0, lead_out_size, &a_reg, &b_reg);
