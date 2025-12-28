@@ -4579,7 +4579,9 @@ AARU_EXPORT int AARU_CALL aaruf_close(void *context)
     free(ctx->sector_cpr_mai);
     free(ctx->sector_edc);
 
-    // TODO: Free caches
+    // Free LRU caches (uses cache->free_func to free cached values)
+    free_cache(&ctx->block_header_cache);
+    free_cache(&ctx->block_cache);
 
     free(context);
 

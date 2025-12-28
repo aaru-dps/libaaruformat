@@ -577,6 +577,10 @@ AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath, const bool resume_m
     ctx->block_header_cache.cache = NULL;
     ctx->block_cache.cache        = NULL;
 
+    // Set free functions for cached values (both cache malloc'd data)
+    ctx->block_header_cache.free_func = free;
+    ctx->block_cache.free_func        = free;
+
     const uint64_t cache_divisor = (uint64_t)ctx->image_info.SectorSize * (1ULL << ctx->shift);
     if(cache_divisor == 0)
     {

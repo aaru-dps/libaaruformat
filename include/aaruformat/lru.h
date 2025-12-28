@@ -44,13 +44,15 @@ struct CacheEntry
  */
 struct CacheHeader
 {
-    uint64_t max_items;        ///< Hard limit for number of entries (policy: enforce/ignore depends on implementation).
-    struct CacheEntry *cache;  ///< Hash root (uthash). NULL when empty.
+    uint64_t max_items;         ///< Hard limit for number of entries (policy: enforce/ignore depends on implementation).
+    struct CacheEntry *cache;   ///< Hash root (uthash). NULL when empty.
+    void (*free_func)(void *);  ///< Optional callback to free cached values. NULL if values don't need freeing.
 };
 
 void *find_in_cache(struct CacheHeader *cache, const char *key);
 void  add_to_cache(struct CacheHeader *cache, const char *key, void *value);
 void *find_in_cache_uint64(struct CacheHeader *cache, uint64_t key);
 void  add_to_cache_uint64(struct CacheHeader *cache, uint64_t key, void *value);
+void  free_cache(struct CacheHeader *cache);
 
 #endif  // LIBAARUFORMAT_LRU_H

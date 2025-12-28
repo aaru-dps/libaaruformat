@@ -62,6 +62,11 @@ void add_to_cache(struct CacheHeader *cache, const char *key, void *value)
             // prune the first entry (loop is based on insertion order so this deletes the oldest item)
             HASH_DELETE(hh, cache->cache, entry);
             free(entry->key);
+
+            // Free the cached value if a free function is registered
+            if(cache->free_func && entry->value)
+                cache->free_func(entry->value);
+
             free(entry);
             break;
         }
@@ -87,7 +92,13 @@ FORCE_INLINE char *uint64_to_string(const uint64_t number)
  */
 void *find_in_cache_uint64(struct CacheHeader *cache, const uint64_t key)
 {
-    return find_in_cache(cache, uint64_to_string(key));
+    char *char_key = uint64_to_string(key);
+    if(!char_key) return NULL;
+
+    void *result = find_in_cache(cache, char_key);
+    free(char_key);  // Free the temporary string to prevent memory leak
+
+    return result;
 }
 
 /**
@@ -101,5 +112,39 @@ void *find_in_cache_uint64(struct CacheHeader *cache, const uint64_t key)
  */
 void add_to_cache_uint64(struct CacheHeader *cache, const uint64_t key, void *value)
 {
-    return add_to_cache(cache, uint64_to_string(key), value);
+    char *char_key = uint64_to_string(key);
+    if(!char_key) return;
+
+    add_to_cache(cache, char_key, value);
+    free(char_key);  // Free the temporary string (add_to_cache makes its own copy with strdup)
 }
+
+/**
+ * @brief Frees all entries in the cache and clears it.
+ *
+ * Iterates through all cache entries, frees their keys and the entries themselves,
+ * then clears the cache hash table. Uses the cache's free_func if set to free cached values.
+ *
+ * @param cache Pointer to the cache header.
+ */
+void free_cache(struct CacheHeader *cache)
+{
+    struct CacheEntry *entry, *tmp;
+
+    if(!cache || !cache->cache) return;
+
+    HASH_ITER(hh, cache->cache, entry, tmp)
+    {
+        HASH_DELETE(hh, cache->cache, entry);
+        free(entry->key);
+
+        // Free the cached value if a free function is registered
+        if(cache->free_func && entry->value)
+            cache->free_func(entry->value);
+
+        free(entry);
+    }
+
+    cache->cache = NULL;
+}
+
