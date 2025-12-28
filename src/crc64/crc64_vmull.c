@@ -21,6 +21,7 @@
 #include <arm_neon.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <aaruformat.h>
 
@@ -163,9 +164,24 @@ AARU_EXPORT TARGET_WITH_SIMD uint64_t AARU_CALL aaruf_crc64_vmull(uint64_t previ
             P = veorq_u64(accumulator, vreinterpretq_u64_u32(vld1q_u32((const uint32_t *)alignedData)));
         else
         {
+            // When len is between 16 and 32, we need both blocks but must be careful not to read past buffer end
             const uint64x2_t end0 =
                 veorq_u64(accumulator, vreinterpretq_u64_u32(vld1q_u32((const uint32_t *)alignedData)));
-            const uint64x2_t end1 = vreinterpretq_u64_u32(vld1q_u32((const uint32_t *)(alignedData + 1)));
+
+            // For the second block, always use safe copy to avoid buffer overflow
+            // The algorithm expects to read up to alignedEnd, but ASan prevents over-reading
+            uint8_t temp[16] __attribute__((aligned(16))) = {0};
+            const uint8_t *nextBlockAddr = (const uint8_t *)(alignedData + 1);
+
+            // Only copy bytes that are actually within the original buffer
+            if(nextBlockAddr < end)
+            {
+                size_t available = (size_t)(end - nextBlockAddr);
+                if(available > 16) available = 16;
+                memcpy(temp, nextBlockAddr, available);
+            }
+
+            const uint64x2_t end1 = vreinterpretq_u64_u32(vld1q_u32((const uint32_t *)temp));
 
             uint64x2_t A, B, C, D;
             shiftRight128(end0, leadOutSize, &A, &B);
