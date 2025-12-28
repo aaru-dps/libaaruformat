@@ -235,6 +235,7 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
 
                 aaruf_crc64_update(crc64_context, buffer, read_bytes);
                 aaruf_crc64_final(crc64_context, &crc64);
+                aaruf_crc64_free(crc64_context);
 
                 if(crc64 != ddt_header.crc64)
                 {
@@ -281,6 +282,7 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
 
                 aaruf_crc64_update(crc64_context, buffer, read_bytes);
                 aaruf_crc64_final(crc64_context, &crc64);
+                aaruf_crc64_free(crc64_context);
 
                 if(crc64 != ddt_header.crc64)
                 {
@@ -386,6 +388,7 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
 
                 aaruf_crc64_update(crc64_context, buffer, read_bytes);
                 aaruf_crc64_final(crc64_context, &crc64);
+                aaruf_crc64_free(crc64_context);
 
                 if(crc64 != ddt_header.crc64)
                 {
@@ -434,6 +437,7 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
 
                 aaruf_crc64_update(crc64_context, buffer, read_bytes);
                 aaruf_crc64_final(crc64_context, &crc64);
+                aaruf_crc64_free(crc64_context);
 
                 if(crc64 != ddt_header.crc64)
                 {
@@ -876,6 +880,7 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
 
                 aaruf_crc64_update(crc64_context, buffer, read_bytes);
                 aaruf_crc64_final(crc64_context, &crc64);
+                aaruf_crc64_free(crc64_context);
 
                 if(crc64 != ddt_header.crc64)
                 {
@@ -922,6 +927,7 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
 
                 aaruf_crc64_update(crc64_context, buffer, read_bytes);
                 aaruf_crc64_final(crc64_context, &crc64);
+                aaruf_crc64_free(crc64_context);
 
                 if(crc64 != ddt_header.crc64)
                 {
@@ -1232,6 +1238,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cached_secondary_ddt2, (uint32_t)ddt_header.length);
 
             aaruf_crc64_final(crc64_context, &crc64);
+            aaruf_crc64_free(crc64_context);
             ddt_header.crc64 = crc64;
 
             uint8_t *cmp_buffer                              = NULL;
@@ -1408,6 +1415,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
         aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cached_secondary_ddt2, ddt_header.length);
 
         aaruf_crc64_final(crc64_context, &crc64);
+        aaruf_crc64_free(crc64_context);
         ddt_header.crc64 = crc64;
 
         uint8_t *cmp_buffer                              = NULL;
@@ -1598,6 +1606,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
 
         aaruf_crc64_update(crc64_context, buffer, read_bytes);
         aaruf_crc64_final(crc64_context, &crc64);
+        aaruf_crc64_free(crc64_context);
 
         if(crc64 != ddt_header.crc64)
         {
