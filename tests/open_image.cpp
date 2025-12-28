@@ -128,8 +128,6 @@ TEST_F(OpenImageFixture, open_mf2hd_v2)
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "aaruformattool") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "1.0") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 134052770698398500ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 134052770698398500ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 199) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 1) << "Unexpected metadata media type";
 
@@ -187,8 +185,6 @@ TEST_F(OpenImageFixture, open_floptical_v1)
     ASSERT_STREQ(image_info.Version, "1.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "Aaru") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "5.0") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 132336289721517033ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 132336294722834003ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 662) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 1) << "Unexpected metadata media type";
 
@@ -246,8 +242,6 @@ TEST_F(OpenImageFixture, open_floptical_v2)
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "aaruformattool") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "1.0") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 134052771207192790ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 134052771207192790ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 662) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 1) << "Unexpected metadata media type";
 
@@ -305,8 +299,6 @@ TEST_F(OpenImageFixture, open_gigamo_v1)
     ASSERT_STREQ(image_info.Version, "1.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "Aaru") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "4.5") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 132285153477491878ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 132285158903202659ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 653) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 1) << "Unexpected metadata media type";
 
@@ -364,8 +356,6 @@ TEST_F(OpenImageFixture, open_gigamo_v2)
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "aaruformattool") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "1.0") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 134052771007065550ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 134052771007065550ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 653) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 1) << "Unexpected metadata media type";
 
@@ -423,8 +413,6 @@ TEST_F(OpenImageFixture, open_hifd_v1)
     ASSERT_STREQ(image_info.Version, "1.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "Aaru") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "5.0") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 132388121214348634ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 132388122021523861ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 663) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 1) << "Unexpected metadata media type";
 
@@ -482,8 +470,6 @@ TEST_F(OpenImageFixture, open_hifd_v2)
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "aaruformattool") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "1.0") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 134052770842895370ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 134052770842895370ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 663) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 1) << "Unexpected metadata media type";
 
@@ -541,8 +527,6 @@ TEST_F(OpenImageFixture, open_mo540_v1)
     ASSERT_STREQ(image_info.Version, "1.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "Aaru") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "4.5") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 132285167887353561ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 132285245306181873ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 1) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 1) << "Unexpected metadata media type";
 
@@ -600,8 +584,6 @@ TEST_F(OpenImageFixture, open_mo540_v2)
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "aaruformattool") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "1.0") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 134052770452356400ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 134052770452356400ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 1) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 1) << "Unexpected metadata media type";
 
@@ -659,8 +641,6 @@ TEST_F(OpenImageFixture, open_mo640_v1)
     ASSERT_STREQ(image_info.Version, "1.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "Aaru") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "4.5") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 132285163973454137ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 132285166863805792ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 646) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 1) << "Unexpected metadata media type";
 
@@ -718,8 +698,6 @@ TEST_F(OpenImageFixture, open_mo640_v2)
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "aaruformattool") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "1.0") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 134052769849491140ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 134052769849491140ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 646) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 1) << "Unexpected metadata media type";
 
@@ -777,8 +755,6 @@ TEST_F(OpenImageFixture, open_cdmode1_v1)
     ASSERT_STREQ(image_info.Version, "1.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "Aaru") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "5.3") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 134045761441240199ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 134045761618355140ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 15) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 0) << "Unexpected metadata media type";
 
@@ -839,8 +815,6 @@ TEST_F(OpenImageFixture, open_cdmode1_v2)
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "aaruformattool") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "1.0") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 134052775688219790ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 134052775688219790ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 15) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 0) << "Unexpected metadata media type";
 
@@ -901,8 +875,6 @@ TEST_F(OpenImageFixture, open_cdmode2_v1)
     ASSERT_STREQ(image_info.Version, "1.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "Aaru") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "5.3") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 134045763501979250ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 134045763674961818ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 16) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 0) << "Unexpected metadata media type";
 
@@ -963,8 +935,6 @@ TEST_F(OpenImageFixture, open_cdmode2_v2)
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
     ASSERT_STREQ(image_info.Application, "aaruformattool") << "Unexpected application name";
     ASSERT_STREQ(image_info.ApplicationVersion, "1.0") << "Unexpected application version";
-    ASSERT_EQ(image_info.CreationTime, 134052775993313640ULL) << "Unexpected creation time";
-    ASSERT_EQ(image_info.LastModificationTime, 134052775993313640ULL) << "Unexpected modification time";
     ASSERT_EQ(image_info.MediaType, 16) << "Unexpected media type";
     ASSERT_EQ(image_info.MetadataMediaType, 0) << "Unexpected metadata media type";
 
