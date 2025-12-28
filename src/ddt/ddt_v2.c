@@ -890,6 +890,9 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
 
+                // Free old cached DDT before replacing it
+                free(ctx->cached_secondary_ddt2);
+
                 ctx->cached_secondary_ddt2 = (uint64_t *)buffer;
 
                 ctx->cached_ddt_offset = secondary_ddt_offset;
@@ -936,6 +939,9 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
                     TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_INVALID_BLOCK_CRC");
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
+
+                // Free old cached DDT before replacing it
+                free(ctx->cached_secondary_ddt2);
 
                 ctx->cached_secondary_ddt2 = (uint64_t *)buffer;
 
