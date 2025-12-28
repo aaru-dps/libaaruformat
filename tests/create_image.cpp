@@ -60,7 +60,7 @@ TEST_F(CreateImageFixture, create_image_uncompresed_duplicated)
 
     // Create image
     void *context = aaruf_create("test.aif", 1, 512, total_sectors, 0, 0, "deduplicate=false;compress=false",
-                                 reinterpret_cast<const uint8_t *>("gtest"), 10, 0, 0, false);
+                                 reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0, false);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to create test.aif";
@@ -153,7 +153,7 @@ TEST_F(CreateImageFixture, create_image_uncompresed_deduplicated)
 
     // Create image
     void *context = aaruf_create("test.aif", 1, 512, total_sectors, 0, 0, "deduplicate=true;compress=false",
-                                 reinterpret_cast<const uint8_t *>("gtest"), 10, 0, 0, false);
+                                 reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0, false);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to create test.aif";
@@ -246,7 +246,7 @@ TEST_F(CreateImageFixture, create_image_compresed_duplicated)
 
     // Create image
     void *context = aaruf_create("test.aif", 1, 512, total_sectors, 0, 0, "deduplicate=false;compress=true",
-                                 reinterpret_cast<const uint8_t *>("gtest"), 10, 0, 0, false);
+                                 reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0, false);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to create test.aif";
@@ -339,7 +339,7 @@ TEST_F(CreateImageFixture, create_image_compresed_deduplicated)
 
     // Create image
     void *context = aaruf_create("test.aif", 1, 512, total_sectors, 0, 0, "deduplicate=true;compress=true",
-                                 reinterpret_cast<const uint8_t *>("gtest"), 10, 0, 0, false);
+                                 reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0, false);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to create test.aif";
@@ -432,7 +432,7 @@ TEST_F(CreateImageFixture, create_image_resume)
 
     // Create image
     void *context = aaruf_create("test.aif", 1, 512, total_sectors, 0, 0, "deduplicate=true;compress=true",
-                                 reinterpret_cast<const uint8_t *>("gtest"), 10, 0, 0, false);
+                                 reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0, false);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to create test.aif";
@@ -545,7 +545,7 @@ TEST_F(CreateImageFixture, create_image_table_shift_9)
 
     // Create image
     void *context = aaruf_create("test.aif", 1, 512, total_sectors, 0, 0, "table_shift=9",
-                                 reinterpret_cast<const uint8_t *>("gtest"), 10, 0, 0, false);
+                                 reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0, false);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to create test.aif";
@@ -648,7 +648,7 @@ TEST_F(CreateImageFixture, create_audio_image)
 
     // Create image with default options (NULL for options means defaults)
     void *context = aaruf_create("test_audio.aif", 11, 2352, total_size / 2352, 0, 0, NULL,
-                                 reinterpret_cast<const uint8_t *>("gtest"), 10, 0, 0, false);
+                                 reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0, false);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to create test_audio.aif";
@@ -759,7 +759,7 @@ TEST_F(CreateImageFixture, create_image_negative_sectors)
 
     // Create image
     void *context = aaruf_create("test.aif", 1, 512, total_sectors, 300, 0, "deduplicate=true;compress=true",
-                                 reinterpret_cast<const uint8_t *>("gtest"), 10, 0, 0, false);
+                                 reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0, false);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to create test.aif";
@@ -885,7 +885,7 @@ TEST_F(CreateImageFixture, create_subchannel_uncompressed_image)
 
     // Create image with default options (NULL for options means defaults)
     void *context = aaruf_create("test_audio.aif", 11, 2352, total_size / 2352, 0, 0, "compress=false",
-                                 reinterpret_cast<const uint8_t *>("gtest"), 10, 0, 0, false);
+                                 reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0, false);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to create test_audio.aif";
@@ -1048,7 +1048,7 @@ TEST_F(CreateImageFixture, create_subchannel_compressed_image)
 
     // Create image with default options (NULL for options means defaults)
     void *context = aaruf_create("test_audio.aif", 11, 2352, total_size / 2352, 0, 0, "compress=true",
-                                 reinterpret_cast<const uint8_t *>("gtest"), 10, 0, 0, false);
+                                 reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0, false);
 
     // Verify that the file was successfully opened
     ASSERT_NE(context, nullptr) << "Failed to create test_audio.aif";
