@@ -137,6 +137,9 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
         ddt_header.crc64 = crc64;
     }
 
+    // Free CRC64 context
+    aaruf_crc64_free(crc64_context);
+
     uint8_t *buffer                                  = NULL;
     uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
 
@@ -312,6 +315,9 @@ static int32_t write_primary_ddt(aaruformat_context *ctx)
 
         TRACE("Calculated CRC64 for primary DDT: 0x%16lX", crc64);
     }
+
+    // Free CRC64 context
+    aaruf_crc64_free(crc64_context);
 
     // First write the DDT header
     fseek(ctx->imageStream, ctx->primary_ddt_offset, SEEK_SET);
@@ -4227,6 +4233,9 @@ static int32_t write_index_block(aaruformat_context *ctx)
     }
     else
         index_header.crc64 = 0;
+
+    // Free CRC64 context
+    aaruf_crc64_free(index_crc64_context);
 
     // Write index header
     if(fwrite(&index_header, sizeof(IndexHeader3), 1, ctx->imageStream) == 1)
