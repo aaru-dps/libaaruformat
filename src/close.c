@@ -4564,6 +4564,7 @@ AARU_EXPORT int AARU_CALL aaruf_close(void *context)
             free(ctx->dump_hardware_entries_with_data[i].softwareOperatingSystem);
             ctx->dump_hardware_entries_with_data[i].softwareOperatingSystem = NULL;
         }
+        free(ctx->dump_hardware_entries_with_data);  // Free the array itself
         ctx->dump_hardware_entries_with_data = NULL;
     }
 
