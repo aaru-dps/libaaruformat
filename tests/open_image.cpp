@@ -778,6 +778,7 @@ TEST_F(OpenImageFixture, open_cdmode1_v1)
 
     aaruf_crc64_final(ctx, &crc);
     aaruf_crc64_free(ctx);
+    aaruf_ecc_cd_free(ecc_context);  // Free ECC context
 
     ASSERT_EQ(crc, 0xAE1014831CD81711) << "Unexpected CRC64 for image data";
 
@@ -838,6 +839,7 @@ TEST_F(OpenImageFixture, open_cdmode1_v2)
 
     aaruf_crc64_final(ctx, &crc);
     aaruf_crc64_free(ctx);
+    aaruf_ecc_cd_free(ecc_context);  // Free ECC context
 
     ASSERT_EQ(crc, 0xAE1014831CD81711) << "Unexpected CRC64 for image data";
 
@@ -898,6 +900,7 @@ TEST_F(OpenImageFixture, open_cdmode2_v1)
 
     aaruf_crc64_final(ctx, &crc);
     aaruf_crc64_free(ctx);
+    aaruf_ecc_cd_free(ecc_context);  // Free ECC context
 
     ASSERT_EQ(crc, 0x5FD9D5979AD99BAB) << "Unexpected CRC64 for image data";
 
@@ -958,6 +961,7 @@ TEST_F(OpenImageFixture, open_cdmode2_v2)
 
     aaruf_crc64_final(ctx, &crc);
     aaruf_crc64_free(ctx);
+    aaruf_ecc_cd_free(ecc_context);  // Free ECC context
 
     ASSERT_EQ(crc, 0x5FD9D5979AD99BAB) << "Unexpected CRC64 for image data";
 
