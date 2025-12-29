@@ -3420,7 +3420,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_user_sectors(const void *context, uint64
  *          (e.g., CSS on DVDs, AACS on Blu-rays). Handle this data according to
  *          applicable laws and licensing agreements.
  */
-AARU_EXPORT int32_t AARU_CALL aaruf_get_negative_sectors(const void *context, uint16_t *sectors)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_negative_sectors(const void *context, uint32_t *sectors)
 {
     TRACE("Entering aaruf_get_negative_sectors(%p, %p)", context, sectors);
 
@@ -3555,7 +3555,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_negative_sectors(const void *context, ui
  *          of overflow sectors in an image indicates the imaging drive was capable of
  *          reading these extended areas, but other drives may not be able to access them.
  */
-AARU_EXPORT int32_t AARU_CALL aaruf_get_overflow_sectors(const void *context, uint16_t *sectors)
+AARU_EXPORT int32_t AARU_CALL aaruf_get_overflow_sectors(const void *context, uint32_t *sectors)
 {
     TRACE("Entering aaruf_get_overflow_sectors(%p, %p)", context, sectors);
 

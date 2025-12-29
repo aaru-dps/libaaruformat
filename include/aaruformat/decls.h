@@ -181,8 +181,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_cicm_metadata(const void *context, uint8
 AARU_EXPORT int32_t AARU_CALL aaruf_get_aaru_json_metadata(const void *context, uint8_t *buffer, size_t *length);
 AARU_EXPORT int32_t AARU_CALL aaruf_set_aaru_json_metadata(void *context, uint8_t *data, size_t length);
 AARU_EXPORT int32_t AARU_CALL aaruf_get_user_sectors(const void *context, uint64_t *sectors);
-AARU_EXPORT int32_t AARU_CALL aaruf_get_negative_sectors(const void *context, uint16_t *sectors);
-AARU_EXPORT int32_t AARU_CALL aaruf_get_overflow_sectors(const void *context, uint16_t *sectors);
+AARU_EXPORT int32_t AARU_CALL aaruf_get_negative_sectors(const void *context, uint32_t *sectors);
+AARU_EXPORT int32_t AARU_CALL aaruf_get_overflow_sectors(const void *context, uint32_t *sectors);
 AARU_EXPORT int32_t AARU_CALL aaruf_get_image_info(const void *context, ImageInfo *image_info);
 AARU_EXPORT int32_t AARU_CALL aaruf_clear_media_sequence(void *context);
 AARU_EXPORT int32_t AARU_CALL aaruf_clear_creator(void *context);
