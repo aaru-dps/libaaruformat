@@ -467,6 +467,9 @@ AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath, const bool resume_m
         switch(entry->blockType)
         {
             case DataBlock:
+                if(entry->dataType == UserData && ctx->header.biggestSectorSize > 0)
+                    break;
+
                 error_no = process_data_block(ctx, entry);
 
                 if(error_no != AARUF_STATUS_OK)
