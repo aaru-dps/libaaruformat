@@ -101,7 +101,7 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
     // Even if those two checks shall have been done before
 
     // NOP block, skip
-    if(entry->dataType == NoData)
+    if(entry->dataType == NoData || (entry->dataType == UserData && ctx->header.biggestSectorSize > 0))
     {
         TRACE("NoData block found, skipping");
         TRACE("Exiting process_data_block() = AARUF_STATUS_OK");

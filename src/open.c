@@ -101,9 +101,9 @@ static void cleanup_open_failure(aaruformat_context *ctx)
  *                           File is opened read/write for additional operations.
  *                           Requires existing valid image structure.
  *                           IMPORTANT: Only AaruFormat version 2.x or later images can be opened in resume mode.
- *                                      Version 1.x images cannot be resumed and will fail with AARUF_ERROR_INCOMPATIBLE_VERSION.
- *                           Write operations are handled as if resuming an incomplete creation.
- *                           Options string is parsed for write configuration.
+ *                                      Version 1.x images cannot be resumed and will fail with
+ * AARUF_ERROR_INCOMPATIBLE_VERSION. Write operations are handled as if resuming an incomplete creation. Options string
+ * is parsed for write configuration.
  *
  * @param options String with opening/resume options in key=value format, semicolon-separated.
  *                Used primarily in resume mode to configure checksum and compression parameters.
@@ -561,6 +561,12 @@ AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath, const bool resume_m
         return NULL;
     }
 
+    if(ctx->header.biggestSectorSize != 0)
+    {
+        TRACE("Setting sector size to %u bytes", ctx->header.biggestSectorSize);
+        ctx->image_info.SectorSize = ctx->header.biggestSectorSize;
+    }
+
     ctx->image_info.CreationTime         = ctx->header.creationTime;
     ctx->image_info.LastModificationTime = ctx->header.lastWrittenTime;
     ctx->image_info.MetadataMediaType    = aaruf_get_xml_mediatype(ctx->header.mediaType);
@@ -611,8 +617,8 @@ AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath, const bool resume_m
 
     // Parse the options
     TRACE("Parsing options");
-    bool table_shift_found = false;
-    const aaru_options parsed_options = parse_options(options, &table_shift_found);
+    bool               table_shift_found = false;
+    const aaru_options parsed_options    = parse_options(options, &table_shift_found);
 
     ctx->header.lastWrittenTime          = get_filetime_uint64();
     ctx->image_info.LastModificationTime = ctx->header.lastWrittenTime;
