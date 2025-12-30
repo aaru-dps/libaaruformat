@@ -147,6 +147,14 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
         return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
     }
 
+    if(length > USHRT_MAX)
+    {
+        FATAL("Sector length too large");
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_INVALID_SECTOR_LENGTH");
+        return AARUF_ERROR_INVALID_SECTOR_LENGTH;
+    }
+
     if(length > ctx->header.biggestSectorSize) ctx->header.biggestSectorSize = (uint16_t)length;
 
     if(!ctx->rewinded)

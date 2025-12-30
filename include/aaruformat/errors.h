@@ -67,6 +67,7 @@
 #define AARUF_ERROR_TAPE_FILE_NOT_FOUND       (-28)  ///< Requested tape file number not present in image.
 #define AARUF_ERROR_TAPE_PARTITION_NOT_FOUND  (-29)  ///< Requested tape partition not present in image.
 #define AARUF_ERROR_METADATA_NOT_PRESENT      (-30)  ///< Requested metadata not present in image.
+#define AARUF_ERROR_INVALID_SECTOR_LENGTH     (-31)  ///< Sector length is too big.
 /** @} */
 
 /** \name Non-fatal sector status codes (non-negative)
