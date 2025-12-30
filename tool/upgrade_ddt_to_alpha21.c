@@ -106,8 +106,7 @@ int upgrade_ddt_to_alpha21(const char *path)
     printf("  Index offset: %llu bytes\n", (unsigned long long)header.indexOffset);
     printf("  Media type: %u (%s)\n", header.mediaType, media_type_to_string(header.mediaType));
     printf("  Block alignment shift: %u\n", header.blockAlignmentShift);
-    printf("  Data shift: %u\n", header.dataShift);
-    printf("  Table shift: %u\n", header.tableShift);
+    printf("  Biggest sector size: %u bytes\n", header.biggestSectorSize);
 
     // Display important warnings
     printf("\n");

@@ -117,8 +117,7 @@ typedef struct AaruHeaderV2
     int64_t  lastWrittenTime;  ///< Last modification FILETIME (100 ns since 1601-01-01 UTC).
     uint8_t  guid[GUID_SIZE];  ///< 128-bit image GUID (binary, not text); stable across children.
     uint8_t  blockAlignmentShift;  ///< log2 block alignment (block size alignment = 2^blockAlignmentShift bytes).
-    uint8_t  dataShift;            ///< log2 sectors/items per block-index increment in DDT entries (2^dataShift).
-    uint8_t  tableShift;           ///< log2 sectors spanned by each primary DDT entry (0 = single-level).
+    uint16_t biggestSectorSize;    ///< size of biggest sector in the image (in bytes).
     uint64_t featureCompatible;    ///< Feature bits: unimplemented bits are ignorable (still R/W safe).
     uint64_t featureCompatibleRo;  ///< Feature bits: unimplemented -> degrade to read-only access.
     uint64_t featureIncompatible;  ///< Feature bits: any unimplemented -> abort (cannot open safely).

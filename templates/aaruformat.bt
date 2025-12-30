@@ -784,8 +784,7 @@ typedef struct
     {
         GUID               guid;
         byte               blockAlignmentShift;
-        byte               dataShift;
-        byte               tableShift;
+        uint16             biggestSectorSize;
         FeaturesCompatible featureCompatible;
         uint64             featureCompatibleRo;
         uint64             featureIncompatible;

@@ -16,6 +16,7 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 #include <errno.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -145,6 +146,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
         TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
         return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
     }
+
+    if(length > ctx->header.biggestSectorSize) ctx->header.biggestSectorSize = (uint16_t)length;
 
     if(!ctx->rewinded)
     {

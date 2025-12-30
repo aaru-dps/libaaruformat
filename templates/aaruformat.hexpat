@@ -811,8 +811,7 @@ struct AaruHeader
     {
         type::GUID  guid;
         u8          blockAlignmentShift;
-        u8          dataShift;
-        u8          tableShift;
+        u16         biggestSectorSize;
         u64         featureCompatible;
         u64         featureCompatibleRo;
         u64         featureIncompatible;
