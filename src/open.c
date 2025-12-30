@@ -611,7 +611,8 @@ AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath, const bool resume_m
 
     // Parse the options
     TRACE("Parsing options");
-    const aaru_options parsed_options = parse_options(options);
+    bool table_shift_found = false;
+    const aaru_options parsed_options = parse_options(options, &table_shift_found);
 
     ctx->header.lastWrittenTime          = get_filetime_uint64();
     ctx->image_info.LastModificationTime = ctx->header.lastWrittenTime;
