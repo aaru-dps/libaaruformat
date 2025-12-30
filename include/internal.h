@@ -55,7 +55,7 @@ bool    set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address,
                                uint64_t block_offset, uint8_t sector_status, uint64_t *ddt_entry);
 bool    set_ddt_tape(aaruformat_context *ctx, uint64_t sector_address, uint64_t offset, uint64_t block_offset,
                      uint8_t sector_status, uint64_t *ddt_entry);
-aaru_options parse_options(const char *options);
+aaru_options parse_options(const char *options, bool *table_shift_found);
 uint64_t     get_filetime_uint64();
 int32_t      aaruf_close_current_block(aaruformat_context *ctx);
 int          compare_extents(const void *a, const void *b);

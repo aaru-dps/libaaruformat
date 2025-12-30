@@ -35,7 +35,7 @@
  * @param options String with options to parse (may be NULL).
  * @return Parsed options as an aaru_options struct.
  */
-aaru_options parse_options(const char *options)
+aaru_options parse_options(const char *options, bool *table_shift_found)
 {
     const char *options_str = options != NULL ? options : "(null)";
     TRACE("Entering parse_options(%s)", options_str);
@@ -97,7 +97,7 @@ aaru_options parse_options(const char *options)
                     if(parsed_value < INT8_MIN) parsed_value = INT8_MIN;
                     if(parsed_value > INT8_MAX) parsed_value = INT8_MAX;
                     parsed.table_shift = (int8_t)parsed_value;
-                    if(parsed.table_shift == 0) parsed.table_shift = 9;
+                    *table_shift_found = true;
                 }
             }
             else if(strncmp(key, "data_shift", 10) == 0)
