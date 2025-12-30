@@ -290,8 +290,8 @@ AARU_EXPORT void AARU_CALL *aaruf_create(const char *filepath, const uint32_t me
 
     // Parse the options
     TRACE("Parsing options");
-    bool table_shift_found = false;
-    const aaru_options parsed_options = parse_options(options, &table_shift_found);
+    bool               table_shift_found = false;
+    const aaru_options parsed_options    = parse_options(options, &table_shift_found);
 
     // Allocate context
     TRACE("Allocating memory for context");
@@ -484,6 +484,7 @@ AARU_EXPORT void AARU_CALL *aaruf_create(const char *filepath, const uint32_t me
     {
         // Fill needed values
         ctx->user_data_ddt_header.blockAlignmentShift = parsed_options.block_alignment;
+        ctx->header.blockAlignmentShift               = parsed_options.block_alignment;
         ctx->user_data_ddt_header.dataShift           = parsed_options.data_shift;
 
         // Calculate aligned next block position
