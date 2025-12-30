@@ -787,7 +787,9 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
             return AARUF_ERROR_CANNOT_READ_BLOCK;
         }
 
-        if(ddt_header.identifier != DeDuplicationTableSecondary || ddt_header.type != UserData)
+        if((ddt_header.identifier != DeDuplicationTableSecondary &&
+            ddt_header.identifier != DeDuplicationTableSAlpha) ||
+           ddt_header.type != UserData)
         {
             FATAL("Invalid block header at %" PRIu64 "", secondary_ddt_offset);
             TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
@@ -1504,7 +1506,8 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             for(unsigned int i = 0; i < utarray_len(ctx->index_entries); i++)
             {
                 entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, i);
-                if(entry && entry->offset == ctx->cached_ddt_offset && entry->blockType == DeDuplicationTableSecondary)
+                if(entry && entry->offset == ctx->cached_ddt_offset &&
+                   (entry->blockType == DeDuplicationTableSecondary || entry->blockType == DeDuplicationTableSAlpha))
                 {
                     TRACE("Found old DDT index entry at position %u, removing", i);
                     utarray_erase(ctx->index_entries, i, 1);

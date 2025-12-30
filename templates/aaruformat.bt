@@ -588,7 +588,7 @@ enum <uint> MediaType
     ODC1500R = 784,
     ODC3300R = 785,
     ODC5500R = 786,
-    
+
     ECMA_322_1k   = 800,
     ECMA_322_512  = 801,
     ISO_14517     = 802,
@@ -709,7 +709,7 @@ enum <uint> BlockType
     DataBlock                    = 0x4B4C4244,
     DeDuplicationTable           = 0X2A544444,
     DeDuplicationTable2          = 0x32544444,
-    DeDuplicationTableSecondary  = 0x53545444, 
+    DeDuplicationTableSecondary  = 0x53544444,
     IndexBlock                   = 0X58444E49,
     IndexBlock2                  = 0x32584449,
     IndexBlock3                  = 0x33584449,
@@ -761,18 +761,18 @@ typedef struct
 
     byte                   imageMajorVersion;
     byte                   imageMinorVersion;
-    
+
     // Go back to application name
     FSeek(0x08);
-    
+
     if(imageMajorVersion >= 2)
         char               application[64];
     else
         wchar_t            application[32];
-        
+
     // Move to after image version
     FSeek(0x4A);
-    
+
     byte                   applicationMajorVersion;
     byte                   applicationMinorVersion;
     MediaType              mediaType;

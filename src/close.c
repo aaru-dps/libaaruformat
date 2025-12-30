@@ -212,7 +212,8 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
                 {
                     entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
                     if(entry && entry->offset == ctx->cached_ddt_offset &&
-                       entry->blockType == DeDuplicationTableSecondary)
+                       (entry->blockType == DeDuplicationTableSecondary ||
+                        entry->blockType == DeDuplicationTableSAlpha))
                     {
                         TRACE("Found old DDT index entry at position %u, removing", k);
                         utarray_erase(ctx->index_entries, k, 1);
@@ -517,8 +518,7 @@ static int32_t write_single_level_ddt(aaruformat_context *ctx)
         TRACE("Failed to write single-level DDT table data to file");
 
     // Free compression buffer if it was allocated
-    if(ctx->user_data_ddt_header.compression != None && cmp_buffer != (uint8_t *)ctx->user_data_ddt2)
-        free(cmp_buffer);
+    if(ctx->user_data_ddt_header.compression != None && cmp_buffer != (uint8_t *)ctx->user_data_ddt2) free(cmp_buffer);
 
     return AARUF_STATUS_OK;
 }
@@ -4596,8 +4596,8 @@ AARU_EXPORT int AARU_CALL aaruf_close(void *context)
     free(ctx->sector_edc);
 
     // Free DDT allocations (v1 and v2)
-    free(ctx->user_data_ddt);   // Legacy v1 DDT
-    free(ctx->user_data_ddt2);  // v2 DDT primary/secondary
+    free(ctx->user_data_ddt);          // Legacy v1 DDT
+    free(ctx->user_data_ddt2);         // v2 DDT primary/secondary
     free(ctx->cached_secondary_ddt2);  // Cached secondary DDT (read operations)
 
     // Free LRU caches (uses cache->free_func to free cached values)
