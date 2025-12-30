@@ -22,8 +22,10 @@
 
 #include "hash_map.h"
 
-#define INITIAL_SIZE 1024
-#define LOAD_FACTOR  0.75
+#define INITIAL_SIZE        1024
+#define LOAD_FACTOR         0.75
+#define LARGE_MAP_THRESHOLD (2ULL * 1024 * 1024 * 1024 / sizeof(kv_pair_t))  // ~2GB worth of entries
+#define LARGE_GROWTH_FACTOR 1.25                                             // 25% growth for large maps
 
 /**
  * @brief Creates a new hash map with the specified initial size.
@@ -80,6 +82,32 @@ void free_map(hash_map_t *map)
 }
 
 /**
+ * @brief Calculates the new size for hash map resizing.
+ *
+ * This function implements intelligent size calculation based on the current map size.
+ * For small to medium maps (below ~2GB), it doubles the size for fast growth.
+ * For large maps (at or above ~2GB), it uses a smaller growth factor (25%) to avoid
+ * excessive memory allocation.
+ *
+ * @param current_size The current size of the hash table.
+ *
+ * @return The calculated new size for the hash table.
+ *
+ * @note For maps below LARGE_MAP_THRESHOLD, size doubles (2x growth).
+ * @note For maps at or above LARGE_MAP_THRESHOLD, size grows by 25% (1.25x growth).
+ * @note This is a static (internal) function and should not be called directly.
+ *
+ * @see resize_map()
+ * @see insert_map()
+ */
+static size_t calculate_new_size(size_t current_size)
+{
+    if(current_size < LARGE_MAP_THRESHOLD) return current_size * 2;
+
+    return (size_t)((double)current_size * LARGE_GROWTH_FACTOR);
+}
+
+/**
  * @brief Resizes the hash map to a new size and rehashes all entries.
  *
  * This is an internal function that creates a new hash table with the specified size,
@@ -100,6 +128,7 @@ void free_map(hash_map_t *map)
  * @warning If memory allocation for the new table fails, the program may terminate.
  *
  * @see insert_map()
+ * @see calculate_new_size()
  */
 static void resize_map(hash_map_t *map, size_t new_size)
 {
@@ -155,7 +184,7 @@ static void resize_map(hash_map_t *map, size_t new_size)
  */
 bool insert_map(hash_map_t *map, uint64_t key, uint64_t value)
 {
-    if((double)map->count / map->size > LOAD_FACTOR) resize_map(map, map->size * 2);
+    if((double)map->count / map->size > LOAD_FACTOR) resize_map(map, calculate_new_size(map->size));
 
     size_t idx = key % map->size;
 
