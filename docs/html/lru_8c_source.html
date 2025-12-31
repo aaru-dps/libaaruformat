@@ -141,42 +141,82 @@ $(function(){initNavTree('lru_8c_source.html','',''); });
 <div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>            <span class="comment">// prune the first entry (loop is based on insertion order so this deletes the oldest item)</span></div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>            HASH_DELETE(<a class="code hl_variable" href="structCacheEntry.html#ae7e5f03fa52b88d99e27e2433623b4f5">hh</a>, cache-&gt;<a class="code hl_variable" href="structCacheHeader.html#a44229bb929d8949f3c2700d07123d224">cache</a>, entry);</div>
 <div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>            free(entry-&gt;<a class="code hl_variable" href="structCacheEntry.html#aeb007cfa604b485f120ec1f7526c95f4">key</a>);</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>            free(entry);</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>            <span class="keywordflow">break</span>;</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>        }</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    }</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>}</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span> </div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>            <span class="comment">// Free the cached value if a free function is registered</span></div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>            <span class="keywordflow">if</span>(cache-&gt;<a class="code hl_variable" href="structCacheHeader.html#afeac54c794f8fece845e49954fd89f1a">free_func</a> &amp;&amp; entry-&gt;<a class="code hl_variable" href="structCacheEntry.html#a7d6d1ed0aab03cffbb34aff16f6f3d56">value</a>)</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>                cache-&gt;<a class="code hl_variable" href="structCacheHeader.html#afeac54c794f8fece845e49954fd89f1a">free_func</a>(entry-&gt;<a class="code hl_variable" href="structCacheEntry.html#a7d6d1ed0aab03cffbb34aff16f6f3d56">value</a>);</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span> </div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>            free(entry);</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>            <span class="keywordflow">break</span>;</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>        }</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    }</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>}</div>
 </div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
-<div class="foldopen" id="foldopen00071" data-start="{" data-end="}">
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno"><a class="line" href="lru_8c.html#a8c8313d05785802938c6d8a2a7fa3e09">   71</a></span><a class="code hl_define" href="decls_8h.html#ac032d233a8ebfcd82fd49d0824eefb18">FORCE_INLINE</a> <span class="keywordtype">char</span> *uint64_to_string(<span class="keyword">const</span> uint64_t number)</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>{</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    <span class="keywordtype">char</span> *char_key = malloc(17);  <span class="comment">// 16 hex digits + null terminator</span></div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    <span class="keywordflow">if</span>(!char_key) <span class="keywordflow">return</span> NULL;</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    snprintf(char_key, 17, <span class="stringliteral">&quot;%016&quot;</span> PRIX64, number);</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    <span class="keywordflow">return</span> char_key;</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>}</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
+<div class="foldopen" id="foldopen00076" data-start="{" data-end="}">
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno"><a class="line" href="lru_8c.html#a8c8313d05785802938c6d8a2a7fa3e09">   76</a></span><a class="code hl_define" href="decls_8h.html#ac032d233a8ebfcd82fd49d0824eefb18">FORCE_INLINE</a> <span class="keywordtype">char</span> *uint64_to_string(<span class="keyword">const</span> uint64_t number)</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>{</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    <span class="keywordtype">char</span> *char_key = malloc(17);  <span class="comment">// 16 hex digits + null terminator</span></div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    <span class="keywordflow">if</span>(!char_key) <span class="keywordflow">return</span> NULL;</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    snprintf(char_key, 17, <span class="stringliteral">&quot;%016&quot;</span> PRIX64, number);</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    <span class="keywordflow">return</span> char_key;</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>}</div>
 </div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span></div>
-<div class="foldopen" id="foldopen00088" data-start="{" data-end="}">
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno"><a class="line" href="lru_8h.html#a8cb7ac8e057627210732ee61d2966e35">   88</a></span><span class="keywordtype">void</span> *<a class="code hl_function" href="lru_8c.html#af628823e6826f0d0e0aa52f96fc74f02">find_in_cache_uint64</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structCacheHeader.html">CacheHeader</a> *cache, <span class="keyword">const</span> uint64_t <a class="code hl_variable" href="structCacheEntry.html#aeb007cfa604b485f120ec1f7526c95f4">key</a>)</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>{</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="lru_8c.html#ac7008173fc7e392fa825c69410920f0a">find_in_cache</a>(cache, uint64_to_string(<a class="code hl_variable" href="structCacheEntry.html#aeb007cfa604b485f120ec1f7526c95f4">key</a>));</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>}</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span></div>
+<div class="foldopen" id="foldopen00093" data-start="{" data-end="}">
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno"><a class="line" href="lru_8h.html#a8cb7ac8e057627210732ee61d2966e35">   93</a></span><span class="keywordtype">void</span> *<a class="code hl_function" href="lru_8c.html#af628823e6826f0d0e0aa52f96fc74f02">find_in_cache_uint64</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structCacheHeader.html">CacheHeader</a> *cache, <span class="keyword">const</span> uint64_t <a class="code hl_variable" href="structCacheEntry.html#aeb007cfa604b485f120ec1f7526c95f4">key</a>)</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>{</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    <span class="keywordtype">char</span> *char_key = uint64_to_string(<a class="code hl_variable" href="structCacheEntry.html#aeb007cfa604b485f120ec1f7526c95f4">key</a>);</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    <span class="keywordflow">if</span>(!char_key) <span class="keywordflow">return</span> NULL;</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>    <span class="keywordtype">void</span> *result = <a class="code hl_function" href="lru_8c.html#ac7008173fc7e392fa825c69410920f0a">find_in_cache</a>(cache, char_key);</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    free(char_key);  <span class="comment">// Free the temporary string to prevent memory leak</span></div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span> </div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    <span class="keywordflow">return</span> result;</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>}</div>
 </div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span></div>
-<div class="foldopen" id="foldopen00102" data-start="{" data-end="}">
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno"><a class="line" href="lru_8h.html#a0735969939ca80db3fe439ed92b787bb">  102</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="lru_8c.html#a06d1782c0ae7cb53efa1b5e0f63c5ccb">add_to_cache_uint64</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structCacheHeader.html">CacheHeader</a> *cache, <span class="keyword">const</span> uint64_t <a class="code hl_variable" href="structCacheEntry.html#aeb007cfa604b485f120ec1f7526c95f4">key</a>, <span class="keywordtype">void</span> *<a class="code hl_variable" href="structCacheEntry.html#a7d6d1ed0aab03cffbb34aff16f6f3d56">value</a>)</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>{</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="lru_8c.html#a962bb6b97fb208cbd8a5932afb60e680">add_to_cache</a>(cache, uint64_to_string(<a class="code hl_variable" href="structCacheEntry.html#aeb007cfa604b485f120ec1f7526c95f4">key</a>), <a class="code hl_variable" href="structCacheEntry.html#a7d6d1ed0aab03cffbb34aff16f6f3d56">value</a>);</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>}</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span></div>
+<div class="foldopen" id="foldopen00113" data-start="{" data-end="}">
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno"><a class="line" href="lru_8h.html#a0735969939ca80db3fe439ed92b787bb">  113</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="lru_8c.html#a06d1782c0ae7cb53efa1b5e0f63c5ccb">add_to_cache_uint64</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structCacheHeader.html">CacheHeader</a> *cache, <span class="keyword">const</span> uint64_t <a class="code hl_variable" href="structCacheEntry.html#aeb007cfa604b485f120ec1f7526c95f4">key</a>, <span class="keywordtype">void</span> *<a class="code hl_variable" href="structCacheEntry.html#a7d6d1ed0aab03cffbb34aff16f6f3d56">value</a>)</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>{</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    <span class="keywordtype">char</span> *char_key = uint64_to_string(<a class="code hl_variable" href="structCacheEntry.html#aeb007cfa604b485f120ec1f7526c95f4">key</a>);</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    <span class="keywordflow">if</span>(!char_key) <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span> </div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    <a class="code hl_function" href="lru_8c.html#a962bb6b97fb208cbd8a5932afb60e680">add_to_cache</a>(cache, char_key, <a class="code hl_variable" href="structCacheEntry.html#a7d6d1ed0aab03cffbb34aff16f6f3d56">value</a>);</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>    free(char_key);  <span class="comment">// Free the temporary string (add_to_cache makes its own copy with strdup)</span></div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>}</div>
 </div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span></div>
+<div class="foldopen" id="foldopen00130" data-start="{" data-end="}">
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno"><a class="line" href="lru_8h.html#a92e298695411672c3497ae5c8d9c0427">  130</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="lru_8c.html#a92e298695411672c3497ae5c8d9c0427">free_cache</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structCacheHeader.html">CacheHeader</a> *cache)</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>{</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structCacheEntry.html">CacheEntry</a> *entry, *tmp;</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span> </div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>    <span class="keywordflow">if</span>(!cache || !cache-&gt;<a class="code hl_variable" href="structCacheHeader.html#a44229bb929d8949f3c2700d07123d224">cache</a>) <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span> </div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>    HASH_ITER(<a class="code hl_variable" href="structCacheEntry.html#ae7e5f03fa52b88d99e27e2433623b4f5">hh</a>, cache-&gt;<a class="code hl_variable" href="structCacheHeader.html#a44229bb929d8949f3c2700d07123d224">cache</a>, entry, tmp)</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>    {</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>        HASH_DELETE(<a class="code hl_variable" href="structCacheEntry.html#ae7e5f03fa52b88d99e27e2433623b4f5">hh</a>, cache-&gt;<a class="code hl_variable" href="structCacheHeader.html#a44229bb929d8949f3c2700d07123d224">cache</a>, entry);</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>        free(entry-&gt;<a class="code hl_variable" href="structCacheEntry.html#aeb007cfa604b485f120ec1f7526c95f4">key</a>);</div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span> </div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>        <span class="comment">// Free the cached value if a free function is registered</span></div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>        <span class="keywordflow">if</span>(cache-&gt;<a class="code hl_variable" href="structCacheHeader.html#afeac54c794f8fece845e49954fd89f1a">free_func</a> &amp;&amp; entry-&gt;<a class="code hl_variable" href="structCacheEntry.html#a7d6d1ed0aab03cffbb34aff16f6f3d56">value</a>)</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>            cache-&gt;<a class="code hl_variable" href="structCacheHeader.html#afeac54c794f8fece845e49954fd89f1a">free_func</a>(entry-&gt;<a class="code hl_variable" href="structCacheEntry.html#a7d6d1ed0aab03cffbb34aff16f6f3d56">value</a>);</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span> </div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>        free(entry);</div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>    }</div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span> </div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>    cache-&gt;<a class="code hl_variable" href="structCacheHeader.html#a44229bb929d8949f3c2700d07123d224">cache</a> = NULL;</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>}</div>
+</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span> </div>
 <div class="ttc" id="aaaruformat_8h_html"><div class="ttname"><a href="aaruformat_8h.html">aaruformat.h</a></div></div>
 <div class="ttc" id="adecls_8h_html_ac032d233a8ebfcd82fd49d0824eefb18"><div class="ttname"><a href="decls_8h.html#ac032d233a8ebfcd82fd49d0824eefb18">FORCE_INLINE</a></div><div class="ttdeci">#define FORCE_INLINE</div><div class="ttdef"><b>Definition</b> <a href="decls_8h_source.html#l00063">decls.h:63</a></div></div>
-<div class="ttc" id="alru_8c_html_a06d1782c0ae7cb53efa1b5e0f63c5ccb"><div class="ttname"><a href="lru_8c.html#a06d1782c0ae7cb53efa1b5e0f63c5ccb">add_to_cache_uint64</a></div><div class="ttdeci">void add_to_cache_uint64(struct CacheHeader *cache, const uint64_t key, void *value)</div><div class="ttdoc">Adds a value to the cache with a uint64_t key, using string conversion.</div><div class="ttdef"><b>Definition</b> <a href="#l00102">lru.c:102</a></div></div>
+<div class="ttc" id="alru_8c_html_a06d1782c0ae7cb53efa1b5e0f63c5ccb"><div class="ttname"><a href="lru_8c.html#a06d1782c0ae7cb53efa1b5e0f63c5ccb">add_to_cache_uint64</a></div><div class="ttdeci">void add_to_cache_uint64(struct CacheHeader *cache, const uint64_t key, void *value)</div><div class="ttdoc">Adds a value to the cache with a uint64_t key, using string conversion.</div><div class="ttdef"><b>Definition</b> <a href="#l00113">lru.c:113</a></div></div>
+<div class="ttc" id="alru_8c_html_a92e298695411672c3497ae5c8d9c0427"><div class="ttname"><a href="lru_8c.html#a92e298695411672c3497ae5c8d9c0427">free_cache</a></div><div class="ttdeci">void free_cache(struct CacheHeader *cache)</div><div class="ttdoc">Frees all entries in the cache and clears it.</div><div class="ttdef"><b>Definition</b> <a href="#l00130">lru.c:130</a></div></div>
 <div class="ttc" id="alru_8c_html_a962bb6b97fb208cbd8a5932afb60e680"><div class="ttname"><a href="lru_8c.html#a962bb6b97fb208cbd8a5932afb60e680">add_to_cache</a></div><div class="ttdeci">void add_to_cache(struct CacheHeader *cache, const char *key, void *value)</div><div class="ttdoc">Adds a value to the cache with a string key, pruning if necessary.</div><div class="ttdef"><b>Definition</b> <a href="#l00047">lru.c:47</a></div></div>
 <div class="ttc" id="alru_8c_html_ac7008173fc7e392fa825c69410920f0a"><div class="ttname"><a href="lru_8c.html#ac7008173fc7e392fa825c69410920f0a">find_in_cache</a></div><div class="ttdeci">void * find_in_cache(struct CacheHeader *cache, const char *key)</div><div class="ttdoc">Finds a value in the cache by string key.</div><div class="ttdef"><b>Definition</b> <a href="#l00024">lru.c:24</a></div></div>
-<div class="ttc" id="alru_8c_html_af628823e6826f0d0e0aa52f96fc74f02"><div class="ttname"><a href="lru_8c.html#af628823e6826f0d0e0aa52f96fc74f02">find_in_cache_uint64</a></div><div class="ttdeci">void * find_in_cache_uint64(struct CacheHeader *cache, const uint64_t key)</div><div class="ttdoc">Finds a value in the cache by uint64_t key, using string conversion.</div><div class="ttdef"><b>Definition</b> <a href="#l00088">lru.c:88</a></div></div>
+<div class="ttc" id="alru_8c_html_af628823e6826f0d0e0aa52f96fc74f02"><div class="ttname"><a href="lru_8c.html#af628823e6826f0d0e0aa52f96fc74f02">find_in_cache_uint64</a></div><div class="ttdeci">void * find_in_cache_uint64(struct CacheHeader *cache, const uint64_t key)</div><div class="ttdoc">Finds a value in the cache by uint64_t key, using string conversion.</div><div class="ttdef"><b>Definition</b> <a href="#l00093">lru.c:93</a></div></div>
 <div class="ttc" id="astructCacheEntry_html"><div class="ttname"><a href="structCacheEntry.html">CacheEntry</a></div><div class="ttdoc">Single hash entry in the in-memory cache.</div><div class="ttdef"><b>Definition</b> <a href="lru_8h_source.html#l00026">lru.h:27</a></div></div>
 <div class="ttc" id="astructCacheEntry_html_a7d6d1ed0aab03cffbb34aff16f6f3d56"><div class="ttname"><a href="structCacheEntry.html#a7d6d1ed0aab03cffbb34aff16f6f3d56">CacheEntry::value</a></div><div class="ttdeci">void * value</div><div class="ttdoc">Opaque value pointer associated with key (not freed automatically on eviction/clear).</div><div class="ttdef"><b>Definition</b> <a href="lru_8h_source.html#l00029">lru.h:29</a></div></div>
 <div class="ttc" id="astructCacheEntry_html_ae7e5f03fa52b88d99e27e2433623b4f5"><div class="ttname"><a href="structCacheEntry.html#ae7e5f03fa52b88d99e27e2433623b4f5">CacheEntry::hh</a></div><div class="ttdeci">UT_hash_handle hh</div><div class="ttdoc">uthash handle linking this entry into the hash table (must remain last or per uthash docs).</div><div class="ttdef"><b>Definition</b> <a href="lru_8h_source.html#l00030">lru.h:30</a></div></div>
@@ -184,6 +224,7 @@ $(function(){initNavTree('lru_8c_source.html','',''); });
 <div class="ttc" id="astructCacheHeader_html"><div class="ttname"><a href="structCacheHeader.html">CacheHeader</a></div><div class="ttdoc">Cache top-level descriptor encapsulating the hash table root and capacity limit.</div><div class="ttdef"><b>Definition</b> <a href="lru_8h_source.html#l00045">lru.h:46</a></div></div>
 <div class="ttc" id="astructCacheHeader_html_a44229bb929d8949f3c2700d07123d224"><div class="ttname"><a href="structCacheHeader.html#a44229bb929d8949f3c2700d07123d224">CacheHeader::cache</a></div><div class="ttdeci">struct CacheEntry * cache</div><div class="ttdoc">Hash root (uthash). NULL when empty.</div><div class="ttdef"><b>Definition</b> <a href="lru_8h_source.html#l00048">lru.h:48</a></div></div>
 <div class="ttc" id="astructCacheHeader_html_ad3b962f8ce6c6115143cf581c7936e55"><div class="ttname"><a href="structCacheHeader.html#ad3b962f8ce6c6115143cf581c7936e55">CacheHeader::max_items</a></div><div class="ttdeci">uint64_t max_items</div><div class="ttdoc">Hard limit for number of entries (policy: enforce/ignore depends on implementation).</div><div class="ttdef"><b>Definition</b> <a href="lru_8h_source.html#l00047">lru.h:47</a></div></div>
+<div class="ttc" id="astructCacheHeader_html_afeac54c794f8fece845e49954fd89f1a"><div class="ttname"><a href="structCacheHeader.html#afeac54c794f8fece845e49954fd89f1a">CacheHeader::free_func</a></div><div class="ttdeci">void(* free_func)(void *)</div><div class="ttdoc">Optional callback to free cached values. NULL if values don&#39;t need freeing.</div><div class="ttdef"><b>Definition</b> <a href="lru_8h_source.html#l00049">lru.h:49</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 </div><!-- container -->

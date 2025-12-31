@@ -131,11 +131,45 @@ $(function(){initNavTree('md_README.html','',''); });
 <li>Compile for PlayStation 3</li>
 <li>Snapshots</li>
 <li>Parent images</li>
-<li>Data positioning measurements </li>
+<li>Data positioning measurements</li>
+</ul>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md1"></a>
+Building and Testing</h1>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md2"></a>
+Standard Build</h2>
+<div class="fragment"><div class="line">mkdir build</div>
+<div class="line">cd build</div>
+<div class="line">cmake ..</div>
+<div class="line">cmake --build .</div>
+</div><!-- fragment --><h2 class="doxsection"><a class="anchor" id="autotoc_md3"></a>
+Running Tests</h2>
+<div class="fragment"><div class="line">cd build</div>
+<div class="line">ctest --verbose</div>
+</div><!-- fragment --><h2 class="doxsection"><a class="anchor" id="autotoc_md4"></a>
+Building with Address Sanitizer</h2>
+<p>For debugging memory issues, you can build with Address Sanitizer enabled:</p>
+<div class="fragment"><div class="line">mkdir build-asan</div>
+<div class="line">cd build-asan</div>
+<div class="line">cmake -DUSE_ASAN=ON -DCMAKE_BUILD_TYPE=Debug ..</div>
+<div class="line">cmake --build .</div>
+<div class="line">ctest --verbose</div>
+</div><!-- fragment --><p>For detailed information on using Address Sanitizer to detect memory issues, see docs/ASAN_USAGE.md.</p>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md5"></a>
+Other Build Options</h2>
+<ul>
+<li><span class="tt">-DUSE_SLOG=ON</span> - Enable slog logging for debugging</li>
+<li><span class="tt">-DUSE_ASAN=ON</span> - Enable Address Sanitizer for memory error detection </li>
 </ul>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->
+<div id="page-nav" class="page-nav-panel">
+<div id="page-nav-resize-handle"></div>
+<div id="page-nav-tree">
+<div id="page-nav-contents">
+</div><!-- page-nav-contents -->
+</div><!-- page-nav-tree -->
+</div><!-- page-nav -->
 </div><!-- container -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->

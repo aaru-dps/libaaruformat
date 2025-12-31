@@ -103,6 +103,8 @@ $(function(){initNavTree('hash__map_8c.html','',''); });
 Macros</h2></td></tr>
 <tr class="memitem:a40958a1382463445e451148e3a93e049" id="r_a40958a1382463445e451148e3a93e049"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a40958a1382463445e451148e3a93e049">INITIAL_SIZE</a>&#160;&#160;&#160;1024</td></tr>
 <tr class="memitem:a846f78d98a30c431ef3a4d570e657913" id="r_a846f78d98a30c431ef3a4d570e657913"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a846f78d98a30c431ef3a4d570e657913">LOAD_FACTOR</a>&#160;&#160;&#160;0.75</td></tr>
+<tr class="memitem:a614af37e22c4614e66ca11ccaa1beda6" id="r_a614af37e22c4614e66ca11ccaa1beda6"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a614af37e22c4614e66ca11ccaa1beda6">LARGE_MAP_THRESHOLD</a>&#160;&#160;&#160;(2ULL * 1024 * 1024 * 1024 / sizeof(<a class="el" href="structkv__pair__t.html">kv_pair_t</a>))</td></tr>
+<tr class="memitem:a38c4d7f794a3272aea11f3653fcf04c4" id="r_a38c4d7f794a3272aea11f3653fcf04c4"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a38c4d7f794a3272aea11f3653fcf04c4">LARGE_GROWTH_FACTOR</a>&#160;&#160;&#160;1.25</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-func-members" class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
@@ -110,6 +112,8 @@ Functions</h2></td></tr>
 <tr class="memdesc:a4698f62d88ee9530fb93bf672455676f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new hash map with the specified initial size.  <br /></td></tr>
 <tr class="memitem:ab885e8c5bedaf6f3cca1877e378fd04f" id="r_ab885e8c5bedaf6f3cca1877e378fd04f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab885e8c5bedaf6f3cca1877e378fd04f">free_map</a> (<a class="el" href="structhash__map__t.html">hash_map_t</a> *map)</td></tr>
 <tr class="memdesc:ab885e8c5bedaf6f3cca1877e378fd04f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Frees all memory associated with a hash map.  <br /></td></tr>
+<tr class="memitem:a149bd33c2f2fe226e330d4e0177d36fa" id="r_a149bd33c2f2fe226e330d4e0177d36fa"><td class="memItemLeft" align="right" valign="top">static size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a149bd33c2f2fe226e330d4e0177d36fa">calculate_new_size</a> (size_t current_size)</td></tr>
+<tr class="memdesc:a149bd33c2f2fe226e330d4e0177d36fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the new size for hash map resizing.  <br /></td></tr>
 <tr class="memitem:ad662d4309e791d854bc7a788b1cddf34" id="r_ad662d4309e791d854bc7a788b1cddf34"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad662d4309e791d854bc7a788b1cddf34">resize_map</a> (<a class="el" href="structhash__map__t.html">hash_map_t</a> *map, size_t new_size)</td></tr>
 <tr class="memdesc:ad662d4309e791d854bc7a788b1cddf34"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resizes the hash map to a new size and rehashes all entries.  <br /></td></tr>
 <tr class="memitem:a56a11edd19b5362f1dd719a11c06f892" id="r_a56a11edd19b5362f1dd719a11c06f892"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a56a11edd19b5362f1dd719a11c06f892">insert_map</a> (<a class="el" href="structhash__map__t.html">hash_map_t</a> *map, uint64_t key, uint64_t value)</td></tr>
@@ -132,7 +136,43 @@ Functions</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="hash__map_8c_source.html#l00025">25</a> of file <a class="el" href="hash__map_8c_source.html">hash_map.c</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="hash__map_8c_source.html#l00049">create_map()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="hash__map_8c_source.html#l00051">create_map()</a>.</p>
+
+</div>
+</div>
+<a id="a38c4d7f794a3272aea11f3653fcf04c4" name="a38c4d7f794a3272aea11f3653fcf04c4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a38c4d7f794a3272aea11f3653fcf04c4">&#9670;&#160;</a></span>LARGE_GROWTH_FACTOR</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define LARGE_GROWTH_FACTOR&#160;&#160;&#160;1.25</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="hash__map_8c_source.html#l00028">28</a> of file <a class="el" href="hash__map_8c_source.html">hash_map.c</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="hash__map_8c_source.html#l00103">calculate_new_size()</a>.</p>
+
+</div>
+</div>
+<a id="a614af37e22c4614e66ca11ccaa1beda6" name="a614af37e22c4614e66ca11ccaa1beda6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a614af37e22c4614e66ca11ccaa1beda6">&#9670;&#160;</a></span>LARGE_MAP_THRESHOLD</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define LARGE_MAP_THRESHOLD&#160;&#160;&#160;(2ULL * 1024 * 1024 * 1024 / sizeof(<a class="el" href="structkv__pair__t.html">kv_pair_t</a>))</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="hash__map_8c_source.html#l00027">27</a> of file <a class="el" href="hash__map_8c_source.html">hash_map.c</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="hash__map_8c_source.html#l00103">calculate_new_size()</a>.</p>
 
 </div>
 </div>
@@ -150,11 +190,60 @@ Functions</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="hash__map_8c_source.html#l00026">26</a> of file <a class="el" href="hash__map_8c_source.html">hash_map.c</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="hash__map_8c_source.html#l00156">insert_map()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="hash__map_8c_source.html#l00185">insert_map()</a>.</p>
 
 </div>
 </div>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
+<a id="a149bd33c2f2fe226e330d4e0177d36fa" name="a149bd33c2f2fe226e330d4e0177d36fa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a149bd33c2f2fe226e330d4e0177d36fa">&#9670;&#160;</a></span>calculate_new_size()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t calculate_new_size </td>
+          <td>(</td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>current_size</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel static">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Calculates the new size for hash map resizing. </p>
+<p>This function implements intelligent size calculation based on the current map size. For small to medium maps (below ~2GB), it doubles the size for fast growth. For large maps (at or above ~2GB), it uses a smaller growth factor (25%) to avoid excessive memory allocation.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">current_size</td><td>The current size of the hash table.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The calculated new size for the hash table.</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>For maps below LARGE_MAP_THRESHOLD, size doubles (2x growth). </dd>
+<dd>
+For maps at or above LARGE_MAP_THRESHOLD, size grows by 25% (1.25x growth). </dd>
+<dd>
+This is a static (internal) function and should not be called directly.</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="#ad662d4309e791d854bc7a788b1cddf34" title="Resizes the hash map to a new size and rehashes all entries.">resize_map()</a> </dd>
+<dd>
+<a class="el" href="#a56a11edd19b5362f1dd719a11c06f892" title="Inserts a key-value pair into the hash map.">insert_map()</a> </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="hash__map_8c_source.html#l00103">103</a> of file <a class="el" href="hash__map_8c_source.html">hash_map.c</a>.</p>
+
+<p class="reference">References <a class="el" href="hash__map_8c_source.html#l00028">LARGE_GROWTH_FACTOR</a>, and <a class="el" href="hash__map_8c_source.html#l00027">LARGE_MAP_THRESHOLD</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="hash__map_8c_source.html#l00185">insert_map()</a>.</p>
+
+</div>
+</div>
 <a id="a4698f62d88ee9530fb93bf672455676f" name="a4698f62d88ee9530fb93bf672455676f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4698f62d88ee9530fb93bf672455676f">&#9670;&#160;</a></span>create_map()</h2>
 
@@ -196,7 +285,7 @@ Functions</h2></td></tr>
 A key value of 0 is reserved to indicate empty slots and cannot be used as a valid key.</dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="#ab885e8c5bedaf6f3cca1877e378fd04f" title="Frees all memory associated with a hash map.">free_map()</a> </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="hash__map_8c_source.html#l00049">49</a> of file <a class="el" href="hash__map_8c_source.html">hash_map.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hash__map_8c_source.html#l00051">51</a> of file <a class="el" href="hash__map_8c_source.html">hash_map.c</a>.</p>
 
 <p class="reference">References <a class="el" href="hash__map_8h_source.html#l00053">hash_map_t::count</a>, <a class="el" href="hash__map_8c_source.html#l00025">INITIAL_SIZE</a>, <a class="el" href="hash__map_8h_source.html#l00052">hash_map_t::size</a>, and <a class="el" href="hash__map_8h_source.html#l00051">hash_map_t::table</a>.</p>
 
@@ -230,11 +319,11 @@ A key value of 0 is reserved to indicate empty slots and cannot be used as a val
 <dl class="section note"><dt>Note</dt><dd>This function does not free any memory pointed to by the values stored in the map. If the values are dynamically allocated, they must be freed separately before calling this function.</dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="#a4698f62d88ee9530fb93bf672455676f" title="Creates a new hash map with the specified initial size.">create_map()</a> </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="hash__map_8c_source.html#l00076">76</a> of file <a class="el" href="hash__map_8c_source.html">hash_map.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hash__map_8c_source.html#l00078">78</a> of file <a class="el" href="hash__map_8c_source.html">hash_map.c</a>.</p>
 
 <p class="reference">References <a class="el" href="hash__map_8h_source.html#l00051">hash_map_t::table</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l04327">aaruf_close()</a>, and <a class="el" href="create_8c_source.html#l00030">cleanup_failed_create()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l04340">aaruf_close()</a>, and <a class="el" href="create_8c_source.html#l00030">cleanup_failed_create()</a>.</p>
 
 </div>
 </div>
@@ -292,11 +381,11 @@ If memory allocation fails during automatic resizing, the program may terminate.
 <dd>
 <a class="el" href="#ad662d4309e791d854bc7a788b1cddf34" title="Resizes the hash map to a new size and rehashes all entries.">resize_map()</a> </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="hash__map_8c_source.html#l00156">156</a> of file <a class="el" href="hash__map_8c_source.html">hash_map.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hash__map_8c_source.html#l00185">185</a> of file <a class="el" href="hash__map_8c_source.html">hash_map.c</a>.</p>
 
-<p class="reference">References <a class="el" href="hash__map_8h_source.html#l00053">hash_map_t::count</a>, <a class="el" href="hash__map_8h_source.html#l00034">kv_pair_t::key</a>, <a class="el" href="hash__map_8c_source.html#l00026">LOAD_FACTOR</a>, <a class="el" href="hash__map_8c_source.html#l00104">resize_map()</a>, <a class="el" href="hash__map_8h_source.html#l00052">hash_map_t::size</a>, <a class="el" href="hash__map_8h_source.html#l00051">hash_map_t::table</a>, and <a class="el" href="hash__map_8h_source.html#l00035">kv_pair_t::value</a>.</p>
+<p class="reference">References <a class="el" href="hash__map_8c_source.html#l00103">calculate_new_size()</a>, <a class="el" href="hash__map_8h_source.html#l00053">hash_map_t::count</a>, <a class="el" href="hash__map_8h_source.html#l00034">kv_pair_t::key</a>, <a class="el" href="hash__map_8c_source.html#l00026">LOAD_FACTOR</a>, <a class="el" href="hash__map_8c_source.html#l00133">resize_map()</a>, <a class="el" href="hash__map_8h_source.html#l00052">hash_map_t::size</a>, <a class="el" href="hash__map_8h_source.html#l00051">hash_map_t::table</a>, and <a class="el" href="hash__map_8h_source.html#l00035">kv_pair_t::value</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l00099">aaruf_write_sector()</a>.</p>
 
 </div>
 </div>
@@ -350,11 +439,11 @@ Searching for key value 0 will always return false as 0 indicates empty slots.</
 <dl class="section warning"><dt>Warning</dt><dd>The out_value parameter must point to valid memory location. Passing NULL will result in undefined behavior.</dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="#a56a11edd19b5362f1dd719a11c06f892" title="Inserts a key-value pair into the hash map.">insert_map()</a> </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="hash__map_8c_source.html#l00199">199</a> of file <a class="el" href="hash__map_8c_source.html">hash_map.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hash__map_8c_source.html#l00228">228</a> of file <a class="el" href="hash__map_8c_source.html">hash_map.c</a>.</p>
 
 <p class="reference">References <a class="el" href="hash__map_8h_source.html#l00034">kv_pair_t::key</a>, <a class="el" href="hash__map_8h_source.html#l00052">hash_map_t::size</a>, <a class="el" href="hash__map_8h_source.html#l00051">hash_map_t::table</a>, and <a class="el" href="hash__map_8h_source.html#l00035">kv_pair_t::value</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l00098">aaruf_write_sector()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l00099">aaruf_write_sector()</a>.</p>
 
 </div>
 </div>
@@ -402,13 +491,15 @@ After resizing, the physical positions of entries in the table will change, but 
 <dd>
 The old table is automatically freed after successful migration.</dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>If memory allocation for the new table fails, the program may terminate.</dd></dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="#a56a11edd19b5362f1dd719a11c06f892" title="Inserts a key-value pair into the hash map.">insert_map()</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="#a56a11edd19b5362f1dd719a11c06f892" title="Inserts a key-value pair into the hash map.">insert_map()</a> </dd>
+<dd>
+<a class="el" href="#a149bd33c2f2fe226e330d4e0177d36fa" title="Calculates the new size for hash map resizing.">calculate_new_size()</a> </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="hash__map_8c_source.html#l00104">104</a> of file <a class="el" href="hash__map_8c_source.html">hash_map.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hash__map_8c_source.html#l00133">133</a> of file <a class="el" href="hash__map_8c_source.html">hash_map.c</a>.</p>
 
 <p class="reference">References <a class="el" href="hash__map_8h_source.html#l00053">hash_map_t::count</a>, <a class="el" href="hash__map_8h_source.html#l00034">kv_pair_t::key</a>, <a class="el" href="hash__map_8h_source.html#l00052">hash_map_t::size</a>, and <a class="el" href="hash__map_8h_source.html#l00051">hash_map_t::table</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="hash__map_8c_source.html#l00156">insert_map()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="hash__map_8c_source.html#l00185">insert_map()</a>.</p>
 
 </div>
 </div>

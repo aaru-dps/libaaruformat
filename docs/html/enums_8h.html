@@ -222,24 +222,25 @@ Enumerations</h2></td></tr>
 &#160;&#160;<a class="el" href="#a54420623f26ab6bb61042b41cccf37a3a5a0811c5ee97536aef900cecb8787713">DataBlock</a> = 0x4B4C4244
 , <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3ac9f1e20a51c73f238aa322e180c42bd4">DeDuplicationTable</a> = 0x2A544444
 , <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3aba4d0f50b26af1d0292daaa0d70feacf">DeDuplicationTable2</a> = 0x32544444
-, <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3a76b6a78e4e765794c4cca2dde5bfc3fb">DeDuplicationTableSecondary</a> = 0x53545444
+, <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3ad1d443e05bbdf4c75084244a151a44d3">DeDuplicationTableSAlpha</a> = 0x53545444
 , <br />
-&#160;&#160;<a class="el" href="#a54420623f26ab6bb61042b41cccf37a3ab8d63dc690b2ba82f066fdc31ab5adad">IndexBlock</a> = 0x58444E49
+&#160;&#160;<a class="el" href="#a54420623f26ab6bb61042b41cccf37a3a76b6a78e4e765794c4cca2dde5bfc3fb">DeDuplicationTableSecondary</a> = 0x53544444
+, <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3ab8d63dc690b2ba82f066fdc31ab5adad">IndexBlock</a> = 0x58444E49
 , <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3a6ee3c4c583df36e3dfe796593c1e9439">IndexBlock2</a> = 0x32584449
 , <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3a318acaf230a8ad091ef405caf7e4f411">IndexBlock3</a> = 0x33584449
-, <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3a76691ea3f772bf28e7446d171e205db2">GeometryBlock</a> = 0x4D4F4547
 , <br />
-&#160;&#160;<a class="el" href="#a54420623f26ab6bb61042b41cccf37a3ad5a8c9e1ce6a2acd795dc1e7561addf8">MetadataBlock</a> = 0x4154454D
+&#160;&#160;<a class="el" href="#a54420623f26ab6bb61042b41cccf37a3a76691ea3f772bf28e7446d171e205db2">GeometryBlock</a> = 0x4D4F4547
+, <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3ad5a8c9e1ce6a2acd795dc1e7561addf8">MetadataBlock</a> = 0x4154454D
 , <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3ae550bdf57660fcbf3500155c29d4637e">TracksBlock</a> = 0x534B5254
 , <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3aa90947995922dcd8b27c998978aba359">CicmBlock</a> = 0x4D434943
-, <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3a3e451c2577a6c790f33f99c2da189d46">ChecksumBlock</a> = 0x4D534B43
 , <br />
-&#160;&#160;<a class="el" href="#a54420623f26ab6bb61042b41cccf37a3adb070ea0a488e0519514d18b2579d450">DataPositionMeasurementBlock</a> = 0x2A4D5044
+&#160;&#160;<a class="el" href="#a54420623f26ab6bb61042b41cccf37a3a3e451c2577a6c790f33f99c2da189d46">ChecksumBlock</a> = 0x4D534B43
+, <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3adb070ea0a488e0519514d18b2579d450">DataPositionMeasurementBlock</a> = 0x2A4D5044
 , <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3a7c4697ba513490ff05ea4daf1044957f">SnapshotBlock</a> = 0x50414E53
 , <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3aaf2b82002c359bb1547a4b3f6d39cd28">ParentBlock</a> = 0x50524E54
-, <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3ad33812deb344562478c4e0d208a114db">DumpHardwareBlock</a> = 0x2A504D44
 , <br />
-&#160;&#160;<a class="el" href="#a54420623f26ab6bb61042b41cccf37a3ac3a117f2498bf736a76d5d3a3830540a">TapeFileBlock</a> = 0x454C4654
+&#160;&#160;<a class="el" href="#a54420623f26ab6bb61042b41cccf37a3ad33812deb344562478c4e0d208a114db">DumpHardwareBlock</a> = 0x2A504D44
+, <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3ac3a117f2498bf736a76d5d3a3830540a">TapeFileBlock</a> = 0x454C4654
 , <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3a60609bbcd07339a8bf589e66ef4a3041">TapePartitionBlock</a> = 0x54425054
 , <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3a8ac77889f0c345ed861ed653a3063032">AaruMetadataJsonBlock</a> = 0x444D534A
 <br />
@@ -326,7 +327,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00208">208</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00209">209</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -349,6 +350,8 @@ Enumerations</h2></td></tr>
 <tr><td class="fieldname"><a id="a54420623f26ab6bb61042b41cccf37a3ac9f1e20a51c73f238aa322e180c42bd4" name="a54420623f26ab6bb61042b41cccf37a3ac9f1e20a51c73f238aa322e180c42bd4"></a>DeDuplicationTable&#160;</td><td class="fielddoc"><p>Block containing a deduplication table (v1). </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a54420623f26ab6bb61042b41cccf37a3aba4d0f50b26af1d0292daaa0d70feacf" name="a54420623f26ab6bb61042b41cccf37a3aba4d0f50b26af1d0292daaa0d70feacf"></a>DeDuplicationTable2&#160;</td><td class="fielddoc"><p>Block containing a deduplication table v2. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a54420623f26ab6bb61042b41cccf37a3ad1d443e05bbdf4c75084244a151a44d3" name="a54420623f26ab6bb61042b41cccf37a3ad1d443e05bbdf4c75084244a151a44d3"></a>DeDuplicationTableSAlpha&#160;</td><td class="fielddoc"><p>Block containing a secondary deduplication table (v2) (mistake). </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a54420623f26ab6bb61042b41cccf37a3a76b6a78e4e765794c4cca2dde5bfc3fb" name="a54420623f26ab6bb61042b41cccf37a3a76b6a78e4e765794c4cca2dde5bfc3fb"></a>DeDuplicationTableSecondary&#160;</td><td class="fielddoc"><p>Block containing a secondary deduplication table (v2). </p>
 </td></tr>
@@ -414,7 +417,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00181">181</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00182">182</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -446,7 +449,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00167">167</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00168">168</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -695,14 +698,14 @@ Enumerations</h2></td></tr>
 <div class="line">{</div>
 <div class="line">    <span class="comment">// Image contains BLAKE3 checksums; enable BLAKE3 verification path.</span></div>
 <div class="line">}</div>
-<div class="ttc" id="aenums_8h_html_af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4"><div class="ttname"><a href="#af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4">AARU_FEATURE_RW_BLAKE3</a></div><div class="ttdeci">@ AARU_FEATURE_RW_BLAKE3</div><div class="ttdoc">BLAKE3 checksum is present (read/write support for BLAKE3 hashes).</div><div class="ttdef"><b>Definition</b> <a href="enums_8h_source.html#l00266">enums.h:266</a></div></div>
+<div class="ttc" id="aenums_8h_html_af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4"><div class="ttname"><a href="#af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4">AARU_FEATURE_RW_BLAKE3</a></div><div class="ttdeci">@ AARU_FEATURE_RW_BLAKE3</div><div class="ttdoc">BLAKE3 checksum is present (read/write support for BLAKE3 hashes).</div><div class="ttdef"><b>Definition</b> <a href="enums_8h_source.html#l00267">enums.h:267</a></div></div>
 </div><!-- fragment --><p>Future compatible features SHALL use the next available bit (1ULL &lt;&lt; n). </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4" name="af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4"></a>AARU_FEATURE_RW_BLAKE3&#160;</td><td class="fielddoc"><p>BLAKE3 checksum is present (read/write support for BLAKE3 hashes). </p>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00264">264</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00265">265</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -744,7 +747,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00229">229</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00230">230</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -776,7 +779,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00194">194</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00195">195</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -804,7 +807,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00217">217</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00218">218</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>

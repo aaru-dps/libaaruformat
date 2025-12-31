@@ -124,10 +124,8 @@ Data Fields</h2></td></tr>
 <tr class="memdesc:a69ff1a1dbdaf0501e6488451b7270b51"><td class="mdescLeft">&#160;</td><td class="mdescRight">128-bit image GUID (binary, not text); stable across children.  <br /></td></tr>
 <tr class="memitem:ac55c9959435ff7b62a72ec8243ebe1c8" id="r_ac55c9959435ff7b62a72ec8243ebe1c8"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac55c9959435ff7b62a72ec8243ebe1c8">blockAlignmentShift</a></td></tr>
 <tr class="memdesc:ac55c9959435ff7b62a72ec8243ebe1c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">log2 block alignment (block size alignment = 2^blockAlignmentShift bytes).  <br /></td></tr>
-<tr class="memitem:a520d6f22b18a42fee0c6d72fbe3e064d" id="r_a520d6f22b18a42fee0c6d72fbe3e064d"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a520d6f22b18a42fee0c6d72fbe3e064d">dataShift</a></td></tr>
-<tr class="memdesc:a520d6f22b18a42fee0c6d72fbe3e064d"><td class="mdescLeft">&#160;</td><td class="mdescRight">log2 sectors/items per block-index increment in DDT entries (2^dataShift).  <br /></td></tr>
-<tr class="memitem:a35c4fa9c7e21cdea332efdb34383abad" id="r_a35c4fa9c7e21cdea332efdb34383abad"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a35c4fa9c7e21cdea332efdb34383abad">tableShift</a></td></tr>
-<tr class="memdesc:a35c4fa9c7e21cdea332efdb34383abad"><td class="mdescLeft">&#160;</td><td class="mdescRight">log2 sectors spanned by each primary DDT entry (0 = single-level).  <br /></td></tr>
+<tr class="memitem:abc1b56bbb9310ea37e1c73b4e5bbf8bc" id="r_abc1b56bbb9310ea37e1c73b4e5bbf8bc"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abc1b56bbb9310ea37e1c73b4e5bbf8bc">biggestSectorSize</a></td></tr>
+<tr class="memdesc:abc1b56bbb9310ea37e1c73b4e5bbf8bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">size of biggest sector in the image (in bytes).  <br /></td></tr>
 <tr class="memitem:a4c3f5ccfe34123e402d1b7641d0d6c03" id="r_a4c3f5ccfe34123e402d1b7641d0d6c03"><td class="memItemLeft" align="right" valign="top">uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4c3f5ccfe34123e402d1b7641d0d6c03">featureCompatible</a></td></tr>
 <tr class="memdesc:a4c3f5ccfe34123e402d1b7641d0d6c03"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feature bits: unimplemented bits are ignorable (still R/W safe).  <br /></td></tr>
 <tr class="memitem:a9dae72bee3d161760dbbe389e4a70444" id="r_a9dae72bee3d161760dbbe389e4a70444"><td class="memItemLeft" align="right" valign="top">uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9dae72bee3d161760dbbe389e4a70444">featureCompatibleRo</a></td></tr>
@@ -211,6 +209,26 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
+<a id="abc1b56bbb9310ea37e1c73b4e5bbf8bc" name="abc1b56bbb9310ea37e1c73b4e5bbf8bc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abc1b56bbb9310ea37e1c73b4e5bbf8bc">&#9670;&#160;</a></span>biggestSectorSize</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint16_t AaruHeaderV2::biggestSectorSize</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>size of biggest sector in the image (in bytes). </p>
+
+<p class="definition">Definition at line <a class="el" href="header_8h_source.html#l00120">120</a> of file <a class="el" href="header_8h_source.html">header.h</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="write_8c_source.html#l00099">aaruf_write_sector()</a>, and <a class="el" href="data_8c_source.html#l00071">process_data_block()</a>.</p>
+
+</div>
+</div>
 <a id="ac55c9959435ff7b62a72ec8243ebe1c8" name="ac55c9959435ff7b62a72ec8243ebe1c8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac55c9959435ff7b62a72ec8243ebe1c8">&#9670;&#160;</a></span>blockAlignmentShift</h2>
 
@@ -226,6 +244,8 @@ Data Fields</h2></td></tr>
 <p>log2 block alignment (block size alignment = 2^blockAlignmentShift bytes). </p>
 
 <p class="definition">Definition at line <a class="el" href="header_8h_source.html#l00119">119</a> of file <a class="el" href="header_8h_source.html">header.h</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>.</p>
 
 </div>
 </div>
@@ -249,24 +269,6 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
-<a id="a520d6f22b18a42fee0c6d72fbe3e064d" name="a520d6f22b18a42fee0c6d72fbe3e064d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a520d6f22b18a42fee0c6d72fbe3e064d">&#9670;&#160;</a></span>dataShift</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">uint8_t AaruHeaderV2::dataShift</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>log2 sectors/items per block-index increment in DDT entries (2^dataShift). </p>
-
-<p class="definition">Definition at line <a class="el" href="header_8h_source.html#l00120">120</a> of file <a class="el" href="header_8h_source.html">header.h</a>.</p>
-
-</div>
-</div>
 <a id="a4c3f5ccfe34123e402d1b7641d0d6c03" name="a4c3f5ccfe34123e402d1b7641d0d6c03"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4c3f5ccfe34123e402d1b7641d0d6c03">&#9670;&#160;</a></span>featureCompatible</h2>
 
@@ -281,9 +283,9 @@ Data Fields</h2></td></tr>
 
 <p>Feature bits: unimplemented bits are ignorable (still R/W safe). </p>
 
-<p class="definition">Definition at line <a class="el" href="header_8h_source.html#l00122">122</a> of file <a class="el" href="header_8h_source.html">header.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="header_8h_source.html#l00121">121</a> of file <a class="el" href="header_8h_source.html">header.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l00681">write_checksum_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l00691">write_checksum_block()</a>.</p>
 
 </div>
 </div>
@@ -301,7 +303,7 @@ Data Fields</h2></td></tr>
 
 <p>Feature bits: unimplemented -&gt; degrade to read-only access. </p>
 
-<p class="definition">Definition at line <a class="el" href="header_8h_source.html#l00123">123</a> of file <a class="el" href="header_8h_source.html">header.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="header_8h_source.html#l00122">122</a> of file <a class="el" href="header_8h_source.html">header.h</a>.</p>
 
 </div>
 </div>
@@ -319,7 +321,7 @@ Data Fields</h2></td></tr>
 
 <p>Feature bits: any unimplemented -&gt; abort (cannot open safely). </p>
 
-<p class="definition">Definition at line <a class="el" href="header_8h_source.html#l00124">124</a> of file <a class="el" href="header_8h_source.html">header.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="header_8h_source.html#l00123">123</a> of file <a class="el" href="header_8h_source.html">header.h</a>.</p>
 
 </div>
 </div>
@@ -419,7 +421,7 @@ Data Fields</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="header_8h_source.html#l00115">115</a> of file <a class="el" href="header_8h_source.html">header.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="verify_8c_source.html#l00130">aaruf_verify_image()</a>, <a class="el" href="index__v1_8c_source.html#l00079">process_index_v1()</a>, <a class="el" href="index__v2_8c_source.html#l00081">process_index_v2()</a>, <a class="el" href="index__v3_8c_source.html#l00098">process_index_v3()</a>, <a class="el" href="index__v1_8c_source.html#l00225">verify_index_v1()</a>, <a class="el" href="index__v2_8c_source.html#l00227">verify_index_v2()</a>, <a class="el" href="index__v3_8c_source.html#l00408">verify_index_v3()</a>, and <a class="el" href="close_8c_source.html#l04194">write_index_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>, <a class="el" href="verify_8c_source.html#l00130">aaruf_verify_image()</a>, <a class="el" href="index__v1_8c_source.html#l00079">process_index_v1()</a>, <a class="el" href="index__v2_8c_source.html#l00081">process_index_v2()</a>, <a class="el" href="index__v3_8c_source.html#l00098">process_index_v3()</a>, <a class="el" href="index__v1_8c_source.html#l00225">verify_index_v1()</a>, <a class="el" href="index__v2_8c_source.html#l00227">verify_index_v2()</a>, <a class="el" href="index__v3_8c_source.html#l00408">verify_index_v3()</a>, and <a class="el" href="close_8c_source.html#l04204">write_index_block()</a>.</p>
 
 </div>
 </div>
@@ -460,24 +462,6 @@ Data Fields</h2></td></tr>
 <p class="definition">Definition at line <a class="el" href="header_8h_source.html#l00114">114</a> of file <a class="el" href="header_8h_source.html">header.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="create_8c_source.html#l00279">aaruf_create()</a>, and <a class="el" href="open_8c_source.html#l00223">aaruf_open()</a>.</p>
-
-</div>
-</div>
-<a id="a35c4fa9c7e21cdea332efdb34383abad" name="a35c4fa9c7e21cdea332efdb34383abad"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a35c4fa9c7e21cdea332efdb34383abad">&#9670;&#160;</a></span>tableShift</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">uint8_t AaruHeaderV2::tableShift</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>log2 sectors spanned by each primary DDT entry (0 = single-level). </p>
-
-<p class="definition">Definition at line <a class="el" href="header_8h_source.html#l00121">121</a> of file <a class="el" href="header_8h_source.html">header.h</a>.</p>
 
 </div>
 </div>

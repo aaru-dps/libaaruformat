@@ -105,6 +105,8 @@ $(function(){initNavTree('ecc__cd_8c.html','',''); });
 Functions</h2></td></tr>
 <tr class="memitem:ac1a30bb251ac148f485c51593c0740c1" id="r_ac1a30bb251ac148f485c51593c0740c1"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac1a30bb251ac148f485c51593c0740c1">aaruf_ecc_cd_init</a> ()</td></tr>
 <tr class="memdesc:ac1a30bb251ac148f485c51593c0740c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes a Compact Disc ECC context.  <br /></td></tr>
+<tr class="memitem:aecef731b5a5aee840fd21618d326b955" id="r_aecef731b5a5aee840fd21618d326b955"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aecef731b5a5aee840fd21618d326b955">aaruf_ecc_cd_free</a> (void *ctx)</td></tr>
+<tr class="memdesc:aecef731b5a5aee840fd21618d326b955"><td class="mdescLeft">&#160;</td><td class="mdescRight">Frees a Compact Disc ECC context and its internal tables.  <br /></td></tr>
 <tr class="memitem:afbc09e16b1a654de04706e07c3212ecb" id="r_afbc09e16b1a654de04706e07c3212ecb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afbc09e16b1a654de04706e07c3212ecb">aaruf_ecc_cd_is_suffix_correct</a> (void *context, const uint8_t *sector)</td></tr>
 <tr class="memdesc:afbc09e16b1a654de04706e07c3212ecb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the suffix (EDC/ECC) of a CD sector is correct (Mode 1).  <br /></td></tr>
 <tr class="memitem:ab77ca170a2e8d2f0a2a7ea1a8a51690a" id="r_ab77ca170a2e8d2f0a2a7ea1a8a51690a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab77ca170a2e8d2f0a2a7ea1a8a51690a">aaruf_ecc_cd_is_suffix_correct_mode2</a> (void *context, const uint8_t *sector)</td></tr>
@@ -165,11 +167,11 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="ecc__cd_8c_source.html#l00374">374</a> of file <a class="el" href="ecc__cd_8c_source.html">ecc_cd.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ecc__cd_8c_source.html#l00391">391</a> of file <a class="el" href="ecc__cd_8c_source.html">ecc_cd.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00055">AARU_LOCAL</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="ecc__cd_8c_source.html#l00392">aaruf_ecc_cd_reconstruct_prefix()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="ecc__cd_8c_source.html#l00409">aaruf_ecc_cd_reconstruct_prefix()</a>.</p>
 
 </div>
 </div>
@@ -256,11 +258,42 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if ECC is correct, false otherwise. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="ecc__cd_8c_source.html#l00227">227</a> of file <a class="el" href="ecc__cd_8c_source.html">ecc_cd.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ecc__cd_8c_source.html#l00244">244</a> of file <a class="el" href="ecc__cd_8c_source.html">ecc_cd.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="context_8h_source.html#l00088">CdEccContext::ecc_b_table</a>, <a class="el" href="context_8h_source.html#l00089">CdEccContext::ecc_f_table</a>, <a class="el" href="context_8h_source.html#l00087">CdEccContext::inited_edc</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="ecc__cd_8c_source.html#l00101">aaruf_ecc_cd_is_suffix_correct()</a>, and <a class="el" href="ecc__cd_8c_source.html#l00165">aaruf_ecc_cd_is_suffix_correct_mode2()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="ecc__cd_8c_source.html#l00118">aaruf_ecc_cd_is_suffix_correct()</a>, and <a class="el" href="ecc__cd_8c_source.html#l00182">aaruf_ecc_cd_is_suffix_correct_mode2()</a>.</p>
+
+</div>
+</div>
+<a id="aecef731b5a5aee840fd21618d326b955" name="aecef731b5a5aee840fd21618d326b955"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aecef731b5a5aee840fd21618d326b955">&#9670;&#160;</a></span>aaruf_ecc_cd_free()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void aaruf_ecc_cd_free </td>
+          <td>(</td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>ctx</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Frees a Compact Disc ECC context and its internal tables. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ctx</td><td>Pointer to the <a class="el" href="structCdEccContext.html" title="Lookup tables and state for Compact Disc EDC/ECC (P/Q) regeneration / verification.">CdEccContext</a> to free. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">Definition at line <a class="el" href="ecc__cd_8c_source.html#l00099">99</a> of file <a class="el" href="ecc__cd_8c_source.html">ecc_cd.c</a>.</p>
+
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="context_8h_source.html#l00088">CdEccContext::ecc_b_table</a>, <a class="el" href="context_8h_source.html#l00089">CdEccContext::ecc_f_table</a>, and <a class="el" href="context_8h_source.html#l00090">CdEccContext::edc_table</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l04340">aaruf_close()</a>.</p>
 
 </div>
 </div>
@@ -320,11 +353,11 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if the suffix is correct, false otherwise. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="ecc__cd_8c_source.html#l00101">101</a> of file <a class="el" href="ecc__cd_8c_source.html">ecc_cd.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ecc__cd_8c_source.html#l00118">118</a> of file <a class="el" href="ecc__cd_8c_source.html">ecc_cd.c</a>.</p>
 
-<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="ecc__cd_8c_source.html#l00227">aaruf_ecc_cd_check()</a>, <a class="el" href="ecc__cd_8c_source.html#l00547">aaruf_edc_cd_compute()</a>, <a class="el" href="context_8h_source.html#l00087">CdEccContext::inited_edc</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="ecc__cd_8c_source.html#l00244">aaruf_ecc_cd_check()</a>, <a class="el" href="ecc__cd_8c_source.html#l00564">aaruf_edc_cd_compute()</a>, <a class="el" href="context_8h_source.html#l00087">CdEccContext::inited_edc</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l00544">aaruf_write_sector_long()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l00555">aaruf_write_sector_long()</a>.</p>
 
 </div>
 </div>
@@ -357,11 +390,11 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if the suffix is correct, false otherwise. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="ecc__cd_8c_source.html#l00165">165</a> of file <a class="el" href="ecc__cd_8c_source.html">ecc_cd.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ecc__cd_8c_source.html#l00182">182</a> of file <a class="el" href="ecc__cd_8c_source.html">ecc_cd.c</a>.</p>
 
-<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="ecc__cd_8c_source.html#l00227">aaruf_ecc_cd_check()</a>, <a class="el" href="ecc__cd_8c_source.html#l00547">aaruf_edc_cd_compute()</a>, <a class="el" href="context_8h_source.html#l00087">CdEccContext::inited_edc</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="ecc__cd_8c_source.html#l00244">aaruf_ecc_cd_check()</a>, <a class="el" href="ecc__cd_8c_source.html#l00564">aaruf_edc_cd_compute()</a>, <a class="el" href="context_8h_source.html#l00087">CdEccContext::inited_edc</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l00544">aaruf_write_sector_long()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="write_8c_source.html#l00555">aaruf_write_sector_long()</a>.</p>
 
 </div>
 </div>
@@ -399,9 +432,9 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="ecc__cd_8c_source.html#l00459">459</a> of file <a class="el" href="ecc__cd_8c_source.html">ecc_cd.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ecc__cd_8c_source.html#l00476">476</a> of file <a class="el" href="ecc__cd_8c_source.html">ecc_cd.c</a>.</p>
 
-<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="ecc__cd_8c_source.html#l00352">aaruf_ecc_cd_write_sector()</a>, <a class="el" href="ecc__cd_8c_source.html#l00547">aaruf_edc_cd_compute()</a>, <a class="el" href="enums_8h_source.html#l00198">CdMode1</a>, <a class="el" href="enums_8h_source.html#l00200">CdMode2Form1</a>, <a class="el" href="enums_8h_source.html#l00201">CdMode2Form2</a>, <a class="el" href="context_8h_source.html#l00087">CdEccContext::inited_edc</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="ecc__cd_8c_source.html#l00369">aaruf_ecc_cd_write_sector()</a>, <a class="el" href="ecc__cd_8c_source.html#l00564">aaruf_edc_cd_compute()</a>, <a class="el" href="enums_8h_source.html#l00199">CdMode1</a>, <a class="el" href="enums_8h_source.html#l00201">CdMode2Form1</a>, <a class="el" href="enums_8h_source.html#l00202">CdMode2Form2</a>, <a class="el" href="context_8h_source.html#l00087">CdEccContext::inited_edc</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>.</p>
 
@@ -441,9 +474,9 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="ecc__cd_8c_source.html#l00392">392</a> of file <a class="el" href="ecc__cd_8c_source.html">ecc_cd.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ecc__cd_8c_source.html#l00409">409</a> of file <a class="el" href="ecc__cd_8c_source.html">ecc_cd.c</a>.</p>
 
-<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="ecc__cd_8c_source.html#l00374">aaruf_cd_lba_to_msf()</a>, <a class="el" href="enums_8h_source.html#l00198">CdMode1</a>, <a class="el" href="enums_8h_source.html#l00200">CdMode2Form1</a>, <a class="el" href="enums_8h_source.html#l00201">CdMode2Form2</a>, <a class="el" href="enums_8h_source.html#l00199">CdMode2Formless</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="ecc__cd_8c_source.html#l00391">aaruf_cd_lba_to_msf()</a>, <a class="el" href="enums_8h_source.html#l00199">CdMode1</a>, <a class="el" href="enums_8h_source.html#l00201">CdMode2Form1</a>, <a class="el" href="enums_8h_source.html#l00202">CdMode2Form2</a>, <a class="el" href="enums_8h_source.html#l00200">CdMode2Formless</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="read_8c_source.html#l00826">aaruf_read_sector_long()</a>.</p>
 
@@ -531,11 +564,11 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="ecc__cd_8c_source.html#l00293">293</a> of file <a class="el" href="ecc__cd_8c_source.html">ecc_cd.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ecc__cd_8c_source.html#l00310">310</a> of file <a class="el" href="ecc__cd_8c_source.html">ecc_cd.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="context_8h_source.html#l00088">CdEccContext::ecc_b_table</a>, <a class="el" href="context_8h_source.html#l00089">CdEccContext::ecc_f_table</a>, <a class="el" href="context_8h_source.html#l00087">CdEccContext::inited_edc</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="ecc__cd_8c_source.html#l00352">aaruf_ecc_cd_write_sector()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="ecc__cd_8c_source.html#l00369">aaruf_ecc_cd_write_sector()</a>.</p>
 
 </div>
 </div>
@@ -597,11 +630,11 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="ecc__cd_8c_source.html#l00352">352</a> of file <a class="el" href="ecc__cd_8c_source.html">ecc_cd.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ecc__cd_8c_source.html#l00369">369</a> of file <a class="el" href="ecc__cd_8c_source.html">ecc_cd.c</a>.</p>
 
-<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="ecc__cd_8c_source.html#l00293">aaruf_ecc_cd_write()</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="ecc__cd_8c_source.html#l00310">aaruf_ecc_cd_write()</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="ecc__cd_8c_source.html#l00459">aaruf_ecc_cd_reconstruct()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="ecc__cd_8c_source.html#l00476">aaruf_ecc_cd_reconstruct()</a>.</p>
 
 </div>
 </div>
@@ -652,11 +685,11 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Computed EDC value. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="ecc__cd_8c_source.html#l00547">547</a> of file <a class="el" href="ecc__cd_8c_source.html">ecc_cd.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ecc__cd_8c_source.html#l00564">564</a> of file <a class="el" href="ecc__cd_8c_source.html">ecc_cd.c</a>.</p>
 
 <p class="reference">References <a class="el" href="decls_8h_source.html#l00045">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00054">AARU_EXPORT</a>, <a class="el" href="context_8h_source.html#l00090">CdEccContext::edc_table</a>, <a class="el" href="context_8h_source.html#l00087">CdEccContext::inited_edc</a>, and <a class="el" href="log_8h_source.html#l00025">TRACE</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="ecc__cd_8c_source.html#l00101">aaruf_ecc_cd_is_suffix_correct()</a>, <a class="el" href="ecc__cd_8c_source.html#l00165">aaruf_ecc_cd_is_suffix_correct_mode2()</a>, <a class="el" href="ecc__cd_8c_source.html#l00459">aaruf_ecc_cd_reconstruct()</a>, and <a class="el" href="write_8c_source.html#l00544">aaruf_write_sector_long()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="ecc__cd_8c_source.html#l00118">aaruf_ecc_cd_is_suffix_correct()</a>, <a class="el" href="ecc__cd_8c_source.html#l00182">aaruf_ecc_cd_is_suffix_correct_mode2()</a>, <a class="el" href="ecc__cd_8c_source.html#l00476">aaruf_ecc_cd_reconstruct()</a>, and <a class="el" href="write_8c_source.html#l00555">aaruf_write_sector_long()</a>.</p>
 
 </div>
 </div>

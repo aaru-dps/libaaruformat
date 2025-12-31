@@ -114,6 +114,8 @@ Functions</h2></td></tr>
 <tr class="memdesc:a8cb7ac8e057627210732ee61d2966e35"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finds a value in the cache by uint64_t key, using string conversion.  <br /></td></tr>
 <tr class="memitem:a0735969939ca80db3fe439ed92b787bb" id="r_a0735969939ca80db3fe439ed92b787bb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0735969939ca80db3fe439ed92b787bb">add_to_cache_uint64</a> (struct <a class="el" href="structCacheHeader.html">CacheHeader</a> *cache, uint64_t key, void *value)</td></tr>
 <tr class="memdesc:a0735969939ca80db3fe439ed92b787bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a value to the cache with a uint64_t key, using string conversion.  <br /></td></tr>
+<tr class="memitem:a92e298695411672c3497ae5c8d9c0427" id="r_a92e298695411672c3497ae5c8d9c0427"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a92e298695411672c3497ae5c8d9c0427">free_cache</a> (struct <a class="el" href="structCacheHeader.html">CacheHeader</a> *cache)</td></tr>
+<tr class="memdesc:a92e298695411672c3497ae5c8d9c0427"><td class="mdescLeft">&#160;</td><td class="mdescRight">Frees all entries in the cache and clears it.  <br /></td></tr>
 </table>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
 <a id="a962bb6b97fb208cbd8a5932afb60e680" name="a962bb6b97fb208cbd8a5932afb60e680"></a>
@@ -153,9 +155,9 @@ Functions</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="lru_8c_source.html#l00047">47</a> of file <a class="el" href="lru_8c_source.html">lru.c</a>.</p>
 
-<p class="reference">References <a class="el" href="lru_8h_source.html#l00048">CacheHeader::cache</a>, <a class="el" href="lru_8h_source.html#l00030">CacheEntry::hh</a>, <a class="el" href="lru_8h_source.html#l00028">CacheEntry::key</a>, <a class="el" href="lru_8h_source.html#l00047">CacheHeader::max_items</a>, and <a class="el" href="lru_8h_source.html#l00029">CacheEntry::value</a>.</p>
+<p class="reference">References <a class="el" href="lru_8h_source.html#l00048">CacheHeader::cache</a>, <a class="el" href="lru_8h_source.html#l00049">CacheHeader::free_func</a>, <a class="el" href="lru_8h_source.html#l00030">CacheEntry::hh</a>, <a class="el" href="lru_8h_source.html#l00028">CacheEntry::key</a>, <a class="el" href="lru_8h_source.html#l00047">CacheHeader::max_items</a>, and <a class="el" href="lru_8h_source.html#l00029">CacheEntry::value</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="lru_8c_source.html#l00102">add_to_cache_uint64()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="lru_8c_source.html#l00113">add_to_cache_uint64()</a>.</p>
 
 </div>
 </div>
@@ -194,7 +196,7 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="lru_8c_source.html#l00102">102</a> of file <a class="el" href="lru_8c_source.html">lru.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="lru_8c_source.html#l00113">113</a> of file <a class="el" href="lru_8c_source.html">lru.c</a>.</p>
 
 <p class="reference">References <a class="el" href="lru_8c_source.html#l00047">add_to_cache()</a>, <a class="el" href="lru_8h_source.html#l00028">CacheEntry::key</a>, and <a class="el" href="lru_8h_source.html#l00029">CacheEntry::value</a>.</p>
 
@@ -236,7 +238,7 @@ Functions</h2></td></tr>
 
 <p class="reference">References <a class="el" href="lru_8h_source.html#l00048">CacheHeader::cache</a>, <a class="el" href="lru_8h_source.html#l00030">CacheEntry::hh</a>, <a class="el" href="lru_8h_source.html#l00028">CacheEntry::key</a>, and <a class="el" href="lru_8h_source.html#l00029">CacheEntry::value</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="lru_8c_source.html#l00088">find_in_cache_uint64()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="lru_8c_source.html#l00093">find_in_cache_uint64()</a>.</p>
 
 </div>
 </div>
@@ -270,11 +272,43 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Pointer to the value if found, or NULL if not found. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="lru_8c_source.html#l00088">88</a> of file <a class="el" href="lru_8c_source.html">lru.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="lru_8c_source.html#l00093">93</a> of file <a class="el" href="lru_8c_source.html">lru.c</a>.</p>
 
 <p class="reference">References <a class="el" href="lru_8c_source.html#l00024">find_in_cache()</a>, and <a class="el" href="lru_8h_source.html#l00028">CacheEntry::key</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="read_8c_source.html#l00253">aaruf_read_sector()</a>.</p>
+
+</div>
+</div>
+<a id="a92e298695411672c3497ae5c8d9c0427" name="a92e298695411672c3497ae5c8d9c0427"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a92e298695411672c3497ae5c8d9c0427">&#9670;&#160;</a></span>free_cache()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void free_cache </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structCacheHeader.html">CacheHeader</a> *</td>          <td class="paramname"><span class="paramname"><em>cache</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Frees all entries in the cache and clears it. </p>
+<p>Iterates through all cache entries, frees their keys and the entries themselves, then clears the cache hash table. Uses the cache's free_func if set to free cached values.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cache</td><td>Pointer to the cache header. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">Definition at line <a class="el" href="lru_8c_source.html#l00130">130</a> of file <a class="el" href="lru_8c_source.html">lru.c</a>.</p>
+
+<p class="reference">References <a class="el" href="lru_8h_source.html#l00048">CacheHeader::cache</a>, <a class="el" href="lru_8h_source.html#l00049">CacheHeader::free_func</a>, <a class="el" href="lru_8h_source.html#l00030">CacheEntry::hh</a>, <a class="el" href="lru_8h_source.html#l00028">CacheEntry::key</a>, and <a class="el" href="lru_8h_source.html#l00029">CacheEntry::value</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l04340">aaruf_close()</a>.</p>
 
 </div>
 </div>

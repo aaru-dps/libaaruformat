@@ -7,6 +7,7 @@ var enums_8h =
       [ "DataBlock", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3a5a0811c5ee97536aef900cecb8787713", null ],
       [ "DeDuplicationTable", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3ac9f1e20a51c73f238aa322e180c42bd4", null ],
       [ "DeDuplicationTable2", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3aba4d0f50b26af1d0292daaa0d70feacf", null ],
+      [ "DeDuplicationTableSAlpha", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3ad1d443e05bbdf4c75084244a151a44d3", null ],
       [ "DeDuplicationTableSecondary", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3a76b6a78e4e765794c4cca2dde5bfc3fb", null ],
       [ "IndexBlock", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3ab8d63dc690b2ba82f066fdc31ab5adad", null ],
       [ "IndexBlock2", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3a6ee3c4c583df36e3dfe796593c1e9439", null ],

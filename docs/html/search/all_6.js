@@ -38,12 +38,14 @@ var searchData=
   ['floptical_35',['Floptical',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa7167e5fc54a519ec2c5f7997ac8c1180',1,'aaru.h']]],
   ['fmtowns_36',['FMTOWNS',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa54a5601323f7c9935ba35beb1da5abcd',1,'aaru.h']]],
   ['force_5finline_37',['FORCE_INLINE',['../decls_8h.html#ac032d233a8ebfcd82fd49d0824eefb18',1,'decls.h']]],
-  ['free_5fdump_5fhardware_5fentries_38',['free_dump_hardware_entries',['../dump_8c.html#ab98a236ef7ac4de15fb37a2e3c3ce633',1,'dump.c']]],
-  ['free_5fdump_5fhardware_5fentries_5farray_39',['free_dump_hardware_entries_array',['../blocks_2dump_8c.html#a5145c01023659313140eb978a393b6eb',1,'dump.c']]],
-  ['free_5fmap_40',['free_map',['../hash__map_8h.html#ab885e8c5bedaf6f3cca1877e378fd04f',1,'free_map(hash_map_t *map):&#160;hash_map.c'],['../hash__map_8c.html#ab885e8c5bedaf6f3cca1877e378fd04f',1,'free_map(hash_map_t *map):&#160;hash_map.c']]],
-  ['fuzzy_5fengine_5fstep_41',['fuzzy_engine_step',['../decls_8h.html#a680150d4b3df13261af758c504a1f848',1,'fuzzy_engine_step(spamsum_ctx *ctx, uint8_t c):&#160;spamsum.c'],['../spamsum_8c.html#a680150d4b3df13261af758c504a1f848',1,'fuzzy_engine_step(spamsum_ctx *ctx, uint8_t c):&#160;spamsum.c']]],
-  ['fuzzy_5fmax_5fresult_42',['FUZZY_MAX_RESULT',['../spamsum_8h.html#a2309f23e98c4c0370f32e3e3cb09afa5',1,'spamsum.h']]],
-  ['fuzzy_5ftry_5ffork_5fblockhash_43',['fuzzy_try_fork_blockhash',['../decls_8h.html#a24c6d35239a8d1fee6e93aa12bbd5bd6',1,'fuzzy_try_fork_blockhash(spamsum_ctx *ctx):&#160;spamsum.c'],['../spamsum_8c.html#a24c6d35239a8d1fee6e93aa12bbd5bd6',1,'fuzzy_try_fork_blockhash(spamsum_ctx *ctx):&#160;spamsum.c']]],
-  ['fuzzy_5ftry_5freduce_5fblockhash_44',['fuzzy_try_reduce_blockhash',['../decls_8h.html#a906ad6bd1809bf999874c848af7c648b',1,'fuzzy_try_reduce_blockhash(spamsum_ctx *ctx):&#160;spamsum.c'],['../spamsum_8c.html#a906ad6bd1809bf999874c848af7c648b',1,'fuzzy_try_reduce_blockhash(spamsum_ctx *ctx):&#160;spamsum.c']]],
-  ['fvd_45',['FVD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aad0c431131a66081e6b394fafdb9828c4',1,'aaru.h']]]
+  ['free_5fcache_38',['free_cache',['../lru_8h.html#a92e298695411672c3497ae5c8d9c0427',1,'free_cache(struct CacheHeader *cache):&#160;lru.c'],['../lru_8c.html#a92e298695411672c3497ae5c8d9c0427',1,'free_cache(struct CacheHeader *cache):&#160;lru.c']]],
+  ['free_5fdump_5fhardware_5fentries_39',['free_dump_hardware_entries',['../dump_8c.html#ab98a236ef7ac4de15fb37a2e3c3ce633',1,'dump.c']]],
+  ['free_5fdump_5fhardware_5fentries_5farray_40',['free_dump_hardware_entries_array',['../blocks_2dump_8c.html#a5145c01023659313140eb978a393b6eb',1,'dump.c']]],
+  ['free_5ffunc_41',['free_func',['../structCacheHeader.html#afeac54c794f8fece845e49954fd89f1a',1,'CacheHeader']]],
+  ['free_5fmap_42',['free_map',['../hash__map_8h.html#ab885e8c5bedaf6f3cca1877e378fd04f',1,'free_map(hash_map_t *map):&#160;hash_map.c'],['../hash__map_8c.html#ab885e8c5bedaf6f3cca1877e378fd04f',1,'free_map(hash_map_t *map):&#160;hash_map.c']]],
+  ['fuzzy_5fengine_5fstep_43',['fuzzy_engine_step',['../decls_8h.html#a680150d4b3df13261af758c504a1f848',1,'fuzzy_engine_step(spamsum_ctx *ctx, uint8_t c):&#160;spamsum.c'],['../spamsum_8c.html#a680150d4b3df13261af758c504a1f848',1,'fuzzy_engine_step(spamsum_ctx *ctx, uint8_t c):&#160;spamsum.c']]],
+  ['fuzzy_5fmax_5fresult_44',['FUZZY_MAX_RESULT',['../spamsum_8h.html#a2309f23e98c4c0370f32e3e3cb09afa5',1,'spamsum.h']]],
+  ['fuzzy_5ftry_5ffork_5fblockhash_45',['fuzzy_try_fork_blockhash',['../decls_8h.html#a24c6d35239a8d1fee6e93aa12bbd5bd6',1,'fuzzy_try_fork_blockhash(spamsum_ctx *ctx):&#160;spamsum.c'],['../spamsum_8c.html#a24c6d35239a8d1fee6e93aa12bbd5bd6',1,'fuzzy_try_fork_blockhash(spamsum_ctx *ctx):&#160;spamsum.c']]],
+  ['fuzzy_5ftry_5freduce_5fblockhash_46',['fuzzy_try_reduce_blockhash',['../decls_8h.html#a906ad6bd1809bf999874c848af7c648b',1,'fuzzy_try_reduce_blockhash(spamsum_ctx *ctx):&#160;spamsum.c'],['../spamsum_8c.html#a906ad6bd1809bf999874c848af7c648b',1,'fuzzy_try_reduce_blockhash(spamsum_ctx *ctx):&#160;spamsum.c']]],
+  ['fvd_47',['FVD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aad0c431131a66081e6b394fafdb9828c4',1,'aaru.h']]]
 ];

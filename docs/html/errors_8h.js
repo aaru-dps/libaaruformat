@@ -16,6 +16,7 @@ var errors_8h =
     [ "AARUF_ERROR_INCORRECT_MEDIA_TYPE", "errors_8h.html#a26707b86af4dd4f3bae7d57abd4345b0", null ],
     [ "AARUF_ERROR_INVALID_APP_NAME_LENGTH", "errors_8h.html#a24494b154606028b04c1d71367545e5c", null ],
     [ "AARUF_ERROR_INVALID_BLOCK_CRC", "errors_8h.html#aa8dcb9cad962fc5f5f84d5e1ec41fae7", null ],
+    [ "AARUF_ERROR_INVALID_SECTOR_LENGTH", "errors_8h.html#ade4e3e3feaf2ea083deea82878e6cf69", null ],
     [ "AARUF_ERROR_INVALID_TAG", "errors_8h.html#ad3340e78aca685a8ea4739fdfd04292f", null ],
     [ "AARUF_ERROR_INVALID_TRACK_FORMAT", "errors_8h.html#a604a2b6b7bf491f7e62a817b6c887f32", null ],
     [ "AARUF_ERROR_MEDIA_TAG_NOT_PRESENT", "errors_8h.html#ad87e52bef1f48eebb49458a5f64f7016", null ],

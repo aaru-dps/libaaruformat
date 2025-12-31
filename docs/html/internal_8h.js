@@ -8,7 +8,7 @@ var internal_8h =
     [ "decode_ddt_single_level_v2", "internal_8h.html#a40c571bc4778040f22ac211cea670db1", null ],
     [ "generate_random_bytes", "internal_8h.html#a7db9f44b931877b306de9cf7cd1deed2", null ],
     [ "get_filetime_uint64", "internal_8h.html#a36c1cca0e4cea9c2e0dffb582b836f6f", null ],
-    [ "parse_options", "internal_8h.html#aaae42bff244df727b6c029f58d4957df", null ],
+    [ "parse_options", "internal_8h.html#addf13857b7c9f36eb32cfd3c7efab10b", null ],
     [ "process_aaru_metadata_json_block", "internal_8h.html#a84003ec881425a7b28ec24cb48d19f02", null ],
     [ "process_checksum_block", "internal_8h.html#a565eace88f86c500249be1f2a89a1c60", null ],
     [ "process_cicm_block", "internal_8h.html#a5e0397faed8aea27c5a6a3881875de54", null ],

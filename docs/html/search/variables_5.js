@@ -9,5 +9,6 @@ var searchData=
   ['firmware_6',['firmware',['../structDumpHardwareEntriesWithData.html#a04e71aaa515a5a88171f5730e371abbf',1,'DumpHardwareEntriesWithData']]],
   ['firmwarelength_7',['firmwareLength',['../structDumpHardwareEntry.html#a52948ae4f0d07e4d861e79def4a0deec',1,'DumpHardwareEntry']]],
   ['firstblock_8',['FirstBlock',['../structTapeFileEntry.html#a8bc76d9c2d9c43e14680e39d3fc728ca',1,'TapeFileEntry::FirstBlock'],['../structTapePartitionEntry.html#af2cdde924cd050523ad0fb453eb5842d',1,'TapePartitionEntry::FirstBlock']]],
-  ['flags_9',['flags',['../structTrackEntry.html#a7ae98d532f6dff50c2439b64d2cddb45',1,'TrackEntry']]]
+  ['flags_9',['flags',['../structTrackEntry.html#a7ae98d532f6dff50c2439b64d2cddb45',1,'TrackEntry']]],
+  ['free_5ffunc_10',['free_func',['../structCacheHeader.html#afeac54c794f8fece845e49954fd89f1a',1,'CacheHeader']]]
 ];

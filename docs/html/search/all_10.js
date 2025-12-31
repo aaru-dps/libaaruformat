@@ -1,7 +1,7 @@
 var searchData=
 [
   ['parentblock_0',['ParentBlock',['../enums_8h.html#a54420623f26ab6bb61042b41cccf37a3aaf2b82002c359bb1547a4b3f6d39cd28',1,'enums.h']]],
-  ['parse_5foptions_1',['parse_options',['../internal_8h.html#aaae42bff244df727b6c029f58d4957df',1,'parse_options(const char *options):&#160;options.c'],['../options_8c.html#aaae42bff244df727b6c029f58d4957df',1,'parse_options(const char *options):&#160;options.c']]],
+  ['parse_5foptions_1',['parse_options',['../internal_8h.html#addf13857b7c9f36eb32cfd3c7efab10b',1,'parse_options(const char *options, bool *table_shift_found):&#160;options.c'],['../options_8c.html#addf13857b7c9f36eb32cfd3c7efab10b',1,'parse_options(const char *options, bool *table_shift_found):&#160;options.c']]],
   ['partition_2',['Partition',['../structTapeFileEntry.html#acef4f9b9acac33d1e5f08f6cd62afab3',1,'TapeFileEntry']]],
   ['partitionentry_3',['partitionEntry',['../structTapePartitionHashEntry.html#af7c9f8904da9a0a21171ff3c04ec4379',1,'TapePartitionHashEntry']]],
   ['pccardtypei_4',['PCCardTypeI',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa1e769aa2d23d5980075ac83436c4497a',1,'aaru.h']]],

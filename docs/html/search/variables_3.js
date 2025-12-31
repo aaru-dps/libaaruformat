@@ -5,7 +5,7 @@ var searchData=
   ['data_2',['data',['../structmediaTagEntry.html#a334fc65b37efdfb624e804e98c398927',1,'mediaTagEntry']]],
   ['data_5fshift_3',['data_shift',['../structaaru__options.html#a3b6341d5cbd1ed2c4ff0686cd88de753',1,'aaru_options']]],
   ['data_5ftracks_4',['data_tracks',['../structaaruformat__context.html#a2656e1efffab41086f8c580896ea24a1',1,'aaruformat_context']]],
-  ['datashift_5',['dataShift',['../structDdtHeader2.html#ad9a2beb3a79bc6c239ba04fe341e0cde',1,'DdtHeader2::dataShift'],['../structAaruHeaderV2.html#a520d6f22b18a42fee0c6d72fbe3e064d',1,'AaruHeaderV2::dataShift']]],
+  ['datashift_5',['dataShift',['../structDdtHeader2.html#ad9a2beb3a79bc6c239ba04fe341e0cde',1,'DdtHeader2']]],
   ['datatype_6',['dataType',['../structIndexEntry.html#ae5d35082a756e0388efbf5fabbe93d10',1,'IndexEntry']]],
   ['ddt_5fversion_7',['ddt_version',['../structaaruformat__context.html#a7c284949fdbfecfddeac2ba6687213b0',1,'aaruformat_context']]],
   ['deduplicate_8',['deduplicate',['../structaaruformat__context.html#a0d4e1977913ce67e85bced41c58e5dd2',1,'aaruformat_context::deduplicate'],['../structaaru__options.html#a2d62d4cd6f1e59c145e3c4bc621f7d43',1,'aaru_options::deduplicate']]],
