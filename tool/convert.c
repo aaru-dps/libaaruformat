@@ -95,14 +95,12 @@ static void draw_progress_bar(double percentage, double speed, double elapsed, d
     printf("\r" ANSI_CYAN "  [");
 
     for(int i = 0; i < PROGRESS_BAR_WIDTH; i++)
-    {
         if(i < filled)
             printf(ANSI_GREEN "█");
         else if(i == filled)
             printf(ANSI_YELLOW "▓");
         else
             printf(ANSI_WHITE "░");
-    }
 
     printf(ANSI_CYAN "] " ANSI_WHITE "%5.1f%%" ANSI_RESET, percentage);
     printf(" │ %s/s │ %s │ ETA: %s   ", speed_str, elapsed_str, eta_str);
@@ -264,10 +262,8 @@ int convert(const char *input_path, const char *output_path, bool use_long)
                         int  sw_len = snprintf(sw_info, sizeof(sw_info), "%.*s", entry->entry.softwareNameLength,
                                                entry->softwareName);
                         if(entry->softwareVersion != NULL && entry->entry.softwareVersionLength > 0)
-                        {
                             snprintf(sw_info + sw_len, sizeof(sw_info) - sw_len, " %.*s",
                                      entry->entry.softwareVersionLength, entry->softwareVersion);
-                        }
                         print_info("  Software:", sw_info);
                     }
 
@@ -289,9 +285,9 @@ int convert(const char *input_path, const char *output_path, bool use_long)
     }
 
     // Check for Aaru JSON metadata
-    size_t   json_size    = 0;
-    uint8_t *json_data    = NULL;
-    bool     has_json     = false;
+    size_t   json_size = 0;
+    uint8_t *json_data = NULL;
+    bool     has_json  = false;
 
     res = aaruf_get_aaru_json_metadata(input_ctx, NULL, &json_size);
     if(res == AARUF_ERROR_BUFFER_TOO_SMALL && json_size > 0)
@@ -307,6 +303,43 @@ int convert(const char *input_path, const char *output_path, bool use_long)
                 print_header("Aaru JSON Metadata");
                 print_info("Size:", buffer);
                 print_success("Aaru JSON metadata present");
+            }
+        }
+    }
+
+    // Enumerate media tags
+    size_t   media_tags_size  = 0;
+    uint8_t *media_tags_map   = NULL;
+    int      media_tags_count = 0;
+
+    res = aaruf_get_readable_media_tags(input_ctx, NULL, &media_tags_size);
+    if(res == AARUF_ERROR_BUFFER_TOO_SMALL && media_tags_size > 0)
+    {
+        media_tags_map = malloc(media_tags_size);
+        if(media_tags_map != NULL)
+        {
+            res = aaruf_get_readable_media_tags(input_ctx, media_tags_map, &media_tags_size);
+            if(res == AARUF_STATUS_OK)
+            {
+                // Count how many media tags are present
+                for(size_t i = 0; i < media_tags_size; i++)
+                    if(media_tags_map[i]) media_tags_count++;
+
+                if(media_tags_count > 0)
+                {
+                    print_header("Media Tags");
+                    snprintf(buffer, sizeof(buffer), "%d media tag(s) present", media_tags_count);
+                    print_info("Count:", buffer);
+                    printf("\n");
+
+                    // List all present media tags
+                    for(size_t i = 0; i < media_tags_size; i++)
+                        if(media_tags_map[i])
+                        {
+                            const char *tag_name = media_tag_type_to_string((int32_t)i);
+                            printf("    " ANSI_GREEN "•" ANSI_RESET " %s\n", tag_name ? tag_name : "Unknown");
+                        }
+                }
             }
         }
     }
@@ -574,6 +607,63 @@ int convert(const char *input_path, const char *output_path, bool use_long)
         }
     }
 
+    // Copy media tags if any are present
+    if(media_tags_count > 0 && media_tags_map != NULL)
+    {
+        int tags_copied = 0;
+        int tags_failed = 0;
+
+        for(size_t i = 0; i < media_tags_size; i++)
+        {
+            if(!media_tags_map[i]) continue;
+
+            // First, query the size of this media tag
+            uint32_t tag_length = 0;
+            res                 = aaruf_read_media_tag(input_ctx, NULL, (int32_t)i, &tag_length);
+            if(res != AARUF_ERROR_BUFFER_TOO_SMALL || tag_length == 0)
+            {
+                tags_failed++;
+                continue;
+            }
+
+            // Allocate buffer and read the tag data
+            uint8_t *tag_data = malloc(tag_length);
+            if(tag_data == NULL)
+            {
+                tags_failed++;
+                continue;
+            }
+
+            res = aaruf_read_media_tag(input_ctx, tag_data, (int32_t)i, &tag_length);
+            if(res != AARUF_STATUS_OK)
+            {
+                free(tag_data);
+                tags_failed++;
+                continue;
+            }
+
+            // Write the tag to the destination image
+            res = aaruf_write_media_tag(output_ctx, tag_data, (int32_t)i, tag_length);
+            free(tag_data);
+
+            if(res == AARUF_STATUS_OK)
+                tags_copied++;
+            else
+                tags_failed++;
+        }
+
+        if(tags_copied > 0)
+        {
+            snprintf(buffer, sizeof(buffer), "Media tags copied (%d of %d)", tags_copied, media_tags_count);
+            print_success(buffer);
+        }
+        if(tags_failed > 0)
+        {
+            snprintf(buffer, sizeof(buffer), "Warning: %d media tag(s) could not be copied", tags_failed);
+            print_warning(buffer);
+        }
+    }
+
     // Free dump hardware data if allocated
     if(dumphw_data != NULL)
     {
@@ -586,6 +676,13 @@ int convert(const char *input_path, const char *output_path, bool use_long)
     {
         free(json_data);
         json_data = NULL;
+    }
+
+    // Free media tags map if allocated
+    if(media_tags_map != NULL)
+    {
+        free(media_tags_map);
+        media_tags_map = NULL;
     }
 
     // Calculate final statistics
