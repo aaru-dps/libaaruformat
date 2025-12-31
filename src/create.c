@@ -425,7 +425,7 @@ AARU_EXPORT void AARU_CALL *aaruf_create(const char *filepath, const uint32_t me
         {
             const uint64_t total_sectors = user_sectors + overflow_sectors + negative_sectors;
 
-            if(total_sectors < 0x8388608ULL)
+            if(total_sectors < 8388608ULL)
                 ctx->user_data_ddt_header.tableShift = 0;
             else
                 ctx->user_data_ddt_header.tableShift = 22;
