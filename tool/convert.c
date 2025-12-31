@@ -209,6 +209,25 @@ int convert(const char *input_path, const char *output_path, bool use_long)
         }
     }
 
+    // Copy geometry if source is BlockMedia and has valid geometry
+    if(input_ctx->image_info.MetadataMediaType == BlockMedia)
+    {
+        uint32_t cylinders         = 0;
+        uint32_t heads             = 0;
+        uint32_t sectors_per_track = 0;
+
+        res = aaruf_get_geometry(input_ctx, &cylinders, &heads, &sectors_per_track);
+        if(res == AARUF_STATUS_OK && (cylinders != 0 || heads != 0 || sectors_per_track != 0))
+        {
+            res = aaruf_set_geometry(output_ctx, cylinders, heads, sectors_per_track);
+            if(res == AARUF_STATUS_OK)
+                printf("\nGeometry copied: %u cylinders, %u heads, %u sectors per track.\n", cylinders, heads,
+                       sectors_per_track);
+            else
+                printf("\nError %d when setting geometry on output image.\n", res);
+        }
+    }
+
     printf("\n");
 
     // Clean up
