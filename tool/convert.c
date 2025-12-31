@@ -135,6 +135,28 @@ static void print_error(const char *message) { printf(ANSI_RED "  ✗ %s" ANSI_R
 // Print warning message
 static void print_warning(const char *message) { printf(ANSI_YELLOW "  ⚠ %s" ANSI_RESET "\n", message); }
 
+// Helper to convert UTF-16LE metadata to displayable string
+// Returns malloc'd string that must be freed, or NULL on failure
+static char *utf16le_to_utf8(const uint8_t *utf16_data, int32_t utf16_length)
+{
+    if(utf16_data == NULL || utf16_length <= 0) return NULL;
+
+    char *result = malloc(utf16_length + 1);
+    if(result == NULL) return NULL;
+
+    memset(result, 0, utf16_length + 1);
+    UErrorCode u_error = U_ZERO_ERROR;
+    ucnv_convert(NULL, "UTF-16LE", result, utf16_length, (const char *)utf16_data, utf16_length, &u_error);
+
+    if(u_error != U_ZERO_ERROR)
+    {
+        free(result);
+        return NULL;
+    }
+
+    return result;
+}
+
 int convert(const char *input_path, const char *output_path, bool use_long)
 {
     aaruformat_context *input_ctx     = NULL;
@@ -303,6 +325,405 @@ int convert(const char *input_path, const char *output_path, bool use_long)
                 print_header("Aaru JSON Metadata");
                 print_info("Size:", buffer);
                 print_success("Aaru JSON metadata present");
+            }
+        }
+    }
+
+    // Check for basic metadata
+    int32_t  meta_sequence          = 0;
+    int32_t  meta_last_sequence     = 0;
+    bool     has_sequence           = false;
+    int32_t  meta_length            = 0;
+    uint8_t *meta_creator           = NULL;
+    int32_t  meta_creator_len       = 0;
+    uint8_t *meta_comments          = NULL;
+    int32_t  meta_comments_len      = 0;
+    uint8_t *meta_title             = NULL;
+    int32_t  meta_title_len         = 0;
+    uint8_t *meta_media_mfr         = NULL;
+    int32_t  meta_media_mfr_len     = 0;
+    uint8_t *meta_media_model       = NULL;
+    int32_t  meta_media_model_len   = 0;
+    uint8_t *meta_media_serial      = NULL;
+    int32_t  meta_media_serial_len  = 0;
+    uint8_t *meta_media_barcode     = NULL;
+    int32_t  meta_media_barcode_len = 0;
+    uint8_t *meta_media_partno      = NULL;
+    int32_t  meta_media_partno_len  = 0;
+    uint8_t *meta_drive_mfr         = NULL;
+    int32_t  meta_drive_mfr_len     = 0;
+    uint8_t *meta_drive_model       = NULL;
+    int32_t  meta_drive_model_len   = 0;
+    uint8_t *meta_drive_serial      = NULL;
+    int32_t  meta_drive_serial_len  = 0;
+    uint8_t *meta_drive_fw          = NULL;
+    int32_t  meta_drive_fw_len      = 0;
+    bool     has_basic_metadata     = false;
+
+    // Check sequence
+    if(aaruf_get_media_sequence(input_ctx, &meta_sequence, &meta_last_sequence) == AARUF_STATUS_OK && meta_sequence > 0)
+    {
+        has_sequence       = true;
+        has_basic_metadata = true;
+    }
+
+    // Check and get creator
+    meta_length = 0;
+    if(aaruf_get_creator(input_ctx, NULL, &meta_length) == AARUF_ERROR_BUFFER_TOO_SMALL && meta_length > 0)
+    {
+        meta_creator = malloc(meta_length);
+        if(meta_creator != NULL)
+        {
+            meta_creator_len = meta_length;
+            if(aaruf_get_creator(input_ctx, meta_creator, &meta_creator_len) != AARUF_STATUS_OK)
+            {
+                free(meta_creator);
+                meta_creator     = NULL;
+                meta_creator_len = 0;
+            }
+            else
+                has_basic_metadata = true;
+        }
+    }
+
+    // Check and get comments
+    meta_length = 0;
+    if(aaruf_get_comments(input_ctx, NULL, &meta_length) == AARUF_ERROR_BUFFER_TOO_SMALL && meta_length > 0)
+    {
+        meta_comments = malloc(meta_length);
+        if(meta_comments != NULL)
+        {
+            meta_comments_len = meta_length;
+            if(aaruf_get_comments(input_ctx, meta_comments, &meta_comments_len) != AARUF_STATUS_OK)
+            {
+                free(meta_comments);
+                meta_comments     = NULL;
+                meta_comments_len = 0;
+            }
+            else
+                has_basic_metadata = true;
+        }
+    }
+
+    // Check and get media title
+    meta_length = 0;
+    if(aaruf_get_media_title(input_ctx, NULL, &meta_length) == AARUF_ERROR_BUFFER_TOO_SMALL && meta_length > 0)
+    {
+        meta_title = malloc(meta_length);
+        if(meta_title != NULL)
+        {
+            meta_title_len = meta_length;
+            if(aaruf_get_media_title(input_ctx, meta_title, &meta_title_len) != AARUF_STATUS_OK)
+            {
+                free(meta_title);
+                meta_title     = NULL;
+                meta_title_len = 0;
+            }
+            else
+                has_basic_metadata = true;
+        }
+    }
+
+    // Check and get media manufacturer
+    meta_length = 0;
+    if(aaruf_get_media_manufacturer(input_ctx, NULL, &meta_length) == AARUF_ERROR_BUFFER_TOO_SMALL && meta_length > 0)
+    {
+        meta_media_mfr = malloc(meta_length);
+        if(meta_media_mfr != NULL)
+        {
+            meta_media_mfr_len = meta_length;
+            if(aaruf_get_media_manufacturer(input_ctx, meta_media_mfr, &meta_media_mfr_len) != AARUF_STATUS_OK)
+            {
+                free(meta_media_mfr);
+                meta_media_mfr     = NULL;
+                meta_media_mfr_len = 0;
+            }
+            else
+                has_basic_metadata = true;
+        }
+    }
+
+    // Check and get media model
+    meta_length = 0;
+    if(aaruf_get_media_model(input_ctx, NULL, &meta_length) == AARUF_ERROR_BUFFER_TOO_SMALL && meta_length > 0)
+    {
+        meta_media_model = malloc(meta_length);
+        if(meta_media_model != NULL)
+        {
+            meta_media_model_len = meta_length;
+            if(aaruf_get_media_model(input_ctx, meta_media_model, &meta_media_model_len) != AARUF_STATUS_OK)
+            {
+                free(meta_media_model);
+                meta_media_model     = NULL;
+                meta_media_model_len = 0;
+            }
+            else
+                has_basic_metadata = true;
+        }
+    }
+
+    // Check and get media serial number
+    meta_length = 0;
+    if(aaruf_get_media_serial_number(input_ctx, NULL, &meta_length) == AARUF_ERROR_BUFFER_TOO_SMALL && meta_length > 0)
+    {
+        meta_media_serial = malloc(meta_length);
+        if(meta_media_serial != NULL)
+        {
+            meta_media_serial_len = meta_length;
+            if(aaruf_get_media_serial_number(input_ctx, meta_media_serial, &meta_media_serial_len) != AARUF_STATUS_OK)
+            {
+                free(meta_media_serial);
+                meta_media_serial     = NULL;
+                meta_media_serial_len = 0;
+            }
+            else
+                has_basic_metadata = true;
+        }
+    }
+
+    // Check and get media barcode
+    meta_length = 0;
+    if(aaruf_get_media_barcode(input_ctx, NULL, &meta_length) == AARUF_ERROR_BUFFER_TOO_SMALL && meta_length > 0)
+    {
+        meta_media_barcode = malloc(meta_length);
+        if(meta_media_barcode != NULL)
+        {
+            meta_media_barcode_len = meta_length;
+            if(aaruf_get_media_barcode(input_ctx, meta_media_barcode, &meta_media_barcode_len) != AARUF_STATUS_OK)
+            {
+                free(meta_media_barcode);
+                meta_media_barcode     = NULL;
+                meta_media_barcode_len = 0;
+            }
+            else
+                has_basic_metadata = true;
+        }
+    }
+
+    // Check and get media part number
+    meta_length = 0;
+    if(aaruf_get_media_part_number(input_ctx, NULL, &meta_length) == AARUF_ERROR_BUFFER_TOO_SMALL && meta_length > 0)
+    {
+        meta_media_partno = malloc(meta_length);
+        if(meta_media_partno != NULL)
+        {
+            meta_media_partno_len = meta_length;
+            if(aaruf_get_media_part_number(input_ctx, meta_media_partno, &meta_media_partno_len) != AARUF_STATUS_OK)
+            {
+                free(meta_media_partno);
+                meta_media_partno     = NULL;
+                meta_media_partno_len = 0;
+            }
+            else
+                has_basic_metadata = true;
+        }
+    }
+
+    // Check and get drive manufacturer
+    meta_length = 0;
+    if(aaruf_get_drive_manufacturer(input_ctx, NULL, &meta_length) == AARUF_ERROR_BUFFER_TOO_SMALL && meta_length > 0)
+    {
+        meta_drive_mfr = malloc(meta_length);
+        if(meta_drive_mfr != NULL)
+        {
+            meta_drive_mfr_len = meta_length;
+            if(aaruf_get_drive_manufacturer(input_ctx, meta_drive_mfr, &meta_drive_mfr_len) != AARUF_STATUS_OK)
+            {
+                free(meta_drive_mfr);
+                meta_drive_mfr     = NULL;
+                meta_drive_mfr_len = 0;
+            }
+            else
+                has_basic_metadata = true;
+        }
+    }
+
+    // Check and get drive model
+    meta_length = 0;
+    if(aaruf_get_drive_model(input_ctx, NULL, &meta_length) == AARUF_ERROR_BUFFER_TOO_SMALL && meta_length > 0)
+    {
+        meta_drive_model = malloc(meta_length);
+        if(meta_drive_model != NULL)
+        {
+            meta_drive_model_len = meta_length;
+            if(aaruf_get_drive_model(input_ctx, meta_drive_model, &meta_drive_model_len) != AARUF_STATUS_OK)
+            {
+                free(meta_drive_model);
+                meta_drive_model     = NULL;
+                meta_drive_model_len = 0;
+            }
+            else
+                has_basic_metadata = true;
+        }
+    }
+
+    // Check and get drive serial number
+    meta_length = 0;
+    if(aaruf_get_drive_serial_number(input_ctx, NULL, &meta_length) == AARUF_ERROR_BUFFER_TOO_SMALL && meta_length > 0)
+    {
+        meta_drive_serial = malloc(meta_length);
+        if(meta_drive_serial != NULL)
+        {
+            meta_drive_serial_len = meta_length;
+            if(aaruf_get_drive_serial_number(input_ctx, meta_drive_serial, &meta_drive_serial_len) != AARUF_STATUS_OK)
+            {
+                free(meta_drive_serial);
+                meta_drive_serial     = NULL;
+                meta_drive_serial_len = 0;
+            }
+            else
+                has_basic_metadata = true;
+        }
+    }
+
+    // Check and get drive firmware revision
+    meta_length = 0;
+    if(aaruf_get_drive_firmware_revision(input_ctx, NULL, &meta_length) == AARUF_ERROR_BUFFER_TOO_SMALL &&
+       meta_length > 0)
+    {
+        meta_drive_fw = malloc(meta_length);
+        if(meta_drive_fw != NULL)
+        {
+            meta_drive_fw_len = meta_length;
+            if(aaruf_get_drive_firmware_revision(input_ctx, meta_drive_fw, &meta_drive_fw_len) != AARUF_STATUS_OK)
+            {
+                free(meta_drive_fw);
+                meta_drive_fw     = NULL;
+                meta_drive_fw_len = 0;
+            }
+            else
+                has_basic_metadata = true;
+        }
+    }
+
+    // Display basic metadata if any exists
+    if(has_basic_metadata)
+    {
+        print_header("Image Metadata");
+
+        if(has_sequence)
+        {
+            snprintf(buffer, sizeof(buffer), "%d of %d", meta_sequence, meta_last_sequence);
+            print_info("Media Sequence:", buffer);
+        }
+
+        if(meta_creator != NULL)
+        {
+            char *str = utf16le_to_utf8(meta_creator, meta_creator_len);
+            if(str != NULL)
+            {
+                print_info("Creator:", str);
+                free(str);
+            }
+        }
+
+        if(meta_comments != NULL)
+        {
+            char *str = utf16le_to_utf8(meta_comments, meta_comments_len);
+            if(str != NULL)
+            {
+                print_info("Comments:", str);
+                free(str);
+            }
+        }
+
+        if(meta_title != NULL)
+        {
+            char *str = utf16le_to_utf8(meta_title, meta_title_len);
+            if(str != NULL)
+            {
+                print_info("Media Title:", str);
+                free(str);
+            }
+        }
+
+        if(meta_media_mfr != NULL)
+        {
+            char *str = utf16le_to_utf8(meta_media_mfr, meta_media_mfr_len);
+            if(str != NULL)
+            {
+                print_info("Media Manufacturer:", str);
+                free(str);
+            }
+        }
+
+        if(meta_media_model != NULL)
+        {
+            char *str = utf16le_to_utf8(meta_media_model, meta_media_model_len);
+            if(str != NULL)
+            {
+                print_info("Media Model:", str);
+                free(str);
+            }
+        }
+
+        if(meta_media_serial != NULL)
+        {
+            char *str = utf16le_to_utf8(meta_media_serial, meta_media_serial_len);
+            if(str != NULL)
+            {
+                print_info("Media Serial:", str);
+                free(str);
+            }
+        }
+
+        if(meta_media_barcode != NULL)
+        {
+            char *str = utf16le_to_utf8(meta_media_barcode, meta_media_barcode_len);
+            if(str != NULL)
+            {
+                print_info("Media Barcode:", str);
+                free(str);
+            }
+        }
+
+        if(meta_media_partno != NULL)
+        {
+            char *str = utf16le_to_utf8(meta_media_partno, meta_media_partno_len);
+            if(str != NULL)
+            {
+                print_info("Media Part Number:", str);
+                free(str);
+            }
+        }
+
+        if(meta_drive_mfr != NULL)
+        {
+            char *str = utf16le_to_utf8(meta_drive_mfr, meta_drive_mfr_len);
+            if(str != NULL)
+            {
+                print_info("Drive Manufacturer:", str);
+                free(str);
+            }
+        }
+
+        if(meta_drive_model != NULL)
+        {
+            char *str = utf16le_to_utf8(meta_drive_model, meta_drive_model_len);
+            if(str != NULL)
+            {
+                print_info("Drive Model:", str);
+                free(str);
+            }
+        }
+
+        if(meta_drive_serial != NULL)
+        {
+            char *str = utf16le_to_utf8(meta_drive_serial, meta_drive_serial_len);
+            if(str != NULL)
+            {
+                print_info("Drive Serial:", str);
+                free(str);
+            }
+        }
+
+        if(meta_drive_fw != NULL)
+        {
+            char *str = utf16le_to_utf8(meta_drive_fw, meta_drive_fw_len);
+            if(str != NULL)
+            {
+                print_info("Drive Firmware:", str);
+                free(str);
             }
         }
     }
@@ -664,6 +1085,154 @@ int convert(const char *input_path, const char *output_path, bool use_long)
         }
     }
 
+    // Copy basic metadata if available
+    if(has_basic_metadata)
+    {
+        int meta_copied = 0;
+        int meta_failed = 0;
+
+        // Copy media sequence
+        if(has_sequence)
+        {
+            res = aaruf_set_media_sequence(output_ctx, meta_sequence, meta_last_sequence);
+            if(res == AARUF_STATUS_OK)
+                meta_copied++;
+            else
+                meta_failed++;
+        }
+
+        // Copy creator
+        if(meta_creator != NULL)
+        {
+            res = aaruf_set_creator(output_ctx, meta_creator, meta_creator_len);
+            if(res == AARUF_STATUS_OK)
+                meta_copied++;
+            else
+                meta_failed++;
+        }
+
+        // Copy comments
+        if(meta_comments != NULL)
+        {
+            res = aaruf_set_comments(output_ctx, meta_comments, meta_comments_len);
+            if(res == AARUF_STATUS_OK)
+                meta_copied++;
+            else
+                meta_failed++;
+        }
+
+        // Copy media title
+        if(meta_title != NULL)
+        {
+            res = aaruf_set_media_title(output_ctx, meta_title, meta_title_len);
+            if(res == AARUF_STATUS_OK)
+                meta_copied++;
+            else
+                meta_failed++;
+        }
+
+        // Copy media manufacturer
+        if(meta_media_mfr != NULL)
+        {
+            res = aaruf_set_media_manufacturer(output_ctx, meta_media_mfr, meta_media_mfr_len);
+            if(res == AARUF_STATUS_OK)
+                meta_copied++;
+            else
+                meta_failed++;
+        }
+
+        // Copy media model
+        if(meta_media_model != NULL)
+        {
+            res = aaruf_set_media_model(output_ctx, meta_media_model, meta_media_model_len);
+            if(res == AARUF_STATUS_OK)
+                meta_copied++;
+            else
+                meta_failed++;
+        }
+
+        // Copy media serial number
+        if(meta_media_serial != NULL)
+        {
+            res = aaruf_set_media_serial_number(output_ctx, meta_media_serial, meta_media_serial_len);
+            if(res == AARUF_STATUS_OK)
+                meta_copied++;
+            else
+                meta_failed++;
+        }
+
+        // Copy media barcode
+        if(meta_media_barcode != NULL)
+        {
+            res = aaruf_set_media_barcode(output_ctx, meta_media_barcode, meta_media_barcode_len);
+            if(res == AARUF_STATUS_OK)
+                meta_copied++;
+            else
+                meta_failed++;
+        }
+
+        // Copy media part number
+        if(meta_media_partno != NULL)
+        {
+            res = aaruf_set_media_part_number(output_ctx, meta_media_partno, meta_media_partno_len);
+            if(res == AARUF_STATUS_OK)
+                meta_copied++;
+            else
+                meta_failed++;
+        }
+
+        // Copy drive manufacturer
+        if(meta_drive_mfr != NULL)
+        {
+            res = aaruf_set_drive_manufacturer(output_ctx, meta_drive_mfr, meta_drive_mfr_len);
+            if(res == AARUF_STATUS_OK)
+                meta_copied++;
+            else
+                meta_failed++;
+        }
+
+        // Copy drive model
+        if(meta_drive_model != NULL)
+        {
+            res = aaruf_set_drive_model(output_ctx, meta_drive_model, meta_drive_model_len);
+            if(res == AARUF_STATUS_OK)
+                meta_copied++;
+            else
+                meta_failed++;
+        }
+
+        // Copy drive serial number
+        if(meta_drive_serial != NULL)
+        {
+            res = aaruf_set_drive_serial_number(output_ctx, meta_drive_serial, meta_drive_serial_len);
+            if(res == AARUF_STATUS_OK)
+                meta_copied++;
+            else
+                meta_failed++;
+        }
+
+        // Copy drive firmware revision
+        if(meta_drive_fw != NULL)
+        {
+            res = aaruf_set_drive_firmware_revision(output_ctx, meta_drive_fw, meta_drive_fw_len);
+            if(res == AARUF_STATUS_OK)
+                meta_copied++;
+            else
+                meta_failed++;
+        }
+
+        if(meta_copied > 0)
+        {
+            snprintf(buffer, sizeof(buffer), "Basic metadata copied (%d field(s))", meta_copied);
+            print_success(buffer);
+        }
+        if(meta_failed > 0)
+        {
+            snprintf(buffer, sizeof(buffer), "Warning: %d metadata field(s) could not be copied", meta_failed);
+            print_warning(buffer);
+        }
+    }
+
     // Free dump hardware data if allocated
     if(dumphw_data != NULL)
     {
@@ -684,6 +1253,20 @@ int convert(const char *input_path, const char *output_path, bool use_long)
         free(media_tags_map);
         media_tags_map = NULL;
     }
+
+    // Free basic metadata buffers if allocated
+    if(meta_creator != NULL) free(meta_creator);
+    if(meta_comments != NULL) free(meta_comments);
+    if(meta_title != NULL) free(meta_title);
+    if(meta_media_mfr != NULL) free(meta_media_mfr);
+    if(meta_media_model != NULL) free(meta_media_model);
+    if(meta_media_serial != NULL) free(meta_media_serial);
+    if(meta_media_barcode != NULL) free(meta_media_barcode);
+    if(meta_media_partno != NULL) free(meta_media_partno);
+    if(meta_drive_mfr != NULL) free(meta_drive_mfr);
+    if(meta_drive_model != NULL) free(meta_drive_model);
+    if(meta_drive_serial != NULL) free(meta_drive_serial);
+    if(meta_drive_fw != NULL) free(meta_drive_fw);
 
     // Calculate final statistics
     clock_t end_time      = clock();
