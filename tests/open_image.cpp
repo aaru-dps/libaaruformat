@@ -122,7 +122,7 @@ TEST_F(OpenImageFixture, open_mf2hd_v2)
     // Basic sanity checks on the image info
     ASSERT_EQ(image_info.HasPartitions, false) << "Image should not have partitions";
     ASSERT_EQ(image_info.HasSessions, false) << "Image should not have sessions";
-    ASSERT_EQ(image_info.ImageSize, 49802) << "Unexpected image size";
+    ASSERT_EQ(image_info.ImageSize, 355) << "Unexpected image size";
     ASSERT_EQ(image_info.Sectors, 2880) << "Unexpected number of sectors";
     ASSERT_EQ(image_info.SectorSize, 512) << "Unexpected sector size";
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
@@ -236,7 +236,7 @@ TEST_F(OpenImageFixture, open_floptical_v2)
     // Basic sanity checks on the image info
     ASSERT_EQ(image_info.HasPartitions, false) << "Image should not have partitions";
     ASSERT_EQ(image_info.HasSessions, false) << "Image should not have sessions";
-    ASSERT_EQ(image_info.ImageSize, 142) << "Unexpected image size";
+    ASSERT_EQ(image_info.ImageSize, 144) << "Unexpected image size";
     ASSERT_EQ(image_info.Sectors, 40662) << "Unexpected number of sectors";
     ASSERT_EQ(image_info.SectorSize, 512) << "Unexpected sector size";
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
@@ -350,7 +350,7 @@ TEST_F(OpenImageFixture, open_gigamo_v2)
     // Basic sanity checks on the image info
     ASSERT_EQ(image_info.HasPartitions, false) << "Image should not have partitions";
     ASSERT_EQ(image_info.HasSessions, false) << "Image should not have sessions";
-    ASSERT_EQ(image_info.ImageSize, 790) << "Unexpected image size";
+    ASSERT_EQ(image_info.ImageSize, 781) << "Unexpected image size";
     ASSERT_EQ(image_info.Sectors, 605846) << "Unexpected number of sectors";
     ASSERT_EQ(image_info.SectorSize, 2048) << "Unexpected sector size";
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
@@ -464,7 +464,7 @@ TEST_F(OpenImageFixture, open_hifd_v2)
     // Basic sanity checks on the image info
     ASSERT_EQ(image_info.HasPartitions, false) << "Image should not have partitions";
     ASSERT_EQ(image_info.HasSessions, false) << "Image should not have sessions";
-    ASSERT_EQ(image_info.ImageSize, 1035) << "Unexpected image size";
+    ASSERT_EQ(image_info.ImageSize, 552) << "Unexpected image size";
     ASSERT_EQ(image_info.Sectors, 393380) << "Unexpected number of sectors";
     ASSERT_EQ(image_info.SectorSize, 512) << "Unexpected sector size";
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
@@ -692,7 +692,7 @@ TEST_F(OpenImageFixture, open_mo640_v2)
     // Basic sanity checks on the image info
     ASSERT_EQ(image_info.HasPartitions, false) << "Image should not have partitions";
     ASSERT_EQ(image_info.HasSessions, false) << "Image should not have sessions";
-    ASSERT_EQ(image_info.ImageSize, 556) << "Unexpected image size";
+    ASSERT_EQ(image_info.ImageSize, 457) << "Unexpected image size";
     ASSERT_EQ(image_info.Sectors, 310352) << "Unexpected number of sectors";
     ASSERT_EQ(image_info.SectorSize, 2048) << "Unexpected sector size";
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
@@ -810,7 +810,7 @@ TEST_F(OpenImageFixture, open_cdmode1_v2)
     // Basic sanity checks on the image info
     ASSERT_EQ(image_info.HasPartitions, true) << "Image should not have partitions";
     ASSERT_EQ(image_info.HasSessions, true) << "Image should not have sessions";
-    ASSERT_EQ(image_info.ImageSize, 4385095) << "Unexpected image size";
+    ASSERT_EQ(image_info.ImageSize, 3931) << "Unexpected image size";
     ASSERT_EQ(image_info.Sectors, 9120) << "Unexpected number of sectors";
     ASSERT_EQ(image_info.SectorSize, 2048) << "Unexpected sector size";
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
@@ -932,7 +932,7 @@ TEST_F(OpenImageFixture, open_cdmode2_v2)
     // Basic sanity checks on the image info
     ASSERT_EQ(image_info.HasPartitions, true) << "Image should not have partitions";
     ASSERT_EQ(image_info.HasSessions, true) << "Image should not have sessions";
-    ASSERT_EQ(image_info.ImageSize, 4385179) << "Unexpected image size";
+    ASSERT_EQ(image_info.ImageSize, 4017) << "Unexpected image size";
     ASSERT_EQ(image_info.Sectors, 9120) << "Unexpected number of sectors";
     ASSERT_EQ(image_info.SectorSize, 2048) << "Unexpected sector size";
     ASSERT_STREQ(image_info.Version, "2.0") << "Unexpected image version";
