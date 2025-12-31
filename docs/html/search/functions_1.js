@@ -121,5 +121,6 @@ var searchData=
   ['aaruformat_5ferror_5fstring_118',['aaruformat_error_string',['../errors_8h.html#aec12cc4bb15cd7f404ec3bcd62810dc7',1,'errors.h']]],
   ['add_5fsubindex_5fentries_119',['add_subindex_entries',['../index__v3_8c.html#ac85ad03ba0f06b8799d7fe056b87a18e',1,'index_v3.c']]],
   ['add_5fto_5fcache_120',['add_to_cache',['../lru_8h.html#a962bb6b97fb208cbd8a5932afb60e680',1,'add_to_cache(struct CacheHeader *cache, const char *key, void *value):&#160;lru.c'],['../lru_8c.html#a962bb6b97fb208cbd8a5932afb60e680',1,'add_to_cache(struct CacheHeader *cache, const char *key, void *value):&#160;lru.c']]],
-  ['add_5fto_5fcache_5fuint64_121',['add_to_cache_uint64',['../lru_8h.html#a0735969939ca80db3fe439ed92b787bb',1,'add_to_cache_uint64(struct CacheHeader *cache, uint64_t key, void *value):&#160;lru.c'],['../lru_8c.html#a06d1782c0ae7cb53efa1b5e0f63c5ccb',1,'add_to_cache_uint64(struct CacheHeader *cache, const uint64_t key, void *value):&#160;lru.c']]]
+  ['add_5fto_5fcache_5fuint64_121',['add_to_cache_uint64',['../lru_8h.html#a0735969939ca80db3fe439ed92b787bb',1,'add_to_cache_uint64(struct CacheHeader *cache, uint64_t key, void *value):&#160;lru.c'],['../lru_8c.html#a06d1782c0ae7cb53efa1b5e0f63c5ccb',1,'add_to_cache_uint64(struct CacheHeader *cache, const uint64_t key, void *value):&#160;lru.c']]],
+  ['age_5faccess_5fcounts_122',['age_access_counts',['../static__lru__hash__map_8c.html#a10b51676befecdb66df70abbcf9d91e9',1,'static_lru_hash_map.c']]]
 ];

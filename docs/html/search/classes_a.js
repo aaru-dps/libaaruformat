@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['roll_5fstate_0',['roll_state',['../structroll__state.html',1,'']]]
+  ['priam_5ftag_0',['priam_tag',['../structpriam__tag.html',1,'']]],
+  ['profile_5ftag_1',['profile_tag',['../structprofile__tag.html',1,'']]]
 ];

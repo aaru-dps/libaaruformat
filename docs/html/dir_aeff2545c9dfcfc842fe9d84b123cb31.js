@@ -13,5 +13,6 @@ var dir_aeff2545c9dfcfc842fe9d84b123cb31 =
     [ "lru.h", "lru_8h.html", "lru_8h" ],
     [ "simd.h", "simd_8h.html", "simd_8h" ],
     [ "spamsum.h", "spamsum_8h.html", "spamsum_8h" ],
+    [ "static_lru_hash_map.h", "static__lru__hash__map_8h.html", "static__lru__hash__map_8h" ],
     [ "structs.h", "structs_8h.html", null ]
 ];

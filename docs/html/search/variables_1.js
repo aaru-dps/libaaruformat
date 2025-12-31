@@ -1,22 +1,12 @@
 var searchData=
 [
-  ['b_0',['b',['../structmd5__ctx.html#a0d97b57112eabf84662c5cb834a5e958',1,'md5_ctx']]],
-  ['b64_1',['b64',['../spamsum_8c.html#a172df0ac676d5a0f2c93001809e53a41',1,'spamsum.c']]],
-  ['bh_2',['bh',['../structspamsum__ctx.html#a6c06adcf0f7b1a38b8471198408e0bf0',1,'spamsum_ctx']]],
-  ['bh_5fend_3',['bh_end',['../structspamsum__ctx.html#a7ddd33313b728271d39a1277726608c8',1,'spamsum_ctx']]],
-  ['bh_5fstart_4',['bh_start',['../structspamsum__ctx.html#ac286a992cea333182165a4fa4a9ddc8f',1,'spamsum_ctx']]],
-  ['biggestsectorsize_5',['biggestSectorSize',['../structAaruHeaderV2.html#abc1b56bbb9310ea37e1c73b4e5bbf8bc',1,'AaruHeaderV2']]],
-  ['bitcount_6',['bitcount',['../structsha256__ctx.html#a7b6c100e9d3e50e4f417b446a378ee87',1,'sha256_ctx']]],
-  ['blake3_7',['blake3',['../structChecksums.html#aca24093de3cb292573b7c3ebe777f5e8',1,'Checksums::blake3'],['../structaaru__options.html#abfbdc9267e6db5222e04ffd5a963b3a7',1,'aaru_options::blake3']]],
-  ['blake3_5fcontext_8',['blake3_context',['../structaaruformat__context.html#a8b89a7e0e6369dad38e23dabaf4b49a4',1,'aaruformat_context']]],
-  ['block_9',['block',['../structmd5__ctx.html#a8ab8f09a47057f2598505ff191f88706',1,'md5_ctx']]],
-  ['block_5falignment_10',['block_alignment',['../structaaru__options.html#aea2e536712f73ad12dcca704b47dc48c',1,'aaru_options']]],
-  ['block_5fcache_11',['block_cache',['../structaaruformat__context.html#a58359ec8607d1d10e0af8699be238e77',1,'aaruformat_context']]],
-  ['block_5fheader_5fcache_12',['block_header_cache',['../structaaruformat__context.html#a3a12addf4a338cc04471709604d48ae1',1,'aaruformat_context']]],
-  ['block_5fzero_5fwritten_13',['block_zero_written',['../structaaruformat__context.html#aabd695fe8ff334cd96711bf085d4cf9f',1,'aaruformat_context']]],
-  ['blockalignmentshift_14',['blockAlignmentShift',['../structDdtHeader2.html#aa67b097c3a20f926ede495d27152f1c0',1,'DdtHeader2::blockAlignmentShift'],['../structAaruHeaderV2.html#ac55c9959435ff7b62a72ec8243ebe1c8',1,'AaruHeaderV2::blockAlignmentShift']]],
-  ['blocks_15',['blocks',['../structDdtHeader2.html#a9571c1d556e33537935bab1edba31135',1,'DdtHeader2']]],
-  ['blocksize_16',['blockSize',['../structMetadataBlockHeader.html#a3d1affce1a6ce2bda81aeaf85435b885',1,'MetadataBlockHeader']]],
-  ['blocktype_17',['blockType',['../structIndexEntry.html#a4b5c7115ac83019c3f77c6f047e5f75e',1,'IndexEntry']]],
-  ['buffer_18',['buffer',['../structmd5__ctx.html#a72256766fb1a364fe9398dcacff6bb63',1,'md5_ctx::buffer'],['../structsha1__ctx.html#a7d619177109240d16be88c5b03c464ad',1,'sha1_ctx::buffer'],['../structsha256__ctx.html#a992c56715c7da465ec39b11ca5e659f2',1,'sha256_ctx::buffer']]]
+  ['a_0',['a',['../structmd5__ctx.html#a08d0effe77a7c9a82c72b4f377b3eb20',1,'md5_ctx']]],
+  ['abs_5fpage_1',['abs_page',['../structprofile__tag.html#a3270bbdab1c6aaadd64deeb57aca77e3',1,'profile_tag::abs_page'],['../structpriam__tag.html#a78af22f84a209cc0bb7139edd9feab0e',1,'priam_tag::abs_page']]],
+  ['access_5fcount_2',['access_count',['../structlru__kv__pair__t.html#a6b149392e7cb888c1a26459de99b1075',1,'lru_kv_pair_t']]],
+  ['age_5fcounter_3',['age_counter',['../structstatic__lru__hash__map__t.html#a68079504fdb5f0c2fb08bad5efe26f21',1,'static_lru_hash_map_t']]],
+  ['application_4',['Application',['../structImageInfo.html#aaea8b3a14fc03f9a4b045318160b7f54',1,'ImageInfo']]],
+  ['application_5',['application',['../structAaruHeader.html#a6e3491e610ddb25885cba59ac9793193',1,'AaruHeader::application'],['../structAaruHeaderV2.html#a0afcf9a5f565a9053351f44234c90dc3',1,'AaruHeaderV2::application']]],
+  ['applicationmajorversion_6',['applicationMajorVersion',['../structAaruHeader.html#a50191fbb48b58fd10bbb4b4e6458fa0d',1,'AaruHeader::applicationMajorVersion'],['../structAaruHeaderV2.html#a1c26feafd945328f8f1854b523a0f03c',1,'AaruHeaderV2::applicationMajorVersion']]],
+  ['applicationminorversion_7',['applicationMinorVersion',['../structAaruHeader.html#a267034c125b34596ce7f580b56790c20',1,'AaruHeader::applicationMinorVersion'],['../structAaruHeaderV2.html#a5ae79accbb8ba2762d01a63ad334ee60',1,'AaruHeaderV2::applicationMinorVersion']]],
+  ['applicationversion_8',['ApplicationVersion',['../structImageInfo.html#aebf7783c46e640a8e7d0192ba2843e9a',1,'ImageInfo']]]
 ];

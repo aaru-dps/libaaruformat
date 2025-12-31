@@ -25,13 +25,11 @@
 var NAVTREE =
 [
   [ "libaaruformat", "index.html", [
-    [ "libaaruformat", "md_README.html", [
-      [ "Building and Testing", "md_README.html#autotoc_md1", [
-        [ "Standard Build", "md_README.html#autotoc_md2", null ],
-        [ "Running Tests", "md_README.html#autotoc_md3", null ],
-        [ "Building with Address Sanitizer", "md_README.html#autotoc_md4", null ],
-        [ "Other Build Options", "md_README.html#autotoc_md5", null ]
-      ] ]
+    [ "Building and Testing", "index.html#autotoc_md1", [
+      [ "Standard Build", "index.html#autotoc_md2", null ],
+      [ "Running Tests", "index.html#autotoc_md3", null ],
+      [ "Building with Address Sanitizer", "index.html#autotoc_md4", null ],
+      [ "Other Build Options", "index.html#autotoc_md5", null ]
     ] ],
     [ "Topics", "topics.html", "topics" ],
     [ "Data Structures", "annotated.html", [
@@ -62,12 +60,12 @@ var NAVTREEINDEX =
 "aaru_8h.html",
 "decls_8h.html#ac5f5334a51424028574a5433a0e24b20",
 "files.html",
-"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa15dbd14ab5c4317ac42b451c46689d0f",
-"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa8e0ff6b32a39706d7a51544e62e61e7e",
-"group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aa7807c14140de3beeda2945e17fbf5310",
-"open_8c.html#ad8f06110e0937555873119f7c05d3379",
-"structIndexHeader3.html#a33743c206cb10cc1d8ff2c7f9e61ddcf",
-"structmediaTagEntry.html#a95bf0de1de367f90491367921069c9e2"
+"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa15b38bc9a1138fdec063a0314bec55bc",
+"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa8dccd9aa3702e0112d3c4d6f3388820e",
+"group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aa7165008ad58fcf7904dc3f6626064828",
+"open_8c.html#a356a7467b41a2929a27a6639cd3a2b50",
+"structDumpHardwareHeader.html#aee1b5c61324635638fbfbb2518fb86d8",
+"structaaruformat__context.html#aeb5bda76e0ea176598a04be97b7d5683"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronization';

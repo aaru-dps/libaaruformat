@@ -1,10 +1,10 @@
 var searchData=
 [
-  ['readablesectortags_0',['readableSectorTags',['../structaaruformat__context.html#ad3d5494e23b07418e9fbd22c3771e534',1,'aaruformat_context']]],
-  ['rel_5fpage_1',['rel_page',['../structsony__tag.html#a4b1f11f947f58e55639d6563281916e5',1,'sony_tag::rel_page'],['../structprofile__tag.html#a11feeafd02854a66a97531a5794cf1db',1,'profile_tag::rel_page'],['../structpriam__tag.html#afe0cce49a23353f9d6e5f665278e158f',1,'priam_tag::rel_page']]],
-  ['reserved_2',['reserved',['../structsony__tag.html#acd0cfd0731d0e9050d5f7d18dd944885',1,'sony_tag::reserved'],['../structprofile__tag.html#a4510946a5699b8523d8afb109be254f6',1,'profile_tag::reserved'],['../structpriam__tag.html#a102f83cf0185be426e50033477b7aef7',1,'priam_tag::reserved']]],
-  ['revision_3',['revision',['../structDumpHardwareEntriesWithData.html#a05cc1da940a0009621038a0327719a91',1,'DumpHardwareEntriesWithData']]],
-  ['revisionlength_4',['revisionLength',['../structDumpHardwareEntry.html#aca3e85fe2b6b8dd49afde691e5cf1ee8',1,'DumpHardwareEntry']]],
-  ['rewinded_5',['rewinded',['../structaaruformat__context.html#a551d4fb5a3213106d01d369e98bdf3c8',1,'aaruformat_context']]],
-  ['roll_6',['roll',['../structspamsum__ctx.html#a77be799510adf0ac63ec01584dcbb05a',1,'spamsum_ctx']]]
+  ['partition_0',['Partition',['../structTapeFileEntry.html#acef4f9b9acac33d1e5f08f6cd62afab3',1,'TapeFileEntry']]],
+  ['partitionentry_1',['partitionEntry',['../structTapePartitionHashEntry.html#af7c9f8904da9a0a21171ff3c04ec4379',1,'TapePartitionHashEntry']]],
+  ['pregap_2',['pregap',['../structTrackEntry.html#a84fbff0d6d7b4f6451386c1665fb43d6',1,'TrackEntry']]],
+  ['prev_5fblock_3',['prev_block',['../structsony__tag.html#af67234c6e985f047a3338eed5a308b82',1,'sony_tag::prev_block'],['../structprofile__tag.html#af49e5fa3d9fb6f0a69a220ce541d82f7',1,'profile_tag::prev_block'],['../structpriam__tag.html#a56681c4dc59185e989701142ff542918',1,'priam_tag::prev_block']]],
+  ['previous_4',['previous',['../structIndexHeader3.html#a33743c206cb10cc1d8ff2c7f9e61ddcf',1,'IndexHeader3']]],
+  ['previousleveloffset_5',['previousLevelOffset',['../structDdtHeader2.html#af71423c2a8c7fa89dfd2313b456c57a2',1,'DdtHeader2']]],
+  ['primary_5fddt_5foffset_6',['primary_ddt_offset',['../structaaruformat__context.html#a88effb2eb082320b5b31d729981cf2d4',1,'aaruformat_context']]]
 ];

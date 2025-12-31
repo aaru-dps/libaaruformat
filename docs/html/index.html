@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.15.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>libaaruformat: Main Page</title>
+<title>libaaruformat: libaaruformat</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -88,10 +88,79 @@ $(function(){initNavTree('index.html','',''); });
 </div>
 </div>
 
-<div class="header">
-  <div class="headertitle"><div class="title">libaaruformat Documentation</div></div>
+<div><div class="header">
+  <div class="headertitle"><div class="title">libaaruformat </div></div>
 </div><!--header-->
 <div class="contents">
+<div class="textblock"><p><a class="anchor" id="md_README"></a></p>
+<p>C implementation of <a href="https://www.github.com/aaru-dps/Aaru">Aaru</a> file format.</p>
+<p>The target is to be able to compile it with a normal C (C89 compliant) compiler.</p>
+<p>There are no external dependencies.</p>
+<p>cmake is not a hard dependency, it's merely for the ease of using IDEs (specifically CLion).</p>
+<p>Currently supported features:</p><ul>
+<li>AaruFormat V1 images reading (writing will never be implemented)</li>
+<li>AaruFormat V2 images reading and writing</li>
+<li>LZMA compression</li>
+<li>Claunia Subchannel Transform</li>
+<li>Optical disc tracks</li>
+<li>XML metadata retrieval (writing will never be implemented)</li>
+<li>JSON metadata retrieval and writing</li>
+<li>Hashing while writing (MD5, SHA1, SHA256, SpamSum and BLAKE3)</li>
+<li>Deduplication</li>
+<li>Tape file and partitions</li>
+<li>Dump hardware lists</li>
+<li>Currently on sync (as of October 2025) with Aaru's media type list</li>
+<li>CHS geometry retrieval and setting</li>
+<li>Metadata</li>
+<li>Unit testing</li>
+<li>Automatic generation of API documentation</li>
+<li>It is to all effects feature parity with C#</li>
+</ul>
+<p>Things still to be implemented that are already in the C# version:</p>
+<ul>
+<li>Automatic media type generation from C# enumeration</li>
+<li>Nuget package for linking with Aaru</li>
+</ul>
+<p>Things to be implemented not in the C# version (maybe):</p>
+<ul>
+<li>Compile for Dreamcast (KallistiOS preferibly)</li>
+<li>Compile for PlayStation Portable</li>
+<li>Compile for Wii</li>
+<li>Compile for Wii U</li>
+<li>Compile for PlayStation 2</li>
+<li>Compile for PlayStation 3</li>
+<li>Snapshots</li>
+<li>Parent images</li>
+<li>Data positioning measurements</li>
+</ul>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md1"></a>
+Building and Testing</h1>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md2"></a>
+Standard Build</h2>
+<div class="fragment"><div class="line">mkdir build</div>
+<div class="line">cd build</div>
+<div class="line">cmake ..</div>
+<div class="line">cmake --build .</div>
+</div><!-- fragment --><h2 class="doxsection"><a class="anchor" id="autotoc_md3"></a>
+Running Tests</h2>
+<div class="fragment"><div class="line">cd build</div>
+<div class="line">ctest --verbose</div>
+</div><!-- fragment --><h2 class="doxsection"><a class="anchor" id="autotoc_md4"></a>
+Building with Address Sanitizer</h2>
+<p>For debugging memory issues, you can build with Address Sanitizer enabled:</p>
+<div class="fragment"><div class="line">mkdir build-asan</div>
+<div class="line">cd build-asan</div>
+<div class="line">cmake -DUSE_ASAN=ON -DCMAKE_BUILD_TYPE=Debug ..</div>
+<div class="line">cmake --build .</div>
+<div class="line">ctest --verbose</div>
+</div><!-- fragment --><p>For detailed information on using Address Sanitizer to detect memory issues, see docs/ASAN_USAGE.md.</p>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md5"></a>
+Other Build Options</h2>
+<ul>
+<li><span class="tt">-DUSE_SLOG=ON</span> - Enable slog logging for debugging</li>
+<li><span class="tt">-DUSE_ASAN=ON</span> - Enable Address Sanitizer for memory error detection </li>
+</ul>
+</div></div><!-- PageDoc -->
 <a href="doxygen_crawl.html"></a>
 </div><!-- contents -->
 </div><!-- doc-content -->

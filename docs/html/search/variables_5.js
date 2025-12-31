@@ -1,14 +1,12 @@
 var searchData=
 [
-  ['featurecompatible_0',['featureCompatible',['../structAaruHeaderV2.html#a4c3f5ccfe34123e402d1b7641d0d6c03',1,'AaruHeaderV2']]],
-  ['featurecompatiblero_1',['featureCompatibleRo',['../structAaruHeaderV2.html#a9dae72bee3d161760dbbe389e4a70444',1,'AaruHeaderV2']]],
-  ['featureincompatible_2',['featureIncompatible',['../structAaruHeaderV2.html#a3a3a71ed3c7d48791a450b822c05ea2a',1,'AaruHeaderV2']]],
-  ['file_3',['File',['../structTapeFileEntry.html#a1e5786e5762aaecbd270f9e26777f344',1,'TapeFileEntry']]],
-  ['file_5fid_4',['file_id',['../structsony__tag.html#a1a279a02a02aca10e57fd1138c41c80c',1,'sony_tag::file_id'],['../structprofile__tag.html#a9f01066878d94d23da7aae992b99e19d',1,'profile_tag::file_id'],['../structpriam__tag.html#a133a65d0ff73efaa540e1e0d0d2ace80',1,'priam_tag::file_id']]],
-  ['fileentry_5',['fileEntry',['../structTapeFileHashEntry.html#aff0f81d26d4ee00ad33331aacc2834e1',1,'TapeFileHashEntry']]],
-  ['firmware_6',['firmware',['../structDumpHardwareEntriesWithData.html#a04e71aaa515a5a88171f5730e371abbf',1,'DumpHardwareEntriesWithData']]],
-  ['firmwarelength_7',['firmwareLength',['../structDumpHardwareEntry.html#a52948ae4f0d07e4d861e79def4a0deec',1,'DumpHardwareEntry']]],
-  ['firstblock_8',['FirstBlock',['../structTapeFileEntry.html#a8bc76d9c2d9c43e14680e39d3fc728ca',1,'TapeFileEntry::FirstBlock'],['../structTapePartitionEntry.html#af2cdde924cd050523ad0fb453eb5842d',1,'TapePartitionEntry::FirstBlock']]],
-  ['flags_9',['flags',['../structTrackEntry.html#a7ae98d532f6dff50c2439b64d2cddb45',1,'TrackEntry']]],
-  ['free_5ffunc_10',['free_func',['../structCacheHeader.html#afeac54c794f8fece845e49954fd89f1a',1,'CacheHeader']]]
+  ['ecc_5fb_5ftable_0',['ecc_b_table',['../structCdEccContext.html#af969156c568c760439fc67632353aa4d',1,'CdEccContext']]],
+  ['ecc_5fcd_5fcontext_1',['ecc_cd_context',['../structaaruformat__context.html#a510b72290e2bd50e02ef8a2387aa829d',1,'aaruformat_context']]],
+  ['ecc_5ff_5ftable_2',['ecc_f_table',['../structCdEccContext.html#a0c4d1f6c6dedb3e966333d386924a359',1,'CdEccContext']]],
+  ['edc_5ftable_3',['edc_table',['../structCdEccContext.html#ad4146692ba163b5ab6c9f56320cef4aa',1,'CdEccContext']]],
+  ['end_4',['end',['../structDumpExtent.html#aa25d7ebff7b292bd503a7e6550940fa1',1,'DumpExtent::end'],['../structTrackEntry.html#a7c545a1a4aa3547eacac09b3652034dd',1,'TrackEntry::end']]],
+  ['entries_5',['entries',['../structChecksumHeader.html#aa82464bce9c97dda1066930b9250cfbe',1,'ChecksumHeader::entries'],['../structDdtHeader.html#a74eb3f36e0c52cc59849fcc7b283d84d',1,'DdtHeader::entries'],['../structDdtHeader2.html#a4e90c22109c3fff37b526a113b094a50',1,'DdtHeader2::entries'],['../structDumpHardwareHeader.html#aee1b5c61324635638fbfbb2518fb86d8',1,'DumpHardwareHeader::entries'],['../structIndexHeader.html#ae58869887e8b622c63cc4ca85b8490a6',1,'IndexHeader::entries'],['../structIndexHeader2.html#a514ed0ba071841bc96f9583b67c664f9',1,'IndexHeader2::entries'],['../structIndexHeader3.html#af05fe8e08e929aa0eab6b74638f22b74',1,'IndexHeader3::entries'],['../structTracksHeader.html#a98df23dccacc04396f07f450a742527a',1,'TracksHeader::entries'],['../structTapeFileHeader.html#a319aea86a448c0b969de944f22e551c0',1,'TapeFileHeader::entries'],['../structTapePartitionHeader.html#a85cd855dac694aa7cf12177844d8b43e',1,'TapePartitionHeader::entries']]],
+  ['entry_6',['entry',['../structDumpHardwareEntriesWithData.html#a9b5f7b438c99ede6988179b7b89915df',1,'DumpHardwareEntriesWithData']]],
+  ['error_7',['error',['../structaaru__flac__ctx.html#a00ea4358e7738535296e7acdab63dd8b',1,'aaru_flac_ctx']]],
+  ['extents_8',['extents',['../structDumpHardwareEntriesWithData.html#a34453672c41a27c7d1b9a5df28f7df1a',1,'DumpHardwareEntriesWithData::extents'],['../structDumpHardwareEntry.html#a558ff77451f13188e00f5b8da4c595ad',1,'DumpHardwareEntry::extents']]]
 ];

@@ -330,7 +330,7 @@ $(function(){initNavTree('create_8c_source.html','',''); });
 <div class="line"><a id="l00425" name="l00425"></a><span class="lineno">  425</span>        {</div>
 <div class="line"><a id="l00426" name="l00426"></a><span class="lineno">  426</span>            <span class="keyword">const</span> uint64_t total_sectors = user_sectors + overflow_sectors + negative_sectors;</div>
 <div class="line"><a id="l00427" name="l00427"></a><span class="lineno">  427</span> </div>
-<div class="line"><a id="l00428" name="l00428"></a><span class="lineno">  428</span>            <span class="keywordflow">if</span>(total_sectors &lt; 0x8388608ULL)</div>
+<div class="line"><a id="l00428" name="l00428"></a><span class="lineno">  428</span>            <span class="keywordflow">if</span>(total_sectors &lt; 8388608ULL)</div>
 <div class="line"><a id="l00429" name="l00429"></a><span class="lineno">  429</span>                ctx-&gt;<a class="code hl_variable" href="structaaruformat__context.html#a04c5fb367458a6e9dd0a50b39f6edec2">user_data_ddt_header</a>.<a class="code hl_variable" href="structDdtHeader2.html#a8c2110cbb42bde3c0e302d3429024b04">tableShift</a> = 0;</div>
 <div class="line"><a id="l00430" name="l00430"></a><span class="lineno">  430</span>            <span class="keywordflow">else</span></div>
 <div class="line"><a id="l00431" name="l00431"></a><span class="lineno">  431</span>                ctx-&gt;<a class="code hl_variable" href="structaaruformat__context.html#a04c5fb367458a6e9dd0a50b39f6edec2">user_data_ddt_header</a>.<a class="code hl_variable" href="structDdtHeader2.html#a8c2110cbb42bde3c0e302d3429024b04">tableShift</a> = 22;</div>

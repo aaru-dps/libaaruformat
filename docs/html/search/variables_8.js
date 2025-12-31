@@ -1,16 +1,20 @@
 var searchData=
 [
-  ['identifier_0',['identifier',['../structChecksumHeader.html#a2cb8589c2733e9a1cc0c8387da8ae3e3',1,'ChecksumHeader::identifier'],['../structBlockHeader.html#a3b03f118fb2dc3dcef3f87a82238e358',1,'BlockHeader::identifier'],['../structGeometryBlockHeader.html#a233b19be8361b1c3c1963d8521924138',1,'GeometryBlockHeader::identifier'],['../structDdtHeader.html#a640bdd80a0bab66d82d36e9d25ed86a4',1,'DdtHeader::identifier'],['../structDdtHeader2.html#a80a88ec68cd0332a57886ac363bfa4d1',1,'DdtHeader2::identifier'],['../structDumpHardwareHeader.html#aa5764ab144eef9a32c08f4475254442d',1,'DumpHardwareHeader::identifier'],['../structAaruHeader.html#ac127379f3983bae7bb74e0449b0ea8bd',1,'AaruHeader::identifier'],['../structAaruHeaderV2.html#a27af1bfabbc7650471a6010475116697',1,'AaruHeaderV2::identifier'],['../structIndexHeader.html#ae177ec4a99f07ed0e3caadf38a27268e',1,'IndexHeader::identifier'],['../structIndexHeader2.html#a6b95ee733661cf13e56a46ecd1e048b0',1,'IndexHeader2::identifier'],['../structIndexHeader3.html#a482f94fd93019dd2879d984bc8eecf67',1,'IndexHeader3::identifier'],['../structMetadataBlockHeader.html#a16f0be711a2a0ddb48a0f092716e93dc',1,'MetadataBlockHeader::identifier'],['../structCicmMetadataBlock.html#aee270357b6dc394ed9ac5f22c9903c90',1,'CicmMetadataBlock::identifier'],['../structAaruMetadataJsonBlockHeader.html#a5e3db5d08dc09206cad6ea1b88b2db7d',1,'AaruMetadataJsonBlockHeader::identifier'],['../structTracksHeader.html#a8f78b3d1336efc46e97bbd84deab8e80',1,'TracksHeader::identifier'],['../structTapeFileHeader.html#a36fe923f8d67004e0b0ae8eaf6535e1d',1,'TapeFileHeader::identifier'],['../structTapePartitionHeader.html#ace597fc284e2191b65e69eb0be9f99f6',1,'TapePartitionHeader::identifier']]],
-  ['image_5finfo_1',['image_info',['../structaaruformat__context.html#ac970291b3449c04221827b9c2c18ac70',1,'aaruformat_context']]],
-  ['imagemajorversion_2',['imageMajorVersion',['../structAaruHeader.html#a95bd4c3c038bf354c04216e0a025aff3',1,'AaruHeader::imageMajorVersion'],['../structAaruHeaderV2.html#af79ca31bcd428d1a54ac25c30d09b7a7',1,'AaruHeaderV2::imageMajorVersion']]],
-  ['imageminorversion_3',['imageMinorVersion',['../structAaruHeader.html#a9eb2bde1126e58254c82d4205a9f0ad5',1,'AaruHeader::imageMinorVersion'],['../structAaruHeaderV2.html#ae2d6d3c7bc0a1956fb246cf7acbddeeb',1,'AaruHeaderV2::imageMinorVersion']]],
-  ['imagesize_4',['ImageSize',['../structImageInfo.html#abca8e73a9655d810e6d30d36c3ab54d7',1,'ImageInfo']]],
-  ['imagestream_5',['imageStream',['../structaaruformat__context.html#ab516fae594bde4f76b75488d0a3ca3a8',1,'aaruformat_context']]],
-  ['in_5fmemory_5fddt_6',['in_memory_ddt',['../structaaruformat__context.html#a62885cab6ef674fd27b4de32ab4ee346',1,'aaruformat_context']]],
-  ['index_5fentries_7',['index_entries',['../structaaruformat__context.html#ab97a719a5b4186695b67143db7376152',1,'aaruformat_context']]],
-  ['indexoffset_8',['indexOffset',['../structAaruHeader.html#aacb36b5521218ce37b786a3db520b96e',1,'AaruHeader::indexOffset'],['../structAaruHeaderV2.html#a4ec4b1d593f5a0af19f6d7b8eaeada40',1,'AaruHeaderV2::indexOffset']]],
-  ['inited_5fedc_9',['inited_edc',['../structCdEccContext.html#acd41974dc45317b3bc51e04300b16d2c',1,'CdEccContext']]],
-  ['is_5ftape_10',['is_tape',['../structaaruformat__context.html#a4d514102386b48bd51ac82c27bf9920a',1,'aaruformat_context']]],
-  ['is_5fwriting_11',['is_writing',['../structaaruformat__context.html#a6f61f9ea20f4e3b791a0d6388dd43651',1,'aaruformat_context']]],
-  ['isrc_12',['isrc',['../structTrackEntry.html#acb023e4728c59964c83fe85474c512c8',1,'TrackEntry']]]
+  ['h_0',['h',['../structblockhash__ctx.html#a72a2a4c2cadb39423f6448b49e7b6a4b',1,'blockhash_ctx']]],
+  ['h1_1',['h1',['../structroll__state.html#a54693b882416c9bd195bf1f17bfdac86',1,'roll_state']]],
+  ['h2_2',['h2',['../structroll__state.html#a154924f3e18b1d8573a9fafa9b9c0ede',1,'roll_state']]],
+  ['h3_3',['h3',['../structroll__state.html#a874ffab29cc5570b58ea258e5a267efa',1,'roll_state']]],
+  ['half_5fdigest_4',['half_digest',['../structblockhash__ctx.html#a9c466e69831790bb5420deb8b9be093a',1,'blockhash_ctx']]],
+  ['half_5fh_5',['half_h',['../structblockhash__ctx.html#ad8f6cb69f8b66b75f46a90568cb9650c',1,'blockhash_ctx']]],
+  ['hasblake3_6',['hasBlake3',['../structChecksums.html#aee0cf46a7cf9f514e2b609542820370d',1,'Checksums']]],
+  ['hasmd5_7',['hasMd5',['../structChecksums.html#acd52d3e5df013ac7e30354d93d41ef72',1,'Checksums']]],
+  ['haspartitions_8',['HasPartitions',['../structImageInfo.html#a5f4e71687378856611c72604f63c2835',1,'ImageInfo']]],
+  ['hassessions_9',['HasSessions',['../structImageInfo.html#aaeb20c53439a89baaf21944b3c97f676',1,'ImageInfo']]],
+  ['hassha1_10',['hasSha1',['../structChecksums.html#ac19eb1258cf0bf1c1998dfef7ae52550',1,'Checksums']]],
+  ['hassha256_11',['hasSha256',['../structChecksums.html#a4f404ac9841b3f06f8130722ec613ceb',1,'Checksums']]],
+  ['hasspamsum_12',['hasSpamSum',['../structChecksums.html#abe4e66c6bb57259dd1312f5cfb7730a5',1,'Checksums']]],
+  ['header_13',['header',['../structaaruformat__context.html#a670dec8d59407989fefc361dc26c6832',1,'aaruformat_context']]],
+  ['heads_14',['heads',['../structaaruformat__context.html#ab213059edf055cf1c3e2021bc395c78e',1,'aaruformat_context::heads'],['../structGeometryBlockHeader.html#a9ed0a8f6307eb38589ef4502cef533ee',1,'GeometryBlockHeader::heads']]],
+  ['hh_15',['hh',['../structmediaTagEntry.html#ae0afb5b464c2335889cf1d7d23ccbf28',1,'mediaTagEntry::hh'],['../structTapeFileHashEntry.html#a153c7fcdb97fa9bdc8b20f1988b0386c',1,'TapeFileHashEntry::hh'],['../structTapePartitionHashEntry.html#a1f4e4baef23d115b2da6e0da0b8a18e0',1,'TapePartitionHashEntry::hh'],['../structTapeDdtHashEntry.html#acc892d4fbaf42c479f891b94889224bf',1,'TapeDdtHashEntry::hh'],['../structCacheEntry.html#ae7e5f03fa52b88d99e27e2433623b4f5',1,'CacheEntry::hh']]],
+  ['hi_16',['hi',['../structmd5__ctx.html#ade0449722c62ebb5d5172188188f200a',1,'md5_ctx']]]
 ];

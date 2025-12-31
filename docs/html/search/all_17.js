@@ -2,7 +2,7 @@ var searchData=
 [
   ['wafer_0',['Wafer',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aada39e2cfbaaacd700f2f8e6fe011adaa',1,'aaru.h']]],
   ['window_1',['window',['../structroll__state.html#af671026012e05658f8e1247b89e26ff8',1,'roll_state']]],
-  ['with_20address_20sanitizer_2',['Building with Address Sanitizer',['../md_README.html#autotoc_md4',1,'']]],
+  ['with_20address_20sanitizer_2',['Building with Address Sanitizer',['../index.html#autotoc_md4',1,'']]],
   ['wod_3',['WOD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa61ed400b8bb5104e7309b3823e85766c',1,'aaru.h']]],
   ['write_2ec_4',['write.c',['../write_8c.html',1,'']]],
   ['write_5faaru_5fjson_5fblock_5',['write_aaru_json_block',['../close_8c.html#ad94331170e773c67845daa357c6ecb42',1,'close.c']]],
