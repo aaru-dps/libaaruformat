@@ -288,6 +288,29 @@ int convert(const char *input_path, const char *output_path, bool use_long)
         }
     }
 
+    // Check for Aaru JSON metadata
+    size_t   json_size    = 0;
+    uint8_t *json_data    = NULL;
+    bool     has_json     = false;
+
+    res = aaruf_get_aaru_json_metadata(input_ctx, NULL, &json_size);
+    if(res == AARUF_ERROR_BUFFER_TOO_SMALL && json_size > 0)
+    {
+        json_data = malloc(json_size);
+        if(json_data != NULL)
+        {
+            res = aaruf_get_aaru_json_metadata(input_ctx, json_data, &json_size);
+            if(res == AARUF_STATUS_OK)
+            {
+                has_json = true;
+                format_bytes(json_size, buffer, sizeof(buffer));
+                print_header("Aaru JSON Metadata");
+                print_info("Size:", buffer);
+                print_success("Aaru JSON metadata present");
+            }
+        }
+    }
+
     // Check geometry for BlockMedia
     uint32_t src_cylinders         = 0;
     uint32_t src_heads             = 0;
@@ -533,11 +556,36 @@ int convert(const char *input_path, const char *output_path, bool use_long)
         }
     }
 
+    // Copy Aaru JSON metadata if available
+    if(has_json && json_data != NULL)
+    {
+        res = aaruf_set_aaru_json_metadata(output_ctx, json_data, json_size);
+        if(res == AARUF_STATUS_OK)
+        {
+            format_bytes(json_size, buffer, sizeof(buffer));
+            char msg[128];
+            snprintf(msg, sizeof(msg), "Aaru JSON metadata copied (%s)", buffer);
+            print_success(msg);
+        }
+        else
+        {
+            snprintf(buffer, sizeof(buffer), "Warning: Could not copy Aaru JSON metadata (error %d)", res);
+            print_warning(buffer);
+        }
+    }
+
     // Free dump hardware data if allocated
     if(dumphw_data != NULL)
     {
         free(dumphw_data);
         dumphw_data = NULL;
+    }
+
+    // Free JSON data if allocated
+    if(json_data != NULL)
+    {
+        free(json_data);
+        json_data = NULL;
     }
 
     // Calculate final statistics
