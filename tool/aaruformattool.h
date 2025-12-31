@@ -41,5 +41,6 @@ int         compare(const char *path1, const char *path2);
 int         cli_compare(const char *path1, const char *path2, bool use_long);
 int         convert(const char *input_path, const char *output_path, bool use_long);
 int         upgrade_ddt_to_alpha21(const char *path);
+int         inject_media_tag(const char *tag_type, const char *media_tag_file, const char *image_file);
 
 #endif  // LIBAARUFORMAT_TOOL_AARUFORMATTOOL_H_

@@ -194,6 +194,27 @@ int cmd_upgrade_ddt_to_alpha21(int argc, char *argv[])
     return result;
 }
 
+int cmd_inject_media_tag(int argc, char *argv[])
+{
+    struct arg_str *tag_type       = arg_str1(NULL, NULL, "<tag-type>", "Media tag type to inject");
+    struct arg_str *media_tag_file = arg_str1(NULL, NULL, "<media-tag-file>", "Path to media tag data file");
+    struct arg_str *image_file     = arg_str1(NULL, NULL, "<image-file>", "Path to AaruFormat image");
+    struct arg_end *end            = arg_end(10);
+    void           *argtable[]     = {tag_type, media_tag_file, image_file, end};
+
+    if(arg_parse(argc, argv, argtable) > 0)
+    {
+        arg_print_errors(stderr, end, "inject-media-tag");
+        usage_inject_media_tag();
+        arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
+        return -1;
+    }
+
+    const int result = inject_media_tag(tag_type->sval[0], media_tag_file->sval[0], image_file->sval[0]);
+    arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
+    return result;
+}
+
 Command commands[] = {
     {              "identify",               cmd_identify},
     {                  "info",                   cmd_info},
@@ -205,6 +226,7 @@ Command commands[] = {
     {           "cli-compare",            cmd_cli_compare},
     {               "convert",                cmd_convert},
     {"upgrade-ddt-to-alpha21", cmd_upgrade_ddt_to_alpha21},
+    {      "inject-media-tag",       cmd_inject_media_tag},
 };
 
 const size_t num_commands = sizeof(commands) / sizeof(commands[0]);

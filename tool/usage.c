@@ -35,16 +35,17 @@ void usage()
     printf("\nUsage:\n");
     printf("  aaruformattool <verb> [arguments]\n\n");
     printf("Available verbs:\n");
-    printf("  identify         Identifies if the indicated file is a supported AaruFormat image.\n");
-    printf("  info             Prints information about a given AaruFormat image.\n");
-    printf("  read             Reads a sector and prints it out on screen.\n");
-    printf("  read_long        Reads a sector with all its prefixes and suffixes.\n");
-    printf("  verify           Verifies the integrity of blocks in an image.\n");
-    printf("  verify_sectors   Verifies the integrity of all sectors in an image.\n");
-    printf("  compare          Compares two AaruFormat images.\n");
-    printf("  cli-compare      Compares two AaruFormat images sector by sector (CLI mode).\n");
-    printf("  convert          Converts an AaruFormat image to another AaruFormat image.\n");
-    printf("  upgrade-ddt-to-alpha21  Upgrades a DDT image to alpha21 format.\n\n");
+    printf("  cli-compare            Compares two AaruFormat images sector by sector (CLI mode).\n");
+    printf("  compare                Compares two AaruFormat images.\n");
+    printf("  convert                Converts an AaruFormat image to another AaruFormat image.\n");
+    printf("  identify               Identifies if the indicated file is a supported AaruFormat image.\n");
+    printf("  info                   Prints information about a given AaruFormat image.\n");
+    printf("  inject-media-tag       Injects a media tag into an AaruFormat image.\n");
+    printf("  read                   Reads a sector and prints it out on screen.\n");
+    printf("  read_long              Reads a sector with all its prefixes and suffixes.\n");
+    printf("  upgrade-ddt-to-alpha21 Upgrades a DDT image to alpha21 format.\n");
+    printf("  verify                 Verifies the integrity of blocks in an image.\n");
+    printf("  verify_sectors         Verifies the integrity of all sectors in an image.\n\n");
     printf("For help with any verb, run:\n");
     printf("  aaruformattool <verb> --help\n");
 }
@@ -146,4 +147,15 @@ void usage_upgrade_ddt_to_alpha21()
     printf("Upgrades a DDT image to alpha21 format.\n");
     printf("Arguments:\n");
     printf("  <filename>       Path to the DDT image file to upgrade.\n");
+}
+
+void usage_inject_media_tag()
+{
+    printf("\nUsage:\n");
+    printf("  aaruformattool inject-media-tag <tag-type> <media-tag-file> <image-file>\n\n");
+    printf("Injects a media tag into an AaruFormat image.\n");
+    printf("Arguments:\n");
+    printf("  <tag-type>       The type of media tag to inject.\n");
+    printf("  <media-tag-file> Path to the file containing the media tag data.\n");
+    printf("  <image-file>     Path to the AaruFormat image file.\n");
 }

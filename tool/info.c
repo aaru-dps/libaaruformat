@@ -782,8 +782,8 @@ int info(const char *path)
             if(displayed < 20)  // Limit display to first 20 tags
             {
                 char tag_info[128];
-                snprintf(tag_info, sizeof(tag_info), "%s (%d bytes)", data_type_to_string((uint16_t)mediaTag->type),
-                         mediaTag->length);
+                snprintf(tag_info, sizeof(tag_info), "%s (%d bytes)",
+                         media_tag_type_to_string((uint16_t)mediaTag->type), mediaTag->length);
                 print_field("", tag_info, 0);
                 displayed++;
             }

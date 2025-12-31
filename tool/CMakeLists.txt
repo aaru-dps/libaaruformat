@@ -26,6 +26,7 @@ add_executable(aaruformattool
                cli_compare.c
                convert.c
                upgrade_ddt_to_alpha21.c
+               inject_media_tag.c
                termbox2.h
 )
 

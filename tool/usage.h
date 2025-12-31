@@ -32,5 +32,6 @@ void usage_compare();
 void usage_cli_compare();
 void usage_convert();
 void usage_upgrade_ddt_to_alpha21();
+void usage_inject_media_tag();
 
 #endif  // LIBAARUFORMAT_USAGE_H
