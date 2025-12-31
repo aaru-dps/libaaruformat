@@ -201,6 +201,12 @@ typedef struct FluxCaptureMapEntry FluxCaptureMapEntry;
  * may be compressed using LZMA compression. Currently used for flux capture data, but
  * can be used for other data streams such as bitstreams or PNG data.
  *
+ * **Data Type:**
+ * The dataType field identifies the type of data stored in the payload. Common values include:
+ * - FluxData: Flux capture data (data and index buffers)
+ * - BitstreamData: Bitstream data
+ * This field enables the block to be self-describing and allows validation of the payload content.
+ *
  * **Compression:**
  * The compression field indicates whether the payload is compressed:
  * - 0 (None): Payload is stored uncompressed
@@ -226,6 +232,7 @@ typedef struct FluxCaptureMapEntry FluxCaptureMapEntry;
 typedef struct DataStreamPayloadHeader
 {
     uint32_t identifier;   ///< Block identifier, must be BlockType::DataStreamPayloadBlock (0x4C505344, "DSPL").
+    uint16_t dataType;     ///< Data type classification (value from \ref DataType), e.g., FluxData or BitstreamData.
     uint16_t compression;  ///< Compression type: 0 = None, 1 = Lzma.
     uint32_t cmpLength;    ///< Compressed length in bytes (includes LZMA properties if compression = Lzma).
     uint32_t length;       ///< Uncompressed length in bytes.

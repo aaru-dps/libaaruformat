@@ -4468,6 +4468,7 @@ static int32_t write_flux_capture_payload(aaruformat_context *ctx, FluxCaptureRe
 
     DataStreamPayloadHeader payload_header = {0};
     payload_header.identifier              = DataStreamPayloadBlock;
+    payload_header.dataType                = FluxData;
     payload_header.compression             = (uint16_t)compression;
     payload_header.cmpLength               = cmp_length;
     payload_header.length                  = (uint32_t)raw_length;

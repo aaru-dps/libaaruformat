@@ -832,6 +832,14 @@ static int32_t read_flux_payload_header(const aaruformat_context *ctx, uint64_t 
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
+    if(header->dataType != FluxData)
+    {
+        FATAL("Incorrect data type %u for flux payload at offset %" PRIu64 " (expected FluxData)", header->dataType,
+              payload_offset);
+        TRACE("Exiting read_flux_payload_header() = AARUF_ERROR_CANNOT_READ_BLOCK\n");
+        return AARUF_ERROR_CANNOT_READ_BLOCK;
+    }
+
     return AARUF_STATUS_OK;
 }
 

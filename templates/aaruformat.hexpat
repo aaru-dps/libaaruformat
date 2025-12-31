@@ -1164,6 +1164,7 @@ struct FluxDataBlock
 struct DataStreamPayloadHeader
 {
     BlockType       identifier;
+    u16             dataType;
     u16             compression;
     u32             cmpLength;
     u32             length;

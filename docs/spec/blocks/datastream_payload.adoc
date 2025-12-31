@@ -19,6 +19,7 @@ For other data types, the payload layout is specific to the data type.
 typedef struct DataStreamPayloadHeader
 {
     uint32_t identifier;  ///< Block identifier, must be BlockType::DataStreamPayloadBlock (0x4C505344).
+    uint16_t dataType;    ///< Data type classification (value from DataType), e.g., FluxData or BitstreamData.
     uint16_t compression; ///< Compression type (0 = None, 1 = Lzma).
     uint32_t cmpLength;   ///< Compressed length in bytes (includes LZMA properties if compressed).
     uint32_t length;      ///< Uncompressed length in bytes.
@@ -39,6 +40,11 @@ typedef struct DataStreamPayloadHeader
 |4 bytes
 |identifier
 |The data stream payload block identifier, always `DSPL` (`0x4C505344`)
+
+|uint16_t
+|2 bytes
+|dataType
+|The data type contained in this block (value from DataType), e.g., FluxData or BitstreamData. See Annex B.
 
 |uint16_t
 |2 bytes
