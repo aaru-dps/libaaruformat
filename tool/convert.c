@@ -21,12 +21,121 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 #include <aaruformat.h>
 #include <unicode/ucnv.h>
 #include <unicode/ustring.h>
 
 #include "aaruformattool.h"
+
+// ANSI color codes for terminal output
+#define ANSI_RESET  "\033[0m"
+#define ANSI_BOLD   "\033[1m"
+#define ANSI_RED    "\033[31m"
+#define ANSI_GREEN  "\033[32m"
+#define ANSI_YELLOW "\033[33m"
+#define ANSI_BLUE   "\033[34m"
+#define ANSI_CYAN   "\033[36m"
+#define ANSI_WHITE  "\033[37m"
+
+// Progress bar width
+#define PROGRESS_BAR_WIDTH 40
+
+// Format bytes to human-readable string
+static void format_bytes(uint64_t bytes, char *buffer, size_t buffer_size)
+{
+    const char *units[]  = {"B", "KiB", "MiB", "GiB", "TiB", "PiB"};
+    int         unit_idx = 0;
+    double      size     = (double)bytes;
+
+    while(size >= 1024.0 && unit_idx < 5)
+    {
+        size /= 1024.0;
+        unit_idx++;
+    }
+
+    if(unit_idx == 0)
+        snprintf(buffer, buffer_size, "%llu %s", (unsigned long long)bytes, units[unit_idx]);
+    else
+        snprintf(buffer, buffer_size, "%.2f %s", size, units[unit_idx]);
+}
+
+// Format time duration to human-readable string
+static void format_duration(double seconds, char *buffer, size_t buffer_size)
+{
+    int secs = (int)seconds;
+    if(seconds < 60)
+        snprintf(buffer, buffer_size, "%.1f sec", seconds);
+    else if(seconds < 3600)
+        snprintf(buffer, buffer_size, "%d min %d sec", secs / 60, secs % 60);
+    else
+        snprintf(buffer, buffer_size, "%d hr %d min %d sec", secs / 3600, (secs % 3600) / 60, secs % 60);
+}
+
+// Draw a progress bar
+static void draw_progress_bar(double percentage, double speed, double elapsed, double eta)
+{
+    char speed_str[32];
+    char elapsed_str[32];
+    char eta_str[32];
+
+    format_bytes((uint64_t)speed, speed_str, sizeof(speed_str));
+    format_duration(elapsed, elapsed_str, sizeof(elapsed_str));
+
+    if(eta > 0 && eta < 86400 * 365)  // Less than a year
+        format_duration(eta, eta_str, sizeof(eta_str));
+    else
+        snprintf(eta_str, sizeof(eta_str), "--:--");
+
+    int filled = (int)(percentage / 100.0 * PROGRESS_BAR_WIDTH);
+    if(filled > PROGRESS_BAR_WIDTH) filled = PROGRESS_BAR_WIDTH;
+
+    printf("\r" ANSI_CYAN "  [");
+
+    for(int i = 0; i < PROGRESS_BAR_WIDTH; i++)
+    {
+        if(i < filled)
+            printf(ANSI_GREEN "█");
+        else if(i == filled)
+            printf(ANSI_YELLOW "▓");
+        else
+            printf(ANSI_WHITE "░");
+    }
+
+    printf(ANSI_CYAN "] " ANSI_WHITE "%5.1f%%" ANSI_RESET, percentage);
+    printf(" │ %s/s │ %s │ ETA: %s   ", speed_str, elapsed_str, eta_str);
+
+    fflush(stdout);
+}
+
+// Print a separator line
+static void print_separator(void)
+{
+    printf(ANSI_BLUE "────────────────────────────────────────────────────────────────────────────────" ANSI_RESET
+                     "\n");
+}
+
+// Print a header
+static void print_header(const char *title)
+{
+    printf("\n" ANSI_BOLD ANSI_CYAN "  %s" ANSI_RESET "\n", title);
+    print_separator();
+}
+
+// Print an info field
+static void print_info(const char *label, const char *value)
+{ printf("  " ANSI_YELLOW "%-20s" ANSI_RESET " %s\n", label, value); }
+
+// Print success message
+static void print_success(const char *message) { printf(ANSI_GREEN "  ✓ %s" ANSI_RESET "\n", message); }
+
+// Print error message
+static void print_error(const char *message) { printf(ANSI_RED "  ✗ %s" ANSI_RESET "\n", message); }
+
+// Print warning message
+static void print_warning(const char *message) { printf(ANSI_YELLOW "  ⚠ %s" ANSI_RESET "\n", message); }
 
 int convert(const char *input_path, const char *output_path, bool use_long)
 {
@@ -37,27 +146,81 @@ int convert(const char *input_path, const char *output_path, bool use_long)
     uint64_t            total_sectors = 0;
     uint8_t            *sector_data   = NULL;
     uint8_t             sector_status = 0;
+    clock_t             start_time;
+    clock_t             current_time;
+    uint64_t            bytes_processed = 0;
+    char                buffer[64];
 
-    printf("Converting image from %s to %s%s...\n", input_path, output_path, use_long ? " (long mode)" : "");
+    // Print banner
+    printf("\n");
+    printf(ANSI_BOLD ANSI_CYAN "════════════════════════════════════════════════════════════════════════════════\n");
+    printf("                           AARUFORMAT IMAGE CONVERTER\n");
+    printf("════════════════════════════════════════════════════════════════════════════════" ANSI_RESET "\n");
+
+    // Print conversion info
+    print_header("Conversion Settings");
+    print_info("Input file:", input_path);
+    print_info("Output file:", output_path);
+    print_info("Mode:", use_long ? "Long sectors (with metadata)" : "Standard sectors");
 
     // Open input image
+    print_header("Opening Source Image");
     input_ctx = aaruf_open(input_path, false, NULL);
     if(input_ctx == NULL)
     {
-        printf("Error %d when opening input AaruFormat image.\n", errno);
+        snprintf(buffer, sizeof(buffer), "Cannot open input image (error %d)", errno);
+        print_error(buffer);
         return errno;
     }
+    print_success("Source image opened successfully");
 
-    // Get image information from input
+    // Get and display image information
     total_sectors = input_ctx->image_info.Sectors;
     sector_size   = input_ctx->image_info.SectorSize;
 
-    printf("Input image has %llu sectors of %u bytes each.\n", total_sectors, sector_size);
+    print_header("Source Image Information");
+    print_info("Media type:", media_type_to_string(input_ctx->header.mediaType));
+
+    snprintf(buffer, sizeof(buffer), "%llu", (unsigned long long)total_sectors);
+    print_info("Total sectors:", buffer);
+
+    snprintf(buffer, sizeof(buffer), "%u bytes", sector_size);
+    print_info("Sector size:", buffer);
+
+    uint64_t total_size = total_sectors * sector_size;
+    format_bytes(total_size, buffer, sizeof(buffer));
+    print_info("Total size:", buffer);
+
+    if(input_ctx->image_info.Application[0] != '\0')
+    {
+        snprintf(buffer, sizeof(buffer), "%s %s", input_ctx->image_info.Application,
+                 input_ctx->image_info.ApplicationVersion);
+        print_info("Created by:", buffer);
+    }
+
+    // Check geometry for BlockMedia
+    uint32_t src_cylinders         = 0;
+    uint32_t src_heads             = 0;
+    uint32_t src_sectors_per_track = 0;
+    bool     has_geometry          = false;
+
+    if(input_ctx->image_info.MetadataMediaType == BlockMedia)
+    {
+        res = aaruf_get_geometry(input_ctx, &src_cylinders, &src_heads, &src_sectors_per_track);
+        if(res == AARUF_STATUS_OK && (src_cylinders != 0 || src_heads != 0 || src_sectors_per_track != 0))
+        {
+            has_geometry = true;
+            snprintf(buffer, sizeof(buffer), "%u cylinders, %u heads, %u sectors/track", src_cylinders, src_heads,
+                     src_sectors_per_track);
+            print_info("Geometry:", buffer);
+        }
+    }
 
     const char *app_name_utf8     = "aaruformattool";
     size_t      app_name_utf8_len = strlen(app_name_utf8);
 
     // Create output image
+    print_header("Creating Destination Image");
     output_ctx = aaruf_create(output_path, input_ctx->image_info.MediaType, sector_size, total_sectors,
                               0,     // negative sectors
                               0,     // overflow sectors
@@ -70,17 +233,21 @@ int convert(const char *input_path, const char *output_path, bool use_long)
 
     if(output_ctx == NULL)
     {
-        printf("Error %d when creating output AaruFormat image.\n", errno);
+        snprintf(buffer, sizeof(buffer), "Cannot create output image (error %d)", errno);
+        print_error(buffer);
         aaruf_close(input_ctx);
         return errno;
     }
+    print_success("Destination image created successfully");
 
+    // Copy tracks if present
     size_t tracks_size = 0;
     res                = aaruf_get_tracks(input_ctx, sector_data, &tracks_size);
 
     if(res != AARUF_ERROR_BUFFER_TOO_SMALL && res != AARUF_ERROR_TRACK_NOT_FOUND)
     {
-        printf("Error %d when getting tracks from input image.\n", res);
+        snprintf(buffer, sizeof(buffer), "Cannot get tracks from input image (error %d)", res);
+        print_error(buffer);
         aaruf_close(input_ctx);
         aaruf_close(output_ctx);
         return res;
@@ -91,7 +258,7 @@ int convert(const char *input_path, const char *output_path, bool use_long)
         sector_data = malloc(tracks_size);
         if(sector_data == NULL)
         {
-            printf("Error allocating memory for tracks buffer.\n");
+            print_error("Cannot allocate memory for tracks buffer");
             aaruf_close(input_ctx);
             aaruf_close(output_ctx);
             return AARUF_ERROR_NOT_ENOUGH_MEMORY;
@@ -100,7 +267,8 @@ int convert(const char *input_path, const char *output_path, bool use_long)
         res = aaruf_get_tracks(input_ctx, sector_data, &tracks_size);
         if(res != AARUF_STATUS_OK)
         {
-            printf("Error %d when getting tracks from input image.\n", res);
+            snprintf(buffer, sizeof(buffer), "Cannot read tracks from input image (error %d)", res);
+            print_error(buffer);
             free(sector_data);
             aaruf_close(input_ctx);
             aaruf_close(output_ctx);
@@ -110,12 +278,16 @@ int convert(const char *input_path, const char *output_path, bool use_long)
         res = aaruf_set_tracks(output_ctx, (TrackEntry *)sector_data, (int)(tracks_size / sizeof(TrackEntry)));
         if(res != AARUF_STATUS_OK)
         {
-            printf("Error %d when setting tracks on output image.\n", res);
+            snprintf(buffer, sizeof(buffer), "Cannot set tracks on output image (error %d)", res);
+            print_error(buffer);
             free(sector_data);
             aaruf_close(input_ctx);
             aaruf_close(output_ctx);
             return res;
         }
+
+        snprintf(buffer, sizeof(buffer), "Copied %zu track(s)", tracks_size / sizeof(TrackEntry));
+        print_success(buffer);
 
         free(sector_data);
         sector_data = NULL;
@@ -125,23 +297,34 @@ int convert(const char *input_path, const char *output_path, bool use_long)
     sector_data = malloc(sector_size);
     if(sector_data == NULL)
     {
-        printf("Error allocating memory for sector buffer.\n");
+        print_error("Cannot allocate memory for sector buffer");
         aaruf_close(input_ctx);
         aaruf_close(output_ctx);
         return AARUF_ERROR_NOT_ENOUGH_MEMORY;
     }
 
     // Copy sectors from input to output
+    print_header("Converting Sectors");
+    printf("\n");
+
+    start_time      = clock();
+    bytes_processed = 0;
+    int last_error  = AARUF_STATUS_OK;
+
     for(uint64_t sector = 0; sector < total_sectors; sector++)
     {
         uint32_t read_length = 0;
 
-        // Show progress every 1000 sectors
-        if(sector % 1000 == 0 || sector == total_sectors - 1)
+        // Update progress every 100 sectors or on last sector
+        if(sector % 100 == 0 || sector == total_sectors - 1)
         {
-            printf("\rProgress: %llu/%llu sectors (%.1f%%)", sector + 1, total_sectors,
-                   (double)(sector + 1) / total_sectors * 100.0);
-            fflush(stdout);
+            current_time          = clock();
+            double elapsed        = (double)(current_time - start_time) / CLOCKS_PER_SEC;
+            double percentage     = (double)(sector + 1) / total_sectors * 100.0;
+            double speed          = elapsed > 0 ? bytes_processed / elapsed : 0;
+            double remaining_secs = speed > 0 ? ((total_size - bytes_processed) / speed) : 0;
+
+            draw_progress_bar(percentage, speed, elapsed, remaining_secs);
         }
 
         // Check sector size
@@ -152,7 +335,10 @@ int convert(const char *input_path, const char *output_path, bool use_long)
 
         if(res != AARUF_ERROR_BUFFER_TOO_SMALL)
         {
-            printf("\nError %d when reading sector %llu from input image.\n", res, (unsigned long long)sector);
+            printf("\n");
+            snprintf(buffer, sizeof(buffer), "Error reading sector %llu (error %d)", (unsigned long long)sector, res);
+            print_error(buffer);
+            last_error = res;
             break;
         }
 
@@ -163,7 +349,8 @@ int convert(const char *input_path, const char *output_path, bool use_long)
             sector_data = malloc(sector_size);
             if(sector_data == NULL)
             {
-                printf("Error allocating memory for sector buffer.\n");
+                printf("\n");
+                print_error("Cannot allocate memory for larger sector buffer");
                 aaruf_close(input_ctx);
                 aaruf_close(output_ctx);
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
@@ -178,7 +365,10 @@ int convert(const char *input_path, const char *output_path, bool use_long)
 
         if(res != AARUF_STATUS_OK)
         {
-            printf("\nError %d when reading sector %llu from input image.\n", res, (unsigned long long)sector);
+            printf("\n");
+            snprintf(buffer, sizeof(buffer), "Error reading sector %llu (error %d)", (unsigned long long)sector, res);
+            print_error(buffer);
+            last_error = res;
             break;
         }
 
@@ -190,11 +380,19 @@ int convert(const char *input_path, const char *output_path, bool use_long)
 
         if(res != AARUF_STATUS_OK)
         {
-            printf("\nError %d when writing sector %llu to output image.\n", res, (unsigned long long)sector);
+            printf("\n");
+            snprintf(buffer, sizeof(buffer), "Error writing sector %llu (error %d)", (unsigned long long)sector, res);
+            print_error(buffer);
+            last_error = res;
             break;
         }
+
+        bytes_processed += read_length;
     }
 
+    printf("\n\n");
+
+    // Copy tracks again (in case they were modified during sector copy)
     size_t tracks_length = 0;
     res                  = aaruf_get_tracks(input_ctx, NULL, &tracks_length);
     if(res != AARUF_ERROR_TRACK_NOT_FOUND && res == AARUF_ERROR_BUFFER_TOO_SMALL)
@@ -205,40 +403,70 @@ int convert(const char *input_path, const char *output_path, bool use_long)
         if(res == AARUF_STATUS_OK)
         {
             res = aaruf_set_tracks(output_ctx, (TrackEntry *)tracks, (int)(tracks_length / sizeof(TrackEntry)));
-            if(res != AARUF_STATUS_OK) printf("\nError %d when setting tracks on output image.\n", res);
+            if(res != AARUF_STATUS_OK)
+            {
+                snprintf(buffer, sizeof(buffer), "Warning: Could not finalize tracks (error %d)", res);
+                print_warning(buffer);
+            }
         }
+        free(tracks);
     }
 
     // Copy geometry if source is BlockMedia and has valid geometry
-    if(input_ctx->image_info.MetadataMediaType == BlockMedia)
+    if(has_geometry)
     {
-        uint32_t cylinders         = 0;
-        uint32_t heads             = 0;
-        uint32_t sectors_per_track = 0;
-
-        res = aaruf_get_geometry(input_ctx, &cylinders, &heads, &sectors_per_track);
-        if(res == AARUF_STATUS_OK && (cylinders != 0 || heads != 0 || sectors_per_track != 0))
+        res = aaruf_set_geometry(output_ctx, src_cylinders, src_heads, src_sectors_per_track);
+        if(res == AARUF_STATUS_OK)
+            print_success("Geometry copied to destination image");
+        else
         {
-            res = aaruf_set_geometry(output_ctx, cylinders, heads, sectors_per_track);
-            if(res == AARUF_STATUS_OK)
-                printf("\nGeometry copied: %u cylinders, %u heads, %u sectors per track.\n", cylinders, heads,
-                       sectors_per_track);
-            else
-                printf("\nError %d when setting geometry on output image.\n", res);
+            snprintf(buffer, sizeof(buffer), "Warning: Could not copy geometry (error %d)", res);
+            print_warning(buffer);
         }
     }
 
-    printf("\n");
+    // Calculate final statistics
+    clock_t end_time      = clock();
+    double  total_elapsed = (double)(end_time - start_time) / CLOCKS_PER_SEC;
+    double  avg_speed     = total_elapsed > 0 ? bytes_processed / total_elapsed : 0;
+    char    speed_str[32];
+    char    elapsed_str[32];
+    char    processed_str[32];
+
+    format_bytes((uint64_t)avg_speed, speed_str, sizeof(speed_str));
+    format_duration(total_elapsed, elapsed_str, sizeof(elapsed_str));
+    format_bytes(bytes_processed, processed_str, sizeof(processed_str));
+
+    // Print summary
+    print_header("Conversion Summary");
+    print_info("Data processed:", processed_str);
+    print_info("Time elapsed:", elapsed_str);
+    snprintf(buffer, sizeof(buffer), "%s/sec", speed_str);
+    print_info("Average speed:", buffer);
 
     // Clean up
     free(sector_data);
     aaruf_close(input_ctx);
     res = aaruf_close(output_ctx);
 
-    if(res == AARUF_STATUS_OK)
-        printf("Conversion completed successfully.\n");
-    else
-        printf("Conversion failed with error %d.\n", res);
+    printf("\n");
 
-    return res;
+    if(res == AARUF_STATUS_OK && last_error == AARUF_STATUS_OK)
+    {
+        printf(ANSI_GREEN ANSI_BOLD
+               "  ══════════════════════════════════════════════════════════════════════════════\n");
+        printf("                          ✓ CONVERSION COMPLETED SUCCESSFULLY\n");
+        printf("  ══════════════════════════════════════════════════════════════════════════════" ANSI_RESET "\n\n");
+    }
+    else
+    {
+        snprintf(buffer, sizeof(buffer), "Conversion failed with error %d", res != AARUF_STATUS_OK ? res : last_error);
+        printf(ANSI_RED ANSI_BOLD "  ══════════════════════════════════════════════════════════════════════════════\n");
+        printf("                             ✗ CONVERSION FAILED\n");
+        printf("  ══════════════════════════════════════════════════════════════════════════════" ANSI_RESET "\n");
+        print_error(buffer);
+        printf("\n");
+    }
+
+    return res != AARUF_STATUS_OK ? res : last_error;
 }
