@@ -16,30 +16,30 @@ cmake_minimum_required(VERSION 3.13)
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, see <http://www.gnu.org/licenses/>.
 
-if (APPLE)
+if(APPLE)
   # Too early cmake has not yet set it
-  if ((NOT DEFINED CMAKE_SYSTEM_PROCESSOR) AND (NOT DEFINED AARU_MACOS_TARGET_ARCH))
+  if((NOT DEFINED CMAKE_SYSTEM_PROCESSOR) AND (NOT DEFINED AARU_MACOS_TARGET_ARCH))
     execute_process(COMMAND uname -m OUTPUT_VARIABLE AARU_MACOS_TARGET_ARCH OUTPUT_STRIP_TRAILING_WHITESPACE)
-  endif ()
+  endif()
 
-  if (NOT DEFINED AARU_MACOS_TARGET_ARCH)
-    if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+  if(NOT DEFINED AARU_MACOS_TARGET_ARCH)
+    if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
       set(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE STRING "Build architectures for macOS" FORCE)
-    elseif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64")
+    elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64")
       set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "Build architectures for macOS" FORCE)
-    else ()
+    else()
       message(FATAL_ERROR "Unknown system processor ${CMAKE_SYSTEM_PROCESSOR} for macOS")
-    endif ()
-  elseif (AARU_MACOS_TARGET_ARCH STREQUAL "x86_64")
+    endif()
+  elseif(AARU_MACOS_TARGET_ARCH STREQUAL "x86_64")
     set(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE STRING "Build architectures for macOS" FORCE)
-  elseif (AARU_MACOS_TARGET_ARCH STREQUAL "arm64")
+  elseif(AARU_MACOS_TARGET_ARCH STREQUAL "arm64")
     set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "Build architectures for macOS" FORCE)
-  else ()
+  else()
     message(FATAL_ERROR "Unknown Aaru target architecture ${AARU_MACOS_TARGET_ARCH} for macOS")
-  endif ()
+  endif()
 
   set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
-endif (APPLE)
+endif(APPLE)
 
 # Integrate vcpkg toolchain if available but not explicitly provided.
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
@@ -221,6 +221,8 @@ add_library(aaruformat SHARED
             include/log.h
             src/ddt/hash_map.c
             include/aaruformat/hash_map.h
+            src/ddt/static_lru_hash_map.c
+            include/aaruformat/static_lru_hash_map.h
             src/checksum/md5.c
             include/md5.h
             src/checksum/sha1.c
@@ -236,12 +238,12 @@ add_library(aaruformat SHARED
 
 # Set up include directories for the target
 target_include_directories(aaruformat
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/aaruformat>
-    $<INSTALL_INTERFACE:include>
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/uthash/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/uthash/src
+                           PUBLIC
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/aaruformat>
+                           $<INSTALL_INTERFACE:include>
+                           ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/uthash/include
+                           ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/uthash/src
 )
 
 # Load third-party dependencies
@@ -275,7 +277,7 @@ endmacro()
 # MinGW/ARM specific: disable PIC
 if(NOT "${CMAKE_C_PLATFORM_ID}" MATCHES "MinGW"
    OR (NOT ${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm"
-       AND NOT ${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64"))
+   AND NOT ${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64"))
   set_property(TARGET aaruformat PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 else()
   set_property(TARGET aaruformat PROPERTY POSITION_INDEPENDENT_CODE FALSE)
