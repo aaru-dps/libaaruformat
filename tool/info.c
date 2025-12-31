@@ -325,6 +325,127 @@ int info(const char *path)
 
     draw_box_bottom(COLOR_HEADER);
 
+    // DDT2 UserData Header Section (if using DDT v2)
+    if(ctx->ddt_version == 2 && ctx->user_data_ddt_header.identifier == DeDuplicationTable2)
+    {
+        draw_box_top("DDT2 USER DATA HEADER", COLOR_HEADER);
+
+        char ddt_type_str[32];
+        switch(ctx->user_data_ddt_header.type)
+        {
+            case UserData:
+                snprintf(ddt_type_str, sizeof(ddt_type_str), "UserData");
+                break;
+            default:
+                snprintf(ddt_type_str, sizeof(ddt_type_str), "%d", ctx->user_data_ddt_header.type);
+                break;
+        }
+        print_field("Data Type:", ddt_type_str, 25);
+
+        char compression_str[32];
+        switch(ctx->user_data_ddt_header.compression)
+        {
+            case None:
+                snprintf(compression_str, sizeof(compression_str), "None");
+                break;
+            case Lzma:
+                snprintf(compression_str, sizeof(compression_str), "LZMA");
+                break;
+            case Flac:
+                snprintf(compression_str, sizeof(compression_str), "FLAC");
+                break;
+            case LzmaClauniaSubchannelTransform:
+                snprintf(compression_str, sizeof(compression_str), "LZMA+CST");
+                break;
+            default:
+                snprintf(compression_str, sizeof(compression_str), "%d", ctx->user_data_ddt_header.compression);
+                break;
+        }
+        print_field("Compression:", compression_str, 25);
+
+        char levels_str[32];
+        snprintf(levels_str, sizeof(levels_str), "%u (current level: %u)", ctx->user_data_ddt_header.levels,
+                 ctx->user_data_ddt_header.tableLevel);
+        print_field("Hierarchy Levels:", levels_str, 25);
+
+        if(ctx->user_data_ddt_header.previousLevelOffset > 0)
+        {
+            char prev_offset_str[32];
+            snprintf(prev_offset_str, sizeof(prev_offset_str), "0x%llX",
+                     (unsigned long long)ctx->user_data_ddt_header.previousLevelOffset);
+            print_field("Previous Level Offset:", prev_offset_str, 25);
+        }
+
+        char blocks_str[64];
+        snprintf(blocks_str, sizeof(blocks_str), "%llu", (unsigned long long)ctx->user_data_ddt_header.blocks);
+        print_field("Total Blocks:", blocks_str, 25);
+
+        char negative_str[32];
+        snprintf(negative_str, sizeof(negative_str), "%u", ctx->user_data_ddt_header.negative);
+        print_field("Negative Sectors:", negative_str, 25);
+
+        char overflow_str[32];
+        snprintf(overflow_str, sizeof(overflow_str), "%u", ctx->user_data_ddt_header.overflow);
+        print_field("Overflow Sectors:", overflow_str, 25);
+
+        char     user_sectors_str[64];
+        uint64_t user_sectors =
+            ctx->user_data_ddt_header.blocks - ctx->user_data_ddt_header.negative - ctx->user_data_ddt_header.overflow;
+        snprintf(user_sectors_str, sizeof(user_sectors_str), "%llu", (unsigned long long)user_sectors);
+        print_field("User Sectors:", user_sectors_str, 25);
+
+        if(ctx->user_data_ddt_header.start > 0)
+        {
+            char start_str[32];
+            snprintf(start_str, sizeof(start_str), "%llu", (unsigned long long)ctx->user_data_ddt_header.start);
+            print_field("Start Index:", start_str, 25);
+        }
+
+        char block_align_str[32];
+        snprintf(block_align_str, sizeof(block_align_str), "%u (2^%u = %u bytes)",
+                 ctx->user_data_ddt_header.blockAlignmentShift, ctx->user_data_ddt_header.blockAlignmentShift,
+                 1 << ctx->user_data_ddt_header.blockAlignmentShift);
+        print_field("Block Alignment Shift:", block_align_str, 25);
+
+        char data_shift_str[32];
+        snprintf(data_shift_str, sizeof(data_shift_str), "%u (2^%u = %u sectors/block)",
+                 ctx->user_data_ddt_header.dataShift, ctx->user_data_ddt_header.dataShift,
+                 1 << ctx->user_data_ddt_header.dataShift);
+        print_field("Data Shift:", data_shift_str, 25);
+
+        char table_shift_str[64];
+        if(ctx->user_data_ddt_header.tableShift > 0)
+        {
+            snprintf(table_shift_str, sizeof(table_shift_str), "%u (2^%u = %u sectors/entry)",
+                     ctx->user_data_ddt_header.tableShift, ctx->user_data_ddt_header.tableShift,
+                     1 << ctx->user_data_ddt_header.tableShift);
+        }
+        else
+        {
+            snprintf(table_shift_str, sizeof(table_shift_str), "0 (single-level)");
+        }
+        print_field("Table Shift:", table_shift_str, 25);
+
+        char entries_str[32];
+        snprintf(entries_str, sizeof(entries_str), "%llu", (unsigned long long)ctx->user_data_ddt_header.entries);
+        print_field("Entries:", entries_str, 25);
+
+        char length_str[64];
+        snprintf(length_str, sizeof(length_str), "%llu bytes (compressed: %llu bytes)",
+                 (unsigned long long)ctx->user_data_ddt_header.length,
+                 (unsigned long long)ctx->user_data_ddt_header.cmpLength);
+        print_field("Table Size:", length_str, 25);
+
+        char crc_str[64];
+        snprintf(crc_str, sizeof(crc_str), "0x%016llX", (unsigned long long)ctx->user_data_ddt_header.crc64);
+        print_field("CRC64 (uncompressed):", crc_str, 25);
+
+        snprintf(crc_str, sizeof(crc_str), "0x%016llX", (unsigned long long)ctx->user_data_ddt_header.cmpCrc64);
+        print_field("CRC64 (compressed):", crc_str, 25);
+
+        draw_box_bottom(COLOR_HEADER);
+    }
+
     // Metadata Section
     int32_t sequence     = 0;
     int32_t lastSequence = 0;
