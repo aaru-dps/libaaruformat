@@ -198,6 +198,96 @@ int convert(const char *input_path, const char *output_path, bool use_long)
         print_info("Created by:", buffer);
     }
 
+    // Check and display dump hardware information
+    size_t   dumphw_size    = 0;
+    uint8_t *dumphw_data    = NULL;
+    bool     has_dump_hw    = false;
+    uint16_t dumphw_entries = 0;
+
+    res = aaruf_get_dumphw(input_ctx, NULL, &dumphw_size);
+    if(res == AARUF_ERROR_BUFFER_TOO_SMALL && dumphw_size > 0)
+    {
+        dumphw_data = malloc(dumphw_size);
+        if(dumphw_data != NULL)
+        {
+            res = aaruf_get_dumphw(input_ctx, dumphw_data, &dumphw_size);
+            if(res == AARUF_STATUS_OK)
+            {
+                has_dump_hw    = true;
+                dumphw_entries = input_ctx->dump_hardware_header.entries;
+
+                print_header("Dump Hardware Information");
+
+                for(uint16_t i = 0; i < dumphw_entries; i++)
+                {
+                    DumpHardwareEntriesWithData *entry = &input_ctx->dump_hardware_entries_with_data[i];
+
+                    if(dumphw_entries > 1)
+                    {
+                        snprintf(buffer, sizeof(buffer), "Hardware Set #%u", i + 1);
+                        printf("  " ANSI_BOLD ANSI_WHITE "%s" ANSI_RESET "\n", buffer);
+                    }
+
+                    if(entry->manufacturer != NULL && entry->entry.manufacturerLength > 0)
+                    {
+                        snprintf(buffer, sizeof(buffer), "%.*s", entry->entry.manufacturerLength, entry->manufacturer);
+                        print_info("  Manufacturer:", buffer);
+                    }
+
+                    if(entry->model != NULL && entry->entry.modelLength > 0)
+                    {
+                        snprintf(buffer, sizeof(buffer), "%.*s", entry->entry.modelLength, entry->model);
+                        print_info("  Model:", buffer);
+                    }
+
+                    if(entry->revision != NULL && entry->entry.revisionLength > 0)
+                    {
+                        snprintf(buffer, sizeof(buffer), "%.*s", entry->entry.revisionLength, entry->revision);
+                        print_info("  Revision:", buffer);
+                    }
+
+                    if(entry->firmware != NULL && entry->entry.firmwareLength > 0)
+                    {
+                        snprintf(buffer, sizeof(buffer), "%.*s", entry->entry.firmwareLength, entry->firmware);
+                        print_info("  Firmware:", buffer);
+                    }
+
+                    if(entry->serial != NULL && entry->entry.serialLength > 0)
+                    {
+                        snprintf(buffer, sizeof(buffer), "%.*s", entry->entry.serialLength, entry->serial);
+                        print_info("  Serial:", buffer);
+                    }
+
+                    if(entry->softwareName != NULL && entry->entry.softwareNameLength > 0)
+                    {
+                        char sw_info[256];
+                        int  sw_len = snprintf(sw_info, sizeof(sw_info), "%.*s", entry->entry.softwareNameLength,
+                                               entry->softwareName);
+                        if(entry->softwareVersion != NULL && entry->entry.softwareVersionLength > 0)
+                        {
+                            snprintf(sw_info + sw_len, sizeof(sw_info) - sw_len, " %.*s",
+                                     entry->entry.softwareVersionLength, entry->softwareVersion);
+                        }
+                        print_info("  Software:", sw_info);
+                    }
+
+                    if(entry->softwareOperatingSystem != NULL && entry->entry.softwareOperatingSystemLength > 0)
+                    {
+                        snprintf(buffer, sizeof(buffer), "%.*s", entry->entry.softwareOperatingSystemLength,
+                                 entry->softwareOperatingSystem);
+                        print_info("  OS:", buffer);
+                    }
+
+                    if(entry->entry.extents > 0)
+                    {
+                        snprintf(buffer, sizeof(buffer), "%u extent(s)", entry->entry.extents);
+                        print_info("  Extents:", buffer);
+                    }
+                }
+            }
+        }
+    }
+
     // Check geometry for BlockMedia
     uint32_t src_cylinders         = 0;
     uint32_t src_heads             = 0;
@@ -212,6 +302,8 @@ int convert(const char *input_path, const char *output_path, bool use_long)
             has_geometry = true;
             snprintf(buffer, sizeof(buffer), "%u cylinders, %u heads, %u sectors/track", src_cylinders, src_heads,
                      src_sectors_per_track);
+
+            print_header("Geometry");
             print_info("Geometry:", buffer);
         }
     }
@@ -423,6 +515,29 @@ int convert(const char *input_path, const char *output_path, bool use_long)
             snprintf(buffer, sizeof(buffer), "Warning: Could not copy geometry (error %d)", res);
             print_warning(buffer);
         }
+    }
+
+    // Copy dump hardware if available
+    if(has_dump_hw && dumphw_data != NULL)
+    {
+        res = aaruf_set_dumphw(output_ctx, dumphw_data, dumphw_size);
+        if(res == AARUF_STATUS_OK)
+        {
+            snprintf(buffer, sizeof(buffer), "Dump hardware information copied (%u set(s))", dumphw_entries);
+            print_success(buffer);
+        }
+        else
+        {
+            snprintf(buffer, sizeof(buffer), "Warning: Could not copy dump hardware (error %d)", res);
+            print_warning(buffer);
+        }
+    }
+
+    // Free dump hardware data if allocated
+    if(dumphw_data != NULL)
+    {
+        free(dumphw_data);
+        dumphw_data = NULL;
     }
 
     // Calculate final statistics
