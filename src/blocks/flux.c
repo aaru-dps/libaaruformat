@@ -1073,9 +1073,10 @@ static int32_t extract_flux_data_buffers(const FluxEntry *flux_entry, const uint
  * This function retrieves the actual flux data and index buffers for a specific
  * flux capture identified by its head, track, subtrack, and capture_index. The
  * function locates the corresponding FluxEntry in the flux_entries array (using
- * the lookup map for efficiency), seeks to the DataStreamPayloadBlock at the specified
- * payloadOffset, reads and decompresses the payload, validates CRC64 checksums,
- * and extracts the data and index buffers.
+ * the lookup map for efficiency), converts the payloadOffset (stored divided by block alignment)
+ * to an absolute file offset using blockAlignmentShift from FluxHeader, seeks to the
+ * DataStreamPayloadBlock at the specified offset, reads and decompresses the payload,
+ * validates CRC64 checksums, and extracts the data and index buffers.
  *
  * The function supports both uncompressed and LZMA-compressed payload blocks.
  * CRC64 validation is performed on both the compressed and uncompressed data.
@@ -1188,8 +1189,15 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_flux_capture(void *context, uint32_t he
           flux_entry->head, flux_entry->track, flux_entry->subtrack, flux_entry->captureIndex,
           flux_entry->payloadOffset);
 
+    // Get block alignment shift from FluxHeader
+    uint8_t block_alignment_shift = ctx->flux_data_header.blockAlignmentShift;
+
+    // Convert payloadOffset from block-aligned units to absolute file offset
+    // payloadOffset is stored divided by (1 << blockAlignmentShift), consistent with DDT
+    uint64_t absolute_payload_offset = flux_entry->payloadOffset << block_alignment_shift;
+
     DataStreamPayloadHeader payload_header;
-    int32_t                 res = read_flux_payload_header(ctx, flux_entry->payloadOffset, &payload_header);
+    int32_t                 res = read_flux_payload_header(ctx, absolute_payload_offset, &payload_header);
     if(res != AARUF_STATUS_OK)
     {
         TRACE("Exiting aaruf_read_flux_capture() = %d\n", res);

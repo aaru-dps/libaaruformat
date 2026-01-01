@@ -19,7 +19,7 @@ The flux capture system uses two block types:
 * `DataStreamPayloadBlock` (`DSPL` / `0x4C505344`): Contains the actual flux data payload (data and index buffers) for individual captures. This is a generic block type that can also be used for other data streams.
 
 Each flux capture has one entry in the `FluxDataBlock` and one corresponding `DataStreamPayloadBlock` containing its data.
-The `FluxEntry` structure in the data block contains a `payloadOffset` field that points to the file offset where the corresponding `DataStreamPayloadBlock` is stored.
+The `FluxEntry` structure in the data block contains a `payloadOffset` field that points to the file offset where the corresponding `DataStreamPayloadBlock` is stored. The offset is stored divided by the block alignment (as indicated by `blockAlignmentShift` in the `FluxHeader`), consistent with DDT table offset storage.
 
 ==== Structure Definition
 
@@ -28,9 +28,10 @@ The `FluxEntry` structure in the data block contains a `payloadOffset` field tha
 /** Flux data block header */
 typedef struct FluxHeader
 {
-    uint32_t identifier;  ///< Block identifier, must be BlockType::FluxDataBlock (0x58554C46).
-    uint16_t entries;     ///< Number of FluxEntry records following this header.
-    uint64_t crc64;       ///< CRC64-ECMA checksum of the FluxEntry array (header excluded).
+    uint32_t identifier;          ///< Block identifier, must be BlockType::FluxDataBlock (0x58554C46).
+    uint16_t entries;             ///< Number of FluxEntry records following this header.
+    uint8_t  blockAlignmentShift; ///< Block alignment shift: 2^blockAlignmentShift = block alignment boundary in bytes.
+    uint64_t crc64;               ///< CRC64-ECMA checksum of the FluxEntry array (header excluded).
 } FluxHeader;
 
 ==== Field Descriptions
@@ -51,6 +52,11 @@ typedef struct FluxHeader
 |2 bytes
 |entries
 |The number of flux entry records following this header
+
+|uint8_t
+|1 byte
+|blockAlignmentShift
+|Block alignment shift: 2^blockAlignmentShift = block alignment boundary in bytes. Used to decode payloadOffset values in FluxEntry structures, which are stored divided by this alignment. Stored in the header to make the block self-contained, similar to DDT headers.
 
 |uint64_t
 |8 bytes
@@ -121,5 +127,5 @@ typedef struct FluxEntry
 |uint64_t
 |8 bytes
 |payloadOffset
-|File offset where the DataStreamPayloadBlock containing this capture's data is stored.
+|Block-aligned file offset where the DataStreamPayloadBlock containing this capture's data is stored, divided by (1 << blockAlignmentShift). To get the absolute file offset, multiply by (1 << blockAlignmentShift) using the blockAlignmentShift value from FluxHeader. This storage method is consistent with DDT table offset storage.
 |===

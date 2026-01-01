@@ -1152,6 +1152,7 @@ struct FluxHeader
 {
     BlockType identifier;
     u16       entries;
+    u8        blockAlignmentShift;
     u64       crc64;
 };
 

@@ -103,14 +103,22 @@
  * data integrity. The identifier field must match BlockType::FluxDataBlock
  * (0x58554C46, "FLUX" in ASCII).
  *
+ * The blockAlignmentShift field stores the block alignment shift value used to
+ * decode the payloadOffset values in FluxEntry structures. This makes the block
+ * self-contained, similar to DDT headers, allowing correct decoding of offsets
+ * without requiring access to the main image header.
+ *
  * @note Only one FluxDataBlock is allowed per image.
  * @note The entries field is limited to UINT16_MAX (65535) captures per image.
+ * @note The blockAlignmentShift field is stored in the header to support reliable
+ *       decoding of payloadOffset values, which are stored divided by (1 << blockAlignmentShift).
  */
 typedef struct FluxHeader
 {
-    uint32_t identifier;  ///< Block identifier, must be BlockType::FluxDataBlock (0x58554C46, "FLUX").
-    uint16_t entries;     ///< Number of FluxEntry records following this header. Maximum value: 65535.
-    uint64_t crc64;      ///< CRC64-ECMA checksum of the FluxEntry array (header excluded).
+    uint32_t identifier;          ///< Block identifier, must be BlockType::FluxDataBlock (0x58554C46, "FLUX").
+    uint16_t entries;             ///< Number of FluxEntry records following this header. Maximum value: 65535.
+    uint8_t  blockAlignmentShift; ///< Block alignment shift: 2^blockAlignmentShift = block alignment boundary in bytes.
+    uint64_t crc64;               ///< CRC64-ECMA checksum of the FluxEntry array (header excluded).
 } FluxHeader;
 
 /**
@@ -128,9 +136,11 @@ typedef struct FluxHeader
  *
  * **Payload Access:**
  * The payloadOffset field points to the file offset where the corresponding
- * DataStreamPayloadBlock is stored. The indexOffset field indicates where the index
- * buffer starts within the payload (the payload is stored as [data_buffer][index_buffer]
- * concatenated).
+ * DataStreamPayloadBlock is stored. The offset is stored divided by the block alignment
+ * (blockAlignmentShift from FluxHeader), consistent with DDT table offset storage.
+ * To convert to an absolute file offset, multiply by (1 << blockAlignmentShift).
+ * The indexOffset field indicates where the index buffer starts within the payload
+ * (the payload is stored as [data_buffer][index_buffer] concatenated).
  *
  * **Resolution:**
  * Both indexResolution and dataResolution are specified in picoseconds, indicating
@@ -151,7 +161,7 @@ typedef struct FluxEntry
     uint64_t indexResolution; ///< Resolution in picoseconds at which the index stream was sampled.
     uint64_t dataResolution;  ///< Resolution in picoseconds at which the data stream was sampled.
     uint64_t indexOffset;     ///< Byte offset within the payload where the index buffer starts (equals data_length).
-    uint64_t payloadOffset;   ///< File offset where the DataStreamPayloadBlock containing this capture's data is stored.
+    uint64_t payloadOffset;   ///< Block-aligned file offset where the DataStreamPayloadBlock containing this capture's data is stored, divided by (1 << blockAlignmentShift). To get the absolute offset, multiply by (1 << blockAlignmentShift) from FluxHeader.
 } FluxEntry;
 
 /**

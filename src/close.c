@@ -4268,7 +4268,8 @@ static void write_aaru_json_block(aaruformat_context *ctx)
  * - head, track, subtrack, captureIndex: Identifiers from the record
  * - dataResolution, indexResolution: Timing resolution metadata
  * - indexOffset: Offset within payload where index buffer starts (equals data_length)
- * - payloadOffset: File offset where this payload block was written
+ * - payloadOffset: Block-aligned file offset divided by (1 << blockAlignmentShift), 
+ *   consistent with DDT offset storage. Multiply by (1 << blockAlignmentShift) to get absolute offset.
  *
  * This metadata is later written to the FluxDataBlock to enable efficient lookup
  * of flux captures by their identifiers.
@@ -4338,9 +4339,11 @@ static void write_aaru_json_block(aaruformat_context *ctx)
  *       If compression doesn't reduce size, the raw data is written instead. This
  *       prevents wasting space on incompressible flux data.
  *
- * @note The payloadOffset stored in the FluxEntry enables direct seeking to the payload
- *       during reads without requiring a full index scan. This is critical for efficient
- *       random access to flux captures.
+ * @note The payloadOffset stored in the FluxEntry is divided by block alignment
+ *       (blockAlignmentShift), consistent with DDT table offset storage. It enables direct
+ *       seeking to the payload during reads without requiring a full index scan. This is 
+ *       critical for efficient random access to flux captures. The blockAlignmentShift
+ *       value is stored in the FluxHeader to allow correct decoding.
  *
  * @note LZMA properties are written immediately after the header when compression is
  *       enabled. The properties are included in cmpLength but not in the separate
@@ -4505,7 +4508,7 @@ static int32_t write_flux_capture_payload(aaruformat_context *ctx, FluxCaptureRe
     entry->dataResolution  = record->entry.dataResolution;
     entry->indexResolution = record->entry.indexResolution;
     entry->indexOffset     = record->data_length;
-    entry->payloadOffset   = payload_position;
+    entry->payloadOffset   = payload_position >> ctx->user_data_ddt_header.blockAlignmentShift;
 
     record->entry = *entry;
 
@@ -4668,7 +4671,7 @@ static int32_t write_flux_capture_payload(aaruformat_context *ctx, FluxCaptureRe
  * **Format Considerations:**
  * - The FluxDataBlock must be written after all DataStreamPayloadBlock entries
  * - The entry count in FluxHeader must match the number of payload blocks written
- * - Each FluxEntry's payloadOffset must point to a valid DataStreamPayloadBlock
+ * - Each FluxEntry's payloadOffset must point to a valid DataStreamPayloadBlock (stored divided by block alignment)
  * - The CRC64 in FluxHeader enables verification of entry array integrity
  * - Multiple captures per track are supported via captureIndex differentiation
  *
@@ -4796,8 +4799,9 @@ static int32_t write_flux_blocks(aaruformat_context *ctx)
     }
 
     FluxHeader header = {0};
-    header.identifier = FluxDataBlock;
-    header.entries    = (uint16_t)capture_count;
+    header.identifier           = FluxDataBlock;
+    header.entries              = (uint16_t)capture_count;
+    header.blockAlignmentShift  = ctx->user_data_ddt_header.blockAlignmentShift;
     header.crc64 =
         capture_count == 0 ? 0 : aaruf_crc64_data((const uint8_t *)entries, capture_count * sizeof(FluxEntry));
 
