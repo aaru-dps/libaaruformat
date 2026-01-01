@@ -214,9 +214,9 @@ int32_t flux_map_rebuild_from_entries(aaruformat_context *ctx)
  * enables O(1) lookup of flux captures by their identifiers (head, track, subtrack, captureIndex),
  * which is used by aaruf_read_flux_capture() and other flux access functions.
  *
- * The function is intended for internal library use during image opening / indexing and is NOT
- * part of the stable public API (no versioning guarantees). Callers outside the library should use
- * the higher-level image open helpers that trigger this parsing implicitly.
+ * The function is intended for internal library use and is NOT part of the stable public API
+ * (no versioning guarantees). It is called on-demand (lazy loading) when flux data is first
+ * accessed, rather than during image opening, to avoid unnecessary I/O if flux data is never used.
  *
  * **Processing Flow:**
  * 1. **Validation:** Check ctx and ctx->imageStream are valid
@@ -401,6 +401,60 @@ void process_flux_data_block(aaruformat_context *ctx, const IndexEntry *entry)
 }
 
 /**
+ * @brief Lazy load flux data block if not already loaded.
+ *
+ * This helper function checks if flux entries are loaded, and if not, finds the
+ * FluxDataBlock in the index and loads it. This enables lazy loading of flux
+ * entries only when they are actually needed.
+ *
+ * @param ctx Pointer to the aaruformat context. Must not be NULL.
+ * @return AARUF_STATUS_OK if flux entries are loaded (or no flux data exists),
+ *         or an error code on failure.
+ * @internal
+ */
+static int32_t ensure_flux_entries_loaded(aaruformat_context *ctx)
+{
+    // If already loaded, nothing to do
+    if(ctx->flux_entries != NULL || ctx->flux_data_header.entries > 0)
+    {
+        return AARUF_STATUS_OK;
+    }
+
+    // Find FluxDataBlock in index
+    if(ctx->index_entries == NULL)
+    {
+        return AARUF_ERROR_FLUX_DATA_NOT_FOUND;
+    }
+
+    IndexEntry *entry = NULL;
+    for(unsigned int i = 0; i < utarray_len(ctx->index_entries); i++)
+    {
+        entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, i);
+        if(entry && entry->blockType == FluxDataBlock)
+        {
+            break;
+        }
+        entry = NULL;
+    }
+
+    if(entry == NULL)
+    {
+        return AARUF_ERROR_FLUX_DATA_NOT_FOUND;
+    }
+
+    // Load the flux data block
+    process_flux_data_block(ctx, entry);
+
+    // Check if loading was successful
+    if(ctx->flux_entries == NULL || ctx->flux_data_header.entries == 0)
+    {
+        return AARUF_ERROR_FLUX_DATA_NOT_FOUND;
+    }
+
+    return AARUF_STATUS_OK;
+}
+
+/**
  * @brief Retrieve metadata for all flux captures in the image.
  *
  * This function retrieves metadata for all flux captures stored in the AaruFormat image.
@@ -434,6 +488,8 @@ void process_flux_data_block(aaruformat_context *ctx, const IndexEntry *entry)
  *       FluxDataBlock (on-disk order).
  * @note This function only returns metadata; use aaruf_read_flux_capture() to retrieve
  *       the actual flux data and index buffers.
+ * @note Flux entries are loaded on-demand (lazy loading) the first time this function
+ *       or aaruf_read_flux_capture() is called, avoiding unnecessary I/O during image opening.
  *
  * @see aaruf_read_flux_capture() to retrieve actual flux data for a specific capture
  * @see FluxCaptureMeta for the structure of each metadata entry
@@ -449,13 +505,21 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_flux_captures(void *context, uint8_t *bu
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    const aaruformat_context *ctx = context;
+    aaruformat_context *ctx = (aaruformat_context *)context;
 
     // Not a libaaruformat context
     if(ctx->magic != AARU_MAGIC)
     {
         FATAL("Invalid context");
         return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Lazy load flux entries if not already loaded
+    int32_t res = ensure_flux_entries_loaded(ctx);
+    if(res != AARUF_STATUS_OK)
+    {
+        TRACE("Exiting aaruf_get_flux_captures() = %d", res);
+        return res;
     }
 
     if(ctx->flux_data_header.entries == 0 || ctx->flux_entries == NULL)
@@ -1148,13 +1212,21 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_flux_capture(void *context, uint32_t he
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    const aaruformat_context *ctx = context;
+    aaruformat_context *ctx = (aaruformat_context *)context;
 
     if(ctx->magic != AARU_MAGIC)
     {
         FATAL("Invalid context");
         TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_NOT_AARUFORMAT");
         return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Lazy load flux entries if not already loaded
+    int32_t load_res = ensure_flux_entries_loaded(ctx);
+    if(load_res != AARUF_STATUS_OK)
+    {
+        TRACE("Exiting aaruf_read_flux_capture() = %d", load_res);
+        return load_res;
     }
 
     if(ctx->flux_data_header.entries == 0 || ctx->flux_entries == NULL)
