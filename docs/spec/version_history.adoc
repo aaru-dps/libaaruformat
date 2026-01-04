@@ -98,4 +98,6 @@ Clarify deduplication table sector status.
 Add encrypted and decrypted sector status.
 
 Add Aaru Metadata JSON.
+
+Rework the flux workflow.
 |===

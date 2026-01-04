@@ -1286,6 +1286,146 @@ int convert(const char *input_path, const char *output_path, bool use_long)
     print_info("Time elapsed:", elapsed_str);
     snprintf(buffer, sizeof(buffer), "%s/sec", speed_str);
     print_info("Average speed:", buffer);
+    
+    // Copy flux captures from input to output
+    size_t flux_captures_length = 0;
+    res                         = aaruf_get_flux_captures(input_ctx, NULL, &flux_captures_length);
+    if(res == AARUF_ERROR_BUFFER_TOO_SMALL)
+    {
+        uint8_t *flux_captures = malloc(flux_captures_length);
+        if(flux_captures == NULL)
+        {
+            printf("\nError allocating memory for flux captures buffer.\n");
+            free(sector_data);
+            aaruf_close(input_ctx);
+            aaruf_close(output_ctx);
+            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        }
+
+        res = aaruf_get_flux_captures(input_ctx, flux_captures, &flux_captures_length);
+        if(res == AARUF_STATUS_OK)
+        {
+            size_t                 capture_count = flux_captures_length / sizeof(FluxCaptureMeta);
+            const FluxCaptureMeta *captures      = (FluxCaptureMeta *)flux_captures;
+            uint8_t               *index_data    = NULL;
+            uint8_t               *data_data     = NULL;
+            uint32_t               index_length  = 0;
+            uint32_t               data_length   = 0;
+
+            printf("Copying %zu flux captures...\n", capture_count);
+
+            for(size_t i = 0; i < capture_count; i++)
+            {
+                // First call to get required buffer sizes
+                res = aaruf_read_flux_capture(input_ctx, captures[i].head, captures[i].track, captures[i].subtrack,
+                                               captures[i].captureIndex, NULL, &index_length, NULL, &data_length);
+
+                if(res == AARUF_ERROR_BUFFER_TOO_SMALL)
+                {
+                    // Allocate buffers
+                    if(index_length > 0)
+                    {
+                        index_data = malloc(index_length);
+                        if(index_data == NULL)
+                        {
+                            printf("Error allocating memory for flux index buffer.\n");
+                            free(flux_captures);
+                            free(sector_data);
+                            aaruf_close(input_ctx);
+                            aaruf_close(output_ctx);
+                            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                        }
+                    }
+
+                    if(data_length > 0)
+                    {
+                        data_data = malloc(data_length);
+                        if(data_data == NULL)
+                        {
+                            printf("Error allocating memory for flux data buffer.\n");
+                            free(index_data);
+                            free(flux_captures);
+                            free(sector_data);
+                            aaruf_close(input_ctx);
+                            aaruf_close(output_ctx);
+                            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                        }
+                    }
+
+                    // Read flux capture data
+                    res = aaruf_read_flux_capture(input_ctx, captures[i].head, captures[i].track, captures[i].subtrack,
+                                                   captures[i].captureIndex, index_data, &index_length, data_data,
+                                                   &data_length);
+
+                    if(res == AARUF_STATUS_OK)
+                    {
+                        // Write flux capture to output
+                        res = aaruf_write_flux_capture(output_ctx, captures[i].head, captures[i].track,
+                                                        captures[i].subtrack, captures[i].captureIndex,
+                                                        captures[i].dataResolution, captures[i].indexResolution, data_data,
+                                                        data_length, index_data, index_length);
+
+                        if(res != AARUF_STATUS_OK)
+                        {
+                            printf("Error %d when writing flux capture (head=%u, track=%u, subtrack=%u, index=%u) to output image.\n",
+                                   res, captures[i].head, captures[i].track, captures[i].subtrack,
+                                   captures[i].captureIndex);
+                            free(index_data);
+                            free(data_data);
+                            free(flux_captures);
+                            free(sector_data);
+                            aaruf_close(input_ctx);
+                            aaruf_close(output_ctx);
+                            return res;
+                        }
+                    }
+                    else
+                    {
+                        printf("Error %d when reading flux capture (head=%u, track=%u, subtrack=%u, index=%u) from input image.\n",
+                               res, captures[i].head, captures[i].track, captures[i].subtrack, captures[i].captureIndex);
+                        free(index_data);
+                        free(data_data);
+                        free(flux_captures);
+                        free(sector_data);
+                        aaruf_close(input_ctx);
+                        aaruf_close(output_ctx);
+                        return res;
+                    }
+
+                    free(index_data);
+                    free(data_data);
+                    index_data  = NULL;
+                    data_data   = NULL;
+                    index_length = 0;
+                    data_length  = 0;
+                }
+                else if(res != AARUF_ERROR_FLUX_DATA_NOT_FOUND)
+                {
+                    printf("Error %d when reading flux capture (head=%u, track=%u, subtrack=%u, index=%u) from input image.\n",
+                           res, captures[i].head, captures[i].track, captures[i].subtrack, captures[i].captureIndex);
+                    free(flux_captures);
+                    free(sector_data);
+                    aaruf_close(input_ctx);
+                    aaruf_close(output_ctx);
+                    return res;
+                }
+            }
+
+            printf("Successfully copied %zu flux captures.\n", capture_count);
+        }
+        else if(res != AARUF_ERROR_FLUX_DATA_NOT_FOUND)
+        {
+            printf("\nError %d when getting flux captures from input image.\n", res);
+        }
+
+        free(flux_captures);
+    }
+    else if(res != AARUF_ERROR_FLUX_DATA_NOT_FOUND)
+    {
+        printf("\nError %d when getting flux captures from input image.\n", res);
+    }
+
+    printf("\n");
 
     // Clean up
     free(sector_data);

@@ -21,6 +21,7 @@
 
 #include "aaru.h"
 #include "crc64.h"
+#include "enums.h"
 #include "md5.h"
 #include "sha1.h"
 #include "sha256.h"
@@ -88,6 +89,17 @@ AARU_EXPORT uint64_t AARU_CALL   aaruf_crc64_data(const uint8_t *data, uint32_t 
 
 AARU_EXPORT int32_t AARU_CALL aaruf_get_tracks(const void *context, uint8_t *buffer, size_t *length);
 AARU_EXPORT int32_t AARU_CALL aaruf_set_tracks(void *context, TrackEntry *tracks, const int count);
+AARU_EXPORT int32_t AARU_CALL aaruf_get_flux_captures(void *context, uint8_t *buffer, size_t *length);
+AARU_EXPORT int32_t AARU_CALL aaruf_read_flux_capture(void *context, uint32_t head, uint16_t track, uint8_t subtrack,
+                                                      uint32_t capture_index, uint8_t *index_data,
+                                                      uint32_t *index_length, uint8_t *data_data,
+                                                      uint32_t *data_length);
+AARU_EXPORT int32_t AARU_CALL aaruf_write_flux_capture(void *context, uint32_t head, uint16_t track, uint8_t subtrack,
+                                                     uint32_t capture_index, uint64_t data_resolution,
+                                                     uint64_t index_resolution, const uint8_t *data,
+                                                     uint32_t data_length, const uint8_t *index,
+                                                     uint32_t index_length);
+AARU_EXPORT int32_t AARU_CALL aaruf_clear_flux_captures(void *context);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, uint64_t sector_address, bool negative, uint8_t *data,
                                                 uint32_t *length, uint8_t *sector_status);

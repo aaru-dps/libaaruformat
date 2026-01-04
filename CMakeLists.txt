@@ -234,7 +234,8 @@ add_library(aaruformat SHARED
             src/metadata.c
             src/dump.c
             include/aaruformat/structs/tape.h
-            src/blocks/tape.c)
+            src/blocks/tape.c
+            src/blocks/flux.c)
 
 # Set up include directories for the target
 target_include_directories(aaruformat

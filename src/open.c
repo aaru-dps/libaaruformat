@@ -546,6 +546,11 @@ AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath, const bool resume_m
                 process_tape_partitions_block(ctx, entry);
 
                 break;
+            case FluxDataBlock:
+                // Store the FluxDataBlock offset for lazy loading
+                // Don't read flux entries during open - load them on-demand when actually needed
+                // This avoids unnecessary I/O if flux data is never accessed
+                break;
             default:
                 TRACE("Unhandled block type %4.4s with data type %d is indexed to be at %" PRIu64 "",
                       (char *)&entry->blockType, entry->dataType, entry->offset);

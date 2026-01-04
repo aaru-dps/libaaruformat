@@ -4186,6 +4186,677 @@ static void write_aaru_json_block(aaruformat_context *ctx)
 }
 
 /**
+ * @brief Serialize a single flux capture payload block to the image file.
+ *
+ * This helper function writes a DataStreamPayloadBlock containing the raw flux data and index
+ * buffers for a single flux capture. Flux captures represent analog signal transitions
+ * recorded from floppy disk drives or other magnetic media, enabling bit-level analysis
+ * and preservation of timing information that cannot be reconstructed from sector data alone.
+ *
+ * The function concatenates the data buffer and index buffer into a single raw payload,
+ * optionally compresses it using LZMA if compression is enabled, calculates CRC64 checksums
+ * for both raw and compressed data, writes the DataStreamPayloadHeader followed by the payload
+ * data, and adds an IndexEntry to enable fast location during subsequent reads.
+ *
+ * **Block Structure:**
+ * The serialized block consists of:
+ * ```
+ * +----------------------------------+
+ * | DataStreamPayloadHeader (32 B)   | <- identifier, compression, lengths, CRCs
+ * +----------------------------------+
+ * | LZMA Properties (5 B)            | <- Only if compression == Lzma
+ * +----------------------------------+
+ * | Compressed/Uncompressed          | <- Flux data + index buffers
+ * | Payload Data (variable)          |
+ * +----------------------------------+
+ * ```
+ *
+ * **Processing Flow:**
+ * 1. **Buffer Concatenation:** Combine data_buffer and index_buffer into a single raw_buffer
+ * 2. **CRC64 Calculation:** Compute CRC64-ECMA over the raw concatenated buffer
+ * 3. **Compression Attempt:** If compression enabled, attempt LZMA compression
+ *    - If compression is effective (reduces size), use compressed data
+ *    - If compression is ineffective or fails, fall back to uncompressed
+ * 4. **Alignment:** Seek to EOF and align to block boundary (blockAlignmentShift)
+ * 5. **Header Construction:** Build DataStreamPayloadHeader with compression type, lengths, CRCs
+ * 6. **Write Operations:** Write header, LZMA properties (if compressed), then payload data
+ * 7. **Indexing:** Add IndexEntry with blockType=DataStreamPayloadBlock, dataType=FluxData
+ * 8. **Entry Population:** Populate the output FluxEntry with metadata and payload offset
+ * 9. **Cleanup:** Free temporary compression buffers
+ *
+ * **Data and Index Buffers:**
+ * - data_buffer: Contains the raw flux transition timing data (typically in nanoseconds or
+ *   arbitrary time units based on dataResolution)
+ * - index_buffer: Contains an index structure that maps logical positions to offsets within
+ *   the data buffer, enabling efficient random access to specific flux transitions
+ * - The two buffers are concatenated: [data_buffer][index_buffer] before compression/writing
+ * - indexOffset in the FluxEntry records where the index starts (equals data_length)
+ *
+ * **Compression Strategy:**
+ * - Compression is attempted only if ctx->compression_enabled is true
+ * - LZMA compression with preset level 9 is used
+ * - If compressed size >= raw size, compression is disabled and raw data is written
+ * - LZMA properties (5 bytes) are prepended to compressed data
+ * - Both raw and compressed data have separate CRC64 checksums for integrity verification
+ *
+ * **Alignment Strategy:**
+ * Before writing, the file position is:
+ * 1. Moved to EOF using fseek(SEEK_END)
+ * 2. Aligned forward to next boundary: (position + alignment_mask) & ~alignment_mask
+ * 3. Where alignment_mask = (1 << blockAlignmentShift) - 1
+ * This ensures the flux payload block starts on a properly aligned offset for efficient
+ * I/O and compliance with the Aaru format specification.
+ *
+ * **CRC64 Integrity Protection:**
+ * Two CRC64-ECMA checksums are computed and stored:
+ * - crc64: Checksum over the raw concatenated buffer (data + index)
+ * - cmpCrc64: Checksum over the compressed data (or same as crc64 if uncompressed)
+ * These checksums allow verification of flux payload integrity when reading the image,
+ * detecting corruption in either the raw or compressed representation.
+ *
+ * **Index Entry:**
+ * On successful write, an IndexEntry is appended to ctx->indexEntries with:
+ * - blockType = DataStreamPayloadBlock (identifies this as data stream payload)
+ * - dataType = FluxData (identifies the payload content type)
+ * - offset = file position where DataStreamPayloadHeader was written
+ *
+ * This index entry enables aaruf_read_flux_capture() to quickly locate the payload
+ * during subsequent reads without scanning the entire file.
+ *
+ * **FluxEntry Population:**
+ * The output @p entry parameter is populated with:
+ * - head, track, subtrack, captureIndex: Identifiers from the record
+ * - dataResolution, indexResolution: Timing resolution metadata
+ * - indexOffset: Offset within payload where index buffer starts (equals data_length)
+ * - payloadOffset: Block-aligned file offset divided by (1 << blockAlignmentShift), 
+ *   consistent with DDT offset storage. Multiply by (1 << blockAlignmentShift) to get absolute offset.
+ *
+ * This metadata is later written to the FluxDataBlock to enable efficient lookup
+ * of flux captures by their identifiers.
+ *
+ * **Error Handling:**
+ * The function returns error codes on failure:
+ * - AARUF_ERROR_INCORRECT_DATA_SIZE: Raw length exceeds 32-bit limit
+ * - AARUF_ERROR_NOT_ENOUGH_MEMORY: Memory allocation failure
+ * - AARUF_ERROR_CANNOT_WRITE_BLOCK_HEADER: Failed writing header
+ * - AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA: Failed writing payload data
+ *
+ * On error, all allocated buffers are freed before returning. The function does not
+ * modify ctx state on failure, allowing the caller to retry or handle the error gracefully.
+ *
+ * **Memory Management:**
+ * - Allocates raw_buffer to hold concatenated data + index buffers
+ * - Allocates temporary cmp_stream buffer for LZMA compression attempt
+ * - Allocates compressed_buffer if compression is effective
+ * - All buffers are freed before function returns, even on error
+ * - Source buffers in @p record are not modified or freed (managed by caller)
+ *
+ * **Thread Safety:**
+ * This function is NOT thread-safe. It modifies shared ctx state (imageStream file
+ * position, indexEntries array) and must only be called during single-threaded
+ * finalization (within write_flux_blocks).
+ *
+ * **Use Cases:**
+ * - Preserving analog flux transitions from floppy disk drives
+ * - Enabling bit-level analysis and timing reconstruction
+ * - Supporting forensic analysis of magnetic media
+ * - Preserving drive-specific timing characteristics
+ * - Enabling advanced data recovery techniques
+ *
+ * **Relationship to Other Functions:**
+ * - Called by write_flux_blocks() for each flux capture in ctx->flux_captures
+ * - FluxEntry populated here is later written to FluxDataBlock by write_flux_blocks()
+ * - aaruf_read_flux_capture() reads these payload blocks during image reading
+ * - aaruf_write_flux_capture() adds records to ctx->flux_captures during image creation
+ *
+ * @param ctx Pointer to an initialized aaruformatContext in write mode. Must not be NULL.
+ *            ctx->imageStream must be open and writable. ctx->indexEntries must be
+ *            initialized (utarray) to accept new index entries.
+ * @param record Pointer to a FluxCaptureRecord containing the data and index buffers to
+ *               serialize. The record's entry field will be updated with the final
+ *               FluxEntry metadata including payloadOffset.
+ * @param entry Output parameter that will be populated with the complete FluxEntry
+ *              metadata including the payloadOffset where this block was written.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully wrote the flux payload block. The @p entry
+ *         parameter has been populated with complete metadata.
+ * @retval AARUF_ERROR_INCORRECT_DATA_SIZE (-5) The combined length of data and index
+ *         buffers exceeds UINT32_MAX (4GB). This should not occur in practice but is
+ *         checked for safety.
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed for raw buffer,
+ *         compression buffer, or compressed output buffer.
+ * @retval AARUF_ERROR_CANNOT_WRITE_BLOCK_HEADER (-22) Failed to write the
+ *         DataStreamPayloadHeader to the image stream.
+ * @retval AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA (-23) Failed to write the payload data
+ *         to the image stream.
+ *
+ * @note The function does not validate that data_length and index_length match the
+ *       actual buffer sizes. The caller is responsible for ensuring these values are
+ *       correct.
+ *
+ * @note Compression effectiveness is evaluated by comparing compressed size to raw size.
+ *       If compression doesn't reduce size, the raw data is written instead. This
+ *       prevents wasting space on incompressible flux data.
+ *
+ * @note The payloadOffset stored in the FluxEntry is divided by block alignment
+ *       (blockAlignmentShift), consistent with DDT table offset storage. It enables direct
+ *       seeking to the payload during reads without requiring a full index scan. This is 
+ *       critical for efficient random access to flux captures. The blockAlignmentShift
+ *       value is stored in the FluxHeader to allow correct decoding.
+ *
+ * @note LZMA properties are written immediately after the header when compression is
+ *       enabled. The properties are included in cmpLength but not in the separate
+ *       LZMA_PROPERTIES_LENGTH field, so readers must account for this when decompressing.
+ *
+ * @warning The function assumes data_buffer and index_buffer are valid for the specified
+ *          lengths. Buffer overruns may occur if the lengths are incorrect. The caller
+ *          must ensure these buffers are properly sized and valid.
+ *
+ * @warning Memory allocation failures result in immediate return with an error code.
+ *          No partial writes occur on allocation failure, ensuring image consistency.
+ *
+ * @warning Write failures (fwrite returning != 1) result in error codes being returned.
+ *          The caller (write_flux_blocks) is responsible for handling these errors and
+ *          cleaning up any partially written state.
+ *
+ * @see DataStreamPayloadHeader for the block header structure definition
+ * @see FluxEntry for the metadata entry structure
+ * @see FluxCaptureRecord for the input record structure
+ * @see write_flux_blocks() for the caller that orchestrates writing all flux captures
+ * @see aaruf_read_flux_capture() for reading these payload blocks
+ *
+ * @internal
+ */
+static int32_t write_flux_capture_payload(aaruformat_context *ctx, FluxCaptureRecord *record, FluxEntry *entry)
+{
+    uint64_t data_length  = record->data_length;
+    uint64_t index_length = record->index_length;
+    uint64_t raw_length   = data_length + index_length;
+
+    if(raw_length > UINT32_MAX)
+    {
+        FATAL("Flux capture raw length exceeds 32-bit limit (%" PRIu64 ")", raw_length);
+        return AARUF_ERROR_INCORRECT_DATA_SIZE;
+    }
+
+    uint8_t *raw_buffer = NULL;
+    if(raw_length != 0)
+    {
+        raw_buffer = malloc(raw_length);
+        if(raw_buffer == NULL)
+        {
+            FATAL("Could not allocate %" PRIu64 " bytes for flux serialization", raw_length);
+            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        }
+
+        if(data_length != 0 && record->data_buffer != NULL) memcpy(raw_buffer, record->data_buffer, data_length);
+        if(index_length != 0 && record->index_buffer != NULL)
+            memcpy(raw_buffer + data_length, record->index_buffer, index_length);
+    }
+
+    uint64_t raw_crc = raw_length != 0 && raw_buffer != NULL ? aaruf_crc64_data(raw_buffer, raw_length) : 0;
+
+    CompressionType compression = ctx->compression_enabled ? Lzma : None;
+
+    uint8_t *compressed_buffer = NULL;
+    uint32_t cmp_length        = 0;
+    uint64_t cmp_crc           = 0;
+
+    if(compression == Lzma)
+    {
+        size_t cmp_capacity = raw_length ? raw_length * 2 + 65536 : LZMA_PROPERTIES_LENGTH + 16;
+        if(cmp_capacity < raw_length + LZMA_PROPERTIES_LENGTH) cmp_capacity = raw_length + LZMA_PROPERTIES_LENGTH;
+
+        uint8_t *cmp_stream = malloc(cmp_capacity);
+        if(cmp_stream == NULL)
+        {
+            free(raw_buffer);
+            FATAL("Could not allocate %zu bytes for LZMA flux compression", cmp_capacity);
+            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        }
+
+        size_t  dst_size                           = cmp_capacity;
+        uint8_t lzma_props[LZMA_PROPERTIES_LENGTH] = {0};
+        size_t  props_size                         = LZMA_PROPERTIES_LENGTH;
+        int32_t error_no = aaruf_lzma_encode_buffer(cmp_stream, &dst_size, raw_buffer, raw_length, lzma_props,
+                                                    &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+
+        if(error_no != 0 || props_size != LZMA_PROPERTIES_LENGTH || dst_size >= raw_length)
+        {
+            TRACE("Flux capture compression fell back to uncompressed (err=%d, dst=%zu, raw=%" PRIu64 ")", error_no,
+                  dst_size, raw_length);
+            compression = None;
+            free(cmp_stream);
+        }
+        else
+        {
+            cmp_length        = (uint32_t)(dst_size + LZMA_PROPERTIES_LENGTH);
+            compressed_buffer = malloc(cmp_length);
+            if(compressed_buffer == NULL)
+            {
+                free(cmp_stream);
+                free(raw_buffer);
+                FATAL("Could not allocate %u bytes for flux compressed payload", cmp_length);
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            memcpy(compressed_buffer, lzma_props, LZMA_PROPERTIES_LENGTH);
+            memcpy(compressed_buffer + LZMA_PROPERTIES_LENGTH, cmp_stream, dst_size);
+            cmp_crc = aaruf_crc64_data(compressed_buffer, cmp_length);
+            free(cmp_stream);
+            free(raw_buffer);
+            raw_buffer = NULL;
+        }
+    }
+
+    if(compression == None)
+    {
+        cmp_length        = (uint32_t)raw_length;
+        cmp_crc           = raw_crc;
+        compressed_buffer = raw_buffer;
+        raw_buffer        = NULL;
+    }
+
+    // Align stream position to block boundary
+    fseek(ctx->imageStream, 0, SEEK_END);
+    long           payload_position = ftell(ctx->imageStream);
+    const uint64_t alignment_mask   = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
+    if(payload_position & alignment_mask)
+    {
+        const uint64_t aligned_position = payload_position + alignment_mask & ~alignment_mask;
+        fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        payload_position = aligned_position;
+    }
+
+    DataStreamPayloadHeader payload_header = {0};
+    payload_header.identifier              = DataStreamPayloadBlock;
+    payload_header.dataType                = FluxData;
+    payload_header.compression             = (uint16_t)compression;
+    payload_header.cmpLength               = cmp_length;
+    payload_header.length                  = (uint32_t)raw_length;
+    payload_header.cmpCrc64                = cmp_crc;
+    payload_header.crc64                   = raw_crc;
+
+    if(fwrite(&payload_header, sizeof(DataStreamPayloadHeader), 1, ctx->imageStream) != 1)
+    {
+        free(compressed_buffer);
+        free(raw_buffer);
+        FATAL("Could not write flux payload header");
+        return AARUF_ERROR_CANNOT_WRITE_BLOCK_HEADER;
+    }
+
+    if(cmp_length != 0 && compressed_buffer != NULL &&
+       fwrite(compressed_buffer, cmp_length, 1, ctx->imageStream) != 1)
+    {
+        free(compressed_buffer);
+        free(raw_buffer);
+        FATAL("Could not write flux payload data");
+        return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
+    }
+
+    IndexEntry payload_entry;
+    payload_entry.blockType = DataStreamPayloadBlock;
+    payload_entry.dataType  = FluxData;
+    payload_entry.offset    = payload_position;
+    utarray_push_back(ctx->index_entries, &payload_entry);
+
+    entry->head            = record->entry.head;
+    entry->track           = record->entry.track;
+    entry->subtrack        = record->entry.subtrack;
+    entry->captureIndex    = record->entry.captureIndex;
+    entry->dataResolution  = record->entry.dataResolution;
+    entry->indexResolution = record->entry.indexResolution;
+    entry->indexOffset     = record->data_length;
+    entry->payloadOffset   = payload_position >> ctx->user_data_ddt_header.blockAlignmentShift;
+
+    record->entry = *entry;
+
+    free(compressed_buffer);
+    free(raw_buffer);
+
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Serialize all accumulated flux capture blocks to the image file.
+ *
+ * This function writes the complete flux capture data structure to the Aaru image file.
+ * Flux captures represent analog signal transitions recorded from floppy disk drives or
+ * other magnetic media, preserving timing information that enables bit-level analysis
+ * and advanced data recovery techniques that cannot be performed using sector data alone.
+ *
+ * The function processes all flux captures that have been enqueued in ctx->flux_captures
+ * during image creation. For each capture, it writes a DataStreamPayloadBlock containing the
+ * raw flux data and index buffers. After all payload blocks are written, it writes a
+ * FluxDataBlock containing metadata entries that enable efficient lookup and access to
+ * the flux captures. Finally, it rebuilds the in-memory flux capture lookup map for
+ * fast access during the remainder of the close operation.
+ *
+ * The flux capture system supports multiple captures per disk (identified by head,
+ * track, subtrack, and captureIndex), enabling preservation of multiple read attempts,
+ * different drive characteristics, or verification passes.
+ *
+ * **Block Structure:**
+ * The serialized flux capture structure consists of:
+ * ```
+ * +------------------------------+
+ * | DataStreamPayloadBlock 0     | <- First capture's data + index
+ * +------------------------------+
+ * | DataStreamPayloadBlock 1     | <- Second capture's data + index
+ * +------------------------------+
+ * | ...                          |
+ * +------------------------------+
+ * | DataStreamPayloadBlock (n-1) | <- Last capture's data + index
+ * +------------------------------+
+ * | FluxDataBlock                | <- Metadata block with all entries
+ * | + FluxHeader (16 B)          |    identifier, entries count, crc64
+ * | + FluxEntry 0 (32 B)         |    head, track, subtrack, offsets, etc.
+ * | + FluxEntry 1 (32 B)         |
+ * | + ...                        |
+ * | + FluxEntry (n-1) (32 B)     |
+ * +------------------------------+
+ * ```
+ *
+ * **Processing Flow:**
+ * 1. **Validation:** Check context validity and presence of flux captures
+ * 2. **Entry Count Validation:** Verify capture count doesn't exceed UINT16_MAX
+ * 3. **Entry Array Allocation:** Allocate temporary array for FluxEntry structures
+ * 4. **Payload Writing:** For each capture, call write_flux_capture_payload() to write
+ *    the payload block and populate the corresponding FluxEntry
+ * 5. **Header Construction:** Build FluxHeader with entry count and CRC64 over entries
+ * 6. **Alignment:** Seek to EOF and align to block boundary (blockAlignmentShift)
+ * 7. **Metadata Write:** Write FluxHeader followed by FluxEntry array
+ * 8. **Indexing:** Add IndexEntry for FluxDataBlock to enable fast location during reads
+ * 9. **Context Update:** Update ctx->flux_entries and ctx->flux_data_header
+ * 10. **Cleanup:** Free ctx->flux_captures array (no longer needed)
+ * 11. **Map Rebuild:** Rebuild flux capture lookup map from entries for fast access
+ *
+ * **Flux Capture Organization:**
+ * - Each flux capture is identified by: head, track, subtrack, captureIndex
+ * - Multiple captures can exist for the same track (e.g., different read attempts)
+ * - The captureIndex allows distinguishing between multiple captures of the same location
+ * - Entries are written in the order they appear in ctx->flux_captures (insertion order)
+ *
+ * **CRC64 Integrity Protection:**
+ * A CRC64-ECMA checksum is computed over the complete array of FluxEntry structures
+ * using aaruf_crc64_data(). This checksum is stored in the FluxHeader and verified
+ * during image opening by process_flux_data_block() to detect corruption in the flux
+ * metadata. The checksum covers only the entry data, not the header itself.
+ *
+ * **Alignment Strategy:**
+ * Before writing the FluxDataBlock, the file position is:
+ * 1. Moved to EOF using fseek(SEEK_END)
+ * 2. Aligned forward to next boundary: (position + alignment_mask) & ~alignment_mask
+ * 3. Where alignment_mask = (1 << blockAlignmentShift) - 1
+ * This ensures the flux data block starts on a properly aligned offset for efficient
+ * I/O and compliance with the Aaru format specification. Individual payload blocks
+ * are also aligned by write_flux_capture_payload().
+ *
+ * **Write Sequence:**
+ * The function performs a multi-stage write operation:
+ * 1. Write all DataStreamPayloadBlock entries (one per capture, via write_flux_capture_payload)
+ * 2. Write FluxHeader (sizeof(FluxHeader) = 16 bytes)
+ * 3. Write FluxEntry array (capture_count * sizeof(FluxEntry) bytes)
+ *
+ * All writes must succeed for the index entry to be added. If any write fails, the
+ * function returns an error code and the caller (aaruf_close) handles cleanup.
+ *
+ * **Indexing:**
+ * On successful write of the FluxDataBlock, an IndexEntry is appended to ctx->indexEntries:
+ * - blockType = FluxDataBlock (identifies this as flux capture metadata)
+ * - dataType = 0 (flux data blocks have no subtype)
+ * - offset = file position where FluxHeader was written
+ *
+ * Individual DataStreamPayloadBlock entries are indexed by write_flux_capture_payload() with
+ * blockType=DataStreamPayloadBlock and dataType=FluxData.
+ *
+ * This index entry enables process_flux_data_block() to quickly locate the flux metadata
+ * during subsequent image opens without scanning the entire file.
+ *
+ * **Flux Capture Lookup Map:**
+ * After writing, the function calls flux_map_rebuild_from_entries() to rebuild the
+ * in-memory hash table that maps (head, track, subtrack, captureIndex) tuples to
+ * FluxEntry array indices. This map enables O(1) lookup of flux captures by their
+ * identifiers, which is used by aaruf_read_flux_capture() and other flux access functions.
+ *
+ * The map is stored in ctx->flux_capture_map and uses UTHASH for efficient hash table
+ * operations. The map is cleared and rebuilt from scratch each time this function is
+ * called, ensuring consistency with the newly written entries.
+ *
+ * **Error Handling:**
+ * The function returns error codes on failure:
+ * - AARUF_ERROR_NOT_AARUFORMAT: Invalid context or image stream
+ * - AARUF_ERROR_INCORRECT_DATA_SIZE: Capture count exceeds UINT16_MAX
+ * - AARUF_ERROR_NOT_ENOUGH_MEMORY: Failed to allocate entry array
+ * - Error codes propagated from write_flux_capture_payload() on payload write failure
+ * - Error codes propagated from flux_map_rebuild_from_entries() on map rebuild failure
+ *
+ * On error, allocated memory is freed and ctx->flux_entries is restored to its previous
+ * value (if any), ensuring the context remains in a consistent state.
+ *
+ * **Memory Management:**
+ * - Allocates temporary entries array sized to hold all FluxEntry structures
+ * - Previous ctx->flux_entries (if any) are preserved and restored on error
+ * - On success, previous entries are freed and replaced with new entries
+ * - ctx->flux_captures array is freed after successful write (no longer needed)
+ * - Individual payload buffers are managed by write_flux_capture_payload()
+ *
+ * **No-op Conditions:**
+ * If ctx->flux_captures is NULL or empty (utarray_len == 0), the function returns
+ * AARUF_STATUS_OK immediately without writing anything. This allows images without
+ * flux captures to be created normally.
+ *
+ * **Thread Safety:**
+ * This function is NOT thread-safe. It modifies shared ctx state (imageStream file
+ * position, indexEntries array, flux_entries, flux_data_header, flux_capture_map) and
+ * must only be called during single-threaded finalization (within aaruf_close).
+ *
+ * **Use Cases:**
+ * - Preserving analog flux transitions from floppy disk drives for forensic analysis
+ * - Enabling bit-level timing analysis and reconstruction
+ * - Supporting advanced data recovery from damaged or degraded media
+ * - Preserving drive-specific characteristics and read variations
+ * - Enabling research into magnetic media encoding and decoding
+ * - Supporting preservation of non-standard or copy-protected disk formats
+ *
+ * **Relationship to Other Functions:**
+ * - Flux captures are added via aaruf_write_flux_capture() during image creation
+ * - Captures are stored in ctx->flux_captures array until image close
+ * - This function serializes all captures to disk during aaruf_close()
+ * - process_flux_data_block() reads and reconstructs the entries during aaruf_open()
+ * - aaruf_read_flux_capture() uses the lookup map to access specific captures
+ * - flux_map_rebuild_from_entries() rebuilds the lookup map from entries
+ *
+ * **Format Considerations:**
+ * - The FluxDataBlock must be written after all DataStreamPayloadBlock entries
+ * - The entry count in FluxHeader must match the number of payload blocks written
+ * - Each FluxEntry's payloadOffset must point to a valid DataStreamPayloadBlock (stored divided by block alignment)
+ * - The CRC64 in FluxHeader enables verification of entry array integrity
+ * - Multiple captures per track are supported via captureIndex differentiation
+ *
+ * @param ctx Pointer to an initialized aaruformatContext in write mode. Must not be NULL.
+ *            ctx->flux_captures should contain the array of flux captures to serialize
+ *            (may be NULL or empty if no flux captures were added). ctx->imageStream
+ *            must be open and writable. ctx->indexEntries must be initialized (utarray)
+ *            to accept new index entries.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) Successfully wrote all flux capture blocks. This occurs when:
+ *         - The context is valid and imageStream is open
+ *         - All payload blocks were written successfully
+ *         - The FluxDataBlock header and entries were written successfully
+ *         - The flux capture lookup map was rebuilt successfully
+ *         - Or when no flux captures were present (no-op success)
+ *
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is invalid or imageStream is NULL.
+ *         This indicates a programming error or corrupted context state.
+ *
+ * @retval AARUF_ERROR_INCORRECT_DATA_SIZE (-5) The number of flux captures exceeds
+ *         UINT16_MAX (65535). This is a practical limit to keep the header size reasonable.
+ *
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Memory allocation failed for the FluxEntry
+ *         array. This can occur when there are extremely many flux captures or system
+ *         memory is exhausted.
+ *
+ * @retval AARUF_ERROR_CANNOT_WRITE_BLOCK_HEADER (-22) Failed to write the FluxHeader.
+ *         This can occur due to disk full, I/O errors, or stream corruption.
+ *
+ * @retval AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA (-23) Failed to write the FluxEntry array.
+ *         This can occur due to disk full, I/O errors, or stream corruption.
+ *
+ * @retval <other error codes> Propagated from write_flux_capture_payload() if any
+ *         payload block write fails, or from flux_map_rebuild_from_entries() if map
+ *         rebuild fails.
+ *
+ * @note The function preserves ctx->flux_entries if it already exists, freeing the
+ *       previous array only after successful write of the new entries. This ensures
+ *       that read operations can continue to use the old entries if the write fails.
+ *
+ * @note The flux capture lookup map is rebuilt even if it already exists, ensuring
+ *       consistency with the newly written entries. The previous map is cleared
+ *       by flux_map_rebuild_from_entries() before rebuilding.
+ *
+ * @note Entry ordering in the FluxDataBlock matches the order in ctx->flux_captures,
+ *       which is typically insertion order. Applications reading flux captures should
+ *       not rely on any specific ordering beyond what is guaranteed by the identifiers.
+ *
+ * @note The function does not validate that payloadOffset values in FluxEntry structures
+ *       point to valid DataStreamPayloadBlock locations. This validation is performed during
+ *       reading by process_flux_data_block() and aaruf_read_flux_capture().
+ *
+ * @warning If write_flux_capture_payload() fails for any capture, this function
+ *          immediately returns the error code without attempting to write remaining
+ *          captures. Partial flux capture data may be present in the image, but the
+ *          FluxDataBlock will not be written, making the flux data inaccessible.
+ *
+ * @warning Memory allocation failure for the entries array results in immediate return
+ *          with an error code. No flux data is written in this case, even if some
+ *          payload blocks were already written (though this should not occur as payload
+ *          writing happens before entry array allocation).
+ *
+ * @warning The function modifies ctx->flux_entries, ctx->flux_data_header, and
+ *          ctx->flux_capture_map. These modifications occur even if a later step fails,
+ *          so the caller must handle cleanup if needed. However, the function does
+ *          restore ctx->flux_entries to its previous value on error.
+ *
+ * @see FluxHeader for the metadata block header structure definition
+ * @see FluxEntry for individual flux capture entry structure definition
+ * @see DataStreamPayloadHeader for payload block header structure definition
+ * @see write_flux_capture_payload() for writing individual payload blocks
+ * @see flux_map_rebuild_from_entries() for rebuilding the lookup map
+ * @see process_flux_data_block() for reading flux metadata during image opening
+ * @see aaruf_write_flux_capture() for adding flux captures during image creation
+ * @see aaruf_read_flux_capture() for reading flux captures from opened images
+ *
+ * @internal
+ */
+static int32_t write_flux_blocks(aaruformat_context *ctx)
+{
+    TRACE("Entering write_flux_blocks(%p)", ctx);
+
+    if(ctx == NULL || ctx->imageStream == NULL)
+    {
+        FATAL("Invalid context when writing flux blocks");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(ctx->flux_captures == NULL || utarray_len(ctx->flux_captures) == 0)
+    {
+        TRACE("No flux captures enqueued, skipping flux block serialization");
+        return AARUF_STATUS_OK;
+    }
+
+    size_t capture_count = utarray_len(ctx->flux_captures);
+    if(capture_count > UINT16_MAX)
+    {
+        FATAL("Flux capture count exceeds header capacity (%zu > %u)", capture_count, UINT16_MAX);
+        return AARUF_ERROR_INCORRECT_DATA_SIZE;
+    }
+
+    FluxEntry *previous_entries = ctx->flux_entries;
+    ctx->flux_entries           = NULL;
+
+    FluxEntry *entries = malloc(capture_count * sizeof(FluxEntry));
+    if(entries == NULL)
+    {
+        ctx->flux_entries = previous_entries;
+        FATAL("Could not allocate %zu bytes for flux entries", capture_count * sizeof(FluxEntry));
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    size_t idx = 0;
+    for(FluxCaptureRecord *record = (FluxCaptureRecord *)utarray_front(ctx->flux_captures); record != NULL;
+        record                    = (FluxCaptureRecord *)utarray_next(ctx->flux_captures, record), ++idx)
+    {
+        int32_t res = write_flux_capture_payload(ctx, record, &entries[idx]);
+        if(res != AARUF_STATUS_OK)
+        {
+            free(entries);
+            ctx->flux_entries = previous_entries;
+            return res;
+        }
+    }
+
+    FluxHeader header = {0};
+    header.identifier           = FluxDataBlock;
+    header.entries              = (uint16_t)capture_count;
+    header.blockAlignmentShift  = ctx->user_data_ddt_header.blockAlignmentShift;
+    header.crc64 =
+        capture_count == 0 ? 0 : aaruf_crc64_data((const uint8_t *)entries, capture_count * sizeof(FluxEntry));
+
+    // Align stream position to block boundary
+    fseek(ctx->imageStream, 0, SEEK_END);
+    long           metadata_position = ftell(ctx->imageStream);
+    const uint64_t alignment_mask    = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
+    if(metadata_position & alignment_mask)
+    {
+        const uint64_t aligned_position = metadata_position + alignment_mask & ~alignment_mask;
+        fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        metadata_position = aligned_position;
+    }
+
+    if(fwrite(&header, sizeof(FluxHeader), 1, ctx->imageStream) != 1)
+    {
+        free(entries);
+        ctx->flux_entries = previous_entries;
+        FATAL("Could not write flux metadata header");
+        return AARUF_ERROR_CANNOT_WRITE_BLOCK_HEADER;
+    }
+
+    if(capture_count != 0)
+    {
+        size_t written_entries = fwrite(entries, sizeof(FluxEntry), capture_count, ctx->imageStream);
+        if(written_entries != capture_count)
+        {
+            free(entries);
+            ctx->flux_entries = previous_entries;
+            FATAL("Could not write %zu flux entries (wrote %zu)", capture_count, written_entries);
+            return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
+        }
+    }
+
+    IndexEntry metadata_entry;
+    metadata_entry.blockType = FluxDataBlock;
+    metadata_entry.dataType  = 0;
+    metadata_entry.offset    = metadata_position;
+    utarray_push_back(ctx->index_entries, &metadata_entry);
+
+    if(previous_entries != NULL) free(previous_entries);
+    ctx->flux_entries     = entries;
+    ctx->flux_data_header = header;
+
+    utarray_free(ctx->flux_captures);
+    ctx->flux_captures = NULL;
+
+    int32_t map_result = flux_map_rebuild_from_entries(ctx);
+    if(map_result != AARUF_STATUS_OK) return map_result;
+
+    TRACE("Wrote %zu flux captures", capture_count);
+    return AARUF_STATUS_OK;
+}
+
+/**
  * @brief Serialize the accumulated index entries at the end of the image and back-patch the header.
  *
  * All previously written structural blocks push their IndexEntry into ctx->indexEntries. This
@@ -4426,6 +5097,12 @@ AARU_EXPORT int AARU_CALL aaruf_close(void *context)
 
         // Write tracks block
         if(ctx->dirty_tracks_block) write_tracks_block(ctx);
+
+        // Write flux capture blocks
+        if(ctx->dirty_flux_block) {
+            res = write_flux_blocks(ctx);
+            if(res != AARUF_STATUS_OK) return res;
+        }
 
         // Write MODE 2 subheader data block
         if(ctx->dirty_mode2_subheaders_block) write_mode2_subheaders_block(ctx);

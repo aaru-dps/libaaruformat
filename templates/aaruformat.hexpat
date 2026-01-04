@@ -727,8 +727,13 @@ enum DataType : u16
     DecryptedDVDDiscKey              = 80,
     DVD_CPI_MAI                      = 81,
     DecryptedDVDTitleKey             = 82,
-    FluxData                         = 83,
-    BitstreamData                    = 84
+    DvdSectorId                      = 83,
+    DvdSectorIed                     = 84,
+    DvdSectorEdc                     = 85,
+    DvdSectorEccPi                   = 86,
+    DvdEccBlockPo                    = 87,
+    FluxData                         = 88,
+    BitstreamData                    = 89
 };
 
 enum BlockType : u32
@@ -753,6 +758,7 @@ enum BlockType : u32
     TwinSectorTable              = 0x42545754,
     CompactDiscIndexesBlock      = 0x58494443,
     FluxDataBlock                = 0x58554C46,
+    DataStreamPayloadBlock       = 0x4C505344,
     BitstreamDataBlock           = 0x53544942,
     TrackLayoutBlock             = 0x594C4B54,
     JsonMetadataBlock            = 0x444D534A
@@ -1130,6 +1136,49 @@ struct CompactDiscIndexesBlock
     CompactDiscIndexEntry indexes[entries];
 };
 
+struct FluxEntry
+{
+    u32 head;
+    u16 track;
+    u8  subtrack;
+    u32 captureIndex;
+    u64 indexResolution;
+    u64 dataResolution;
+    u64 indexOffset;
+    u64 payloadOffset;
+};
+
+struct FluxHeader
+{
+    BlockType identifier;
+    u16       entries;
+    u8        blockAlignmentShift;
+    u64       crc64;
+};
+
+struct FluxDataBlock
+{
+    FluxHeader  header;
+    FluxEntry   entries[header.entries];
+};
+
+struct DataStreamPayloadHeader
+{
+    BlockType       identifier;
+    u16             dataType;
+    u16             compression;
+    u32             cmpLength;
+    u32             length;
+    u64             cmpCrc64;
+    u64             crc64;
+};
+
+struct DataStreamPayloadBlock
+{
+    DataStreamPayloadHeader header;
+    u8                payload[header.cmpLength];
+};
+
 using Index;
 
 struct IndexEntry
@@ -1153,6 +1202,8 @@ struct IndexEntry
         (BlockType::TapePartitionBlock):           TapePartitionHeader     *tapePartitions      : u64 [[inline]];
         (BlockType::CompactDiscIndexesBlock):      CompactDiscIndexesBlock *compactDiscIndexes  : u64 [[inline]];
         (BlockType::Index3):                       Index                   *index               : u64 [[inline]];
+        (BlockType::FluxDataBlock):                FluxDataBlock           *fluxData            : u64 [[inline]];
+        (BlockType::DataStreamPayloadBlock):       DataStreamPayloadBlock  *dataStreamPayload   : u64 [[inline]];
         (_):                                       BlockType               *offset              : u64 [[inline]];
     }
 };

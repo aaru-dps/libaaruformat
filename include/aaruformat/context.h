@@ -21,6 +21,7 @@
 
 #include "blake3.h"
 #include "crc64.h"
+#include "structs/flux.h"
 #include "hash_map.h"
 #include "lru.h"
 #include "md5.h"
@@ -29,6 +30,8 @@
 #include "spamsum.h"
 #include "structs.h"
 #include "utarray.h"
+
+typedef struct FluxCaptureMapEntry FluxCaptureMapEntry;
 
 /** \file aaruformat/context.h
  *  \brief Central runtime context structures for libaaruformat (image state, caches, checksum buffers).
@@ -304,6 +307,12 @@ typedef struct aaruformat_context
     TapePartitionHashEntry *tape_partitions;  ///< Hash table root for tape partitions
     bool                    is_tape;          ///< True if the image is a tape image
 
+    /* Flux data structures */
+    FluxHeader  flux_data_header;  ///< Flux data header (if present).
+    FluxEntry  *flux_entries;      ///< Array of flux entries (flux_data_header.entries elements).
+    UT_array   *flux_captures;     ///< Pending flux capture payloads (write path).
+    FluxCaptureMapEntry *flux_map; ///< Hash map for flux capture lookup by head/track/subtrack/capture index.
+
     /* Dirty flags (controls write behavior in close.c) */
     bool dirty_secondary_ddt;                  ///< True if secondary DDT tables should be written during close
     bool dirty_primary_ddt;                    ///< True if primary DDT table should be written during close
@@ -327,6 +336,7 @@ typedef struct aaruformat_context
     bool dirty_dumphw_block;                   ///< True if dump hardware block should be written during close
     bool dirty_cicm_block;                     ///< True if CICM metadata block should be written during close
     bool dirty_json_block;                     ///< True if JSON metadata block should be written during close
+    bool dirty_flux_block;                     ///< True if flux block should be written during close
     bool dirty_index_block;                    ///< True if index block should be written during close
 } aaruformat_context;
 
