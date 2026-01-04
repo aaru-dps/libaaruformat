@@ -9,7 +9,8 @@ var searchData=
   ['tape_5fpartitions_6',['tape_partitions',['../structaaruformat__context.html#ad7ca524fb6cece835566c268258b9a54',1,'aaruformat_context']]],
   ['target_5fcount_7',['target_count',['../structstatic__lru__hash__map__t.html#a712c31a18edc1d62378523a91e8d6ad7',1,'static_lru_hash_map_t']]],
   ['total_5fsize_8',['total_size',['../structspamsum__ctx.html#a8936ea7a028ee607420647aed0f968fe',1,'spamsum_ctx']]],
-  ['track_5fentries_9',['track_entries',['../structaaruformat__context.html#adcabe3b59f532d036adf16b78faba58e',1,'aaruformat_context']]],
-  ['tracks_5fheader_10',['tracks_header',['../structaaruformat__context.html#aff71b0229a1c4c78572cfdb0824e601e',1,'aaruformat_context']]],
-  ['type_11',['type',['../structmediaTagEntry.html#a95bf0de1de367f90491367921069c9e2',1,'mediaTagEntry::type'],['../structChecksumEntry.html#aae2307548d69d23749ffdfd9d4acd627',1,'ChecksumEntry::type'],['../structBlockHeader.html#ac31ad48f3362a43175c94ec2e30662ad',1,'BlockHeader::type'],['../structDdtHeader.html#a7d0eb9ac1d810626e9f86b7f8c8655f5',1,'DdtHeader::type'],['../structDdtHeader2.html#a14f9ccf36df63e036d69291182cf7bbb',1,'DdtHeader2::type'],['../structTrackEntry.html#ac8dd4cd45f2757b51a27385c7731dde4',1,'TrackEntry::type']]]
+  ['track_9',['track',['../structFluxEntry.html#a46108bba60946e7b7d4f41160e3dfd86',1,'FluxEntry::track'],['../structFluxCaptureMeta.html#aebee512e3f6ce8a4c1aa1b4cfbecdb33',1,'FluxCaptureMeta::track'],['../structFluxCaptureKey.html#a1728ed3937674d667aec49213c454dc0',1,'FluxCaptureKey::track']]],
+  ['track_5fentries_10',['track_entries',['../structaaruformat__context.html#adcabe3b59f532d036adf16b78faba58e',1,'aaruformat_context']]],
+  ['tracks_5fheader_11',['tracks_header',['../structaaruformat__context.html#aff71b0229a1c4c78572cfdb0824e601e',1,'aaruformat_context']]],
+  ['type_12',['type',['../structmediaTagEntry.html#a95bf0de1de367f90491367921069c9e2',1,'mediaTagEntry::type'],['../structChecksumEntry.html#aae2307548d69d23749ffdfd9d4acd627',1,'ChecksumEntry::type'],['../structBlockHeader.html#ac31ad48f3362a43175c94ec2e30662ad',1,'BlockHeader::type'],['../structDdtHeader.html#a7d0eb9ac1d810626e9f86b7f8c8655f5',1,'DdtHeader::type'],['../structDdtHeader2.html#a14f9ccf36df63e036d69291182cf7bbb',1,'DdtHeader2::type'],['../structTrackEntry.html#ac8dd4cd45f2757b51a27385c7731dde4',1,'TrackEntry::type']]]
 ];

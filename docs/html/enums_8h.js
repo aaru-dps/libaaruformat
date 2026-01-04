@@ -23,7 +23,9 @@ var enums_8h =
       [ "DumpHardwareBlock", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3ad33812deb344562478c4e0d208a114db", null ],
       [ "TapeFileBlock", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3ac3a117f2498bf736a76d5d3a3830540a", null ],
       [ "TapePartitionBlock", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3a60609bbcd07339a8bf589e66ef4a3041", null ],
-      [ "AaruMetadataJsonBlock", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3a8ac77889f0c345ed861ed653a3063032", null ]
+      [ "AaruMetadataJsonBlock", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3a8ac77889f0c345ed861ed653a3063032", null ],
+      [ "FluxDataBlock", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3aeaee7c0287e406b4b09ad4b8954e46a3", null ],
+      [ "DataStreamPayloadBlock", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3afbe1bc6eb5c4d2258b9e885c8e89513d", null ]
     ] ],
     [ "CdFixFlags", "enums_8h.html#ab72dc399e3946b3c40a5ad8c8e3254b7", [
       [ "NotDumped", "enums_8h.html#ab72dc399e3946b3c40a5ad8c8e3254b7ab3fac5cd103786d64f7ee67bcb9ac458", null ],
@@ -135,7 +137,9 @@ var enums_8h =
       [ "DvdSectorEdc", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a9761d07be6a71826f3f0146d091f2176", null ],
       [ "DvdSectorEccPi", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6abb62769f9eb8d50d3fe96c2eccfe82de", null ],
       [ "DvdEccBlockPo", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a9773bd9f1ecc63ab9b38641c4637ba44", null ],
-      [ "DvdPfi2ndLayer", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a0346ddff75651daf77c3f75c39ad24e0", null ]
+      [ "DvdPfi2ndLayer", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a0346ddff75651daf77c3f75c39ad24e0", null ],
+      [ "FluxData", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a390407e323208ceb978198c5d993ea80", null ],
+      [ "BitstreamData", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a451a072d05820a53faecb6716c2b7ba3", null ]
     ] ],
     [ "FeaturesCompatible", "enums_8h.html#af104aa102cdba100b9f245bef4abd42d", [
       [ "AARU_FEATURE_RW_BLAKE3", "enums_8h.html#af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4", null ]

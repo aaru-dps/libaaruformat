@@ -15,6 +15,8 @@ var searchData=
   ['floppyaddressmark_12',['FloppyAddressMark',['../group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aa440e8a66ac1ffbbae3347b72728da547',1,'aaru.h']]],
   ['floppyleadout_13',['FloppyLeadOut',['../enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6ad28a6e4b3a2ac2917dec6684f2e6a08e',1,'enums.h']]],
   ['floptical_14',['Floptical',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa7167e5fc54a519ec2c5f7997ac8c1180',1,'aaru.h']]],
-  ['fmtowns_15',['FMTOWNS',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa54a5601323f7c9935ba35beb1da5abcd',1,'aaru.h']]],
-  ['fvd_16',['FVD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aad0c431131a66081e6b394fafdb9828c4',1,'aaru.h']]]
+  ['fluxdata_15',['FluxData',['../enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a390407e323208ceb978198c5d993ea80',1,'enums.h']]],
+  ['fluxdatablock_16',['FluxDataBlock',['../enums_8h.html#a54420623f26ab6bb61042b41cccf37a3aeaee7c0287e406b4b09ad4b8954e46a3',1,'enums.h']]],
+  ['fmtowns_17',['FMTOWNS',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa54a5601323f7c9935ba35beb1da5abcd',1,'aaru.h']]],
+  ['fvd_18',['FVD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aad0c431131a66081e6b394fafdb9828c4',1,'aaru.h']]]
 ];

@@ -186,10 +186,11 @@ var searchData=
   ['stk4490_183',['STK4490',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaefd940f05f4db9ed21ed2abb1817697b',1,'aaru.h']]],
   ['stk9490_184',['STK9490',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa1aee0a945fb952eda9fc59c36ef4bba8',1,'aaru.h']]],
   ['structs_2eh_185',['structs.h',['../structs_8h.html',1,'']]],
-  ['sum_5fhash_186',['SUM_HASH',['../spamsum_8c.html#a0e886062da69d341fbee947ba56cae96',1,'spamsum.c']]],
-  ['supercdrom2_187',['SuperCDROM2',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa3e52a110f0759765e20f0c3380ad72a6',1,'aaru.h']]],
-  ['svcd_188',['SVCD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa42a85e55170f4b530f2841fe6d56b388',1,'aaru.h']]],
-  ['svod_189',['SVOD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa0e880bad655cd93dfd4321c6a559dd5c',1,'aaru.h']]],
-  ['switchgamecard_190',['SwitchGameCard',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa64c3f553240acee7926acfae616bbcd4',1,'aaru.h']]],
-  ['syjet_191',['SyJet',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aad1af9b71a52d69b0ef7d870a2fe53fab',1,'aaru.h']]]
+  ['subtrack_186',['subtrack',['../structFluxEntry.html#abd12c00010d82cd83820dd3405b7b860',1,'FluxEntry::subtrack'],['../structFluxCaptureMeta.html#a9e7ceeae4845e8dcd87bd76e32d065d6',1,'FluxCaptureMeta::subtrack'],['../structFluxCaptureKey.html#a8a1ff1cb573f89f004babec6b42b2edf',1,'FluxCaptureKey::subtrack']]],
+  ['sum_5fhash_187',['SUM_HASH',['../spamsum_8c.html#a0e886062da69d341fbee947ba56cae96',1,'spamsum.c']]],
+  ['supercdrom2_188',['SuperCDROM2',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa3e52a110f0759765e20f0c3380ad72a6',1,'aaru.h']]],
+  ['svcd_189',['SVCD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa42a85e55170f4b530f2841fe6d56b388',1,'aaru.h']]],
+  ['svod_190',['SVOD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa0e880bad655cd93dfd4321c6a559dd5c',1,'aaru.h']]],
+  ['switchgamecard_191',['SwitchGameCard',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa64c3f553240acee7926acfae616bbcd4',1,'aaru.h']]],
+  ['syjet_192',['SyJet',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aad1af9b71a52d69b0ef7d870a2fe53fab',1,'aaru.h']]]
 ];

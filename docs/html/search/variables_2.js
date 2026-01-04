@@ -14,7 +14,7 @@ var searchData=
   ['block_5fcache_11',['block_cache',['../structaaruformat__context.html#a58359ec8607d1d10e0af8699be238e77',1,'aaruformat_context']]],
   ['block_5fheader_5fcache_12',['block_header_cache',['../structaaruformat__context.html#a3a12addf4a338cc04471709604d48ae1',1,'aaruformat_context']]],
   ['block_5fzero_5fwritten_13',['block_zero_written',['../structaaruformat__context.html#aabd695fe8ff334cd96711bf085d4cf9f',1,'aaruformat_context']]],
-  ['blockalignmentshift_14',['blockAlignmentShift',['../structDdtHeader2.html#aa67b097c3a20f926ede495d27152f1c0',1,'DdtHeader2::blockAlignmentShift'],['../structAaruHeaderV2.html#ac55c9959435ff7b62a72ec8243ebe1c8',1,'AaruHeaderV2::blockAlignmentShift']]],
+  ['blockalignmentshift_14',['blockAlignmentShift',['../structDdtHeader2.html#aa67b097c3a20f926ede495d27152f1c0',1,'DdtHeader2::blockAlignmentShift'],['../structFluxHeader.html#a8e2f7fb0153155438629cda42cb6f329',1,'FluxHeader::blockAlignmentShift'],['../structAaruHeaderV2.html#ac55c9959435ff7b62a72ec8243ebe1c8',1,'AaruHeaderV2::blockAlignmentShift']]],
   ['blocks_15',['blocks',['../structDdtHeader2.html#a9571c1d556e33537935bab1edba31135',1,'DdtHeader2']]],
   ['blocksize_16',['blockSize',['../structMetadataBlockHeader.html#a3d1affce1a6ce2bda81aeaf85435b885',1,'MetadataBlockHeader']]],
   ['blocktype_17',['blockType',['../structIndexEntry.html#a4b5c7115ac83019c3f77c6f047e5f75e',1,'IndexEntry']]],

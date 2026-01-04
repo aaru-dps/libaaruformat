@@ -8,6 +8,8 @@ var close_8c =
     [ "write_dumphw_block", "close_8c.html#a796034966c1e918152e652635431dc39", null ],
     [ "write_dvd_long_sector_blocks", "close_8c.html#a13f6c475294969c1eb8c59ff53c91af9", null ],
     [ "write_dvd_title_key_decrypted_block", "close_8c.html#a5e2cce0d9661697c767d9312224fd340", null ],
+    [ "write_flux_blocks", "close_8c.html#af80e68ad63df21d7eb0ff9c7212302a1", null ],
+    [ "write_flux_capture_payload", "close_8c.html#a10d7168f66ee3b1e78d17022f37f63a9", null ],
     [ "write_geometry_block", "close_8c.html#ada8f13126103c0077ddcf5e6120aea53", null ],
     [ "write_index_block", "close_8c.html#a3532372fac3d5bb2619900820a26632e", null ],
     [ "write_media_tags", "close_8c.html#a3decc41ec145e8b153a23de6389b3782", null ],

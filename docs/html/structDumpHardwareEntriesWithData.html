@@ -125,7 +125,7 @@ Data Fields</h2></td></tr>
 <div class="textblock"><p>In-memory representation of a dump hardware entry plus decoded variable-length fields &amp; extents. </p>
 <p>All string pointers are NUL-terminated UTF-8 copies of on-disk data (or NULL if absent). extents array may be NULL when no ranges were recorded. Freed during context teardown. </p>
 
-<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00339">339</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00349">349</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 </div><a name="doc-variable-members" id="doc-variable-members"></a><h2 id="header-doc-variable-members" class="groupheader">Field Documentation</h2>
 <a id="a9b5f7b438c99ede6988179b7b89915df" name="a9b5f7b438c99ede6988179b7b89915df"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9b5f7b438c99ede6988179b7b89915df">&#9670;&#160;</a></span>entry</h2>
@@ -141,7 +141,7 @@ Data Fields</h2></td></tr>
 
 <p>Fixed-size header with lengths &amp; counts. </p>
 
-<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00341">341</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00351">351</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="dump_8c_source.html#l00531">aaruf_set_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, and <a class="el" href="close_8c_source.html#l03748">write_dumphw_block()</a>.</p>
 
@@ -161,9 +161,9 @@ Data Fields</h2></td></tr>
 
 <p>Array of extents (entry.extents elements) or NULL. </p>
 
-<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00342">342</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00352">352</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l04340">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="dump_8c_source.html#l00531">aaruf_set_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, and <a class="el" href="close_8c_source.html#l03748">write_dumphw_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l05011">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="dump_8c_source.html#l00531">aaruf_set_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, and <a class="el" href="close_8c_source.html#l03748">write_dumphw_block()</a>.</p>
 
 </div>
 </div>
@@ -181,9 +181,9 @@ Data Fields</h2></td></tr>
 
 <p>Firmware version string or NULL. </p>
 
-<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00346">346</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00356">356</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l04340">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, and <a class="el" href="close_8c_source.html#l03748">write_dumphw_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l05011">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, and <a class="el" href="close_8c_source.html#l03748">write_dumphw_block()</a>.</p>
 
 </div>
 </div>
@@ -201,9 +201,9 @@ Data Fields</h2></td></tr>
 
 <p>Manufacturer string (UTF-8) or NULL. </p>
 
-<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00343">343</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00353">353</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l04340">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, and <a class="el" href="close_8c_source.html#l03748">write_dumphw_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l05011">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, and <a class="el" href="close_8c_source.html#l03748">write_dumphw_block()</a>.</p>
 
 </div>
 </div>
@@ -221,9 +221,9 @@ Data Fields</h2></td></tr>
 
 <p>Model string or NULL. </p>
 
-<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00344">344</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00354">354</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l04340">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, and <a class="el" href="close_8c_source.html#l03748">write_dumphw_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l05011">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, and <a class="el" href="close_8c_source.html#l03748">write_dumphw_block()</a>.</p>
 
 </div>
 </div>
@@ -241,9 +241,9 @@ Data Fields</h2></td></tr>
 
 <p>Hardware revision string or NULL. </p>
 
-<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00345">345</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00355">355</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l04340">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, and <a class="el" href="close_8c_source.html#l03748">write_dumphw_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l05011">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, and <a class="el" href="close_8c_source.html#l03748">write_dumphw_block()</a>.</p>
 
 </div>
 </div>
@@ -261,9 +261,9 @@ Data Fields</h2></td></tr>
 
 <p>Serial number string or NULL. </p>
 
-<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00347">347</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00357">357</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l04340">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, and <a class="el" href="close_8c_source.html#l03748">write_dumphw_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l05011">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, and <a class="el" href="close_8c_source.html#l03748">write_dumphw_block()</a>.</p>
 
 </div>
 </div>
@@ -281,9 +281,9 @@ Data Fields</h2></td></tr>
 
 <p>Dump software name or NULL. </p>
 
-<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00348">348</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00358">358</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l04340">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, and <a class="el" href="close_8c_source.html#l03748">write_dumphw_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l05011">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, and <a class="el" href="close_8c_source.html#l03748">write_dumphw_block()</a>.</p>
 
 </div>
 </div>
@@ -301,9 +301,9 @@ Data Fields</h2></td></tr>
 
 <p>Host operating system string or NULL. </p>
 
-<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00350">350</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00360">360</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l04340">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, and <a class="el" href="close_8c_source.html#l03748">write_dumphw_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l05011">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, and <a class="el" href="close_8c_source.html#l03748">write_dumphw_block()</a>.</p>
 
 </div>
 </div>
@@ -321,9 +321,9 @@ Data Fields</h2></td></tr>
 
 <p>Dump software version or NULL. </p>
 
-<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00349">349</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8h_source.html#l00359">359</a> of file <a class="el" href="context_8h_source.html">context.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l04340">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, and <a class="el" href="close_8c_source.html#l03748">write_dumphw_block()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="close_8c_source.html#l05011">aaruf_close()</a>, <a class="el" href="dump_8c_source.html#l00186">aaruf_get_dumphw()</a>, <a class="el" href="blocks_2dump_8c_source.html#l00107">process_dumphw_block()</a>, and <a class="el" href="close_8c_source.html#l03748">write_dumphw_block()</a>.</p>
 
 </div>
 </div>

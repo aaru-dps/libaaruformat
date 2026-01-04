@@ -11,6 +11,7 @@ var errors_8h =
     [ "AARUF_ERROR_CANNOT_WRITE_BLOCK_HEADER", "errors_8h.html#af86dd78bcb33b547113460822ed96c3e", null ],
     [ "AARUF_ERROR_CANNOT_WRITE_HEADER", "errors_8h.html#af180a859e926a3826486d78078076919", null ],
     [ "AARUF_ERROR_FILE_TOO_SMALL", "errors_8h.html#acebe3e4bcc498066fe65d9e24e16c7f5", null ],
+    [ "AARUF_ERROR_FLUX_DATA_NOT_FOUND", "errors_8h.html#ae74707aa7fa4c8d8c3b717514a5f5c7c", null ],
     [ "AARUF_ERROR_INCOMPATIBLE_VERSION", "errors_8h.html#a626d70083785adf028130ac349f270c5", null ],
     [ "AARUF_ERROR_INCORRECT_DATA_SIZE", "errors_8h.html#a8fc3ecb14777e72bebad62084b6caf16", null ],
     [ "AARUF_ERROR_INCORRECT_MEDIA_TYPE", "errors_8h.html#a26707b86af4dd4f3bae7d57abd4345b0", null ],

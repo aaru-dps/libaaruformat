@@ -23,12 +23,13 @@ var searchData=
   ['bernoulli65_20',['Bernoulli65',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa3cba49fc5bd6094417108386ddfedae6',1,'aaru.h']]],
   ['bernoulli90_21',['Bernoulli90',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aabc74a255d8b7d98bbd1d5d9d87943ae4',1,'aaru.h']]],
   ['bernoullibox2_5f20_22',['BernoulliBox2_20',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aad82d354fae075278c150b684c5c0e508',1,'aaru.h']]],
-  ['blake3_23',['Blake3',['../enums_8h.html#abda1f9cb04c30fc71ee8c6081d21ee0ea38ec9844caac88b80addcad50704f0fd',1,'enums.h']]],
-  ['blockmedia_24',['BlockMedia',['../enums_8h.html#abaa37b51ab0a4cc3d5d1a0b4820c8466ad45ebea105994c5fe86200f36d9e6ccd',1,'enums.h']]],
-  ['bluraybca_25',['BlurayBca',['../enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6ac61ed90fcfd8386b6e8269bd69895c13',1,'enums.h']]],
-  ['bluraycartridgestatus_26',['BlurayCartridgeStatus',['../enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6ac46f573ecc193059e928f8f82ae0f55b',1,'enums.h']]],
-  ['bluraydds_27',['BlurayDds',['../enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6af57987d7cbc5739aed5317192308238d',1,'enums.h']]],
-  ['bluraydi_28',['BlurayDi',['../enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a87d824a9987888180fb826f633c27210',1,'enums.h']]],
-  ['bluraysparearea_29',['BluraySpareArea',['../enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a9a7723fde7bf407e5c96647feaf01496',1,'enums.h']]],
-  ['borsu_30',['Borsu',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa39cee35f676a3a5d96a8dba4a032ada2',1,'aaru.h']]]
+  ['bitstreamdata_23',['BitstreamData',['../enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a451a072d05820a53faecb6716c2b7ba3',1,'enums.h']]],
+  ['blake3_24',['Blake3',['../enums_8h.html#abda1f9cb04c30fc71ee8c6081d21ee0ea38ec9844caac88b80addcad50704f0fd',1,'enums.h']]],
+  ['blockmedia_25',['BlockMedia',['../enums_8h.html#abaa37b51ab0a4cc3d5d1a0b4820c8466ad45ebea105994c5fe86200f36d9e6ccd',1,'enums.h']]],
+  ['bluraybca_26',['BlurayBca',['../enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6ac61ed90fcfd8386b6e8269bd69895c13',1,'enums.h']]],
+  ['bluraycartridgestatus_27',['BlurayCartridgeStatus',['../enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6ac46f573ecc193059e928f8f82ae0f55b',1,'enums.h']]],
+  ['bluraydds_28',['BlurayDds',['../enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6af57987d7cbc5739aed5317192308238d',1,'enums.h']]],
+  ['bluraydi_29',['BlurayDi',['../enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a87d824a9987888180fb826f633c27210',1,'enums.h']]],
+  ['bluraysparearea_30',['BluraySpareArea',['../enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a9a7723fde7bf407e5c96647feaf01496',1,'enums.h']]],
+  ['borsu_31',['Borsu',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa39cee35f676a3a5d96a8dba4a032ada2',1,'aaru.h']]]
 ];

@@ -15,6 +15,7 @@ var context_8h =
     [ "Checksums", "context_8h.html#a269d576bb08923618502afa0ce77c869", null ],
     [ "DumpExtent", "context_8h.html#aa607bc285ec04872be8d317bb16924f1", null ],
     [ "DumpHardwareEntriesWithData", "context_8h.html#afdce598c4a7b73c31a747ac56458e178", null ],
+    [ "FluxCaptureMapEntry", "context_8h.html#a0dc9151d615e11146d91996ce4129191", null ],
     [ "mediaTagEntry", "context_8h.html#a2db7e557df9bb4db40e140298b494946", null ],
     [ "TapeDdtHashEntry", "context_8h.html#a6f261287fa8891601a626c6649b3196e", null ],
     [ "tapeFileHashEntry", "context_8h.html#a5ba965cb003bc2d68a9f9e1c11225494", null ],

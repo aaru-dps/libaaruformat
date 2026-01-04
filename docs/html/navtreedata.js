@@ -58,14 +58,14 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "aaru_8h.html",
-"decls_8h.html#ac5f5334a51424028574a5433a0e24b20",
-"files.html",
-"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa15b38bc9a1138fdec063a0314bec55bc",
-"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa8dccd9aa3702e0112d3c4d6f3388820e",
-"group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aa7165008ad58fcf7904dc3f6626064828",
-"open_8c.html#a356a7467b41a2929a27a6639cd3a2b50",
-"structDumpHardwareHeader.html#aee1b5c61324635638fbfbb2518fb86d8",
-"structaaruformat__context.html#aeb5bda76e0ea176598a04be97b7d5683"
+"decls_8h.html#abe1156eceb456b48e92389d9f2a20601",
+"errors_8h.html#acebe3e4bcc498066fe65d9e24e16c7f5",
+"group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebeaffb17871a6a508af15eacc2f96349f61",
+"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa78da2407a2effb99c6580eacf184d0f0",
+"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaee394a7c6e389c9b3734850e1666ee04",
+"metadata_8c.html#a38d72be7e7854d6cb0bba89172e27b03",
+"structDdtHeader.html#a7d0eb9ac1d810626e9f86b7f8c8655f5",
+"structaaruformat__context.html#a468632adcfc1f6b884b8906835c3228b"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronization';

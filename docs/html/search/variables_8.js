@@ -13,8 +13,9 @@ var searchData=
   ['hassha1_10',['hasSha1',['../structChecksums.html#ac19eb1258cf0bf1c1998dfef7ae52550',1,'Checksums']]],
   ['hassha256_11',['hasSha256',['../structChecksums.html#a4f404ac9841b3f06f8130722ec613ceb',1,'Checksums']]],
   ['hasspamsum_12',['hasSpamSum',['../structChecksums.html#abe4e66c6bb57259dd1312f5cfb7730a5',1,'Checksums']]],
-  ['header_13',['header',['../structaaruformat__context.html#a670dec8d59407989fefc361dc26c6832',1,'aaruformat_context']]],
-  ['heads_14',['heads',['../structaaruformat__context.html#ab213059edf055cf1c3e2021bc395c78e',1,'aaruformat_context::heads'],['../structGeometryBlockHeader.html#a9ed0a8f6307eb38589ef4502cef533ee',1,'GeometryBlockHeader::heads']]],
-  ['hh_15',['hh',['../structmediaTagEntry.html#ae0afb5b464c2335889cf1d7d23ccbf28',1,'mediaTagEntry::hh'],['../structTapeFileHashEntry.html#a153c7fcdb97fa9bdc8b20f1988b0386c',1,'TapeFileHashEntry::hh'],['../structTapePartitionHashEntry.html#a1f4e4baef23d115b2da6e0da0b8a18e0',1,'TapePartitionHashEntry::hh'],['../structTapeDdtHashEntry.html#acc892d4fbaf42c479f891b94889224bf',1,'TapeDdtHashEntry::hh'],['../structCacheEntry.html#ae7e5f03fa52b88d99e27e2433623b4f5',1,'CacheEntry::hh']]],
-  ['hi_16',['hi',['../structmd5__ctx.html#ade0449722c62ebb5d5172188188f200a',1,'md5_ctx']]]
+  ['head_13',['head',['../structFluxEntry.html#a31cafff6f54acc9e019da447e94ace4a',1,'FluxEntry::head'],['../structFluxCaptureMeta.html#a0b227d050c7e82a606376fd3f0c2db02',1,'FluxCaptureMeta::head'],['../structFluxCaptureKey.html#ac8945dce9e2b566546610d67bd729e64',1,'FluxCaptureKey::head']]],
+  ['header_14',['header',['../structaaruformat__context.html#a670dec8d59407989fefc361dc26c6832',1,'aaruformat_context']]],
+  ['heads_15',['heads',['../structaaruformat__context.html#ab213059edf055cf1c3e2021bc395c78e',1,'aaruformat_context::heads'],['../structGeometryBlockHeader.html#a9ed0a8f6307eb38589ef4502cef533ee',1,'GeometryBlockHeader::heads']]],
+  ['hh_16',['hh',['../structmediaTagEntry.html#ae0afb5b464c2335889cf1d7d23ccbf28',1,'mediaTagEntry::hh'],['../structTapeFileHashEntry.html#a153c7fcdb97fa9bdc8b20f1988b0386c',1,'TapeFileHashEntry::hh'],['../structTapePartitionHashEntry.html#a1f4e4baef23d115b2da6e0da0b8a18e0',1,'TapePartitionHashEntry::hh'],['../structTapeDdtHashEntry.html#acc892d4fbaf42c479f891b94889224bf',1,'TapeDdtHashEntry::hh'],['../structCacheEntry.html#ae7e5f03fa52b88d99e27e2433623b4f5',1,'CacheEntry::hh'],['../structFluxCaptureMapEntry.html#ae5c32160a1cbc308cec42816832f79c7',1,'FluxCaptureMapEntry::hh']]],
+  ['hi_17',['hi',['../structmd5__ctx.html#ade0449722c62ebb5d5172188188f200a',1,'md5_ctx']]]
 ];

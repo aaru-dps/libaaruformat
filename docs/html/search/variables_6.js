@@ -10,5 +10,10 @@ var searchData=
   ['firmwarelength_7',['firmwareLength',['../structDumpHardwareEntry.html#a52948ae4f0d07e4d861e79def4a0deec',1,'DumpHardwareEntry']]],
   ['firstblock_8',['FirstBlock',['../structTapeFileEntry.html#a8bc76d9c2d9c43e14680e39d3fc728ca',1,'TapeFileEntry::FirstBlock'],['../structTapePartitionEntry.html#af2cdde924cd050523ad0fb453eb5842d',1,'TapePartitionEntry::FirstBlock']]],
   ['flags_9',['flags',['../structTrackEntry.html#a7ae98d532f6dff50c2439b64d2cddb45',1,'TrackEntry']]],
-  ['free_5ffunc_10',['free_func',['../structCacheHeader.html#afeac54c794f8fece845e49954fd89f1a',1,'CacheHeader']]]
+  ['flux_5fcapture_5frecord_5ficd_10',['FLUX_CAPTURE_RECORD_ICD',['../flux_8c.html#af25f05916bee2f8489613b6a096c2cec',1,'flux.c']]],
+  ['flux_5fcaptures_11',['flux_captures',['../structaaruformat__context.html#a1e11606681ce5da5947a2345efebf46e',1,'aaruformat_context']]],
+  ['flux_5fdata_5fheader_12',['flux_data_header',['../structaaruformat__context.html#a1b150de162e5fb75d368dd6a52f6d5d7',1,'aaruformat_context']]],
+  ['flux_5fentries_13',['flux_entries',['../structaaruformat__context.html#a69e227faa1e5168628bb32d4acbe9f29',1,'aaruformat_context']]],
+  ['flux_5fmap_14',['flux_map',['../structaaruformat__context.html#a468632adcfc1f6b884b8906835c3228b',1,'aaruformat_context']]],
+  ['free_5ffunc_15',['free_func',['../structCacheHeader.html#afeac54c794f8fece845e49954fd89f1a',1,'CacheHeader']]]
 ];
