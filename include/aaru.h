@@ -398,27 +398,27 @@ typedef enum
     // Advanced Intelligent Tape, types 320 to 339
 
     // Iomega, types 340 to 359
-    Bernoulli  = 340,
-    Bernoulli2 = 341,
-    Ditto      = 342,
-    DittoMax   = 343,
-    Jaz        = 344,
-    Jaz2       = 345,
-    PocketZip  = 346,
-    REV120     = 347,
-    REV35      = 348,
-    REV70      = 349,
-    ZIP100     = 350,
-    ZIP250     = 351,
-    ZIP750     = 352,
-  Bernoulli35 = 353,///< 5⅓" Bernoulli Box II disk with 35Mb capacity
-  Bernoulli44 = 354,///< 5⅓" Bernoulli Box II disk with 44Mb capacity
-  Bernoulli65 = 355,///< 5⅓" Bernoulli Box II disk with 65Mb capacity
-  Bernoulli90 = 356,///< 5⅓" Bernoulli Box II disk with 90Mb capacity
-  Bernoulli105 = 357,///< 5⅓" Bernoulli Box II disk with 105Mb capacity
-  Bernoulli150 = 358,///< 5⅓" Bernoulli Box II disk with 150Mb capacity
-  Bernoulli230 = 359,///< 5⅓" Bernoulli Box II disk with 230Mb capacity
-  // Iomega, types 340 to 359
+    Bernoulli    = 340,
+    Bernoulli2   = 341,
+    Ditto        = 342,
+    DittoMax     = 343,
+    Jaz          = 344,
+    Jaz2         = 345,
+    PocketZip    = 346,
+    REV120       = 347,
+    REV35        = 348,
+    REV70        = 349,
+    ZIP100       = 350,
+    ZIP250       = 351,
+    ZIP750       = 352,
+    Bernoulli35  = 353,  ///< 5⅓" Bernoulli Box II disk with 35Mb capacity
+    Bernoulli44  = 354,  ///< 5⅓" Bernoulli Box II disk with 44Mb capacity
+    Bernoulli65  = 355,  ///< 5⅓" Bernoulli Box II disk with 65Mb capacity
+    Bernoulli90  = 356,  ///< 5⅓" Bernoulli Box II disk with 90Mb capacity
+    Bernoulli105 = 357,  ///< 5⅓" Bernoulli Box II disk with 105Mb capacity
+    Bernoulli150 = 358,  ///< 5⅓" Bernoulli Box II disk with 150Mb capacity
+    Bernoulli230 = 359,  ///< 5⅓" Bernoulli Box II disk with 230Mb capacity
+                         // Iomega, types 340 to 359
 
     // Audio or video media, types 360 to 369
     CompactCassette = 360,
@@ -1071,7 +1071,8 @@ typedef enum
     MiniDiscDTOC = 72,  ///< Not entirely clear kind of TOC that only appears on MD-DATA discs
     DVD_DiscKey_Decrypted = 73,  ///< Decrypted DVD disc key,
     DVD_PFI_2ndLayer      = 74,  ///< DVD Physical Format Information for the second layer
-    MaxMediaTag           = DVD_PFI_2ndLayer
+    Floppy_WriteProtect   = 75,  ///< Write protection status of the floppy disk
+    MaxMediaTag           = Floppy_WriteProtect
 } MediaTagType;
 
 /** @} */ /* end of MediaTags group */

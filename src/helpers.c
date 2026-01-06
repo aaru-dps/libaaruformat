@@ -17,8 +17,8 @@
  */
 
 #if defined(_WIN32) || defined(_WIN64)
-#include <windows.h>
 #include <wincrypt.h>
+#include <windows.h>
 #endif
 
 #include <aaru.h>
@@ -182,6 +182,8 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_media_tag_type_for_datatype(const int32_t
             return CD_LeadIn;
         case DvdDiscKeyDecrypted:
             return DVD_DiscKey_Decrypted;
+        case FloppyWriteProtectStatus:
+            return Floppy_WriteProtect;
         default:
             return -1;
     }
@@ -342,6 +344,8 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_datatype_for_media_tag_type(const int32_t
             return CompactDiscLeadIn;
         case DVD_DiscKey_Decrypted:
             return DvdDiscKeyDecrypted;
+        case Floppy_WriteProtect:
+            return FloppyWriteProtectStatus;
         default:
             return -1;
     }

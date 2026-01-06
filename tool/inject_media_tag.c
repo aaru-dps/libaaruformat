@@ -124,6 +124,7 @@ static const MediaTagTypeMapping media_tag_mappings[] = {
     {"MiniDiscDTOC",                  MiniDiscDTOC},
     {"DVD_DiscKey_Decrypted",         DVD_DiscKey_Decrypted},
     {"DVD_PFI_2ndLayer",              DVD_PFI_2ndLayer},
+    {"Floppy_WriteProtect",           Floppy_WriteProtect},
 };
 // clang-format on
 
@@ -278,6 +279,8 @@ static int32_t get_datatype_for_media_tag_type(MediaTagType tag_type)
             return CompactDiscLeadIn;
         case DVD_DiscKey_Decrypted:
             return DvdDiscKeyDecrypted;
+        case Floppy_WriteProtect:
+            return FloppyWriteProtectStatus;
         default:
             return -1;
     }

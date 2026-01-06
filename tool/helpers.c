@@ -204,6 +204,8 @@ const char *media_tag_type_to_string(int32_t type)
             return "DVD Disc Key (decrypted)";
         case DVD_PFI_2ndLayer:
             return "DVD Physical Format Information (2nd layer)";
+        case Floppy_WriteProtect:
+            return "Floppy Write-Protect Status";
         default:
             return "Unknown Media Tag";
     }
@@ -387,6 +389,8 @@ const char *data_type_to_string(uint16_t type)
             return "DVD ECC Block Parity Outer";
         case DvdPfi2ndLayer:
             return "DVD Physical Format Info (2nd layer)";
+        case FloppyWriteProtectStatus:
+            return "Floppy Write-Protect Status";
         default:
             return "Unknown Data Type";
     }
