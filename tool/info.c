@@ -68,17 +68,13 @@ static void init_display(void)
         // Enable colors if we have a terminal that likely supports them
         // If TERM is not set but we're in a TTY, assume color support (common on macOS)
         if(term == NULL)
-        {
             // Default to enabling colors if we're in a TTY
             use_colors = true;
-        }
         else if(strstr(term, "color") != NULL || strstr(term, "xterm") != NULL || strstr(term, "screen") != NULL ||
                 strstr(term, "tmux") != NULL || strcmp(term, "linux") == 0 || strcmp(term, "vt100") == 0)
-        {
             use_colors = true;
-        }
         // Check for explicit no-color requests
-        if(getenv("NO_COLOR") != NULL) { use_colors = false; }
+        if(getenv("NO_COLOR") != NULL) use_colors = false;
     }
 }
 
@@ -97,7 +93,6 @@ static void cleanup_display(void)
 static void draw_box_top(const char *title, int color_pair)
 {
     if(use_colors)
-    {
         // Select color based on color pair
         switch(color_pair)
         {
@@ -111,7 +106,6 @@ static void draw_box_top(const char *title, int color_pair)
                 printf(ANSI_BOLD);
                 break;
         }
-    }
 
     printf("┌─ %s ", title);
 
@@ -119,17 +113,16 @@ static void draw_box_top(const char *title, int color_pair)
     int title_len = strlen(title);
     int padding   = 80 - 5 - title_len - 1;  // 5 = "┌─ " + " ", -1 for "┐"
 
-    for(int i = 0; i < padding; i++) { printf("─"); }
+    for(int i = 0; i < padding; i++) printf("─");
     printf("┐\n");
 
-    if(use_colors) { printf(ANSI_RESET); }
+    if(use_colors) printf(ANSI_RESET);
 }
 
 // Draw box bottom border
 static void draw_box_bottom(int color_pair)
 {
     if(use_colors)
-    {
         // Select color based on color pair
         switch(color_pair)
         {
@@ -143,13 +136,12 @@ static void draw_box_bottom(int color_pair)
                 printf(ANSI_BOLD);
                 break;
         }
-    }
 
     printf("└");
-    for(int i = 0; i < 77; i++) { printf("─"); }
+    for(int i = 0; i < 77; i++) printf("─");
     printf("┘\n\n");
 
-    if(use_colors) { printf(ANSI_RESET); }
+    if(use_colors) printf(ANSI_RESET);
 }
 
 // Print a formatted field with label and value, with proper padding
@@ -170,9 +162,7 @@ static void print_field(const char *label, const char *value, int label_width)
         printf(ANSI_BLUE "│\n" ANSI_RESET);
     }
     else
-    {
         printf("│ %-76s │\n", line);
-    }
 }
 
 // Converts Windows FILETIME (100ns intervals since 1601-01-01) to time_t (seconds since 1970-01-01)
@@ -186,15 +176,11 @@ static const char *format_filetime(uint64_t filetime)
     ft.dwLowDateTime  = (DWORD)(filetime & 0xFFFFFFFF);
     ft.dwHighDateTime = (DWORD)(filetime >> 32);
     if(FileTimeToSystemTime(&ft, &st))
-    {
         // Format: YYYY-MM-DD HH:MM:SS
         snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute,
                  st.wSecond);
-    }
     else
-    {
         snprintf(buf, sizeof(buf), "%llu", filetime);
-    }
     return buf;
 #else
     time_t    t;
@@ -230,13 +216,9 @@ int info(const char *path)
     if(ctx == NULL)
     {
         if(use_colors)
-        {
             printf(ANSI_RED "\n❌ Error: Cannot open AaruFormat image (error code: %d)\n\n" ANSI_RESET, errno);
-        }
         else
-        {
             printf("\n❌ Error: Cannot open AaruFormat image (error code: %d)\n\n", errno);
-        }
         cleanup_display();
         return errno;
     }
@@ -415,15 +397,11 @@ int info(const char *path)
 
         char table_shift_str[64];
         if(ctx->user_data_ddt_header.tableShift > 0)
-        {
             snprintf(table_shift_str, sizeof(table_shift_str), "%u (2^%u = %u sectors/entry)",
                      ctx->user_data_ddt_header.tableShift, ctx->user_data_ddt_header.tableShift,
                      1 << ctx->user_data_ddt_header.tableShift);
-        }
         else
-        {
             snprintf(table_shift_str, sizeof(table_shift_str), "0 (single-level)");
-        }
         print_field("Table Shift:", table_shift_str, 25);
 
         char entries_str[32];
@@ -466,9 +444,7 @@ int info(const char *path)
        aaruf_get_drive_model(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL ||
        aaruf_get_drive_serial_number(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL ||
        aaruf_get_drive_firmware_revision(ctx, NULL, &length) == AARUF_ERROR_BUFFER_TOO_SMALL)
-    {
         hasMetadata = true;
-    }
 
     if(hasMetadata)
     {
@@ -834,7 +810,6 @@ int info(const char *path)
 
             if(ctx->dump_hardware_entries_with_data[i].entry.extents > 0 &&
                ctx->dump_hardware_entries_with_data[i].entry.extents <= 3)
-            {
                 for(uint32_t j = 0; j < ctx->dump_hardware_entries_with_data[i].entry.extents; j++)
                 {
                     char extent_str[80];
@@ -843,7 +818,6 @@ int info(const char *path)
                              ctx->dump_hardware_entries_with_data[i].extents[j].end);
                     print_field("  Extent:", extent_str, 20);
                 }
-            }
             else if(ctx->dump_hardware_entries_with_data[i].entry.extents > 3)
             {
                 char extent_str[80];
@@ -855,12 +829,13 @@ int info(const char *path)
         draw_box_bottom(COLOR_HEADER);
     }
 
-    if(ctx->flux_data_header.entries > 0) {
+    if(ctx->flux_data_header.entries > 0)
+    {
         printf("Image contains %d flux captures.\n", ctx->flux_data_header.entries);
 
         // Get flux capture metadata
-        size_t flux_captures_length = 0;
-        int32_t res = aaruf_get_flux_captures(ctx, NULL, &flux_captures_length);
+        size_t  flux_captures_length = 0;
+        int32_t res                  = aaruf_get_flux_captures(ctx, NULL, &flux_captures_length);
         if(res == AARUF_ERROR_BUFFER_TOO_SMALL)
         {
             uint8_t *flux_captures = malloc(flux_captures_length);
@@ -869,8 +844,8 @@ int info(const char *path)
                 res = aaruf_get_flux_captures(ctx, flux_captures, &flux_captures_length);
                 if(res == AARUF_STATUS_OK)
                 {
-                    size_t capture_count = flux_captures_length / sizeof(FluxCaptureMeta);
-                    const FluxCaptureMeta *captures = (const FluxCaptureMeta *)flux_captures;
+                    size_t                 capture_count = flux_captures_length / sizeof(FluxCaptureMeta);
+                    const FluxCaptureMeta *captures      = (const FluxCaptureMeta *)flux_captures;
 
                     printf("Flux capture details:\n");
 
@@ -883,8 +858,8 @@ int info(const char *path)
                     // Track unique heads and tracks
                     uint16_t *seen_tracks = calloc(capture_count, sizeof(uint16_t));
                     uint32_t *seen_heads  = calloc(capture_count, sizeof(uint32_t));
-                    uint32_t track_count  = 0;
-                    uint32_t head_count   = 0;
+                    uint32_t  track_count = 0;
+                    uint32_t  head_count  = 0;
 
                     for(size_t i = 0; i < capture_count; i++)
                     {
@@ -897,32 +872,22 @@ int info(const char *path)
                         // Track unique tracks
                         bool track_seen = false;
                         for(uint32_t j = 0; j < track_count; j++)
-                        {
                             if(seen_tracks[j] == captures[i].track)
                             {
                                 track_seen = true;
                                 break;
                             }
-                        }
-                        if(!track_seen)
-                        {
-                            seen_tracks[track_count++] = captures[i].track;
-                        }
+                        if(!track_seen) seen_tracks[track_count++] = captures[i].track;
 
                         // Track unique heads
                         bool head_seen = false;
                         for(uint32_t j = 0; j < head_count; j++)
-                        {
                             if(seen_heads[j] == captures[i].head)
                             {
                                 head_seen = true;
                                 break;
                             }
-                        }
-                        if(!head_seen)
-                        {
-                            seen_heads[head_count++] = captures[i].head;
-                        }
+                        if(!head_seen) seen_heads[head_count++] = captures[i].head;
                     }
 
                     free(seen_tracks);
@@ -933,17 +898,13 @@ int info(const char *path)
                     printf("\t\tUnique heads: %u\n", head_count);
                     printf("\t\tUnique tracks: %u\n", track_count);
                     if(min_index_res != UINT64_MAX)
-                    {
                         printf("\t\tIndex resolution: %llu - %llu picoseconds (%.3f - %.3f nanoseconds)\n",
                                (unsigned long long)min_index_res, (unsigned long long)max_index_res,
                                min_index_res / 1000.0, max_index_res / 1000.0);
-                    }
                     if(min_data_res != UINT64_MAX)
-                    {
                         printf("\t\tData resolution: %llu - %llu picoseconds (%.3f - %.3f nanoseconds)\n",
                                (unsigned long long)min_data_res, (unsigned long long)max_data_res,
                                min_data_res / 1000.0, max_data_res / 1000.0);
-                    }
 
                     // Display individual captures
                     printf("\tCaptures:\n");
@@ -955,11 +916,9 @@ int info(const char *path)
                         printf("\t\t\tSubtrack: %u\n", captures[i].subtrack);
                         printf("\t\t\tCapture index: %u\n", captures[i].captureIndex);
                         printf("\t\t\tIndex resolution: %llu picoseconds (%.3f nanoseconds)\n",
-                               (unsigned long long)captures[i].indexResolution,
-                               captures[i].indexResolution / 1000.0);
+                               (unsigned long long)captures[i].indexResolution, captures[i].indexResolution / 1000.0);
                         printf("\t\t\tData resolution: %llu picoseconds (%.3f nanoseconds)\n",
-                               (unsigned long long)captures[i].dataResolution,
-                               captures[i].dataResolution / 1000.0);
+                               (unsigned long long)captures[i].dataResolution, captures[i].dataResolution / 1000.0);
                     }
                 }
                 free(flux_captures);
@@ -996,7 +955,7 @@ int info(const char *path)
             free(strBuffer);
         }
 
-        if(ctx->checksums.hasSpamSum) { print_field("SpamSum:", (char *)ctx->checksums.spamsum, 20); }
+        if(ctx->checksums.hasSpamSum) print_field("SpamSum:", (char *)ctx->checksums.spamsum, 20);
 
         draw_box_bottom(COLOR_HEADER);
     }
@@ -1011,15 +970,13 @@ int info(const char *path)
 
         uint32_t displayed = 0;
         HASH_ITER(hh, ctx->mediaTags, mediaTag, tmpMediaTag)
+        if(displayed < 20)  // Limit display to first 20 tags
         {
-            if(displayed < 20)  // Limit display to first 20 tags
-            {
-                char tag_info[128];
-                snprintf(tag_info, sizeof(tag_info), "%s (%d bytes)",
-                         media_tag_type_to_string((uint16_t)mediaTag->type), mediaTag->length);
-                print_field("", tag_info, 0);
-                displayed++;
-            }
+            char tag_info[128];
+            snprintf(tag_info, sizeof(tag_info), "%s (%d bytes)", media_tag_type_to_string((uint16_t)mediaTag->type),
+                     mediaTag->length);
+            print_field("", tag_info, 0);
+            displayed++;
         }
 
         if(tag_count > 20)
@@ -1028,6 +985,10 @@ int info(const char *path)
             snprintf(more_info, sizeof(more_info), "... and %u more tag(s)", tag_count - 20);
             print_field("", more_info, 0);
         }
+
+        draw_box_bottom(COLOR_HEADER);
+    }
+
     // Readable Sector Tags Section
     if(ctx->readableSectorTags != NULL)
     {
