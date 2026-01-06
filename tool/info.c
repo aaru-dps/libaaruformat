@@ -1028,6 +1028,38 @@ int info(const char *path)
             snprintf(more_info, sizeof(more_info), "... and %u more tag(s)", tag_count - 20);
             print_field("", more_info, 0);
         }
+    // Readable Sector Tags Section
+    if(ctx->readableSectorTags != NULL)
+    {
+        draw_box_top("READABLE SECTOR TAGS", COLOR_HEADER);
+
+        uint32_t readable_count = 0;
+        // Count readable tags
+        for(int i = 0; i <= MaxSectorTag; i++)
+            if(ctx->readableSectorTags[i]) readable_count++;
+
+        if(readable_count > 0)
+        {
+            uint32_t displayed = 0;
+            for(int i = 0; i <= MaxSectorTag; i++)
+                if(ctx->readableSectorTags[i])
+                {
+                    print_field("", sector_tag_type_to_string(i), 0);
+                    displayed++;
+                    if(displayed >= 20)
+                    {
+                        if(readable_count > 20)
+                        {
+                            char more_info[64];
+                            snprintf(more_info, sizeof(more_info), "... and %u more tag(s)", readable_count - 20);
+                            print_field("", more_info, 0);
+                        }
+                        break;
+                    }
+                }
+        }
+        else
+            print_field("", "(No readable sector tags)", 0);
 
         draw_box_bottom(COLOR_HEADER);
     }
