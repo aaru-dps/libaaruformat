@@ -28,6 +28,7 @@ int         info(const char *path);
 char       *byte_array_to_hex_string(const unsigned char *array, int array_size);
 const char *media_type_to_string(MediaType type);
 const char *media_tag_type_to_string(int32_t type);
+const char *sector_tag_type_to_string(int32_t type);
 const char *data_type_to_string(uint16_t type);
 int         read_sector(unsigned long long sector_no, const char *path);
 int         printhex(unsigned char *array, unsigned int length, int width, bool color);

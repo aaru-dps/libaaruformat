@@ -1534,3 +1534,56 @@ const char *media_type_to_string(MediaType type)
             return "Unknown Media Type";
     }
 }
+
+const char *sector_tag_type_to_string(int32_t type)
+{
+    switch(type)
+    {
+        case AppleSonyTagAaru:
+            return "Apple Sony Tag";
+        case CdSectorSync:
+            return "CD Sector Sync";
+        case CdSectorHeader:
+            return "CD Sector Header";
+        case CdSectorSubHeader:
+            return "CD Sector Sub-Header";
+        case CdSectorEdc:
+            return "CD Sector EDC";
+        case CdSectorEccP:
+            return "CD Sector ECC P";
+        case CdSectorEccQ:
+            return "CD Sector ECC Q";
+        case CdSectorEcc:
+            return "CD Sector ECC (P+Q)";
+        case CdSectorSubchannelAaru:
+            return "CD Sector Subchannel";
+        case CdTrackIsrc:
+            return "CD Track ISRC";
+        case CdTrackText:
+            return "CD Track Text";
+        case CdTrackFlags:
+            return "CD Track Flags";
+        case DvdCmi:
+            return "DVD Copyright Management Information";
+        case FloppyAddressMark:
+            return "Floppy Address Mark";
+        case DvdSectorTitleKey:
+            return "DVD Sector Title Key";
+        case DvdTitleKeyDecrypted:
+            return "DVD Title Key (Decrypted)";
+        case DvdSectorInformation:
+            return "DVD Sector Information";
+        case DvdSectorNumber:
+            return "DVD Sector Number";
+        case DvdSectorIedAaru:
+            return "DVD Sector IED";
+        case DvdSectorEdcAaru:
+            return "DVD Sector EDC";
+        case AppleProfileTagAaru:
+            return "Apple Profile Tag";
+        case PriamDataTowerTagAaru:
+            return "Priam DataTower Tag";
+        default:
+            return "Unknown Sector Tag";
+    }
+}
