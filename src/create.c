@@ -419,6 +419,7 @@ AARU_EXPORT void AARU_CALL *aaruf_create(const char *filepath, const uint32_t me
         ctx->user_data_ddt_header.overflow            = overflow_sectors;
         ctx->user_data_ddt_header.start               = 0;
         ctx->user_data_ddt_header.blockAlignmentShift = parsed_options.block_alignment;
+        ctx->header.blockAlignmentShift               = parsed_options.block_alignment;
         ctx->user_data_ddt_header.dataShift           = parsed_options.data_shift;
 
         if(parsed_options.table_shift == -1 || !table_shift_found)
