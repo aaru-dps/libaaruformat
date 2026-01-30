@@ -46,6 +46,32 @@ else()
   message(STATUS "Bzip3: Failed to build from source")
 endif()
 
+# Download and build Brotli from git using FetchContent
+message(STATUS "Fetching Brotli from GitHub...")
+
+FetchContent_Declare(
+        brotli
+        GIT_REPOSITORY https://github.com/google/brotli.git
+        GIT_TAG v1.1.0
+        GIT_SHALLOW TRUE
+)
+
+# Configure Brotli options - build static libraries only
+set(BROTLI_DISABLE_TESTS ON CACHE BOOL "Disable Brotli tests" FORCE)
+set(BROTLI_BUNDLED_MODE ON CACHE BOOL "Enable bundled mode" FORCE)
+
+# Make Brotli available
+FetchContent_MakeAvailable(brotli)
+
+# Check if Brotli targets were created
+if(TARGET brotlienc AND TARGET brotlidec AND TARGET brotlicommon)
+  set(BROTLI_AVAILABLE TRUE)
+  message(STATUS "Brotli: Built from source (FetchContent)")
+else()
+  set(BROTLI_AVAILABLE FALSE)
+  message(STATUS "Brotli: Failed to build from source")
+endif()
+
 
 # Benchmark executable
 add_executable(aarubenchmark
@@ -79,6 +105,14 @@ if(BZ3_AVAILABLE)
   target_compile_definitions(aarubenchmark PRIVATE HAVE_BZ3=1)
 endif()
 
+# Add Brotli compile definition and includes if available
+if(BROTLI_AVAILABLE)
+  target_compile_definitions(aarubenchmark PRIVATE HAVE_BROTLI=1)
+  # Get include directories from FetchContent
+  FetchContent_GetProperties(brotli SOURCE_DIR BROTLI_SOURCE_DIR)
+  target_include_directories(aarubenchmark PRIVATE ${BROTLI_SOURCE_DIR}/c/include)
+endif()
+
 # Link to the main library and compression libraries
 target_link_libraries(aarubenchmark
                       PRIVATE
@@ -106,6 +140,11 @@ if(BZ3_AVAILABLE)
   target_link_libraries(aarubenchmark PRIVATE ${BZ3_LIBRARY})
 endif()
 
+# Link Brotli if available
+if(BROTLI_AVAILABLE)
+  target_link_libraries(aarubenchmark PRIVATE brotlienc brotlidec brotlicommon)
+endif()
+
 
 # On Linux, enable GNU/POSIX feature test macros
 if(UNIX AND NOT APPLE)
@@ -127,5 +166,10 @@ if(BZ3_AVAILABLE)
   message(STATUS "  - Bzip3 support: YES (downloaded from git)")
 else()
   message(STATUS "  - Bzip3 support: NO (will be disabled)")
+endif()
+if(BROTLI_AVAILABLE)
+  message(STATUS "  - Brotli support: YES (downloaded from git)")
+else()
+  message(STATUS "  - Brotli support: NO (will be disabled)")
 endif()
 

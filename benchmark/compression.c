@@ -32,6 +32,11 @@
 #include <libbz3.h>
 #endif
 
+#ifdef HAVE_BROTLI
+#include <brotli/encode.h>
+#include <brotli/decode.h>
+#endif
+
 // LZMA compression from library
 extern int32_t aaruf_lzma_encode_buffer(uint8_t *dst_buffer, size_t *dst_size, const uint8_t *src_buffer,
                                         size_t src_len, uint8_t *out_props, size_t *out_props_size, int32_t level,
@@ -152,6 +157,58 @@ static int compress_zstd(const uint8_t *input, const size_t input_size, uint8_t 
 #endif
 }
 
+// Compress data using Brotli
+// Using quality 11 (max) and window size 24 (16MB) for LZMA-equivalent compression
+static int compress_brotli(const uint8_t *input, const size_t input_size, uint8_t **output, size_t *output_size)
+{
+#ifdef HAVE_BROTLI
+    // Calculate max output size
+    const size_t max_output_size = BrotliEncoderMaxCompressedSize(input_size);
+    if(max_output_size == 0)
+    {
+        // Input too large, use a conservative estimate
+        *output = malloc(input_size + (input_size >> 2) + 10240);
+    }
+    else
+    {
+        *output = malloc(max_output_size);
+    }
+    if(*output == NULL) return -1;
+
+    size_t encoded_size = max_output_size ? max_output_size : (input_size + (input_size >> 2) + 10240);
+
+    // Compress with quality 11 (max compression, equivalent to LZMA level 9)
+    // Window size 24 = 16MB window (2^24 bytes), similar to LZMA's 32MB dictionary
+    // This provides equivalent compression performance to LZMA
+    const BROTLI_BOOL result = BrotliEncoderCompress(
+        BROTLI_MAX_QUALITY,     // quality 11 (max)
+        24,                     // lgwin = 24 (16MB window)
+        BROTLI_DEFAULT_MODE,    // generic mode
+        input_size,
+        input,
+        &encoded_size,
+        *output
+    );
+
+    if(result != BROTLI_TRUE)
+    {
+        free(*output);
+        *output = NULL;
+        return -1;
+    }
+
+    *output_size = encoded_size;
+    return 0;
+#else
+    // Brotli not available
+    (void)input;
+    (void)input_size;
+    *output      = NULL;
+    *output_size = 0;
+    return -1;
+#endif
+}
+
 // Main compression function
 int compress_data(const compression_algorithm algorithm, const uint8_t *input, const size_t input_size,
                   uint8_t **output, size_t *output_size)
@@ -164,6 +221,8 @@ int compress_data(const compression_algorithm algorithm, const uint8_t *input, c
             return compress_bzip3(input, input_size, output, output_size);
         case COMP_ZSTD:
             return compress_zstd(input, input_size, output, output_size);
+        case COMP_BROTLI:
+            return compress_brotli(input, input_size, output, output_size);
         default:
             return -1;
     }
@@ -180,6 +239,8 @@ int get_compression_type(const compression_algorithm algorithm)
             return 100;  // Custom identifier for bzip3
         case COMP_ZSTD:
             return 101;  // Custom identifier for zstd
+        case COMP_BROTLI:
+            return 102;  // Custom identifier for brotli
         default:
             return 0;  // None
     }

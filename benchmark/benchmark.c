@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
     {
         fprintf(stderr, "Usage: %s <input.aaruformat>\n", argv[0]);
         fprintf(stderr, "\nBenchmark compression algorithms on Aaru format images.\n");
-        fprintf(stderr, "Tests: LZMA, Bzip3, Zstd\n");
+        fprintf(stderr, "Tests: LZMA, Bzip3, Brotli, Zstd\n");
         return 1;
     }
 
@@ -267,11 +267,11 @@ int main(int argc, char *argv[])
     // ===== END DICTIONARY TRAINING =====
 
     // Test each compression algorithm
-    const compression_algorithm algorithms[]      = {COMP_LZMA, COMP_BZIP3, COMP_ZSTD, COMP_ZSTD};
-    const char                 *algorithm_names[] = {"LZMA", "Bzip3", "Zstd (no dict)", "Zstd (with dict)"};
+    const compression_algorithm algorithms[]      = {COMP_LZMA, COMP_BZIP3, COMP_BROTLI, COMP_ZSTD, COMP_ZSTD};
+    const char                 *algorithm_names[] = {"LZMA", "Bzip3", "Brotli", "Zstd (no dict)", "Zstd (with dict)"};
     const size_t                algorithm_count   = sizeof(algorithms) / sizeof(algorithms[0]);
 
-    benchmark_result results[4];
+    benchmark_result results[5];
 
     for(size_t i = 0; i < algorithm_count; i++)
     {
@@ -285,8 +285,8 @@ int main(int argc, char *argv[])
         progress_state progress = {0, info.block_count, {0}};
         snprintf(progress.label, sizeof(progress.label), "Processing %s", algorithm_names[i]);
 
-        // Pass dictionary only for fourth run (Zstd with dict)
-        const zstd_dict_context *use_dict = (i == 3) ? dict_ctx : NULL;
+        // Pass dictionary only for fifth run (Zstd with dict)
+        const zstd_dict_context *use_dict = (i == 4) ? dict_ctx : NULL;
 
         if(benchmark_compression(input_path, output_path, algorithms[i], &info, &results[i], &progress, print_progress,
                                  use_dict) != 0)

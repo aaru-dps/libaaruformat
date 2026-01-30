@@ -548,7 +548,11 @@ int benchmark_compression(const char *input_path, const char *output_path, const
                 // Clean up CST buffer if not used
                 if(cst_transformed && cst_transformed != recompressed) free(cst_transformed);
                 // Clean up uncompressed if CST was used and not recompressed
-                if(had_cst && uncompressed && uncompressed != recompressed) free(uncompressed);
+                if(had_cst && uncompressed && uncompressed != recompressed)
+                {
+                    free(uncompressed);
+                    uncompressed = NULL;
+                }
             }
             else
             {

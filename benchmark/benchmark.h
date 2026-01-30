@@ -34,9 +34,10 @@ typedef struct
 // Compression algorithm identifiers
 typedef enum
 {
-    COMP_LZMA  = 0,
-    COMP_BZIP3 = 1,
-    COMP_ZSTD  = 2
+    COMP_LZMA   = 0,
+    COMP_BZIP3  = 1,
+    COMP_ZSTD   = 2,
+    COMP_BROTLI = 3
 } compression_algorithm;
 
 // Image information structure
