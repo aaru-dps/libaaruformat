@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include <aaruformat/structs/data.h>
 #include <aaruformat/structs/ddt.h>
@@ -31,7 +32,37 @@
 #include <aaruformat/structs/index.h>
 #include "compression.h"
 
-#define PROGRESS_BAR_WIDTH 50
+#define PROGRESS_BAR_WIDTH 40
+
+// ANSI color codes
+#define ANSI_RESET       "\033[0m"
+#define ANSI_BOLD        "\033[1m"
+#define ANSI_DIM         "\033[2m"
+#define ANSI_RED         "\033[31m"
+#define ANSI_GREEN       "\033[32m"
+#define ANSI_YELLOW      "\033[33m"
+#define ANSI_BLUE        "\033[34m"
+#define ANSI_MAGENTA     "\033[35m"
+#define ANSI_CYAN        "\033[36m"
+#define ANSI_WHITE       "\033[37m"
+#define ANSI_BG_BLUE     "\033[44m"
+#define ANSI_BG_GREEN    "\033[42m"
+#define ANSI_CLEAR_LINE  "\033[2K"
+
+// Check if terminal supports colors
+static int use_colors = 0;
+
+static void init_colors(void)
+{
+    // Check if stdout is a terminal and TERM is set
+    use_colors = isatty(STDOUT_FILENO) && getenv("TERM") != NULL;
+}
+
+// Color helper function
+static const char* clr(const char* code)
+{
+    return use_colors ? code : "";
+}
 
 // External library functions
 extern uint64_t aaruf_crc64_data(const uint8_t *data, size_t length);
@@ -40,7 +71,7 @@ extern int32_t  aaruf_lzma_decode_buffer(uint8_t *dst_buffer, size_t *dst_size, 
 
 #define LZMA_PROPERTIES_LENGTH 5
 
-// Print progress bar
+// Print progress bar with colors
 static void print_progress(const progress_state *state)
 {
     if(state->total == 0) return;
@@ -48,9 +79,21 @@ static void print_progress(const progress_state *state)
     const double percentage = (double)state->current / (double)state->total * 100.0;
     const int    filled     = (int)(percentage / 100.0 * PROGRESS_BAR_WIDTH);
 
-    printf("\r%s [", state->label);
-    for(int i = 0; i < PROGRESS_BAR_WIDTH; i++) printf(i < filled ? "=" : " ");
-    printf("] %.1f%%", percentage);
+    printf("\r%s%s%s ", clr(ANSI_CLEAR_LINE), clr(ANSI_CYAN), state->label);
+    printf("%s[", clr(ANSI_RESET));
+
+    // Draw progress bar with gradient effect
+    for(int i = 0; i < PROGRESS_BAR_WIDTH; i++)
+    {
+        if(i < filled)
+            printf("%s█", clr(ANSI_GREEN));
+        else if(i == filled && state->current < state->total)
+            printf("%s▓", clr(ANSI_YELLOW));
+        else
+            printf("%s░", clr(ANSI_DIM));
+    }
+
+    printf("%s] %s%6.1f%%%s", clr(ANSI_RESET), clr(ANSI_BOLD), percentage, clr(ANSI_RESET));
     fflush(stdout);
 
     if(state->current >= state->total) printf("\n");
@@ -67,61 +110,129 @@ static uint64_t get_time_ns(void)
 // Convert nanoseconds to seconds
 static double ns_to_seconds(const uint64_t ns) { return (double)ns / 1000000000.0; }
 
-// Format bytes as human-readable string
+// Format bytes as human-readable string with optional color
 static void format_bytes(const uint64_t bytes, char *buffer, const size_t buffer_size)
 {
     if(bytes < 1024)
         snprintf(buffer, buffer_size, "%" PRIu64 " B", bytes);
     else if(bytes < 1024 * 1024)
-        snprintf(buffer, buffer_size, "%.2f KB", (double)bytes / 1024.0);
+        snprintf(buffer, buffer_size, "%.2f KiB", (double)bytes / 1024.0);
     else if(bytes < 1024 * 1024 * 1024)
-        snprintf(buffer, buffer_size, "%.2f MB", (double)bytes / 1024.0 / 1024.0);
+        snprintf(buffer, buffer_size, "%.2f MiB", (double)bytes / 1024.0 / 1024.0);
     else
-        snprintf(buffer, buffer_size, "%.2f GB", (double)bytes / 1024.0 / 1024.0 / 1024.0);
+        snprintf(buffer, buffer_size, "%.2f GiB", (double)bytes / 1024.0 / 1024.0 / 1024.0);
+}
+
+// Print a section header
+static void print_section_header(const char *title)
+{
+    printf("\n%s%s══════════════════════════════════════════════════════════════%s\n",
+           clr(ANSI_BOLD), clr(ANSI_CYAN), clr(ANSI_RESET));
+    printf("%s%s  %s%s\n", clr(ANSI_BOLD), clr(ANSI_WHITE), title, clr(ANSI_RESET));
+    printf("%s%s══════════════════════════════════════════════════════════════%s\n\n",
+           clr(ANSI_BOLD), clr(ANSI_CYAN), clr(ANSI_RESET));
+}
+
+// Print a subsection header
+static void print_subsection_header(const char *title)
+{
+    printf("%s%s▶ %s%s\n", clr(ANSI_BOLD), clr(ANSI_YELLOW), title, clr(ANSI_RESET));
+    printf("%s──────────────────────────────────────────────────────────────%s\n",
+           clr(ANSI_DIM), clr(ANSI_RESET));
+}
+
+// Print a key-value pair
+static void print_info(const char *key, const char *value)
+{
+    printf("  %s%-24s%s %s%s%s\n", clr(ANSI_DIM), key, clr(ANSI_RESET), clr(ANSI_WHITE), value, clr(ANSI_RESET));
+}
+
+// Print a key-value pair with numeric value
+static void print_info_num(const char *key, uint64_t value)
+{
+    printf("  %s%-24s%s %s%'" PRIu64 "%s\n", clr(ANSI_DIM), key, clr(ANSI_RESET), clr(ANSI_WHITE), value, clr(ANSI_RESET));
+}
+
+// Get color for compression ratio
+static const char* get_ratio_color(double ratio)
+{
+    if(ratio < 50.0) return ANSI_GREEN;
+    if(ratio < 70.0) return ANSI_YELLOW;
+    return ANSI_RED;
 }
 
 int main(int argc, char *argv[])
 {
+    // Initialize color support
+    init_colors();
+
     // Set locale for thousands separator in printf
     setlocale(LC_NUMERIC, "");
 
+    // Print banner
+    printf("\n%s%s", clr(ANSI_BOLD), clr(ANSI_CYAN));
+    printf("    ╔═══════════════════════════════════════════════════════╗\n");
+    printf("    ║       %sAaru Format Compression Benchmark Tool%s          ║\n", clr(ANSI_WHITE), clr(ANSI_CYAN));
+    printf("    ╚═══════════════════════════════════════════════════════╝%s\n\n", clr(ANSI_RESET));
+
     if(argc < 2)
     {
-        fprintf(stderr, "Usage: %s <input.aaruformat>\n", argv[0]);
-        fprintf(stderr, "\nBenchmark compression algorithms on Aaru format images.\n");
-        fprintf(stderr, "Tests: LZMA, Bzip3, Brotli, Zstd\n");
+        printf("%sUsage:%s %s <input.aaruformat>\n\n", clr(ANSI_BOLD), clr(ANSI_RESET), argv[0]);
+        printf("%sDescription:%s\n", clr(ANSI_BOLD), clr(ANSI_RESET));
+        printf("  Benchmark compression algorithms on Aaru format images.\n\n");
+        printf("%sAlgorithms tested:%s\n", clr(ANSI_BOLD), clr(ANSI_RESET));
+        printf("  %s•%s LZMA      %s(high compression, slow)%s\n", clr(ANSI_GREEN), clr(ANSI_RESET), clr(ANSI_DIM), clr(ANSI_RESET));
+        printf("  %s•%s Bzip3     %s(high compression, medium speed)%s\n", clr(ANSI_GREEN), clr(ANSI_RESET), clr(ANSI_DIM), clr(ANSI_RESET));
+        printf("  %s•%s Brotli    %s(good compression, medium speed)%s\n", clr(ANSI_GREEN), clr(ANSI_RESET), clr(ANSI_DIM), clr(ANSI_RESET));
+        printf("  %s•%s Zstd      %s(good compression, fast)%s\n", clr(ANSI_GREEN), clr(ANSI_RESET), clr(ANSI_DIM), clr(ANSI_RESET));
+        printf("  %s•%s Zstd+Dict %s(better compression with trained dictionary)%s\n\n", clr(ANSI_GREEN), clr(ANSI_RESET), clr(ANSI_DIM), clr(ANSI_RESET));
         return 1;
     }
 
     const char *input_path = argv[1];
 
     // Open and analyze input image
-    printf("Opening image: %s\n", input_path);
+    print_section_header("Image Analysis");
+
+    printf("  %sOpening:%s %s%s%s\n", clr(ANSI_DIM), clr(ANSI_RESET), clr(ANSI_WHITE), input_path, clr(ANSI_RESET));
 
     image_info info;
     if(open_image(input_path, &info) != 0)
     {
-        fprintf(stderr, "Failed to open image\n");
+        printf("\n  %s✗ Failed to open image%s\n", clr(ANSI_RED), clr(ANSI_RESET));
         return 1;
     }
 
-    printf("Image version: %u.%u\n", info.major_version, info.minor_version);
-    printf("Block count: %" PRIu64 "\n", info.block_count);
-    printf("Total uncompressed size: %'" PRIu64 " bytes\n\n", info.total_uncompressed_size);
+    printf("  %s✓ Image opened successfully%s\n\n", clr(ANSI_GREEN), clr(ANSI_RESET));
+
+    char size_str[64];
+    format_bytes(info.total_uncompressed_size, size_str, sizeof(size_str));
+
+    char version_str[32];
+    snprintf(version_str, sizeof(version_str), "%u.%u", info.major_version, info.minor_version);
+    print_info("Format Version:", version_str);
+    print_info_num("Block Count:", info.block_count);
+    print_info("Total Size:", size_str);
 
     // ===== ZSTD DICTIONARY TRAINING PHASE (runs once for all algorithms) =====
     zstd_dict_context *dict_ctx = NULL;
 
-    printf("=== Zstd Dictionary Training Phase ===\n");
+    print_section_header("Zstd Dictionary Training");
+
     uint64_t sample_target_size = info.total_uncompressed_size / 10;                    // 10%
     if(sample_target_size > 100 * 1024 * 1024) sample_target_size = 100 * 1024 * 1024;  // 100MB max
 
     uint8_t *sample_buffer = malloc(sample_target_size);
-    if(sample_buffer == NULL) { fprintf(stderr, "Warning: Cannot allocate sample buffer for dictionary training\n"); }
+    if(sample_buffer == NULL)
+    {
+        printf("  %s⚠ Cannot allocate sample buffer for dictionary training%s\n", clr(ANSI_YELLOW), clr(ANSI_RESET));
+    }
     else
     {
         uint64_t sample_collected = 0;
-        printf("Target sample size: %'" PRIu64 " bytes\n", sample_target_size);
+        char target_str[64];
+        format_bytes(sample_target_size, target_str, sizeof(target_str));
+        print_info("Target Sample Size:", target_str);
 
         // Collect samples from first blocks
         for(uint64_t i = 0; i < info.block_count && sample_collected < sample_target_size; i++)
@@ -255,11 +366,33 @@ int main(int argc, char *argv[])
             }
         }
 
-        printf("Collected sample: %'" PRIu64 " bytes\n", sample_collected);
+        char collected_str[64], dict_size_str[64];
+        format_bytes(sample_collected, collected_str, sizeof(collected_str));
+        print_info("Collected:", collected_str);
+
         if(sample_collected > 0)
         {
-            dict_ctx = train_zstd_dictionary(sample_buffer, sample_collected, 512 * 1024);  // 128KB dict
-            if(dict_ctx != NULL) printf("Dictionary trained: %zu bytes\n\n", dict_ctx->dict_size);
+            printf("  %sTraining...%s", clr(ANSI_DIM), clr(ANSI_RESET));
+            fflush(stdout);
+
+            dict_ctx = train_zstd_dictionary(sample_buffer, sample_collected, 512 * 1024);  // 512KB dict
+
+            printf("\r%s", clr(ANSI_CLEAR_LINE));  // Clear the "Training..." line
+
+            if(dict_ctx != NULL)
+            {
+                format_bytes(dict_ctx->dict_size, dict_size_str, sizeof(dict_size_str));
+                print_info("Dictionary Size:", dict_size_str);
+                printf("  %s✓ Dictionary trained successfully%s\n", clr(ANSI_GREEN), clr(ANSI_RESET));
+            }
+            else
+            {
+                printf("  %s⚠ Dictionary training failed%s\n", clr(ANSI_YELLOW), clr(ANSI_RESET));
+            }
+        }
+        else
+        {
+            printf("  %s⚠ No samples collected for dictionary training%s\n", clr(ANSI_YELLOW), clr(ANSI_RESET));
         }
 
         free(sample_buffer);
@@ -273,9 +406,11 @@ int main(int argc, char *argv[])
 
     benchmark_result results[5];
 
+    print_section_header("Compression Benchmarks");
+
     for(size_t i = 0; i < algorithm_count; i++)
     {
-        printf("=== Testing %s ===\n", algorithm_names[i]);
+        print_subsection_header(algorithm_names[i]);
 
         char output_path[512];
         snprintf(output_path, sizeof(output_path), "%s.%s.aaruformat", input_path, algorithm_names[i]);
@@ -283,7 +418,7 @@ int main(int argc, char *argv[])
         const uint64_t start_time = get_time_ns();
 
         progress_state progress = {0, info.block_count, {0}};
-        snprintf(progress.label, sizeof(progress.label), "Processing %s", algorithm_names[i]);
+        snprintf(progress.label, sizeof(progress.label), "Compressing");
 
         // Pass dictionary only for fifth run (Zstd with dict)
         const zstd_dict_context *use_dict = (i == 4) ? dict_ctx : NULL;
@@ -291,7 +426,7 @@ int main(int argc, char *argv[])
         if(benchmark_compression(input_path, output_path, algorithms[i], &info, &results[i], &progress, print_progress,
                                  use_dict) != 0)
         {
-            fprintf(stderr, "Failed to benchmark %s\n", algorithm_names[i]);
+            printf("  %s✗ Failed to benchmark%s\n", clr(ANSI_RED), clr(ANSI_RESET));
             if(dict_ctx) free_zstd_dictionary(dict_ctx);
             close_image(&info);
             return 1;
@@ -299,28 +434,40 @@ int main(int argc, char *argv[])
 
         results[i].elapsed_ns = get_time_ns() - start_time;
 
-        printf("Completed in %.2f seconds\n", ns_to_seconds(results[i].elapsed_ns));
-        printf("Compressed size: %'" PRIu64 " bytes\n", results[i].compressed_size);
-        printf("Compression ratio: %.2f%%\n\n",
-               (double)results[i].compressed_size / (double)info.total_uncompressed_size * 100.0);
+        // Print results for this algorithm
+        char compressed_str[64];
+        format_bytes(results[i].compressed_size, compressed_str, sizeof(compressed_str));
+        double ratio = (double)results[i].compressed_size / (double)info.total_uncompressed_size * 100.0;
+
+        printf("  %sTime:%s         %s%.2f%s seconds\n", clr(ANSI_DIM), clr(ANSI_RESET),
+               clr(ANSI_WHITE), ns_to_seconds(results[i].elapsed_ns), clr(ANSI_RESET));
+        printf("  %sCompressed:%s   %s%s%s\n", clr(ANSI_DIM), clr(ANSI_RESET),
+               clr(ANSI_WHITE), compressed_str, clr(ANSI_RESET));
+        printf("  %sRatio:%s        %s%s%.2f%%%s\n\n", clr(ANSI_DIM), clr(ANSI_RESET),
+               clr(ANSI_BOLD), clr(get_ratio_color(ratio)), ratio, clr(ANSI_RESET));
     }
 
     // Cleanup dictionary
     if(dict_ctx != NULL) free_zstd_dictionary(dict_ctx);
 
     // Print summary table
-    printf("\n=== Benchmark Results Summary ===\n");
-    printf("%-10s %20s %20s %-12s %-10s\n", "Algorithm", "Uncompressed (B)", "Compressed (B)", "Ratio", "Time (s)");
-    printf("%-10s %20s %20s %-12s %-10s\n", "----------", "--------------------", "--------------------",
-           "------------", "----------");
+    print_section_header("Results Summary");
+
+    // Table header
+    printf("  %s%-16s %20s %20s %12s %10s%s\n", clr(ANSI_BOLD),
+           "Algorithm", "Uncompressed (B)", "Compressed (B)", "Ratio", "Time (s)", clr(ANSI_RESET));
+    printf("  %s────────────────────────────────────────────────────────────────────────────────%s\n",
+           clr(ANSI_DIM), clr(ANSI_RESET));
 
     for(size_t i = 0; i < algorithm_count; i++)
     {
         const double ratio  = (double)results[i].compressed_size / (double)info.total_uncompressed_size * 100.0;
         const double time_s = ns_to_seconds(results[i].elapsed_ns);
 
-        printf("%-10s %'20" PRIu64 " %'20" PRIu64 " %11.2f%% %10.2f\n", algorithm_names[i],
-               info.total_uncompressed_size, results[i].compressed_size, ratio, time_s);
+        printf("  %s%-16s%s %'20" PRIu64 " %'20" PRIu64 " %s%s%11.2f%%%s %10.2f\n",
+               clr(ANSI_WHITE), algorithm_names[i], clr(ANSI_RESET),
+               info.total_uncompressed_size, results[i].compressed_size,
+               clr(ANSI_BOLD), clr(get_ratio_color(ratio)), ratio, clr(ANSI_RESET), time_s);
     }
 
     // Find best compression
@@ -347,8 +494,12 @@ int main(int argc, char *argv[])
         }
     }
 
-    printf("\nBest compression: %s\n", algorithm_names[best_compression_idx]);
-    printf("Fastest: %s\n", algorithm_names[fastest_idx]);
+    printf("\n  %s────────────────────────────────────────────────────────────────────────────────%s\n",
+           clr(ANSI_DIM), clr(ANSI_RESET));
+    printf("  %s🏆 Best Compression:%s %s%s%s\n", clr(ANSI_BOLD), clr(ANSI_RESET),
+           clr(ANSI_GREEN), algorithm_names[best_compression_idx], clr(ANSI_RESET));
+    printf("  %s⚡ Fastest:%s         %s%s%s\n\n", clr(ANSI_BOLD), clr(ANSI_RESET),
+           clr(ANSI_CYAN), algorithm_names[fastest_idx], clr(ANSI_RESET));
 
     close_image(&info);
     return 0;

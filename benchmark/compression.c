@@ -179,11 +179,11 @@ static int compress_brotli(const uint8_t *input, const size_t input_size, uint8_
 
     size_t encoded_size = max_output_size ? max_output_size : (input_size + (input_size >> 2) + 10240);
 
-    // Compress with quality 9 (high compression but not max)
+    // Compress with quality 8 (high compression but not max)
     // Window size 22 = 4MB window (2^22 bytes)
     // Quality 9 is ~5-10x faster than quality 11 with minimal compression loss
     const BROTLI_BOOL result = BrotliEncoderCompress(
-        9,                      // quality 9 (high but not max - much faster)
+        8,                      // quality 8 (high but not max - much faster)
         22,                     // lgwin = 22 (4MB window)
         BROTLI_DEFAULT_MODE,    // generic mode
         input_size,
@@ -270,15 +270,6 @@ zstd_dict_context *train_zstd_dictionary(const uint8_t *sample_data, size_t samp
     // This analyzes the sample data and creates an optimized dictionary
     // We need to split the sample into multiple samples for proper training
 
-    // Minimum sample size should be at least 100x the dictionary size for good training
-    const size_t min_total_size = dict_size * 100;
-    if(sample_size < min_total_size)
-    {
-        fprintf(stderr,
-                "Warning: Sample size %zu too small for optimal dictionary training (recommended at least %zu)\n",
-                sample_size, min_total_size);
-    }
-
     // ZDICT has internal constraints on maximum sample size
     // Split large samples into chunks to work around this
     // Use reasonable chunk size (e.g., 2MB per sample)
@@ -302,9 +293,6 @@ zstd_dict_context *train_zstd_dictionary(const uint8_t *sample_data, size_t samp
         remaining -= sample_sizes[i];
     }
 
-    printf("Training dictionary with %zu samples (total %zu bytes, dict size %zu)\n", num_samples, sample_size,
-           dict_size);
-
     // Use standard ZDICT_trainFromBuffer
     size_t trained_size = ZDICT_trainFromBuffer(ctx->dict_data, dict_size, sample_data, sample_sizes, num_samples);
 
@@ -312,7 +300,6 @@ zstd_dict_context *train_zstd_dictionary(const uint8_t *sample_data, size_t samp
 
     if(ZDICT_isError(trained_size))
     {
-        fprintf(stderr, "Dictionary training failed: %s\n", ZDICT_getErrorName(trained_size));
         free(ctx->dict_data);
         free(ctx);
         return NULL;
@@ -320,14 +307,10 @@ zstd_dict_context *train_zstd_dictionary(const uint8_t *sample_data, size_t samp
 
     ctx->dict_size = trained_size;
 
-    fprintf(stderr, "Dictionary training SUCCESS: trained_size=%zu (requested=%zu)\n", trained_size, dict_size);
-
     // Get dictionary ID
     ctx->dict_id = ZSTD_getDictID_fromDict(ctx->dict_data, ctx->dict_size);
-    fprintf(stderr, "Dictionary ID: 0x%08X\n", ctx->dict_id);
     if(ctx->dict_id == 0)
     {
-        fprintf(stderr, "Warning: Dictionary ID is 0, setting fallback\n");
         ctx->dict_id = 0x12345678;  // Fallback ID
     }
 
