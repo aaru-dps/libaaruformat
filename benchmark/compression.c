@@ -37,6 +37,7 @@
 #include <brotli/decode.h>
 #endif
 
+
 // LZMA compression from library
 extern int32_t aaruf_lzma_encode_buffer(uint8_t *dst_buffer, size_t *dst_size, const uint8_t *src_buffer,
                                         size_t src_len, uint8_t *out_props, size_t *out_props_size, int32_t level,
@@ -158,7 +159,8 @@ static int compress_zstd(const uint8_t *input, const size_t input_size, uint8_t 
 }
 
 // Compress data using Brotli
-// Using quality 11 (max) and window size 24 (16MB) for LZMA-equivalent compression
+// Using quality 9 and window size 22 (4MB) for good compression with reasonable speed
+// Quality 11 is extremely slow; quality 9 provides similar ratio but much faster
 static int compress_brotli(const uint8_t *input, const size_t input_size, uint8_t **output, size_t *output_size)
 {
 #ifdef HAVE_BROTLI
@@ -177,12 +179,12 @@ static int compress_brotli(const uint8_t *input, const size_t input_size, uint8_
 
     size_t encoded_size = max_output_size ? max_output_size : (input_size + (input_size >> 2) + 10240);
 
-    // Compress with quality 11 (max compression, equivalent to LZMA level 9)
-    // Window size 24 = 16MB window (2^24 bytes), similar to LZMA's 32MB dictionary
-    // This provides equivalent compression performance to LZMA
+    // Compress with quality 9 (high compression but not max)
+    // Window size 22 = 4MB window (2^22 bytes)
+    // Quality 9 is ~5-10x faster than quality 11 with minimal compression loss
     const BROTLI_BOOL result = BrotliEncoderCompress(
-        BROTLI_MAX_QUALITY,     // quality 11 (max)
-        24,                     // lgwin = 24 (16MB window)
+        9,                      // quality 9 (high but not max - much faster)
+        22,                     // lgwin = 22 (4MB window)
         BROTLI_DEFAULT_MODE,    // generic mode
         input_size,
         input,
@@ -208,6 +210,7 @@ static int compress_brotli(const uint8_t *input, const size_t input_size, uint8_
     return -1;
 #endif
 }
+
 
 // Main compression function
 int compress_data(const compression_algorithm algorithm, const uint8_t *input, const size_t input_size,
