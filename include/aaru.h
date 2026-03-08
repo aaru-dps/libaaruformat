@@ -1072,7 +1072,8 @@ typedef enum
     DVD_DiscKey_Decrypted = 73,  ///< Decrypted DVD disc key,
     DVD_PFI_2ndLayer      = 74,  ///< DVD Physical Format Information for the second layer
     Floppy_WriteProtect   = 75,  ///< Write protection status of the floppy disk
-    MaxMediaTag           = Floppy_WriteProtect
+    WiiUDiscKey   = 76,  ///< Nintendo Wii U disc key (16 bytes, from non-readable disc area)
+    MaxMediaTag           = WiiUDiscKey
 } MediaTagType;
 
 /** @} */ /* end of MediaTags group */

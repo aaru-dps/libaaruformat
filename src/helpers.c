@@ -184,6 +184,8 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_media_tag_type_for_datatype(const int32_t
             return DVD_DiscKey_Decrypted;
         case FloppyWriteProtectStatus:
             return Floppy_WriteProtect;
+        case NintendoWiiUDiscKey:
+            return WiiUDiscKey;
         default:
             return -1;
     }
@@ -346,6 +348,8 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_datatype_for_media_tag_type(const int32_t
             return DvdDiscKeyDecrypted;
         case Floppy_WriteProtect:
             return FloppyWriteProtectStatus;
+        case WiiUDiscKey:
+            return NintendoWiiUDiscKey;
         default:
             return -1;
     }
