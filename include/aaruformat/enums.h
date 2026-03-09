@@ -133,8 +133,13 @@ typedef enum
     DvdPfi2ndLayer                   = 88,  ///< DVD Physical Format Information for the second layer
     FluxData                         = 89,  ///< Flux data.
     BitstreamData                    = 90,  ///< Bitstream data.
-    FloppyWriteProtectStatus         = 91,   ///< Floppy write-protect status.
+    FloppyWriteProtectStatus         = 91,  ///< Floppy write-protect status.
     NintendoWiiUDiscKey              = 92,  ///< Nintendo Wii U disc key (16 bytes, from non-readable disc area)
+    PS3DiscKey                       = 93,  ///< PS3 derived disc key (16 bytes)
+    PS3Data1                         = 94,  ///< PS3 data1 key (16 bytes, from disc)
+    PS3Data2                         = 95,  ///< PS3 data2 key (16 bytes, from disc)
+    PS3PIC                           = 96,  ///< PS3 PIC data (115 bytes, from disc lead-in)
+    PS3EncryptionMap                 = 97,  ///< PS3 encryption region map (serialized from sector 0)
 } DataType;
 
 /**

@@ -1073,7 +1073,12 @@ typedef enum
     DVD_PFI_2ndLayer      = 74,  ///< DVD Physical Format Information for the second layer
     Floppy_WriteProtect   = 75,  ///< Write protection status of the floppy disk
     WiiUDiscKey   = 76,  ///< Nintendo Wii U disc key (16 bytes, from non-readable disc area)
-    MaxMediaTag           = WiiUDiscKey
+    PS3_DiscKey            = 77,  ///< PS3 derived disc key (16 bytes)
+    PS3_Data1                 = 78,  ///< PS3 data1 key (16 bytes, from disc)
+    PS3_Data2                 = 79,  ///< PS3 data2 key (16 bytes, from disc)
+    PS3_PIC                = 80,  ///< PS3 PIC data (115 bytes, from disc lead-in)
+    PS3_EncryptionMap      = 81,  ///< PS3 encryption region map (serialized from sector 0)
+    MaxMediaTag           = PS3_EncryptionMap
 } MediaTagType;
 
 /** @} */ /* end of MediaTags group */

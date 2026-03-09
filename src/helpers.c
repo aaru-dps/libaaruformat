@@ -186,6 +186,16 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_media_tag_type_for_datatype(const int32_t
             return Floppy_WriteProtect;
         case NintendoWiiUDiscKey:
             return WiiUDiscKey;
+        case PS3DiscKey:
+            return PS3_DiscKey;
+        case PS3Data1:
+            return PS3_Data1;
+        case PS3Data2:
+            return PS3_Data2;
+        case PS3PIC:
+            return PS3_PIC;
+        case PS3EncryptionMap:
+            return PS3_EncryptionMap;
         default:
             return -1;
     }
@@ -350,6 +360,16 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_datatype_for_media_tag_type(const int32_t
             return FloppyWriteProtectStatus;
         case WiiUDiscKey:
             return NintendoWiiUDiscKey;
+        case PS3_DiscKey:
+            return PS3DiscKey;
+        case PS3_Data1:
+            return PS3Data1;
+        case PS3_Data2:
+            return PS3Data2;
+        case PS3_PIC:
+            return PS3PIC;
+        case PS3_EncryptionMap:
+            return PS3EncryptionMap;
         default:
             return -1;
     }
