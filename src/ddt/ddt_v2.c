@@ -154,7 +154,7 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
         // Check for DDT compression
         switch(ddt_header.compression)
         {
-            case Lzma:
+            case kCompressionLzma:
                 if(ddt_header.cmpLength <= LZMA_PROPERTIES_LENGTH)
                 {
                     FATAL("Compressed DDT payload too small (%" PRIu64 ") for LZMA properties.", ddt_header.cmpLength);
@@ -251,7 +251,7 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
                 *found_user_data_ddt = true;
 
                 break;
-            case None:
+            case kCompressionNone:
                 buffer = malloc(ddt_header.length);
 
                 if(buffer == NULL)
@@ -307,7 +307,7 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
     else if(entry->dataType == CdSectorPrefix || entry->dataType == CdSectorSuffix)
         switch(ddt_header.compression)
         {
-            case Lzma:
+            case kCompressionLzma:
                 if(ddt_header.cmpLength <= LZMA_PROPERTIES_LENGTH)
                 {
                     FATAL("Compressed DDT payload too small (%" PRIu64 ") for LZMA properties.", ddt_header.cmpLength);
@@ -407,7 +407,7 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
 
                 break;
 
-            case None:
+            case kCompressionNone:
                 buffer = malloc(ddt_header.length);
 
                 if(buffer == NULL)
@@ -799,7 +799,7 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
         // Check for DDT compression
         switch(ddt_header.compression)
         {
-            case Lzma:
+            case kCompressionLzma:
                 if(ddt_header.cmpLength <= LZMA_PROPERTIES_LENGTH)
                 {
                     FATAL("Compressed DDT payload too small (%" PRIu64 ") for LZMA properties.", ddt_header.cmpLength);
@@ -900,7 +900,7 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
                 ctx->cached_ddt_offset = secondary_ddt_offset;
 
                 break;
-            case None:
+            case kCompressionNone:
                 buffer = malloc(ddt_header.length);
 
                 if(buffer == NULL)
@@ -1215,11 +1215,12 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
 
             // Prepare DDT header for the never-written cached table
             memset(&ddt_header, 0, sizeof(DdtHeader2));
-            ddt_header.identifier  = DeDuplicationTableSecondary;
-            ddt_header.type        = UserData;
-            ddt_header.compression = ctx->compression_enabled ? Lzma : None;  // Use no compression for simplicity
-            ddt_header.levels      = ctx->user_data_ddt_header.levels;
-            ddt_header.tableLevel  = ctx->user_data_ddt_header.tableLevel + 1;
+            ddt_header.identifier = DeDuplicationTableSecondary;
+            ddt_header.type       = UserData;
+            ddt_header.compression =
+                ctx->compression_enabled ? kCompressionLzma : kCompressionNone;  // Use no compression for simplicity
+            ddt_header.levels              = ctx->user_data_ddt_header.levels;
+            ddt_header.tableLevel          = ctx->user_data_ddt_header.tableLevel + 1;
             ddt_header.previousLevelOffset = ctx->primary_ddt_offset;
             ddt_header.negative            = ctx->user_data_ddt_header.negative;
             ddt_header.blocks              = items_per_ddt_entry;
@@ -1252,7 +1253,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             uint8_t *cmp_buffer                              = NULL;
             uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
 
-            if(ddt_header.compression == None)
+            if(ddt_header.compression == kCompressionNone)
             {
 
                 cmp_buffer          = (uint8_t *)ctx->cached_secondary_ddt2;
@@ -1277,14 +1278,14 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
 
                 if(ddt_header.cmpLength >= ddt_header.length)
                 {
-                    ddt_header.compression = None;
+                    ddt_header.compression = kCompressionNone;
                     free(cmp_buffer);
 
                     cmp_buffer = (uint8_t *)ctx->cached_secondary_ddt2;
                 }
             }
 
-            if(ddt_header.compression == None)
+            if(ddt_header.compression == kCompressionNone)
             {
                 ddt_header.cmpLength = ddt_header.length;
                 ddt_header.cmpCrc64  = ddt_header.crc64;
@@ -1292,7 +1293,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             else
                 ddt_header.cmpCrc64 = aaruf_crc64_data(cmp_buffer, (uint32_t)ddt_header.cmpLength);
 
-            if(ddt_header.compression == Lzma) ddt_header.cmpLength += LZMA_PROPERTIES_LENGTH;
+            if(ddt_header.compression == kCompressionLzma) ddt_header.cmpLength += LZMA_PROPERTIES_LENGTH;
 
             // Write header
             written_bytes = fwrite(&ddt_header, sizeof(DdtHeader2), 1, ctx->imageStream);
@@ -1304,7 +1305,8 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             }
 
             // Write data
-            if(ddt_header.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
+            if(ddt_header.compression == kCompressionLzma)
+                fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
 
             if(fwrite(cmp_buffer, ddt_header.cmpLength, 1, ctx->imageStream) != 1)
             {
@@ -1313,7 +1315,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
                 return false;
             }
 
-            if(ddt_header.compression == Lzma) free(cmp_buffer);
+            if(ddt_header.compression == kCompressionLzma) free(cmp_buffer);
 
             // Add index entry for the newly written secondary DDT
             IndexEntry new_ddt_entry;
@@ -1394,7 +1396,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
         memset(&ddt_header, 0, sizeof(DdtHeader2));
         ddt_header.identifier          = DeDuplicationTableSecondary;
         ddt_header.type                = UserData;
-        ddt_header.compression         = ctx->compression_enabled ? Lzma : None;
+        ddt_header.compression         = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
         ddt_header.levels              = ctx->user_data_ddt_header.levels;
         ddt_header.tableLevel          = ctx->user_data_ddt_header.tableLevel + 1;
         ddt_header.previousLevelOffset = ctx->primary_ddt_offset;  // Set to primary DDT table location
@@ -1429,7 +1431,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
         uint8_t *cmp_buffer                              = NULL;
         uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
 
-        if(ddt_header.compression == None)
+        if(ddt_header.compression == kCompressionNone)
         {
 
             cmp_buffer          = (uint8_t *)ctx->cached_secondary_ddt2;
@@ -1453,14 +1455,14 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
 
             if(ddt_header.cmpLength >= ddt_header.length)
             {
-                ddt_header.compression = None;
+                ddt_header.compression = kCompressionNone;
                 free(cmp_buffer);
 
                 cmp_buffer = (uint8_t *)ctx->cached_secondary_ddt2;
             }
         }
 
-        if(ddt_header.compression == None)
+        if(ddt_header.compression == kCompressionNone)
         {
             ddt_header.cmpLength = ddt_header.length;
             ddt_header.cmpCrc64  = ddt_header.crc64;
@@ -1468,10 +1470,11 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
         else
             ddt_header.cmpCrc64 = aaruf_crc64_data(cmp_buffer, (uint32_t)ddt_header.cmpLength);
 
-        if(ddt_header.compression == Lzma) ddt_header.cmpLength += LZMA_PROPERTIES_LENGTH;
+        if(ddt_header.compression == kCompressionLzma) ddt_header.cmpLength += LZMA_PROPERTIES_LENGTH;
 
         // Write header
-        if(ddt_header.compression == Lzma) fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
+        if(ddt_header.compression == kCompressionLzma)
+            fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
 
         written_bytes = fwrite(&ddt_header, sizeof(DdtHeader2), 1, ctx->imageStream);
         if(written_bytes != 1)
@@ -1491,7 +1494,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             return false;
         }
 
-        if(ddt_header.compression == Lzma) free(cmp_buffer);
+        if(ddt_header.compression == kCompressionLzma) free(cmp_buffer);
 
         // Update index: remove old entry and add new one for the evicted secondary DDT
         TRACE("Updating index for evicted secondary DDT");

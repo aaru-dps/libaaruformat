@@ -141,7 +141,7 @@ int32_t process_ddt_v1(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
         switch(ddt_header.compression)
         {
             // TODO: Check CRC
-            case Lzma:
+            case kCompressionLzma:
                 if(ddt_header.cmpLength <= LZMA_PROPERTIES_LENGTH)
                 {
                     FATAL("Compressed DDT payload too small (%" PRIu64 ") for LZMA properties.", ddt_header.cmpLength);
@@ -216,7 +216,7 @@ int32_t process_ddt_v1(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
 
                 break;
             // TODO: Check CRC
-            case None:
+            case kCompressionNone:
                 ctx->user_data_ddt = (uint64_t *)malloc(ddt_header.length);
                 if(ctx->user_data_ddt == NULL)
                 {
@@ -248,7 +248,7 @@ int32_t process_ddt_v1(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
         switch(ddt_header.compression)
         {
             // TODO: Check CRC
-            case Lzma:
+            case kCompressionLzma:
                 if(ddt_header.cmpLength <= LZMA_PROPERTIES_LENGTH)
                 {
                     FATAL("Compressed DDT payload too small (%" PRIu64 ") for LZMA properties.", ddt_header.cmpLength);
@@ -324,7 +324,7 @@ int32_t process_ddt_v1(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
                 break;
 
             // TODO: Check CRC
-            case None:
+            case kCompressionNone:
                 cd_ddt = (uint32_t *)malloc(ddt_header.entries * sizeof(uint32_t));
 
                 if(cd_ddt == NULL)

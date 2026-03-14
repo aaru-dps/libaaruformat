@@ -30,10 +30,10 @@
  */
 typedef enum
 {
-    None                           = 0,  ///< Not compressed.
-    Lzma                           = 1,  ///< LZMA compression.
-    Flac                           = 2,  ///< FLAC compression.
-    LzmaClauniaSubchannelTransform = 3   ///< LZMA applied to Claunia Subchannel Transform processed data.
+    kCompressionNone    = 0,  ///< Not compressed.
+    kCompressionLzma    = 1,  ///< LZMA compression.
+    kCompressionFlac    = 2,  ///< FLAC compression.
+    kCompressionLzmaCst = 3   ///< LZMA applied to Claunia Subchannel Transform processed data.
 } CompressionType;
 
 /**

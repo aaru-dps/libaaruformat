@@ -710,8 +710,8 @@ int inject_media_tag(const char *tag_type_str, const char *media_tag_file, const
     BlockHeader block_header = {0};
     block_header.identifier  = DataBlock;
     block_header.type        = (uint16_t)data_type;
-    block_header.compression = None;  // No compression for simplicity
-    block_header.sectorSize  = 1;     // Media tags don't have sectors, use 1
+    block_header.compression = kCompressionNone;  // No compression for simplicity
+    block_header.sectorSize  = 1;                 // Media tags don't have sectors, use 1
     block_header.length      = (uint32_t)tag_file_size;
     block_header.cmpLength   = (uint32_t)tag_file_size;
     block_header.crc64       = aaruf_crc64_data(tag_data, (uint32_t)tag_file_size);

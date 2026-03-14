@@ -327,16 +327,16 @@ int info(const char *path)
         char compression_str[32];
         switch(ctx->user_data_ddt_header.compression)
         {
-            case None:
+            case kCompressionNone:
                 snprintf(compression_str, sizeof(compression_str), "None");
                 break;
-            case Lzma:
+            case kCompressionLzma:
                 snprintf(compression_str, sizeof(compression_str), "LZMA");
                 break;
-            case Flac:
+            case kCompressionFlac:
                 snprintf(compression_str, sizeof(compression_str), "FLAC");
                 break;
-            case LzmaClauniaSubchannelTransform:
+            case kCompressionLzmaCst:
                 snprintf(compression_str, sizeof(compression_str), "LZMA+CST");
                 break;
             default:

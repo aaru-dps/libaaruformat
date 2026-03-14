@@ -153,10 +153,10 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
 
     TRACE("Found data block with type %4.4s at position %" PRIu64, (char *)&entry->blockType, entry->offset);
 
-    if(block_header.compression == Lzma || block_header.compression == LzmaClauniaSubchannelTransform)
+    if(block_header.compression == kCompressionLzma || block_header.compression == kCompressionLzmaCst)
     {
         int error_no = 0;
-        if(block_header.compression == LzmaClauniaSubchannelTransform && block_header.type != CdSectorSubchannel)
+        if(block_header.compression == kCompressionLzmaCst && block_header.type != CdSectorSubchannel)
         {
             TRACE("Invalid compression type %u for block with data type %u, continuing...", block_header.compression,
                   block_header.type);
@@ -260,7 +260,7 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
             return AARUF_STATUS_OK;
         }
 
-        if(block_header.compression == LzmaClauniaSubchannelTransform && block_header.length != 0)
+        if(block_header.compression == kCompressionLzmaCst && block_header.length != 0)
         {
             cst_data = (uint8_t *)malloc(block_header.length);
             if(cst_data == NULL)
@@ -281,7 +281,7 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
 
         free(cmp_data);
     }
-    else if(block_header.compression == None)
+    else if(block_header.compression == kCompressionNone)
     {
         if(block_header.length != 0)
         {

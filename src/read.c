@@ -418,7 +418,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
     // Decompress block
     switch(block_header->compression)
     {
-        case None:
+        case kCompressionNone:
             TRACE("Allocating memory for block");
             block = (uint8_t *)malloc(block_header->length);
             if(block == NULL)
@@ -442,7 +442,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
             }
 
             break;
-        case Lzma:
+        case kCompressionLzma:
             if(block_header->cmpLength <= LZMA_PROPERTIES_LENGTH || block_header->length == 0)
             {
                 FATAL("Invalid LZMA block lengths (cmpLength=%u, length=%u)", block_header->cmpLength,
@@ -526,7 +526,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
             free(cmp_data);
 
             break;
-        case Flac:
+        case kCompressionFlac:
             TRACE("Allocating memory for compressed data of size %zu bytes", block_header->cmpLength);
             cmp_data = malloc(block_header->cmpLength);
 

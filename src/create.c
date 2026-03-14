@@ -411,7 +411,7 @@ AARU_EXPORT void AARU_CALL *aaruf_create(const char *filepath, const uint32_t me
         ctx->in_memory_ddt                            = true;
         ctx->user_data_ddt_header.identifier          = DeDuplicationTable2;
         ctx->user_data_ddt_header.type                = UserData;
-        ctx->user_data_ddt_header.compression         = None;
+        ctx->user_data_ddt_header.compression         = kCompressionNone;
         ctx->user_data_ddt_header.tableLevel          = 0;
         ctx->user_data_ddt_header.previousLevelOffset = 0;
         ctx->user_data_ddt_header.negative            = negative_sectors;

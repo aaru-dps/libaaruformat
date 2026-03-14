@@ -304,20 +304,20 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
             if(ctx->compression_enabled)
             {
                 if(ctx->current_track_type == Audio)
-                    ctx->current_block_header.compression = Flac;
+                    ctx->current_block_header.compression = kCompressionFlac;
                 else
-                    ctx->current_block_header.compression = Lzma;
+                    ctx->current_block_header.compression = kCompressionLzma;
             }
             else
-                ctx->current_block_header.compression = None;
+                ctx->current_block_header.compression = kCompressionNone;
         }
         else
         {
             ctx->current_track_type = Data;
             if(ctx->compression_enabled)
-                ctx->current_block_header.compression = Lzma;
+                ctx->current_block_header.compression = kCompressionLzma;
             else
-                ctx->current_block_header.compression = None;
+                ctx->current_block_header.compression = kCompressionNone;
         }
 
         uint32_t max_buffer_size =
@@ -1456,9 +1456,9 @@ int32_t aaruf_close_current_block(aaruformat_context *ctx)
 
     switch(ctx->current_block_header.compression)
     {
-        case None:
+        case kCompressionNone:
             break;
-        case Flac:
+        case kCompressionFlac:
             cmp_buffer = malloc(ctx->current_block_header.length * 2);
             if(cmp_buffer == NULL)
             {
@@ -1483,12 +1483,12 @@ int32_t aaruf_close_current_block(aaruformat_context *ctx)
 
             if(ctx->current_block_header.cmpLength >= ctx->current_block_header.length)
             {
-                ctx->current_block_header.compression = None;
+                ctx->current_block_header.compression = kCompressionNone;
                 free(cmp_buffer);
             }
 
             break;
-        case Lzma:
+        case kCompressionLzma:
             cmp_buffer = malloc(ctx->current_block_header.length * 2);
             if(cmp_buffer == NULL)
             {
@@ -1505,7 +1505,7 @@ int32_t aaruf_close_current_block(aaruformat_context *ctx)
 
             if(ctx->current_block_header.cmpLength >= ctx->current_block_header.length)
             {
-                ctx->current_block_header.compression = None;
+                ctx->current_block_header.compression = kCompressionNone;
                 free(cmp_buffer);
             }
 
@@ -1515,7 +1515,7 @@ int32_t aaruf_close_current_block(aaruformat_context *ctx)
             return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
     }
 
-    if(ctx->current_block_header.compression == None)
+    if(ctx->current_block_header.compression == kCompressionNone)
     {
         ctx->current_block_header.cmpCrc64  = ctx->current_block_header.crc64;
         ctx->current_block_header.cmpLength = ctx->current_block_header.length;
@@ -1523,7 +1523,8 @@ int32_t aaruf_close_current_block(aaruformat_context *ctx)
     else
         ctx->current_block_header.cmpCrc64 = aaruf_crc64_data(cmp_buffer, ctx->current_block_header.cmpLength);
 
-    if(ctx->current_block_header.compression == Lzma) ctx->current_block_header.cmpLength += LZMA_PROPERTIES_LENGTH;
+    if(ctx->current_block_header.compression == kCompressionLzma)
+        ctx->current_block_header.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Add to index
     TRACE("Adding block to index");
@@ -1546,14 +1547,14 @@ int32_t aaruf_close_current_block(aaruformat_context *ctx)
         return AARUF_ERROR_CANNOT_WRITE_BLOCK_HEADER;
 
     // Write block data
-    if(ctx->current_block_header.compression == Lzma &&
+    if(ctx->current_block_header.compression == kCompressionLzma &&
        fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream) != 1)
     {
         free(cmp_buffer);
         return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
     }
 
-    if(ctx->current_block_header.compression == None)
+    if(ctx->current_block_header.compression == kCompressionNone)
     {
         if(fwrite(ctx->writing_buffer, ctx->current_block_header.length, 1, ctx->imageStream) != 1)
             return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;

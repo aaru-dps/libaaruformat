@@ -415,41 +415,26 @@ void process_flux_data_block(aaruformat_context *ctx, const IndexEntry *entry)
 static int32_t ensure_flux_entries_loaded(aaruformat_context *ctx)
 {
     // If already loaded, nothing to do
-    if(ctx->flux_entries != NULL || ctx->flux_data_header.entries > 0)
-    {
-        return AARUF_STATUS_OK;
-    }
+    if(ctx->flux_entries != NULL || ctx->flux_data_header.entries > 0) { return AARUF_STATUS_OK; }
 
     // Find FluxDataBlock in index
-    if(ctx->index_entries == NULL)
-    {
-        return AARUF_ERROR_FLUX_DATA_NOT_FOUND;
-    }
+    if(ctx->index_entries == NULL) { return AARUF_ERROR_FLUX_DATA_NOT_FOUND; }
 
     IndexEntry *entry = NULL;
     for(unsigned int i = 0; i < utarray_len(ctx->index_entries); i++)
     {
         entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, i);
-        if(entry && entry->blockType == FluxDataBlock)
-        {
-            break;
-        }
+        if(entry && entry->blockType == FluxDataBlock) { break; }
         entry = NULL;
     }
 
-    if(entry == NULL)
-    {
-        return AARUF_ERROR_FLUX_DATA_NOT_FOUND;
-    }
+    if(entry == NULL) { return AARUF_ERROR_FLUX_DATA_NOT_FOUND; }
 
     // Load the flux data block
     process_flux_data_block(ctx, entry);
 
     // Check if loading was successful
-    if(ctx->flux_entries == NULL || ctx->flux_data_header.entries == 0)
-    {
-        return AARUF_ERROR_FLUX_DATA_NOT_FOUND;
-    }
+    if(ctx->flux_entries == NULL || ctx->flux_data_header.entries == 0) { return AARUF_ERROR_FLUX_DATA_NOT_FOUND; }
 
     return AARUF_STATUS_OK;
 }
@@ -729,7 +714,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_flux_capture(void *context, uint32_t h
     ctx->flux_data_header.entries        = (uint16_t)(existing_captures + 1);
     ctx->flux_data_header.crc64 =
         aaruf_crc64_data((const uint8_t *)ctx->flux_entries, ctx->flux_data_header.entries * sizeof(FluxEntry));
-    ctx->dirty_flux_block                = true;
+    ctx->dirty_flux_block = true;
 
     FluxCaptureKey key = {head, track, subtrack, capture_index};
     if(flux_map_add(ctx, &key, (uint32_t)existing_captures) != 0)
@@ -931,7 +916,7 @@ static int32_t read_uncompressed_payload(const aaruformat_context *ctx, size_t c
     if(cmp_length == 0)
     {
         *cmp_buffer = NULL;
-        *payload     = NULL;
+        *payload    = NULL;
         return AARUF_STATUS_OK;
     }
 
@@ -964,7 +949,8 @@ static int32_t read_uncompressed_payload(const aaruformat_context *ctx, size_t c
  * @param cmp_length Compressed length including LZMA properties.
  * @param raw_length Expected uncompressed length.
  * @param cmp_buffer Output parameter for compressed buffer pointer (caller must free). Can be NULL if allocation fails.
- * @param payload Output parameter for decompressed payload buffer pointer (caller must free). Can be NULL if allocation fails.
+ * @param payload Output parameter for decompressed payload buffer pointer (caller must free). Can be NULL if allocation
+ * fails.
  * @return AARUF_STATUS_OK on success, or an error code on failure.
  * @internal
  */
@@ -1024,7 +1010,7 @@ static int32_t read_lzma_compressed_payload(const aaruformat_context *ctx, size_
         FATAL("LZMA decompression failed for flux payload (err=%d, dst=%zu/%zu)", error_no, dst_len, raw_length);
         free(*payload);
         free(*cmp_buffer);
-        *payload  = NULL;
+        *payload    = NULL;
         *cmp_buffer = NULL;
         TRACE("Exiting read_lzma_compressed_payload() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK\n");
         return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
@@ -1249,8 +1235,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_flux_capture(void *context, uint32_t he
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
-    FluxCaptureKey        key        = {head, track, subtrack, capture_index};
-    const FluxEntry      *flux_entry = find_flux_entry_by_key(ctx, &key);
+    FluxCaptureKey   key        = {head, track, subtrack, capture_index};
+    const FluxEntry *flux_entry = find_flux_entry_by_key(ctx, &key);
     if(flux_entry == NULL)
     {
         TRACE("Exiting aaruf_read_flux_capture() = AARUF_ERROR_FLUX_DATA_NOT_FOUND\n");
@@ -1282,11 +1268,11 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_flux_capture(void *context, uint32_t he
     size_t                cmp_length  = payload_header.cmpLength;
     size_t                raw_length  = payload_header.length;
 
-    if(compression == None)
+    if(compression == kCompressionNone)
     {
         res = read_uncompressed_payload(ctx, cmp_length, raw_length, &cmp_buffer, &payload);
     }
-    else if(compression == Lzma)
+    else if(compression == kCompressionLzma)
     {
         res = read_lzma_compressed_payload(ctx, cmp_length, raw_length, &cmp_buffer, &payload);
     }
@@ -1304,7 +1290,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_flux_capture(void *context, uint32_t he
     }
 
     res = validate_flux_payload_crcs(cmp_buffer, cmp_length, payload, raw_length, payload_header.cmpCrc64,
-                                      payload_header.crc64);
+                                     payload_header.crc64);
     if(res != AARUF_STATUS_OK)
     {
         if(payload != NULL && payload != cmp_buffer) free(payload);
@@ -1313,8 +1299,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_flux_capture(void *context, uint32_t he
         return res;
     }
 
-    res = extract_flux_data_buffers(flux_entry, payload, raw_length, data_data, data_length, index_data,
-                                    index_length);
+    res = extract_flux_data_buffers(flux_entry, payload, raw_length, data_data, data_length, index_data, index_length);
     if(res != AARUF_STATUS_OK)
     {
         if(payload != NULL && payload != cmp_buffer) free(payload);

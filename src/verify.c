@@ -225,7 +225,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context)
         goto cleanup;
     }
 
-    uint64_t crc_length;
+    uint64_t           crc_length;
     const unsigned int entry_count = utarray_len(index_entries);
 
     for(unsigned int i = 0; i < entry_count; i++)
@@ -261,7 +261,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context)
 
                 // For LZMA compression, skip the 5-byte properties header
                 crc_length = block_header.cmpLength;
-                if(block_header.compression == Lzma || block_header.compression == LzmaClauniaSubchannelTransform)
+                if(block_header.compression == kCompressionLzma || block_header.compression == kCompressionLzmaCst)
                 {
                     // Skip LZMA properties
                     uint8_t props[LZMA_PROPERTIES_LENGTH];
@@ -317,7 +317,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context)
 
                 // For LZMA compression, skip the 5-byte properties header
                 crc_length = ddt_header.cmpLength;
-                if(ddt_header.compression == Lzma || ddt_header.compression == LzmaClauniaSubchannelTransform)
+                if(ddt_header.compression == kCompressionLzma || ddt_header.compression == kCompressionLzmaCst)
                 {
                     // Skip LZMA properties
                     uint8_t props[LZMA_PROPERTIES_LENGTH];
@@ -373,7 +373,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context)
 
                 // For LZMA compression, skip the 5-byte properties header
                 crc_length = ddt2_header.cmpLength;
-                if(ddt2_header.compression == Lzma || ddt2_header.compression == LzmaClauniaSubchannelTransform)
+                if(ddt2_header.compression == kCompressionLzma || ddt2_header.compression == kCompressionLzmaCst)
                 {
                     // Skip LZMA properties
                     uint8_t props[LZMA_PROPERTIES_LENGTH];
