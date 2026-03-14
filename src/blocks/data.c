@@ -396,9 +396,9 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
             ctx->sector_edc                                 = data;
             ctx->readableSectorTags[kSectorTagDvdSectorEdc] = true;
             break;
-        case kSectorTagDvdTitleKeyDecrypted:
-            ctx->sector_decrypted_title_key                        = data;
-            ctx->readableSectorTags[kDataTypeDvdTitleKeyDecrypted] = true;
+        case kDataTypeDvdTitleKeyDecrypted:
+            ctx->sector_decrypted_title_key                         = data;
+            ctx->readableSectorTags[kSectorTagDvdTitleKeyDecrypted] = true;
             break;
         default:
             media_tag = (mediaTagEntry *)malloc(sizeof(mediaTagEntry));
