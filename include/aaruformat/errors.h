@@ -69,6 +69,7 @@
 #define AARUF_ERROR_METADATA_NOT_PRESENT      (-30)  ///< Requested metadata not present in image.
 #define AARUF_ERROR_INVALID_SECTOR_LENGTH     (-31)  ///< Sector length is too big.
 #define AARUF_ERROR_FLUX_DATA_NOT_FOUND       (-32)  ///< Requested flux data not present in image.
+#define AARUF_ERROR_INCOMPATIBLE_FEATURES     (-33)  ///< Image requires features not supported by this library.
 /** @} */
 
 /** \name Non-fatal sector status codes (non-negative)
@@ -144,6 +145,8 @@ static inline const char *aaruformat_error_string(int code)
             return "Cannot write block data";
         case AARUF_ERROR_CANNOT_SET_DDT_ENTRY:
             return "Cannot set DDT entry";
+        case AARUF_ERROR_INCOMPATIBLE_FEATURES:
+            return "Image requires unsupported features";
 
         /* Status */
         case AARUF_STATUS_OK:

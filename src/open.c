@@ -332,6 +332,43 @@ AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath, const bool resume_m
         return NULL;
     }
 
+
+    // Check feature compatibility for V2+ images
+    if(ctx->header.imageMajorVersion >= AARUF_VERSION_V2)
+    {
+        uint64_t unknown_incompat = ctx->header.featureIncompatible & ~AARUF_KNOWN_INCOMPAT_FEATURES;
+
+        if(unknown_incompat != 0)
+        {
+            FATAL("Image requires unsupported incompatible features: 0x%016" PRIX64, unknown_incompat);
+            cleanup_open_failure(ctx);
+            errno = AARUF_ERROR_INCOMPATIBLE_FEATURES;
+
+            TRACE("Exiting aaruf_open() = NULL");
+            return NULL;
+        }
+
+        uint64_t unknown_rocompat = ctx->header.featureCompatibleRo & ~AARUF_KNOWN_ROCOMPAT_FEATURES;
+
+        if(unknown_rocompat != 0)
+        {
+            if(resume_mode)
+            {
+                FATAL("Image has unsupported read-only compatible features: 0x%016" PRIX64
+                      ", cannot open for writing",
+                      unknown_rocompat);
+                cleanup_open_failure(ctx);
+                errno = AARUF_ERROR_INCOMPATIBLE_FEATURES;
+
+                TRACE("Exiting aaruf_open() = NULL");
+                return NULL;
+            }
+
+            TRACE("Image has unsupported read-only compatible features: 0x%016" PRIX64 ", forcing read-only",
+                  unknown_rocompat);
+        }
+    }
+
     TRACE("Opening image version %d.%d", ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
 
     TRACE("Allocating memory for readable sector tags bitmap");

@@ -98,6 +98,15 @@
 /** Mask for extracting correction / fix flags in Compact Disc suffix/prefix DDT entries.
  *  High 8 bits store status (see SectorStatus / CdFixFlags relationships). */
 #define CD_XFIX_MASK 0xFF000000U
+
+/** Bitmask of all featureIncompatible bits understood by this library version.
+ *  Currently no incompatible features are defined. */
+#define AARUF_KNOWN_INCOMPAT_FEATURES   0ULL
+/** Bitmask of all featureCompatibleRo bits understood by this library version.
+ *  Currently no read-only-compatible features are defined. */
+#define AARUF_KNOWN_ROCOMPAT_FEATURES   0ULL
+/** Bitmask of all featureCompatible bits understood by this library version. */
+#define AARUF_KNOWN_COMPAT_FEATURES     ((uint64_t)AARU_FEATURE_RW_BLAKE3)
 /** Mask for extracting positional index (lower 24 bits) in Compact Disc suffix/prefix deduplicated block entries. */
 #define CD_DFIX_MASK 0x00FFFFFFU
 
