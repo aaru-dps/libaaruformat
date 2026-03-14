@@ -502,7 +502,7 @@ AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath, const bool resume_m
         switch(entry->blockType)
         {
             case DataBlock:
-                if(entry->dataType == UserData && ctx->header.biggestSectorSize > 0) break;
+                if(entry->dataType == kDataTypeUserData && ctx->header.biggestSectorSize > 0) break;
 
                 error_no = process_data_block(ctx, entry);
 
@@ -544,14 +544,14 @@ AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath, const bool resume_m
 
                 switch(entry->dataType)
                 {
-                    case CdSectorPrefix:
-                    case CdSectorPrefixCorrected:
+                    case kDataTypeCdSectorPrefix:
+                    case kDataTypeCdSectorPrefixCorrected:
                         ctx->readableSectorTags[kSectorTagCdSync]   = true;
                         ctx->readableSectorTags[kSectorTagCdHeader] = true;
 
                         break;
-                    case CdSectorSuffix:
-                    case CdSectorSuffixCorrected:
+                    case kDataTypeCdSectorSuffix:
+                    case kDataTypeCdSectorSuffixCorrected:
                         ctx->readableSectorTags[kSectorTagCdSubHeader] = true;
                         ctx->readableSectorTags[kSectorTagCdEcc]       = true;
                         ctx->readableSectorTags[kSectorTagCdEccP]      = true;

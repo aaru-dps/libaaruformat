@@ -101,7 +101,7 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
     // Even if those two checks shall have been done before
 
     // NOP block, skip
-    if(entry->dataType == NoData || (entry->dataType == UserData && ctx->header.biggestSectorSize > 0))
+    if(entry->dataType == kDataTypeNone || (entry->dataType == kDataTypeUserData && ctx->header.biggestSectorSize > 0))
     {
         TRACE("NoData block found, skipping");
         TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
@@ -122,7 +122,7 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
     ctx->image_info.ImageSize += block_header.cmpLength;
 
     // Unused, skip
-    if(entry->dataType == UserData)
+    if(entry->dataType == kDataTypeUserData)
     {
         if(block_header.sectorSize > ctx->image_info.SectorSize)
         {
@@ -156,7 +156,7 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
     if(block_header.compression == kCompressionLzma || block_header.compression == kCompressionLzmaCst)
     {
         int error_no = 0;
-        if(block_header.compression == kCompressionLzmaCst && block_header.type != CdSectorSubchannel)
+        if(block_header.compression == kCompressionLzmaCst && block_header.type != kDataTypeCdSubchannel)
         {
             TRACE("Invalid compression type %u for block with data type %u, continuing...", block_header.compression,
                   block_header.type);
@@ -337,9 +337,9 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
     // Check if it's not a media tag, but a sector tag, and fill the appropriate table then
     switch(entry->dataType)
     {
-        case CdSectorPrefix:
-        case CdSectorPrefixCorrected:
-            if(entry->dataType == CdSectorPrefixCorrected) { ctx->sector_prefix_corrected = data; }
+        case kDataTypeCdSectorPrefix:
+        case kDataTypeCdSectorPrefixCorrected:
+            if(entry->dataType == kDataTypeCdSectorPrefixCorrected) { ctx->sector_prefix_corrected = data; }
             else
                 ctx->sector_prefix = data;
 
@@ -347,9 +347,9 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
             ctx->readableSectorTags[kSectorTagCdHeader] = true;
 
             break;
-        case CdSectorSuffix:
-        case CdSectorSuffixCorrected:
-            if(entry->dataType == CdSectorSuffixCorrected)
+        case kDataTypeCdSectorSuffix:
+        case kDataTypeCdSectorSuffixCorrected:
+            if(entry->dataType == kDataTypeCdSectorSuffixCorrected)
                 ctx->sector_suffix_corrected = data;
             else
                 ctx->sector_suffix = data;
@@ -360,45 +360,45 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
             ctx->readableSectorTags[kSectorTagCdEccQ]      = true;
             ctx->readableSectorTags[kSectorTagCdEdc]       = true;
             break;
-        case CdSectorSubchannel:
+        case kDataTypeCdSubchannel:
             ctx->sector_subchannel                          = data;
             ctx->readableSectorTags[kSectorTagCdSubchannel] = true;
             break;
-        case AppleProfileTag:
+        case kDataTypeAppleProfileTag:
             ctx->sector_subchannel                          = data;
             ctx->readableSectorTags[kSectorTagAppleProfile] = true;
             break;
-        case AppleSonyTag:
+        case kDataTypeAppleSonyTag:
             ctx->sector_subchannel                            = data;
             ctx->readableSectorTags[kSectorTagPriamDataTower] = true;
             break;
-        case PriamDataTowerTag:
+        case kDataTypePriamDataTowerTag:
             ctx->sector_subchannel                       = data;
             ctx->readableSectorTags[kSectorTagAppleSony] = true;
             break;
-        case CompactDiscMode2Subheader:
+        case kDataTypeCdSubHeader:
             ctx->mode2_subheaders = data;
             break;
-        case DvdSectorId:
+        case kDataTypeDvdSectorId:
             ctx->sector_id                                          = data;
             ctx->readableSectorTags[kSectorTagDvdSectorNumber]      = true;
             ctx->readableSectorTags[kSectorTagDvdSectorInformation] = true;
             break;
-        case DvdSectorIed:
+        case kDataTypeDvdSectorIed:
             ctx->sector_ied                                 = data;
             ctx->readableSectorTags[kSectorTagDvdSectorIed] = true;
             break;
-        case DvdSectorCprMai:
+        case kDataTypeDvdSectorCprMai:
             ctx->sector_cpr_mai                       = data;
             ctx->readableSectorTags[kSectorTagDvdCmi] = true;
             break;
-        case DvdSectorEdc:
+        case kDataTypeDvdSectorEdc:
             ctx->sector_edc                                 = data;
             ctx->readableSectorTags[kSectorTagDvdSectorEdc] = true;
             break;
         case kSectorTagDvdTitleKeyDecrypted:
-            ctx->sector_decrypted_title_key                     = data;
-            ctx->readableSectorTags[DvdSectorTitleKeyDecrypted] = true;
+            ctx->sector_decrypted_title_key                        = data;
+            ctx->readableSectorTags[kDataTypeDvdTitleKeyDecrypted] = true;
             break;
         default:
             media_tag = (mediaTagEntry *)malloc(sizeof(mediaTagEntry));

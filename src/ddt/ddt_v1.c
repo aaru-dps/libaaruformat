@@ -131,7 +131,7 @@ int32_t process_ddt_v1(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
 
     ctx->image_info.ImageSize += ddt_header.cmpLength;
 
-    if(entry->dataType == UserData)
+    if(entry->dataType == kDataTypeUserData)
     {
         ctx->image_info.Sectors = ddt_header.entries;
         ctx->shift              = ddt_header.shift;
@@ -243,7 +243,7 @@ int32_t process_ddt_v1(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
                 break;
         }
     }
-    else if(entry->dataType == CdSectorPrefixCorrected || entry->dataType == CdSectorSuffixCorrected)
+    else if(entry->dataType == kDataTypeCdSectorPrefixCorrected || entry->dataType == kDataTypeCdSectorSuffixCorrected)
     {
         switch(ddt_header.compression)
         {
@@ -314,9 +314,9 @@ int32_t process_ddt_v1(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
                 free(cmp_data);
                 cmp_data = NULL;
 
-                if(entry->dataType == CdSectorPrefixCorrected)
+                if(entry->dataType == kDataTypeCdSectorPrefixCorrected)
                     ctx->sector_prefix_ddt = cd_ddt;
-                else if(entry->dataType == CdSectorSuffixCorrected)
+                else if(entry->dataType == kDataTypeCdSectorSuffixCorrected)
                     ctx->sector_suffix_ddt = cd_ddt;
                 else
                     free(cd_ddt);
@@ -342,9 +342,9 @@ int32_t process_ddt_v1(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
                     break;
                 }
 
-                if(entry->dataType == CdSectorPrefixCorrected)
+                if(entry->dataType == kDataTypeCdSectorPrefixCorrected)
                     ctx->sector_prefix_ddt = cd_ddt;
-                else if(entry->dataType == CdSectorSuffixCorrected)
+                else if(entry->dataType == kDataTypeCdSectorSuffixCorrected)
                     ctx->sector_suffix_ddt = cd_ddt;
                 else
                     free(cd_ddt);

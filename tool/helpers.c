@@ -215,181 +215,181 @@ const char *data_type_to_string(uint16_t type)
 {
     switch(type)
     {
-        case UserData:
+        case kDataTypeUserData:
             return "User Data";
-        case CompactDiscPartialToc:
+        case kDataTypeCdToc:
             return "CD Partial TOC";
-        case CompactDiscSessionInfo:
+        case kDataTypeSessionInfo:
             return "CD Session Information";
-        case CompactDiscToc:
+        case kDataTypeFullToc:
             return "CD Table of Contents";
-        case CompactDiscPma:
+        case kDataTypeCdPma:
             return "CD Power Management Area";
-        case CompactDiscAtip:
+        case kDataTypeCdAtip:
             return "CD Absolute Time in Pregroove";
-        case CompactDiscLeadInCdText:
+        case kDataTypeCdText:
             return "CD Lead-in CD-TEXT";
-        case DvdPfi:
+        case kDataTypeDvdPfi:
             return "DVD Physical Format Information";
-        case DvdLeadInCmi:
+        case kDataTypeDvdCmi:
             return "DVD Lead-in Copyright Management Information";
-        case DvdDiscKey:
+        case kDataTypeDvdDiscKey:
             return "DVD Disc Key";
-        case DvdBca:
+        case kDataTypeDvdBca:
             return "DVD Burst Cutting Area";
-        case DvdDmi:
+        case kDataTypeDvdDmi:
             return "DVD Disc Manufacturing Information";
-        case DvdMediaIdentifier:
+        case kDataTypeDvdMediaIdentifier:
             return "DVD Media Identifier";
-        case DvdMediaKeyBlock:
+        case kDataTypeDvdMkb:
             return "DVD Media Key Block";
-        case DvdRamDds:
+        case kDataTypeDvdRamDds:
             return "DVD-RAM Disc Definition Structure";
-        case DvdRamMediumStatus:
+        case kDataTypeDvdRamMediumStatus:
             return "DVD-RAM Medium Status";
-        case DvdRamSpareArea:
+        case kDataTypeDvdRamSpareArea:
             return "DVD-RAM Spare Area Information";
-        case DvdRRmd:
+        case kDataTypeDvdrRmd:
             return "DVD-R Recording Management Data";
-        case DvdRPrerecordedInfo:
+        case kDataTypeDvdrPreRecordedInfo:
             return "DVD-R Pre-recorded Information";
-        case DvdRMediaIdentifier:
+        case kDataTypeDvdrMediaIdentifier:
             return "DVD-R Media Identifier";
-        case DvdRPfi:
+        case kDataTypeDvdrPfi:
             return "DVD-R Physical Format Information";
-        case DvdAdip:
+        case kDataTypeDvdAdip:
             return "DVD Address in Pregroove";
-        case HdDvdCpi:
+        case kDataTypeHddvdCpi:
             return "HD DVD Content Protection Information";
-        case HdDvdMediumStatus:
+        case kDataTypeHddvdMediumStatus:
             return "HD DVD Medium Status";
-        case DvdDlLayerCapacity:
+        case kDataTypeDvddlLayerCapacity:
             return "DVD Dual Layer - Layer Capacity";
-        case DvdDlMiddleZoneAddress:
+        case kDataTypeDvddlMiddleZoneAddress:
             return "DVD Dual Layer - Middle Zone Address";
-        case DvdDlJumpIntervalSize:
+        case kDataTypeDvddlJumpIntervalSize:
             return "DVD Dual Layer - Jump Interval Size";
-        case DvdDlManualLayerJumpLba:
+        case kDataTypeDvddlManualLayerJumpLba:
             return "DVD Dual Layer - Manual Layer Jump LBA";
-        case BlurayDi:
+        case kDataTypeBlurayDi:
             return "Blu-ray Disc Information";
-        case BlurayBca:
+        case kDataTypeBlurayBca:
             return "Blu-ray Burst Cutting Area";
-        case BlurayDds:
+        case kDataTypeBlurayDds:
             return "Blu-ray Disc Definition Structure";
-        case BlurayCartridgeStatus:
+        case kDataTypeBlurayCartridgeStatus:
             return "Blu-ray Cartridge Status";
-        case BluraySpareArea:
+        case kDataTypeBluraySpareArea:
             return "Blu-ray Spare Area Information";
-        case AacsVolumeIdentifier:
+        case kDataTypeAacsVolumeIdentifier:
             return "AACS Volume Identifier";
-        case AacsMediaIdentifier:
+        case kDataTypeAacsMediaIdentifier:
             return "AACS Media Identifier";
-        case AacsMediaKeyBlock:
+        case kDataTypeAacsMkb:
             return "AACS Media Key Block";
-        case AacsDataKeys:
+        case kDataTypeAacsDataKeys:
             return "AACS Data Keys";
-        case AacsLbaExtents:
+        case kDataTypeAacsLbaExtents:
             return "AACS LBA Extents";
-        case CprmMediaKeyBlock:
+        case kDataTypeCprmMkb:
             return "CPRM Media Key Block";
-        case HybridRecognizedLayers:
+        case kDataTypeHybridRecognizedLayers:
             return "Hybrid Disc - Recognized Layers";
-        case ScsiMmcWriteProtection:
+        case kDataTypeMmcWriteProtection:
             return "SCSI MMC Write Protection";
-        case ScsiMmcDiscInformation:
+        case kDataTypeMmcDiscInformation:
             return "SCSI MMC Disc Information";
-        case ScsiMmcTrackResourcesInformation:
+        case kDataTypeMmcTrackResourcesInformation:
             return "SCSI MMC Track Resources Information";
-        case ScsiMmcPowResourcesInformation:
+        case kDataTypeMmcPowResourcesInformation:
             return "SCSI MMC POW Resources Information";
-        case ScsiInquiry:
+        case kDataTypeScsiInquiry:
             return "SCSI INQUIRY Response";
-        case ScsiModePage2A:
+        case kDataTypeScsiModePage2A:
             return "SCSI MODE PAGE 2Ah";
-        case AtaIdentify:
+        case kDataTypeAtaIdentify:
             return "ATA IDENTIFY DEVICE";
-        case AtapiIdentify:
+        case kDataTypeAtapiIdentify:
             return "ATAPI IDENTIFY PACKET DEVICE";
-        case PcmciaCis:
+        case kDataTypePcmciaCis:
             return "PCMCIA Card Information Structure";
-        case SecureDigitalCid:
+        case kDataTypeSdCid:
             return "Secure Digital CID Register";
-        case SecureDigitalCsd:
+        case kDataTypeSdCsd:
             return "Secure Digital CSD Register";
-        case SecureDigitalScr:
+        case kDataTypeSdScr:
             return "Secure Digital SCR Register";
-        case SecureDigitalOcr:
+        case kDataTypeSdOcr:
             return "Secure Digital OCR Register";
-        case MultiMediaCardCid:
+        case kDataTypeMmcCid:
             return "MultiMediaCard CID Register";
-        case MultiMediaCardCsd:
+        case kDataTypeMmcCsd:
             return "MultiMediaCard CSD Register";
-        case MultiMediaCardExtendedCsd:
+        case kDataTypeExtendedCsd:
             return "MultiMediaCard Extended CSD Register";
-        case MultiMediaCardOcr:
+        case kDataTypeMmcOcr:
             return "MultiMediaCard OCR Register";
-        case XboxSecuritySector:
+        case kDataTypeXboxSecuritySector:
             return "Xbox Security Sector";
-        case FloppyLeadOut:
+        case kDataTypeFloppyLeadOut:
             return "Floppy Lead-out";
-        case DvdDiscControlBlock:
+        case kDataTypeDiscControlBlock:
             return "DVD Disc Control Block";
-        case CompactDiscFirstTrackPregap:
+        case kDataTypeCdFirstTrackPregap:
             return "CD First Track Pre-gap";
-        case CompactDiscLeadOut:
+        case kDataTypeCdLeadOut:
             return "CD Lead-out";
-        case ScsiModeSense6:
+        case kDataTypeScsiModeSense6:
             return "SCSI MODE SENSE (6)";
-        case ScsiModeSense10:
+        case kDataTypeScsiModeSense10:
             return "SCSI MODE SENSE (10)";
-        case UsbDescriptors:
+        case kDataTypeUsbDescriptors:
             return "USB Descriptors";
-        case XboxDmi:
+        case kDataTypeXboxDmi:
             return "Xbox Disc Manufacturing Information";
-        case XboxPfi:
+        case kDataTypeXboxPfi:
             return "Xbox Physical Format Information";
-        case CdSectorPrefix:
+        case kDataTypeCdSectorPrefix:
             return "CD Sector Prefix (sync + header)";
-        case CdSectorSuffix:
+        case kDataTypeCdSectorSuffix:
             return "CD Sector Suffix (EDC + ECC)";
-        case CdSectorSubchannel:
+        case kDataTypeCdSubchannel:
             return "CD Sector Subchannel";
-        case AppleProfileTag:
+        case kDataTypeAppleProfileTag:
             return "Apple Profile Tag";
-        case AppleSonyTag:
+        case kDataTypeAppleSonyTag:
             return "Apple Sony Tag";
-        case PriamDataTowerTag:
+        case kDataTypePriamDataTowerTag:
             return "Priam DataTower Tag";
-        case CompactDiscMediaCatalogueNumber:
+        case kDataTypeCdMcn:
             return "CD Media Catalogue Number";
-        case CdSectorPrefixCorrected:
+        case kDataTypeCdSectorPrefixCorrected:
             return "CD Sector Prefix (corrected)";
-        case CdSectorSuffixCorrected:
+        case kDataTypeCdSectorSuffixCorrected:
             return "CD Sector Suffix (corrected)";
-        case CompactDiscMode2Subheader:
+        case kDataTypeCdSubHeader:
             return "CD Mode 2 Subheader";
-        case CompactDiscLeadIn:
+        case kDataTypeCdLeadIn:
             return "CD Lead-in";
-        case DvdDiscKeyDecrypted:
+        case kDataTypeDvdDiscKeyDecrypted:
             return "DVD Disc Key (decrypted)";
-        case DvdSectorCprMai:
+        case kDataTypeDvdSectorCprMai:
             return "DVD Sector Copyright Management Info";
-        case DvdSectorTitleKeyDecrypted:
+        case kDataTypeDvdTitleKeyDecrypted:
             return "DVD Title Key (decrypted)";
-        case DvdSectorId:
+        case kDataTypeDvdSectorId:
             return "DVD Sector ID";
-        case DvdSectorIed:
+        case kDataTypeDvdSectorIed:
             return "DVD Sector ID Error Detection";
-        case DvdSectorEdc:
+        case kDataTypeDvdSectorEdc:
             return "DVD Sector Error Detection Code";
-        case DvdSectorEccPi:
+        case kDataTypeDvdSectorEccPi:
             return "DVD Sector ECC Parity Inner";
-        case DvdEccBlockPo:
+        case kDataTypeDvdEccBlockPo:
             return "DVD ECC Block Parity Outer";
-        case DvdPfi2ndLayer:
+        case kDataTypeDvdPfi2ndLayer:
             return "DVD Physical Format Info (2nd layer)";
-        case FloppyWriteProtectStatus:
+        case kDataTypeFloppyWriteProtect:
             return "Floppy Write-Protect Status";
         default:
             return "Unknown Data Type";

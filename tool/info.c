@@ -315,7 +315,7 @@ int info(const char *path)
         char ddt_type_str[32];
         switch(ctx->user_data_ddt_header.type)
         {
-            case UserData:
+            case kDataTypeUserData:
                 snprintf(ddt_type_str, sizeof(ddt_type_str), "UserData");
                 break;
             default:

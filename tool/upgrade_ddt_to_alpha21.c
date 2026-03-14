@@ -487,7 +487,7 @@ int upgrade_ddt_to_alpha21(const char *path)
     ddt_v2_header_alpha20 *userdata_ddt_header = NULL;
     for(uint64_t i = 0; i < processed_count; i++)
     {
-        if(ddt_upgrades[i].dataType == UserData)
+        if(ddt_upgrades[i].dataType == kDataTypeUserData)
         {
             userdata_ddt_header = ddt_upgrades[i].old_header;
             break;

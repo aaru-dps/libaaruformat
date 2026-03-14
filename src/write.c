@@ -270,7 +270,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
     {
         TRACE("Creating new writing block");
         ctx->current_block_header.identifier = DataBlock;
-        ctx->current_block_header.type       = UserData;
+        ctx->current_block_header.type       = kDataTypeUserData;
         ctx->current_block_header.sectorSize = length;
 
         // We need to save the track type for later compression
@@ -1530,7 +1530,7 @@ int32_t aaruf_close_current_block(aaruformat_context *ctx)
     TRACE("Adding block to index");
     IndexEntry index_entry;
     index_entry.blockType = DataBlock;
-    index_entry.dataType  = UserData;
+    index_entry.dataType  = kDataTypeUserData;
     index_entry.offset    = ctx->next_block_position;
 
     utarray_push_back(ctx->index_entries, &index_entry);

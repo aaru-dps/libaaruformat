@@ -141,7 +141,7 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
 
     ctx->image_info.ImageSize += ddt_header.cmpLength;
 
-    if(entry->dataType == UserData)
+    if(entry->dataType == kDataTypeUserData)
     {
         // User area sectors is blocks stored in DDT minus the negative and overflow displacement blocks
         ctx->image_info.Sectors   = ddt_header.blocks - ddt_header.negative - ddt_header.overflow;
@@ -304,7 +304,7 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
                 break;
         }
     }
-    else if(entry->dataType == CdSectorPrefix || entry->dataType == CdSectorSuffix)
+    else if(entry->dataType == kDataTypeCdSectorPrefix || entry->dataType == kDataTypeCdSectorSuffix)
         switch(ddt_header.compression)
         {
             case kCompressionLzma:
@@ -398,9 +398,9 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
 
-                if(entry->dataType == CdSectorPrefix)
+                if(entry->dataType == kDataTypeCdSectorPrefix)
                     ctx->sector_prefix_ddt2 = (uint64_t *)buffer;
-                else if(entry->dataType == CdSectorSuffix)
+                else if(entry->dataType == kDataTypeCdSectorSuffix)
                     ctx->sector_suffix_ddt2 = (uint64_t *)buffer;
                 else
                     free(buffer);
@@ -447,9 +447,9 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
                     return AARUF_ERROR_INVALID_BLOCK_CRC;
                 }
 
-                if(entry->dataType == CdSectorPrefix)
+                if(entry->dataType == kDataTypeCdSectorPrefix)
                     ctx->sector_prefix_ddt2 = (uint64_t *)buffer;
-                else if(entry->dataType == CdSectorSuffix)
+                else if(entry->dataType == kDataTypeCdSectorSuffix)
                     ctx->sector_suffix_ddt2 = (uint64_t *)buffer;
                 else
                     free(buffer);
@@ -789,7 +789,7 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
 
         if((ddt_header.identifier != DeDuplicationTableSecondary &&
             ddt_header.identifier != DeDuplicationTableSAlpha) ||
-           ddt_header.type != UserData)
+           ddt_header.type != kDataTypeUserData)
         {
             FATAL("Invalid block header at %" PRIu64 "", secondary_ddt_offset);
             TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
@@ -1216,7 +1216,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             // Prepare DDT header for the never-written cached table
             memset(&ddt_header, 0, sizeof(DdtHeader2));
             ddt_header.identifier = DeDuplicationTableSecondary;
-            ddt_header.type       = UserData;
+            ddt_header.type       = kDataTypeUserData;
             ddt_header.compression =
                 ctx->compression_enabled ? kCompressionLzma : kCompressionNone;  // Use no compression for simplicity
             ddt_header.levels              = ctx->user_data_ddt_header.levels;
@@ -1320,7 +1320,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             // Add index entry for the newly written secondary DDT
             IndexEntry new_ddt_entry;
             new_ddt_entry.blockType = DeDuplicationTableSecondary;
-            new_ddt_entry.dataType  = UserData;
+            new_ddt_entry.dataType  = kDataTypeUserData;
             new_ddt_entry.offset    = end_of_file;
 
             utarray_push_back(ctx->index_entries, &new_ddt_entry);
@@ -1395,7 +1395,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
         // Prepare DDT header for the cached table
         memset(&ddt_header, 0, sizeof(DdtHeader2));
         ddt_header.identifier          = DeDuplicationTableSecondary;
-        ddt_header.type                = UserData;
+        ddt_header.type                = kDataTypeUserData;
         ddt_header.compression         = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
         ddt_header.levels              = ctx->user_data_ddt_header.levels;
         ddt_header.tableLevel          = ctx->user_data_ddt_header.tableLevel + 1;
@@ -1522,7 +1522,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
         // Add new index entry for the newly written secondary DDT
         IndexEntry new_ddt_entry;
         new_ddt_entry.blockType = DeDuplicationTableSecondary;
-        new_ddt_entry.dataType  = UserData;
+        new_ddt_entry.dataType  = kDataTypeUserData;
         new_ddt_entry.offset    = end_of_file;
 
         utarray_push_back(ctx->index_entries, &new_ddt_entry);
@@ -1581,7 +1581,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
         size_t read_bytes = fread(&ddt_header, 1, sizeof(DdtHeader2), ctx->imageStream);
 
         if(read_bytes != sizeof(DdtHeader2) || ddt_header.identifier != DeDuplicationTable2 ||
-           ddt_header.type != UserData)
+           ddt_header.type != kDataTypeUserData)
         {
             FATAL("Invalid secondary DDT header at %" PRIu64, secondary_ddt_offset);
             TRACE("Exiting set_ddt_multi_level_v2() = false");

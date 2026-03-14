@@ -40,161 +40,161 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_media_tag_type_for_datatype(const int32_t
 {
     switch(type)
     {
-        case CompactDiscPartialToc:
+        case kDataTypeCdToc:
             return kMediaTagCdToc;
-        case CompactDiscSessionInfo:
+        case kDataTypeSessionInfo:
             return kMediaTagSessionInfo;
-        case CompactDiscToc:
+        case kDataTypeFullToc:
             return kMediaTagFullToc;
-        case CompactDiscPma:
+        case kDataTypeCdPma:
             return kMediaTagCdPma;
-        case CompactDiscAtip:
+        case kDataTypeCdAtip:
             return kMediaTagCdAtip;
-        case CompactDiscLeadInCdText:
+        case kDataTypeCdText:
             return kMediaTagCdText;
-        case DvdPfi:
+        case kDataTypeDvdPfi:
             return kMediaTagDvdPfi;
-        case DvdPfi2ndLayer:
+        case kDataTypeDvdPfi2ndLayer:
             return kMediaTagDvdPfi2ndLayer;
-        case DvdLeadInCmi:
+        case kDataTypeDvdCmi:
             return kMediaTagDvdCmi;
-        case DvdDiscKey:
+        case kDataTypeDvdDiscKey:
             return kMediaTagDvdDiscKey;
-        case DvdBca:
+        case kDataTypeDvdBca:
             return kMediaTagDvdBca;
-        case DvdDmi:
+        case kDataTypeDvdDmi:
             return kMediaTagDvdDmi;
-        case DvdMediaIdentifier:
+        case kDataTypeDvdMediaIdentifier:
             return kMediaTagDvdMediaIdentifier;
-        case DvdMediaKeyBlock:
+        case kDataTypeDvdMkb:
             return kMediaTagDvdMkb;
-        case DvdRamDds:
+        case kDataTypeDvdRamDds:
             return kMediaTagDvdRamDds;
-        case DvdRamMediumStatus:
+        case kDataTypeDvdRamMediumStatus:
             return kMediaTagDvdRamMediumStatus;
-        case DvdRamSpareArea:
+        case kDataTypeDvdRamSpareArea:
             return kMediaTagDvdRamSpareArea;
-        case DvdRRmd:
+        case kDataTypeDvdrRmd:
             return kMediaTagDvdrRmd;
-        case DvdRPrerecordedInfo:
+        case kDataTypeDvdrPreRecordedInfo:
             return kMediaTagDvdrPreRecordedInfo;
-        case DvdRMediaIdentifier:
+        case kDataTypeDvdrMediaIdentifier:
             return kMediaTagDvdrMediaIdentifier;
-        case DvdRPfi:
+        case kDataTypeDvdrPfi:
             return kMediaTagDvdrPfi;
-        case DvdAdip:
+        case kDataTypeDvdAdip:
             return kMediaTagDvdAdip;
-        case HdDvdCpi:
+        case kDataTypeHddvdCpi:
             return kMediaTagHddvdCpi;
-        case HdDvdMediumStatus:
+        case kDataTypeHddvdMediumStatus:
             return kMediaTagHddvdMediumStatus;
-        case DvdDlLayerCapacity:
+        case kDataTypeDvddlLayerCapacity:
             return kMediaTagDvddlLayerCapacity;
-        case DvdDlMiddleZoneAddress:
+        case kDataTypeDvddlMiddleZoneAddress:
             return kMediaTagDvddlMiddleZoneAddress;
-        case DvdDlJumpIntervalSize:
+        case kDataTypeDvddlJumpIntervalSize:
             return kMediaTagDvddlJumpIntervalSize;
-        case DvdDlManualLayerJumpLba:
+        case kDataTypeDvddlManualLayerJumpLba:
             return kMediaTagDvddlManualLayerJumpLba;
-        case BlurayDi:
+        case kDataTypeBlurayDi:
             return kMediaTagBlurayDi;
-        case BlurayBca:
+        case kDataTypeBlurayBca:
             return kMediaTagBlurayBca;
-        case BlurayDds:
+        case kDataTypeBlurayDds:
             return kMediaTagBlurayDds;
-        case BlurayCartridgeStatus:
+        case kDataTypeBlurayCartridgeStatus:
             return kMediaTagBlurayCartridgeStatus;
-        case BluraySpareArea:
+        case kDataTypeBluraySpareArea:
             return kMediaTagBluraySpareArea;
-        case AacsVolumeIdentifier:
+        case kDataTypeAacsVolumeIdentifier:
             return kMediaTagAacsVolumeIdentifier;
-        case AacsSerialNumber:
+        case kDataTypeAacsSerialNumber:
             return kMediaTagAacsSerialNumber;
-        case AacsMediaIdentifier:
+        case kDataTypeAacsMediaIdentifier:
             return kMediaTagAacsMediaIdentifier;
-        case AacsMediaKeyBlock:
+        case kDataTypeAacsMkb:
             return kMediaTagAacsMkb;
-        case AacsDataKeys:
+        case kDataTypeAacsDataKeys:
             return kMediaTagAacsDataKeys;
-        case AacsLbaExtents:
+        case kDataTypeAacsLbaExtents:
             return kMediaTagAacsLbaExtents;
-        case CprmMediaKeyBlock:
+        case kDataTypeCprmMkb:
             return kMediaTagCprmMkb;
-        case HybridRecognizedLayers:
+        case kDataTypeHybridRecognizedLayers:
             return kMediaTagHybridRecognizedLayers;
-        case ScsiMmcWriteProtection:
+        case kDataTypeMmcWriteProtection:
             return kMediaTagMmcWriteProtection;
-        case ScsiMmcDiscInformation:
+        case kDataTypeMmcDiscInformation:
             return kMediaTagMmcDiscInformation;
-        case ScsiMmcTrackResourcesInformation:
+        case kDataTypeMmcTrackResourcesInformation:
             return kMediaTagMmcTrackResourcesInformation;
-        case ScsiMmcPowResourcesInformation:
+        case kDataTypeMmcPowResourcesInformation:
             return kMediaTagMmcPowResourcesInformation;
-        case ScsiInquiry:
+        case kDataTypeScsiInquiry:
             return kMediaTagScsiInquiry;
-        case ScsiModePage2A:
+        case kDataTypeScsiModePage2A:
             return kMediaTagScsiModePage2A;
-        case AtaIdentify:
+        case kDataTypeAtaIdentify:
             return kMediaTagAtaIdentify;
-        case AtapiIdentify:
+        case kDataTypeAtapiIdentify:
             return kMediaTagAtapiIdentify;
-        case PcmciaCis:
+        case kDataTypePcmciaCis:
             return kMediaTagPcmciaCis;
-        case SecureDigitalCid:
+        case kDataTypeSdCid:
             return kMediaTagSdCid;
-        case SecureDigitalCsd:
+        case kDataTypeSdCsd:
             return kMediaTagSdCsd;
-        case SecureDigitalScr:
+        case kDataTypeSdScr:
             return kMediaTagSdScr;
-        case SecureDigitalOcr:
+        case kDataTypeSdOcr:
             return kMediaTagSdOcr;
-        case MultiMediaCardCid:
+        case kDataTypeMmcCid:
             return kMediaTagMmcCid;
-        case MultiMediaCardCsd:
+        case kDataTypeMmcCsd:
             return kMediaTagMmcCsd;
-        case MultiMediaCardOcr:
+        case kDataTypeMmcOcr:
             return kMediaTagMmcOcr;
-        case MultiMediaCardExtendedCsd:
+        case kDataTypeExtendedCsd:
             return kMediaTagExtendedCsd;
-        case XboxSecuritySector:
+        case kDataTypeXboxSecuritySector:
             return kMediaTagXboxSecuritySector;
-        case FloppyLeadOut:
+        case kDataTypeFloppyLeadOut:
             return kMediaTagFloppyLeadOut;
-        case DvdDiscControlBlock:
+        case kDataTypeDiscControlBlock:
             return kMediaTagDiscControlBlock;
-        case CompactDiscFirstTrackPregap:
+        case kDataTypeCdFirstTrackPregap:
             return kMediaTagCdFirstTrackPregap;
-        case CompactDiscLeadOut:
+        case kDataTypeCdLeadOut:
             return kMediaTagCdLeadOut;
-        case ScsiModeSense6:
+        case kDataTypeScsiModeSense6:
             return kMediaTagScsiModeSense6;
-        case ScsiModeSense10:
+        case kDataTypeScsiModeSense10:
             return kMediaTagScsiModeSense10;
-        case UsbDescriptors:
+        case kDataTypeUsbDescriptors:
             return kMediaTagUsbDescriptors;
-        case XboxDmi:
+        case kDataTypeXboxDmi:
             return kMediaTagXboxDmi;
-        case XboxPfi:
+        case kDataTypeXboxPfi:
             return kMediaTagXboxPfi;
-        case CompactDiscMediaCatalogueNumber:
+        case kDataTypeCdMcn:
             return kMediaTagCdMcn;
-        case CompactDiscLeadIn:
+        case kDataTypeCdLeadIn:
             return kMediaTagCdLeadIn;
-        case DvdDiscKeyDecrypted:
+        case kDataTypeDvdDiscKeyDecrypted:
             return kMediaTagDvdDiscKeyDecrypted;
-        case FloppyWriteProtectStatus:
+        case kDataTypeFloppyWriteProtect:
             return kMediaTagFloppyWriteProtect;
-        case NintendoWiiUDiscKey:
+        case kDataTypeWiiUDiscKey:
             return kMediaTagWiiUDiscKey;
-        case PS3DiscKey:
+        case kDataTypePs3DiscKey:
             return kMediaTagPs3DiscKey;
-        case PS3Data1:
+        case kDataTypePs3Data1:
             return kMediaTagPs3Data1;
-        case PS3Data2:
+        case kDataTypePs3Data2:
             return kMediaTagPs3Data2;
-        case PS3PIC:
+        case kDataTypePs3Pic:
             return kMediaTagPs3Pic;
-        case PS3EncryptionMap:
+        case kDataTypePs3EncryptionMap:
             return kMediaTagPs3EncryptionMap;
         default:
             return -1;
@@ -215,161 +215,161 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_datatype_for_media_tag_type(const int32_t
     switch(tag_type)
     {
         case kMediaTagCdToc:
-            return CompactDiscPartialToc;
+            return kDataTypeCdToc;
         case kMediaTagSessionInfo:
-            return CompactDiscSessionInfo;
+            return kDataTypeSessionInfo;
         case kMediaTagFullToc:
-            return CompactDiscToc;
+            return kDataTypeFullToc;
         case kMediaTagCdPma:
-            return CompactDiscPma;
+            return kDataTypeCdPma;
         case kMediaTagCdAtip:
-            return CompactDiscAtip;
+            return kDataTypeCdAtip;
         case kMediaTagCdText:
-            return CompactDiscLeadInCdText;
+            return kDataTypeCdText;
         case kMediaTagDvdPfi:
-            return DvdPfi;
+            return kDataTypeDvdPfi;
         case kMediaTagDvdPfi2ndLayer:
-            return DvdPfi2ndLayer;
+            return kDataTypeDvdPfi2ndLayer;
         case kMediaTagDvdCmi:
-            return DvdLeadInCmi;
+            return kDataTypeDvdCmi;
         case kMediaTagDvdDiscKey:
-            return DvdDiscKey;
+            return kDataTypeDvdDiscKey;
         case kMediaTagDvdBca:
-            return DvdBca;
+            return kDataTypeDvdBca;
         case kMediaTagDvdDmi:
-            return DvdDmi;
+            return kDataTypeDvdDmi;
         case kMediaTagDvdMediaIdentifier:
-            return DvdMediaIdentifier;
+            return kDataTypeDvdMediaIdentifier;
         case kMediaTagDvdMkb:
-            return DvdMediaKeyBlock;
+            return kDataTypeDvdMkb;
         case kMediaTagDvdRamDds:
-            return DvdRamDds;
+            return kDataTypeDvdRamDds;
         case kMediaTagDvdRamMediumStatus:
-            return DvdRamMediumStatus;
+            return kDataTypeDvdRamMediumStatus;
         case kMediaTagDvdRamSpareArea:
-            return DvdRamSpareArea;
+            return kDataTypeDvdRamSpareArea;
         case kMediaTagDvdrRmd:
-            return DvdRRmd;
+            return kDataTypeDvdrRmd;
         case kMediaTagDvdrPreRecordedInfo:
-            return DvdRPrerecordedInfo;
+            return kDataTypeDvdrPreRecordedInfo;
         case kMediaTagDvdrMediaIdentifier:
-            return DvdRMediaIdentifier;
+            return kDataTypeDvdrMediaIdentifier;
         case kMediaTagDvdrPfi:
-            return DvdRPfi;
+            return kDataTypeDvdrPfi;
         case kMediaTagDvdAdip:
-            return DvdAdip;
+            return kDataTypeDvdAdip;
         case kMediaTagHddvdCpi:
-            return HdDvdCpi;
+            return kDataTypeHddvdCpi;
         case kMediaTagHddvdMediumStatus:
-            return HdDvdMediumStatus;
+            return kDataTypeHddvdMediumStatus;
         case kMediaTagDvddlLayerCapacity:
-            return DvdDlLayerCapacity;
+            return kDataTypeDvddlLayerCapacity;
         case kMediaTagDvddlMiddleZoneAddress:
-            return DvdDlMiddleZoneAddress;
+            return kDataTypeDvddlMiddleZoneAddress;
         case kMediaTagDvddlJumpIntervalSize:
-            return DvdDlJumpIntervalSize;
+            return kDataTypeDvddlJumpIntervalSize;
         case kMediaTagDvddlManualLayerJumpLba:
-            return DvdDlManualLayerJumpLba;
+            return kDataTypeDvddlManualLayerJumpLba;
         case kMediaTagBlurayDi:
-            return BlurayDi;
+            return kDataTypeBlurayDi;
         case kMediaTagBlurayBca:
-            return BlurayBca;
+            return kDataTypeBlurayBca;
         case kMediaTagBlurayDds:
-            return BlurayDds;
+            return kDataTypeBlurayDds;
         case kMediaTagBlurayCartridgeStatus:
-            return BlurayCartridgeStatus;
+            return kDataTypeBlurayCartridgeStatus;
         case kMediaTagBluraySpareArea:
-            return BluraySpareArea;
+            return kDataTypeBluraySpareArea;
         case kMediaTagAacsVolumeIdentifier:
-            return AacsVolumeIdentifier;
+            return kDataTypeAacsVolumeIdentifier;
         case kMediaTagAacsSerialNumber:
-            return AacsSerialNumber;
+            return kDataTypeAacsSerialNumber;
         case kMediaTagAacsMediaIdentifier:
-            return AacsMediaIdentifier;
+            return kDataTypeAacsMediaIdentifier;
         case kMediaTagAacsMkb:
-            return AacsMediaKeyBlock;
+            return kDataTypeAacsMkb;
         case kMediaTagAacsDataKeys:
-            return AacsDataKeys;
+            return kDataTypeAacsDataKeys;
         case kMediaTagAacsLbaExtents:
-            return AacsLbaExtents;
+            return kDataTypeAacsLbaExtents;
         case kMediaTagCprmMkb:
-            return CprmMediaKeyBlock;
+            return kDataTypeCprmMkb;
         case kMediaTagHybridRecognizedLayers:
-            return HybridRecognizedLayers;
+            return kDataTypeHybridRecognizedLayers;
         case kMediaTagMmcWriteProtection:
-            return ScsiMmcWriteProtection;
+            return kDataTypeMmcWriteProtection;
         case kMediaTagMmcDiscInformation:
-            return ScsiMmcDiscInformation;
+            return kDataTypeMmcDiscInformation;
         case kMediaTagMmcTrackResourcesInformation:
-            return ScsiMmcTrackResourcesInformation;
+            return kDataTypeMmcTrackResourcesInformation;
         case kMediaTagMmcPowResourcesInformation:
-            return ScsiMmcPowResourcesInformation;
+            return kDataTypeMmcPowResourcesInformation;
         case kMediaTagScsiInquiry:
-            return ScsiInquiry;
+            return kDataTypeScsiInquiry;
         case kMediaTagScsiModePage2A:
-            return ScsiModePage2A;
+            return kDataTypeScsiModePage2A;
         case kMediaTagAtaIdentify:
-            return AtaIdentify;
+            return kDataTypeAtaIdentify;
         case kMediaTagAtapiIdentify:
-            return AtapiIdentify;
+            return kDataTypeAtapiIdentify;
         case kMediaTagPcmciaCis:
-            return PcmciaCis;
+            return kDataTypePcmciaCis;
         case kMediaTagSdCid:
-            return SecureDigitalCid;
+            return kDataTypeSdCid;
         case kMediaTagSdCsd:
-            return SecureDigitalCsd;
+            return kDataTypeSdCsd;
         case kMediaTagSdScr:
-            return SecureDigitalScr;
+            return kDataTypeSdScr;
         case kMediaTagSdOcr:
-            return SecureDigitalOcr;
+            return kDataTypeSdOcr;
         case kMediaTagMmcCid:
-            return MultiMediaCardCid;
+            return kDataTypeMmcCid;
         case kMediaTagMmcCsd:
-            return MultiMediaCardCsd;
+            return kDataTypeMmcCsd;
         case kMediaTagMmcOcr:
-            return MultiMediaCardOcr;
+            return kDataTypeMmcOcr;
         case kMediaTagExtendedCsd:
-            return MultiMediaCardExtendedCsd;
+            return kDataTypeExtendedCsd;
         case kMediaTagXboxSecuritySector:
-            return XboxSecuritySector;
+            return kDataTypeXboxSecuritySector;
         case kMediaTagFloppyLeadOut:
-            return FloppyLeadOut;
+            return kDataTypeFloppyLeadOut;
         case kMediaTagDiscControlBlock:
-            return DvdDiscControlBlock;
+            return kDataTypeDiscControlBlock;
         case kMediaTagCdFirstTrackPregap:
-            return CompactDiscFirstTrackPregap;
+            return kDataTypeCdFirstTrackPregap;
         case kMediaTagCdLeadOut:
-            return CompactDiscLeadOut;
+            return kDataTypeCdLeadOut;
         case kMediaTagScsiModeSense6:
-            return ScsiModeSense6;
+            return kDataTypeScsiModeSense6;
         case kMediaTagScsiModeSense10:
-            return ScsiModeSense10;
+            return kDataTypeScsiModeSense10;
         case kMediaTagUsbDescriptors:
-            return UsbDescriptors;
+            return kDataTypeUsbDescriptors;
         case kMediaTagXboxDmi:
-            return XboxDmi;
+            return kDataTypeXboxDmi;
         case kMediaTagXboxPfi:
-            return XboxPfi;
+            return kDataTypeXboxPfi;
         case kMediaTagCdMcn:
-            return CompactDiscMediaCatalogueNumber;
+            return kDataTypeCdMcn;
         case kMediaTagCdLeadIn:
-            return CompactDiscLeadIn;
+            return kDataTypeCdLeadIn;
         case kMediaTagDvdDiscKeyDecrypted:
-            return DvdDiscKeyDecrypted;
+            return kDataTypeDvdDiscKeyDecrypted;
         case kMediaTagFloppyWriteProtect:
-            return FloppyWriteProtectStatus;
+            return kDataTypeFloppyWriteProtect;
         case kMediaTagWiiUDiscKey:
-            return NintendoWiiUDiscKey;
+            return kDataTypeWiiUDiscKey;
         case kMediaTagPs3DiscKey:
-            return PS3DiscKey;
+            return kDataTypePs3DiscKey;
         case kMediaTagPs3Data1:
-            return PS3Data1;
+            return kDataTypePs3Data1;
         case kMediaTagPs3Data2:
-            return PS3Data2;
+            return kDataTypePs3Data2;
         case kMediaTagPs3Pic:
-            return PS3PIC;
+            return kDataTypePs3Pic;
         case kMediaTagPs3EncryptionMap:
-            return PS3EncryptionMap;
+            return kDataTypePs3EncryptionMap;
         default:
             return -1;
     }

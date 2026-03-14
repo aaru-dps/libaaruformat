@@ -107,7 +107,7 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
     // Prepare DDT header for the cached table
     DdtHeader2 ddt_header          = {0};
     ddt_header.identifier          = DeDuplicationTableSecondary;
-    ddt_header.type                = UserData;
+    ddt_header.type                = kDataTypeUserData;
     ddt_header.compression         = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
     ddt_header.levels              = ctx->user_data_ddt_header.levels;
     ddt_header.tableLevel          = ctx->user_data_ddt_header.tableLevel + 1;
@@ -226,7 +226,7 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
             // Add new index entry for the newly written secondary DDT
             IndexEntry new_ddt_entry;
             new_ddt_entry.blockType = DeDuplicationTableSecondary;
-            new_ddt_entry.dataType  = UserData;
+            new_ddt_entry.dataType  = kDataTypeUserData;
             new_ddt_entry.offset    = end_of_file;
 
             utarray_push_back(ctx->index_entries, &new_ddt_entry);
@@ -306,7 +306,7 @@ static int32_t write_primary_ddt(aaruformat_context *ctx)
 
         // Properly populate all header fields for multi-level DDT primary table
         ctx->user_data_ddt_header.identifier  = DeDuplicationTable2;
-        ctx->user_data_ddt_header.type        = UserData;
+        ctx->user_data_ddt_header.type        = kDataTypeUserData;
         ctx->user_data_ddt_header.compression = kCompressionNone;
         // levels, tableLevel, previousLevelOffset, negative, overflow, blockAlignmentShift,
         // dataShift, tableShift, sizeType, entries, blocks, start are already set during creation
@@ -348,7 +348,7 @@ static int32_t write_primary_ddt(aaruformat_context *ctx)
         for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
         {
             const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
-            if(entry && entry->blockType == DeDuplicationTable2 && entry->dataType == UserData)
+            if(entry && entry->blockType == DeDuplicationTable2 && entry->dataType == kDataTypeUserData)
             {
                 TRACE("Found existing primary DDT index entry at position %d, removing", k);
                 utarray_erase(ctx->index_entries, k, 1);
@@ -359,7 +359,7 @@ static int32_t write_primary_ddt(aaruformat_context *ctx)
         TRACE("Adding primary DDT to index");
         IndexEntry primary_ddt_entry;
         primary_ddt_entry.blockType = DeDuplicationTable2;
-        primary_ddt_entry.dataType  = UserData;
+        primary_ddt_entry.dataType  = kDataTypeUserData;
         primary_ddt_entry.offset    = ctx->primary_ddt_offset;
 
         utarray_push_back(ctx->index_entries, &primary_ddt_entry);
@@ -400,7 +400,7 @@ static int32_t write_single_level_ddt(aaruformat_context *ctx)
 
     // Properly populate all header fields
     ctx->user_data_ddt_header.identifier          = DeDuplicationTable2;
-    ctx->user_data_ddt_header.type                = UserData;
+    ctx->user_data_ddt_header.type                = kDataTypeUserData;
     ctx->user_data_ddt_header.compression         = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
     ctx->user_data_ddt_header.levels              = 1;  // Single level
     ctx->user_data_ddt_header.tableLevel          = 0;  // Top level
@@ -498,7 +498,7 @@ static int32_t write_single_level_ddt(aaruformat_context *ctx)
         for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
         {
             const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
-            if(entry && entry->blockType == DeDuplicationTable2 && entry->dataType == UserData)
+            if(entry && entry->blockType == DeDuplicationTable2 && entry->dataType == kDataTypeUserData)
             {
                 TRACE("Found existing single-level DDT index entry at position %d, removing", k);
                 utarray_erase(ctx->index_entries, k, 1);
@@ -509,7 +509,7 @@ static int32_t write_single_level_ddt(aaruformat_context *ctx)
         TRACE("Adding single-level DDT to index");
         IndexEntry single_ddt_entry;
         single_ddt_entry.blockType = DeDuplicationTable2;
-        single_ddt_entry.dataType  = UserData;
+        single_ddt_entry.dataType  = kDataTypeUserData;
         single_ddt_entry.offset    = ddt_position;
 
         utarray_push_back(ctx->index_entries, &single_ddt_entry);
@@ -645,7 +645,7 @@ static int32_t write_tape_ddt(aaruformat_context *ctx)
 
     // Initialize context user data DDT header
     ctx->user_data_ddt_header.identifier          = DeDuplicationTable2;
-    ctx->user_data_ddt_header.type                = UserData;
+    ctx->user_data_ddt_header.type                = kDataTypeUserData;
     ctx->user_data_ddt_header.compression         = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
     ctx->user_data_ddt_header.levels              = 1;  // Single level
     ctx->user_data_ddt_header.tableLevel          = 0;  // Top level
@@ -933,7 +933,7 @@ static void write_mode2_subheaders_block(aaruformat_context *ctx)
     TRACE("Writing MODE 2 subheaders block at position %ld", mode2_subheaders_position);
     BlockHeader subheaders_block = {0};
     subheaders_block.identifier  = DataBlock;
-    subheaders_block.type        = CompactDiscMode2Subheader;
+    subheaders_block.type        = kDataTypeCdSubHeader;
     subheaders_block.compression = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
     subheaders_block.length =
         (uint32_t)(ctx->user_data_ddt_header.negative + ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow) *
@@ -1002,7 +1002,7 @@ static void write_mode2_subheaders_block(aaruformat_context *ctx)
             for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
             {
                 const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
-                if(entry && entry->blockType == DataBlock && entry->dataType == CompactDiscMode2Subheader)
+                if(entry && entry->blockType == DataBlock && entry->dataType == kDataTypeCdSubHeader)
                 {
                     TRACE("Found existing MODE 2 subheaders block index entry at position %d, removing", k);
                     utarray_erase(ctx->index_entries, k, 1);
@@ -1013,7 +1013,7 @@ static void write_mode2_subheaders_block(aaruformat_context *ctx)
             TRACE("Adding MODE 2 subheaders block to index");
             IndexEntry mode2_subheaders_index_entry;
             mode2_subheaders_index_entry.blockType = DataBlock;
-            mode2_subheaders_index_entry.dataType  = CompactDiscMode2Subheader;
+            mode2_subheaders_index_entry.dataType  = kDataTypeCdSubHeader;
             mode2_subheaders_index_entry.offset    = mode2_subheaders_position;
             utarray_push_back(ctx->index_entries, &mode2_subheaders_index_entry);
             ctx->dirty_index_block = true;
@@ -1064,7 +1064,7 @@ static void write_sector_prefix(aaruformat_context *ctx)
     TRACE("Writing sector prefix block at position %ld", prefix_position);
     BlockHeader prefix_block = {0};
     prefix_block.identifier  = DataBlock;
-    prefix_block.type        = CdSectorPrefix;
+    prefix_block.type        = kDataTypeCdSectorPrefix;
     prefix_block.compression = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
     prefix_block.length      = (uint32_t)ctx->sector_prefix_offset;
 
@@ -1131,7 +1131,7 @@ static void write_sector_prefix(aaruformat_context *ctx)
             for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
             {
                 const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
-                if(entry && entry->blockType == DataBlock && entry->dataType == CdSectorPrefix)
+                if(entry && entry->blockType == DataBlock && entry->dataType == kDataTypeCdSectorPrefix)
                 {
                     TRACE("Found existing CD sector prefix block index entry at position %d, removing", k);
                     utarray_erase(ctx->index_entries, k, 1);
@@ -1142,7 +1142,7 @@ static void write_sector_prefix(aaruformat_context *ctx)
             TRACE("Adding CD sector prefix block to index");
             IndexEntry prefix_index_entry;
             prefix_index_entry.blockType = DataBlock;
-            prefix_index_entry.dataType  = CdSectorPrefix;
+            prefix_index_entry.dataType  = kDataTypeCdSectorPrefix;
             prefix_index_entry.offset    = prefix_position;
             utarray_push_back(ctx->index_entries, &prefix_index_entry);
             ctx->dirty_index_block = true;
@@ -1202,7 +1202,7 @@ static void write_sector_suffix(aaruformat_context *ctx)
     TRACE("Writing sector suffix block at position %ld", suffix_position);
     BlockHeader suffix_block = {0};
     suffix_block.identifier  = DataBlock;
-    suffix_block.type        = CdSectorSuffix;
+    suffix_block.type        = kDataTypeCdSectorSuffix;
     suffix_block.compression = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
     suffix_block.length      = (uint32_t)ctx->sector_suffix_offset;
 
@@ -1269,7 +1269,7 @@ static void write_sector_suffix(aaruformat_context *ctx)
             for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
             {
                 const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
-                if(entry && entry->blockType == DataBlock && entry->dataType == CdSectorSuffix)
+                if(entry && entry->blockType == DataBlock && entry->dataType == kDataTypeCdSectorSuffix)
                 {
                     TRACE("Found existing CD sector suffix block index entry at position %d, removing", k);
                     utarray_erase(ctx->index_entries, k, 1);
@@ -1280,7 +1280,7 @@ static void write_sector_suffix(aaruformat_context *ctx)
             TRACE("Adding CD sector suffix block to index");
             IndexEntry suffix_index_entry;
             suffix_index_entry.blockType = DataBlock;
-            suffix_index_entry.dataType  = CdSectorSuffix;
+            suffix_index_entry.dataType  = kDataTypeCdSectorSuffix;
             suffix_index_entry.offset    = suffix_position;
             utarray_push_back(ctx->index_entries, &suffix_index_entry);
             ctx->dirty_index_block = true;
@@ -1336,7 +1336,7 @@ static void write_sector_prefix_ddt(aaruformat_context *ctx)
     TRACE("Writing sector prefix DDT v2 at position %ld", prefix_ddt_position);
     DdtHeader2 ddt_header2          = {0};
     ddt_header2.identifier          = DeDuplicationTable2;
-    ddt_header2.type                = CdSectorPrefix;
+    ddt_header2.type                = kDataTypeCdSectorPrefix;
     ddt_header2.compression         = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
     ddt_header2.levels              = 1;
     ddt_header2.tableLevel          = 0;
@@ -1413,7 +1413,7 @@ static void write_sector_prefix_ddt(aaruformat_context *ctx)
             for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
             {
                 const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
-                if(entry && entry->blockType == DeDuplicationTable2 && entry->dataType == CdSectorPrefix)
+                if(entry && entry->blockType == DeDuplicationTable2 && entry->dataType == kDataTypeCdSectorPrefix)
                 {
                     TRACE("Found existing sector prefix DDT v2 index entry at position %d, removing", k);
                     utarray_erase(ctx->index_entries, k, 1);
@@ -1424,7 +1424,7 @@ static void write_sector_prefix_ddt(aaruformat_context *ctx)
             TRACE("Adding sector prefix DDT v2 to index");
             IndexEntry prefix_ddt_index_entry;
             prefix_ddt_index_entry.blockType = DeDuplicationTable2;
-            prefix_ddt_index_entry.dataType  = CdSectorPrefix;
+            prefix_ddt_index_entry.dataType  = kDataTypeCdSectorPrefix;
             prefix_ddt_index_entry.offset    = prefix_ddt_position;
             utarray_push_back(ctx->index_entries, &prefix_ddt_index_entry);
             ctx->dirty_index_block = true;
@@ -1496,7 +1496,7 @@ static void write_sector_suffix_ddt(aaruformat_context *ctx)
     TRACE("Writing sector suffix DDT v2 at position %ld", suffix_ddt_position);
     DdtHeader2 ddt_header2          = {0};
     ddt_header2.identifier          = DeDuplicationTable2;
-    ddt_header2.type                = CdSectorSuffix;
+    ddt_header2.type                = kDataTypeCdSectorSuffix;
     ddt_header2.compression         = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
     ddt_header2.levels              = 1;
     ddt_header2.tableLevel          = 0;
@@ -1573,7 +1573,7 @@ static void write_sector_suffix_ddt(aaruformat_context *ctx)
             for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
             {
                 const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
-                if(entry && entry->blockType == DeDuplicationTable2 && entry->dataType == CdSectorSuffix)
+                if(entry && entry->blockType == DeDuplicationTable2 && entry->dataType == kDataTypeCdSectorSuffix)
                 {
                     TRACE("Found existing sector suffix DDT v2 index entry at position %d, removing", k);
                     utarray_erase(ctx->index_entries, k, 1);
@@ -1584,7 +1584,7 @@ static void write_sector_suffix_ddt(aaruformat_context *ctx)
             TRACE("Adding sector suffix DDT v2 to index");
             IndexEntry suffix_ddt_index_entry;
             suffix_ddt_index_entry.blockType = DeDuplicationTable2;
-            suffix_ddt_index_entry.dataType  = CdSectorSuffix;
+            suffix_ddt_index_entry.dataType  = kDataTypeCdSectorSuffix;
             suffix_ddt_index_entry.offset    = suffix_ddt_position;
             utarray_push_back(ctx->index_entries, &suffix_ddt_index_entry);
             ctx->dirty_index_block = true;
@@ -1678,7 +1678,7 @@ static void write_sector_subchannel(aaruformat_context *ctx)
 
     if(ctx->image_info.MetadataMediaType == OpticalDisc)
     {
-        subchannel_block.type   = CdSectorSubchannel;
+        subchannel_block.type   = kDataTypeCdSubchannel;
         subchannel_block.length = (uint32_t)(ctx->user_data_ddt_header.negative + ctx->image_info.Sectors +
                                              ctx->user_data_ddt_header.overflow) *
                                   96;
@@ -1733,16 +1733,16 @@ static void write_sector_subchannel(aaruformat_context *ctx)
         {
             case AppleProfile:
             case AppleFileWare:
-                subchannel_block.type   = AppleProfileTag;
+                subchannel_block.type   = kDataTypeAppleProfileTag;
                 subchannel_block.length = (uint32_t)(ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow) * 20;
                 break;
             case AppleSonyDS:
             case AppleSonySS:
-                subchannel_block.type   = AppleSonyTag;
+                subchannel_block.type   = kDataTypeAppleSonyTag;
                 subchannel_block.length = (uint32_t)(ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow) * 12;
                 break;
             case PriamDataTower:
-                subchannel_block.type   = PriamDataTowerTag;
+                subchannel_block.type   = kDataTypePriamDataTowerTag;
                 subchannel_block.length = (uint32_t)(ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow) * 24;
                 break;
             default:
@@ -1991,7 +1991,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
     TRACE("Writing DVD sector ID block at position %ld", id_position);
     BlockHeader id_block = {0};
     id_block.identifier  = DataBlock;
-    id_block.type        = DvdSectorId;
+    id_block.type        = kDataTypeDvdSectorId;
     id_block.compression = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
     id_block.length      = (uint32_t)total_sectors * 4;
 
@@ -2058,7 +2058,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
             for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
             {
                 const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
-                if(entry && entry->blockType == DataBlock && entry->dataType == DvdSectorId)
+                if(entry && entry->blockType == DataBlock && entry->dataType == kDataTypeDvdSectorId)
                 {
                     TRACE("Found existing DVD sector ID block index entry at position %d, removing", k);
                     utarray_erase(ctx->index_entries, k, 1);
@@ -2069,7 +2069,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
             TRACE("Adding DVD sector ID block to index");
             IndexEntry id_index_entry;
             id_index_entry.blockType = DataBlock;
-            id_index_entry.dataType  = DvdSectorId;
+            id_index_entry.dataType  = kDataTypeDvdSectorId;
             id_index_entry.offset    = id_position;
             utarray_push_back(ctx->index_entries, &id_index_entry);
             ctx->dirty_index_block = true;
@@ -2091,7 +2091,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
     TRACE("Writing DVD sector IED block at position %ld", ied_position);
     BlockHeader ied_block = {0};
     ied_block.identifier  = DataBlock;
-    ied_block.type        = DvdSectorIed;
+    ied_block.type        = kDataTypeDvdSectorIed;
     ied_block.compression = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
     ied_block.length      = (uint32_t)total_sectors * 2;
     // Calculate CRC64
@@ -2156,7 +2156,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
             for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
             {
                 const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
-                if(entry && entry->blockType == DataBlock && entry->dataType == DvdSectorIed)
+                if(entry && entry->blockType == DataBlock && entry->dataType == kDataTypeDvdSectorIed)
                 {
                     TRACE("Found existing DVD sector IED block index entry at position %d, removing", k);
                     utarray_erase(ctx->index_entries, k, 1);
@@ -2167,7 +2167,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
             TRACE("Adding DVD sector IED block to index");
             IndexEntry ied_index_entry;
             ied_index_entry.blockType = DataBlock;
-            ied_index_entry.dataType  = DvdSectorIed;
+            ied_index_entry.dataType  = kDataTypeDvdSectorIed;
             ied_index_entry.offset    = ied_position;
             utarray_push_back(ctx->index_entries, &ied_index_entry);
             ctx->dirty_index_block = true;
@@ -2189,7 +2189,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
     TRACE("Writing DVD sector CPR/MAI block at position %ld", cpr_mai_position);
     BlockHeader cpr_mai_block = {0};
     cpr_mai_block.identifier  = DataBlock;
-    cpr_mai_block.type        = DvdSectorCprMai;
+    cpr_mai_block.type        = kDataTypeDvdSectorCprMai;
     cpr_mai_block.compression = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
     cpr_mai_block.length      = (uint32_t)total_sectors * 6;
     // Calculate CRC64
@@ -2254,7 +2254,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
             for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
             {
                 const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
-                if(entry && entry->blockType == DataBlock && entry->dataType == DvdSectorCprMai)
+                if(entry && entry->blockType == DataBlock && entry->dataType == kDataTypeDvdSectorCprMai)
                 {
                     TRACE("Found existing DVD sector CPR/MAI block index entry at position %d, removing", k);
                     utarray_erase(ctx->index_entries, k, 1);
@@ -2265,7 +2265,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
             TRACE("Adding DVD sector CPR/MAI block to index");
             IndexEntry cpr_mai_index_entry;
             cpr_mai_index_entry.blockType = DataBlock;
-            cpr_mai_index_entry.dataType  = DvdSectorCprMai;
+            cpr_mai_index_entry.dataType  = kDataTypeDvdSectorCprMai;
             cpr_mai_index_entry.offset    = cpr_mai_position;
             utarray_push_back(ctx->index_entries, &cpr_mai_index_entry);
             ctx->dirty_index_block = true;
@@ -2287,7 +2287,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
     TRACE("Writing DVD sector EDC block at position %ld", edc_position);
     BlockHeader edc_block = {0};
     edc_block.identifier  = DataBlock;
-    edc_block.type        = DvdSectorEdc;
+    edc_block.type        = kDataTypeDvdSectorEdc;
     edc_block.compression = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
     edc_block.length      = (uint32_t)total_sectors * 4;
     // Calculate CRC64
@@ -2352,7 +2352,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
             for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
             {
                 const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
-                if(entry && entry->blockType == DataBlock && entry->dataType == DvdSectorEdc)
+                if(entry && entry->blockType == DataBlock && entry->dataType == kDataTypeDvdSectorEdc)
                 {
                     TRACE("Found existing DVD sector EDC block index entry at position %d, removing", k);
                     utarray_erase(ctx->index_entries, k, 1);
@@ -2363,7 +2363,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
             TRACE("Adding DVD sector EDC block to index");
             IndexEntry edc_index_entry;
             edc_index_entry.blockType = DataBlock;
-            edc_index_entry.dataType  = DvdSectorEdc;
+            edc_index_entry.dataType  = kDataTypeDvdSectorEdc;
             edc_index_entry.offset    = edc_position;
             utarray_push_back(ctx->index_entries, &edc_index_entry);
             ctx->dirty_index_block = true;
@@ -2487,7 +2487,7 @@ static void write_dvd_title_key_decrypted_block(aaruformat_context *ctx)
     TRACE("Writing DVD decrypted title key block at position %ld", block_position);
     BlockHeader decrypted_title_key_block = {0};
     decrypted_title_key_block.identifier  = DataBlock;
-    decrypted_title_key_block.type        = DvdSectorTitleKeyDecrypted;
+    decrypted_title_key_block.type        = kDataTypeDvdTitleKeyDecrypted;
     decrypted_title_key_block.compression = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
     decrypted_title_key_block.length =
         (uint32_t)(ctx->user_data_ddt_header.negative + ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow) *
@@ -2558,7 +2558,7 @@ static void write_dvd_title_key_decrypted_block(aaruformat_context *ctx)
             for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
             {
                 const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
-                if(entry && entry->blockType == DataBlock && entry->dataType == DvdSectorTitleKeyDecrypted)
+                if(entry && entry->blockType == DataBlock && entry->dataType == kDataTypeDvdTitleKeyDecrypted)
                 {
                     TRACE("Found existing DVD decrypted title key block index entry at position %d, removing", k);
                     utarray_erase(ctx->index_entries, k, 1);
@@ -2569,7 +2569,7 @@ static void write_dvd_title_key_decrypted_block(aaruformat_context *ctx)
             TRACE("Adding DVD decrypted title key block to index");
             IndexEntry decrypted_title_key_index_entry;
             decrypted_title_key_index_entry.blockType = DataBlock;
-            decrypted_title_key_index_entry.dataType  = DvdSectorTitleKeyDecrypted;
+            decrypted_title_key_index_entry.dataType  = kDataTypeDvdTitleKeyDecrypted;
             decrypted_title_key_index_entry.offset    = block_position;
             utarray_push_back(ctx->index_entries, &decrypted_title_key_index_entry);
             ctx->dirty_index_block = true;
@@ -4485,7 +4485,7 @@ static int32_t write_flux_capture_payload(aaruformat_context *ctx, FluxCaptureRe
 
     DataStreamPayloadHeader payload_header = {0};
     payload_header.identifier              = DataStreamPayloadBlock;
-    payload_header.dataType                = FluxData;
+    payload_header.dataType                = kDataTypeFluxData;
     payload_header.compression             = (uint16_t)compression;
     payload_header.cmpLength               = cmp_length;
     payload_header.length                  = (uint32_t)raw_length;
@@ -4510,7 +4510,7 @@ static int32_t write_flux_capture_payload(aaruformat_context *ctx, FluxCaptureRe
 
     IndexEntry payload_entry;
     payload_entry.blockType = DataStreamPayloadBlock;
-    payload_entry.dataType  = FluxData;
+    payload_entry.dataType  = kDataTypeFluxData;
     payload_entry.offset    = payload_position;
     utarray_push_back(ctx->index_entries, &payload_entry);
 
