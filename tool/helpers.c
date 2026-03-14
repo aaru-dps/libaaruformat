@@ -54,157 +54,157 @@ const char *media_tag_type_to_string(int32_t type)
 {
     switch(type)
     {
-        case CD_TOC:
+        case kMediaTagCdToc:
             return "CD Table of Contents";
-        case CD_SessionInfo:
+        case kMediaTagSessionInfo:
             return "CD Session Information";
-        case CD_FullTOC:
+        case kMediaTagFullToc:
             return "CD Full TOC (multi-session)";
-        case CD_PMA:
+        case kMediaTagCdPma:
             return "CD Program Memory Area";
-        case CD_ATIP:
+        case kMediaTagCdAtip:
             return "CD Absolute Time in Pregroove";
-        case CD_TEXT:
+        case kMediaTagCdText:
             return "CD-Text";
-        case CD_MCN:
+        case kMediaTagCdMcn:
             return "CD Media Catalogue Number";
-        case DVD_PFI:
+        case kMediaTagDvdPfi:
             return "DVD Physical Format Information";
-        case DVD_CMI:
+        case kMediaTagDvdCmi:
             return "DVD Copyright Management Information";
-        case DVD_DiscKey:
+        case kMediaTagDvdDiscKey:
             return "DVD Disc Key";
-        case DVD_BCA:
+        case kMediaTagDvdBca:
             return "DVD Burst Cutting Area";
-        case DVD_DMI:
+        case kMediaTagDvdDmi:
             return "DVD Disc Manufacturing Information";
-        case DVD_MediaIdentifier:
+        case kMediaTagDvdMediaIdentifier:
             return "DVD Media Identifier";
-        case DVD_MKB:
+        case kMediaTagDvdMkb:
             return "DVD Media Key Block";
-        case DVDRAM_DDS:
+        case kMediaTagDvdRamDds:
             return "DVD-RAM Defect Data Structure";
-        case DVDRAM_MediumStatus:
+        case kMediaTagDvdRamMediumStatus:
             return "DVD-RAM Medium Status";
-        case DVDRAM_SpareArea:
+        case kMediaTagDvdRamSpareArea:
             return "DVD-RAM Spare Area";
-        case DVDR_RMD:
+        case kMediaTagDvdrRmd:
             return "DVD-R Recording Management Data";
-        case DVDR_PreRecordedInfo:
+        case kMediaTagDvdrPreRecordedInfo:
             return "DVD-R Pre-recorded Information";
-        case DVDR_MediaIdentifier:
+        case kMediaTagDvdrMediaIdentifier:
             return "DVD-R Media Identifier";
-        case DVDR_PFI:
+        case kMediaTagDvdrPfi:
             return "DVD-R Physical Format Information";
-        case DVD_ADIP:
+        case kMediaTagDvdAdip:
             return "DVD Address in Pregroove";
-        case HDDVD_CPI:
+        case kMediaTagHddvdCpi:
             return "HD DVD Content Protection Information";
-        case HDDVD_MediumStatus:
+        case kMediaTagHddvdMediumStatus:
             return "HD DVD Medium Status";
-        case DVDDL_LayerCapacity:
+        case kMediaTagDvddlLayerCapacity:
             return "DVD Dual Layer - Layer Capacity";
-        case DVDDL_MiddleZoneAddress:
+        case kMediaTagDvddlMiddleZoneAddress:
             return "DVD Dual Layer - Middle Zone Address";
-        case DVDDL_JumpIntervalSize:
+        case kMediaTagDvddlJumpIntervalSize:
             return "DVD Dual Layer - Jump Interval Size";
-        case DVDDL_ManualLayerJumpLBA:
+        case kMediaTagDvddlManualLayerJumpLba:
             return "DVD Dual Layer - Manual Layer Jump LBA";
-        case BD_DI:
+        case kMediaTagBlurayDi:
             return "Blu-ray Disc Information";
-        case BD_BCA:
+        case kMediaTagBlurayBca:
             return "Blu-ray Burst Cutting Area";
-        case BD_DDS:
+        case kMediaTagBlurayDds:
             return "Blu-ray Disc Definition Structure";
-        case BD_CartridgeStatus:
+        case kMediaTagBlurayCartridgeStatus:
             return "Blu-ray Cartridge Status";
-        case BD_SpareArea:
+        case kMediaTagBluraySpareArea:
             return "Blu-ray Spare Area";
-        case AACS_VolumeIdentifier:
+        case kMediaTagAacsVolumeIdentifier:
             return "AACS Volume Identifier";
-        case AACS_SerialNumber:
+        case kMediaTagAacsSerialNumber:
             return "AACS Serial Number";
-        case AACS_MediaIdentifier:
+        case kMediaTagAacsMediaIdentifier:
             return "AACS Media Identifier";
-        case AACS_MKB:
+        case kMediaTagAacsMkb:
             return "AACS Media Key Block";
-        case AACS_DataKeys:
+        case kMediaTagAacsDataKeys:
             return "AACS Data Keys";
-        case AACS_LBAExtents:
+        case kMediaTagAacsLbaExtents:
             return "AACS LBA Extents";
-        case AACS_CPRM_MKB:
+        case kMediaTagCprmMkb:
             return "CPRM Media Key Block";
-        case Hybrid_RecognizedLayers:
+        case kMediaTagHybridRecognizedLayers:
             return "Hybrid Disc - Recognized Layers";
-        case MMC_WriteProtection:
+        case kMediaTagMmcWriteProtection:
             return "MMC Write Protection Status";
-        case MMC_DiscInformation:
+        case kMediaTagMmcDiscInformation:
             return "MMC Disc Information";
-        case MMC_TrackResourcesInformation:
+        case kMediaTagMmcTrackResourcesInformation:
             return "MMC Track Resources Information";
-        case MMC_POWResourcesInformation:
+        case kMediaTagMmcPowResourcesInformation:
             return "MMC POW Resources Information";
-        case SCSI_INQUIRY:
+        case kMediaTagScsiInquiry:
             return "SCSI INQUIRY Data";
-        case SCSI_MODEPAGE_2A:
+        case kMediaTagScsiModePage2A:
             return "SCSI Mode Page 2Ah (CD/DVD Capabilities)";
-        case ATA_IDENTIFY:
+        case kMediaTagAtaIdentify:
             return "ATA IDENTIFY DEVICE";
-        case ATAPI_IDENTIFY:
+        case kMediaTagAtapiIdentify:
             return "ATAPI IDENTIFY DEVICE";
-        case PCMCIA_CIS:
+        case kMediaTagPcmciaCis:
             return "PCMCIA Card Information Structure";
-        case SD_CID:
+        case kMediaTagSdCid:
             return "Secure Digital Card ID";
-        case SD_CSD:
+        case kMediaTagSdCsd:
             return "Secure Digital Card Specific Data";
-        case SD_SCR:
+        case kMediaTagSdScr:
             return "Secure Digital Configuration Register";
-        case SD_OCR:
+        case kMediaTagSdOcr:
             return "Secure Digital Operation Conditions";
-        case MMC_CID:
+        case kMediaTagMmcCid:
             return "MultiMediaCard Card ID";
-        case MMC_CSD:
+        case kMediaTagMmcCsd:
             return "MultiMediaCard Card Specific Data";
-        case MMC_OCR:
+        case kMediaTagMmcOcr:
             return "MultiMediaCard Operation Conditions";
-        case MMC_ExtendedCSD:
+        case kMediaTagExtendedCsd:
             return "MultiMediaCard Extended CSD";
-        case Xbox_SecuritySector:
+        case kMediaTagXboxSecuritySector:
             return "Xbox Security Sector";
-        case Floppy_LeadOut:
+        case kMediaTagFloppyLeadOut:
             return "Floppy Lead-out";
-        case DiscControlBlock:
+        case kMediaTagDiscControlBlock:
             return "DVD Disc Control Block";
-        case CD_FirstTrackPregap:
+        case kMediaTagCdFirstTrackPregap:
             return "CD First Track Pre-gap";
-        case CD_LeadOut:
+        case kMediaTagCdLeadOut:
             return "CD Lead-out";
-        case SCSI_MODESENSE_6:
+        case kMediaTagScsiModeSense6:
             return "SCSI MODE SENSE (6)";
-        case SCSI_MODESENSE_10:
+        case kMediaTagScsiModeSense10:
             return "SCSI MODE SENSE (10)";
-        case USB_Descriptors:
+        case kMediaTagUsbDescriptors:
             return "USB Descriptors";
-        case Xbox_DMI:
+        case kMediaTagXboxDmi:
             return "Xbox Disc Manufacturing Information";
-        case Xbox_PFI:
+        case kMediaTagXboxPfi:
             return "Xbox Physical Format Information";
-        case CD_LeadIn:
+        case kMediaTagCdLeadIn:
             return "CD Lead-in";
-        case MiniDiscType:
+        case kMediaTagMiniDiscType:
             return "MiniDisc Type";
-        case MiniDiscD5:
+        case kMediaTagMiniDiscD5:
             return "MiniDisc D5h Response";
-        case MiniDiscUTOC:
+        case kMediaTagMiniDiscUtoc:
             return "MiniDisc User TOC";
-        case MiniDiscDTOC:
+        case kMediaTagMiniDiscDtoc:
             return "MiniDisc Data TOC";
-        case DVD_DiscKey_Decrypted:
+        case kMediaTagDvdDiscKeyDecrypted:
             return "DVD Disc Key (decrypted)";
-        case DVD_PFI_2ndLayer:
+        case kMediaTagDvdPfi2ndLayer:
             return "DVD Physical Format Information (2nd layer)";
-        case Floppy_WriteProtect:
+        case kMediaTagFloppyWriteProtect:
             return "Floppy Write-Protect Status";
         default:
             return "Unknown Media Tag";

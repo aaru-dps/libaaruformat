@@ -49,82 +49,82 @@ typedef struct
 
 // clang-format off
 static const MediaTagTypeMapping media_tag_mappings[] = {
-    {"CD_TOC",                        CD_TOC},
-    {"CD_SessionInfo",                CD_SessionInfo},
-    {"CD_FullTOC",                    CD_FullTOC},
-    {"CD_PMA",                        CD_PMA},
-    {"CD_ATIP",                       CD_ATIP},
-    {"CD_TEXT",                       CD_TEXT},
-    {"CD_MCN",                        CD_MCN},
-    {"DVD_PFI",                       DVD_PFI},
-    {"DVD_CMI",                       DVD_CMI},
-    {"DVD_DiscKey",                   DVD_DiscKey},
-    {"DVD_BCA",                       DVD_BCA},
-    {"DVD_DMI",                       DVD_DMI},
-    {"DVD_MediaIdentifier",           DVD_MediaIdentifier},
-    {"DVD_MKB",                       DVD_MKB},
-    {"DVDRAM_DDS",                    DVDRAM_DDS},
-    {"DVDRAM_MediumStatus",           DVDRAM_MediumStatus},
-    {"DVDRAM_SpareArea",              DVDRAM_SpareArea},
-    {"DVDR_RMD",                      DVDR_RMD},
-    {"DVDR_PreRecordedInfo",          DVDR_PreRecordedInfo},
-    {"DVDR_MediaIdentifier",          DVDR_MediaIdentifier},
-    {"DVDR_PFI",                      DVDR_PFI},
-    {"DVD_ADIP",                      DVD_ADIP},
-    {"HDDVD_CPI",                     HDDVD_CPI},
-    {"HDDVD_MediumStatus",            HDDVD_MediumStatus},
-    {"DVDDL_LayerCapacity",           DVDDL_LayerCapacity},
-    {"DVDDL_MiddleZoneAddress",       DVDDL_MiddleZoneAddress},
-    {"DVDDL_JumpIntervalSize",        DVDDL_JumpIntervalSize},
-    {"DVDDL_ManualLayerJumpLBA",      DVDDL_ManualLayerJumpLBA},
-    {"BD_DI",                         BD_DI},
-    {"BD_BCA",                        BD_BCA},
-    {"BD_DDS",                        BD_DDS},
-    {"BD_CartridgeStatus",            BD_CartridgeStatus},
-    {"BD_SpareArea",                  BD_SpareArea},
-    {"AACS_VolumeIdentifier",         AACS_VolumeIdentifier},
-    {"AACS_SerialNumber",             AACS_SerialNumber},
-    {"AACS_MediaIdentifier",          AACS_MediaIdentifier},
-    {"AACS_MKB",                      AACS_MKB},
-    {"AACS_DataKeys",                 AACS_DataKeys},
-    {"AACS_LBAExtents",               AACS_LBAExtents},
-    {"AACS_CPRM_MKB",                 AACS_CPRM_MKB},
-    {"Hybrid_RecognizedLayers",       Hybrid_RecognizedLayers},
-    {"MMC_WriteProtection",           MMC_WriteProtection},
-    {"MMC_DiscInformation",           MMC_DiscInformation},
-    {"MMC_TrackResourcesInformation", MMC_TrackResourcesInformation},
-    {"MMC_POWResourcesInformation",   MMC_POWResourcesInformation},
-    {"SCSI_INQUIRY",                  SCSI_INQUIRY},
-    {"SCSI_MODEPAGE_2A",              SCSI_MODEPAGE_2A},
-    {"ATA_IDENTIFY",                  ATA_IDENTIFY},
-    {"ATAPI_IDENTIFY",                ATAPI_IDENTIFY},
-    {"PCMCIA_CIS",                    PCMCIA_CIS},
-    {"SD_CID",                        SD_CID},
-    {"SD_CSD",                        SD_CSD},
-    {"SD_SCR",                        SD_SCR},
-    {"SD_OCR",                        SD_OCR},
-    {"MMC_CID",                       MMC_CID},
-    {"MMC_CSD",                       MMC_CSD},
-    {"MMC_OCR",                       MMC_OCR},
-    {"MMC_ExtendedCSD",               MMC_ExtendedCSD},
-    {"Xbox_SecuritySector",           Xbox_SecuritySector},
-    {"Floppy_LeadOut",                Floppy_LeadOut},
-    {"DiscControlBlock",              DiscControlBlock},
-    {"CD_FirstTrackPregap",           CD_FirstTrackPregap},
-    {"CD_LeadOut",                    CD_LeadOut},
-    {"SCSI_MODESENSE_6",              SCSI_MODESENSE_6},
-    {"SCSI_MODESENSE_10",             SCSI_MODESENSE_10},
-    {"USB_Descriptors",               USB_Descriptors},
-    {"Xbox_DMI",                      Xbox_DMI},
-    {"Xbox_PFI",                      Xbox_PFI},
-    {"CD_LeadIn",                     CD_LeadIn},
-    {"MiniDiscType",                  MiniDiscType},
-    {"MiniDiscD5",                    MiniDiscD5},
-    {"MiniDiscUTOC",                  MiniDiscUTOC},
-    {"MiniDiscDTOC",                  MiniDiscDTOC},
-    {"DVD_DiscKey_Decrypted",         DVD_DiscKey_Decrypted},
-    {"DVD_PFI_2ndLayer",              DVD_PFI_2ndLayer},
-    {"Floppy_WriteProtect",           Floppy_WriteProtect},
+    {"kMediaTagCdToc",                        kMediaTagCdToc},
+    {"kMediaTagSessionInfo",                kMediaTagSessionInfo},
+    {"kMediaTagFullToc",                    kMediaTagFullToc},
+    {"kMediaTagCdPma",                        kMediaTagCdPma},
+    {"kMediaTagCdAtip",                       kMediaTagCdAtip},
+    {"kMediaTagCdText",                       kMediaTagCdText},
+    {"kMediaTagCdMcn",                        kMediaTagCdMcn},
+    {"kMediaTagDvdPfi",                       kMediaTagDvdPfi},
+    {"kMediaTagDvdCmi",                       kMediaTagDvdCmi},
+    {"kMediaTagDvdDiscKey",                   kMediaTagDvdDiscKey},
+    {"kMediaTagDvdBca",                       kMediaTagDvdBca},
+    {"kMediaTagDvdDmi",                       kMediaTagDvdDmi},
+    {"kMediaTagDvdMediaIdentifier",           kMediaTagDvdMediaIdentifier},
+    {"kMediaTagDvdMkb",                       kMediaTagDvdMkb},
+    {"kMediaTagDvdRamDds",                    kMediaTagDvdRamDds},
+    {"kMediaTagDvdRamMediumStatus",           kMediaTagDvdRamMediumStatus},
+    {"kMediaTagDvdRamSpareArea",              kMediaTagDvdRamSpareArea},
+    {"kMediaTagDvdrRmd",                      kMediaTagDvdrRmd},
+    {"kMediaTagDvdrPreRecordedInfo",          kMediaTagDvdrPreRecordedInfo},
+    {"kMediaTagDvdrMediaIdentifier",          kMediaTagDvdrMediaIdentifier},
+    {"kMediaTagDvdrPfi",                      kMediaTagDvdrPfi},
+    {"kMediaTagDvdAdip",                      kMediaTagDvdAdip},
+    {"kMediaTagHddvdCpi",                     kMediaTagHddvdCpi},
+    {"kMediaTagHddvdMediumStatus",            kMediaTagHddvdMediumStatus},
+    {"kMediaTagDvddlLayerCapacity",           kMediaTagDvddlLayerCapacity},
+    {"kMediaTagDvddlMiddleZoneAddress",       kMediaTagDvddlMiddleZoneAddress},
+    {"kMediaTagDvddlJumpIntervalSize",        kMediaTagDvddlJumpIntervalSize},
+    {"kMediaTagDvddlManualLayerJumpLba",      kMediaTagDvddlManualLayerJumpLba},
+    {"kMediaTagBlurayDi",                         kMediaTagBlurayDi},
+    {"kMediaTagBlurayBca",                        kMediaTagBlurayBca},
+    {"kMediaTagBlurayDds",                        kMediaTagBlurayDds},
+    {"kMediaTagBlurayCartridgeStatus",            kMediaTagBlurayCartridgeStatus},
+    {"kMediaTagBluraySpareArea",                  kMediaTagBluraySpareArea},
+    {"kMediaTagAacsVolumeIdentifier",         kMediaTagAacsVolumeIdentifier},
+    {"kMediaTagAacsSerialNumber",             kMediaTagAacsSerialNumber},
+    {"kMediaTagAacsMediaIdentifier",          kMediaTagAacsMediaIdentifier},
+    {"kMediaTagAacsMkb",                      kMediaTagAacsMkb},
+    {"kMediaTagAacsDataKeys",                 kMediaTagAacsDataKeys},
+    {"kMediaTagAacsLbaExtents",               kMediaTagAacsLbaExtents},
+    {"kMediaTagCprmMkb",                 kMediaTagCprmMkb},
+    {"kMediaTagHybridRecognizedLayers",       kMediaTagHybridRecognizedLayers},
+    {"kMediaTagMmcWriteProtection",           kMediaTagMmcWriteProtection},
+    {"kMediaTagMmcDiscInformation",           kMediaTagMmcDiscInformation},
+    {"kMediaTagMmcTrackResourcesInformation", kMediaTagMmcTrackResourcesInformation},
+    {"kMediaTagMmcPowResourcesInformation",   kMediaTagMmcPowResourcesInformation},
+    {"kMediaTagScsiInquiry",                  kMediaTagScsiInquiry},
+    {"kMediaTagScsiModePage2A",              kMediaTagScsiModePage2A},
+    {"kMediaTagAtaIdentify",                  kMediaTagAtaIdentify},
+    {"kMediaTagAtapiIdentify",                kMediaTagAtapiIdentify},
+    {"kMediaTagPcmciaCis",                    kMediaTagPcmciaCis},
+    {"kMediaTagSdCid",                        kMediaTagSdCid},
+    {"kMediaTagSdCsd",                        kMediaTagSdCsd},
+    {"kMediaTagSdScr",                        kMediaTagSdScr},
+    {"kMediaTagSdOcr",                        kMediaTagSdOcr},
+    {"kMediaTagMmcCid",                       kMediaTagMmcCid},
+    {"kMediaTagMmcCsd",                       kMediaTagMmcCsd},
+    {"kMediaTagMmcOcr",                       kMediaTagMmcOcr},
+    {"kMediaTagExtendedCsd",               kMediaTagExtendedCsd},
+    {"kMediaTagXboxSecuritySector",           kMediaTagXboxSecuritySector},
+    {"kMediaTagFloppyLeadOut",                kMediaTagFloppyLeadOut},
+    {"kMediaTagDiscControlBlock",              kMediaTagDiscControlBlock},
+    {"kMediaTagCdFirstTrackPregap",           kMediaTagCdFirstTrackPregap},
+    {"kMediaTagCdLeadOut",                    kMediaTagCdLeadOut},
+    {"kMediaTagScsiModeSense6",              kMediaTagScsiModeSense6},
+    {"kMediaTagScsiModeSense10",             kMediaTagScsiModeSense10},
+    {"kMediaTagUsbDescriptors",               kMediaTagUsbDescriptors},
+    {"kMediaTagXboxDmi",                      kMediaTagXboxDmi},
+    {"kMediaTagXboxPfi",                      kMediaTagXboxPfi},
+    {"kMediaTagCdLeadIn",                     kMediaTagCdLeadIn},
+    {"kMediaTagMiniDiscType",                  kMediaTagMiniDiscType},
+    {"kMediaTagMiniDiscD5",                    kMediaTagMiniDiscD5},
+    {"kMediaTagMiniDiscUtoc",                  kMediaTagMiniDiscUtoc},
+    {"kMediaTagMiniDiscDtoc",                  kMediaTagMiniDiscDtoc},
+    {"kMediaTagDvdDiscKeyDecrypted",         kMediaTagDvdDiscKeyDecrypted},
+    {"kMediaTagDvdPfi2ndLayer",              kMediaTagDvdPfi2ndLayer},
+    {"kMediaTagFloppyWriteProtect",           kMediaTagFloppyWriteProtect},
 };
 // clang-format on
 
@@ -137,149 +137,149 @@ static int32_t get_datatype_for_media_tag_type(MediaTagType tag_type)
 {
     switch(tag_type)
     {
-        case CD_TOC:
+        case kMediaTagCdToc:
             return CompactDiscPartialToc;
-        case CD_SessionInfo:
+        case kMediaTagSessionInfo:
             return CompactDiscSessionInfo;
-        case CD_FullTOC:
+        case kMediaTagFullToc:
             return CompactDiscToc;
-        case CD_PMA:
+        case kMediaTagCdPma:
             return CompactDiscPma;
-        case CD_ATIP:
+        case kMediaTagCdAtip:
             return CompactDiscAtip;
-        case CD_TEXT:
+        case kMediaTagCdText:
             return CompactDiscLeadInCdText;
-        case DVD_PFI:
+        case kMediaTagDvdPfi:
             return DvdPfi;
-        case DVD_PFI_2ndLayer:
+        case kMediaTagDvdPfi2ndLayer:
             return DvdPfi2ndLayer;
-        case DVD_CMI:
+        case kMediaTagDvdCmi:
             return DvdLeadInCmi;
-        case DVD_DiscKey:
+        case kMediaTagDvdDiscKey:
             return DvdDiscKey;
-        case DVD_BCA:
+        case kMediaTagDvdBca:
             return DvdBca;
-        case DVD_DMI:
+        case kMediaTagDvdDmi:
             return DvdDmi;
-        case DVD_MediaIdentifier:
+        case kMediaTagDvdMediaIdentifier:
             return DvdMediaIdentifier;
-        case DVD_MKB:
+        case kMediaTagDvdMkb:
             return DvdMediaKeyBlock;
-        case DVDRAM_DDS:
+        case kMediaTagDvdRamDds:
             return DvdRamDds;
-        case DVDRAM_MediumStatus:
+        case kMediaTagDvdRamMediumStatus:
             return DvdRamMediumStatus;
-        case DVDRAM_SpareArea:
+        case kMediaTagDvdRamSpareArea:
             return DvdRamSpareArea;
-        case DVDR_RMD:
+        case kMediaTagDvdrRmd:
             return DvdRRmd;
-        case DVDR_PreRecordedInfo:
+        case kMediaTagDvdrPreRecordedInfo:
             return DvdRPrerecordedInfo;
-        case DVDR_MediaIdentifier:
+        case kMediaTagDvdrMediaIdentifier:
             return DvdRMediaIdentifier;
-        case DVDR_PFI:
+        case kMediaTagDvdrPfi:
             return DvdRPfi;
-        case DVD_ADIP:
+        case kMediaTagDvdAdip:
             return DvdAdip;
-        case HDDVD_CPI:
+        case kMediaTagHddvdCpi:
             return HdDvdCpi;
-        case HDDVD_MediumStatus:
+        case kMediaTagHddvdMediumStatus:
             return HdDvdMediumStatus;
-        case DVDDL_LayerCapacity:
+        case kMediaTagDvddlLayerCapacity:
             return DvdDlLayerCapacity;
-        case DVDDL_MiddleZoneAddress:
+        case kMediaTagDvddlMiddleZoneAddress:
             return DvdDlMiddleZoneAddress;
-        case DVDDL_JumpIntervalSize:
+        case kMediaTagDvddlJumpIntervalSize:
             return DvdDlJumpIntervalSize;
-        case DVDDL_ManualLayerJumpLBA:
+        case kMediaTagDvddlManualLayerJumpLba:
             return DvdDlManualLayerJumpLba;
-        case BD_DI:
+        case kMediaTagBlurayDi:
             return BlurayDi;
-        case BD_BCA:
+        case kMediaTagBlurayBca:
             return BlurayBca;
-        case BD_DDS:
+        case kMediaTagBlurayDds:
             return BlurayDds;
-        case BD_CartridgeStatus:
+        case kMediaTagBlurayCartridgeStatus:
             return BlurayCartridgeStatus;
-        case BD_SpareArea:
+        case kMediaTagBluraySpareArea:
             return BluraySpareArea;
-        case AACS_VolumeIdentifier:
+        case kMediaTagAacsVolumeIdentifier:
             return AacsVolumeIdentifier;
-        case AACS_SerialNumber:
+        case kMediaTagAacsSerialNumber:
             return AacsSerialNumber;
-        case AACS_MediaIdentifier:
+        case kMediaTagAacsMediaIdentifier:
             return AacsMediaIdentifier;
-        case AACS_MKB:
+        case kMediaTagAacsMkb:
             return AacsMediaKeyBlock;
-        case AACS_DataKeys:
+        case kMediaTagAacsDataKeys:
             return AacsDataKeys;
-        case AACS_LBAExtents:
+        case kMediaTagAacsLbaExtents:
             return AacsLbaExtents;
-        case AACS_CPRM_MKB:
+        case kMediaTagCprmMkb:
             return CprmMediaKeyBlock;
-        case Hybrid_RecognizedLayers:
+        case kMediaTagHybridRecognizedLayers:
             return HybridRecognizedLayers;
-        case MMC_WriteProtection:
+        case kMediaTagMmcWriteProtection:
             return ScsiMmcWriteProtection;
-        case MMC_DiscInformation:
+        case kMediaTagMmcDiscInformation:
             return ScsiMmcDiscInformation;
-        case MMC_TrackResourcesInformation:
+        case kMediaTagMmcTrackResourcesInformation:
             return ScsiMmcTrackResourcesInformation;
-        case MMC_POWResourcesInformation:
+        case kMediaTagMmcPowResourcesInformation:
             return ScsiMmcPowResourcesInformation;
-        case SCSI_INQUIRY:
+        case kMediaTagScsiInquiry:
             return ScsiInquiry;
-        case SCSI_MODEPAGE_2A:
+        case kMediaTagScsiModePage2A:
             return ScsiModePage2A;
-        case ATA_IDENTIFY:
+        case kMediaTagAtaIdentify:
             return AtaIdentify;
-        case ATAPI_IDENTIFY:
+        case kMediaTagAtapiIdentify:
             return AtapiIdentify;
-        case PCMCIA_CIS:
+        case kMediaTagPcmciaCis:
             return PcmciaCis;
-        case SD_CID:
+        case kMediaTagSdCid:
             return SecureDigitalCid;
-        case SD_CSD:
+        case kMediaTagSdCsd:
             return SecureDigitalCsd;
-        case SD_SCR:
+        case kMediaTagSdScr:
             return SecureDigitalScr;
-        case SD_OCR:
+        case kMediaTagSdOcr:
             return SecureDigitalOcr;
-        case MMC_CID:
+        case kMediaTagMmcCid:
             return MultiMediaCardCid;
-        case MMC_CSD:
+        case kMediaTagMmcCsd:
             return MultiMediaCardCsd;
-        case MMC_OCR:
+        case kMediaTagMmcOcr:
             return MultiMediaCardOcr;
-        case MMC_ExtendedCSD:
+        case kMediaTagExtendedCsd:
             return MultiMediaCardExtendedCsd;
-        case Xbox_SecuritySector:
+        case kMediaTagXboxSecuritySector:
             return XboxSecuritySector;
-        case Floppy_LeadOut:
+        case kMediaTagFloppyLeadOut:
             return FloppyLeadOut;
-        case DiscControlBlock:
+        case kMediaTagDiscControlBlock:
             return DvdDiscControlBlock;
-        case CD_FirstTrackPregap:
+        case kMediaTagCdFirstTrackPregap:
             return CompactDiscFirstTrackPregap;
-        case CD_LeadOut:
+        case kMediaTagCdLeadOut:
             return CompactDiscLeadOut;
-        case SCSI_MODESENSE_6:
+        case kMediaTagScsiModeSense6:
             return ScsiModeSense6;
-        case SCSI_MODESENSE_10:
+        case kMediaTagScsiModeSense10:
             return ScsiModeSense10;
-        case USB_Descriptors:
+        case kMediaTagUsbDescriptors:
             return UsbDescriptors;
-        case Xbox_DMI:
+        case kMediaTagXboxDmi:
             return XboxDmi;
-        case Xbox_PFI:
+        case kMediaTagXboxPfi:
             return XboxPfi;
-        case CD_MCN:
+        case kMediaTagCdMcn:
             return CompactDiscMediaCatalogueNumber;
-        case CD_LeadIn:
+        case kMediaTagCdLeadIn:
             return CompactDiscLeadIn;
-        case DVD_DiscKey_Decrypted:
+        case kMediaTagDvdDiscKeyDecrypted:
             return DvdDiscKeyDecrypted;
-        case Floppy_WriteProtect:
+        case kMediaTagFloppyWriteProtect:
             return FloppyWriteProtectStatus;
         default:
             return -1;
