@@ -1543,49 +1543,49 @@ const char *sector_tag_type_to_string(int32_t type)
 {
     switch(type)
     {
-        case AppleSonyTagAaru:
+        case kSectorTagAppleSony:
             return "Apple Sony Tag";
-        case CdSectorSync:
+        case kSectorTagCdSync:
             return "CD Sector Sync";
-        case CdSectorHeader:
+        case kSectorTagCdHeader:
             return "CD Sector Header";
-        case CdSectorSubHeader:
+        case kSectorTagCdSubHeader:
             return "CD Sector Sub-Header";
-        case CdSectorEdc:
+        case kSectorTagCdEdc:
             return "CD Sector EDC";
-        case CdSectorEccP:
+        case kSectorTagCdEccP:
             return "CD Sector ECC P";
-        case CdSectorEccQ:
+        case kSectorTagCdEccQ:
             return "CD Sector ECC Q";
-        case CdSectorEcc:
+        case kSectorTagCdEcc:
             return "CD Sector ECC (P+Q)";
-        case CdSectorSubchannelAaru:
+        case kSectorTagCdSubchannel:
             return "CD Sector Subchannel";
-        case CdTrackIsrc:
+        case kSectorTagCdTrackIsrc:
             return "CD Track ISRC";
-        case CdTrackText:
+        case kSectorTagCdTrackText:
             return "CD Track Text";
-        case CdTrackFlags:
+        case kSectorTagCdTrackFlags:
             return "CD Track Flags";
-        case DvdCmi:
+        case kSectorTagDvdCmi:
             return "DVD Copyright Management Information";
-        case FloppyAddressMark:
+        case kSectorTagFloppyAddressMark:
             return "Floppy Address Mark";
-        case DvdSectorTitleKey:
+        case kSectorTagDvdTitleKey:
             return "DVD Sector Title Key";
-        case DvdTitleKeyDecrypted:
+        case kSectorTagDvdTitleKeyDecrypted:
             return "DVD Title Key (Decrypted)";
-        case DvdSectorInformation:
+        case kSectorTagDvdSectorInformation:
             return "DVD Sector Information";
-        case DvdSectorNumber:
+        case kSectorTagDvdSectorNumber:
             return "DVD Sector Number";
-        case DvdSectorIedAaru:
+        case kSectorTagDvdSectorIed:
             return "DVD Sector IED";
-        case DvdSectorEdcAaru:
+        case kSectorTagDvdSectorEdc:
             return "DVD Sector EDC";
-        case AppleProfileTagAaru:
+        case kSectorTagAppleProfile:
             return "Apple Profile Tag";
-        case PriamDataTowerTagAaru:
+        case kSectorTagPriamDataTower:
             return "Priam DataTower Tag";
         default:
             return "Unknown Sector Tag";

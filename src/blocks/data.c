@@ -343,8 +343,8 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
             else
                 ctx->sector_prefix = data;
 
-            ctx->readableSectorTags[CdSectorSync]   = true;
-            ctx->readableSectorTags[CdSectorHeader] = true;
+            ctx->readableSectorTags[kSectorTagCdSync]   = true;
+            ctx->readableSectorTags[kSectorTagCdHeader] = true;
 
             break;
         case CdSectorSuffix:
@@ -354,49 +354,49 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
             else
                 ctx->sector_suffix = data;
 
-            ctx->readableSectorTags[CdSectorSubHeader] = true;
-            ctx->readableSectorTags[CdSectorEcc]       = true;
-            ctx->readableSectorTags[CdSectorEccP]      = true;
-            ctx->readableSectorTags[CdSectorEccQ]      = true;
-            ctx->readableSectorTags[CdSectorEdc]       = true;
+            ctx->readableSectorTags[kSectorTagCdSubHeader] = true;
+            ctx->readableSectorTags[kSectorTagCdEcc]       = true;
+            ctx->readableSectorTags[kSectorTagCdEccP]      = true;
+            ctx->readableSectorTags[kSectorTagCdEccQ]      = true;
+            ctx->readableSectorTags[kSectorTagCdEdc]       = true;
             break;
         case CdSectorSubchannel:
             ctx->sector_subchannel                          = data;
-            ctx->readableSectorTags[CdSectorSubchannelAaru] = true;
+            ctx->readableSectorTags[kSectorTagCdSubchannel] = true;
             break;
         case AppleProfileTag:
-            ctx->sector_subchannel                       = data;
-            ctx->readableSectorTags[AppleProfileTagAaru] = true;
+            ctx->sector_subchannel                          = data;
+            ctx->readableSectorTags[kSectorTagAppleProfile] = true;
             break;
         case AppleSonyTag:
-            ctx->sector_subchannel                         = data;
-            ctx->readableSectorTags[PriamDataTowerTagAaru] = true;
+            ctx->sector_subchannel                            = data;
+            ctx->readableSectorTags[kSectorTagPriamDataTower] = true;
             break;
         case PriamDataTowerTag:
-            ctx->sector_subchannel                    = data;
-            ctx->readableSectorTags[AppleSonyTagAaru] = true;
+            ctx->sector_subchannel                       = data;
+            ctx->readableSectorTags[kSectorTagAppleSony] = true;
             break;
         case CompactDiscMode2Subheader:
             ctx->mode2_subheaders = data;
             break;
         case DvdSectorId:
-            ctx->sector_id                                = data;
-            ctx->readableSectorTags[DvdSectorNumber]      = true;
-            ctx->readableSectorTags[DvdSectorInformation] = true;
+            ctx->sector_id                                          = data;
+            ctx->readableSectorTags[kSectorTagDvdSectorNumber]      = true;
+            ctx->readableSectorTags[kSectorTagDvdSectorInformation] = true;
             break;
         case DvdSectorIed:
-            ctx->sector_ied                           = data;
-            ctx->readableSectorTags[DvdSectorIedAaru] = true;
+            ctx->sector_ied                                 = data;
+            ctx->readableSectorTags[kSectorTagDvdSectorIed] = true;
             break;
         case DvdSectorCprMai:
-            ctx->sector_cpr_mai             = data;
-            ctx->readableSectorTags[DvdCmi] = true;
+            ctx->sector_cpr_mai                       = data;
+            ctx->readableSectorTags[kSectorTagDvdCmi] = true;
             break;
         case DvdSectorEdc:
-            ctx->sector_edc                           = data;
-            ctx->readableSectorTags[DvdSectorEdcAaru] = true;
+            ctx->sector_edc                                 = data;
+            ctx->readableSectorTags[kSectorTagDvdSectorEdc] = true;
             break;
-        case DvdTitleKeyDecrypted:
+        case kSectorTagDvdTitleKeyDecrypted:
             ctx->sector_decrypted_title_key                     = data;
             ctx->readableSectorTags[DvdSectorTitleKeyDecrypted] = true;
             break;

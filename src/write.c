@@ -2173,7 +2173,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
 
     switch(tag)
     {
-        case CdTrackFlags:
+        case kSectorTagCdTrackFlags:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
@@ -2199,7 +2199,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
 
             FATAL("Track not found");
             return AARUF_ERROR_TRACK_NOT_FOUND;
-        case CdTrackIsrc:
+        case kSectorTagCdTrackIsrc:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
@@ -2225,7 +2225,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
 
             FATAL("Track not found");
             return AARUF_ERROR_TRACK_NOT_FOUND;
-        case CdSectorSubchannelAaru:
+        case kSectorTagCdSubchannel:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
@@ -2254,7 +2254,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             ctx->dirty_sector_subchannel_block = true;  // Mark subchannel block as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case DvdCmi:
+        case kSectorTagDvdCmi:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
@@ -2283,7 +2283,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             ctx->dirty_dvd_long_sector_blocks = true;  // Mark DVD long sector blocks as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case DvdSectorInformation:
+        case kSectorTagDvdSectorInformation:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
@@ -2311,7 +2311,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             memcpy(ctx->sector_id + corrected_sector_address * 4, data, 1);
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case DvdSectorNumber:
+        case kSectorTagDvdSectorNumber:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
@@ -2340,7 +2340,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             ctx->dirty_dvd_long_sector_blocks = true;  // Mark DVD long sector blocks as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case DvdSectorIedAaru:
+        case kSectorTagDvdSectorIed:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
@@ -2369,7 +2369,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             ctx->dirty_dvd_long_sector_blocks = true;  // Mark DVD long sector blocks as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case DvdSectorEdcAaru:
+        case kSectorTagDvdSectorEdc:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
@@ -2398,7 +2398,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             ctx->dirty_dvd_long_sector_blocks = true;  // Mark DVD long sector blocks as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case DvdTitleKeyDecrypted:
+        case kSectorTagDvdTitleKeyDecrypted:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
@@ -2427,7 +2427,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             ctx->dirty_dvd_title_key_decrypted_block = true;  // Mark title key block as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case AppleSonyTagAaru:
+        case kSectorTagAppleSony:
             if(ctx->image_info.MetadataMediaType != BlockMedia)
             {
                 FATAL("Invalid media type for tag");
@@ -2456,7 +2456,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             ctx->dirty_sector_subchannel_block = true;  // Mark subchannel block as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case AppleProfileTagAaru:
+        case kSectorTagAppleProfile:
             if(ctx->image_info.MetadataMediaType != BlockMedia)
             {
                 FATAL("Invalid media type for tag");
@@ -2485,7 +2485,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             ctx->dirty_sector_subchannel_block = true;  // Mark subchannel block as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case PriamDataTowerTagAaru:
+        case kSectorTagPriamDataTower:
             if(ctx->image_info.MetadataMediaType != BlockMedia)
             {
                 FATAL("Invalid media type for tag");

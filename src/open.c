@@ -332,7 +332,6 @@ AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath, const bool resume_m
         return NULL;
     }
 
-
     // Check feature compatibility for V2+ images
     if(ctx->header.imageMajorVersion >= AARUF_VERSION_V2)
     {
@@ -354,8 +353,7 @@ AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath, const bool resume_m
         {
             if(resume_mode)
             {
-                FATAL("Image has unsupported read-only compatible features: 0x%016" PRIX64
-                      ", cannot open for writing",
+                FATAL("Image has unsupported read-only compatible features: 0x%016" PRIX64 ", cannot open for writing",
                       unknown_rocompat);
                 cleanup_open_failure(ctx);
                 errno = AARUF_ERROR_INCOMPATIBLE_FEATURES;
@@ -548,17 +546,17 @@ AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath, const bool resume_m
                 {
                     case CdSectorPrefix:
                     case CdSectorPrefixCorrected:
-                        ctx->readableSectorTags[CdSectorSync]   = true;
-                        ctx->readableSectorTags[CdSectorHeader] = true;
+                        ctx->readableSectorTags[kSectorTagCdSync]   = true;
+                        ctx->readableSectorTags[kSectorTagCdHeader] = true;
 
                         break;
                     case CdSectorSuffix:
                     case CdSectorSuffixCorrected:
-                        ctx->readableSectorTags[CdSectorSubHeader] = true;
-                        ctx->readableSectorTags[CdSectorEcc]       = true;
-                        ctx->readableSectorTags[CdSectorEccP]      = true;
-                        ctx->readableSectorTags[CdSectorEccQ]      = true;
-                        ctx->readableSectorTags[CdSectorEdc]       = true;
+                        ctx->readableSectorTags[kSectorTagCdSubHeader] = true;
+                        ctx->readableSectorTags[kSectorTagCdEcc]       = true;
+                        ctx->readableSectorTags[kSectorTagCdEccP]      = true;
+                        ctx->readableSectorTags[kSectorTagCdEccQ]      = true;
+                        ctx->readableSectorTags[kSectorTagCdEdc]       = true;
                         break;
                     default:
                         break;

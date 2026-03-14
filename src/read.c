@@ -1535,7 +1535,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
 
     switch(tag)
     {
-        case CdTrackFlags:
+        case kSectorTagCdTrackFlags:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
@@ -1561,7 +1561,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
 
             FATAL("Track not found");
             return AARUF_ERROR_TRACK_NOT_FOUND;
-        case CdTrackIsrc:
+        case kSectorTagCdTrackIsrc:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
@@ -1587,7 +1587,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
 
             FATAL("Track not found");
             return AARUF_ERROR_TRACK_NOT_FOUND;
-        case CdSectorSubchannelAaru:
+        case kSectorTagCdSubchannel:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
@@ -1613,7 +1613,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
             memcpy(buffer, ctx->sector_subchannel + corrected_sector_address * 96, 96);
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case DvdCmi:
+        case kSectorTagDvdCmi:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
@@ -1639,7 +1639,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
             memcpy(buffer, ctx->sector_cpr_mai + corrected_sector_address * 6, 1);
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case DvdSectorInformation:
+        case kSectorTagDvdSectorInformation:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
@@ -1665,7 +1665,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
             memcpy(buffer, ctx->sector_id + corrected_sector_address * 4, 1);
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case DvdSectorNumber:
+        case kSectorTagDvdSectorNumber:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
@@ -1691,7 +1691,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
             memcpy(buffer, ctx->sector_id + corrected_sector_address * 4 + 1, 3);
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case DvdSectorIedAaru:
+        case kSectorTagDvdSectorIed:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
@@ -1717,7 +1717,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
             memcpy(buffer, ctx->sector_ied + corrected_sector_address * 2, 2);
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case DvdSectorEdcAaru:
+        case kSectorTagDvdSectorEdc:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
@@ -1743,7 +1743,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
             memcpy(buffer, ctx->sector_edc + corrected_sector_address * 4, 4);
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case DvdTitleKeyDecrypted:
+        case kSectorTagDvdTitleKeyDecrypted:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
@@ -1769,7 +1769,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
             memcpy(buffer, ctx->sector_decrypted_title_key + corrected_sector_address * 5, 5);
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case AppleSonyTagAaru:
+        case kSectorTagAppleSony:
             if(ctx->image_info.MetadataMediaType != BlockMedia)
             {
                 FATAL("Invalid media type for tag");
@@ -1795,7 +1795,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
             memcpy(buffer, ctx->sector_subchannel + corrected_sector_address * 12, 12);
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case AppleProfileTagAaru:
+        case kSectorTagAppleProfile:
             if(ctx->image_info.MetadataMediaType != BlockMedia)
             {
                 FATAL("Invalid media type for tag");
@@ -1821,7 +1821,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
             memcpy(buffer, ctx->sector_subchannel + corrected_sector_address * 20, 20);
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
-        case PriamDataTowerTagAaru:
+        case kSectorTagPriamDataTower:
             if(ctx->image_info.MetadataMediaType != BlockMedia)
             {
                 FATAL("Invalid media type for tag");

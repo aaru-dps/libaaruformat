@@ -936,7 +936,7 @@ TEST_F(CreateImageFixture, create_subchannel_uncompressed_image)
         for(size_t i = 0; i < 96; ++i) { subchannel_data[i] = static_cast<uint8_t>((sector * 96 + i) & 0xFF); }
 
         const int32_t subchannel_result =
-            aaruf_write_sector_tag(context, sector, false, subchannel_data, 96, CdSectorSubchannelAaru);
+            aaruf_write_sector_tag(context, sector, false, subchannel_data, 96, kSectorTagCdSubchannel);
         ASSERT_EQ(subchannel_result, AARUF_STATUS_OK) << "Failed to write subchannel for sector " << sector;
 
         // Update CRC64 with the subchannel data we just wrote
@@ -1002,7 +1002,7 @@ TEST_F(CreateImageFixture, create_subchannel_uncompressed_image)
         uint32_t subchannel_length = sizeof(subchannel_buffer);
 
         const int32_t subchannel_read_result =
-            aaruf_read_sector_tag(context, i, false, subchannel_buffer, &subchannel_length, CdSectorSubchannelAaru);
+            aaruf_read_sector_tag(context, i, false, subchannel_buffer, &subchannel_length, kSectorTagCdSubchannel);
         EXPECT_EQ(subchannel_read_result, AARUF_STATUS_OK) << "Failed to read subchannel for sector " << i;
         EXPECT_EQ(subchannel_length, 96U) << "Unexpected subchannel length for sector " << i;
         aaruf_crc64_update(subchannel_read_ctx, subchannel_buffer, 96);
@@ -1099,7 +1099,7 @@ TEST_F(CreateImageFixture, create_subchannel_compressed_image)
         for(size_t i = 0; i < 96; ++i) { subchannel_data[i] = static_cast<uint8_t>((sector * 96 + i) & 0xFF); }
 
         const int32_t subchannel_result =
-            aaruf_write_sector_tag(context, sector, false, subchannel_data, 96, CdSectorSubchannelAaru);
+            aaruf_write_sector_tag(context, sector, false, subchannel_data, 96, kSectorTagCdSubchannel);
         ASSERT_EQ(subchannel_result, AARUF_STATUS_OK) << "Failed to write subchannel for sector " << sector;
 
         // Update CRC64 with the subchannel data we just wrote
@@ -1165,7 +1165,7 @@ TEST_F(CreateImageFixture, create_subchannel_compressed_image)
         uint32_t subchannel_length = sizeof(subchannel_buffer);
 
         const int32_t subchannel_read_result =
-            aaruf_read_sector_tag(context, i, false, subchannel_buffer, &subchannel_length, CdSectorSubchannelAaru);
+            aaruf_read_sector_tag(context, i, false, subchannel_buffer, &subchannel_length, kSectorTagCdSubchannel);
         EXPECT_EQ(subchannel_read_result, AARUF_STATUS_OK) << "Failed to read subchannel for sector " << i;
         EXPECT_EQ(subchannel_length, 96U) << "Unexpected subchannel length for sector " << i;
         aaruf_crc64_update(subchannel_read_ctx, subchannel_buffer, 96);

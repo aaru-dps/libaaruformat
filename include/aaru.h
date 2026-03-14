@@ -955,29 +955,29 @@ typedef struct ImageInfo  // NOLINT
 // NOLINTBEGIN(readability-identifier-naming)
 typedef enum
 {
-    AppleSonyTagAaru       = 0,   ///< Apple's Sony sector tags, 12 bytes (address prolog + checksum)
-    CdSectorSync           = 1,   ///< 12-byte CD sync pattern (00 FF*10 00)
-    CdSectorHeader         = 2,   ///< 4-byte CD header (minute, second, frame, mode)
-    CdSectorSubHeader      = 3,   ///< Mode 2 Form subheader (8 bytes: copy, submode, channel)
-    CdSectorEdc            = 4,   ///< 32-bit CRC (EDC)
-    CdSectorEccP           = 5,   ///< 172 bytes Reed-Solomon ECC (P)
-    CdSectorEccQ           = 6,   ///< 104 bytes Reed-Solomon ECC (Q)
-    CdSectorEcc            = 7,   ///< Combined P+Q ECC (276 bytes)
-    CdSectorSubchannelAaru = 8,   ///< 96 raw subchannel bytes (P-W)
-    CdTrackIsrc            = 9,   ///< Track ISRC (12 ASCII chars, no terminator)
-    CdTrackText            = 10,  ///< Track text (CD-Text fragment, 13 bytes)
-    CdTrackFlags           = 11,  ///< Track flags (audio/data, copy permitted, pre-emphasis)
-    DvdCmi                 = 12,  ///< DVD Copyright Management Information (CSS)
-    FloppyAddressMark      = 13,  ///< Raw address mark & sync preamble (format dependent)
-    DvdSectorTitleKey      = 14,  ///< DVD sector title key, 5 bytes
-    DvdTitleKeyDecrypted   = 15,  ///< Decrypted DVD sector title key, 5 bytes
-    DvdSectorInformation   = 16,  ///< DVD sector information, 1 bytes
-    DvdSectorNumber        = 17,  ///< DVD sector number, 3 bytes
-    DvdSectorIedAaru       = 18,  ///< DVD sector ID error detection, 2 bytes
-    DvdSectorEdcAaru       = 19,  ///< DVD sector EDC, 4 bytes
-    AppleProfileTagAaru    = 20,  ///< Apple's Profile sector tags, 20 bytes
-    PriamDataTowerTagAaru  = 21,  ///< Priam DataTower sector tags, 24 bytes
-    MaxSectorTag           = PriamDataTowerTagAaru
+    kSectorTagAppleSony            = 0,   ///< Apple's Sony sector tags, 12 bytes (address prolog + checksum)
+    kSectorTagCdSync               = 1,   ///< 12-byte CD sync pattern (00 FF*10 00)
+    kSectorTagCdHeader             = 2,   ///< 4-byte CD header (minute, second, frame, mode)
+    kSectorTagCdSubHeader          = 3,   ///< Mode 2 Form subheader (8 bytes: copy, submode, channel)
+    kSectorTagCdEdc                = 4,   ///< 32-bit CRC (EDC)
+    kSectorTagCdEccP               = 5,   ///< 172 bytes Reed-Solomon ECC (P)
+    kSectorTagCdEccQ               = 6,   ///< 104 bytes Reed-Solomon ECC (Q)
+    kSectorTagCdEcc                = 7,   ///< Combined P+Q ECC (276 bytes)
+    kSectorTagCdSubchannel         = 8,   ///< 96 raw subchannel bytes (P-W)
+    kSectorTagCdTrackIsrc          = 9,   ///< Track ISRC (12 ASCII chars, no terminator)
+    kSectorTagCdTrackText          = 10,  ///< Track text (CD-Text fragment, 13 bytes)
+    kSectorTagCdTrackFlags         = 11,  ///< Track flags (audio/data, copy permitted, pre-emphasis)
+    kSectorTagDvdCmi               = 12,  ///< DVD Copyright Management Information (CSS)
+    kSectorTagFloppyAddressMark    = 13,  ///< Raw address mark & sync preamble (format dependent)
+    kSectorTagDvdTitleKey          = 14,  ///< DVD sector title key, 5 bytes
+    kSectorTagDvdTitleKeyDecrypted = 15,  ///< Decrypted DVD sector title key, 5 bytes
+    kSectorTagDvdSectorInformation = 16,  ///< DVD sector information, 1 bytes
+    kSectorTagDvdSectorNumber      = 17,  ///< DVD sector number, 3 bytes
+    kSectorTagDvdSectorIed         = 18,  ///< DVD sector ID error detection, 2 bytes
+    kSectorTagDvdSectorEdc         = 19,  ///< DVD sector EDC, 4 bytes
+    kSectorTagAppleProfile         = 20,  ///< Apple's Profile sector tags, 20 bytes
+    kSectorTagPriamDataTower       = 21,  ///< Priam DataTower sector tags, 24 bytes
+    MaxSectorTag                   = kSectorTagPriamDataTower
 } SectorTagType;
 
 /** @} */ /* end of SectorTags group */
@@ -1072,12 +1072,12 @@ typedef enum
     DVD_DiscKey_Decrypted = 73,  ///< Decrypted DVD disc key,
     DVD_PFI_2ndLayer      = 74,  ///< DVD Physical Format Information for the second layer
     Floppy_WriteProtect   = 75,  ///< Write protection status of the floppy disk
-    WiiUDiscKey   = 76,  ///< Nintendo Wii U disc key (16 bytes, from non-readable disc area)
-    PS3_DiscKey            = 77,  ///< PS3 derived disc key (16 bytes)
-    PS3_Data1                 = 78,  ///< PS3 data1 key (16 bytes, from disc)
-    PS3_Data2                 = 79,  ///< PS3 data2 key (16 bytes, from disc)
-    PS3_PIC                = 80,  ///< PS3 PIC data (115 bytes, from disc lead-in)
-    PS3_EncryptionMap      = 81,  ///< PS3 encryption region map (serialized from sector 0)
+    WiiUDiscKey           = 76,  ///< Nintendo Wii U disc key (16 bytes, from non-readable disc area)
+    PS3_DiscKey           = 77,  ///< PS3 derived disc key (16 bytes)
+    PS3_Data1             = 78,  ///< PS3 data1 key (16 bytes, from disc)
+    PS3_Data2             = 79,  ///< PS3 data2 key (16 bytes, from disc)
+    PS3_PIC               = 80,  ///< PS3 PIC data (115 bytes, from disc lead-in)
+    PS3_EncryptionMap     = 81,  ///< PS3 encryption region map (serialized from sector 0)
     MaxMediaTag           = PS3_EncryptionMap
 } MediaTagType;
 
