@@ -87,6 +87,10 @@ add_executable(tests_run
     sha1.cpp
     open_image.cpp
     create_image.cpp
+    ps3_aes.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/aes128.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_crypto.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_encryption_map.c
 )
 
 # Set up include directories using modern target-specific approach

@@ -236,6 +236,9 @@ add_library(aaruformat SHARED
             include/aaruformat/structs/tape.h
             src/blocks/tape.c
             src/blocks/flux.c)
+            src/blocks/flux.c
+            src/ps3/aes128.c
+            src/ps3/aes128.h
 
 # Set up include directories for the target
 target_include_directories(aaruformat
