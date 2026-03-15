@@ -235,10 +235,13 @@ add_library(aaruformat SHARED
             src/dump.c
             include/aaruformat/structs/tape.h
             src/blocks/tape.c
-            src/blocks/flux.c)
             src/blocks/flux.c
             src/ps3/aes128.c
             src/ps3/aes128.h
+            src/ps3/ps3_crypto.c
+            src/ps3/ps3_crypto.h
+            src/ps3/ps3_encryption_map.c
+            src/ps3/ps3_encryption_map.h)
 
 # Set up include directories for the target
 target_include_directories(aaruformat
