@@ -657,7 +657,7 @@ TEST_F(CreateImageFixture, create_audio_image)
     TrackEntry track;
     memset(&track, 0, sizeof(TrackEntry));
     track.sequence = 1;                            // Track 1
-    track.type     = Audio;                        // Audio track type (0)
+    track.type     = kTrackTypeAudio;                        // Audio track type (0)
     track.start    = 0;                            // Start at sector 0
     track.end      = (audio_size * 3 / 2352) - 1;  // End at last sector (inclusive)
     track.pregap   = 0;                            // No pregap
@@ -894,7 +894,7 @@ TEST_F(CreateImageFixture, create_subchannel_uncompressed_image)
     TrackEntry track;
     memset(&track, 0, sizeof(TrackEntry));
     track.sequence = 1;                            // Track 1
-    track.type     = Audio;                        // Audio track type (0)
+    track.type     = kTrackTypeAudio;                        // Audio track type (0)
     track.start    = 0;                            // Start at sector 0
     track.end      = (audio_size * 3 / 2352) - 1;  // End at last sector (inclusive)
     track.pregap   = 0;                            // No pregap
@@ -1057,7 +1057,7 @@ TEST_F(CreateImageFixture, create_subchannel_compressed_image)
     TrackEntry track;
     memset(&track, 0, sizeof(TrackEntry));
     track.sequence = 1;                            // Track 1
-    track.type     = Audio;                        // Audio track type (0)
+    track.type     = kTrackTypeAudio;                        // Audio track type (0)
     track.start    = 0;                            // Start at sector 0
     track.end      = (audio_size * 3 / 2352) - 1;  // End at last sector (inclusive)
     track.pregap   = 0;                            // No pregap

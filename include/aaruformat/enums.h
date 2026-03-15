@@ -206,12 +206,12 @@ typedef enum
  */
 typedef enum
 {
-    Audio           = 0,  ///< Audio track.
-    Data            = 1,  ///< Generic data track (not further specified).
-    CdMode1         = 2,  ///< Compact Disc Mode 1 data track.
-    CdMode2Formless = 3,  ///< Compact Disc Mode 2 (formless) data track.
-    CdMode2Form1    = 4,  ///< Compact Disc Mode 2 Form 1 data track.
-    CdMode2Form2    = 5   ///< Compact Disc Mode 2 Form 2 data track.
+    kTrackTypeAudio           = 0,  ///< Audio track.
+    kTrackTypeData            = 1,  ///< Generic data track (not further specified).
+    kTrackTypeCdMode1         = 2,  ///< Compact Disc Mode 1 data track.
+    kTrackTypeCdMode2Formless = 3,  ///< Compact Disc Mode 2 (formless) data track.
+    kTrackTypeCdMode2Form1    = 4,  ///< Compact Disc Mode 2 Form 1 data track.
+    kTrackTypeCdMode2Form2    = 5   ///< Compact Disc Mode 2 Form 2 data track.
 } TrackType;
 
 /**

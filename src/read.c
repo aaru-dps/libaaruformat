@@ -1041,13 +1041,13 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
 
             switch(trk.type)
             {
-                case Audio:
-                case Data:
+                case kTrackTypeAudio:
+                case kTrackTypeData:
                     memcpy(data, bare_data, bare_length);
                     *length = bare_length;
                     free(bare_data);
                     return res;
-                case CdMode1:
+                case kTrackTypeCdMode1:
                     memcpy(data + 16, bare_data, 2048);
 
                     if(ctx->sector_prefix_ddt2 != NULL)
@@ -1140,9 +1140,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                     *length = 2352;
                     free(bare_data);
                     return res;
-                case CdMode2Formless:
-                case CdMode2Form1:
-                case CdMode2Form2:
+                case kTrackTypeCdMode2Formless:
+                case kTrackTypeCdMode2Form1:
+                case kTrackTypeCdMode2Form2:
                     if(ctx->sector_prefix_ddt2 != NULL)
                     {
                         const uint64_t prefix_ddt_entry = ctx->sector_prefix_ddt2[corrected_sector_address];
@@ -1200,14 +1200,14 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                         if(suffix_status == SectorStatusMode2Form1Ok)
                         {
                             memcpy(data + 24, bare_data, 2048);
-                            aaruf_ecc_cd_reconstruct(ctx->ecc_cd_context, data, CdMode2Form1);
+                            aaruf_ecc_cd_reconstruct(ctx->ecc_cd_context, data, kTrackTypeCdMode2Form1);
                         }
                         else if(suffix_status == SectorStatusMode2Form2Ok ||
                                 suffix_status == SectorStatusMode2Form2NoCrc)
                         {
                             memcpy(data + 24, bare_data, 2324);
                             if(suffix_status == SectorStatusMode2Form2Ok)
-                                aaruf_ecc_cd_reconstruct(ctx->ecc_cd_context, data, CdMode2Form2);
+                                aaruf_ecc_cd_reconstruct(ctx->ecc_cd_context, data, kTrackTypeCdMode2Form2);
                         }
                         else if(suffix_status == SectorStatusNotDumped)
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
@@ -1222,14 +1222,14 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                         if((ctx->sector_suffix_ddt[corrected_sector_address] & CD_XFIX_MASK) == Mode2Form1Ok)
                         {
                             memcpy(data + 24, bare_data, 2048);
-                            aaruf_ecc_cd_reconstruct(ctx->ecc_cd_context, data, CdMode2Form1);
+                            aaruf_ecc_cd_reconstruct(ctx->ecc_cd_context, data, kTrackTypeCdMode2Form1);
                         }
                         else if((ctx->sector_suffix_ddt[corrected_sector_address] & CD_XFIX_MASK) == Mode2Form2Ok ||
                                 (ctx->sector_suffix_ddt[corrected_sector_address] & CD_XFIX_MASK) == Mode2Form2NoCrc)
                         {
                             memcpy(data + 24, bare_data, 2324);
                             if((ctx->sector_suffix_ddt[corrected_sector_address] & CD_XFIX_MASK) == Mode2Form2Ok)
-                                aaruf_ecc_cd_reconstruct(ctx->ecc_cd_context, data, CdMode2Form2);
+                                aaruf_ecc_cd_reconstruct(ctx->ecc_cd_context, data, kTrackTypeCdMode2Form2);
                         }
                         else if((ctx->sector_suffix_ddt[corrected_sector_address] & CD_XFIX_MASK) == NotDumped)
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;

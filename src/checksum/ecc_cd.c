@@ -438,15 +438,15 @@ AARU_EXPORT void AARU_CALL aaruf_ecc_cd_reconstruct_prefix(uint8_t *sector, cons
 
     switch((TrackType)type)
     {
-        case CdMode1:
+        case kTrackTypeCdMode1:
             //
             // Mode
             //
             sector[0x00F] = 0x01;
             break;
-        case CdMode2Form1:
-        case CdMode2Form2:
-        case CdMode2Formless:
+        case kTrackTypeCdMode2Form1:
+        case kTrackTypeCdMode2Form2:
+        case kTrackTypeCdMode2Formless:
             //
             // Mode
             //
@@ -499,15 +499,15 @@ AARU_EXPORT void AARU_CALL aaruf_ecc_cd_reconstruct(void *context, uint8_t *sect
         //
         // Compute EDC
         //
-        case CdMode1:
+        case kTrackTypeCdMode1:
             computed_edc = aaruf_edc_cd_compute(context, 0, sector, 0x810, 0);
             memcpy(sector + 0x810, &computed_edc, 4);
             break;
-        case CdMode2Form1:
+        case kTrackTypeCdMode2Form1:
             computed_edc = aaruf_edc_cd_compute(context, 0, sector, 0x808, 0x10);
             memcpy(sector + 0x818, &computed_edc, 4);
             break;
-        case CdMode2Form2:
+        case kTrackTypeCdMode2Form2:
             computed_edc = aaruf_edc_cd_compute(context, 0, sector, 0x91C, 0x10);
             memcpy(sector + 0x92C, &computed_edc, 4);
             break;
@@ -523,7 +523,7 @@ AARU_EXPORT void AARU_CALL aaruf_ecc_cd_reconstruct(void *context, uint8_t *sect
         //
         // Compute ECC
         //
-        case CdMode1:
+        case kTrackTypeCdMode1:
             //
             // Reserved
             //
@@ -537,7 +537,7 @@ AARU_EXPORT void AARU_CALL aaruf_ecc_cd_reconstruct(void *context, uint8_t *sect
             sector[0x81B] = 0x00;
             aaruf_ecc_cd_write_sector(context, sector, sector, sector, 0xC, 0x10, 0x81C);
             break;
-        case CdMode2Form1:
+        case kTrackTypeCdMode2Form1:
             aaruf_ecc_cd_write_sector(context, zeroaddress, sector, sector, 0, 0x10, 0x81C);
             break;
         default:

@@ -288,22 +288,22 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
             {
                 ctx->current_track_type = track->type;
 
-                if(track->sequence == 0 && track->start == 0 && track->end == 0) ctx->current_track_type = Data;
+                if(track->sequence == 0 && track->start == 0 && track->end == 0) ctx->current_track_type = kTrackTypeData;
             }
             else
-                ctx->current_track_type = Data;
+                ctx->current_track_type = kTrackTypeData;
 
-            if(ctx->current_track_type == Audio &&
+            if(ctx->current_track_type == kTrackTypeAudio &&
                // JaguarCD stores data in audio tracks. FLAC is too inefficient, we need to use LZMA as data.
                (ctx->image_info.MediaType == JaguarCD && track->session > 1 ||
                 // VideoNow stores video in audio tracks, and LZMA works better too.
                 ctx->image_info.MediaType == VideoNow || ctx->image_info.MediaType == VideoNowColor ||
                 ctx->image_info.MediaType == VideoNowXp))
-                ctx->current_track_type = Data;
+                ctx->current_track_type = kTrackTypeData;
 
             if(ctx->compression_enabled)
             {
-                if(ctx->current_track_type == Audio)
+                if(ctx->current_track_type == kTrackTypeAudio)
                     ctx->current_block_header.compression = kCompressionFlac;
                 else
                     ctx->current_block_header.compression = kCompressionLzma;
@@ -313,7 +313,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
         }
         else
         {
-            ctx->current_track_type = Data;
+            ctx->current_track_type = kTrackTypeData;
             if(ctx->compression_enabled)
                 ctx->current_block_header.compression = kCompressionLzma;
             else
@@ -616,7 +616,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                     break;
                 }
 
-            if(track.sequence == 0 && track.start == 0 && track.end == 0) track.type = Data;
+            if(track.sequence == 0 && track.start == 0 && track.end == 0) track.type = kTrackTypeData;
 
             uint64_t corrected_sector_address = sector_address;
 
@@ -709,10 +709,10 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
             // Split raw cd sector data in prefix (sync, header), user data and suffix (edc, ecc p, ecc q)
             switch(track.type)
             {
-                case Audio:
-                case Data:
+                case kTrackTypeAudio:
+                case kTrackTypeData:
                     return aaruf_write_sector(context, sector_address, negative, data, sector_status, length);
-                case CdMode1:
+                case kTrackTypeCdMode1:
 
                     // If we do not have a DDT V2 for sector prefix, create one
                     if(ctx->sector_prefix_ddt2 == NULL)
@@ -873,9 +873,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
 
                     return aaruf_write_sector(context, sector_address, negative, data + 16, SectorStatusMode1Correct,
                                               2048);
-                case CdMode2Form1:
-                case CdMode2Form2:
-                case CdMode2Formless:
+                case kTrackTypeCdMode2Form1:
+                case kTrackTypeCdMode2Form2:
+                case kTrackTypeCdMode2Formless:
                     // If we do not have a DDT V2 for sector prefix, create one
                     if(ctx->sector_prefix_ddt2 == NULL)
                     {
