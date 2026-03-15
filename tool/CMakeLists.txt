@@ -5,6 +5,7 @@ project(aaruformattool C CXX)
 find_package(ICU COMPONENTS uc REQUIRED)
 find_package(Argtable3 CONFIG REQUIRED)
 find_package(Curses REQUIRED)
+find_package(ZLIB REQUIRED)
 
 # Tool executable
 add_executable(aaruformattool
@@ -27,6 +28,8 @@ add_executable(aaruformattool
                convert.c
                upgrade_ddt_to_alpha21.c
                inject_media_tag.c
+               ird.c
+               ird.h
                termbox2.h
 )
 
@@ -42,6 +45,7 @@ target_link_libraries(aaruformattool
                       aaruformat
                       argtable3::argtable3
                       ICU::uc
+                      ZLIB::ZLIB
                       ${CURSES_LIBRARIES}
 )
 

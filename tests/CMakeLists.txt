@@ -45,6 +45,7 @@ set(TEST_DATA_FILES
     cdmode1.aif
     cdmode2_v1.aif
     cdmode2.aif
+    BLES-00905.ird
 )
 
 # Create data directory in build tree
@@ -90,9 +91,11 @@ add_executable(tests_run
     ps3_aes.cpp
     ps3_crypto.cpp
     ps3_encryption_map.cpp
+    ps3_ird.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/aes128.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_crypto.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_encryption_map.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../tool/ird.c
 )
 
 # Set up include directories using modern target-specific approach
@@ -106,7 +109,8 @@ target_include_directories(tests_run
 )
 
 # Link libraries
-target_link_libraries(tests_run PRIVATE gtest gtest_main aaruformat)
+find_package(ZLIB REQUIRED)
+target_link_libraries(tests_run PRIVATE gtest gtest_main aaruformat ZLIB::ZLIB)
 
 # Apply address sanitizer flags to tests if enabled
 if(USE_ASAN)
