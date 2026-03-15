@@ -30,6 +30,8 @@ add_executable(aaruformattool
                inject_media_tag.c
                ird.c
                ird.h
+               sfo.c
+               sfo.h
                termbox2.h
 )
 
