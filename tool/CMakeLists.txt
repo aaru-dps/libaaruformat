@@ -32,6 +32,8 @@ add_executable(aaruformattool
                ird.h
                sfo.c
                sfo.h
+               iso9660_mini.c
+               iso9660_mini.h
                termbox2.h
 )
 

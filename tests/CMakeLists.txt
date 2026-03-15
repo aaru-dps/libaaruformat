@@ -47,6 +47,7 @@ set(TEST_DATA_FILES
     cdmode2.aif
     BLES-00905.ird
     ps3_param.sfo
+    ps3_test.iso
 )
 
 # Create data directory in build tree
@@ -94,11 +95,13 @@ add_executable(tests_run
     ps3_encryption_map.cpp
     ps3_ird.cpp
     ps3_sfo.cpp
+    ps3_iso9660.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/aes128.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_crypto.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_encryption_map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../tool/ird.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../tool/sfo.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../tool/iso9660_mini.c
 )
 
 # Set up include directories using modern target-specific approach
