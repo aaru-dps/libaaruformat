@@ -26,6 +26,8 @@
 #include "aaruformat.h"
 #include "internal.h"
 #include "log.h"
+#include "ps3/ps3_crypto.h"
+#include "ps3/ps3_encryption_map.h"
 #include "structs/lisa_tag.h"
 #include "xxhash.h"
 
@@ -206,6 +208,37 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
        !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long)
         ctx->dirty_checksum_block = true;
 
+    // PS3 decryption: if caller sends encrypted data marked as "to be stored decrypted"
+    // Checksums have already been computed on the ciphertext above.
+    const uint8_t *write_data       = data;
+    uint8_t       *decrypted_buffer = NULL;
+
+    if(sector_status == SectorStatusUnencrypted && (ctx->header.mediaType == PS3DVD || ctx->header.mediaType == PS3BD))
+    {
+        if(!ctx->ps3_encryption_initialized)
+        {
+            ps3_lazy_init(ctx);
+            ctx->ps3_encryption_initialized = true;
+        }
+
+        if(ctx->ps3_disc_key != NULL && ctx->ps3_plaintext_regions != NULL &&
+           ps3_is_sector_encrypted((const Ps3PlaintextRegion *)ctx->ps3_plaintext_regions,
+                                   ctx->ps3_plaintext_region_count, sector_address))
+        {
+            decrypted_buffer = (uint8_t *)malloc(length);
+
+            if(decrypted_buffer == NULL)
+            {
+                FATAL("Could not allocate memory for PS3 decryption buffer");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            memcpy(decrypted_buffer, data, length);
+            ps3_decrypt_sector(ctx->ps3_disc_key, sector_address, decrypted_buffer, length);
+            write_data = decrypted_buffer;
+        }
+    }
+
     // Close current block first
     if(ctx->writing_buffer != NULL &&
        // When sector size changes or block reaches maximum size
@@ -229,9 +262,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
 
     if(ctx->deduplicate)
     {
-        // Calculate 64-bit XXH3 hash of the sector
+        // Calculate 64-bit XXH3 hash of the sector (on decrypted data for dedup)
         TRACE("Hashing sector data for deduplication");
-        uint64_t hash = XXH3_64bits(data, length);
+        uint64_t hash = XXH3_64bits(write_data, length);
 
         // Check if the hash is already in the map
         bool existing = lookup_map(ctx->sector_hash_map, hash, &ddt_entry);
@@ -248,6 +281,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
         if(existing)
         {
             TRACE("Sector exists, so not writing to image");
+            free(decrypted_buffer);
             TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         }
@@ -288,7 +322,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
             {
                 ctx->current_track_type = track->type;
 
-                if(track->sequence == 0 && track->start == 0 && track->end == 0) ctx->current_track_type = kTrackTypeData;
+                if(track->sequence == 0 && track->start == 0 && track->end == 0)
+                    ctx->current_track_type = kTrackTypeData;
             }
             else
                 ctx->current_track_type = kTrackTypeData;
@@ -336,11 +371,13 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
     }
 
     TRACE("Copying data to writing buffer at position %zu", ctx->writing_buffer_position);
-    memcpy(ctx->writing_buffer + ctx->writing_buffer_position, data, length);
+    memcpy(ctx->writing_buffer + ctx->writing_buffer_position, write_data, length);
     TRACE("Advancing writing buffer position to %zu", ctx->writing_buffer_position + length);
     ctx->writing_buffer_position += length;
     TRACE("Advancing current block offset to %zu", ctx->current_block_offset + 1);
     ctx->current_block_offset++;
+
+    free(decrypted_buffer);
 
     TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;

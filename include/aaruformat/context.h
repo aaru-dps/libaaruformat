@@ -21,7 +21,6 @@
 
 #include "blake3.h"
 #include "crc64.h"
-#include "structs/flux.h"
 #include "hash_map.h"
 #include "lru.h"
 #include "md5.h"
@@ -29,6 +28,7 @@
 #include "sha256.h"
 #include "spamsum.h"
 #include "structs.h"
+#include "structs/flux.h"
 #include "utarray.h"
 
 typedef struct FluxCaptureMapEntry FluxCaptureMapEntry;
@@ -308,10 +308,10 @@ typedef struct aaruformat_context
     bool                    is_tape;          ///< True if the image is a tape image
 
     /* Flux data structures */
-    FluxHeader  flux_data_header;  ///< Flux data header (if present).
-    FluxEntry  *flux_entries;      ///< Array of flux entries (flux_data_header.entries elements).
-    UT_array   *flux_captures;     ///< Pending flux capture payloads (write path).
-    FluxCaptureMapEntry *flux_map; ///< Hash map for flux capture lookup by head/track/subtrack/capture index.
+    FluxHeader           flux_data_header;  ///< Flux data header (if present).
+    FluxEntry           *flux_entries;      ///< Array of flux entries (flux_data_header.entries elements).
+    UT_array            *flux_captures;     ///< Pending flux capture payloads (write path).
+    FluxCaptureMapEntry *flux_map;          ///< Hash map for flux capture lookup by head/track/subtrack/capture index.
 
     /* Dirty flags (controls write behavior in close.c) */
     bool dirty_secondary_ddt;                  ///< True if secondary DDT tables should be written during close
@@ -338,6 +338,12 @@ typedef struct aaruformat_context
     bool dirty_json_block;                     ///< True if JSON metadata block should be written during close
     bool dirty_flux_block;                     ///< True if flux block should be written during close
     bool dirty_index_block;                    ///< True if index block should be written during close
+
+    // PS3 encryption support (lazy-initialized on first use)
+    uint8_t *ps3_disc_key;                ///< Cached disc key (16 bytes), NULL if not loaded
+    void    *ps3_plaintext_regions;       ///< Parsed Ps3PlaintextRegion array (max 32), NULL if not loaded
+    uint32_t ps3_plaintext_region_count;  ///< Number of plaintext regions
+    bool     ps3_encryption_initialized;  ///< Whether lazy init has occurred
 } aaruformat_context;
 
 /** \struct DumpHardwareEntriesWithData

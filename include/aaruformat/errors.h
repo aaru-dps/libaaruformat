@@ -70,6 +70,9 @@
 #define AARUF_ERROR_INVALID_SECTOR_LENGTH     (-31)  ///< Sector length is too big.
 #define AARUF_ERROR_FLUX_DATA_NOT_FOUND       (-32)  ///< Requested flux data not present in image.
 #define AARUF_ERROR_INCOMPATIBLE_FEATURES     (-33)  ///< Image requires features not supported by this library.
+#define AARUF_ERROR_CANNOT_ENCRYPT_SECTOR     (-34)  ///< AES sector encryption failed.
+#define AARUF_ERROR_CANNOT_DECRYPT_SECTOR     (-35)  ///< AES sector decryption failed.
+#define AARUF_ERROR_MISSING_ENCRYPTION_KEY    (-36)  ///< Required encryption key not present in media tags.
 /** @} */
 
 /** \name Non-fatal sector status codes (non-negative)
@@ -147,6 +150,12 @@ static inline const char *aaruformat_error_string(int code)
             return "Cannot set DDT entry";
         case AARUF_ERROR_INCOMPATIBLE_FEATURES:
             return "Image requires unsupported features";
+        case AARUF_ERROR_CANNOT_ENCRYPT_SECTOR:
+            return "Cannot encrypt sector";
+        case AARUF_ERROR_CANNOT_DECRYPT_SECTOR:
+            return "Cannot decrypt sector";
+        case AARUF_ERROR_MISSING_ENCRYPTION_KEY:
+            return "Missing encryption key";
 
         /* Status */
         case AARUF_STATUS_OK:

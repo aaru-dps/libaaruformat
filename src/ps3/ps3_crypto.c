@@ -19,10 +19,14 @@
  */
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
+
+#include <aaruformat.h>
 
 #include "aes128.h"
 #include "ps3_crypto.h"
+#include "ps3_encryption_map.h"
 
 /* PS3 Encryption Round Key — publicly known constant */
 static const uint8_t PS3_ERK[16] = {0x38, 0x0B, 0xCF, 0x0B, 0x53, 0x45, 0x5B, 0x3C,
@@ -61,4 +65,57 @@ void ps3_decrypt_sector(const uint8_t disc_key[16], uint64_t sector_num, uint8_t
     uint8_t iv[16];
     ps3_derive_iv(sector_num, iv);
     aes128_cbc_decrypt(disc_key, iv, data, length);
+}
+
+void ps3_lazy_init(aaruformat_context *ctx)
+{
+    if(ctx == NULL) return;
+
+    /* Read disc key from media tags */
+    if(ctx->ps3_disc_key == NULL)
+    {
+        mediaTagEntry *item = NULL;
+        int32_t        tag  = kMediaTagPs3DiscKey;
+        HASH_FIND_INT(ctx->mediaTags, &tag, item);
+
+        if(item != NULL && item->length == 16)
+        {
+            ctx->ps3_disc_key = (uint8_t *)malloc(16);
+
+            if(ctx->ps3_disc_key != NULL) memcpy(ctx->ps3_disc_key, item->data, 16);
+        }
+        else
+        {
+            /* Try deriving from data1 */
+            tag = kMediaTagPs3Data1;
+            HASH_FIND_INT(ctx->mediaTags, &tag, item);
+
+            if(item != NULL && item->length == 16)
+            {
+                ctx->ps3_disc_key = (uint8_t *)malloc(16);
+
+                if(ctx->ps3_disc_key != NULL) ps3_derive_disc_key(item->data, ctx->ps3_disc_key);
+            }
+        }
+    }
+
+    /* Read and deserialize encryption map from media tags */
+    if(ctx->ps3_plaintext_regions == NULL)
+    {
+        mediaTagEntry *item = NULL;
+        int32_t        tag  = kMediaTagPs3EncryptionMap;
+        HASH_FIND_INT(ctx->mediaTags, &tag, item);
+
+        if(item != NULL && item->length >= 4)
+        {
+            Ps3PlaintextRegion *regions = NULL;
+            uint32_t            count   = 0;
+
+            if(ps3_deserialize_encryption_map(item->data, item->length, &regions, &count) == 0)
+            {
+                ctx->ps3_plaintext_regions      = regions;
+                ctx->ps3_plaintext_region_count = count;
+            }
+        }
+    }
 }

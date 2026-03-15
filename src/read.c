@@ -23,6 +23,8 @@
 
 #include "internal.h"
 #include "log.h"
+#include "ps3/ps3_crypto.h"
+#include "ps3/ps3_encryption_map.h"
 
 /**
  * @brief Reads a media tag from the AaruFormat image.
@@ -411,6 +413,26 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
         memcpy(data, block + offset * block_header->sectorSize, block_header->sectorSize);
         *length = block_header->sectorSize;
 
+        // PS3 re-encryption: if stored decrypted, re-encrypt for caller
+        if(*sector_status == SectorStatusUnencrypted &&
+           (ctx->header.mediaType == PS3DVD || ctx->header.mediaType == PS3BD))
+        {
+            if(!ctx->ps3_encryption_initialized)
+            {
+                ps3_lazy_init(ctx);
+                ctx->ps3_encryption_initialized = true;
+            }
+
+            if(ctx->ps3_disc_key != NULL && ctx->ps3_plaintext_regions != NULL &&
+               ps3_is_sector_encrypted((const Ps3PlaintextRegion *)ctx->ps3_plaintext_regions,
+                                       ctx->ps3_plaintext_region_count, sector_address))
+            {
+                ps3_encrypt_sector(ctx->ps3_disc_key, sector_address, data, *length);
+            }
+
+            *sector_status = SectorStatusDumped;
+        }
+
         TRACE("Exiting aaruf_read_sector() = AARUF_STATUS_OK");
         return AARUF_STATUS_OK;
     }
@@ -590,6 +612,25 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
 
     memcpy(data, block + offset * block_header->sectorSize, block_header->sectorSize);
     *length = block_header->sectorSize;
+
+    // PS3 re-encryption: if stored decrypted, re-encrypt for caller
+    if(*sector_status == SectorStatusUnencrypted && (ctx->header.mediaType == PS3DVD || ctx->header.mediaType == PS3BD))
+    {
+        if(!ctx->ps3_encryption_initialized)
+        {
+            ps3_lazy_init(ctx);
+            ctx->ps3_encryption_initialized = true;
+        }
+
+        if(ctx->ps3_disc_key != NULL && ctx->ps3_plaintext_regions != NULL &&
+           ps3_is_sector_encrypted((const Ps3PlaintextRegion *)ctx->ps3_plaintext_regions,
+                                   ctx->ps3_plaintext_region_count, sector_address))
+        {
+            ps3_encrypt_sector(ctx->ps3_disc_key, sector_address, data, *length);
+        }
+
+        *sector_status = SectorStatusDumped;
+    }
 
     TRACE("Exiting aaruf_read_sector() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;

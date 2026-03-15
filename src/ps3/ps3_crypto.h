@@ -24,50 +24,64 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+/* Forward declaration */
+typedef struct aaruformat_context aaruformat_context;
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-/**
- * @brief Derive a PS3 disc key from a data1 key.
- *
- * disc_key = AES-128-CBC-Encrypt(PS3_ERK, PS3_ERK_IV, data1)
- *
- * @param data1    16-byte data1 key (from disc or IRD).
- * @param disc_key Output: 16-byte derived disc key.
- */
-void ps3_derive_disc_key(const uint8_t data1[16], uint8_t disc_key[16]);
+    /**
+     * @brief Derive a PS3 disc key from a data1 key.
+     *
+     * disc_key = AES-128-CBC-Encrypt(PS3_ERK, PS3_ERK_IV, data1)
+     *
+     * @param data1    16-byte data1 key (from disc or IRD).
+     * @param disc_key Output: 16-byte derived disc key.
+     */
+    void ps3_derive_disc_key(const uint8_t data1[16], uint8_t disc_key[16]);
 
-/**
- * @brief Derive the per-sector AES IV from a sector number.
- *
- * IV = sector number as 128-bit big-endian integer, zero-padded left.
- *
- * @param sector_num Sector number.
- * @param iv         Output: 16-byte IV buffer.
- */
-void ps3_derive_iv(uint64_t sector_num, uint8_t iv[16]);
+    /**
+     * @brief Derive the per-sector AES IV from a sector number.
+     *
+     * IV = sector number as 128-bit big-endian integer, zero-padded left.
+     *
+     * @param sector_num Sector number.
+     * @param iv         Output: 16-byte IV buffer.
+     */
+    void ps3_derive_iv(uint64_t sector_num, uint8_t iv[16]);
 
-/**
- * @brief Encrypt a sector using PS3 disc encryption (AES-128-CBC).
- *
- * @param disc_key 16-byte disc key.
- * @param sector_num Sector number (for IV derivation).
- * @param data     Buffer to encrypt in-place.
- * @param length   Number of bytes (must be multiple of 16).
- */
-void ps3_encrypt_sector(const uint8_t disc_key[16], uint64_t sector_num, uint8_t *data, uint32_t length);
+    /**
+     * @brief Encrypt a sector using PS3 disc encryption (AES-128-CBC).
+     *
+     * @param disc_key 16-byte disc key.
+     * @param sector_num Sector number (for IV derivation).
+     * @param data     Buffer to encrypt in-place.
+     * @param length   Number of bytes (must be multiple of 16).
+     */
+    void ps3_encrypt_sector(const uint8_t disc_key[16], uint64_t sector_num, uint8_t *data, uint32_t length);
 
-/**
- * @brief Decrypt a sector using PS3 disc encryption (AES-128-CBC).
- *
- * @param disc_key 16-byte disc key.
- * @param sector_num Sector number (for IV derivation).
- * @param data     Buffer to decrypt in-place.
- * @param length   Number of bytes (must be multiple of 16).
- */
-void ps3_decrypt_sector(const uint8_t disc_key[16], uint64_t sector_num, uint8_t *data, uint32_t length);
+    /**
+     * @brief Decrypt a sector using PS3 disc encryption (AES-128-CBC).
+     *
+     * @param disc_key 16-byte disc key.
+     * @param sector_num Sector number (for IV derivation).
+     * @param data     Buffer to decrypt in-place.
+     * @param length   Number of bytes (must be multiple of 16).
+     */
+    void ps3_decrypt_sector(const uint8_t disc_key[16], uint64_t sector_num, uint8_t *data, uint32_t length);
+
+    /**
+     * @brief Lazy-initialize PS3 encryption state from context media tags.
+     *
+     * Reads kMediaTagPs3DiscKey and kMediaTagPs3EncryptionMap from the context's
+     * media tag hash table. Safe to call multiple times (no-op after first init).
+     * On failure, leaves fields NULL so callers degrade gracefully.
+     *
+     * @param ctx The aaruformat context.
+     */
+    void ps3_lazy_init(aaruformat_context *ctx);
 
 #ifdef __cplusplus
 }

@@ -5281,6 +5281,18 @@ AARU_EXPORT int AARU_CALL aaruf_close(void *context)
     free(ctx->checksums.spamsum);
     ctx->checksums.spamsum = NULL;
 
+    // Free PS3 encryption context
+    if(ctx->ps3_disc_key != NULL)
+    {
+        memset(ctx->ps3_disc_key, 0, 16);
+        free(ctx->ps3_disc_key);
+        ctx->ps3_disc_key = NULL;
+    }
+    free(ctx->ps3_plaintext_regions);
+    ctx->ps3_plaintext_regions      = NULL;
+    ctx->ps3_plaintext_region_count = 0;
+    ctx->ps3_encryption_initialized = false;
+
     free(ctx->sector_id);
     free(ctx->sector_ied);
     free(ctx->sector_cpr_mai);
