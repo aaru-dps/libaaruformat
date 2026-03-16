@@ -28,16 +28,16 @@ add_executable(aaruformattool
                convert.c
                upgrade_ddt_to_alpha21.c
                inject_media_tag.c
-               ird.c
-               ird.h
-               sfo.c
-               sfo.h
-               iso9660_mini.c
-               iso9660_mini.h
-               convert_ps3.c
-               convert_wiiu.c
-               wiiu_reader.c
-               wiiu_reader.h
+               ps3/ird.c
+               ps3/ird.h
+               ps3/sfo.c
+               ps3/sfo.h
+               ps3/iso9660_mini.c
+               ps3/iso9660_mini.h
+               ps3/convert.c
+               wiiu/convert.c
+               wiiu/reader.c
+               wiiu/reader.h
                ${CMAKE_CURRENT_SOURCE_DIR}/../src/lib/aes128.c
                ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_crypto.c
                ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_encryption_map.c

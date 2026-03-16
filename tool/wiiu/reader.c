@@ -18,7 +18,7 @@
  * WUD/WUX disc reader abstraction for aaruformattool.
  */
 
-#include "wiiu_reader.h"
+#include "reader.h"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -29,13 +29,13 @@
 
 #include <aaruformat.h>
 
-#include "aaruformattool.h"
-#include "ird.h"
+#include "../aaruformattool.h"
 #include "iso9660_mini.h"
+#include "ird.h"
 #include "sfo.h"
 
-#include "../src/ps3/ps3_crypto.h"
-#include "../src/ps3/ps3_encryption_map.h"
+#include "../../src/ps3/ps3_crypto.h"
+#include "../../src/ps3/ps3_encryption_map.h"
 
 /* ANSI color codes */
 #define ANSI_RESET  "\033[0m"

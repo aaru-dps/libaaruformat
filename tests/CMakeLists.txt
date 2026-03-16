@@ -99,9 +99,9 @@ add_executable(tests_run
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/lib/aes128.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_crypto.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_encryption_map.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../tool/ird.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../tool/sfo.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../tool/iso9660_mini.c
+               ../tool/ps3/ird.c
+               ../tool/ps3/sfo.c
+               ../tool/ps3/iso9660_mini.c
 )
 
 # Set up include directories using modern target-specific approach

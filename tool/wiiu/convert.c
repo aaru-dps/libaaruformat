@@ -30,11 +30,11 @@
 
 #include <aaruformat.h>
 
-#include "aaruformattool.h"
-#include "wiiu_reader.h"
+#include "../aaruformattool.h"
+#include "reader.h"
 
-#include "../src/lib/aes128.h"
-#include "../src/wiiu/wiiu_crypto.h"
+#include "../../src/lib/aes128.h"
+#include "../../src/wiiu/wiiu_crypto.h"
 
 /* ANSI color codes */
 #define ANSI_RESET  "\033[0m"
