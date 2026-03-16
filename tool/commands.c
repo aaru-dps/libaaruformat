@@ -215,6 +215,34 @@ int cmd_inject_media_tag(int argc, char *argv[])
     return result;
 }
 
+int cmd_convert_ps3(int argc, char *argv[])
+{
+    struct arg_str *input_filename  = arg_str1(NULL, NULL, "<input>", "Input ISO or AaruFormat image");
+    struct arg_str *output_filename = arg_str1(NULL, NULL, "<output>", "Output AaruFormat image");
+    struct arg_str *disc_key_arg    = arg_str0(NULL, "disc-key", "<hex>", "32-char hex disc key");
+    struct arg_str *data1_key_arg   = arg_str0(NULL, "data1-key", "<hex>", "32-char hex data1 key");
+    struct arg_str *ird_arg         = arg_str0(NULL, "ird", "<path>", "Path to IRD file");
+    struct arg_end *end             = arg_end(10);
+    void           *argtable[]      = {input_filename, output_filename, disc_key_arg, data1_key_arg, ird_arg, end};
+
+    if(arg_parse(argc, argv, argtable) > 0)
+    {
+        arg_print_errors(stderr, end, "convert-ps3");
+        usage_convert_ps3();
+        arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
+        return -1;
+    }
+
+    const char *disc_key_hex  = disc_key_arg->count > 0 ? disc_key_arg->sval[0] : NULL;
+    const char *data1_key_hex = data1_key_arg->count > 0 ? data1_key_arg->sval[0] : NULL;
+    const char *ird_path      = ird_arg->count > 0 ? ird_arg->sval[0] : NULL;
+
+    const int result =
+        convert_ps3(input_filename->sval[0], output_filename->sval[0], disc_key_hex, data1_key_hex, ird_path);
+    arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
+    return result;
+}
+
 Command commands[] = {
     {              "identify",               cmd_identify},
     {                  "info",                   cmd_info},
@@ -227,6 +255,7 @@ Command commands[] = {
     {               "convert",                cmd_convert},
     {"upgrade-ddt-to-alpha21", cmd_upgrade_ddt_to_alpha21},
     {      "inject-media-tag",       cmd_inject_media_tag},
+    {           "convert-ps3",            cmd_convert_ps3},
 };
 
 const size_t num_commands = sizeof(commands) / sizeof(commands[0]);

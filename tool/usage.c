@@ -159,3 +159,24 @@ void usage_inject_media_tag()
     printf("  <media-tag-file> Path to the file containing the media tag data.\n");
     printf("  <image-file>     Path to the AaruFormat image file.\n");
 }
+
+void usage_convert_ps3()
+{
+    printf("\nUsage:\n");
+    printf("  aaruformattool convert-ps3 <input> <output> [options]\n\n");
+    printf("Converts a PS3 disc ISO or AaruFormat image to an AaruFormat image with\n");
+    printf("decrypted sector storage and PS3 encryption metadata.\n\n");
+    printf("Arguments:\n");
+    printf("  <input>              Path to input ISO or AaruFormat image.\n");
+    printf("  <output>             Path to output AaruFormat image.\n\n");
+    printf("Options:\n");
+    printf("  --disc-key=<hex>     32-char hex disc key (16 bytes).\n");
+    printf("  --data1-key=<hex>    32-char hex data1 key (disc key will be derived).\n");
+    printf("  --ird=<path>         Path to IRD file (extracts keys, PIC, metadata).\n\n");
+    printf("Key resolution order:\n");
+    printf("  1. --disc-key argument\n");
+    printf("  2. --data1-key argument (derives disc key)\n");
+    printf("  3. --ird file (extracts data1 key, derives disc key)\n");
+    printf("  4. Sidecar files: <input>.disc_key, <input>.data1, <input>.ird\n");
+    printf("  5. Source AaruFormat image media tags\n");
+}
