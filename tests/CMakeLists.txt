@@ -96,7 +96,7 @@ add_executable(tests_run
     ps3_ird.cpp
     ps3_sfo.cpp
     ps3_iso9660.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/aes128.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/lib/aes128.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_crypto.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_encryption_map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../tool/ird.c

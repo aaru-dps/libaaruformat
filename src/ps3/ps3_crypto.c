@@ -24,7 +24,7 @@
 
 #include <aaruformat.h>
 
-#include "aes128.h"
+#include "../lib/aes128.h"
 #include "ps3_crypto.h"
 #include "ps3_encryption_map.h"
 

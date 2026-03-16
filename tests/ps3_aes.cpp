@@ -12,7 +12,7 @@
 
 extern "C"
 {
-#include "../src/ps3/aes128.h"
+#include "../src/lib/aes128.h"
 }
 
 /* NIST SP 800-38A F.2.1 CBC-AES128.Encrypt */

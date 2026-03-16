@@ -35,7 +35,7 @@ add_executable(aaruformattool
                iso9660_mini.c
                iso9660_mini.h
                convert_ps3.c
-               ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/aes128.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/../src/lib/aes128.c
                ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_crypto.c
                ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_encryption_map.c
                termbox2.h

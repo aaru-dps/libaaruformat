@@ -29,25 +29,25 @@ extern "C"
 {
 #endif
 
-/**
- * @brief AES-128 CBC encrypt data in-place.
- *
- * @param key  16-byte encryption key.
- * @param iv   16-byte initialization vector (not modified).
- * @param data Buffer to encrypt in-place. Must be a multiple of 16 bytes.
- * @param length Number of bytes to encrypt. Must be a multiple of 16.
- */
-void aes128_cbc_encrypt(const uint8_t key[16], const uint8_t iv[16], uint8_t *data, uint32_t length);
+    /**
+     * @brief AES-128 CBC encrypt data in-place.
+     *
+     * @param key  16-byte encryption key.
+     * @param iv   16-byte initialization vector (not modified).
+     * @param data Buffer to encrypt in-place. Must be a multiple of 16 bytes.
+     * @param length Number of bytes to encrypt. Must be a multiple of 16.
+     */
+    void aes128_cbc_encrypt(const uint8_t key[16], const uint8_t iv[16], uint8_t *data, uint32_t length);
 
-/**
- * @brief AES-128 CBC decrypt data in-place.
- *
- * @param key  16-byte decryption key.
- * @param iv   16-byte initialization vector (not modified).
- * @param data Buffer to decrypt in-place. Must be a multiple of 16 bytes.
- * @param length Number of bytes to decrypt. Must be a multiple of 16.
- */
-void aes128_cbc_decrypt(const uint8_t key[16], const uint8_t iv[16], uint8_t *data, uint32_t length);
+    /**
+     * @brief AES-128 CBC decrypt data in-place.
+     *
+     * @param key  16-byte decryption key.
+     * @param iv   16-byte initialization vector (not modified).
+     * @param data Buffer to decrypt in-place. Must be a multiple of 16 bytes.
+     * @param length Number of bytes to decrypt. Must be a multiple of 16.
+     */
+    void aes128_cbc_decrypt(const uint8_t key[16], const uint8_t iv[16], uint8_t *data, uint32_t length);
 
 #ifdef __cplusplus
 }
