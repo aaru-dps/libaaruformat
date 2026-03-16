@@ -161,7 +161,19 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
 
     if(!ctx->rewinded)
     {
-        if(sector_address <= ctx->last_written_block)
+        // disable checksums on first encounter of decrypted/generable sectors
+        if(sector_status == SectorStatusUnencrypted || sector_status == SectorStatusGenerable)
+        {
+            TRACE("NGCW sector detected, disabling checksums");
+            ctx->rewinded = true;
+
+            if(ctx->calculating_md5) ctx->calculating_md5 = false;
+            if(ctx->calculating_sha1) ctx->calculating_sha1 = false;
+            if(ctx->calculating_sha256) ctx->calculating_sha256 = false;
+            if(ctx->calculating_spamsum) ctx->calculating_spamsum = false;
+            if(ctx->calculating_blake3) ctx->calculating_blake3 = false;
+        }
+        else if(sector_address <= ctx->last_written_block)
         {
             if(sector_address == 0 && !ctx->block_zero_written)
                 ctx->block_zero_written = true;
