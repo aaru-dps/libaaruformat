@@ -15,7 +15,7 @@
 
 extern "C"
 {
-#include "../tool/sfo.h"
+#include "../tool/ps3/sfo.h"
 }
 
 class SfoFixture : public ::testing::Test

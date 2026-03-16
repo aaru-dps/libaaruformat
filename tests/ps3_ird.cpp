@@ -14,7 +14,7 @@
 
 extern "C"
 {
-#include "../tool/ird.h"
+#include "../tool/ps3/ird.h"
 }
 
 class IrdFixture : public ::testing::Test

@@ -15,8 +15,8 @@
 
 extern "C"
 {
-#include "../tool/iso9660_mini.h"
-#include "../tool/sfo.h"
+#include "../tool/ps3/iso9660_mini.h"
+#include "../tool/ps3/sfo.h"
 }
 
 /* In-memory ISO image for testing */
