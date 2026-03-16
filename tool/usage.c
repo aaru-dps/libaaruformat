@@ -40,6 +40,7 @@ void usage()
     printf("  convert                Converts an AaruFormat image to another AaruFormat image.\n");
     printf("  convert-ps3            Converts a PS3 disc image to AaruFormat with decrypted storage.\n");
     printf("  convert-wiiu           Converts a Wii U disc image to AaruFormat with decrypted storage.\n");
+    printf("  convert-ngcw           Converts a GameCube/Wii disc image to AaruFormat.\n");
     printf("  identify               Identifies if the indicated file is a supported AaruFormat image.\n");
     printf("  info                   Prints information about a given AaruFormat image.\n");
     printf("  inject-media-tag       Injects a media tag into an AaruFormat image.\n");
@@ -198,4 +199,18 @@ void usage_convert_wiiu()
     printf("  1. --disc-key argument\n");
     printf("  2. Sidecar files: <input>.disckey, <input>.key\n");
     printf("  3. Source AaruFormat image media tags\n");
+}
+
+void usage_convert_ngcw()
+{
+    printf("\nUsage:\n");
+    printf("  aaruformattool convert-ngcw <input> <output>\n\n");
+    printf("Converts a Nintendo GameCube or Wii disc ISO or AaruFormat image to an\n");
+    printf("AaruFormat image with decrypted sectors (Wii) and junk regions removed.\n\n");
+    printf("Arguments:\n");
+    printf("  <input>              Path to input ISO or AaruFormat image.\n");
+    printf("  <output>             Path to output AaruFormat image.\n\n");
+    printf("The disc type (GameCube or Wii) is auto-detected from the disc header.\n");
+    printf("Wii common keys are hardcoded; no key arguments are needed.\n");
+    printf("A .bca sidecar file will be imported if found alongside the input.\n");
 }

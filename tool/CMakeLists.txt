@@ -38,10 +38,14 @@ add_executable(aaruformattool
                wiiu/convert.c
                wiiu/reader.c
                wiiu/reader.h
+               ngcw/convert.c
                ${CMAKE_CURRENT_SOURCE_DIR}/../src/lib/aes128.c
                ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_crypto.c
                ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_encryption_map.c
                ${CMAKE_CURRENT_SOURCE_DIR}/../src/wiiu/wiiu_crypto.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/../src/ngcw/lfg.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/../src/ngcw/ngcw_junk.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/../src/ngcw/wii_crypto.c
                termbox2.h
 )
 

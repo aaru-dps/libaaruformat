@@ -46,5 +46,6 @@ int         inject_media_tag(const char *tag_type, const char *media_tag_file, c
 int convert_ps3(const char *input_path, const char *output_path, const char *disc_key_hex, const char *data1_key_hex,
                 const char *ird_path);
 int convert_wiiu(const char *input_path, const char *output_path, const char *disc_key_hex);
+int convert_ngcw(const char *input_path, const char *output_path);
 
 #endif  // LIBAARUFORMAT_TOOL_AARUFORMATTOOL_H_

@@ -266,6 +266,26 @@ int cmd_convert_wiiu(int argc, char *argv[])
     return result;
 }
 
+int cmd_convert_ngcw(int argc, char *argv[])
+{
+    struct arg_str *input_filename  = arg_str1(NULL, NULL, "<input>", "Input ISO or AaruFormat image");
+    struct arg_str *output_filename = arg_str1(NULL, NULL, "<output>", "Output AaruFormat image");
+    struct arg_end *end             = arg_end(10);
+    void           *argtable[]      = {input_filename, output_filename, end};
+
+    if(arg_parse(argc, argv, argtable) > 0)
+    {
+        arg_print_errors(stderr, end, "convert-ngcw");
+        usage_convert_ngcw();
+        arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
+        return -1;
+    }
+
+    const int result = convert_ngcw(input_filename->sval[0], output_filename->sval[0]);
+    arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
+    return result;
+}
+
 Command commands[] = {
     {              "identify",               cmd_identify},
     {                  "info",                   cmd_info},
@@ -280,6 +300,7 @@ Command commands[] = {
     {      "inject-media-tag",       cmd_inject_media_tag},
     {           "convert-ps3",            cmd_convert_ps3},
     {          "convert-wiiu",           cmd_convert_wiiu},
+    {          "convert-ngcw",           cmd_convert_ngcw},
 };
 
 const size_t num_commands = sizeof(commands) / sizeof(commands[0]);

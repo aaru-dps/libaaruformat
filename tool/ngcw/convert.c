@@ -15,26 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ * convert-ngcw command: converts Nintendo GameCube/Wii disc ISO or AaruFormat
+ * images to AaruFormat with decrypted sector storage and junk removal.
  */
 
-#ifndef LIBAARUFORMAT_USAGE_H
-#define LIBAARUFORMAT_USAGE_H
+#include <stdio.h>
 
-void print_banner();
-void usage();
-void usage_identify();
-void usage_info();
-void usage_read();
-void usage_read_long();
-void usage_verify();
-void usage_verify_sectors();
-void usage_compare();
-void usage_cli_compare();
-void usage_convert();
-void usage_upgrade_ddt_to_alpha21();
-void usage_inject_media_tag();
-void usage_convert_ps3();
-void usage_convert_wiiu();
-void usage_convert_ngcw();
+#include "../aaruformattool.h"
 
-#endif  // LIBAARUFORMAT_USAGE_H
+int convert_ngcw(const char *input_path, const char *output_path)
+{
+    (void)input_path;
+    (void)output_path;
+
+    fprintf(stderr, "convert-ngcw: not yet implemented\n");
+    return -1;
+}
