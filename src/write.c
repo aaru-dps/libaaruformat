@@ -251,6 +251,24 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
         }
     }
 
+    // NGCW: SectorStatusGenerable — set DDT entry only, do not store data in any block
+    if(sector_status == SectorStatusGenerable && (ctx->header.mediaType == GOD || ctx->header.mediaType == WOD))
+    {
+        uint64_t ddt_entry_gen = 0;
+        bool     ddt_ok_gen    = set_ddt_entry_v2(ctx, sector_address, negative, 0, 0, sector_status, &ddt_entry_gen);
+
+        free(decrypted_buffer);
+
+        if(!ddt_ok_gen)
+        {
+            TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_CANNOT_SET_DDT_ENTRY");
+            return AARUF_ERROR_CANNOT_SET_DDT_ENTRY;
+        }
+
+        TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK (generable)");
+        return AARUF_STATUS_OK;
+    }
+
     // Close current block first
     if(ctx->writing_buffer != NULL &&
        // When sector size changes or block reaches maximum size
