@@ -1095,8 +1095,30 @@ int convert_ngcw(const char *input_path, const char *output_path)
         {
             if((block_off & 0x7FFFF) == 0)
             {
-                double pct = (double)block_off / (double)disc_size * 100.0;
-                printf("\r  " ANSI_CYAN "Converting GC sectors " ANSI_WHITE "%5.1f%%" ANSI_RESET, pct);
+                double percentage = (double)block_off / (double)disc_size * 100.0;
+                double elapsed    = (double)(clock() - start_time) / CLOCKS_PER_SEC;
+                double speed      = elapsed > 0 ? (double)bytes_processed / elapsed : 0;
+
+                char speed_str[32];
+                format_bytes((uint64_t)speed, speed_str, sizeof(speed_str));
+
+                int filled = (int)(percentage / 100.0 * PROGRESS_BAR_WIDTH);
+
+                if(filled > PROGRESS_BAR_WIDTH) filled = PROGRESS_BAR_WIDTH;
+
+                printf("\r  " ANSI_CYAN "[");
+
+                for(int b = 0; b < PROGRESS_BAR_WIDTH; b++)
+                {
+                    if(b < filled)
+                        printf(ANSI_GREEN "█");
+                    else if(b == filled)
+                        printf(ANSI_YELLOW "▓");
+                    else
+                        printf(ANSI_WHITE "░");
+                }
+
+                printf(ANSI_CYAN "] " ANSI_WHITE "%5.1f%%" ANSI_RESET " │ %s/s   ", percentage, speed_str);
                 fflush(stdout);
             }
 
@@ -1169,8 +1191,30 @@ int convert_ngcw(const char *input_path, const char *output_path)
         {
             if((offset & 0x7FFFF) == 0)
             {
-                double pct = (double)offset / (double)disc_size * 100.0;
-                printf("\r  " ANSI_CYAN "Converting Wii sectors " ANSI_WHITE "%5.1f%%" ANSI_RESET, pct);
+                double percentage = (double)offset / (double)disc_size * 100.0;
+                double elapsed    = (double)(clock() - start_time) / CLOCKS_PER_SEC;
+                double speed      = elapsed > 0 ? (double)bytes_processed / elapsed : 0;
+
+                char speed_str[32];
+                format_bytes((uint64_t)speed, speed_str, sizeof(speed_str));
+
+                int filled = (int)(percentage / 100.0 * PROGRESS_BAR_WIDTH);
+
+                if(filled > PROGRESS_BAR_WIDTH) filled = PROGRESS_BAR_WIDTH;
+
+                printf("\r  " ANSI_CYAN "[");
+
+                for(int b = 0; b < PROGRESS_BAR_WIDTH; b++)
+                {
+                    if(b < filled)
+                        printf(ANSI_GREEN "█");
+                    else if(b == filled)
+                        printf(ANSI_YELLOW "▓");
+                    else
+                        printf(ANSI_WHITE "░");
+                }
+
+                printf(ANSI_CYAN "] " ANSI_WHITE "%5.1f%%" ANSI_RESET " │ %s/s   ", percentage, speed_str);
                 fflush(stdout);
             }
 
