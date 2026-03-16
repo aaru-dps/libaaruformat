@@ -252,7 +252,8 @@ typedef enum
     SectorStatusTwin            = 0x7,  ///< Pointer references a twin sector table.
     SectorStatusUnrecorded      = 0x8,  ///< Sector physically unrecorded; repeated reads non-deterministic.
     SectorStatusEncrypted       = 0x9,  ///< Content encrypted and stored encrypted in image.
-    SectorStatusUnencrypted     = 0xA   ///< Content originally encrypted but stored decrypted in image.
+    SectorStatusUnencrypted     = 0xA,  ///< Content originally encrypted but stored decrypted in image.
+    SectorStatusGenerable       = 0xB   ///< Content can be generated using a known algorithm.
 } SectorStatus;
 
 /**
