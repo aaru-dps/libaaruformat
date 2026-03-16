@@ -354,6 +354,21 @@ typedef struct aaruformat_context
     uint64_t wiiu_cached_physical_sector;  ///< Physical sector number of cached block
     bool     wiiu_cache_valid;             ///< Whether the encrypted block cache is valid
     bool     wiiu_building_crypto_block;   ///< True while gathering sectors for re-encryption (suppresses recursion)
+
+    // Nintendo GC/Wii junk map support (lazy-initialized on first use)
+    void    *ngcw_junk_entries;      ///< Parsed NgcwJunkEntry array, NULL if not loaded
+    uint32_t ngcw_junk_entry_count;  ///< Number of junk entries
+    uint16_t ngcw_junk_seed_size;    ///< LFG seed size in uint32 words (expected: 17)
+    bool     ngcw_junk_initialized;  ///< Whether junk map has been loaded
+
+    // Nintendo Wii encryption support (lazy-initialized on first use)
+    void    *wii_partition_regions;       ///< Parsed WiiPartitionRegion array, NULL if not loaded
+    uint32_t wii_partition_region_count;  ///< Number of partition regions
+    bool     wii_encryption_initialized;  ///< Whether lazy init has occurred
+    uint8_t *wii_encrypted_group_cache;   ///< Cached re-encrypted 0x8000-byte group
+    uint64_t wii_cached_physical_group;   ///< Physical group number of cached block
+    bool     wii_cache_valid;             ///< Whether the encrypted group cache is valid
+    bool     wii_building_crypto_block;   ///< True while gathering sectors for re-encryption (suppresses recursion)
 } aaruformat_context;
 
 /** \struct DumpHardwareEntriesWithData
