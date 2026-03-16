@@ -198,6 +198,10 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_media_tag_type_for_datatype(const int32_t
             return kMediaTagPs3EncryptionMap;
         case kDataTypeWiiUPartitionKeyMap:
             return kMediaTagWiiUPartitionKeyMap;
+        case kDataTypeWiiPartitionKeyMap:
+            return kMediaTagWiiPartitionKeyMap;
+        case kDataTypeNgcwJunkMap:
+            return kMediaTagNgcwJunkMap;
         default:
             return -1;
     }
@@ -374,6 +378,10 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_datatype_for_media_tag_type(const int32_t
             return kDataTypePs3EncryptionMap;
         case kMediaTagWiiUPartitionKeyMap:
             return kDataTypeWiiUPartitionKeyMap;
+        case kMediaTagWiiPartitionKeyMap:
+            return kDataTypeWiiPartitionKeyMap;
+        case kMediaTagNgcwJunkMap:
+            return kDataTypeNgcwJunkMap;
         default:
             return -1;
     }
