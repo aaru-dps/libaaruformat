@@ -243,7 +243,13 @@ add_library(aaruformat SHARED
             src/ps3/ps3_encryption_map.c
             src/ps3/ps3_encryption_map.h
             src/wiiu/wiiu_crypto.c
-            src/wiiu/wiiu_crypto.h)
+            src/wiiu/wiiu_crypto.h
+            src/ngcw/lfg.c
+            src/ngcw/lfg.h
+            src/ngcw/ngcw_junk.c
+            src/ngcw/ngcw_junk.h
+            src/ngcw/wii_crypto.c
+            src/ngcw/wii_crypto.h)
 
 # Set up include directories for the target
 target_include_directories(aaruformat
