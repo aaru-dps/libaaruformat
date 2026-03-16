@@ -53,9 +53,8 @@ const uint8_t *wii_get_sector_key(const WiiPartitionRegion *regions, uint32_t re
     {
         if(phys_group >= regions[i].start_sector && phys_group < regions[i].end_sector)
         {
-            /* Partition header group is plaintext */
-            if(phys_group == regions[i].start_sector) return NULL;
-
+            /* For Wii, data_offset already skips the partition header.
+             * ALL groups in [start_sector, end_sector) are encrypted. */
             return regions[i].key;
         }
     }

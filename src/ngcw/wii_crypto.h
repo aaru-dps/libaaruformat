@@ -24,8 +24,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/* Forward declaration */
+/* Forward declaration — guard against redefinition when aaruformat.h is also included */
+#ifndef AARUFORMAT_CONTEXT_DECLARED
+#define AARUFORMAT_CONTEXT_DECLARED
 typedef struct aaruformat_context aaruformat_context;
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -36,6 +39,7 @@ extern "C"
 #define WII_GROUP_HASH_SIZE   0x0400 /**< Hash block size within a group (1 KiB). */
 #define WII_GROUP_DATA_SIZE   0x7C00 /**< User data size within a group (31 KiB). */
 #define WII_LOGICAL_PER_GROUP 16     /**< Number of 2048-byte logical sectors per group. */
+#define WII_SECTOR_SIZE       2048   /**< Logical sector size in bytes. */
 #define WII_MAX_PARTITIONS    32     /**< Maximum number of partitions supported. */
 
     /**

@@ -23,11 +23,104 @@
 
 #include "internal.h"
 #include "log.h"
+#include "ngcw/lfg.h"
 #include "ngcw/ngcw_junk.h"
 #include "ngcw/wii_crypto.h"
 #include "ps3/ps3_crypto.h"
 #include "ps3/ps3_encryption_map.h"
 #include "wiiu/wiiu_crypto.h"
+
+/**
+ * @brief Reconstruct junk in a Wii group's user data area before re-encryption.
+ *
+ * The LFG stream for Wii operates in a virtual "user data stream" where each
+ * group contributes WII_GROUP_DATA_SIZE (0x7C00) bytes, NOT the full group size.
+ * stream_pos = group_idx * WII_GROUP_DATA_SIZE + offset_within_user_data
+ * advance = stream_pos % WII_GROUP_SIZE (the 0x8000-aligned block boundary)
+ *
+ * This matches OBMAFS's reconstruct_group() logic.
+ */
+static void wii_reconstruct_group_junk(aaruformat_context *ctx, uint64_t phys_group, uint8_t *group_cache)
+{
+    if(ctx->ngcw_junk_entries == NULL || ctx->ngcw_junk_entry_count == 0) return;
+
+    if(ctx->wii_partition_regions == NULL) return;
+
+    /* Find which partition this group belongs to */
+    const WiiPartitionRegion *regions = (const WiiPartitionRegion *)ctx->wii_partition_regions;
+    int                       in_part = -1;
+
+    for(uint32_t p = 0; p < ctx->wii_partition_region_count; p++)
+    {
+        if(phys_group >= regions[p].start_sector && phys_group < regions[p].end_sector)
+        {
+            in_part = (int)p;
+            break;
+        }
+    }
+
+    if(in_part < 0) return; /* Outside partition — no Wii junk reconstruction needed */
+
+    uint64_t group_idx      = phys_group - regions[in_part].start_sector;
+    uint64_t group_disc_off = phys_group * WII_GROUP_SIZE;
+
+    for(uint64_t off = 0; off < WII_GROUP_DATA_SIZE; off += WII_SECTOR_SIZE)
+    {
+        uint64_t disc_off = group_disc_off + WII_GROUP_HASH_SIZE + off;
+
+        /* Look up this user data sector in the junk map */
+        const NgcwJunkEntry *entries = (const NgcwJunkEntry *)ctx->ngcw_junk_entries;
+        int                  lo      = 0;
+        int                  hi      = (int)ctx->ngcw_junk_entry_count - 1;
+        int                  found   = -1;
+
+        while(lo <= hi)
+        {
+            int      mid       = lo + (hi - lo) / 2;
+            uint64_t entry_end = entries[mid].offset + entries[mid].length;
+
+            if(disc_off >= entry_end)
+                lo = mid + 1;
+            else if(disc_off < entries[mid].offset)
+                hi = mid - 1;
+            else
+            {
+                found = mid;
+                break;
+            }
+        }
+
+        if(found < 0) continue; /* Not junk — leave stored data */
+
+        /* Junk found — regenerate using OBMAFS stream formula */
+        struct ngc_lfg_ctx lfg;
+        uint32_t           seed_copy[NGC_LFG_SEED_SIZE];
+        memcpy(seed_copy, entries[found].seed, sizeof(seed_copy));
+        ngc_lfg_set_seed(&lfg, seed_copy);
+
+        uint64_t stream_pos = group_idx * WII_GROUP_DATA_SIZE + off;
+        size_t   advance    = (size_t)(stream_pos % WII_GROUP_SIZE);
+
+        if(advance > 0)
+        {
+            uint8_t discard[4096];
+            size_t  adv = advance;
+
+            while(adv > 0)
+            {
+                size_t step = adv > sizeof(discard) ? sizeof(discard) : adv;
+                ngc_lfg_get_bytes(&lfg, discard, step);
+                adv -= step;
+            }
+        }
+
+        size_t chunk = WII_GROUP_DATA_SIZE - (size_t)off;
+
+        if(chunk > WII_SECTOR_SIZE) chunk = WII_SECTOR_SIZE;
+
+        ngc_lfg_get_bytes(&lfg, group_cache + WII_GROUP_HASH_SIZE + off, chunk);
+    }
+}
 
 /**
  * @brief Reads a media tag from the AaruFormat image.
@@ -366,8 +459,6 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
             if(ngcw_regenerate_junk_sector((const NgcwJunkEntry *)ctx->ngcw_junk_entries, ctx->ngcw_junk_entry_count,
                                            disc_offset, data, *length) == 0)
             {
-                // For WOD: the regenerated junk may need re-encryption below
-                // For GOD: return as-is
                 if(ctx->header.mediaType == GOD)
                 {
                     *sector_status = SectorStatusDumped;
@@ -375,9 +466,71 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
                     return AARUF_STATUS_OK;
                 }
 
-                // WOD: fall through to Wii re-encryption below
-                // Change status so the re-encryption logic picks it up
-                *sector_status = SectorStatusUnencrypted;
+                // WOD: regenerated junk needs Wii re-encryption.
+                // We have the plaintext in the data buffer — do re-encryption now and return.
+                if(!ctx->wii_encryption_initialized)
+                {
+                    wii_lazy_init(ctx);
+                    ctx->wii_encryption_initialized = true;
+                }
+
+                if(ctx->wii_partition_regions != NULL && ctx->wii_encrypted_group_cache != NULL &&
+                   !ctx->wii_building_crypto_block)
+                {
+                    const uint8_t *part_key = wii_get_sector_key((const WiiPartitionRegion *)ctx->wii_partition_regions,
+                                                                 ctx->wii_partition_region_count, sector_address);
+
+                    if(part_key != NULL)
+                    {
+                        uint64_t phys_group  = sector_address / WII_LOGICAL_PER_GROUP;
+                        uint32_t slice_index = (uint32_t)(sector_address % WII_LOGICAL_PER_GROUP);
+
+                        if(!ctx->wii_cache_valid || ctx->wii_cached_physical_group != phys_group)
+                        {
+                            uint64_t first_logical = phys_group * WII_LOGICAL_PER_GROUP;
+
+                            ctx->wii_building_crypto_block = true;
+
+                            for(uint32_t s = 0; s < WII_LOGICAL_PER_GROUP; s++)
+                            {
+                                uint64_t logical = first_logical + s;
+
+                                if(logical == sector_address)
+                                {
+                                    memcpy(ctx->wii_encrypted_group_cache + s * (*length), data, *length);
+                                }
+                                else
+                                {
+                                    uint32_t s_len    = *length;
+                                    uint8_t  s_status = 0;
+                                    int32_t  s_ret    = aaruf_read_sector(context, logical, false,
+                                                                          ctx->wii_encrypted_group_cache + s * s_len,
+                                                                          &s_len, &s_status);
+
+                                    if(s_ret != AARUF_STATUS_OK)
+                                        memset(ctx->wii_encrypted_group_cache + s * (*length), 0, *length);
+                                }
+                            }
+
+                            ctx->wii_building_crypto_block = false;
+
+                            // Reconstruct junk in user data area
+                            wii_reconstruct_group_junk(ctx, phys_group, ctx->wii_encrypted_group_cache);
+
+                            wii_encrypt_group(part_key, ctx->wii_encrypted_group_cache,
+                                              ctx->wii_encrypted_group_cache + WII_GROUP_HASH_SIZE,
+                                              ctx->wii_encrypted_group_cache);
+                            ctx->wii_cached_physical_group = phys_group;
+                            ctx->wii_cache_valid           = true;
+                        }
+
+                        memcpy(data, ctx->wii_encrypted_group_cache + slice_index * (*length), *length);
+                    }
+                }
+
+                *sector_status = SectorStatusDumped;
+                TRACE("Exiting aaruf_read_sector() = AARUF_STATUS_OK (WOD generable re-encrypted)");
+                return AARUF_STATUS_OK;
             }
             else
             {
@@ -396,71 +549,6 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
             TRACE("Exiting aaruf_read_sector() = AARUF_STATUS_OK (no junk map)");
             return AARUF_STATUS_OK;
         }
-    }
-
-    // If we fell through from SectorStatusGenerable on WOD, we need Wii re-encryption
-    // but we already have the data in the buffer. Handle it here before block lookup.
-    if(*sector_status == SectorStatusUnencrypted && ctx->header.mediaType == WOD && !ctx->wii_building_crypto_block)
-    {
-        if(!ctx->wii_encryption_initialized)
-        {
-            wii_lazy_init(ctx);
-            ctx->wii_encryption_initialized = true;
-        }
-
-        if(ctx->wii_partition_regions != NULL && ctx->wii_encrypted_group_cache != NULL)
-        {
-            const uint8_t *part_key = wii_get_sector_key((const WiiPartitionRegion *)ctx->wii_partition_regions,
-                                                         ctx->wii_partition_region_count, sector_address);
-
-            if(part_key != NULL)
-            {
-                uint64_t phys_group  = sector_address / WII_LOGICAL_PER_GROUP;
-                uint32_t slice_index = (uint32_t)(sector_address % WII_LOGICAL_PER_GROUP);
-
-                if(!ctx->wii_cache_valid || ctx->wii_cached_physical_group != phys_group)
-                {
-                    uint64_t first_logical = phys_group * WII_LOGICAL_PER_GROUP;
-
-                    ctx->wii_building_crypto_block = true;
-
-                    for(uint32_t s = 0; s < WII_LOGICAL_PER_GROUP; s++)
-                    {
-                        uint64_t logical = first_logical + s;
-
-                        if(logical == sector_address)
-                        {
-                            memcpy(ctx->wii_encrypted_group_cache + s * (*length), data, *length);
-                        }
-                        else
-                        {
-                            uint32_t s_len    = *length;
-                            uint8_t  s_status = 0;
-                            int32_t  s_ret    = aaruf_read_sector(
-                                context, logical, false, ctx->wii_encrypted_group_cache + s * s_len, &s_len, &s_status);
-
-                            if(s_ret != AARUF_STATUS_OK)
-                                memset(ctx->wii_encrypted_group_cache + s * (*length), 0, *length);
-                        }
-                    }
-
-                    ctx->wii_building_crypto_block = false;
-
-                    // Split into hash_block + data, then encrypt
-                    wii_encrypt_group(part_key, ctx->wii_encrypted_group_cache,
-                                      ctx->wii_encrypted_group_cache + WII_GROUP_HASH_SIZE,
-                                      ctx->wii_encrypted_group_cache);
-                    ctx->wii_cached_physical_group = phys_group;
-                    ctx->wii_cache_valid           = true;
-                }
-
-                memcpy(data, ctx->wii_encrypted_group_cache + slice_index * (*length), *length);
-            }
-        }
-
-        *sector_status = SectorStatusDumped;
-        TRACE("Exiting aaruf_read_sector() = AARUF_STATUS_OK (WOD re-encrypted)");
-        return AARUF_STATUS_OK;
     }
 
     // Check if block header is cached
@@ -624,6 +712,12 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
                 ctx->wii_encryption_initialized = true;
             }
 
+            if(!ctx->ngcw_junk_initialized)
+            {
+                ngcw_junk_lazy_init(ctx);
+                ctx->ngcw_junk_initialized = true;
+            }
+
             if(ctx->wii_partition_regions != NULL && ctx->wii_encrypted_group_cache != NULL)
             {
                 const uint8_t *part_key = wii_get_sector_key((const WiiPartitionRegion *)ctx->wii_partition_regions,
@@ -662,6 +756,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
                         }
 
                         ctx->wii_building_crypto_block = false;
+
+                        // Reconstruct junk in user data area
+                        wii_reconstruct_group_junk(ctx, phys_group, ctx->wii_encrypted_group_cache);
 
                         wii_encrypt_group(part_key, ctx->wii_encrypted_group_cache,
                                           ctx->wii_encrypted_group_cache + WII_GROUP_HASH_SIZE,
@@ -947,6 +1044,12 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
             ctx->wii_encryption_initialized = true;
         }
 
+        if(!ctx->ngcw_junk_initialized)
+        {
+            ngcw_junk_lazy_init(ctx);
+            ctx->ngcw_junk_initialized = true;
+        }
+
         if(ctx->wii_partition_regions != NULL && ctx->wii_encrypted_group_cache != NULL)
         {
             const uint8_t *part_key = wii_get_sector_key((const WiiPartitionRegion *)ctx->wii_partition_regions,
@@ -984,6 +1087,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
                     }
 
                     ctx->wii_building_crypto_block = false;
+
+                    // Reconstruct junk in user data area
+                    wii_reconstruct_group_junk(ctx, phys_group, ctx->wii_encrypted_group_cache);
 
                     wii_encrypt_group(part_key, ctx->wii_encrypted_group_cache,
                                       ctx->wii_encrypted_group_cache + WII_GROUP_HASH_SIZE,

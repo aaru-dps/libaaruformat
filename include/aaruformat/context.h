@@ -371,6 +371,10 @@ typedef struct aaruformat_context
     bool     wii_building_crypto_block;   ///< True while gathering sectors for re-encryption (suppresses recursion)
 } aaruformat_context;
 
+#ifndef AARUFORMAT_CONTEXT_DECLARED
+#define AARUFORMAT_CONTEXT_DECLARED
+#endif
+
 /** \struct DumpHardwareEntriesWithData
  *  \brief In-memory representation of a dump hardware entry plus decoded variable-length fields & extents.
  *

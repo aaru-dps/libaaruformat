@@ -1260,6 +1260,74 @@ int convert_ngcw(const char *input_path, const char *output_path)
     else
     {
         /* ---- Wii pipeline ---- */
+
+        /* Build FST data maps for each partition */
+        NgcwDataMap *part_maps    = calloc(part_count > 0 ? part_count : 1, sizeof(NgcwDataMap));
+        uint64_t    *part_sys_end = calloc(part_count > 0 ? part_count : 1, sizeof(uint64_t));
+
+        if(part_maps != NULL && part_sys_end != NULL && is_raw)
+        {
+            for(int p = 0; p < part_count; p++)
+            {
+                /* Read and decrypt first group to get boot block */
+                uint8_t enc_grp0[WII_GROUP_SIZE];
+
+                if(fseek(iso_file, (long)parts[p].data_offset, SEEK_SET) != 0 ||
+                   fread(enc_grp0, 1, WII_GROUP_SIZE, iso_file) != WII_GROUP_SIZE)
+                    continue;
+
+                uint8_t hb0[WII_GROUP_HASH_SIZE];
+                uint8_t gd0[WII_GROUP_DATA_SIZE];
+                wii_decrypt_group(parts[p].title_key, enc_grp0, hb0, gd0);
+
+                uint32_t fst_offset_p = read_be32(gd0 + 0x424) << 2;
+                uint32_t fst_size_p   = read_be32(gd0 + 0x428) << 2;
+
+                part_sys_end[p] = (uint64_t)fst_offset_p + fst_size_p;
+
+                if(fst_size_p > 0 && fst_size_p < 64 * 1024 * 1024)
+                {
+                    uint8_t *fst_p = malloc(fst_size_p);
+
+                    if(fst_p)
+                    {
+                        uint64_t fst_read = 0;
+                        int      fst_ok   = 1;
+
+                        while(fst_read < fst_size_p)
+                        {
+                            uint64_t logical_off = fst_offset_p + fst_read;
+                            uint64_t grp_idx     = logical_off / WII_GROUP_DATA_SIZE;
+                            uint64_t grp_off     = logical_off % WII_GROUP_DATA_SIZE;
+                            uint64_t disc_off    = parts[p].data_offset + grp_idx * WII_GROUP_SIZE;
+
+                            uint8_t enc_g[WII_GROUP_SIZE];
+
+                            if(fseek(iso_file, (long)disc_off, SEEK_SET) != 0 ||
+                               fread(enc_g, 1, WII_GROUP_SIZE, iso_file) != WII_GROUP_SIZE)
+                            {
+                                fst_ok = 0;
+                                break;
+                            }
+
+                            uint8_t hb[WII_GROUP_HASH_SIZE];
+                            uint8_t gd[WII_GROUP_DATA_SIZE];
+                            wii_decrypt_group(parts[p].title_key, enc_g, hb, gd);
+
+                            uint64_t avail = WII_GROUP_DATA_SIZE - grp_off;
+                            uint64_t chunk = (fst_size_p - fst_read < avail) ? fst_size_p - fst_read : avail;
+                            memcpy(fst_p + fst_read, gd + grp_off, chunk);
+                            fst_read += chunk;
+                        }
+
+                        if(fst_ok) build_data_map_from_fst(fst_p, fst_size_p, 0, 2, &part_maps[p]);
+
+                        free(fst_p);
+                    }
+                }
+            }
+        }
+
         for(uint64_t offset = 0; offset < disc_size;)
         {
             if((offset & 0x7FFFF) == 0)
@@ -1305,7 +1373,7 @@ int convert_ngcw(const char *input_path, const char *output_path)
 
             if(in_part >= 0 && is_raw)
             {
-                /* Inside partition — read, decrypt, detect junk, write */
+                /* Inside partition — read, decrypt, detect junk in user data, write */
                 uint64_t group_disc_off = parts[in_part].data_offset +
                                           ((offset - parts[in_part].data_offset) / WII_GROUP_SIZE) * WII_GROUP_SIZE;
 
@@ -1324,17 +1392,154 @@ int convert_ngcw(const char *input_path, const char *output_path)
                 uint8_t group_data[WII_GROUP_DATA_SIZE];
                 wii_decrypt_group(parts[in_part].title_key, enc_grp, hash_block, group_data);
 
-                /* Reassemble: hash_block + group_data → decrypted_group */
+                /* Classify each user data sector using the partition's FST */
+                uint64_t group_num      = (group_disc_off - parts[in_part].data_offset) / WII_GROUP_SIZE;
+                uint64_t logical_offset = group_num * WII_GROUP_DATA_SIZE;
+
+                int sector_is_data[16];
+                int num_ud_sectors = 0;
+
+                for(uint64_t off = 0; off < WII_GROUP_DATA_SIZE; off += NGC_SECTOR_SIZE)
+                {
+                    uint64_t chunk = WII_GROUP_DATA_SIZE - off;
+
+                    if(chunk > NGC_SECTOR_SIZE) chunk = NGC_SECTOR_SIZE;
+
+                    if(logical_offset + off < part_sys_end[in_part])
+                        sector_is_data[num_ud_sectors] = 1;
+                    else if(part_maps[in_part].count > 0)
+                        sector_is_data[num_ud_sectors] =
+                            is_data_region(&part_maps[in_part], logical_offset + off, chunk) ? 1 : 0;
+                    else
+                        sector_is_data[num_ud_sectors] = 1;
+
+                    num_ud_sectors++;
+                }
+
+                /* Extract LFG seeds from user data (up to 2 per group for block boundaries) */
+                uint64_t block_phase  = logical_offset % WII_GROUP_SIZE;
+                uint64_t block2_start = (block_phase > 0) ? (WII_GROUP_SIZE - block_phase) : WII_GROUP_DATA_SIZE;
+
+                if(block2_start > WII_GROUP_DATA_SIZE) block2_start = WII_GROUP_DATA_SIZE;
+
+                int      have_seed1 = 0;
+                uint32_t seed1[NGC_LFG_SEED_SIZE];
+                int      have_seed2 = 0;
+                uint32_t seed2[NGC_LFG_SEED_SIZE];
+
+                for(int s = 0; s < num_ud_sectors; s++)
+                {
+                    if(sector_is_data[s]) continue;
+
+                    uint64_t soff      = (uint64_t)s * NGC_SECTOR_SIZE;
+                    int      in_block2 = (soff >= block2_start);
+
+                    if(in_block2 && have_seed2) continue;
+
+                    if(!in_block2 && have_seed1) continue;
+
+                    size_t avail = (size_t)(WII_GROUP_DATA_SIZE - soff);
+                    size_t doff  = (size_t)((logical_offset + soff) % WII_GROUP_SIZE);
+
+                    if(avail < NGC_LFG_K * sizeof(uint32_t)) continue;
+
+                    uint32_t *dst = in_block2 ? seed2 : seed1;
+                    size_t    m   = ngc_lfg_get_seed(group_data + soff, avail, doff, dst);
+
+                    if(m > 0)
+                    {
+                        if(in_block2)
+                            have_seed2 = 1;
+                        else
+                            have_seed1 = 1;
+                    }
+
+                    if(have_seed1 && have_seed2) break;
+                }
+
+                /* Build output: hash_block + user_data, detect and zero junk.
+                 * Due to the 1024-byte hash block offset, junk detection sectors
+                 * (2048-byte chunks within group_data) don't align with AaruFormat
+                 * sectors (2048-byte chunks within the full 0x8000 group). So we
+                 * can't use SectorStatusGenerable per-sector for Wii partitions.
+                 * Instead: detect junk, zero it, record in junk map, write ALL
+                 * sectors as SectorStatusUnencrypted. Dedup handles the zeros.
+                 * On readback, junk is reconstructed at group level before re-encryption. */
                 uint8_t decrypted_group[WII_GROUP_SIZE];
                 memcpy(decrypted_group, hash_block, WII_GROUP_HASH_SIZE);
-                memcpy(decrypted_group + WII_GROUP_HASH_SIZE, group_data, WII_GROUP_DATA_SIZE);
+
+                for(int s = 0; s < num_ud_sectors; s++)
+                {
+                    uint64_t off     = (uint64_t)s * NGC_SECTOR_SIZE;
+                    uint64_t chunk   = WII_GROUP_DATA_SIZE - off;
+                    uint64_t out_off = WII_GROUP_HASH_SIZE + off;
+
+                    if(chunk > NGC_SECTOR_SIZE) chunk = NGC_SECTOR_SIZE;
+
+                    if(sector_is_data[s])
+                    {
+                        memcpy(decrypted_group + out_off, group_data + off, chunk);
+                        data_sectors++;
+                        continue;
+                    }
+
+                    int       in_block2 = (off >= block2_start);
+                    int       have_seed = in_block2 ? have_seed2 : have_seed1;
+                    uint32_t *the_seed  = in_block2 ? seed2 : seed1;
+
+                    if(!have_seed)
+                    {
+                        memcpy(decrypted_group + out_off, group_data + off, chunk);
+                        data_sectors++;
+                        continue;
+                    }
+
+                    /* Verify sector against LFG */
+                    struct ngc_lfg_ctx lfg;
+                    uint32_t           sc[NGC_LFG_SEED_SIZE];
+                    memcpy(sc, the_seed, sizeof(sc));
+                    ngc_lfg_set_seed(&lfg, sc);
+
+                    size_t adv = (size_t)((logical_offset + off) % WII_GROUP_SIZE);
+
+                    if(adv > 0)
+                    {
+                        uint8_t discard[4096];
+                        size_t  rem = adv;
+
+                        while(rem > 0)
+                        {
+                            size_t step = rem > sizeof(discard) ? sizeof(discard) : rem;
+                            ngc_lfg_get_bytes(&lfg, discard, step);
+                            rem -= step;
+                        }
+                    }
+
+                    uint8_t expected[NGC_SECTOR_SIZE];
+                    ngc_lfg_get_bytes(&lfg, expected, chunk);
+
+                    if(memcmp(group_data + off, expected, chunk) == 0)
+                    {
+                        /* Junk — zero it out, record in junk map */
+                        memset(decrypted_group + out_off, 0, chunk);
+                        junk_collector_add(&jc, group_disc_off + WII_GROUP_HASH_SIZE + off, chunk, (uint16_t)in_part,
+                                           the_seed);
+                        junk_sectors++;
+                    }
+                    else
+                    {
+                        memcpy(decrypted_group + out_off, group_data + off, chunk);
+                        data_sectors++;
+                    }
+                }
 
                 /* Write all 16 sectors as SectorStatusUnencrypted */
                 for(uint32_t s = 0; s < SECTORS_PER_BLOCK; s++)
                 {
                     uint64_t sector = group_disc_off / NGC_SECTOR_SIZE + s;
-                    int32_t  wret = aaruf_write_sector(output_ctx, sector, false, decrypted_group + s * NGC_SECTOR_SIZE,
-                                                       SectorStatusUnencrypted, NGC_SECTOR_SIZE);
+
+                    int32_t wret = aaruf_write_sector(output_ctx, sector, false, decrypted_group + s * NGC_SECTOR_SIZE,
+                                                      SectorStatusUnencrypted, NGC_SECTOR_SIZE);
 
                     if(wret != AARUF_STATUS_OK)
                     {
@@ -1345,8 +1550,6 @@ int convert_ngcw(const char *input_path, const char *output_path)
                         result = -1;
                         break;
                     }
-
-                    data_sectors++;
                 }
 
                 if(result != 0) break;
@@ -1420,6 +1623,16 @@ int convert_ngcw(const char *input_path, const char *output_path)
                 bytes_processed += block_bytes;
             }
         }
+
+        /* Free partition data maps */
+        if(part_maps != NULL)
+        {
+            for(int p = 0; p < part_count; p++) data_map_free(&part_maps[p]);
+
+            free(part_maps);
+        }
+
+        free(part_sys_end);
     }
 
     printf("\n\n");

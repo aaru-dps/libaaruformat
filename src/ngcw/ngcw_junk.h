@@ -26,8 +26,11 @@
 
 #include "lfg.h"
 
-/* Forward declaration */
+/* Forward declaration — guard against redefinition when aaruformat.h is also included */
+#ifndef AARUFORMAT_CONTEXT_DECLARED
+#define AARUFORMAT_CONTEXT_DECLARED
 typedef struct aaruformat_context aaruformat_context;
+#endif
 
 #ifdef __cplusplus
 extern "C"
