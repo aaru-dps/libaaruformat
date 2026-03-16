@@ -25,6 +25,7 @@
 #include "log.h"
 #include "ps3/ps3_crypto.h"
 #include "ps3/ps3_encryption_map.h"
+#include "wiiu/wiiu_crypto.h"
 
 /**
  * @brief Reads a media tag from the AaruFormat image.
@@ -433,6 +434,59 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
             *sector_status = SectorStatusDumped;
         }
 
+        // Wii U re-encryption: if stored decrypted, re-encrypt for caller
+        if(*sector_status == SectorStatusUnencrypted && ctx->header.mediaType == WUOD)
+        {
+            if(!ctx->wiiu_encryption_initialized)
+            {
+                wiiu_lazy_init(ctx);
+                ctx->wiiu_encryption_initialized = true;
+            }
+
+            if(ctx->wiiu_partition_regions != NULL && ctx->wiiu_encrypted_block_cache != NULL)
+            {
+                const uint8_t *part_key = wiiu_get_sector_key((const WiiuPartitionRegion *)ctx->wiiu_partition_regions,
+                                                              ctx->wiiu_partition_region_count, sector_address);
+
+                if(part_key != NULL)
+                {
+                    uint64_t phys_sector = sector_address / WIIU_LOGICAL_PER_PHYSICAL;
+                    uint32_t slice_index = (uint32_t)(sector_address % WIIU_LOGICAL_PER_PHYSICAL);
+
+                    if(!ctx->wiiu_cache_valid || ctx->wiiu_cached_physical_sector != phys_sector)
+                    {
+                        // Build the 0x8000 block from the decompressed block cache
+                        uint64_t first_logical    = phys_sector * WIIU_LOGICAL_PER_PHYSICAL;
+                        uint32_t sectors_in_block = block_header->length / block_header->sectorSize;
+                        uint64_t block_first      = sector_address - offset;
+
+                        for(uint32_t s = 0; s < WIIU_LOGICAL_PER_PHYSICAL; s++)
+                        {
+                            uint64_t logical = first_logical + s;
+                            int64_t  idx     = (int64_t)(logical - block_first);
+
+                            if(idx >= 0 && (uint32_t)idx < sectors_in_block)
+                                memcpy(ctx->wiiu_encrypted_block_cache + s * block_header->sectorSize,
+                                       block + (uint32_t)idx * block_header->sectorSize, block_header->sectorSize);
+                            else
+                                memset(ctx->wiiu_encrypted_block_cache + s * block_header->sectorSize, 0,
+                                       block_header->sectorSize);
+                        }
+
+                        wiiu_encrypt_physical_sector(part_key, ctx->wiiu_encrypted_block_cache,
+                                                     WIIU_CRYPTO_SECTOR_SIZE);
+                        ctx->wiiu_cached_physical_sector = phys_sector;
+                        ctx->wiiu_cache_valid            = true;
+                    }
+
+                    memcpy(data, ctx->wiiu_encrypted_block_cache + slice_index * block_header->sectorSize,
+                           block_header->sectorSize);
+                }
+            }
+
+            *sector_status = SectorStatusDumped;
+        }
+
         TRACE("Exiting aaruf_read_sector() = AARUF_STATUS_OK");
         return AARUF_STATUS_OK;
     }
@@ -627,6 +681,58 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
                                    ctx->ps3_plaintext_region_count, sector_address))
         {
             ps3_encrypt_sector(ctx->ps3_disc_key, sector_address, data, *length);
+        }
+
+        *sector_status = SectorStatusDumped;
+    }
+
+    // Wii U re-encryption: if stored decrypted, re-encrypt for caller
+    if(*sector_status == SectorStatusUnencrypted && ctx->header.mediaType == WUOD)
+    {
+        if(!ctx->wiiu_encryption_initialized)
+        {
+            wiiu_lazy_init(ctx);
+            ctx->wiiu_encryption_initialized = true;
+        }
+
+        if(ctx->wiiu_partition_regions != NULL && ctx->wiiu_encrypted_block_cache != NULL)
+        {
+            const uint8_t *part_key = wiiu_get_sector_key((const WiiuPartitionRegion *)ctx->wiiu_partition_regions,
+                                                          ctx->wiiu_partition_region_count, sector_address);
+
+            if(part_key != NULL)
+            {
+                uint64_t phys_sector = sector_address / WIIU_LOGICAL_PER_PHYSICAL;
+                uint32_t slice_index = (uint32_t)(sector_address % WIIU_LOGICAL_PER_PHYSICAL);
+
+                if(!ctx->wiiu_cache_valid || ctx->wiiu_cached_physical_sector != phys_sector)
+                {
+                    // Build the 0x8000 block from the decompressed block cache
+                    uint64_t first_logical    = phys_sector * WIIU_LOGICAL_PER_PHYSICAL;
+                    uint32_t sectors_in_block = block_header->length / block_header->sectorSize;
+                    uint64_t block_first      = sector_address - offset;
+
+                    for(uint32_t s = 0; s < WIIU_LOGICAL_PER_PHYSICAL; s++)
+                    {
+                        uint64_t logical = first_logical + s;
+                        int64_t  idx     = (int64_t)(logical - block_first);
+
+                        if(idx >= 0 && (uint32_t)idx < sectors_in_block)
+                            memcpy(ctx->wiiu_encrypted_block_cache + s * block_header->sectorSize,
+                                   block + (uint32_t)idx * block_header->sectorSize, block_header->sectorSize);
+                        else
+                            memset(ctx->wiiu_encrypted_block_cache + s * block_header->sectorSize, 0,
+                                   block_header->sectorSize);
+                    }
+
+                    wiiu_encrypt_physical_sector(part_key, ctx->wiiu_encrypted_block_cache, WIIU_CRYPTO_SECTOR_SIZE);
+                    ctx->wiiu_cached_physical_sector = phys_sector;
+                    ctx->wiiu_cache_valid            = true;
+                }
+
+                memcpy(data, ctx->wiiu_encrypted_block_cache + slice_index * block_header->sectorSize,
+                       block_header->sectorSize);
+            }
         }
 
         *sector_status = SectorStatusDumped;
