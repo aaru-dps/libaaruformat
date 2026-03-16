@@ -5293,6 +5293,29 @@ AARU_EXPORT int AARU_CALL aaruf_close(void *context)
     ctx->ps3_plaintext_region_count = 0;
     ctx->ps3_encryption_initialized = false;
 
+    // Free Wii U encryption context
+    if(ctx->wiiu_disc_key != NULL)
+    {
+        memset(ctx->wiiu_disc_key, 0, 16);
+        free(ctx->wiiu_disc_key);
+        ctx->wiiu_disc_key = NULL;
+    }
+    if(ctx->wiiu_partition_regions != NULL)
+    {
+        // Wipe keys from partition regions before freeing
+        uint32_t wiiu_count = ctx->wiiu_partition_region_count;
+        uint8_t *region_mem = (uint8_t *)ctx->wiiu_partition_regions;
+        // Each region entry contains a 16-byte key at offset 8; wipe the entire block
+        memset(region_mem, 0, wiiu_count * 24);
+        free(ctx->wiiu_partition_regions);
+        ctx->wiiu_partition_regions = NULL;
+    }
+    ctx->wiiu_partition_region_count = 0;
+    ctx->wiiu_encryption_initialized = false;
+    free(ctx->wiiu_encrypted_block_cache);
+    ctx->wiiu_encrypted_block_cache = NULL;
+    ctx->wiiu_cache_valid           = false;
+
     free(ctx->sector_id);
     free(ctx->sector_ied);
     free(ctx->sector_cpr_mai);

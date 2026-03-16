@@ -344,6 +344,15 @@ typedef struct aaruformat_context
     void    *ps3_plaintext_regions;       ///< Parsed Ps3PlaintextRegion array (max 32), NULL if not loaded
     uint32_t ps3_plaintext_region_count;  ///< Number of plaintext regions
     bool     ps3_encryption_initialized;  ///< Whether lazy init has occurred
+
+    // Wii U encryption support (lazy-initialized on first use)
+    uint8_t *wiiu_disc_key;                ///< Cached disc key (16 bytes), NULL if not loaded
+    void    *wiiu_partition_regions;       ///< Parsed WiiuPartitionRegion array, NULL if not loaded
+    uint32_t wiiu_partition_region_count;  ///< Number of partition regions
+    bool     wiiu_encryption_initialized;  ///< Whether lazy init has occurred
+    uint8_t *wiiu_encrypted_block_cache;   ///< Cached re-encrypted 0x8000-byte physical sector
+    uint64_t wiiu_cached_physical_sector;  ///< Physical sector number of cached block
+    bool     wiiu_cache_valid;             ///< Whether the encrypted block cache is valid
 } aaruformat_context;
 
 /** \struct DumpHardwareEntriesWithData
