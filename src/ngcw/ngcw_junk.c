@@ -171,8 +171,12 @@ int ngcw_regenerate_junk_sector(const NgcwJunkEntry *entries, uint32_t entry_cou
             hi = mid - 1;
         else
         {
-            /* Found: disc_offset is within entries[mid] */
-            uint64_t stream_pos = disc_offset - entries[mid].offset;
+            /* Found: disc_offset is within entries[mid].
+             * The seed's position 0 corresponds to the start of the 0x8000-aligned
+             * block, not entries[mid].offset (which is the start of the junk region).
+             * Compute advance from the block start. */
+            uint64_t block_start = entries[mid].offset & ~(uint64_t)0x7FFF;
+            uint64_t stream_pos  = disc_offset - block_start;
 
             struct ngc_lfg_ctx lfg;
             uint32_t           seed_copy[NGC_LFG_SEED_SIZE];

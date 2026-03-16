@@ -300,14 +300,18 @@ TEST(JunkMap, RegenerateAtOffset)
     uint8_t expected[2048];
     ngc_lfg_get_bytes(&lfg, expected, sizeof(expected));
 
-    /* Build a junk entry starting at offset 0 with length covering both areas */
+    /* Build a junk entry starting at offset 4096 within a 0x8000-aligned block.
+     * The seed's position 0 corresponds to the block start (offset 0),
+     * not the entry offset. So the entry at offset 4096 with seed for block 0
+     * means regeneration at disc_offset 4096 advances LFG by 4096 bytes. */
     NgcwJunkEntry entry;
-    entry.offset          = 0;
-    entry.length          = 4096 + 2048;
+    entry.offset          = 4096;
+    entry.length          = 2048;
     entry.partition_index = 0xFFFF;
     memcpy(entry.seed, test_seed, sizeof(entry.seed));
 
-    /* Regenerate at offset 4096 */
+    /* Regenerate at offset 4096 — the LFG advances by
+     * disc_offset - (entry.offset & ~0x7FFF) = 4096 - 0 = 4096 bytes */
     uint8_t output[2048];
     int     ret = ngcw_regenerate_junk_sector(&entry, 1, 4096, output, 2048);
     EXPECT_EQ(0, ret);
