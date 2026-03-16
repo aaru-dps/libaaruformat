@@ -946,6 +946,79 @@ int convert_ngcw(const char *input_path, const char *output_path)
         print_success("Wii partition parsing from AaruFormat source (partition key map required in source)");
     }
 
+    /* ── Disc Info ────────────────────────────────────────────── */
+    {
+        printf("\n" ANSI_BOLD ANSI_CYAN "  Disc Information" ANSI_RESET "\n");
+        printf(ANSI_BLUE "────────────────────────────────────────────────────────────────────────────────" ANSI_RESET
+                         "\n");
+
+        print_info("Platform:", disc_type == 0 ? "Nintendo GameCube" : "Nintendo Wii");
+
+        /* Game ID (6 chars) */
+        char game_id[7];
+        memcpy(game_id, header, 6);
+        game_id[6] = '\0';
+        print_info("Game ID:", game_id);
+
+        /* Game title */
+        char title[65];
+        memcpy(title, header + 0x20, 64);
+        title[64] = '\0';
+
+        for(int i = 63; i >= 0 && (title[i] == ' ' || title[i] == '\0'); i--) title[i] = '\0';
+
+        if(title[0]) print_info("Title:", title);
+
+        /* Maker code */
+        char maker[3] = {(char)header[4], (char)header[5], '\0'};
+        print_info("Maker Code:", maker);
+
+        /* Disc number and version */
+        snprintf(buffer, sizeof(buffer), "%u", header[6] + 1);
+        print_info("Disc Number:", buffer);
+
+        snprintf(buffer, sizeof(buffer), "%u", header[7]);
+        print_info("Disc Version:", buffer);
+
+        /* Region */
+        const char *region;
+
+        switch(header[3])
+        {
+            case 'J':
+                region = "Japan";
+                break;
+            case 'E':
+                region = "USA";
+                break;
+            case 'P':
+            case 'D':
+            case 'F':
+            case 'I':
+            case 'S':
+            case 'H':
+            case 'U':
+                region = "Europe";
+                break;
+            case 'K':
+                region = "Korea";
+                break;
+            case 'W':
+                region = "Taiwan";
+                break;
+            default:
+                region = "Unknown";
+                break;
+        }
+
+        print_info("Region:", region);
+
+        /* Disc size */
+        char size_str[32];
+        format_bytes(disc_size, size_str, sizeof(size_str));
+        print_info("Size:", size_str);
+    }
+
     /* ── Step 3: Create output image ──────────────────────────── */
     printf("\n" ANSI_BOLD ANSI_CYAN "  Creating Destination Image" ANSI_RESET "\n");
     printf(ANSI_BLUE "────────────────────────────────────────────────────────────────────────────────" ANSI_RESET
