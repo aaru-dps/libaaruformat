@@ -353,6 +353,7 @@ typedef struct aaruformat_context
     uint8_t *wiiu_encrypted_block_cache;   ///< Cached re-encrypted 0x8000-byte physical sector
     uint64_t wiiu_cached_physical_sector;  ///< Physical sector number of cached block
     bool     wiiu_cache_valid;             ///< Whether the encrypted block cache is valid
+    bool     wiiu_building_crypto_block;   ///< True while gathering sectors for re-encryption (suppresses recursion)
 } aaruformat_context;
 
 /** \struct DumpHardwareEntriesWithData

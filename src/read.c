@@ -435,7 +435,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
         }
 
         // Wii U re-encryption: if stored decrypted, re-encrypt for caller
-        if(*sector_status == SectorStatusUnencrypted && ctx->header.mediaType == WUOD)
+        if(*sector_status == SectorStatusUnencrypted && ctx->header.mediaType == WUOD &&
+           !ctx->wiiu_building_crypto_block)
         {
             if(!ctx->wiiu_encryption_initialized)
             {
@@ -455,23 +456,34 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
 
                     if(!ctx->wiiu_cache_valid || ctx->wiiu_cached_physical_sector != phys_sector)
                     {
-                        // Build the 0x8000 block from the decompressed block cache
-                        uint64_t first_logical    = phys_sector * WIIU_LOGICAL_PER_PHYSICAL;
-                        uint32_t sectors_in_block = block_header->length / block_header->sectorSize;
-                        uint64_t block_first      = sector_address - offset;
+                        uint64_t first_logical = phys_sector * WIIU_LOGICAL_PER_PHYSICAL;
+
+                        // Read all 16 logical sectors via aaruf_read_sector with recursion guard
+                        ctx->wiiu_building_crypto_block = true;
 
                         for(uint32_t s = 0; s < WIIU_LOGICAL_PER_PHYSICAL; s++)
                         {
                             uint64_t logical = first_logical + s;
-                            int64_t  idx     = (int64_t)(logical - block_first);
 
-                            if(idx >= 0 && (uint32_t)idx < sectors_in_block)
-                                memcpy(ctx->wiiu_encrypted_block_cache + s * block_header->sectorSize,
-                                       block + (uint32_t)idx * block_header->sectorSize, block_header->sectorSize);
+                            if(logical == sector_address)
+                            {
+                                // Current sector is already in data buffer
+                                memcpy(ctx->wiiu_encrypted_block_cache + s * (*length), data, *length);
+                            }
                             else
-                                memset(ctx->wiiu_encrypted_block_cache + s * block_header->sectorSize, 0,
-                                       block_header->sectorSize);
+                            {
+                                uint32_t s_len    = *length;
+                                uint8_t  s_status = 0;
+                                int32_t  s_ret =
+                                    aaruf_read_sector(context, logical, false,
+                                                      ctx->wiiu_encrypted_block_cache + s * s_len, &s_len, &s_status);
+
+                                if(s_ret != AARUF_STATUS_OK)
+                                    memset(ctx->wiiu_encrypted_block_cache + s * (*length), 0, *length);
+                            }
                         }
+
+                        ctx->wiiu_building_crypto_block = false;
 
                         wiiu_encrypt_physical_sector(part_key, ctx->wiiu_encrypted_block_cache,
                                                      WIIU_CRYPTO_SECTOR_SIZE);
@@ -479,8 +491,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
                         ctx->wiiu_cache_valid            = true;
                     }
 
-                    memcpy(data, ctx->wiiu_encrypted_block_cache + slice_index * block_header->sectorSize,
-                           block_header->sectorSize);
+                    memcpy(data, ctx->wiiu_encrypted_block_cache + slice_index * (*length), *length);
                 }
             }
 
@@ -687,7 +698,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
     }
 
     // Wii U re-encryption: if stored decrypted, re-encrypt for caller
-    if(*sector_status == SectorStatusUnencrypted && ctx->header.mediaType == WUOD)
+    if(*sector_status == SectorStatusUnencrypted && ctx->header.mediaType == WUOD && !ctx->wiiu_building_crypto_block)
     {
         if(!ctx->wiiu_encryption_initialized)
         {
@@ -707,31 +718,41 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
 
                 if(!ctx->wiiu_cache_valid || ctx->wiiu_cached_physical_sector != phys_sector)
                 {
-                    // Build the 0x8000 block from the decompressed block cache
-                    uint64_t first_logical    = phys_sector * WIIU_LOGICAL_PER_PHYSICAL;
-                    uint32_t sectors_in_block = block_header->length / block_header->sectorSize;
-                    uint64_t block_first      = sector_address - offset;
+                    uint64_t first_logical = phys_sector * WIIU_LOGICAL_PER_PHYSICAL;
+
+                    // Read all 16 logical sectors via aaruf_read_sector with recursion guard
+                    ctx->wiiu_building_crypto_block = true;
 
                     for(uint32_t s = 0; s < WIIU_LOGICAL_PER_PHYSICAL; s++)
                     {
                         uint64_t logical = first_logical + s;
-                        int64_t  idx     = (int64_t)(logical - block_first);
 
-                        if(idx >= 0 && (uint32_t)idx < sectors_in_block)
-                            memcpy(ctx->wiiu_encrypted_block_cache + s * block_header->sectorSize,
-                                   block + (uint32_t)idx * block_header->sectorSize, block_header->sectorSize);
+                        if(logical == sector_address)
+                        {
+                            // Current sector is already in data buffer
+                            memcpy(ctx->wiiu_encrypted_block_cache + s * (*length), data, *length);
+                        }
                         else
-                            memset(ctx->wiiu_encrypted_block_cache + s * block_header->sectorSize, 0,
-                                   block_header->sectorSize);
+                        {
+                            uint32_t s_len    = *length;
+                            uint8_t  s_status = 0;
+                            int32_t  s_ret =
+                                aaruf_read_sector(context, logical, false, ctx->wiiu_encrypted_block_cache + s * s_len,
+                                                  &s_len, &s_status);
+
+                            if(s_ret != AARUF_STATUS_OK)
+                                memset(ctx->wiiu_encrypted_block_cache + s * (*length), 0, *length);
+                        }
                     }
+
+                    ctx->wiiu_building_crypto_block = false;
 
                     wiiu_encrypt_physical_sector(part_key, ctx->wiiu_encrypted_block_cache, WIIU_CRYPTO_SECTOR_SIZE);
                     ctx->wiiu_cached_physical_sector = phys_sector;
                     ctx->wiiu_cache_valid            = true;
                 }
 
-                memcpy(data, ctx->wiiu_encrypted_block_cache + slice_index * block_header->sectorSize,
-                       block_header->sectorSize);
+                memcpy(data, ctx->wiiu_encrypted_block_cache + slice_index * (*length), *length);
             }
         }
 
