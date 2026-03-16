@@ -5316,6 +5316,32 @@ AARU_EXPORT int AARU_CALL aaruf_close(void *context)
     ctx->wiiu_encrypted_block_cache = NULL;
     ctx->wiiu_cache_valid           = false;
 
+    // Free Nintendo GC/Wii junk map context
+    if(ctx->ngcw_junk_entries != NULL)
+    {
+        free(ctx->ngcw_junk_entries);
+        ctx->ngcw_junk_entries = NULL;
+    }
+    ctx->ngcw_junk_entry_count = 0;
+    ctx->ngcw_junk_seed_size   = 0;
+    ctx->ngcw_junk_initialized = false;
+
+    // Free Wii encryption context
+    if(ctx->wii_partition_regions != NULL)
+    {
+        // Wipe keys from partition regions before freeing
+        uint32_t wii_count  = ctx->wii_partition_region_count;
+        uint8_t *wii_region = (uint8_t *)ctx->wii_partition_regions;
+        memset(wii_region, 0, wii_count * 24);
+        free(ctx->wii_partition_regions);
+        ctx->wii_partition_regions = NULL;
+    }
+    ctx->wii_partition_region_count = 0;
+    ctx->wii_encryption_initialized = false;
+    free(ctx->wii_encrypted_group_cache);
+    ctx->wii_encrypted_group_cache = NULL;
+    ctx->wii_cache_valid           = false;
+
     free(ctx->sector_id);
     free(ctx->sector_ied);
     free(ctx->sector_cpr_mai);
