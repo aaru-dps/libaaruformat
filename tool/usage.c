@@ -38,6 +38,8 @@ void usage()
     printf("  cli-compare            Compares two AaruFormat images sector by sector (CLI mode).\n");
     printf("  compare                Compares two AaruFormat images.\n");
     printf("  convert                Converts an AaruFormat image to another AaruFormat image.\n");
+    printf("  convert-ps3            Converts a PS3 disc image to AaruFormat with decrypted storage.\n");
+    printf("  convert-wiiu           Converts a Wii U disc image to AaruFormat with decrypted storage.\n");
     printf("  identify               Identifies if the indicated file is a supported AaruFormat image.\n");
     printf("  info                   Prints information about a given AaruFormat image.\n");
     printf("  inject-media-tag       Injects a media tag into an AaruFormat image.\n");
@@ -179,4 +181,21 @@ void usage_convert_ps3()
     printf("  3. --ird file (extracts data1 key, derives disc key)\n");
     printf("  4. Sidecar files: <input>.disc_key, <input>.data1, <input>.ird\n");
     printf("  5. Source AaruFormat image media tags\n");
+}
+
+void usage_convert_wiiu()
+{
+    printf("\nUsage:\n");
+    printf("  aaruformattool convert-wiiu <input> <output> [options]\n\n");
+    printf("Converts a Wii U disc WUD, WUX, or AaruFormat image to an AaruFormat image\n");
+    printf("with decrypted sector storage and Wii U encryption metadata.\n\n");
+    printf("Arguments:\n");
+    printf("  <input>              Path to input WUD, WUX, or AaruFormat image.\n");
+    printf("  <output>             Path to output AaruFormat image.\n\n");
+    printf("Options:\n");
+    printf("  --disc-key=<hex>     32-char hex disc key (16 bytes).\n\n");
+    printf("Key resolution order:\n");
+    printf("  1. --disc-key argument\n");
+    printf("  2. Sidecar files: <input>.disckey, <input>.key\n");
+    printf("  3. Source AaruFormat image media tags\n");
 }

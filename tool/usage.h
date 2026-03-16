@@ -34,5 +34,6 @@ void usage_convert();
 void usage_upgrade_ddt_to_alpha21();
 void usage_inject_media_tag();
 void usage_convert_ps3();
+void usage_convert_wiiu();
 
 #endif  // LIBAARUFORMAT_USAGE_H

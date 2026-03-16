@@ -35,9 +35,13 @@ add_executable(aaruformattool
                iso9660_mini.c
                iso9660_mini.h
                convert_ps3.c
+               convert_wiiu.c
+               wiiu_reader.c
+               wiiu_reader.h
                ${CMAKE_CURRENT_SOURCE_DIR}/../src/lib/aes128.c
                ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_crypto.c
                ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_encryption_map.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/../src/wiiu/wiiu_crypto.c
                termbox2.h
 )
 
