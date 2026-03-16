@@ -1079,7 +1079,8 @@ typedef enum
     kMediaTagPs3Data2            = 79,  ///< PS3 data2 key (16 bytes, from disc)
     kMediaTagPs3Pic              = 80,  ///< PS3 PIC data (115 bytes, from disc lead-in)
     kMediaTagPs3EncryptionMap    = 81,  ///< PS3 encryption region map (serialized from sector 0)
-    MaxMediaTag                  = kMediaTagPs3EncryptionMap
+    kMediaTagWiiUPartitionKeyMap = 82,  ///< Nintendo Wii U partition-to-key mapping with regions
+    MaxMediaTag                  = kMediaTagWiiUPartitionKeyMap
 } MediaTagType;
 
 /** @} */ /* end of MediaTags group */
