@@ -141,6 +141,8 @@ typedef enum
     kDataTypePs3Pic                  = 96,  ///< PS3 PIC data (115 bytes, from disc lead-in)
     kDataTypePs3EncryptionMap        = 97,  ///< PS3 encryption region map (serialized from sector 0)
     kDataTypeWiiUPartitionKeyMap     = 98,  ///< Nintendo Wii U partition-to-key mapping with regions
+    kDataTypeWiiPartitionKeyMap      = 99,  ///< Nintendo Wii partition-to-key mapping with regions
+    kDataTypeNgcwJunkMap             = 100, ///< Nintendo GameCube/Wii junk region map with LFG seeds
 } DataType;
 
 /**
