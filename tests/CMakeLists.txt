@@ -96,9 +96,13 @@ add_executable(tests_run
     ps3_ird.cpp
     ps3_sfo.cpp
     ps3_iso9660.cpp
+    ngcw.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/lib/aes128.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_crypto.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_encryption_map.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/ngcw/lfg.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/ngcw/ngcw_junk.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/ngcw/wii_crypto.c
                ../tool/ps3/ird.c
                ../tool/ps3/sfo.c
                ../tool/ps3/iso9660_mini.c
