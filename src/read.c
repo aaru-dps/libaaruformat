@@ -1728,6 +1728,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                             memcpy(data + 24, bare_data, 2324);
                             if(suffix_status == SectorStatusMode2Form2Ok)
                                 aaruf_ecc_cd_reconstruct(ctx->ecc_cd_context, data, kTrackTypeCdMode2Form2);
+                            else
+                                memset(data + 2348, 0, 4);
                         }
                         else if(suffix_status == SectorStatusNotDumped)
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
@@ -1750,6 +1752,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                             memcpy(data + 24, bare_data, 2324);
                             if((ctx->sector_suffix_ddt[corrected_sector_address] & CD_XFIX_MASK) == Mode2Form2Ok)
                                 aaruf_ecc_cd_reconstruct(ctx->ecc_cd_context, data, kTrackTypeCdMode2Form2);
+                            else
+                                memset(data + 2348, 0, 4);
                         }
                         else if((ctx->sector_suffix_ddt[corrected_sector_address] & CD_XFIX_MASK) == NotDumped)
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
