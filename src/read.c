@@ -452,6 +452,12 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
 
         *length = ctx->image_info.SectorSize;
 
+        if(data == NULL)
+        {
+            TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_BUFFER_TOO_SMALL (generable, NULL data)");
+            return AARUF_ERROR_BUFFER_TOO_SMALL;
+        }
+
         if(ctx->ngcw_junk_entries != NULL)
         {
             uint64_t disc_offset = sector_address * (uint64_t)ctx->image_info.SectorSize;
