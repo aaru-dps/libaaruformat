@@ -301,6 +301,8 @@ typedef struct aaruformat_context
     uint32_t lzma_dict_size;       ///< LZMA dictionary size (writing path).
     bool     deduplicate;          ///< Storage deduplication active (duplicates coalesce).
     bool     compression_enabled;  ///< True if block compression enabled (writing path).
+    bool     use_zstd;             ///< Use Zstandard instead of LZMA for data blocks.
+    int      zstd_level;           ///< Zstandard compression level (writing path, default 19).
 
     /* Tape-specific structures */
     tapeFileHashEntry      *tape_files;       ///< Hash table root for tape files

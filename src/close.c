@@ -1698,23 +1698,35 @@ static void write_sector_subchannel(aaruformat_context *ctx)
 
             if(dst_buffer == NULL)
             {
-                TRACE("Failed to allocate memory for LZMA output");
+                TRACE("Failed to allocate memory for compressed output");
                 free(cst_buffer);
                 return;
             }
 
             aaruf_cst_transform(ctx->sector_subchannel, cst_buffer, subchannel_block.length);
-            size_t dst_size   = subchannel_block.length;
-            size_t props_size = LZMA_PROPERTIES_LENGTH;
 
-            aaruf_lzma_encode_buffer(dst_buffer, &dst_size, cst_buffer, subchannel_block.length, lzma_properties,
-                                     &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+            size_t dst_size;
+
+            if(ctx->use_zstd)
+            {
+                dst_size = aaruf_zstd_encode_buffer(dst_buffer, subchannel_block.length, cst_buffer,
+                                                     subchannel_block.length, ctx->zstd_level);
+                if(dst_size == 0) dst_size = subchannel_block.length; /* compression failed, fall through to none */
+            }
+            else
+            {
+                dst_size          = subchannel_block.length;
+                size_t props_size = LZMA_PROPERTIES_LENGTH;
+
+                aaruf_lzma_encode_buffer(dst_buffer, &dst_size, cst_buffer, subchannel_block.length, lzma_properties,
+                                         &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+            }
 
             free(cst_buffer);
 
             if(dst_size < subchannel_block.length)
             {
-                subchannel_block.compression = kCompressionLzmaCst;
+                subchannel_block.compression = ctx->use_zstd ? kCompressionZstdCst : kCompressionLzmaCst;
                 subchannel_block.cmpLength   = (uint32_t)dst_size;
                 buffer                       = dst_buffer;
                 owns_buffer                  = true;
@@ -1749,28 +1761,39 @@ static void write_sector_subchannel(aaruformat_context *ctx)
                 TRACE("Incorrect media type, not writing sector subchannel block");
                 return;  // Incorrect media type
         }
-        subchannel_block.cmpLength   = subchannel_block.length;
-        subchannel_block.compression = kCompressionLzma;
+        subchannel_block.cmpLength = subchannel_block.length;
 
         uint8_t *dst_buffer = malloc(subchannel_block.length);
 
         if(dst_buffer == NULL)
         {
-            TRACE("Failed to allocate memory for LZMA output");
+            TRACE("Failed to allocate memory for compressed output");
             return;
         }
 
-        size_t dst_size   = subchannel_block.length;
-        size_t props_size = LZMA_PROPERTIES_LENGTH;
+        size_t dst_size;
 
-        aaruf_lzma_encode_buffer(dst_buffer, &dst_size, ctx->sector_subchannel, subchannel_block.length,
-                                 lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+        if(ctx->use_zstd)
+        {
+            dst_size = aaruf_zstd_encode_buffer(dst_buffer, subchannel_block.length, ctx->sector_subchannel,
+                                                 subchannel_block.length, ctx->zstd_level);
+            if(dst_size == 0) dst_size = subchannel_block.length; /* compression failed, fall through to none */
+        }
+        else
+        {
+            dst_size          = subchannel_block.length;
+            size_t props_size = LZMA_PROPERTIES_LENGTH;
+
+            aaruf_lzma_encode_buffer(dst_buffer, &dst_size, ctx->sector_subchannel, subchannel_block.length,
+                                     lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+        }
 
         if(dst_size < subchannel_block.length)
         {
-            subchannel_block.cmpLength = (uint32_t)dst_size;
-            buffer                     = dst_buffer;
-            owns_buffer                = true;
+            subchannel_block.compression = ctx->use_zstd ? kCompressionZstd : kCompressionLzma;
+            subchannel_block.cmpLength   = (uint32_t)dst_size;
+            buffer                       = dst_buffer;
+            owns_buffer                  = true;
         }
         else
         {
@@ -1793,12 +1816,14 @@ static void write_sector_subchannel(aaruformat_context *ctx)
         subchannel_block.cmpCrc64 = aaruf_crc64_data(buffer, subchannel_block.cmpLength);
 
     const size_t length_to_write = subchannel_block.cmpLength;
-    if(subchannel_block.compression != kCompressionNone) subchannel_block.cmpLength += LZMA_PROPERTIES_LENGTH;
+    const bool   has_lzma_props = subchannel_block.compression == kCompressionLzma ||
+                                  subchannel_block.compression == kCompressionLzmaCst;
+    if(has_lzma_props) subchannel_block.cmpLength += LZMA_PROPERTIES_LENGTH;
 
     // Write header
     if(fwrite(&subchannel_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
     {
-        if(subchannel_block.compression != kCompressionNone)
+        if(has_lzma_props)
             fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
 
         // Write data

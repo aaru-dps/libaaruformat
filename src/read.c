@@ -895,6 +895,59 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
             free(cmp_data);
 
             break;
+        case kCompressionZstd:
+            if(block_header->cmpLength == 0 || block_header->length == 0)
+            {
+                FATAL("Invalid zstd block lengths (cmpLength=%u, length=%u)", block_header->cmpLength,
+                      block_header->length);
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+            }
+
+            TRACE("Allocating memory for block of size %zu bytes", block_header->length);
+            block = (uint8_t *)malloc(block_header->length);
+            if(block == NULL)
+            {
+                FATAL("Not enough memory for block");
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            TRACE("Allocating memory for compressed data of size %zu bytes", block_header->cmpLength);
+            cmp_data = malloc(block_header->cmpLength);
+            if(cmp_data == NULL)
+            {
+                FATAL("Not enough memory for compressed data");
+                free(block);
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            fseek(ctx->imageStream, (long)(block_offset + sizeof(BlockHeader)), SEEK_SET);
+
+            read_bytes = fread(cmp_data, 1, block_header->cmpLength, ctx->imageStream);
+            if(read_bytes != block_header->cmpLength)
+            {
+                FATAL("Could not read compressed block");
+                free(cmp_data);
+                free(block);
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+            }
+
+            read_bytes = aaruf_zstd_decode_buffer(block, block_header->length, cmp_data, block_header->cmpLength);
+            if(read_bytes != block_header->length)
+            {
+                FATAL("Error decompressing zstd block, expected %u bytes got %zu", block_header->length, read_bytes);
+                free(cmp_data);
+                free(block);
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+            }
+
+            free(cmp_data);
+
+            break;
         case kCompressionFlac:
             TRACE("Allocating memory for compressed data of size %zu bytes", block_header->cmpLength);
             cmp_data = malloc(block_header->cmpLength);

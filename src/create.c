@@ -526,6 +526,8 @@ AARU_EXPORT void AARU_CALL *aaruf_create(const char *filepath, const uint32_t me
     ctx->compression_enabled = parsed_options.compress;
     ctx->lzma_dict_size      = parsed_options.dictionary;
     ctx->deduplicate         = parsed_options.deduplicate;
+    ctx->use_zstd            = parsed_options.zstd;
+    ctx->zstd_level          = parsed_options.zstd_level;
     if(ctx->deduplicate)
         ctx->sector_hash_map = create_map(ctx->user_data_ddt_header.blocks * 25 / 100);  // 25% of total sectors
 

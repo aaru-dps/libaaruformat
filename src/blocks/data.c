@@ -281,6 +281,85 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
 
         free(cmp_data);
     }
+    else if(block_header.compression == kCompressionZstd || block_header.compression == kCompressionZstdCst)
+    {
+        if(block_header.compression == kCompressionZstdCst && block_header.type != kDataTypeCdSubchannel)
+        {
+            TRACE("Invalid compression type %u for block with data type %u, continuing...", block_header.compression,
+                  block_header.type);
+            TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        }
+
+        cmp_data = (block_header.cmpLength == 0) ? NULL : (uint8_t *)malloc(block_header.cmpLength);
+        if(block_header.cmpLength != 0 && cmp_data == NULL)
+        {
+            TRACE("Cannot allocate memory for compressed block, continuing...");
+            TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
+        }
+
+        if(block_header.length != 0)
+        {
+            data = (uint8_t *)malloc(block_header.length);
+            if(data == NULL)
+            {
+                TRACE("Cannot allocate memory for block, continuing...");
+                free(cmp_data);
+                TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
+                return AARUF_STATUS_OK;
+            }
+        }
+        else
+            data = NULL;
+
+        if(block_header.cmpLength != 0)
+        {
+            read_bytes = fread(cmp_data, 1, block_header.cmpLength, ctx->imageStream);
+            if(read_bytes != block_header.cmpLength)
+            {
+                TRACE("Could not read compressed block, continuing...");
+                free(cmp_data);
+                free(data);
+                TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
+                return AARUF_STATUS_OK;
+            }
+        }
+
+        if(block_header.length != 0)
+        {
+            size_t decoded = aaruf_zstd_decode_buffer(data, block_header.length, cmp_data, block_header.cmpLength);
+
+            if(decoded != block_header.length)
+            {
+                TRACE("Error decompressing zstd block, expected %" PRIu32 " bytes but got %zu bytes, continuing...",
+                      block_header.length, decoded);
+                free(cmp_data);
+                free(data);
+                TRACE("Exiting process_data_block() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+            }
+        }
+
+        free(cmp_data);
+
+        if(block_header.compression == kCompressionZstdCst && block_header.length != 0)
+        {
+            cst_data = (uint8_t *)malloc(block_header.length);
+            if(cst_data == NULL)
+            {
+                TRACE("Cannot allocate memory for CST untransform, continuing...");
+                free(data);
+                TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
+                return AARUF_STATUS_OK;
+            }
+
+            aaruf_cst_untransform(data, cst_data, block_header.length);
+            free(data);
+            data     = cst_data;
+            cst_data = NULL;
+        }
+    }
     else if(block_header.compression == kCompressionNone)
     {
         if(block_header.length != 0)

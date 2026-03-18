@@ -371,7 +371,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
                 if(ctx->current_track_type == kTrackTypeAudio)
                     ctx->current_block_header.compression = kCompressionFlac;
                 else
-                    ctx->current_block_header.compression = kCompressionLzma;
+                    ctx->current_block_header.compression = ctx->use_zstd ? kCompressionZstd : kCompressionLzma;
             }
             else
                 ctx->current_block_header.compression = kCompressionNone;
@@ -380,7 +380,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
         {
             ctx->current_track_type = kTrackTypeData;
             if(ctx->compression_enabled)
-                ctx->current_block_header.compression = kCompressionLzma;
+                ctx->current_block_header.compression = ctx->use_zstd ? kCompressionZstd : kCompressionLzma;
             else
                 ctx->current_block_header.compression = kCompressionNone;
         }
@@ -1574,6 +1574,37 @@ int32_t aaruf_close_current_block(aaruformat_context *ctx)
             {
                 ctx->current_block_header.compression = kCompressionNone;
                 free(cmp_buffer);
+            }
+
+            break;
+        case kCompressionZstd:
+            cmp_buffer = malloc(ctx->current_block_header.length * 2);
+            if(cmp_buffer == NULL)
+            {
+                FATAL("Could not allocate buffer for compressed data");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            size_t zstd_dst_size =
+                aaruf_zstd_encode_buffer(cmp_buffer, ctx->current_block_header.length * 2, ctx->writing_buffer,
+                                         ctx->current_block_header.length, ctx->zstd_level);
+
+            if(zstd_dst_size == 0)
+            {
+                ctx->current_block_header.compression = kCompressionNone;
+                free(cmp_buffer);
+                cmp_buffer = NULL;
+            }
+            else
+            {
+                ctx->current_block_header.cmpLength = (uint32_t)zstd_dst_size;
+
+                if(ctx->current_block_header.cmpLength >= ctx->current_block_header.length)
+                {
+                    ctx->current_block_header.compression = kCompressionNone;
+                    free(cmp_buffer);
+                    cmp_buffer = NULL;
+                }
             }
 
             break;
