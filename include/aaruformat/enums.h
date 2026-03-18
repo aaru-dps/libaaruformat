@@ -33,7 +33,9 @@ typedef enum
     kCompressionNone    = 0,  ///< Not compressed.
     kCompressionLzma    = 1,  ///< LZMA compression.
     kCompressionFlac    = 2,  ///< FLAC compression.
-    kCompressionLzmaCst = 3   ///< LZMA applied to Claunia Subchannel Transform processed data.
+    kCompressionLzmaCst = 3,  ///< LZMA applied to Claunia Subchannel Transform processed data.
+    kCompressionZstd    = 4,  ///< Zstandard compression (reserved for future implementation).
+    kCompressionZstdCst = 5   ///< Zstandard applied to Claunia Subchannel Transform processed data (reserved).
 } CompressionType;
 
 /**
