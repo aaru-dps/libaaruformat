@@ -77,6 +77,12 @@ endif()
 # Global compile definitions
 add_compile_definitions(__STDC_FORMAT_MACROS=1)
 
+# POSIX functions (strdup, fseeko, ftello, etc.) require feature test macros
+# when building with C_EXTENSIONS OFF. Define on non-Windows platforms.
+if(NOT WIN32)
+  add_compile_definitions(_POSIX_C_SOURCE=200809L)
+endif()
+
 # MinGW specific configuration
 if("${CMAKE_C_PLATFORM_ID}" MATCHES "MinGW")
   if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64" OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm")
@@ -161,7 +167,20 @@ else()
   message(STATUS "Address sanitizer disabled (enable with -DUSE_ASAN=ON)")
 endif()
 
-add_library(aaruformat SHARED
+# Library type controlled by BUILD_SHARED_LIBS (CMake standard).
+# -DBUILD_SHARED_LIBS=ON  → shared library (default, backwards compatible)
+# -DBUILD_SHARED_LIBS=OFF → static library
+if(NOT DEFINED BUILD_SHARED_LIBS)
+  set(BUILD_SHARED_LIBS ON)
+endif()
+
+if(BUILD_SHARED_LIBS)
+  message(STATUS "Building shared library (use -DBUILD_SHARED_LIBS=OFF for static)")
+else()
+  message(STATUS "Building static library")
+endif()
+
+add_library(aaruformat
             include/aaruformat/consts.h
             include/aaruformat/enums.h
             include/aaru.h
