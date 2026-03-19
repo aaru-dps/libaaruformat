@@ -1734,8 +1734,22 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                         else if(suffix_status == SectorStatusNotDumped)
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
                         else
-                            // Mode 2 where ECC failed
-                            memcpy(data + 24, bare_data, 2328);
+                        {
+                            // Mode 2 where ECC/EDC failed — restore user data + stored suffix.
+                            // Check subheader (already copied to data+16) to determine form.
+                            if(data[0x12] & 0x20)
+                            {
+                                // Form 2: 2324 bytes user data, 4 bytes EDC suffix
+                                memcpy(data + 24, bare_data, 2324);
+                                memcpy(data + 2348, ctx->sector_suffix + suffix_index * 288, 4);
+                            }
+                            else
+                            {
+                                // Form 1: 2048 bytes user data, 280 bytes EDC+ECC suffix
+                                memcpy(data + 24, bare_data, 2048);
+                                memcpy(data + 2072, ctx->sector_suffix + suffix_index * 288, 280);
+                            }
+                        }
                     }
                     else if(ctx->mode2_subheaders != NULL && ctx->sector_suffix_ddt != NULL)
                     {
@@ -1758,8 +1772,21 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                         else if((ctx->sector_suffix_ddt[corrected_sector_address] & CD_XFIX_MASK) == NotDumped)
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
                         else
-                            // Mode 2 where ECC failed
-                            memcpy(data + 24, bare_data, 2328);
+                        {
+                            // Mode 2 where ECC/EDC failed — restore user data + stored suffix.
+                            const uint32_t sfx_index =
+                                (ctx->sector_suffix_ddt[corrected_sector_address] & CD_DFIX_MASK) - 1;
+                            if(data[0x12] & 0x20)
+                            {
+                                memcpy(data + 24, bare_data, 2324);
+                                memcpy(data + 2348, ctx->sector_suffix_corrected + sfx_index * 288, 4);
+                            }
+                            else
+                            {
+                                memcpy(data + 24, bare_data, 2048);
+                                memcpy(data + 2072, ctx->sector_suffix_corrected + sfx_index * 288, 280);
+                            }
+                        }
                     }
                     else if(ctx->mode2_subheaders != NULL)
                     {
