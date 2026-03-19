@@ -32,7 +32,7 @@
 
 #include "arm_vmull.h"
 
-#if !defined(__MINGW32__) && (!defined(__ANDROID__) || !defined(__arm__))
+#ifdef TARGET_WITH_CRYPTO
 TARGET_WITH_CRYPTO static uint64x2_t sse2neon_vmull_p64_crypto(uint64x1_t _a, uint64x1_t _b)
 {
     poly64_t a = vget_lane_p64(vreinterpret_p64_u64(_a), 0);
@@ -43,8 +43,7 @@ TARGET_WITH_CRYPTO static uint64x2_t sse2neon_vmull_p64_crypto(uint64x1_t _a, ui
 
 TARGET_WITH_SIMD uint64x2_t sse2neon_vmull_p64(uint64x1_t _a, uint64x1_t _b)
 {
-#if !defined(__MINGW32__) && (!defined(__ANDROID__) || !defined(__arm__))
-    // Wraps vmull_p64
+#ifdef TARGET_WITH_CRYPTO
     if(have_arm_crypto()) return sse2neon_vmull_p64_crypto(_a, _b);
 #endif
 

@@ -35,13 +35,16 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     else()
         target_compile_options(xxhash PRIVATE -O3 -ffast-math)
 
-        # Enable specific optimizations for x86/x64
-        if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64" OR
-           ${CMAKE_SYSTEM_PROCESSOR} MATCHES "AMD64" OR
-           ${CMAKE_SYSTEM_PROCESSOR} MATCHES "i386" OR
-           ${CMAKE_SYSTEM_PROCESSOR} MATCHES "i686")
-            if(NOT "${CMAKE_C_COMPILER_ID}" MATCHES "AppleClang")
-                target_compile_options(xxhash PRIVATE -march=core2 -mtune=westmere)
+        # Enable specific optimizations for native x86/x64 builds.
+        # Cross-compilation toolchain files provide their own -march/-mtune.
+        if(NOT CMAKE_CROSSCOMPILING)
+            if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64" OR
+               ${CMAKE_SYSTEM_PROCESSOR} MATCHES "AMD64" OR
+               ${CMAKE_SYSTEM_PROCESSOR} MATCHES "i386" OR
+               ${CMAKE_SYSTEM_PROCESSOR} MATCHES "i686")
+                if(NOT "${CMAKE_C_COMPILER_ID}" MATCHES "AppleClang")
+                    target_compile_options(xxhash PRIVATE -march=core2 -mtune=westmere)
+                endif()
             endif()
         endif()
     endif()
