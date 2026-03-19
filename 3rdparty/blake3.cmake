@@ -79,9 +79,22 @@ else()
         message(STATUS "BLAKE3: Enabling NEON for AArch64")
         target_sources(blake3 PRIVATE ${BLAKE3_C_DIRECTORY}/blake3_neon.c)
     elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
-        message(STATUS "BLAKE3: Attempting NEON on 32-bit ARM")
-        target_sources(blake3 PRIVATE ${BLAKE3_C_DIRECTORY}/blake3_neon.c)
-        target_compile_options(blake3 PRIVATE -mfpu=neon)
+        # Test whether the target already supports NEON (via CMAKE_C_FLAGS or
+        # compiler defaults).  We must NOT add -mfpu=neon ourselves: GCC uses
+        # last-wins for -mfpu, so appending it would silently override a user's
+        # -mfpu=vfpv3-d16 and produce a binary that crashes on non-NEON hardware.
+        include(CheckCSourceCompiles)
+        check_c_source_compiles("
+            #include <arm_neon.h>
+            int main(void) { uint32x4_t v = vdupq_n_u32(0); return vgetq_lane_u32(v, 0); }
+        " BLAKE3_NEON_COMPILES)
+        if(BLAKE3_NEON_COMPILES)
+            message(STATUS "BLAKE3: Enabling NEON on 32-bit ARM")
+            target_sources(blake3 PRIVATE ${BLAKE3_C_DIRECTORY}/blake3_neon.c)
+            target_compile_definitions(blake3 PRIVATE BLAKE3_USE_NEON=1)
+        else()
+            message(STATUS "BLAKE3: 32-bit ARM without NEON -> portable only")
+        endif()
     else()
         message(STATUS "BLAKE3: Unknown arch -> portable only")
     endif()

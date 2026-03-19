@@ -103,7 +103,8 @@ if("${CMAKE_SIZEOF_VOID_P}" MATCHES "8"
    OR "${CMAKE_C_COMPILER_ARCHITECTURE_ID}" MATCHES "x64"
    OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64"
    OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "AMD64"
-   OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64")
+   OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64"
+   OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "riscv64")
   set(ARCHITECTURE_IS_64BIT TRUE)
 endif()
 
@@ -118,33 +119,37 @@ if("${CMAKE_BUILD_TYPE}" MATCHES "Release")
   else()
     add_compile_options(-ffast-math -O3)
 
-    if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64"
-       OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "i686"
-       OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "AMD64")
-      if(NOT "${CMAKE_C_COMPILER_ID}" MATCHES "AppleClang")
-        add_compile_options(-march=core2 -mtune=westmere -mfpmath=sse)
-      endif()
+    # Architecture-specific flags are only set for native builds.
+    # Cross-compilation toolchain files provide their own -march/-mtune/-mfpu.
+    if(NOT CMAKE_CROSSCOMPILING)
+      if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64"
+         OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "i686"
+         OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "AMD64")
+        if(NOT "${CMAKE_C_COMPILER_ID}" MATCHES "AppleClang")
+          add_compile_options(-march=core2 -mtune=westmere -mfpmath=sse)
+        endif()
 
-      add_compile_options(-msse3)
+        add_compile_options(-msse3)
 
-      if(NOT "${CMAKE_C_PLATFORM_ID}" MATCHES "MinGW")
-        add_compile_options(-flto)
-      endif()
-    elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
-      if(NOT "${CMAKE_C_COMPILER_ID}" MATCHES "AppleClang")
-        add_compile_options(-march=armv8-a)
-      endif()
+        if(NOT "${CMAKE_C_PLATFORM_ID}" MATCHES "MinGW")
+          add_compile_options(-flto)
+        endif()
+      elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+        if(NOT "${CMAKE_C_COMPILER_ID}" MATCHES "AppleClang")
+          add_compile_options(-march=armv8-a)
+        endif()
 
-      if(NOT "${CMAKE_C_PLATFORM_ID}" MATCHES "MinGW")
-        add_compile_options(-flto)
-      endif()
-    elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "armv7l" OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
-      if(NOT "${CMAKE_C_COMPILER_ID}" MATCHES "AppleClang")
-        add_compile_options(-march=armv7+fp -mfpu=vfpv3-d16)
-      endif()
-    elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "mips")
-      if(NOT "${CMAKE_C_PLATFORM_ID}" MATCHES "MinGW")
-        add_compile_options(-flto)
+        if(NOT "${CMAKE_C_PLATFORM_ID}" MATCHES "MinGW")
+          add_compile_options(-flto)
+        endif()
+      elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "armv7l" OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
+        if(NOT "${CMAKE_C_COMPILER_ID}" MATCHES "AppleClang")
+          add_compile_options(-march=armv7+fp -mfpu=vfpv3-d16)
+        endif()
+      elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "mips")
+        if(NOT "${CMAKE_C_PLATFORM_ID}" MATCHES "MinGW")
+          add_compile_options(-flto)
+        endif()
       endif()
     endif()
   endif()

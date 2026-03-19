@@ -86,17 +86,13 @@
 
 #ifdef __clang__
 #define TARGET_ARMV8_WITH_CRC __attribute__((target("armv8-a,crc")))
+#define TARGET_WITH_CRYPTO    __attribute__((target("armv8-a,crypto")))
 #else
 #define TARGET_ARMV8_WITH_CRC __attribute__((target("arch=armv8-a+crc")))
+#define TARGET_WITH_CRYPTO    __attribute__((target("fpu=crypto-neon-fp-armv8")))
 #endif
 
 #endif  // __ARM_ARCH >= 8
-
-#ifdef __clang__
-#define TARGET_WITH_CRYPTO __attribute__((target("armv8-a,crypto")))
-#else
-#define TARGET_WITH_CRYPTO __attribute__((target("fpu=crypto-neon-fp-armv8")))
-#endif
 
 #ifdef __clang__
 #define TARGET_WITH_SIMD __attribute__((target("neon")))
