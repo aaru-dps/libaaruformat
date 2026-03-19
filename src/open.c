@@ -220,7 +220,7 @@ static void cleanup_open_failure(aaruformat_context *ctx)
  * @see aaruf_write_sector() for writing sectors in resume mode
  * @see aaruf_identify() for identifying image type before opening
  */
-AARU_EXPORT void AARU_CALL *aaruf_open(const char *filepath, const bool resume_mode,
+AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_mode,
                                        const char *options)  // NOLINT(readability-function-size)
 {
     aaruformat_context *ctx           = NULL;
