@@ -719,6 +719,22 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                 return aaruf_write_sector(context, sector_address, negative, data + 12, sector_status, 2048);
             }
 
+            // Nintendo DVD long sector
+            if(length == 2064 && ctx->image_info.MediaType == GOD || ctx->image_info.MediaType == WOD)
+            {
+                if(ctx->sector_id == NULL) ctx->sector_id = calloc(1, 4 * total_sectors);
+                if(ctx->sector_ied == NULL) ctx->sector_ied = calloc(1, 2 * total_sectors);
+                if(ctx->sector_cpr_mai == NULL) ctx->sector_cpr_mai = calloc(1, 6 * total_sectors);
+                if(ctx->sector_edc == NULL) ctx->sector_edc = calloc(1, 4 * total_sectors);
+
+                memcpy(ctx->sector_id + corrected_sector_address * 4, data, 4);
+                memcpy(ctx->sector_ied + corrected_sector_address * 2, data + 4, 2);
+                memcpy(ctx->sector_cpr_mai + corrected_sector_address * 6, data + 2054, 6);
+                memcpy(ctx->sector_edc + corrected_sector_address * 4, data + 2060, 4);
+    
+                return aaruf_write_sector(context, sector_address, negative, data + 6, sector_status, 2048);
+            }
+
             if(length != 2352)
             {
                 FATAL("Incorrect sector size");
