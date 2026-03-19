@@ -268,7 +268,8 @@ add_library(aaruformat
             src/ngcw/ngcw_junk.c
             src/ngcw/ngcw_junk.h
             src/ngcw/wii_crypto.c
-            src/ngcw/wii_crypto.h)
+            src/ngcw/wii_crypto.h
+            src/compression/zstd.c)
 
 # Set up include directories for the target
 target_include_directories(aaruformat
@@ -287,6 +288,7 @@ include(3rdparty/flac.cmake)
 include(3rdparty/lzma.cmake)
 include(3rdparty/xxhash.cmake)
 include(3rdparty/blake3.cmake)
+include(3rdparty/zstd.cmake)
 
 if(TARGET blake3)
   target_link_libraries(aaruformat blake3)

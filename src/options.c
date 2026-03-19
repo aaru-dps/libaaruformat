@@ -50,14 +50,18 @@ aaru_options parse_options(const char *options, bool *table_shift_found)
                            .sha1            = false,
                            .sha256          = false,
                            .blake3          = false,
-                           .spamsum         = false};
+                           .spamsum         = false,
+                           .zstd            = false,
+                           .zstd_level      = 19};
 
     if(options == NULL)
     {
         TRACE("Exiting parse_options() = {compress: %d, deduplicate: %d, dictionary: %u, table_shift: %d, "
-              "data_shift: %u, block_alignment: %u, md5: %d, sha1: %d, sha256: %d, blake3: %d, spamsum: %d}",
+              "data_shift: %u, block_alignment: %u, md5: %d, sha1: %d, sha256: %d, blake3: %d, spamsum: %d, "
+              "zstd: %d, zstd_level: %d}",
               parsed.compress, parsed.deduplicate, parsed.dictionary, parsed.table_shift, parsed.data_shift,
-              parsed.block_alignment, parsed.md5, parsed.sha1, parsed.sha256, parsed.blake3, parsed.spamsum);
+              parsed.block_alignment, parsed.md5, parsed.sha1, parsed.sha256, parsed.blake3, parsed.spamsum,
+              parsed.zstd, parsed.zstd_level);
         return parsed;
     }
 
@@ -134,13 +138,23 @@ aaru_options parse_options(const char *options, bool *table_shift_found)
                 parsed.blake3 = bval;
             else if(strncmp(key, "spamsum", 7) == 0)
                 parsed.spamsum = bval;
+            else if(strncmp(key, "zstd_level", 10) == 0)
+            {
+                parsed.zstd_level = (int)strtol(value, NULL, 10);
+                if(parsed.zstd_level < 1) parsed.zstd_level = 1;
+                if(parsed.zstd_level > 22) parsed.zstd_level = 22;
+            }
+            else if(strncmp(key, "zstd", 4) == 0)
+                parsed.zstd = bval;
         }
         token = strtok_r(NULL, ";", &saveptr);
     }
 
     TRACE("Exiting parse_options() = {compress: %d, deduplicate: %d, dictionary: %u, table_shift: %d, "
-          "data_shift: %u, block_alignment: %u, md5: %d, sha1: %d, sha256: %d, blake3: %d, spamsum: %d}",
+          "data_shift: %u, block_alignment: %u, md5: %d, sha1: %d, sha256: %d, blake3: %d, spamsum: %d, "
+          "zstd: %d, zstd_level: %d}",
           parsed.compress, parsed.deduplicate, parsed.dictionary, parsed.table_shift, parsed.data_shift,
-          parsed.block_alignment, parsed.md5, parsed.sha1, parsed.sha256, parsed.blake3, parsed.spamsum);
+          parsed.block_alignment, parsed.md5, parsed.sha1, parsed.sha256, parsed.blake3, parsed.spamsum,
+          parsed.zstd, parsed.zstd_level);
     return parsed;
 }

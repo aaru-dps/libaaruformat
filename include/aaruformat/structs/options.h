@@ -227,6 +227,8 @@ typedef struct
     bool     sha256;           ///< Generate SHA-256 checksum (ChecksumAlgorithm::Sha256) when finalizing image.
     bool     blake3;           ///< Generate BLAKE3 checksum if supported (not stored if algorithm unavailable).
     bool     spamsum;          ///< Generate SpamSum fuzzy hash (ChecksumAlgorithm::SpamSum) if enabled.
+    bool     zstd;             ///< Use Zstandard instead of LZMA for data blocks. Default: false.
+    int      zstd_level;       ///< Zstandard compression level (1-22). Default: 19.
 } aaru_options;
 
 #endif  // LIBAARUFORMAT_OPTIONS_H
