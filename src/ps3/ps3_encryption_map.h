@@ -36,7 +36,7 @@ typedef struct Ps3PlaintextRegion
     uint32_t end_sector;   /**< Last sector of plaintext region (inclusive).  */
 } Ps3PlaintextRegion;
 
-#define PS3_MAX_PLAINTEXT_REGIONS 32
+#define PS3_MAX_PLAINTEXT_REGIONS 64
 
 /**
  * @brief Parse the encryption map from PS3 disc sector 0 (big-endian on disc).
