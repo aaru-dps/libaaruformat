@@ -141,7 +141,7 @@ These parameters are stored in both the master header and each deduplication tab
 
 ===== Block Alignment
 
-Each block in the image is aligned to a boundary of `2 << block_alignment_shift`.
+Each block in the image is aligned to a boundary of `1 << block_alignment_shift`.
 This alignment is essential for technical consistency and performance.
 
 ===== Table Shift
@@ -157,10 +157,10 @@ For example:
 | Sectors per Entry
 
 | 1
-| (2 << table_shift)^2 = 262144
+| (1 << table_shift)^2 = 262144
 
 | 2
-| 2 << table_shift = 512
+| 1 << table_shift = 512
 
 | 3
 | 1
@@ -175,7 +175,7 @@ In non-terminal levels (i.e., all except the last), each entry contains:
 - Relevant metadata flags for its sector range
 - An offset pointing to the next deduplication level
 
-To obtain the byte offset in the image file, multiply this offset by `2 << block_alignment_shift`.
+To obtain the byte offset in the image file, multiply this offset by `1 << block_alignment_shift`.
 
 In the last level, the `data_shift` is applied as follows to determine the specific item within a data block:
 
@@ -191,13 +191,13 @@ Step 1: Mask and shift
 0x35006 >> 5 = 0x1A80
 
 Step 2: Compute byte offset
-0x1A80 * (2 << 9) = 0x6A0000
+0x1A80 * (1 << 9) = 0x350000
 
 Step 3: Determine item index
 0x35006 & 0x1F = 6
 
 Result:
-Sector is stored at byte offset 0x6A0000 as item number 6 in the data block.
+Sector is stored at byte offset 0x350000 as item number 6 in the data block.
 ----
 
 ===== Deduplication Table Status
