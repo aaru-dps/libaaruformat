@@ -1,0 +1,194 @@
+[appendix]
+== 🔐 PlayStation 3 Disc Encryption
+
+This annex describes the encryption scheme used by Sony PlayStation 3 (PS3) Blu-ray game discs, and how AaruFormat handles decryption for storage, deduplication, and compression.
+
+=== 📖 Overview
+
+PS3 game discs (both BD and DVD variants) employ AES-128-CBC encryption on a per-sector basis.
+Not all sectors are encrypted: a map embedded in sector 0 of the disc identifies which regions are plaintext.
+The disc key used for encryption is not stored on the disc itself but can be derived from auxiliary key material (data1/data2 keys found in the drive's handshake data, or from IRD files distributed by the preservation community).
+
+AaruFormat stores PS3 disc sectors in their *decrypted* form to maximize deduplication and compression efficiency.
+When a consumer reads sectors back from the image, the library transparently re-encrypts them so that the output is byte-identical to the original encrypted disc.
+
+=== 🔑 Key Hierarchy
+
+The PS3 disc encryption uses a two-level key hierarchy:
+
+==== Encryption Round Key (ERK)
+
+The ERK is a system-wide 128-bit AES key that is publicly known in the preservation community.
+It is used exclusively to derive per-disc keys.
+
+==== Per-Disc Key Derivation
+
+Each PS3 disc has a unique `data1` key (16 bytes) that can be obtained from:
+
+* An **IRD file** (Internet Redump Database), which bundles the data1 key alongside other disc metadata
+* A **sidecar key file** placed alongside the disc image
+* A **direct hex string** provided by the user
+
+The per-disc key is derived as follows:
+
+[source]
+----
+disc_key = AES-128-CBC-Encrypt(ERK, ERK_IV, data1)
+----
+
+Where:
+
+* `ERK` is the 128-bit Encryption Round Key
+* `ERK_IV` is the 128-bit initialization vector associated with the ERK
+* `data1` is the 16-byte per-disc key material
+* The encryption operation itself serves as a one-way key derivation function
+
+NOTE: This is an *encrypt* operation, not a decrypt. The AES-CBC encryption of `data1` under the ERK produces the disc key.
+
+=== 🗺️ Encryption Map
+
+==== On-Disc Format
+
+Sector 0 of a PS3 disc contains the encryption map, which defines the *plaintext* (unencrypted) regions.
+Any sector not covered by a plaintext region is encrypted.
+
+The map is stored in big-endian format with the following layout:
+
+[cols="2,2,2,6",options="header"]
+|===
+|Offset |Type |Size |Description
+|0 |uint32_t BE |4 bytes |Number of plaintext regions (maximum 64)
+|4 |uint32_t BE |4 bytes |Reserved (unknown purpose)
+|8 + _i_ × 8 |uint32_t BE |4 bytes |Start sector of region _i_ (inclusive)
+|12 + _i_ × 8 |uint32_t BE |4 bytes |End sector of region _i_ (inclusive)
+|===
+
+A sector is considered **encrypted** if and only if it does not fall within any of the listed plaintext regions.
+
+==== Serialized Format in AaruFormat
+
+When stored as a media tag (`kMediaTagPs3EncryptionMap`, value 81), the encryption map is serialized in little-endian format:
+
+[cols="2,2,2,6",options="header"]
+|===
+|Offset |Type |Size |Description
+|0 |uint32_t LE |4 bytes |Number of plaintext regions
+|4 + _i_ × 8 |uint32_t LE |4 bytes |Start sector of region _i_ (inclusive)
+|8 + _i_ × 8 |uint32_t LE |4 bytes |End sector of region _i_ (inclusive)
+|===
+
+This conversion from big-endian (on-disc) to little-endian (in-image) occurs during the conversion process.
+
+=== 🔒 Per-Sector Encryption
+
+==== Algorithm
+
+All encrypted sectors use **AES-128-CBC** with the derived disc key.
+
+==== Initialization Vector (IV)
+
+The IV for each sector is deterministically derived from the sector number:
+
+[source]
+----
+IV = sector_number expressed as a 128-bit big-endian integer, zero-padded on the left
+----
+
+For example:
+
+* Sector 0: IV = `00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00`
+* Sector 1: IV = `00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01`
+* Sector 256: IV = `00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00`
+
+==== Sector Size
+
+PS3 disc sectors are 2048 bytes, which is an exact multiple of the AES block size (16 bytes), so no padding is required.
+
+=== 💾 Storage in AaruFormat
+
+==== Write Path (Conversion)
+
+When converting a PS3 disc image to AaruFormat, the following processing occurs for each sector:
+
+. **Checksum on ciphertext**: Integrity checksums (MD5, SHA-1, SHA-256, SpamSum, BLAKE3) are computed on the *encrypted* sector data as read from the source.
+This ensures the checksums match the original disc content.
+
+. **Determine encryption status**: The sector address is checked against the plaintext region map.
+
+. **Decrypt if encrypted**: If the sector falls outside all plaintext regions, it is decrypted using AES-128-CBC with the disc key and sector-derived IV.
+
+. **Store decrypted**: The decrypted sector data is written to the AaruFormat image.
+The sector's status in the deduplication table is set to `SectorStatusUnencrypted` (`0xA`), indicating the data was originally encrypted but is stored decrypted.
+
+. **Plaintext sectors**: Sectors that are already plaintext are stored as-is with status `SectorStatusDumped` (`0x1`).
+
+==== Deduplication Benefit
+
+Encrypted data is pseudorandom and virtually incompressible, with no opportunity for deduplication.
+By storing sectors in their decrypted form:
+
+* **Identical sectors** (e.g., zero-filled regions, repeated filesystem structures) are deduplicated via the DDT hash map, dramatically reducing storage for games with large amounts of unused space.
+* **LZMA and Zstandard compression** achieve meaningful ratios on the plaintext game data, often reducing image size by 30–70% compared to storing encrypted data.
+
+==== Read Path (Re-encryption)
+
+When a consumer reads a sector from an AaruFormat PS3 image:
+
+. The library reads the decrypted sector data from storage.
+
+. The sector status is checked: if `SectorStatusUnencrypted`, the sector must be re-encrypted before returning to the caller.
+
+. **Lazy initialization**: On first access, the library reads the disc key (`kMediaTagPs3DiscKey`) and encryption map (`kMediaTagPs3EncryptionMap`) from the image's media tags. If the disc key is not directly available, it attempts derivation from `kMediaTagPs3Data1`.
+
+. **Re-encryption**: The sector is encrypted in-place using AES-128-CBC with the disc key and the sector-derived IV.
+
+. The caller receives the sector in its original encrypted form, byte-identical to the physical disc.
+
+This transparent re-encryption ensures that:
+
+* Disc images can be used directly with emulators expecting encrypted input
+* Verification against known checksums of the original disc succeeds
+* The decryption is an internal optimization invisible to consumers
+
+=== 🏷️ Required Media Tags
+
+A PS3 AaruFormat image requires the following media tags for full encryption support:
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Tag Name |Description
+|77 |kMediaTagPs3DiscKey |Derived 16-byte disc key (AES key for sector encryption/decryption)
+|78 |kMediaTagPs3Data1 |16-byte data1 key material (alternative to disc key; used for derivation)
+|79 |kMediaTagPs3Data2 |16-byte data2 key material (preserved for completeness)
+|80 |kMediaTagPs3Pic |115-byte PIC data from disc lead-in (disc metadata)
+|81 |kMediaTagPs3EncryptionMap |Serialized plaintext region map (little-endian format as described above)
+|===
+
+At minimum, either `kMediaTagPs3DiscKey` or `kMediaTagPs3Data1` must be present for re-encryption to function.
+If neither is available, the library degrades gracefully: sectors are returned as stored (decrypted) without re-encryption.
+
+=== 📋 PS3 Disc Identification
+
+A PS3 disc can be identified by examining sector 1 (the second sector) of the disc image.
+PS3 discs begin sector 1 with the ASCII string `PlayStation3` (12 bytes).
+
+=== 🔄 IRD Files
+
+IRD files are community-maintained archives that bundle the cryptographic material required for PS3 disc decryption.
+The meaning of the IRD acronym is unknown.
+The `aaruformattool convert-ps3` command can consume IRD files directly.
+
+An IRD file may be gzip-compressed (magic bytes `0x1F 0x8B`) while retaining the `.ird` extension.
+Implementations must detect and handle this transparently.
+
+IRD files contain, among other fields:
+
+* `data1` key (16 bytes) — Used to derive the disc key
+* `data2` key (16 bytes) — Preserved as metadata
+* PIC data (115 bytes) — Disc lead-in information
+* File hashes — Per-file MD5 checksums for verification
+
+The tool searches for IRD files in multiple locations:
+
+* An explicit path provided via command-line option
+* A sidecar file alongside the input image (both appended suffix and replaced extension)

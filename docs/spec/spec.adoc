@@ -147,3 +147,7 @@ include::appendixes/cst.adoc[]
 <<<
 
 include::appendixes/fluxes.adoc[]
+
+<<<
+
+include::appendixes/ps3_encryption.adoc[]
