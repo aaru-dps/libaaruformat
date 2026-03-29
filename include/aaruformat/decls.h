@@ -257,7 +257,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_lzma_encode_buffer(uint8_t *dst_buffer, size
 AARU_EXPORT size_t AARU_CALL aaruf_zstd_decode_buffer(uint8_t *dst_buffer, size_t dst_size, const uint8_t *src_buffer,
                                                        size_t src_size);
 AARU_EXPORT size_t AARU_CALL aaruf_zstd_encode_buffer(uint8_t *dst_buffer, size_t dst_size, const uint8_t *src_buffer,
-                                                       size_t src_size, int level);
+                                                       size_t src_size, int level, int num_threads);
 
 AARU_EXPORT void AARU_CALL aaruf_md5_init(md5_ctx *ctx);
 AARU_EXPORT void AARU_CALL aaruf_md5_update(md5_ctx *ctx, const void *data, unsigned long size);

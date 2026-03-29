@@ -52,16 +52,17 @@ aaru_options parse_options(const char *options, bool *table_shift_found)
                            .blake3          = false,
                            .spamsum         = false,
                            .zstd            = false,
-                           .zstd_level      = 19};
+                           .zstd_level      = 19,
+                           .num_threads     = 1};
 
     if(options == NULL)
     {
         TRACE("Exiting parse_options() = {compress: %d, deduplicate: %d, dictionary: %u, table_shift: %d, "
               "data_shift: %u, block_alignment: %u, md5: %d, sha1: %d, sha256: %d, blake3: %d, spamsum: %d, "
-              "zstd: %d, zstd_level: %d}",
+              "zstd: %d, zstd_level: %d, num_threads: %d}",
               parsed.compress, parsed.deduplicate, parsed.dictionary, parsed.table_shift, parsed.data_shift,
               parsed.block_alignment, parsed.md5, parsed.sha1, parsed.sha256, parsed.blake3, parsed.spamsum,
-              parsed.zstd, parsed.zstd_level);
+              parsed.zstd, parsed.zstd_level, parsed.num_threads);
         return parsed;
     }
 
@@ -146,15 +147,20 @@ aaru_options parse_options(const char *options, bool *table_shift_found)
             }
             else if(strncmp(key, "zstd", 4) == 0)
                 parsed.zstd = bval;
+            else if(strncmp(key, "threads", 7) == 0)
+            {
+                parsed.num_threads = (int)strtol(value, NULL, 10);
+                if(parsed.num_threads < 1) parsed.num_threads = 1;
+            }
         }
         token = strtok_r(NULL, ";", &saveptr);
     }
 
     TRACE("Exiting parse_options() = {compress: %d, deduplicate: %d, dictionary: %u, table_shift: %d, "
           "data_shift: %u, block_alignment: %u, md5: %d, sha1: %d, sha256: %d, blake3: %d, spamsum: %d, "
-          "zstd: %d, zstd_level: %d}",
+          "zstd: %d, zstd_level: %d, num_threads: %d}",
           parsed.compress, parsed.deduplicate, parsed.dictionary, parsed.table_shift, parsed.data_shift,
           parsed.block_alignment, parsed.md5, parsed.sha1, parsed.sha256, parsed.blake3, parsed.spamsum,
-          parsed.zstd, parsed.zstd_level);
+          parsed.zstd, parsed.zstd_level, parsed.num_threads);
     return parsed;
 }

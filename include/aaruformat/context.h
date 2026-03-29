@@ -303,6 +303,7 @@ typedef struct aaruformat_context
     bool     compression_enabled;  ///< True if block compression enabled (writing path).
     bool     use_zstd;             ///< Use Zstandard instead of LZMA for data blocks.
     int      zstd_level;           ///< Zstandard compression level (writing path, default 19).
+    int      num_threads;          ///< Compression worker threads (1 = single-threaded, default).
 
     /* Tape-specific structures */
     tapeFileHashEntry      *tape_files;       ///< Hash table root for tape files

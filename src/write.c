@@ -1603,7 +1603,7 @@ int32_t aaruf_close_current_block(aaruformat_context *ctx)
 
             size_t zstd_dst_size =
                 aaruf_zstd_encode_buffer(cmp_buffer, ctx->current_block_header.length * 2, ctx->writing_buffer,
-                                         ctx->current_block_header.length, ctx->zstd_level);
+                                         ctx->current_block_header.length, ctx->zstd_level, ctx->num_threads);
 
             if(zstd_dst_size == 0)
             {
