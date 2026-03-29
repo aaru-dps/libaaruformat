@@ -25,6 +25,8 @@ Add stub for new deduplication table.
 
 Add stub for new media type.
 
+Fix CRC64 byte order: V1 images stored CRC64 values byte-swapped due to the original C# writer; V2 stores them in native little-endian order.
+
 | 04 Sep 2022
 | 2.0d2
 | Draft
