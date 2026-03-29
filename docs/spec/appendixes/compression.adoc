@@ -15,4 +15,14 @@ For the latest and most accurate listing, refer to the `libaaruformat` source.
 |1 |LZMA — stream prepended by 5 bytes of parameters
 |2 |FLAC
 |3 |LZMA after Claunia Subchannel Transform (see Appendix D) — stream prepended by 5 bytes of parameters
+|4 |Zstandard (zstd) — standard zstd frame, no prefix
+|5 |Zstandard after Claunia Subchannel Transform (see Appendix D) — standard zstd frame, no prefix
 |===
+
+==== Notes on Zstandard (IDs 4 and 5)
+
+Unlike LZMA (IDs 1 and 3), Zstandard compressed payloads are stored as self-contained zstd frames.
+The `cmpLength` field in the block header covers the entire compressed payload with no additional prefix bytes.
+
+ID 5 (`ZstdCst`) applies the Claunia Subchannel Transform before compression and is restricted to blocks with data type `CdSubchannel`.
+This mirrors the constraint on ID 3 (`LzmaCst`).
