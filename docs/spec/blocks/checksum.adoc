@@ -102,4 +102,8 @@ typedef struct ChecksumEntry
 |SpamSum
 |4
 |SpamSum
+
+|Blake3
+|5
+|BLAKE3 (32-byte digest). Presence is indicated by the `AARU_FEATURE_RW_BLAKE3` bit (bit 0) in the header's `featureCompatible` field.
 |===

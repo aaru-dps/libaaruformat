@@ -1710,7 +1710,7 @@ static void write_sector_subchannel(aaruformat_context *ctx)
             if(ctx->use_zstd)
             {
                 dst_size = aaruf_zstd_encode_buffer(dst_buffer, subchannel_block.length, cst_buffer,
-                                                     subchannel_block.length, ctx->zstd_level);
+                                                     subchannel_block.length, ctx->zstd_level, ctx->num_threads);
                 if(dst_size == 0) dst_size = subchannel_block.length; /* compression failed, fall through to none */
             }
             else
@@ -1776,7 +1776,7 @@ static void write_sector_subchannel(aaruformat_context *ctx)
         if(ctx->use_zstd)
         {
             dst_size = aaruf_zstd_encode_buffer(dst_buffer, subchannel_block.length, ctx->sector_subchannel,
-                                                 subchannel_block.length, ctx->zstd_level);
+                                                 subchannel_block.length, ctx->zstd_level, ctx->num_threads);
             if(dst_size == 0) dst_size = subchannel_block.length; /* compression failed, fall through to none */
         }
         else

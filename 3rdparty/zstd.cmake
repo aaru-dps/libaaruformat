@@ -45,7 +45,14 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
 endif()
 
 target_include_directories(zstd_static PUBLIC ${ZSTD_LIB_DIR})
+target_compile_definitions(zstd_static PRIVATE ZSTD_MULTITHREAD)
 set_property(TARGET zstd_static PROPERTY POSITION_INDEPENDENT_CODE TRUE)
+
+# zstd multi-threading requires pthreads on POSIX (musl includes pthreads in libc)
+if(NOT WIN32)
+  find_package(Threads REQUIRED)
+  target_link_libraries(zstd_static PRIVATE Threads::Threads)
+endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
   if(MSVC)

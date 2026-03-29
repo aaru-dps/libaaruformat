@@ -25,7 +25,38 @@ And the unsigned integers should be: `uint8_t`, `uint16_t`, `uint32_t`, `uint64_
 
 === Strings
 
-All strings are stored as a sequence of bytes, in Unicode's `UTF-16` little endian encoding and terminated and filled with `NULL` (`0x00`) bytes.
+The default string encoding for the metadata block is `UTF-16` little endian, null-terminated with `0x0000`.
+
+Other blocks use different encodings as noted in their respective specifications:
+
+[cols="3,2,3",options="header"]
+|===
+|Location |Encoding |Notes
+
+|Metadata block (creator, comments, media/drive info)
+|UTF-16LE
+|Null-terminated (`0x0000`). Lengths include the terminator.
+
+|Header `application` field (V1)
+|UTF-16LE
+|Fixed 64-byte buffer (32 UTF-16 code units).
+
+|Header `application` field (V2+)
+|UTF-8
+|Fixed 64-byte buffer, null-padded.
+
+|Dump hardware strings (manufacturer, model, etc.)
+|UTF-8
+|Length-prefixed, not null-terminated on disk.
+
+|CICM XML block
+|UTF-8
+|Length from block header, not null-terminated.
+
+|Aaru JSON metadata block
+|UTF-8
+|Length from block header, not null-terminated.
+|===
 
 `String8` values mean the string is stored in Unicode’s `UTF-8` encoding and terminated and filled with `NULL` (`0x00`) bytes.
 
@@ -49,3 +80,23 @@ It can be addressing information, error detection or correction information, enc
 === NULL
 
 NULLs are `0x00` bytes.
+
+=== CRC64 and Version 1 Compatibility
+
+All CRC64 checksums in this specification use the CRC64-ECMA algorithm.
+
+Images with `imageMajorVersion` = 1 store CRC64 values in byte-swapped order due to a quirk in the original C# writer.
+When verifying a V1 image, implementations MUST byte-swap the computed CRC64 before comparing it against the stored value:
+
+----
+computed_crc64 = CRC64_ECMA(data)
+if imageMajorVersion <= 1:
+    computed_crc64 = bswap64(computed_crc64)
+compare computed_crc64 against stored crc64
+----
+
+Where `bswap64` reverses the byte order of a 64-bit value (e.g., `0x0123456789ABCDEF` becomes `0xEFCDAB8967452301`).
+
+This applies to **all** CRC64 fields across all block types: data blocks, deduplication tables, index blocks, tracks, dump hardware, and any other block carrying a `crc64` or `cmpCrc64` field.
+
+Images with `imageMajorVersion` >= 2 store CRC64 values in native (little-endian) order and require no byte-swap.
