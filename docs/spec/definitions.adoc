@@ -49,3 +49,23 @@ It can be addressing information, error detection or correction information, enc
 === NULL
 
 NULLs are `0x00` bytes.
+
+=== CRC64 and Version 1 Compatibility
+
+All CRC64 checksums in this specification use the CRC64-ECMA algorithm.
+
+Images with `imageMajorVersion` = 1 store CRC64 values in byte-swapped order due to a quirk in the original C# writer.
+When verifying a V1 image, implementations MUST byte-swap the computed CRC64 before comparing it against the stored value:
+
+----
+computed_crc64 = CRC64_ECMA(data)
+if imageMajorVersion <= 1:
+    computed_crc64 = bswap64(computed_crc64)
+compare computed_crc64 against stored crc64
+----
+
+Where `bswap64` reverses the byte order of a 64-bit value (e.g., `0x0123456789ABCDEF` becomes `0xEFCDAB8967452301`).
+
+This applies to **all** CRC64 fields across all block types: data blocks, deduplication tables, index blocks, tracks, dump hardware, and any other block carrying a `crc64` or `cmpCrc64` field.
+
+Images with `imageMajorVersion` >= 2 store CRC64 values in native (little-endian) order and require no byte-swap.
