@@ -12,12 +12,39 @@ For the latest and most accurate listing, refer to the `libaaruformat` source.
 |Algorithm
 
 |0 |None
-|1 |LZMA — stream prepended by 5 bytes of parameters
+|1 |LZMA — 5-byte properties prefix followed by compressed stream
 |2 |FLAC
-|3 |LZMA after Claunia Subchannel Transform (see Appendix D) — stream prepended by 5 bytes of parameters
+|3 |LZMA after Claunia Subchannel Transform (see Appendix D) — 5-byte properties prefix followed by compressed stream
 |4 |Zstandard (zstd) — standard zstd frame, no prefix
 |5 |Zstandard after Claunia Subchannel Transform (see Appendix D) — standard zstd frame, no prefix
 |===
+
+=== 📝 Notes on LZMA Properties Prefix (IDs 1 and 3)
+
+For LZMA-compressed blocks, the on-disk payload immediately following the block header is:
+
+----
+[ 5-byte LZMA properties ] [ compressed stream ]
+----
+
+The `cmpLength` field in the block header covers the **entire payload** including the 5-byte properties prefix:
+
+----
+cmpLength = 5 + compressed_stream_size
+----
+
+The `cmpCrc64` checksum covers only the **compressed stream**, excluding the properties prefix:
+
+----
+cmpCrc64 = CRC64(payload[5 .. cmpLength - 1])
+----
+
+To decompress:
+
+1. Read `cmpLength` bytes from the file position after the block header.
+2. The first 5 bytes are LZMA properties (see LZMA SDK specification).
+3. The remaining `cmpLength - 5` bytes are the compressed stream.
+4. Decompress into `length` bytes using the properties and the compressed stream.
 
 === 📝 Notes on Zstandard (IDs 4 and 5)
 

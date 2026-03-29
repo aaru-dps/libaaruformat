@@ -114,7 +114,7 @@ Writers *MUST NOT* produce this identifier in new images.
 |uint64_t
 |8 bytes
 |cmpLength
-|The size in bytes of the compressed table that follows this header.
+|The total size in bytes of the compressed payload that follows this header. For LZMA this includes the 5-byte properties prefix; see Appendix C.
 
 |uint64_t
 |8 bytes
@@ -124,7 +124,7 @@ Writers *MUST NOT* produce this identifier in new images.
 |uint64_t
 |8 bytes
 |cmpCrc64
-|The CRC64-ECMA checksum of the compressed table that follows this header.
+|CRC64-ECMA of the compressed payload. For LZMA this covers the compressed stream only, excluding the 5-byte properties prefix; see Appendix C.
 
 |uint64_t
 |8 bytes
