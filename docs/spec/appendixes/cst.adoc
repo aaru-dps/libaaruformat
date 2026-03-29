@@ -1,19 +1,158 @@
 [appendix]
 == Claunia Subchannel Transform
 
-The subchannel structure in CompactDisc media—and compatible formats—consists of eight interleaved components: `P`, `Q`, `R`, `S`, `T`, `U`, `V`, `W`.
+The subchannel structure in Compact Disc media—and compatible formats—consists of eight interleaved channels: `P`, `Q`, `R`, `S`, `T`, `U`, `V`, `W`.
 
-In their raw form, each byte read from the disc contains a single bit from each of these elements, resulting in a highly interleaved data stream.
-This structure, while efficient for playback, poses challenges for compression algorithms such as LZMA, which struggle with apparent randomness and achieve poor compression ratios (typically less than 2%).
+In their raw form, each byte read from the disc contains a single bit from each channel:
 
-To address this, the **Claunia Subchannel Transform** is applied:
+[cols="1,1",options="header"]
+|===
+|Bit position |Channel
 
-- All bits are **de-interleaved** so that each subchannel (`P` through `W`) is formed into distinct byte streams.
-- All `P` bytes from all sectors are written sequentially, followed by all `Q` bytes, then `R`, and so on up to `W`.
+|7 |P
+|6 |Q
+|5 |R
+|4 |S
+|3 |T
+|2 |U
+|1 |V
+|0 |W
+|===
 
-While this transform temporarily increases memory usage (approximately 32MiB additional), the benefits are substantial:
+This interleaving produces apparent randomness that defeats compression algorithms.
+The Claunia Subchannel Transform (CST) de-interleaves the data so that each channel forms a contiguous byte stream, dramatically improving compressibility.
 
-- Compression speed improves up to **10× faster**
-- Compression gains reach approximately **96%**, particularly on media lacking `R`–`W` subchannel data—as is the case with ~99% of discs.
+=== Preconditions
 
-NOTE: For implementation specifics or updates to this method, refer to the authoritative `libaaruformat` source.
+* Input length `N` MUST be a multiple of 8.
+* For CD subchannel data this is always satisfied: 96 bytes per sector, yielding 12 bytes per channel per sector.
+
+=== Forward Transform (interleaved → sequential)
+
+Given an input buffer `in[0..N-1]` of interleaved subchannel bytes, produce output buffer `out[0..N-1]`:
+
+**Step 1: Bit extraction and packing**
+
+Process the input in groups of 8 consecutive bytes.
+For each group starting at offset `i` (where `i = 0, 8, 16, ...`), extract one channel bit from each of the 8 bytes and pack them MSB-first into a single output byte:
+
+----
+For each channel C with bit position b (P=7, Q=6, R=5, S=4, T=3, U=2, V=1, W=0):
+    channel_byte[C][i/8] = 0
+    for k = 0 to 7:
+        bit = (in[i + k] >> b) & 1
+        channel_byte[C][i/8] |= bit << (7 - k)
+----
+
+Each channel produces `N/8` bytes.
+
+**Step 2: Sequential layout**
+
+Concatenate all channel byte arrays in order P, Q, R, S, T, U, V, W:
+
+----
+out[0 .. N/8 - 1]       = channel_byte[P]
+out[N/8 .. 2*N/8 - 1]   = channel_byte[Q]
+out[2*N/8 .. 3*N/8 - 1] = channel_byte[R]
+out[3*N/8 .. 4*N/8 - 1] = channel_byte[S]
+out[4*N/8 .. 5*N/8 - 1] = channel_byte[T]
+out[5*N/8 .. 6*N/8 - 1] = channel_byte[U]
+out[6*N/8 .. 7*N/8 - 1] = channel_byte[V]
+out[7*N/8 .. N - 1]     = channel_byte[W]
+----
+
+=== Inverse Transform (sequential → interleaved)
+
+Given a sequential buffer `in[0..N-1]`, produce interleaved buffer `out[0..N-1]`:
+
+**Step 1: Split into channel arrays**
+
+----
+channel_byte[P] = in[0 .. N/8 - 1]
+channel_byte[Q] = in[N/8 .. 2*N/8 - 1]
+  ...
+channel_byte[W] = in[7*N/8 .. N - 1]
+----
+
+**Step 2: Bit unpacking**
+
+Zero-initialize the output buffer, then for each group of 8 output bytes at offset `i`:
+
+----
+for k = 0 to 7:
+    for each channel C with bit position b:
+        bit = (channel_byte[C][i/8] >> (7 - k)) & 1
+        out[i + k] |= bit << b
+----
+
+=== Worked Example
+
+Consider one group of 8 input bytes (the first 8 bytes of a subchannel block):
+
+----
+in[0] = 0xC0  =  1 1 0 0 0 0 0 0
+in[1] = 0x80  =  1 0 0 0 0 0 0 0
+in[2] = 0x40  =  0 1 0 0 0 0 0 0
+in[3] = 0x00  =  0 0 0 0 0 0 0 0
+in[4] = 0x00  =  0 0 0 0 0 0 0 0
+in[5] = 0x00  =  0 0 0 0 0 0 0 0
+in[6] = 0x00  =  0 0 0 0 0 0 0 0
+in[7] = 0x00  =  0 0 0 0 0 0 0 0
+               P Q R S T U V W   ← bit positions 7..0
+----
+
+**Step 1 — Extract each channel column, pack MSB-first into one byte:**
+
+Reading down the P column (bit 7): `1 1 0 0 0 0 0 0` → `0xC0`
+
+Reading down the Q column (bit 6): `1 0 1 0 0 0 0 0` → `0xA0`
+
+Reading down the R–W columns: all zeros → `0x00` each.
+
+----
+channel_byte[P][0] = 0xC0
+channel_byte[Q][0] = 0xA0
+channel_byte[R][0] = 0x00
+channel_byte[S][0] = 0x00
+channel_byte[T][0] = 0x00
+channel_byte[U][0] = 0x00
+channel_byte[V][0] = 0x00
+channel_byte[W][0] = 0x00
+----
+
+**Step 2 — Sequential layout** (for a full block with `N` bytes):
+
+The 8 channel byte arrays are concatenated: all P bytes first, then Q, then R through W.
+For a full CD image, channels R–W are typically all zeros, producing long runs that compress to near nothing.
+
+**Inverse verification:**
+
+To recover `in[0]` from the sequential form, unpack bit (7 − 0) = bit 7 from each channel byte at index 0:
+
+----
+P: (0xC0 >> 7) & 1 = 1  → bit 7
+Q: (0xA0 >> 7) & 1 = 1  → bit 6
+R: (0x00 >> 7) & 1 = 0  → bit 5
+S–W: 0                   → bits 4–0
+Result: 0xC0 ✓
+----
+
+To recover `in[2]`, unpack bit (7 − 2) = bit 5 from each channel byte:
+
+----
+P: (0xC0 >> 5) & 1 = 0  → bit 7
+Q: (0xA0 >> 5) & 1 = 1  → bit 6
+R: (0x00 >> 5) & 1 = 0  → bit 5
+S–W: 0                   → bits 4–0
+Result: 0x40 ✓
+----
+
+=== Applicability
+
+The CST is used exclusively with `CdSubchannel` data blocks (data type `kDataTypeCdSubchannel`).
+It is applied as a preprocessing step before compression:
+
+* Compression ID 3 (`LzmaCst`): CST → LZMA
+* Compression ID 5 (`ZstdCst`): CST → Zstandard
+
+Decompression reverses the order: decompress first, then apply the inverse transform.
