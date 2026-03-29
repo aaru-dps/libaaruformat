@@ -41,6 +41,9 @@
  *    sha256=true|false            Generate SHA-256 checksum.
  *    blake3=true|false            Generate BLAKE3 checksum (may require build-time support; ignored if unsupported).
  *    spamsum=true|false           Generate SpamSum fuzzy hash.
+ *    zstd=true|false              Use Zstandard instead of LZMA for data blocks.
+ *    zstd_level=<n>               Zstandard compression level (1-22).
+ *    threads=<n>                  Compression worker threads (>= 1). zstd: nbWorkers; LZMA: clamped to [1, 2].
  *
  *  Defaults (when option string NULL or key omitted):
  *    compress=true, deduplicate=true, dictionary=33554432, table_shift=9, data_shift=12,
@@ -229,6 +232,9 @@ typedef struct
     bool     spamsum;          ///< Generate SpamSum fuzzy hash (ChecksumAlgorithm::SpamSum) if enabled.
     bool     zstd;             ///< Use Zstandard instead of LZMA for data blocks. Default: false.
     int      zstd_level;       ///< Zstandard compression level (1-22). Default: 19.
+    int      num_threads;      ///< Number of compression worker threads. Default: 1 (single-threaded).
+                               ///< zstd: passed as nbWorkers (0 and 1 both mean single-threaded).
+                               ///< LZMA: clamped to [1, 2] (2 = threaded match finder).
 } aaru_options;
 
 #endif  // LIBAARUFORMAT_OPTIONS_H
