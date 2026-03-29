@@ -1378,7 +1378,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
  * - **LZMA (CompressionType = 1)**: For data tracks and non-audio content
  *   - Allocates 2× length buffer for compressed data
  *   - LZMA properties: level 9, dictionary size from ctx->lzma_dict_size
- *   - Properties stored as 5-byte header: lc=4, lp=0, pb=2, fb=273, threads=8
+ *   - Properties stored as 5-byte header: lc=4, lp=0, pb=2, fb=273, threads=LZMA_THREADS(ctx)
  *   - Falls back to None if compression ineffective (compressed ≥ uncompressed)
  *   - Compressed length includes LZMA_PROPERTIES_LENGTH (5 bytes) overhead
  *
@@ -1487,7 +1487,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
  *       - Literal position bits (lp): 0
  *       - Position bits (pb): 2
  *       - Fast bytes (fb): 273
- *       - Threads: 8 (for multi-threaded compression)
+ *       - Threads: LZMA_THREADS(ctx) (1 or 2, from consumer's threads=N option)
  *
  * @note Index Management:
  *       - Every closed block gets an index entry for efficient lookup
@@ -1582,7 +1582,7 @@ int32_t aaruf_close_current_block(aaruformat_context *ctx)
             size_t dst_size   = ctx->current_block_header.length * 2;
             size_t props_size = LZMA_PROPERTIES_LENGTH;
             aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, ctx->writing_buffer, ctx->current_block_header.length,
-                                     lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+                                     lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
 
             ctx->current_block_header.cmpLength = (uint32_t)dst_size;
 
