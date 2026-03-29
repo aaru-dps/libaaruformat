@@ -42,6 +42,10 @@ typedef struct DdtHeader2
 |identifier
 |The deduplication table identifier, always `DDT2` or `DDTS`. The first level of a table is always `DDT2` and its presence is mandatory. Subtables will have `DDTS`
 
+NOTE: An early alpha implementation incorrectly used identifier `0x53545444` (`TDTS`) instead of `0x53544444` (`DDTS`) for secondary tables.
+Readers *SHOULD* accept `0x53545444` as equivalent to `DDTS` for backward compatibility.
+Writers *MUST NOT* produce this identifier in new images.
+
 |uint16_t
 |2 bytes
 |type
