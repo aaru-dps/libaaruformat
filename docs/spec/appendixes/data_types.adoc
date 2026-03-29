@@ -100,3 +100,16 @@ The most current and authoritative list is always maintained in the `libaaruform
 |86 |DVD Error Correction Code (ECC) Parity of Inner Code (PI)
 |87 |DVD Error Correction Code (ECC) Parity of Outer Code (PO)
 |88 |DVD Physical Format Information for the second layer
+|89 |Flux data
+|90 |Bitstream data
+|91 |Floppy write-protect status
+|92 |Nintendo Wii U disc key (16 bytes)
+|93 |PS3 derived disc key (16 bytes)
+|94 |PS3 data1 key (16 bytes)
+|95 |PS3 data2 key (16 bytes)
+|96 |PS3 PIC data (115 bytes)
+|97 |PS3 encryption region map
+|98 |Nintendo Wii U partition-to-key mapping with regions
+|99 |Nintendo Wii partition-to-key mapping with regions
+|100 |Nintendo GameCube/Wii junk region map with LFG seeds
+|===
