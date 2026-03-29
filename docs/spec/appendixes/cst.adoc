@@ -1,5 +1,5 @@
 [appendix]
-== Claunia Subchannel Transform
+== 🔀 Claunia Subchannel Transform
 
 The subchannel structure in Compact Disc media—and compatible formats—consists of eight interleaved channels: `P`, `Q`, `R`, `S`, `T`, `U`, `V`, `W`.
 
@@ -22,12 +22,12 @@ In their raw form, each byte read from the disc contains a single bit from each 
 This interleaving produces apparent randomness that defeats compression algorithms.
 The Claunia Subchannel Transform (CST) de-interleaves the data so that each channel forms a contiguous byte stream, dramatically improving compressibility.
 
-=== Preconditions
+=== ✅ Preconditions
 
 * Input length `N` MUST be a multiple of 8.
 * For CD subchannel data this is always satisfied: 96 bytes per sector, yielding 12 bytes per channel per sector.
 
-=== Forward Transform (interleaved → sequential)
+=== ➡️ Forward Transform (interleaved → sequential)
 
 Given an input buffer `in[0..N-1]` of interleaved subchannel bytes, produce output buffer `out[0..N-1]`:
 
@@ -61,7 +61,7 @@ out[6*N/8 .. 7*N/8 - 1] = channel_byte[V]
 out[7*N/8 .. N - 1]     = channel_byte[W]
 ----
 
-=== Inverse Transform (sequential → interleaved)
+=== ⬅️ Inverse Transform (sequential → interleaved)
 
 Given a sequential buffer `in[0..N-1]`, produce interleaved buffer `out[0..N-1]`:
 
@@ -85,7 +85,7 @@ for k = 0 to 7:
         out[i + k] |= bit << b
 ----
 
-=== Worked Example
+=== 📝 Worked Example
 
 Consider one group of 8 input bytes (the first 8 bytes of a subchannel block):
 
@@ -147,7 +147,7 @@ S–W: 0                   → bits 4–0
 Result: 0x40 ✓
 ----
 
-=== Applicability
+=== 🎯 Applicability
 
 The CST is used exclusively with `CdSubchannel` data blocks (data type `kDataTypeCdSubchannel`).
 It is applied as a preprocessing step before compression:

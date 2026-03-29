@@ -1,4 +1,4 @@
-=== Aaru Metadata JSON Block (`JSMD`)
+=== 📝 Aaru Metadata JSON Block (`JSMD`)
 
 This block header signifies the inclusion of an embedded Aaru metadata JSON sidecar.
 The contents of the JSON are preserved in their original form and are not parsed, interpreted, or validated by the format implementation.

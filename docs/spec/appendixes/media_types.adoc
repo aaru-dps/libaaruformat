@@ -1,5 +1,5 @@
 [appendix]
-== Media Types
+== 💿 Media Types
 
 This annex provides a reference list of known media types at the time this specification was written.
 

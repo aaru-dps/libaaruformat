@@ -1,4 +1,4 @@
-=== Tape Partition Block (`TPBT`)
+=== 📼 Tape Partition Block (`TPBT`)
 
 This block lists all tape partitions.
 Tape partitions are separations written to media.

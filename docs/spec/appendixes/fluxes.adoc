@@ -1,5 +1,5 @@
 [appendix]
-== User Data, Bitstream, Fluxes and Tags
+== ⚡ User Data, Bitstream, Fluxes and Tags
 
 This appendix explains the relationships between user data, bitstream data, flux data, and both sector and media tags in the context of digital imaging and data preservation.
 

@@ -1,4 +1,4 @@
-=== Checksum Block (`CKSM`)
+=== ✅ Checksum Block (`CKSM`)
 
 This block stores an array of checksums corresponding to the user data embedded in the image.
 For media formats such as CompactDisc, the checksum is calculated over the complete sector—comprising the prefix, user data, and suffix—totaling 2352 bytes.

@@ -1,21 +1,21 @@
-== Definitions
+== 📓 Definitions
 
-=== Types
+=== 🧩 Types
 
 All binary types used in this specification are stored as little-endian values on the file.
 This specification follows the C syntax to denote hexadecimal values, and requires the reader have some knowledge on programming.
 
-=== Endianness
+=== 🔄 Endianness
 
 Unless otherwise specified, all fields in this specification are considered to be in __Little-Endian__ format, that is the hexadecimal number `0x12345678` is stored in disk as the following sequence of bytes: `0x78 0x56 0x34 0x12`.
 
-=== Header identifiers
+=== 🏷️ Header identifiers
 
 Header identifiers are 4 `ASCII` characters stored as a sequence of bytes inside a single 32 bits pack.
 They are shown in this specification enclosed in single quotes.
 For example, the header identifier `AARU` should be stored on disk as `0x41 0x41 0x52 0x55`.
 
-=== Integers
+=== 🔢 Integers
 
 Integer values are designated in this specification if unsigned (U) and no letter for signed, continuing with `int`, the number of bits able to be stored in them, and finishing with `_t`.
 
@@ -23,7 +23,7 @@ That so, the signed integers should be: `int8_t`, `int16_t`, `int32_t`, `int64_t
 
 And the unsigned integers should be: `uint8_t`, `uint16_t`, `uint32_t`, `uint64_t` , `uint128_t`.
 
-=== Strings
+=== 📝 Strings
 
 The default string encoding for the metadata block is `UTF-16` little endian, null-terminated with `0x0000`.
 
@@ -62,26 +62,26 @@ Other blocks use different encodings as noted in their respective specifications
 
 `StringA` values mean the string is stored in `ASCII` encoding and terminated and filled with `NULL` (`0x00`) bytes.
 
-=== Timestamp
+=== ⏰ Timestamp
 
 All timestamps used in this specification are stored as a signed 64bit integer (`int64_t`) counting the number of nanoseconds in the UTC timezone after/before the epoch of 1st January 1601 at 00:00 of the Gregorian Calendar.
 This epoch is chosen because it is when the leap-year scheme was adopted.
 
-=== Media tag
+=== 💿 Media tag
 
 A media tag is a piece of data that is physically present in the media but it’s not part of the user data.
 It can be the table of contents, some manufacturing information, sector replacement tables, etc.
 
-=== Sector tag
+=== 🏷️ Sector tag
 
 A sector tag is a piece of data that is physically present in the media, once per each sector, but it’s not part of the user data.
 It can be addressing information, error detection or correction information, encryption metadata, etc.
 
-=== NULL
+=== ∅ NULL
 
 NULLs are `0x00` bytes.
 
-=== CRC64 and Version 1 Compatibility
+=== 🔐 CRC64 and Version 1 Compatibility
 
 All CRC64 checksums in this specification use the CRC64-ECMA algorithm.
 

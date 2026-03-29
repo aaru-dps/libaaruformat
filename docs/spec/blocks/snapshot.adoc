@@ -1,4 +1,4 @@
-=== Snapshot Block (`SNAP`)
+=== 📸 Snapshot Block (`SNAP`)
 
 The snapshot block holds a list of historical indexes, representing earlier versions of the media captured within the image.
 This feature enables users to manually preserve a specific media state, allowing reversion to previous versions or comparison between multiple data capture attempts.

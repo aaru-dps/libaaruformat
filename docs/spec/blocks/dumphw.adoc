@@ -1,4 +1,4 @@
-=== Dump Hardware Block (`DMP*`)
+=== 🖥️ Dump Hardware Block (`DMP*`)
 
 This block defines the set of hardware components involved in capturing the media content.
 It includes an array listing each device used during the dumping process, along with the specific extents each device recorded.

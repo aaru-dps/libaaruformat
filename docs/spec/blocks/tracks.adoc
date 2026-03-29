@@ -1,4 +1,4 @@
-=== Tracks Block (`TRKS`)
+=== 🎵 Tracks Block (`TRKS`)
 
 The tracks block holds a structured list of track entries, typically aligned with the layout specified in the table of contents or a similar indexing schema.
 This format is common in optical media such as CDs, DVDs, and related disc-based formats.

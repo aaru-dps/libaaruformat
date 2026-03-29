@@ -1,12 +1,12 @@
-== Introduction
+== 📖 Introduction
 
 This document is the detailed specification of AaruFormat.
 
-=== Audience
+=== 🎯 Audience
 
 This specification is directed to emulator developers, software preservators, archives, museums and collectors, that want to have a common file format where to store, archive and manage, dumps and copies of any type of computer storage.
 
-=== Scope
+=== 🔭 Scope
 
 The scope of this specification is to define an open, free and universal file format able to store and describe any kind of digital or analog storage media for computer systems, in a clear and extensible way that allows for new media to be easily added, along with any kind of metadata describing them, plus verification and recovery data.
 

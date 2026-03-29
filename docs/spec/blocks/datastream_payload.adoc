@@ -1,4 +1,4 @@
-=== Data Stream Payload Block (`DSPL`)
+=== 📡 Data Stream Payload Block (`DSPL`)
 
 This block contains a generic data stream payload. Can be used for data streams such as bitstreams or flux data.
 Each `DataStreamPayloadBlock` stores a compressed or uncompressed stream of binary data of variable length.

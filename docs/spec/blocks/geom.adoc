@@ -1,4 +1,4 @@
-=== Geometry Block (`GEOM`)
+=== 📏 Geometry Block (`GEOM`)
 
 The geometry block encapsulates metadata that defines the disk’s geometry, primarily to support transformations between CHS (Cylinder-Head-Sector) and LBA (Logical Block Addressing) addressing schemes.
 

@@ -1,10 +1,10 @@
-== Master Header Structure
+== 📄 Master Header Structure
 
 The AaruHeaderV2 is the fundamental header present at the beginning of every AaruFormat file.
 It defines the image's versioning, metadata, layout offset, feature compatibility, and structural alignment.
 All subsequent parsing and interpretation of the file depends on the contents of this header.
 
-=== Structure Definition
+=== 🏗️ Structure Definition
 
 [source,c]
 #define HEADER_APP_NAME_LEN 64
@@ -31,7 +31,7 @@ typedef struct AaruHeaderV2
     uint64_t featureIncompatible;  ///< Feature bits: any unimplemented -> abort (cannot open safely).
 } AaruHeaderV2;
 
-=== Field Descriptions
+=== 📝 Field Descriptions
 
 [cols="2,3,6",options="header"]
 |===

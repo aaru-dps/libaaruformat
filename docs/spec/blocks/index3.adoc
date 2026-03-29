@@ -1,4 +1,4 @@
-=== Index Block Version 3 (`IDX3`)
+=== 🗂️ Index Block Version 3 (`IDX3`)
 
 Version 3 of the index structure introduces a new field: `previous`. This field enables any index block to reference another, allowing for non-linear and flexible index placement within the file.
 

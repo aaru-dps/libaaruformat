@@ -1,5 +1,5 @@
 [appendix]
-== Data Types
+== 📊 Data Types
 
 This appendix enumerates all known data types that may appear within a data block or be referenced by a deduplication table.
 These types represent user data, media metadata, or sector-level tags.

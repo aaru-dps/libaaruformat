@@ -1,4 +1,4 @@
-=== Flux Data Block (`FLUX`)
+=== ⚡ Flux Data Block (`FLUX`)
 
 This block contains metadata for all flux captures in the image.
 Certain hardware devices, such as Kryoflux, Pauline, and Applesauce, read magnetic media at the flux transition level.

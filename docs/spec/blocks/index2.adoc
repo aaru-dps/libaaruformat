@@ -1,4 +1,4 @@
-=== Index Block version 2 (`IDX2`)
+=== 🗂️ Index Block version 2 (`IDX2`)
 
 The index block stores references to all blocks present in the file.
 It is composed of a header, followed by a sequence of entries, the count of which is defined within the header.

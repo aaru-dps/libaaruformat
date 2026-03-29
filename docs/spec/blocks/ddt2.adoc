@@ -1,4 +1,4 @@
-=== Deduplication Table (`DDT2`)
+=== 🔗 Deduplication Table (`DDT2`)
 
 The deduplication table is a multi-level table of pointers to LBAs contained in the image.
 It starts with the following header.

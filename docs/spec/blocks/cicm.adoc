@@ -1,4 +1,4 @@
-=== CICM XML Metadata Block (`CICM`)
+=== 📜 CICM XML Metadata Block (`CICM`)
 
 This block header signifies the inclusion of an embedded CICM XML metadata sidecar.
 The contents of the XML are preserved in their original form and are not parsed, interpreted, or validated by the format implementation.

@@ -1,4 +1,4 @@
-=== Bitstream Data Block (`BITS`)
+=== 💾 Bitstream Data Block (`BITS`)
 
 The `BITS` block contains a list of all known bitstream captures.
 

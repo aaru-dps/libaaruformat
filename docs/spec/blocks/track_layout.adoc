@@ -1,4 +1,4 @@
-=== Track Layout Block (`TKLY`)
+=== 📊 Track Layout Block (`TKLY`)
 
 The `TKLY` block defines the mapping between physical tracks and logical sectors, as referenced by the deduplication table.
 

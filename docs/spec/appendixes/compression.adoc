@@ -1,5 +1,5 @@
 [appendix]
-== Compression Types
+== 🗃️ Compression Types
 
 This apprendix lists all supported compression algorithms used within AaruFormat images.
 
@@ -19,7 +19,7 @@ For the latest and most accurate listing, refer to the `libaaruformat` source.
 |5 |Zstandard after Claunia Subchannel Transform (see Appendix D) — standard zstd frame, no prefix
 |===
 
-=== Notes on Zstandard (IDs 4 and 5)
+=== 📝 Notes on Zstandard (IDs 4 and 5)
 
 Unlike LZMA (IDs 1 and 3), Zstandard compressed payloads are stored as self-contained zstd frames.
 The `cmpLength` field in the block header covers the entire compressed payload with no additional prefix bytes.

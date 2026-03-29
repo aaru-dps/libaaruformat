@@ -1,4 +1,4 @@
-=== Parent File Block (`PRNT`)
+=== 👨‍👩‍👧 Parent File Block (`PRNT`)
 
 The parent file block provides metadata required to locate the image file from which the current image is derived.
 Its primary purpose is to enable hierarchical composition, where non-written sectors in the current image are transparently resolved by referencing their counterparts in the parent image.
