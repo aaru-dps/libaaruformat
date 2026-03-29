@@ -1,0 +1,239 @@
+[appendix]
+== 🔐 Nintendo Wii U Disc Encryption
+
+This annex describes the encryption scheme used by Nintendo Wii U Optical Discs (WUOD), and how AaruFormat handles decryption for storage, deduplication, and compression.
+
+=== 📖 Overview
+
+Nintendo Wii U discs employ a simpler encryption scheme than the Wii: each 0x8000-byte (32 KiB) physical sector is encrypted as a single AES-128-CBC block with a constant IV of all zeros.
+There are no separate hash blocks within the encrypted sector.
+
+Two tiers of keys exist:
+
+* A per-disc **disc key** (obtained from a non-readable area of the disc) encrypts system partitions and the Table of Contents (TOC).
+* Per-title **title keys** (extracted from TITLE.TIK files within system partitions) encrypt game data (GM) partitions.
+
+The first three physical sectors (0–2) and each partition's header sector are always plaintext.
+
+AaruFormat stores Wii U disc sectors in their *decrypted* form for deduplication and compression, transparently re-encrypting them on read.
+
+=== 🗂️ Disc Layout
+
+[source]
+----
+Physical sector 0–2 (0x00000–0x17FFF): Disc header (plaintext)
+Physical sector 3   (0x18000):          TOC (encrypted with disc key)
+Sector 4+:                              Partitions (encrypted, per-partition keys)
+----
+
+==== Disc Header
+
+The disc header occupies the first three physical sectors (0x18000 bytes total) and is always plaintext.
+Key metadata fields:
+
+[cols="2,2,5",options="header"]
+|===
+|Offset |Size |Description
+|0x00 |10 bytes |Product code (ASCII)
+|0x15 |1 byte |Disc number (ASCII digit)
+|===
+
+==== Table of Contents (TOC)
+
+The TOC resides at disc offset `0x18000` (physical sector 3) and is encrypted with the disc key using AES-128-CBC with IV = all zeros.
+
+After decryption, the TOC has the following structure:
+
+[cols="2,2,5",options="header"]
+|===
+|Offset |Type |Description
+|0x00 |uint32_t BE |TOC signature (`0xCCA6E67B`)
+|0x1C |uint32_t BE |Partition count
+|0x800 + _i_ × 0x80 |128 bytes |Partition entry _i_
+|===
+
+Each partition entry contains:
+
+[cols="2,2,5",options="header"]
+|===
+|Offset |Type |Description
+|0x00 |char[25] |Partition identifier (e.g., `SI`, `UP`, `GI`, `GM` + title ID hex)
+|0x20 |uint32_t BE |Start physical sector (in 0x8000-byte units)
+|===
+
+Partition types by identifier prefix:
+
+[cols="1,3",options="header"]
+|===
+|Prefix |Description
+|SI |System Information partition
+|UP |Update partition
+|GI |Game Information partition
+|GM |Game data partition (uses per-title key)
+|===
+
+=== 🔑 Key Hierarchy
+
+==== Disc Key
+
+The disc key is a 16-byte AES-128 key obtained from a non-standard, non-readable area of the physical disc.
+It cannot be extracted through normal optical drive commands and must be provided externally (via command-line option or sidecar `.disckey` / `.key` file).
+
+The disc key encrypts:
+
+* The TOC at physical sector 3
+* All partition data for **SI**, **UP**, and **GI** partitions (system partitions)
+
+==== Wii U Common Key
+
+A single system-wide 128-bit AES key, publicly known, is used to decrypt per-title keys from ticket files.
+
+==== Per-Title Key Derivation
+
+GM (game) partitions use unique per-title keys derived from TITLE.TIK files found within SI or GI partitions:
+
+. **Locate TITLE.TIK**: Parse the FST (File System Table) of each SI/GI partition. The FST starts at the partition's first sector with a `FST\0` magic signature. File entries are 16 bytes each, with cluster-based addressing.
+
+. **Read ticket fields**:
+** Encrypted title key (16 bytes) at ticket offset `0x1BF`
+** Title ID (8 bytes) at ticket offset `0x1DC`
+
+. **Decrypt title key**:
++
+[source]
+----
+IV = title_id || 8_zero_bytes
+title_key = AES-128-CBC-Decrypt(WIIU_COMMON_KEY, IV, encrypted_title_key)
+----
+
+. **Match to GM partition**: The GM partition identifier encodes the title ID as hex digits (e.g., `GM0005000E10143500`). The decrypted title key is assigned to the GM partition whose identifier matches.
+
+. **Fallback**: Partitions without a matched title key (SI, UP, GI) use the disc key directly.
+
+=== 🔒 Physical Sector Encryption
+
+==== Algorithm
+
+All encrypted physical sectors use **AES-128-CBC** with:
+
+* **Key**: The partition's key (disc key for system partitions, title key for GM partitions)
+* **IV**: All zeros (16 bytes of `0x00`)
+* **Block size**: The entire 0x8000-byte (32 KiB) physical sector is one CBC chain
+
+This is significantly simpler than the Wii scheme, which uses separate IVs for hash and data blocks within each group.
+
+==== Plaintext Sectors
+
+The following sectors are never encrypted:
+
+* Physical sectors 0–2 (disc header)
+* Each partition's first physical sector (partition header at `start_sector`)
+
+=== 📦 Source Formats
+
+The conversion tool accepts three Wii U disc image formats:
+
+==== WUD (Wii U Disc)
+
+Raw disc dump, stored as a flat binary file. Each byte corresponds directly to its disc offset.
+
+==== WUX (Wii U Compressed)
+
+A compressed WUD format with sector-level deduplication:
+
+[cols="2,2,5",options="header"]
+|===
+|Offset |Type |Description
+|0x00 |uint32_t LE |Magic: `0x30585557` (`WUX0`)
+|0x04 |uint32_t LE |Reserved
+|0x08 |uint32_t LE |Sector size (must be `0x8000`)
+|0x0C |uint32_t LE |Reserved (0)
+|0x10 |uint64_t LE |Uncompressed disc size in bytes
+|0x18 |uint64_t LE |Reserved (0)
+|===
+
+After the 32-byte header, a sector index table maps logical sectors to physical sectors:
+
+* Index table: `sector_count × sizeof(uint32_t)` bytes at offset `0x20`
+* Data sectors: Start at the next 0x8000-aligned offset after the index table
+* Each index entry maps logical sector _i_ to physical sector `index[i]`
+
+Identical logical sectors share the same physical sector, providing basic deduplication.
+
+==== AaruFormat
+
+An existing AaruFormat image with media type `WUOD`. The disc key may be stored in the `kMediaTagWiiUDiscKey` media tag.
+
+=== 💾 Storage in AaruFormat
+
+==== Partition Key Map
+
+The partition-to-key mapping is stored as media tag `kMediaTagWiiUPartitionKeyMap` (value 82):
+
+[cols="2,2,2,6",options="header"]
+|===
+|Offset |Type |Size |Description
+|0 |uint32_t LE |4 bytes |Number of partitions (maximum 8)
+|4 + _i_ × 24 |uint32_t LE |4 bytes |Start physical sector of partition _i_ (in 0x8000-byte units)
+|8 + _i_ × 24 |uint32_t LE |4 bytes |End physical sector of partition _i_ (exclusive, in 0x8000-byte units)
+|12 + _i_ × 24 |uint8_t[16] |16 bytes |AES-128 key for partition _i_
+|===
+
+The disc key itself is stored separately as media tag `kMediaTagWiiUDiscKey` (value 76), 16 bytes.
+
+==== Write Path (Conversion)
+
+The conversion processes each physical sector sequentially:
+
+. **Read** the 0x8000-byte physical sector from the source (WUD, WUX, or AaruFormat).
+
+. **Classify**: Determine if the sector is plaintext or encrypted:
+** Physical sectors 0–2: always plaintext.
+** A partition's `start_sector`: always plaintext (partition header).
+** All other sectors within a partition's range: encrypted.
+** Sectors outside any partition: plaintext.
+
+. **Decrypt** encrypted sectors using `wiiu_decrypt_physical_sector()` — AES-128-CBC with the partition's key and IV = all zeros.
+
+. **Write** 16 logical sectors (each 2048 bytes) to the AaruFormat image:
+** Decrypted sectors: status `SectorStatusUnencrypted` (`0xA`)
+** Plaintext sectors: status `SectorStatusDumped` (`0x1`)
+
+NOTE: Unlike Wii discs, Wii U conversion does not perform LFG junk detection. Wii U discs do not use the same LFG junk fill pattern as GameCube/Wii discs.
+
+==== Read Path (Re-encryption)
+
+When reading a sector marked `SectorStatusUnencrypted` from a WUOD image:
+
+. **Lazy initialization**: Load the disc key and partition key map from media tags. Allocate a 0x8000-byte group cache.
+
+. **Key lookup**: Convert the logical sector address to a physical sector number. Look up the partition key. Return NULL (plaintext) for disc header sectors and partition header sectors.
+
+. **Group assembly**: Gather all 16 logical sectors of the physical sector:
+** The current sector uses the data already in the read buffer.
+** The remaining 15 are read via recursive `aaruf_read_sector()` calls with a recursion guard flag (`wiiu_building_crypto_block`) to prevent infinite re-encryption loops.
+** Because AaruFormat stores 2048-byte logical sectors via the DDT, different logical sectors from the same 0x8000-byte physical sector may reside in different compressed data blocks. The library cannot assume contiguous storage.
+
+. **Re-encryption**: The assembled 0x8000-byte buffer is encrypted in-place using `wiiu_encrypt_physical_sector()` with the partition's key and IV = all zeros.
+
+. **Cache**: The encrypted physical sector is cached. Subsequent reads of logical sectors from the same physical sector are served directly from the cache.
+
+. The caller receives the 2048-byte slice from the encrypted sector, byte-identical to the original disc.
+
+=== 📊 Storage Benefits
+
+* **Deduplication**: Decrypted game data contains significant repetition (empty filesystem areas, zero-padded regions, common structures) that deduplicates effectively.
+* **Compression**: Decrypted data compresses well under LZMA/Zstandard. Encrypted data is pseudorandom and incompressible.
+* **Typical reduction**: A 25 GiB Wii U disc image commonly compresses to 5–15 GiB depending on game content.
+
+=== 🏷️ Required Media Tags
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Tag Name |Description
+|76 |kMediaTagWiiUDiscKey |16-byte disc key (required for TOC decryption and system partition access)
+|82 |kMediaTagWiiUPartitionKeyMap |Partition-to-key mapping with sector ranges (required for re-encryption)
+|===
+
+Both tags must be present for full transparent re-encryption.
+If either is absent, sectors are returned as stored (decrypted) without re-encryption.

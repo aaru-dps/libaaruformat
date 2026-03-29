@@ -159,3 +159,7 @@ include::appendixes/ngcw_junk.adoc[]
 <<<
 
 include::appendixes/wii_encryption.adoc[]
+
+<<<
+
+include::appendixes/wiiu_encryption.adoc[]
