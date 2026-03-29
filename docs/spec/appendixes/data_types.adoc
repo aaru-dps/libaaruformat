@@ -92,7 +92,7 @@ The most current and authoritative list is always maintained in the `libaaruform
 |78 |CompactDisc MODE 2 sector subheader
 |79 |[.line-through]#CompactDisc Lead-in# *DEPRECATED*
 |80 |DVD Disc Key (decrypted)
-|81 |DVD CPI_MAI
+|81 |DVD CPR_MAI
 |82 |DVD Title Key (decrypted)
 |83 |DVD Identification Data (ID)
 |84 |DVD ID Error Detection Code (IED)
