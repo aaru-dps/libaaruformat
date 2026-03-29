@@ -58,13 +58,13 @@ typedef struct DdtHeader
 |entries
 |How many pointers follow this header.
 
-|uint32_t
-|4 bytes
+|uint64_t
+|8 bytes
 |cmpLength
 |The size in bytes of the compressed table that follows this header.
 
-|uint32_t
-|4 bytes
+|uint64_t
+|8 bytes
 |length
 |The size in bytes of the table block when decompressed.
 

@@ -35,13 +35,13 @@ typedef struct TapePartitionHeader
 |identifier
 |The tape partition block identifier, always `TPBT`
 
-|uint16_t
-|2 bytes
+|uint8_t
+|1 byte
 |entries
 |The number of entries following this header
 
-|uint32_t
-|4 bytes
+|uint64_t
+|8 bytes
 |length
 |The length in bytes of the data following this header.
 

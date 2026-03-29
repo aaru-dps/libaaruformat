@@ -33,13 +33,13 @@ typedef struct TapeFileHeader
 |identifier
 |The tape file block identifier, always `TFLE`
 
-|uint16_t
-|2 bytes
+|uint32_t
+|4 bytes
 |entries
 |The number of entries following this header
 
-|uint32_t
-|4 bytes
+|uint64_t
+|8 bytes
 |length
 |The length in bytes of the data following this header.
 
