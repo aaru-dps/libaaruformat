@@ -81,4 +81,4 @@ NOTE: Bitstream deduplication tables provide a reference for associating bitstre
 |Entry number in the deduplication table where the data corresponding to this bitstream entry is stored
 |===
 
-To better understand the relationship between user data, bitstream data and flux data please refer to _Annex F_.
+To better understand the relationship between user data, bitstream data and flux data please refer to _Annex E_.

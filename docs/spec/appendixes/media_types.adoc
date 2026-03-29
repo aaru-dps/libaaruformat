@@ -6,4 +6,920 @@ This annex provides a reference list of known media types at the time this speci
 NOTE: This list is not exhaustive.
 The most accurate and current list originates from the `libaaruformat` source.
 
-Content to be defined.
+=== Generics (0–9)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|0  |UnknownMedia |Unknown disk type
+|1  |UnknownMO |Unknown magneto-optical
+|2  |GENERIC_HDD |Generic hard disk
+|3  |Microdrive |Microdrive type hard disk
+|4  |Zone_HDD |Zoned hard disk
+|5  |FlashDrive |USB flash drives
+|===
+
+=== Compact Disc (10–39)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|10 |CD |Any unknown or standard violating CD
+|11 |CDDA |CD Digital Audio (Red Book)
+|12 |CDG |CD+G (Red Book)
+|13 |CDEG |CD+EG (Red Book)
+|14 |CDI |CD-i (Green Book)
+|15 |CDROM |CD-ROM (Yellow Book)
+|16 |CDROMXA |CD-ROM XA (Yellow Book)
+|17 |CDPLUS |CD+ (Blue Book)
+|18 |CDMO |CD-MO (Orange Book)
+|19 |CDR |CD-Recordable (Orange Book)
+|20 |CDRW |CD-ReWritable (Orange Book)
+|21 |CDMRW |Mount-Rainier CD-RW
+|22 |VCD |Video CD (White Book)
+|23 |SVCD |Super Video CD (White Book)
+|24 |PCD |Photo CD (Beige Book)
+|25 |SACD |Super Audio CD (Scarlet Book)
+|26 |DDCD |Double-Density CD-ROM (Purple Book)
+|27 |DDCDR |DD CD-R (Purple Book)
+|28 |DDCDRW |DD CD-RW (Purple Book)
+|29 |DTSCD |DTS audio CD (non-standard)
+|30 |CDMIDI |CD-MIDI (Red Book)
+|31 |CDV |CD-Video (ISO/IEC 61104)
+|32 |PD650 |120mm, Phase-Change, 1298496 sectors, 512 bytes/sector, PD650, ECMA-240, ISO 15485
+|33 |PD650_WORM |120mm, Write-Once, 1281856 sectors, 512 bytes/sector, PD650, ECMA-240, ISO 15485
+|34 |CDIREADY |CD-i Ready
+|35 |FMTOWNS |Fujitsu FM Towns bootable CD
+|===
+
+=== DVD (40–50)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|40 |DVDROM |DVD-ROM (applies to DVD Video and DVD Audio)
+|41 |DVDR |DVD-R
+|42 |DVDRW |DVD-RW
+|43 |DVDPR |DVD+R
+|44 |DVDPRW |DVD+RW
+|45 |DVDPRWDL |DVD+RW DL
+|46 |DVDRDL |DVD-R DL
+|47 |DVDPRDL |DVD+R DL
+|48 |DVDRAM |DVD-RAM
+|49 |DVDRWDL |DVD-RW DL
+|50 |DVDDownload |DVD-Download
+|===
+
+=== HD DVD (51–59)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|51 |HDDVDROM |HD DVD-ROM (applies to HD DVD Video)
+|52 |HDDVDRAM |HD DVD-RAM
+|53 |HDDVDR |HD DVD-R
+|54 |HDDVDRW |HD DVD-RW
+|55 |HDDVDRDL |HD DVD-R DL
+|56 |HDDVDRWDL |HD DVD-RW DL
+|===
+
+=== Blu-ray (60–69)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|60 |BDROM |BD-ROM (and BD Video)
+|61 |BDR |BD-R
+|62 |BDRE |BD-RE
+|63 |BDRXL |BD-R XL
+|64 |BDREXL |BD-RE XL
+|===
+
+=== Rare/Uncommon Optical (70–79)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|70 |EVD |Enhanced Versatile Disc
+|71 |FVD |Forward Versatile Disc
+|72 |HVD |Holographic Versatile Disc
+|73 |CBHD |China Blue High Definition
+|74 |HDVMD |High Definition Versatile Multilayer Disc
+|75 |VCDHD |Versatile Compact Disc High Density
+|76 |SVOD |Stacked Volumetric Optical Disc
+|77 |FDDVD |Five Dimensional disc
+|===
+
+=== LaserDisc (80–89)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|80 |LD |Pioneer LaserDisc
+|81 |LDROM |Pioneer LaserDisc data
+|82 |LDROM2 |LaserDisc ROM²
+|83 |LVROM |LaserVision ROM
+|84 |MegaLD |Mega LD
+|===
+
+=== MiniDisc (90–99)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|90 |HiMD |Sony Hi-MD
+|91 |MD |Sony MiniDisc
+|92 |MDData |MiniDisc DATA
+|93 |MDData2 |High-capacity MiniDisc DATA 2
+|94 |MD60 |Sony MiniDisc, 60 minutes, formatted with Hi-MD format
+|95 |MD74 |Sony MiniDisc, 74 minutes, formatted with Hi-MD format
+|96 |MD80 |Sony MiniDisc, 80 minutes, formatted with Hi-MD format
+|===
+
+=== Plasmon UDO (100–109)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|100 |UDO |5.25", Phase-Change, 1834348 sectors, 8192 bytes/sector, Ultra Density Optical, ECMA-350, ISO 17345
+|101 |UDO2 |5.25", Phase-Change, 3669724 sectors, 8192 bytes/sector, Ultra Density Optical 2, ECMA-380, ISO 11976
+|102 |UDO2_WORM |5.25", Write-Once, 3668759 sectors, 8192 bytes/sector, Ultra Density Optical 2, ECMA-380, ISO 11976
+|===
+
+=== Sony Game Media (110–129)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|110 |PlayStationMemoryCard |Sony PlayStation (PS1) memory card
+|111 |PlayStationMemoryCard2 |Sony PlayStation 2 memory card
+|112 |PS1CD |Sony PlayStation game CD
+|113 |PS2CD |Sony PlayStation 2 game CD
+|114 |PS2DVD |Sony PlayStation 2 game DVD
+|115 |PS3DVD |Sony PlayStation 3 game DVD
+|116 |PS3BD |Sony PlayStation 3 game Blu-ray
+|117 |PS4BD |Sony PlayStation 4 game Blu-ray
+|118 |UMD |Sony PlayStation Portable Universal Media Disc (ECMA-365)
+|119 |PlayStationVitaGameCard |PS Vita NV memory card
+|===
+
+=== Microsoft Game Media (130–149)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|130 |XGD |Microsoft X-box Game Disc
+|131 |XGD2 |Microsoft X-box 360 Game Disc
+|132 |XGD3 |Microsoft X-box 360 Game Disc
+|133 |XGD4 |Microsoft X-box One Game Disc
+|===
+
+=== Sega Game Media (150–169)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|150 |MEGACD |Sega MegaCD
+|151 |SATURNCD |Sega Saturn disc
+|152 |GDROM |Sega/Yamaha Gigabyte Disc
+|153 |GDR |Sega/Yamaha recordable Gigabyte Disc
+|154 |SegaCard |Sega My Card / Sega Card (SG-1000 / Mark III)
+|155 |MilCD |Sega Dreamcast MIL-CD enhanced multimedia disc
+|===
+
+=== Other Game Media (170–179)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|170 |HuCard |PC-Engine / TurboGrafx cartridge
+|171 |SuperCDROM2 |PC-Engine / TurboGrafx CD
+|172 |JaguarCD |Atari Jaguar CD
+|173 |ThreeDO |3DO CD
+|174 |PCFX |NEC PC-FX
+|175 |NeoGeoCD |NEO-GEO CD
+|176 |CDTV |Commodore CDTV
+|177 |CD32 |Amiga CD32
+|178 |Nuon |Nuon (DVD based videogame console)
+|179 |Playdia |Bandai Playdia
+|===
+
+=== Apple Floppy Formats (180–189)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|180 |Apple32SS |5.25", SS, DD, 35 tracks, 13 spt, 256 bytes/sector, GCR
+|181 |Apple32DS |5.25", DS, DD, 35 tracks, 13 spt, 256 bytes/sector, GCR
+|182 |Apple33SS |5.25", SS, DD, 35 tracks, 16 spt, 256 bytes/sector, GCR
+|183 |Apple33DS |5.25", DS, DD, 35 tracks, 16 spt, 256 bytes/sector, GCR
+|184 |AppleSonySS |3.5", SS, DD, 80 tracks, 8–12 spt, 512 bytes/sector, GCR
+|185 |AppleSonyDS |3.5", DS, DD, 80 tracks, 8–12 spt, 512 bytes/sector, GCR
+|186 |AppleFileWare |5.25", DS, 512 bytes/sector, GCR, opposite side heads (aka Twiggy)
+|===
+
+=== IBM/Microsoft PC Floppy Formats (190–209)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|190 |DOS_525_SS_DD_8 |5.25", SS, DD, 40 tracks, 8 spt, 512 bytes/sector, MFM
+|191 |DOS_525_SS_DD_9 |5.25", SS, DD, 40 tracks, 9 spt, 512 bytes/sector, MFM
+|192 |DOS_525_DS_DD_8 |5.25", DS, DD, 40 tracks, 8 spt, 512 bytes/sector, MFM
+|193 |DOS_525_DS_DD_9 |5.25", DS, DD, 40 tracks, 9 spt, 512 bytes/sector, MFM
+|194 |DOS_525_HD |5.25", DS, HD, 80 tracks, 15 spt, 512 bytes/sector, MFM
+|195 |DOS_35_SS_DD_8 |3.5", SS, DD, 80 tracks, 8 spt, 512 bytes/sector, MFM
+|196 |DOS_35_SS_DD_9 |3.5", SS, DD, 80 tracks, 9 spt, 512 bytes/sector, MFM
+|197 |DOS_35_DS_DD_8 |3.5", DS, DD, 80 tracks, 8 spt, 512 bytes/sector, MFM
+|198 |DOS_35_DS_DD_9 |3.5", DS, DD, 80 tracks, 9 spt, 512 bytes/sector, MFM
+|199 |DOS_35_HD |3.5", DS, HD, 80 tracks, 18 spt, 512 bytes/sector, MFM
+|200 |DOS_35_ED |3.5", DS, ED, 80 tracks, 36 spt, 512 bytes/sector, MFM
+|201 |DMF |3.5", DS, HD, 80 tracks, 21 spt, 512 bytes/sector, MFM
+|202 |DMF_82 |3.5", DS, HD, 82 tracks, 21 spt, 512 bytes/sector, MFM
+|203 |XDF_525 |5.25", DS, HD, 80 tracks, mixed sector sizes, MFM
+|204 |XDF_35 |3.5", DS, HD, 80 tracks, 4 spt, mixed sector sizes, MFM
+|===
+
+=== IBM Standard Floppy Formats (210–219)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|210 |IBM23FD |8", SS, SD, 32 tracks, 8 spt, 319 bytes/sector, FM
+|211 |IBM33FD_128 |8", SS, SD, 73 tracks, 26 spt, 128 bytes/sector, FM
+|212 |IBM33FD_256 |8", SS, SD, 74 tracks, 15 spt, 256 bytes/sector, FM
+|213 |IBM33FD_512 |8", SS, SD, 74 tracks, 8 spt, 512 bytes/sector, FM
+|214 |IBM43FD_128 |8", DS, SD, 74 tracks, 26 spt, 128 bytes/sector, FM
+|215 |IBM43FD_256 |8", DS, SD, 74 tracks, 26 spt, 256 bytes/sector, FM
+|216 |IBM53FD_256 |8", DS, DD, 74 tracks, 26 spt, 256 bytes/sector, MFM
+|217 |IBM53FD_512 |8", DS, DD, 74 tracks, 15 spt, 512 bytes/sector, MFM
+|218 |IBM53FD_1024 |8", DS, DD, 74 tracks, 8 spt, 1024 bytes/sector, MFM
+|===
+
+=== DEC Floppy Formats (220–229)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|220 |RX01 |8", SS, DD, 77 tracks, 26 spt, 128 bytes/sector, FM
+|221 |RX02 |8", SS, DD, 77 tracks, 26 spt, 256 bytes/sector, FM/MFM
+|222 |RX03 |8", DS, DD, 77 tracks, 26 spt, 256 bytes/sector, FM/MFM
+|223 |RX50 |5.25", SS, DD, 80 tracks, 10 spt, 512 bytes/sector, MFM
+|===
+
+=== Acorn Floppy Formats (230–239)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|230 |ACORN_525_SS_SD_40 |5.25", SS, SD, 40 tracks, 10 spt, 256 bytes/sector, FM
+|231 |ACORN_525_SS_SD_80 |5.25", SS, SD, 80 tracks, 10 spt, 256 bytes/sector, FM
+|232 |ACORN_525_SS_DD_40 |5.25", SS, DD, 40 tracks, 16 spt, 256 bytes/sector, MFM
+|233 |ACORN_525_SS_DD_80 |5.25", SS, DD, 80 tracks, 16 spt, 256 bytes/sector, MFM
+|234 |ACORN_525_DS_DD |5.25", DS, DD, 80 tracks, 16 spt, 256 bytes/sector, MFM
+|235 |ACORN_35_DS_DD |3.5", DS, DD, 80 tracks, 5 spt, 1024 bytes/sector, MFM
+|236 |ACORN_35_DS_HD |3.5", DS, HD, 80 tracks, 10 spt, 1024 bytes/sector, MFM
+|===
+
+=== Atari Floppy Formats (240–249)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|240 |ATARI_525_SD |5.25", SS, SD, 40 tracks, 18 spt, 128 bytes/sector, FM
+|241 |ATARI_525_ED |5.25", SS, ED, 40 tracks, 26 spt, 128 bytes/sector, MFM
+|242 |ATARI_525_DD |5.25", SS, DD, 40 tracks, 18 spt, 256 bytes/sector, MFM
+|243 |ATARI_35_SS_DD |3.5", SS, DD, 80 tracks, 10 spt, 512 bytes/sector, MFM
+|244 |ATARI_35_DS_DD |3.5", DS, DD, 80 tracks, 10 spt, 512 bytes/sector, MFM
+|245 |ATARI_35_SS_DD_11 |3.5", SS, DD, 80 tracks, 11 spt, 512 bytes/sector, MFM
+|246 |ATARI_35_DS_DD_11 |3.5", DS, DD, 80 tracks, 11 spt, 512 bytes/sector, MFM
+|===
+
+=== Commodore Floppy Formats (250–259)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|250 |CBM_35_DD |3.5", DS, DD, 80 tracks, 10 spt, 512 bytes/sector, MFM (1581)
+|251 |CBM_AMIGA_35_DD |3.5", DS, DD, 80 tracks, 11 spt, 512 bytes/sector, MFM (Amiga)
+|252 |CBM_AMIGA_35_HD |3.5", DS, HD, 80 tracks, 22 spt, 512 bytes/sector, MFM (Amiga)
+|253 |CBM_1540 |5.25", SS, DD, 35 tracks, GCR
+|254 |CBM_1540_Ext |5.25", SS, DD, 40 tracks, GCR
+|255 |CBM_1571 |5.25", DS, DD, 35 tracks, GCR
+|===
+
+=== NEC/Sharp Floppy Formats (260–269)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|260 |NEC_8_SD |8", DS, SD, 77 tracks, 26 spt, 128 bytes/sector, FM
+|261 |NEC_8_DD |8", DS, DD, 77 tracks, 26 spt, 256 bytes/sector, MFM
+|262 |NEC_525_SS |5.25", SS, SD, 80 tracks, 16 spt, 256 bytes/sector, FM
+|263 |NEC_525_DS |5.25", DS, SD, 80 tracks, 16 spt, 256 bytes/sector, MFM
+|264 |NEC_525_HD |5.25", DS, HD, 77 tracks, 8 spt, 1024 bytes/sector, MFM
+|265 |NEC_35_HD_8 |3.5", DS, HD, 77 tracks, 8 spt, 1024 bytes/sector, MFM (mode 3)
+|266 |NEC_35_HD_15 |3.5", DS, HD, 80 tracks, 15 spt, 512 bytes/sector, MFM
+|267 |NEC_35_TD |3.5", DS, TD, 240 tracks, 38 spt, 512 bytes/sector, MFM
+|268 |SHARP_525_9 |3.5", DS, HD, 80 tracks, 9 spt, 1024 bytes/sector, MFM
+|269 |SHARP_35_9 |3.5", DS, HD, 80 tracks, 9 spt, 1024 bytes/sector, MFM
+|===
+
+NOTE: SHARP_525 (= NEC_525_HD = 264) and SHARP_35 (= NEC_35_HD_8 = 265) are aliases.
+
+=== ECMA Floppy Standards (270–289)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|270 |ECMA_99_8 |5.25", DS, DD, 80 tracks, 8 spt, 1024 bytes/sector, MFM
+|271 |ECMA_99_15 |5.25", DS, DD, 77 tracks, 15 spt, 512 bytes/sector, MFM
+|272 |ECMA_99_26 |5.25", DS, DD, 77 tracks, 26 spt, 256 bytes/sector, MFM
+|273 |ECMA_54 |8", SS, SD, 77 tracks, 26 spt, 128 bytes/sector, FM
+|274 |ECMA_59 |8", DS, SD, 77 tracks, 26 spt, 128 bytes/sector, FM
+|275 |ECMA_66 |5.25", SS, DD, 35 tracks, 9 spt, 256 bytes/sector, FM
+|276 |ECMA_69_8 |8", DS, DD, 77 tracks, 8 spt, 1024 bytes/sector, FM
+|277 |ECMA_69_15 |8", DS, DD, 77 tracks, 15 spt, 512 bytes/sector, FM
+|278 |ECMA_69_26 |8", DS, DD, 77 tracks, 26 spt, 256 bytes/sector, FM
+|279 |ECMA_70 |5.25", DS, DD, 40 tracks, 16 spt, 256 bytes/sector, FM
+|280 |ECMA_78 |ECMA-78
+|281 |ECMA_78_2 |5.25", DS, DD, 80 tracks, 9 spt, 512 bytes/sector, FM
+|===
+
+NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_147 (= DOS_35_ED = 200) are aliases.
+
+=== Non-standard PC Floppy Formats (290–309)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|290 |FDFORMAT_525_DD |5.25", DS, DD, 82 tracks, 10 spt, 512 bytes/sector, MFM
+|291 |FDFORMAT_525_HD |5.25", DS, HD, 82 tracks, 17 spt, 512 bytes/sector, MFM
+|292 |FDFORMAT_35_DD |3.5", DS, DD, 82 tracks, 10 spt, 512 bytes/sector, MFM
+|293 |FDFORMAT_35_HD |3.5", DS, HD, 82 tracks, 21 spt, 512 bytes/sector, MFM
+|309 |Apricot_35 |3.5", DS, DD, 70 tracks, 9 spt, 512 bytes/sector, MFM
+|===
+
+=== OnStream ADR (310–319)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|310 |ADR2120 |OnStream ADR 2120
+|311 |ADR260 |OnStream ADR 260
+|312 |ADR30 |OnStream ADR 30
+|313 |ADR50 |OnStream ADR 50
+|===
+
+=== Advanced Intelligent Tape (320–339)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|320 |AIT1 |AIT-1
+|321 |AIT1Turbo |AIT-1 Turbo
+|322 |AIT2 |AIT-2
+|323 |AIT2Turbo |AIT-2 Turbo
+|324 |AIT3 |AIT-3
+|325 |AIT3Ex |AIT-3Ex
+|326 |AIT3Turbo |AIT-3 Turbo
+|327 |AIT4 |AIT-4
+|328 |AIT5 |AIT-5
+|329 |AITETurbo |AIT-E Turbo
+|330 |SAIT1 |SAIT-1
+|331 |SAIT2 |SAIT-2
+|===
+
+=== Iomega (340–359)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|340 |Bernoulli |Iomega Bernoulli
+|341 |Bernoulli2 |Iomega Bernoulli II
+|342 |Ditto |Iomega Ditto
+|343 |DittoMax |Iomega Ditto Max
+|344 |Jaz |Iomega Jaz
+|345 |Jaz2 |Iomega Jaz 2
+|346 |PocketZip |Iomega PocketZip
+|347 |REV120 |Iomega REV 120
+|348 |REV35 |Iomega REV 35
+|349 |REV70 |Iomega REV 70
+|350 |ZIP100 |Iomega ZIP 100
+|351 |ZIP250 |Iomega ZIP 250
+|352 |ZIP750 |Iomega ZIP 750
+|353 |Bernoulli35 |5⅓" Bernoulli Box II disk, 35Mb
+|354 |Bernoulli44 |5⅓" Bernoulli Box II disk, 44Mb
+|355 |Bernoulli65 |5⅓" Bernoulli Box II disk, 65Mb
+|356 |Bernoulli90 |5⅓" Bernoulli Box II disk, 90Mb
+|357 |Bernoulli105 |5⅓" Bernoulli Box II disk, 105Mb
+|358 |Bernoulli150 |5⅓" Bernoulli Box II disk, 150Mb
+|359 |Bernoulli230 |5⅓" Bernoulli Box II disk, 230Mb
+|===
+
+=== Audio/Video Media (360–369)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|360 |CompactCassette |Compact Cassette
+|361 |Data8 |Data8 (8mm data cartridge)
+|362 |MiniDV |MiniDV
+|363 |Dcas25 |D/CAS-25: Digital data on Compact Cassette form factor, 9-track
+|364 |Dcas85 |D/CAS-85: Digital data on Compact Cassette form factor, 17-track
+|365 |Dcas103 |D/CAS-103: Digital data on Compact Cassette form factor, 21-track
+|===
+
+=== CompactFlash Association (370–379)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|370 |CFast |CFast
+|371 |CompactFlash |CompactFlash
+|372 |CompactFlashType2 |CompactFlash Type II
+|===
+
+=== Digital Audio Tape / Digital Data Storage (380–389)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|380 |DigitalAudioTape |Digital Audio Tape (DAT)
+|381 |DAT160 |DAT 160
+|382 |DAT320 |DAT 320
+|383 |DAT72 |DAT 72
+|384 |DDS1 |DDS-1
+|385 |DDS2 |DDS-2
+|386 |DDS3 |DDS-3
+|387 |DDS4 |DDS-4
+|===
+
+=== DEC Tapes (390–399)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|390 |CompactTapeI |DEC CompactTape I
+|391 |CompactTapeII |DEC CompactTape II
+|392 |DECtapeII |DECtape II
+|393 |DLTtapeIII |DLTtape III
+|394 |DLTtapeIIIxt |DLTtape IIIxt
+|395 |DLTtapeIV |DLTtape IV
+|396 |DLTtapeS4 |DLTtape S4
+|397 |SDLT1 |Super DLTtape I
+|398 |SDLT2 |Super DLTtape II
+|399 |VStapeI |VStape I
+|===
+
+=== Exatape (400–419)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|400 |Exatape15m |Exatape 15m
+|401 |Exatape22m |Exatape 22m
+|402 |Exatape22mAME |Exatape 22m AME
+|403 |Exatape28m |Exatape 28m
+|404 |Exatape40m |Exatape 40m
+|405 |Exatape45m |Exatape 45m
+|406 |Exatape54m |Exatape 54m
+|407 |Exatape75m |Exatape 75m
+|408 |Exatape76m |Exatape 76m
+|409 |Exatape80m |Exatape 80m
+|410 |Exatape106m |Exatape 106m
+|411 |Exatape160mXL |Exatape 160m XL
+|412 |Exatape112m |Exatape 112m
+|413 |Exatape125m |Exatape 125m
+|414 |Exatape150m |Exatape 150m
+|415 |Exatape170m |Exatape 170m
+|416 |Exatape225m |Exatape 225m
+|===
+
+=== PCMCIA / ExpressCard (420–429)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|420 |ExpressCard34 |ExpressCard/34
+|421 |ExpressCard54 |ExpressCard/54
+|422 |PCCardTypeI |PC Card Type I
+|423 |PCCardTypeII |PC Card Type II
+|424 |PCCardTypeIII |PC Card Type III
+|425 |PCCardTypeIV |PC Card Type IV
+|===
+
+=== SyQuest (430–449)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|430 |EZ135 |SyQuest EZ135
+|431 |EZ230 |SyQuest EZ230
+|432 |Quest |SyQuest Quest
+|433 |SparQ |SyQuest SparQ
+|434 |SQ100 |SyQuest SQ100
+|435 |SQ200 |SyQuest SQ200
+|436 |SQ300 |SyQuest SQ300
+|437 |SQ310 |SyQuest SQ310
+|438 |SQ327 |SyQuest SQ327
+|439 |SQ400 |SyQuest SQ400
+|440 |SQ800 |SyQuest SQ800
+|441 |SQ1500 |SyQuest SQ1500
+|442 |SQ2000 |SyQuest SQ2000
+|443 |SyJet |SyQuest SyJet
+|===
+
+=== Nintendo (450–469)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|450 |FamicomGamePak |Nintendo Famicom cartridge
+|451 |GameBoyAdvanceGamePak |Nintendo Game Boy Advance cartridge
+|452 |GameBoyGamePak |Nintendo Game Boy / Color cartridge
+|453 |GOD |Nintendo GameCube Optical Disc
+|454 |N64DD |Nintendo 64DD disk
+|455 |N64GamePak |Nintendo 64 cartridge
+|456 |NESGamePak |Nintendo NES cartridge
+|457 |Nintendo3DSGameCard |Nintendo 3DS ROM card
+|458 |NintendoDiskCard |Famicom Disk System disk
+|459 |NintendoDSGameCard |Nintendo DS ROM card
+|460 |NintendoDSiGameCard |Nintendo DSi enhanced ROM card
+|461 |SNESGamePak |Nintendo SNES (PAL/JPN) cartridge
+|462 |SNESGamePakUS |Nintendo SNES (US) cartridge (different shell)
+|463 |WOD |Nintendo Wii Optical Disc
+|464 |WUOD |Nintendo Wii U Optical Disc
+|465 |SwitchGameCard |Nintendo Switch Game Card (NV flash)
+|===
+
+=== IBM Tapes (470–479)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|470 |IBM3470 |IBM 3470
+|471 |IBM3480 |IBM 3480
+|472 |IBM3490 |IBM 3490
+|473 |IBM3490E |IBM 3490E
+|474 |IBM3592 |IBM 3592
+|===
+
+=== LTO Ultrium (480–509)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|480 |LTO |LTO Ultrium (gen 1)
+|481 |LTO2 |LTO Ultrium 2
+|482 |LTO3 |LTO Ultrium 3
+|483 |LTO3WORM |LTO Ultrium 3 WORM
+|484 |LTO4 |LTO Ultrium 4
+|485 |LTO4WORM |LTO Ultrium 4 WORM
+|486 |LTO5 |LTO Ultrium 5
+|487 |LTO5WORM |LTO Ultrium 5 WORM
+|488 |LTO6 |LTO Ultrium 6
+|489 |LTO6WORM |LTO Ultrium 6 WORM
+|490 |LTO7 |LTO Ultrium 7
+|491 |LTO7WORM |LTO Ultrium 7 WORM
+|===
+
+=== MemoryStick (510–519)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|510 |MemoryStick |Sony Memory Stick
+|511 |MemoryStickDuo |Sony Memory Stick Duo
+|512 |MemoryStickMicro |Sony Memory Stick Micro (M2)
+|513 |MemoryStickPro |Sony Memory Stick PRO
+|514 |MemoryStickProDuo |Sony Memory Stick PRO Duo
+|===
+
+=== SecureDigital (520–529)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|520 |microSD |microSD / microSDHC / microSDXC card
+|521 |miniSD |miniSD card
+|522 |SecureDigital |Full-size SD / SDHC / SDXC card
+|===
+
+=== MultiMediaCard (530–539)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|530 |MMC |MultiMediaCard (legacy)
+|531 |MMCmicro |MMCmicro (RS-MMC form)
+|532 |RSMMC |Reduced Size MMC
+|533 |MMCplus |MMCplus (high speed)
+|534 |MMCmobile |MMCmobile (dual voltage)
+|===
+
+=== SLR (540–569)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|540 |MLR1 |MLR1
+|541 |MLR1SL |MLR1-SL
+|542 |MLR3 |MLR3
+|543 |SLR1 |SLR1
+|544 |SLR2 |SLR2
+|545 |SLR3 |SLR3
+|546 |SLR32 |SLR32
+|547 |SLR32SL |SLR32-SL
+|548 |SLR4 |SLR4
+|549 |SLR5 |SLR5
+|550 |SLR5SL |SLR5-SL
+|551 |SLR6 |SLR6
+|552 |SLRtape7 |SLRtape7
+|553 |SLRtape7SL |SLRtape7-SL
+|554 |SLRtape24 |SLRtape24
+|555 |SLRtape24SL |SLRtape24-SL
+|556 |SLRtape40 |SLRtape40
+|557 |SLRtape50 |SLRtape50
+|558 |SLRtape60 |SLRtape60
+|559 |SLRtape75 |SLRtape75
+|560 |SLRtape100 |SLRtape100
+|561 |SLRtape140 |SLRtape140
+|===
+
+=== QIC (570–589)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|570 |QIC11 |QIC-11
+|571 |QIC120 |QIC-120
+|572 |QIC1350 |QIC-1350
+|573 |QIC150 |QIC-150
+|574 |QIC24 |QIC-24
+|575 |QIC3010 |QIC-3010
+|576 |QIC3020 |QIC-3020
+|577 |QIC3080 |QIC-3080
+|578 |QIC3095 |QIC-3095
+|579 |QIC320 |QIC-320
+|580 |QIC40 |QIC-40
+|581 |QIC525 |QIC-525
+|582 |QIC80 |QIC-80
+|===
+
+=== StorageTek Tapes (590–609)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|590 |STK4480 |StorageTek 4480
+|591 |STK4490 |StorageTek 4490
+|592 |STK9490 |StorageTek 9490
+|593 |T9840A |StorageTek T9840A
+|594 |T9840B |StorageTek T9840B
+|595 |T9840C |StorageTek T9840C
+|596 |T9840D |StorageTek T9840D
+|597 |T9940A |StorageTek T9940A
+|598 |T9940B |StorageTek T9940B
+|599 |T10000A |StorageTek T10000A
+|600 |T10000B |StorageTek T10000B
+|601 |T10000C |StorageTek T10000C
+|602 |T10000D |StorageTek T10000D
+|===
+
+=== Travan (610–619)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|610 |Travan1 |Travan 1 (TR-1)
+|611 |Travan1Ex |Travan 1 Ex
+|612 |Travan3 |Travan 3 (TR-3)
+|613 |Travan3Ex |Travan 3 Ex
+|614 |Travan4 |Travan 4 (TR-4)
+|615 |Travan5 |Travan 5 (TR-5)
+|616 |Travan7 |Travan 7 (TR-7)
+|===
+
+=== VXA (620–629)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|620 |VXA1 |VXA-1
+|621 |VXA2 |VXA-2
+|622 |VXA3 |VXA-3
+|===
+
+=== Magneto-Optical (630–659)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|630 |ECMA_153 |5.25", M.O., 1024 bytes/sector, ECMA-153, ISO 11560
+|631 |ECMA_153_512 |5.25", M.O., 512 bytes/sector, ECMA-153, ISO 11560
+|632 |ECMA_154 |3.5", M.O., 249850 sectors, 512 bytes/sector, ECMA-154, ISO 10090
+|633 |ECMA_183_512 |5.25", M.O., 904995 sectors, 512 bytes/sector, ECMA-183, ISO 13481
+|634 |ECMA_183 |5.25", M.O., 498526 sectors, 1024 bytes/sector, ECMA-183, ISO 13481
+|635 |ECMA_184_512 |5.25", M.O., 512 bytes/sector, ECMA-184, ISO 13549
+|636 |ECMA_184 |5.25", M.O., 1024 bytes/sector, ECMA-184, ISO 13549
+|637 |ECMA_189 |300mm, M.O., 1024 bytes/sector, ECMA-189, ISO 13614
+|638 |ECMA_190 |300mm, M.O., 1024 bytes/sector, ECMA-190, ISO 13403
+|639 |ECMA_195 |5.25", M.O., 1024 bytes/sector, ECMA-195, ISO 13842
+|640 |ECMA_195_512 |5.25", M.O., 512 bytes/sector, ECMA-195, ISO 13842
+|641 |ECMA_201 |3.5", M.O., 446325 sectors, 512 bytes/sector, ECMA-201, ISO 13963
+|642 |ECMA_201_ROM |3.5", M.O., 429975 sectors, 512 bytes/sector, embossed, ISO 13963
+|643 |ECMA_223 |3.5", M.O., 371371 sectors, 1024 bytes/sector, ECMA-223
+|644 |ECMA_223_512 |3.5", M.O., 694929 sectors, 512 bytes/sector, ECMA-223
+|645 |ECMA_238 |5.25", M.O., 1244621 sectors, 1024 bytes/sector, ECMA-238, ISO 15486
+|646 |ECMA_239 |3.5", M.O., 2048 bytes/sector, ECMA-239, ISO 15498
+|647 |ECMA_260 |356mm, M.O., 14476734 sectors, 1024 bytes/sector, ECMA-260, ISO 15898
+|648 |ECMA_260_Double |356mm, M.O., 24445990 sectors, 1024 bytes/sector, ECMA-260, ISO 15898
+|649 |ECMA_280 |5.25", M.O., 1128134 sectors, 2048 bytes/sector, ECMA-280, ISO 18093
+|650 |ECMA_317 |300mm, M.O., 7355716 sectors, 2048 bytes/sector, ECMA-317, ISO 20162
+|651 |ECMA_322 |5.25", M.O., 1095840 sectors, 4096 bytes/sector, ECMA-322, ISO 22092
+|652 |ECMA_322_2k |5.25", M.O., 2043664 sectors, 2048 bytes/sector, ECMA-322, ISO 22092
+|653 |GigaMo |3.5", M.O., 605846 sectors, 2048 bytes/sector, GigaMo, ECMA-351, ISO 17346
+|654 |GigaMo2 |3.5", M.O., 1063146 sectors, 2048 bytes/sector, GigaMo 2, ECMA-353, ISO 22533
+|===
+
+=== Other Floppy Standards (660–669)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|660 |CompactFloppy |Compact Floppy
+|661 |DemiDiskette |DemiDiskette
+|662 |Floptical |3.5", 652 tracks, 2 sides, 512 bytes/sector, Floptical, ECMA-207, ISO 14169
+|663 |HiFD |Sony HiFD
+|664 |QuickDisk |Quick Disk
+|665 |UHD144 |UHD144
+|666 |VideoFloppy |Video Floppy
+|667 |Wafer |Wafer
+|668 |ZXMicrodrive |ZX Microdrive
+|===
+
+=== Miscellaneous (670–689)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|670 |BeeCard |BeeCard
+|671 |Borsu |Borsu
+|672 |DataStore |DataStore
+|673 |DIR |DIR
+|674 |DST |DST
+|675 |DTF |DTF
+|676 |DTF2 |DTF-2
+|677 |Flextra3020 |Flextra 3020
+|678 |Flextra3225 |Flextra 3225
+|679 |HiTC1 |HiTC1
+|680 |HiTC2 |HiTC2
+|681 |LT1 |LT1
+|683 |Orb |Castlewood Orb
+|684 |Orb5 |Castlewood Orb 5.7
+|685 |SmartMedia |SmartMedia
+|686 |xD |xD-Picture Card
+|687 |XQD |XQD
+|688 |DataPlay |DataPlay
+|872 |MiniCard |MiniCard
+|===
+
+NOTE: MiniCard is assigned value 872 (outside the 670–689 range) due to a historical numbering error.
+
+=== Apple Specific Media (690–699)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|690 |AppleProfile |Apple ProFile hard disk
+|691 |AppleWidget |Apple Widget hard disk
+|692 |AppleHD20 |Apple HD20 hard disk
+|693 |PriamDataTower |Priam DataTower hard disk
+|694 |Pippin |Apple Pippin disc
+|===
+
+=== DEC Hard Disks (700–729)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|700 |RA60 |DEC RA60 (2382 cyl, 4 trk, 42 spt, 512 bps, 204890112 bytes)
+|701 |RA80 |DEC RA80 (546 cyl, 14 trk, 31 spt, 512 bps, 121325568 bytes)
+|702 |RA81 |DEC RA81 (1248 cyl, 14 trk, 51 spt, 512 bps, 456228864 bytes)
+|703 |RC25 |DEC RC25 (302 cyl, 4 trk, 42 spt, 512 bps, 25976832 bytes)
+|704 |RD31 |DEC RD31 (615 cyl, 4 trk, 17 spt, 512 bps, 21411840 bytes)
+|705 |RD32 |DEC RD32 (820 cyl, 6 trk, 17 spt, 512 bps, 42823680 bytes)
+|706 |RD51 |DEC RD51 (306 cyl, 4 trk, 17 spt, 512 bps, 10653696 bytes)
+|707 |RD52 |DEC RD52 (480 cyl, 7 trk, 18 spt, 512 bps, 30965760 bytes)
+|708 |RD53 |DEC RD53 (1024 cyl, 7 trk, 18 spt, 512 bps, 75497472 bytes)
+|709 |RD54 |DEC RD54 (1225 cyl, 8 trk, 18 spt, 512 bps, 159936000 bytes)
+|710 |RK06 |DEC RK06 (411 cyl, 3 trk, 22 spt, 512 bps, 13888512 bytes)
+|711 |RK06_18 |DEC RK06 (411 cyl, 3 trk, 20 spt, 576 bps, 14204160 bytes)
+|712 |RK07 |DEC RK07 (815 cyl, 3 trk, 22 spt, 512 bps, 27540480 bytes)
+|713 |RK07_18 |DEC RK07 (815 cyl, 3 trk, 20 spt, 576 bps, 28166400 bytes)
+|714 |RM02 |DEC RM02 (823 cyl, 5 trk, 32 spt, 512 bps, 67420160 bytes)
+|715 |RM03 |DEC RM03 (823 cyl, 5 trk, 32 spt, 512 bps, 67420160 bytes)
+|716 |RM05 |DEC RM05 (823 cyl, 19 trk, 32 spt, 512 bps, 256196608 bytes)
+|717 |RP02 |DEC RP02 (203 cyl, 10 trk, 22 spt, 512 bps, 22865920 bytes)
+|718 |RP02_18 |DEC RP02 (203 cyl, 10 trk, 20 spt, 576 bps, 23385600 bytes)
+|719 |RP03 |DEC RP03 (400 cyl, 10 trk, 22 spt, 512 bps, 45056000 bytes)
+|720 |RP03_18 |DEC RP03 (400 cyl, 10 trk, 20 spt, 576 bps, 46080000 bytes)
+|721 |RP04 |DEC RP04 (411 cyl, 19 trk, 22 spt, 512 bps, 87960576 bytes)
+|722 |RP04_18 |DEC RP04 (411 cyl, 19 trk, 20 spt, 576 bps, 89959680 bytes)
+|723 |RP05 |DEC RP05 (411 cyl, 19 trk, 22 spt, 512 bps, 87960576 bytes)
+|724 |RP05_18 |DEC RP05 (411 cyl, 19 trk, 20 spt, 576 bps, 89959680 bytes)
+|725 |RP06 |DEC RP06 (815 cyl, 19 trk, 22 spt, 512 bps, 174423040 bytes)
+|726 |RP06_18 |DEC RP06 (815 cyl, 19 trk, 20 spt, 576 bps, 178387200 bytes)
+|===
+
+=== Imation (730–739)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|730 |LS120 |Imation LS-120 SuperDisk
+|731 |LS240 |Imation LS-240 SuperDisk
+|732 |FD32MB |MF2HD formatted as 32MiB disk in Imation LS-240 drive
+|733 |RDX |Tandberg / Imation RDX removable disk cartridge
+|734 |RDX320 |Imation 320Gb RDX
+|===
+
+=== VideoNow (740–749)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|740 |VideoNow |Hasbro VideoNow 85 mm proprietary video disc
+|741 |VideoNowColor |Hasbro VideoNow Color disc
+|742 |VideoNowXp |Hasbro VideoNow XP higher capacity disc
+|===
+
+=== Iomega (750–759)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|750 |Bernoulli10 |8"×11" Bernoulli Box disk, 10Mb
+|751 |Bernoulli20 |8"×11" Bernoulli Box disk, 20Mb
+|752 |BernoulliBox2_20 |5⅓" Bernoulli Box II disk, 20Mb
+|===
+
+=== Kodak (760–769)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|760 |KodakVerbatim3 |Kodak/Verbatim (3Mb)
+|761 |KodakVerbatim6 |Kodak/Verbatim (6Mb)
+|762 |KodakVerbatim12 |Kodak/Verbatim (12Mb)
+|===
+
+=== Sony/Panasonic Blu-ray Derived (770–799)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|770 |ProfessionalDisc |Professional Disc for video, single layer, rewritable, 23Gb
+|771 |ProfessionalDiscDual |Professional Disc for video, dual layer, rewritable, 50Gb
+|772 |ProfessionalDiscTriple |Professional Disc for video, triple layer, rewritable, 100Gb
+|773 |ProfessionalDiscQuad |Professional Disc for video, quad layer, write once, 128Gb
+|774 |PDD |Professional Disc for DATA, single layer, rewritable, 23Gb
+|775 |PDD_WORM |Professional Disc for DATA, single layer, write once, 23Gb
+|776 |ArchivalDisc |Archival Disc, 1st gen., 300Gb
+|777 |ArchivalDisc2 |Archival Disc, 2nd gen., 500Gb
+|778 |ArchivalDisc3 |Archival Disc, 3rd gen., 1Tb
+|779 |ODC300R |Optical Disc archive, 1st gen., write once, 300Gb
+|780 |ODC300RE |Optical Disc archive, 1st gen., rewritable, 300Gb
+|781 |ODC600R |Optical Disc archive, 2nd gen., write once, 600Gb
+|782 |ODC600RE |Optical Disc archive, 2nd gen., rewritable, 600Gb
+|783 |ODC1200RE |Optical Disc archive, 3rd gen., rewritable, 1200Gb
+|784 |ODC1500R |Optical Disc archive, 3rd gen., write once, 1500Gb
+|785 |ODC3300R |Optical Disc archive, 4th gen., write once, 3300Gb
+|786 |ODC5500R |Optical Disc archive, 5th gen., write once, 5500Gb
+|===
+
+=== Magneto-Optical (800–819)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|800 |ECMA_322_1k |5.25", M.O., 4383356 sectors, 1024 bytes/sector, ECMA-322, ISO 22092, 9.1Gb/cart
+|801 |ECMA_322_512 |5.25", M.O., 512 bytes/sector, ECMA-322, ISO 22092, 9.1Gb/cart
+|802 |ISO_14517 |5.25", M.O., 1273011 sectors, 1024 bytes/sector, ISO 14517, 2.6Gb/cart
+|803 |ISO_14517_512 |5.25", M.O., 2244958 sectors, 512 bytes/sector, ISO 14517, 2.3Gb/cart
+|804 |ISO_15041_512 |3.5", M.O., 1041500 sectors, 512 bytes/sector, ISO 15041, 540Mb/cart
+|805 |HSM650 |3.5", M.O., proprietary, 650Mb/cart, Sony HyperStorage
+|===
+
+=== Additional Floppy/Cartridge (820–824)
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Name |Description
+|820 |MetaFloppy_Mod_I |5.25", SS, DD, 35 tracks, 16 spt, 256 bytes/sector, MFM
+|821 |AtariLynxCard |Atari Lynx card
+|822 |AtariJaguarCartridge |Atari Jaguar cartridge
+|823 |HF12 |HyperFlex (12Mb), 5.25", DS, 301 tracks, 78 spt, 256 bytes/sector, MFM, 333 tpi, 600rpm
+|824 |HF24 |HyperFlex (24Mb), 5.25", DS, 506 tracks, 78 spt, 256 bytes/sector, MFM, 666 tpi, 720rpm
+|===
