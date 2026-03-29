@@ -6,7 +6,7 @@ This annex provides a reference list of known media types at the time this speci
 NOTE: This list is not exhaustive.
 The most accurate and current list originates from the `libaaruformat` source.
 
-=== Generics (0–9)
+=== ❓ Generics (0–9)
 
 [cols="1,2,5",options="header"]
 |===
@@ -19,7 +19,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |5  |FlashDrive |USB flash drives
 |===
 
-=== Compact Disc (10–39)
+=== 💿 Compact Disc (10–39)
 
 [cols="1,2,5",options="header"]
 |===
@@ -52,7 +52,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |35 |FMTOWNS |Fujitsu FM Towns bootable CD
 |===
 
-=== DVD (40–50)
+=== 📀 DVD (40–50)
 
 [cols="1,2,5",options="header"]
 |===
@@ -70,7 +70,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |50 |DVDDownload |DVD-Download
 |===
 
-=== HD DVD (51–59)
+=== 📀 HD DVD (51–59)
 
 [cols="1,2,5",options="header"]
 |===
@@ -83,7 +83,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |56 |HDDVDRWDL |HD DVD-RW DL
 |===
 
-=== Blu-ray (60–69)
+=== 📀 Blu-ray (60–69)
 
 [cols="1,2,5",options="header"]
 |===
@@ -95,7 +95,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |64 |BDREXL |BD-RE XL
 |===
 
-=== Rare/Uncommon Optical (70–79)
+=== 📀 Rare/Uncommon Optical (70–79)
 
 [cols="1,2,5",options="header"]
 |===
@@ -110,7 +110,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |77 |FDDVD |Five Dimensional disc
 |===
 
-=== LaserDisc (80–89)
+=== 📀 LaserDisc (80–89)
 
 [cols="1,2,5",options="header"]
 |===
@@ -122,7 +122,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |84 |MegaLD |Mega LD
 |===
 
-=== MiniDisc (90–99)
+=== 💽 MiniDisc (90–99)
 
 [cols="1,2,5",options="header"]
 |===
@@ -136,7 +136,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |96 |MD80 |Sony MiniDisc, 80 minutes, formatted with Hi-MD format
 |===
 
-=== Plasmon UDO (100–109)
+=== 📀 Plasmon UDO (100–109)
 
 [cols="1,2,5",options="header"]
 |===
@@ -146,7 +146,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |102 |UDO2_WORM |5.25", Write-Once, 3668759 sectors, 8192 bytes/sector, Ultra Density Optical 2, ECMA-380, ISO 11976
 |===
 
-=== Sony Game Media (110–129)
+=== 🎮 Sony Game Media (110–129)
 
 [cols="1,2,5",options="header"]
 |===
@@ -163,7 +163,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |119 |PlayStationVitaGameCard |PS Vita NV memory card
 |===
 
-=== Microsoft Game Media (130–149)
+=== 🎮 Microsoft Game Media (130–149)
 
 [cols="1,2,5",options="header"]
 |===
@@ -174,7 +174,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |133 |XGD4 |Microsoft X-box One Game Disc
 |===
 
-=== Sega Game Media (150–169)
+=== 🎮 Sega Game Media (150–169)
 
 [cols="1,2,5",options="header"]
 |===
@@ -187,7 +187,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |155 |MilCD |Sega Dreamcast MIL-CD enhanced multimedia disc
 |===
 
-=== Other Game Media (170–179)
+=== 🎮 Other Game Media (170–179)
 
 [cols="1,2,5",options="header"]
 |===
@@ -204,7 +204,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |179 |Playdia |Bandai Playdia
 |===
 
-=== Apple Floppy Formats (180–189)
+=== 💾 Apple Floppy Formats (180–189)
 
 [cols="1,2,5",options="header"]
 |===
@@ -218,7 +218,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |186 |AppleFileWare |5.25", DS, 512 bytes/sector, GCR, opposite side heads (aka Twiggy)
 |===
 
-=== IBM/Microsoft PC Floppy Formats (190–209)
+=== 💾 IBM/Microsoft PC Floppy Formats (190–209)
 
 [cols="1,2,5",options="header"]
 |===
@@ -240,7 +240,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |204 |XDF_35 |3.5", DS, HD, 80 tracks, 4 spt, mixed sector sizes, MFM
 |===
 
-=== IBM Standard Floppy Formats (210–219)
+=== 💾 IBM Standard Floppy Formats (210–219)
 
 [cols="1,2,5",options="header"]
 |===
@@ -256,7 +256,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |218 |IBM53FD_1024 |8", DS, DD, 74 tracks, 8 spt, 1024 bytes/sector, MFM
 |===
 
-=== DEC Floppy Formats (220–229)
+=== 💾 DEC Floppy Formats (220–229)
 
 [cols="1,2,5",options="header"]
 |===
@@ -267,7 +267,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |223 |RX50 |5.25", SS, DD, 80 tracks, 10 spt, 512 bytes/sector, MFM
 |===
 
-=== Acorn Floppy Formats (230–239)
+=== 💾 Acorn Floppy Formats (230–239)
 
 [cols="1,2,5",options="header"]
 |===
@@ -281,7 +281,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |236 |ACORN_35_DS_HD |3.5", DS, HD, 80 tracks, 10 spt, 1024 bytes/sector, MFM
 |===
 
-=== Atari Floppy Formats (240–249)
+=== 💾 Atari Floppy Formats (240–249)
 
 [cols="1,2,5",options="header"]
 |===
@@ -295,7 +295,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |246 |ATARI_35_DS_DD_11 |3.5", DS, DD, 80 tracks, 11 spt, 512 bytes/sector, MFM
 |===
 
-=== Commodore Floppy Formats (250–259)
+=== 💾 Commodore Floppy Formats (250–259)
 
 [cols="1,2,5",options="header"]
 |===
@@ -308,7 +308,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |255 |CBM_1571 |5.25", DS, DD, 35 tracks, GCR
 |===
 
-=== NEC/Sharp Floppy Formats (260–269)
+=== 💾 NEC/Sharp Floppy Formats (260–269)
 
 [cols="1,2,5",options="header"]
 |===
@@ -327,7 +327,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 
 NOTE: SHARP_525 (= NEC_525_HD = 264) and SHARP_35 (= NEC_35_HD_8 = 265) are aliases.
 
-=== ECMA Floppy Standards (270–289)
+=== 💾 ECMA Floppy Standards (270–289)
 
 [cols="1,2,5",options="header"]
 |===
@@ -348,7 +348,7 @@ NOTE: SHARP_525 (= NEC_525_HD = 264) and SHARP_35 (= NEC_35_HD_8 = 265) are alia
 
 NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_147 (= DOS_35_ED = 200) are aliases.
 
-=== Non-standard PC Floppy Formats (290–309)
+=== 💾 Non-standard PC Floppy Formats (290–309)
 
 [cols="1,2,5",options="header"]
 |===
@@ -360,7 +360,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |309 |Apricot_35 |3.5", DS, DD, 70 tracks, 9 spt, 512 bytes/sector, MFM
 |===
 
-=== OnStream ADR (310–319)
+=== 📼 OnStream ADR (310–319)
 
 [cols="1,2,5",options="header"]
 |===
@@ -371,7 +371,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |313 |ADR50 |OnStream ADR 50
 |===
 
-=== Advanced Intelligent Tape (320–339)
+=== 📼 Advanced Intelligent Tape (320–339)
 
 [cols="1,2,5",options="header"]
 |===
@@ -390,7 +390,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |331 |SAIT2 |SAIT-2
 |===
 
-=== Iomega (340–359)
+=== 💽 Iomega (340–359)
 
 [cols="1,2,5",options="header"]
 |===
@@ -417,7 +417,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |359 |Bernoulli230 |5⅓" Bernoulli Box II disk, 230Mb
 |===
 
-=== Audio/Video Media (360–369)
+=== 🎵 Audio/Video Media (360–369)
 
 [cols="1,2,5",options="header"]
 |===
@@ -430,7 +430,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |365 |Dcas103 |D/CAS-103: Digital data on Compact Cassette form factor, 21-track
 |===
 
-=== CompactFlash Association (370–379)
+=== 💳 CompactFlash Association (370–379)
 
 [cols="1,2,5",options="header"]
 |===
@@ -440,7 +440,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |372 |CompactFlashType2 |CompactFlash Type II
 |===
 
-=== Digital Audio Tape / Digital Data Storage (380–389)
+=== 📼 Digital Audio Tape / Digital Data Storage (380–389)
 
 [cols="1,2,5",options="header"]
 |===
@@ -455,7 +455,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |387 |DDS4 |DDS-4
 |===
 
-=== DEC Tapes (390–399)
+=== 📼 DEC Tapes (390–399)
 
 [cols="1,2,5",options="header"]
 |===
@@ -472,7 +472,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |399 |VStapeI |VStape I
 |===
 
-=== Exatape (400–419)
+=== 📼 Exatape (400–419)
 
 [cols="1,2,5",options="header"]
 |===
@@ -496,7 +496,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |416 |Exatape225m |Exatape 225m
 |===
 
-=== PCMCIA / ExpressCard (420–429)
+=== 💳 PCMCIA / ExpressCard (420–429)
 
 [cols="1,2,5",options="header"]
 |===
@@ -509,7 +509,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |425 |PCCardTypeIV |PC Card Type IV
 |===
 
-=== SyQuest (430–449)
+=== 💽 SyQuest (430–449)
 
 [cols="1,2,5",options="header"]
 |===
@@ -530,7 +530,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |443 |SyJet |SyQuest SyJet
 |===
 
-=== Nintendo (450–469)
+=== 🎮 Nintendo (450–469)
 
 [cols="1,2,5",options="header"]
 |===
@@ -553,7 +553,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |465 |SwitchGameCard |Nintendo Switch Game Card (NV flash)
 |===
 
-=== IBM Tapes (470–479)
+=== 📼 IBM Tapes (470–479)
 
 [cols="1,2,5",options="header"]
 |===
@@ -565,7 +565,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |474 |IBM3592 |IBM 3592
 |===
 
-=== LTO Ultrium (480–509)
+=== 📼 LTO Ultrium (480–509)
 
 [cols="1,2,5",options="header"]
 |===
@@ -584,7 +584,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |491 |LTO7WORM |LTO Ultrium 7 WORM
 |===
 
-=== MemoryStick (510–519)
+=== 💳 MemoryStick (510–519)
 
 [cols="1,2,5",options="header"]
 |===
@@ -596,7 +596,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |514 |MemoryStickProDuo |Sony Memory Stick PRO Duo
 |===
 
-=== SecureDigital (520–529)
+=== 💳 SecureDigital (520–529)
 
 [cols="1,2,5",options="header"]
 |===
@@ -606,7 +606,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |522 |SecureDigital |Full-size SD / SDHC / SDXC card
 |===
 
-=== MultiMediaCard (530–539)
+=== 💳 MultiMediaCard (530–539)
 
 [cols="1,2,5",options="header"]
 |===
@@ -618,7 +618,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |534 |MMCmobile |MMCmobile (dual voltage)
 |===
 
-=== SLR (540–569)
+=== 📼 SLR (540–569)
 
 [cols="1,2,5",options="header"]
 |===
@@ -647,7 +647,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |561 |SLRtape140 |SLRtape140
 |===
 
-=== QIC (570–589)
+=== 📼 QIC (570–589)
 
 [cols="1,2,5",options="header"]
 |===
@@ -667,7 +667,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |582 |QIC80 |QIC-80
 |===
 
-=== StorageTek Tapes (590–609)
+=== 📼 StorageTek Tapes (590–609)
 
 [cols="1,2,5",options="header"]
 |===
@@ -687,7 +687,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |602 |T10000D |StorageTek T10000D
 |===
 
-=== Travan (610–619)
+=== 📼 Travan (610–619)
 
 [cols="1,2,5",options="header"]
 |===
@@ -701,7 +701,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |616 |Travan7 |Travan 7 (TR-7)
 |===
 
-=== VXA (620–629)
+=== 📼 VXA (620–629)
 
 [cols="1,2,5",options="header"]
 |===
@@ -711,7 +711,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |622 |VXA3 |VXA-3
 |===
 
-=== Magneto-Optical (630–659)
+=== 💽 Magneto-Optical (630–659)
 
 [cols="1,2,5",options="header"]
 |===
@@ -743,7 +743,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |654 |GigaMo2 |3.5", M.O., 1063146 sectors, 2048 bytes/sector, GigaMo 2, ECMA-353, ISO 22533
 |===
 
-=== Other Floppy Standards (660–669)
+=== 💾 Other Floppy Standards (660–669)
 
 [cols="1,2,5",options="header"]
 |===
@@ -759,7 +759,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 |668 |ZXMicrodrive |ZX Microdrive
 |===
 
-=== Miscellaneous (670–689)
+=== 🔧 Miscellaneous (670–689)
 
 [cols="1,2,5",options="header"]
 |===
@@ -787,7 +787,7 @@ NOTE: ECMA_100 (= DOS_35_DS_DD_9 = 198), ECMA_125 (= DOS_35_HD = 199), and ECMA_
 
 NOTE: MiniCard is assigned value 872 (outside the 670–689 range) due to a historical numbering error.
 
-=== Apple Specific Media (690–699)
+=== 🍎 Apple Specific Media (690–699)
 
 [cols="1,2,5",options="header"]
 |===
@@ -799,7 +799,7 @@ NOTE: MiniCard is assigned value 872 (outside the 670–689 range) due to a hist
 |694 |Pippin |Apple Pippin disc
 |===
 
-=== DEC Hard Disks (700–729)
+=== 🖥️ DEC Hard Disks (700–729)
 
 [cols="1,2,5",options="header"]
 |===
@@ -833,7 +833,7 @@ NOTE: MiniCard is assigned value 872 (outside the 670–689 range) due to a hist
 |726 |RP06_18 |DEC RP06 (815 cyl, 19 trk, 20 spt, 576 bps, 178387200 bytes)
 |===
 
-=== Imation (730–739)
+=== 💾 Imation (730–739)
 
 [cols="1,2,5",options="header"]
 |===
@@ -845,7 +845,7 @@ NOTE: MiniCard is assigned value 872 (outside the 670–689 range) due to a hist
 |734 |RDX320 |Imation 320Gb RDX
 |===
 
-=== VideoNow (740–749)
+=== 📀 VideoNow (740–749)
 
 [cols="1,2,5",options="header"]
 |===
@@ -855,7 +855,7 @@ NOTE: MiniCard is assigned value 872 (outside the 670–689 range) due to a hist
 |742 |VideoNowXp |Hasbro VideoNow XP higher capacity disc
 |===
 
-=== Iomega (750–759)
+=== 💽 Iomega (750–759)
 
 [cols="1,2,5",options="header"]
 |===
@@ -865,7 +865,7 @@ NOTE: MiniCard is assigned value 872 (outside the 670–689 range) due to a hist
 |752 |BernoulliBox2_20 |5⅓" Bernoulli Box II disk, 20Mb
 |===
 
-=== Kodak (760–769)
+=== 💾 Kodak (760–769)
 
 [cols="1,2,5",options="header"]
 |===
@@ -875,7 +875,7 @@ NOTE: MiniCard is assigned value 872 (outside the 670–689 range) due to a hist
 |762 |KodakVerbatim12 |Kodak/Verbatim (12Mb)
 |===
 
-=== Sony/Panasonic Blu-ray Derived (770–799)
+=== 📀 Sony/Panasonic Blu-ray Derived (770–799)
 
 [cols="1,2,5",options="header"]
 |===
@@ -899,7 +899,7 @@ NOTE: MiniCard is assigned value 872 (outside the 670–689 range) due to a hist
 |786 |ODC5500R |Optical Disc archive, 5th gen., write once, 5500Gb
 |===
 
-=== Magneto-Optical (800–819)
+=== 💽 Magneto-Optical (800–819)
 
 [cols="1,2,5",options="header"]
 |===
@@ -912,7 +912,7 @@ NOTE: MiniCard is assigned value 872 (outside the 670–689 range) due to a hist
 |805 |HSM650 |3.5", M.O., proprietary, 650Mb/cart, Sony HyperStorage
 |===
 
-=== Additional Floppy/Cartridge (820–824)
+=== 💾 Additional Floppy/Cartridge (820–824)
 
 [cols="1,2,5",options="header"]
 |===
