@@ -1,0 +1,243 @@
+[appendix]
+== 🔐 Nintendo Wii Disc Encryption
+
+This annex describes the encryption scheme used by Nintendo Wii Optical Discs (WOD), and how AaruFormat handles decryption for storage, deduplication, and compression.
+
+=== 📖 Overview
+
+Nintendo Wii discs employ AES-128-CBC encryption at the partition level.
+Unlike PS3 discs where encryption operates on individual 2048-byte sectors, Wii discs encrypt data in 32 KiB (0x8000-byte) groups, each consisting of a 1 KiB hash block and 31 KiB of user data.
+Different partitions use different AES keys, derived from per-title tickets embedded on the disc.
+
+Areas outside partitions (disc header, partition table, inter-partition gaps) are unencrypted.
+
+AaruFormat stores Wii partition sectors in their *decrypted* form to enable deduplication and compression.
+On read-back, the library transparently reassembles and re-encrypts groups for byte-identical output.
+
+=== 🗂️ Disc Layout
+
+A Wii disc is structured as follows:
+
+[source]
+----
+0x000000 – 0x000440: Disc header (unencrypted)
+0x000440 – 0x040000: Region settings, disc info (unencrypted)
+0x040000 – variable: Partition table (unencrypted)
+variable – end:      Partitions (encrypted) + inter-partition gaps (unencrypted)
+----
+
+==== Disc Header
+
+The disc header at offset 0 contains:
+
+[cols="2,2,5",options="header"]
+|===
+|Offset |Size |Description
+|0x00 |6 bytes |Game ID (ASCII)
+|0x18 |4 bytes |Wii magic number (`0x5D1C9EA3`, big-endian)
+|0x1C |4 bytes |GameCube magic number (absent on Wii-only discs)
+|0x20 |64 bytes |Game title (padded)
+|===
+
+A Wii disc is identified by the presence of magic `0x5D1C9EA3` at offset 0x18.
+
+==== Partition Table
+
+At disc offset `0x40000`, four partition table info entries (8 bytes each, 32 bytes total) describe partition groups:
+
+[cols="2,2,5",options="header"]
+|===
+|Offset |Type |Description
+|0 |uint32_t BE |Number of partitions in this table group
+|4 |uint32_t BE |Byte offset of this group's entry table, divided by 4 (word-shifted)
+|===
+
+Each partition entry within a table group is 8 bytes:
+
+[cols="2,2,5",options="header"]
+|===
+|Offset |Type |Description
+|0 |uint32_t BE |Partition byte offset, divided by 4 (word-shifted)
+|4 |uint32_t BE |Partition type: 0 = Game (DATA), 1 = Update, 2 = Channel
+|===
+
+To obtain actual byte offsets, multiply the stored values by 4 (left-shift by 2).
+
+=== 🔑 Key Hierarchy
+
+==== Common Keys
+
+Two system-wide 128-bit AES keys are used to decrypt per-title keys from partition tickets.
+The key selection is indicated by a common key index byte in each partition's ticket:
+
+[cols="1,3",options="header"]
+|===
+|Index |Key Name
+|0 |Standard Wii common key
+|1 |Korean Wii common key
+|===
+
+These keys are publicly known in the preservation community.
+
+==== Per-Title Key Derivation
+
+Each partition contains a ticket structure at the partition's starting offset.
+The title key is extracted and decrypted as follows:
+
+. Read the 0x2A4-byte ticket from the partition offset.
+. Extract the encrypted title key (16 bytes) at ticket offset `0x1BF`.
+. Extract the title ID (8 bytes) at ticket offset `0x1DC` (= `0x1BF + 0x1D`).
+. Read the common key index byte at ticket offset `0x1F1`.
+. Select the appropriate common key (standard or Korean).
+. Construct the IV: title ID in the first 8 bytes, zero-padded to 16 bytes.
+. Decrypt the title key:
++
+[source]
+----
+title_key = AES-128-CBC-Decrypt(common_key, title_id || zeros, encrypted_title_key)
+----
+
+Each partition has its own unique title key.
+
+==== Partition Data Boundaries
+
+After the ticket, the partition header at offset `partition_offset + 0x2B8` contains:
+
+[cols="2,2,5",options="header"]
+|===
+|Offset |Type |Description
+|0x2B8 |uint32_t BE |Data offset from partition start, divided by 4 (word-shifted)
+|0x2BC |uint32_t BE |Data size, divided by 4 (word-shifted)
+|===
+
+The encrypted data area spans `[partition_offset + data_offset, partition_offset + data_offset + data_size)`.
+
+=== 🔒 Group Encryption
+
+==== Group Structure
+
+Wii partition data is organized in 0x8000-byte (32 KiB) groups.
+Each group contains:
+
+[cols="2,2,5",options="header"]
+|===
+|Component |Size |Description
+|Hash block |0x0400 (1 KiB) |SHA-1 integrity hashes
+|User data |0x7C00 (31 KiB) |Actual filesystem data (or junk fill)
+|===
+
+Each group holds 16 logical sectors of 2048 bytes when viewed as raw disc content,
+but only 15.5 logical sectors worth of user data due to the hash block overhead.
+
+==== Encryption Algorithm
+
+Both the hash block and user data are encrypted with **AES-128-CBC** using the partition's title key, but with different initialization vectors:
+
+===== Hash Block Encryption
+
+* **Key**: Partition title key
+* **IV**: All zeros (16 bytes of `0x00`)
+* **Input**: 0x0400 bytes of plaintext hash data
+* **Output**: 0x0400 bytes of ciphertext at the start of the group
+
+===== User Data Encryption
+
+* **Key**: Partition title key
+* **IV**: Bytes `0x3D0` through `0x3DF` of the _encrypted_ hash block output (16 bytes)
+* **Input**: 0x7C00 bytes of plaintext user data
+* **Output**: 0x7C00 bytes of ciphertext following the hash block
+
+This means the user data IV depends on the encrypted hash block, creating a dependency chain:
+the hash block must be encrypted first, then its ciphertext provides the IV for user data encryption.
+
+==== Decryption (Reverse)
+
+. Decrypt the hash block (0x0400 bytes) using IV = all zeros.
+. Extract the data IV from the _ciphertext_ (not decrypted) hash block at offset `0x3D0`.
+. Decrypt the user data (0x7C00 bytes) using the extracted IV.
+
+=== 💾 Storage in AaruFormat
+
+==== Partition Key Map
+
+The partition-to-key mapping is stored as media tag `kMediaTagWiiPartitionKeyMap` (value 83).
+The serialization format is identical to the Wii U partition key map:
+
+[cols="2,2,2,6",options="header"]
+|===
+|Offset |Type |Size |Description
+|0 |uint32_t LE |4 bytes |Number of partitions
+|4 + _i_ × 24 |uint32_t LE |4 bytes |Start physical sector of partition _i_ (in 0x8000-byte units)
+|8 + _i_ × 24 |uint32_t LE |4 bytes |End physical sector of partition _i_ (exclusive, in 0x8000-byte units)
+|12 + _i_ × 24 |uint8_t[16] |16 bytes |AES-128 title key for partition _i_
+|===
+
+==== Write Path (Conversion)
+
+The conversion tool processes each group as follows:
+
+===== Encrypted Partition Data
+
+. **Read** the 0x8000-byte encrypted group from the source.
+. **Decrypt** the group using `wii_decrypt_group()`: separate hash block and user data.
+. **Classify** each of the 15 user-data sectors (2048 bytes each within the 0x7C00 area) against the partition's FST data map, identifying data vs. junk regions.
+. **Detect junk**: Attempt LFG seed extraction on non-data sectors. Up to two seeds per group may be needed (because a single group may straddle two 0x8000-aligned LFG block boundaries).
+. **Verify** each candidate junk sector by regenerating LFG output and comparing byte-for-byte.
+. **Zero** confirmed junk sectors in the output and record their seeds in the junk collector.
+. **Reassemble** the decrypted group: hash block (0x0400) + user data (0x7C00, with junk zeroed).
+. **Write** all 16 AaruFormat sectors (covering the full 0x8000 group) with status `SectorStatusUnencrypted` (`0xA`).
+
+NOTE: Due to the 1 KiB hash block offset, junk detection sectors (2048-byte chunks within user data) do not align with AaruFormat sectors (2048-byte chunks of the full group). Therefore, individual sectors cannot be marked `SectorStatusGenerable`. Instead, junk bytes are zeroed and deduplicated as zero-filled blocks, while the junk map enables precise regeneration during re-encryption.
+
+===== Unencrypted Areas
+
+Sectors outside any partition (disc header, partition table, inter-partition gaps) are processed identically to GameCube: junk detection with `SectorStatusGenerable` for confirmed junk, `SectorStatusDumped` for data.
+
+==== Read Path (Re-encryption)
+
+When reading a sector marked `SectorStatusUnencrypted` from a WOD image:
+
+. **Lazy initialization**: Load the partition key map and junk map from media tags.
+
+. **Key lookup**: Convert the logical sector address to a physical group number and determine which partition (if any) the group belongs to.
+
+. **Group assembly**: If the group is in an encrypted partition:
+.. Gather all 16 logical sectors of the group. The current sector uses the data already in the read buffer; the remaining 15 are read via recursive `aaruf_read_sector()` calls with a recursion guard flag (`wii_building_crypto_block`) to prevent infinite re-encryption loops.
+.. **Junk reconstruction**: For each user-data sector in the group, look up its disc offset in the junk map. If found, regenerate the LFG junk bytes using the entry's seed, computing the correct stream position as:
++
+[source]
+----
+stream_pos = group_index_within_partition × WII_GROUP_DATA_SIZE + offset_within_user_data
+advance = stream_pos mod WII_GROUP_SIZE
+----
++
+This accounts for the fact that the LFG stream covers user data only (0x7C00 bytes per group), not the hash blocks.
+
+. **Re-encryption**: The complete group (hash block + user data with junk restored) is encrypted using `wii_encrypt_group()` with the partition's title key.
+
+. **Group cache**: The encrypted group is cached. Subsequent reads of sectors from the same group are served from the cache without re-encryption.
+
+. The caller receives the sector slice from the encrypted group, byte-identical to the original disc.
+
+=== 📊 Storage Benefits
+
+Wii disc encryption makes the raw data pseudorandom and incompressible.
+By decrypting before storage:
+
+* **Deduplication**: Zero-filled junk sectors (after zeroing detected LFG junk) collapse to a single DDT entry, eliminating the majority of disc content.
+* **Compression**: Decrypted game data compresses well under LZMA/Zstandard (typically 30–60% ratio).
+* **Hash block sharing**: Many groups share identical hash blocks, which are deduplicated.
+
+Typical savings: a 4.7 GiB single-layer Wii disc may compress to 500 MiB–2 GiB depending on game content.
+
+=== 🏷️ Required Media Tags
+
+[cols="1,2,5",options="header"]
+|===
+|Value |Tag Name |Description
+|83 |kMediaTagWiiPartitionKeyMap |Partition-to-key mapping with sector ranges (required for re-encryption)
+|84 |kMediaTagNgcwJunkMap |Junk region map with LFG seeds (required for junk reconstruction)
+|===
+
+Both tags must be present for full transparent re-encryption.
+If the partition key map is absent, sectors are returned as stored (decrypted) without re-encryption.

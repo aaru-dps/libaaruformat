@@ -155,3 +155,7 @@ include::appendixes/ps3_encryption.adoc[]
 <<<
 
 include::appendixes/ngcw_junk.adoc[]
+
+<<<
+
+include::appendixes/wii_encryption.adoc[]
