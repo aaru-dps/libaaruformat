@@ -19,6 +19,9 @@
 #ifndef LIBAARUFORMAT_INTERNAL_H
 #define LIBAARUFORMAT_INTERNAL_H
 
+/** @brief Clamp num_threads to LZMA's valid range [1, 2]. */
+#define LZMA_THREADS(ctx) ((ctx)->num_threads > 1 ? 2 : 1)
+
 #include "utarray.h"
 
 UT_array *process_index_v1(aaruformat_context *ctx);

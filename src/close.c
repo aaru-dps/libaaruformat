@@ -162,7 +162,7 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
         aaruf_lzma_encode_buffer(buffer, &dst_size,
 
                                  (uint8_t *)ctx->cached_secondary_ddt2, ddt_header.length, lzma_properties, &props_size,
-                                 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+                                 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
 
         ddt_header.cmpLength = (uint32_t)dst_size;
 
@@ -436,7 +436,7 @@ static int32_t write_single_level_ddt(aaruformat_context *ctx)
         size_t props_size = LZMA_PROPERTIES_LENGTH;
         aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, (uint8_t *)ctx->user_data_ddt2,
                                  ctx->user_data_ddt_header.length, lzma_properties, &props_size, 9, ctx->lzma_dict_size,
-                                 4, 0, 2, 273, 8);
+                                 4, 0, 2, 273, LZMA_THREADS(ctx));
 
         ctx->user_data_ddt_header.cmpLength = (uint32_t)dst_size;
 
@@ -962,7 +962,7 @@ static void write_mode2_subheaders_block(aaruformat_context *ctx)
         size_t dst_size   = (size_t)subheaders_block.length * 2 * 2;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
         aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->mode2_subheaders, subheaders_block.length, lzma_properties,
-                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
 
         subheaders_block.cmpLength = (uint32_t)dst_size;
 
@@ -1091,7 +1091,7 @@ static void write_sector_prefix(aaruformat_context *ctx)
         size_t dst_size   = (size_t)prefix_block.length * 2 * 2;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
         aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_prefix, prefix_block.length, lzma_properties,
-                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
 
         prefix_block.cmpLength = (uint32_t)dst_size;
 
@@ -1229,7 +1229,7 @@ static void write_sector_suffix(aaruformat_context *ctx)
         size_t dst_size   = (size_t)suffix_block.length * 2 * 2;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
         aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_suffix, suffix_block.length, lzma_properties,
-                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
 
         suffix_block.cmpLength = (uint32_t)dst_size;
 
@@ -1373,7 +1373,7 @@ static void write_sector_prefix_ddt(aaruformat_context *ctx)
         size_t dst_size   = (size_t)ddt_header2.length * 2 * 2;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
         aaruf_lzma_encode_buffer(buffer, &dst_size, (uint8_t *)ctx->sector_prefix_ddt2, ddt_header2.length,
-                                 lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+                                 lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
 
         ddt_header2.cmpLength = (uint32_t)dst_size;
 
@@ -1533,7 +1533,7 @@ static void write_sector_suffix_ddt(aaruformat_context *ctx)
         size_t dst_size   = (size_t)ddt_header2.length * 2 * 2;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
         aaruf_lzma_encode_buffer(buffer, &dst_size, (uint8_t *)ctx->sector_suffix_ddt2, ddt_header2.length,
-                                 lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+                                 lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
 
         ddt_header2.cmpLength = (uint32_t)dst_size;
 
@@ -1719,7 +1719,7 @@ static void write_sector_subchannel(aaruformat_context *ctx)
                 size_t props_size = LZMA_PROPERTIES_LENGTH;
 
                 aaruf_lzma_encode_buffer(dst_buffer, &dst_size, cst_buffer, subchannel_block.length, lzma_properties,
-                                         &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+                                         &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
             }
 
             free(cst_buffer);
@@ -1785,7 +1785,7 @@ static void write_sector_subchannel(aaruformat_context *ctx)
             size_t props_size = LZMA_PROPERTIES_LENGTH;
 
             aaruf_lzma_encode_buffer(dst_buffer, &dst_size, ctx->sector_subchannel, subchannel_block.length,
-                                     lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+                                     lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
         }
 
         if(dst_size < subchannel_block.length)
@@ -2043,7 +2043,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         size_t dst_size   = (size_t)id_block.length * 2 * 2;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
         aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_id, id_block.length, lzma_properties, &props_size, 9,
-                                 ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+                                 ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
 
         id_block.cmpLength = (uint32_t)dst_size;
 
@@ -2141,7 +2141,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         size_t dst_size   = (size_t)ied_block.length * 2 * 2;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
         aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_ied, ied_block.length, lzma_properties, &props_size, 9,
-                                 ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+                                 ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
 
         ied_block.cmpLength = (uint32_t)dst_size;
 
@@ -2239,7 +2239,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         size_t dst_size   = (size_t)cpr_mai_block.length * 2 * 2;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
         aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_cpr_mai, cpr_mai_block.length, lzma_properties,
-                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
 
         cpr_mai_block.cmpLength = (uint32_t)dst_size;
 
@@ -2337,7 +2337,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         size_t dst_size   = (size_t)edc_block.length * 2 * 2;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
         aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_edc, edc_block.length, lzma_properties, &props_size, 9,
-                                 ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+                                 ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
 
         edc_block.cmpLength = (uint32_t)dst_size;
 
@@ -2541,7 +2541,7 @@ static void write_dvd_title_key_decrypted_block(aaruformat_context *ctx)
         size_t dst_size   = (size_t)decrypted_title_key_block.length * 2 * 2;
         size_t props_size = LZMA_PROPERTIES_LENGTH;
         aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_decrypted_title_key, decrypted_title_key_block.length,
-                                 lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+                                 lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
 
         decrypted_title_key_block.cmpLength = (uint32_t)dst_size;
 
@@ -2726,7 +2726,7 @@ static void write_media_tags(aaruformat_context *ctx)
             size_t dst_size   = (size_t)tag_block.length * 2 * 2;
             size_t props_size = LZMA_PROPERTIES_LENGTH;
             aaruf_lzma_encode_buffer(buffer, &dst_size, media_tag->data, tag_block.length, lzma_properties, &props_size,
-                                     9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+                                     9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
 
             tag_block.cmpLength = (uint32_t)dst_size;
 
@@ -4459,7 +4459,7 @@ static int32_t write_flux_capture_payload(aaruformat_context *ctx, FluxCaptureRe
         uint8_t lzma_props[LZMA_PROPERTIES_LENGTH] = {0};
         size_t  props_size                         = LZMA_PROPERTIES_LENGTH;
         int32_t error_no = aaruf_lzma_encode_buffer(cmp_stream, &dst_size, raw_buffer, raw_length, lzma_props,
-                                                    &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+                                                    &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
 
         if(error_no != 0 || props_size != LZMA_PROPERTIES_LENGTH || dst_size >= raw_length)
         {

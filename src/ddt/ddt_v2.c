@@ -1272,7 +1272,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
                 size_t props_size = LZMA_PROPERTIES_LENGTH;
                 aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, (uint8_t *)ctx->cached_secondary_ddt2,
                                          ddt_header.length, lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0,
-                                         2, 273, 8);
+                                         2, 273, LZMA_THREADS(ctx));
 
                 ddt_header.cmpLength = (uint32_t)dst_size;
 
@@ -1449,7 +1449,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             size_t dst_size   = (size_t)ddt_header.length * 2 * 2;
             size_t props_size = LZMA_PROPERTIES_LENGTH;
             aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, (uint8_t *)ctx->cached_secondary_ddt2, ddt_header.length,
-                                     lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, 8);
+                                     lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
 
             ddt_header.cmpLength = (uint32_t)dst_size;
 
