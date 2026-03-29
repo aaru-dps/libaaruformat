@@ -254,6 +254,10 @@ The following flags are defined:
 |Unencrypted
 |`0xA`
 |Sector content was originally encrypted on media but is stored decrypted in the image.
+
+|Generable
+|`0xB`
+|Sector content can be generated using a known algorithm (e.g., junk data on Nintendo GameCube/Wii discs).
 |===
 
 [NOTE]
