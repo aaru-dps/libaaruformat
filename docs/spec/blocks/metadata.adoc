@@ -63,12 +63,12 @@ typedef struct MetadataBlockHeader
 |int32_t
 |4 bytes
 |mediaSequence
-|The number of heads.
+|Sequence number of this media within a multi-disc or multi-volume set.
 
 |int32_t
 |4 bytes
 |lastMediaSequence
-|The number of sectors per track.
+|Total number of media in the set; 0 or 1 if single item.
 
 |uint32_t
 |4 bytes
