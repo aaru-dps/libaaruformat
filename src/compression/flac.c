@@ -53,6 +53,8 @@ AARU_EXPORT size_t AARU_CALL aaruf_flac_decode_redbook_buffer(uint8_t *dst_buffe
     aaru_flac_ctx                *ctx         = (aaru_flac_ctx *)malloc(sizeof(aaru_flac_ctx));
     size_t                        ret_size    = 0;
 
+    if(ctx == NULL) return 0;
+
     memset(ctx, 0, sizeof(aaru_flac_ctx));
 
     ctx->src_buffer = src_buffer;
@@ -68,7 +70,7 @@ AARU_EXPORT size_t AARU_CALL aaruf_flac_decode_redbook_buffer(uint8_t *dst_buffe
     if(!decoder)
     {
         free(ctx);
-        return -1;
+        return 0;
     }
 
     FLAC__stream_decoder_set_md5_checking(decoder, false);
@@ -78,18 +80,21 @@ AARU_EXPORT size_t AARU_CALL aaruf_flac_decode_redbook_buffer(uint8_t *dst_buffe
 
     if(init_status != FLAC__STREAM_DECODER_INIT_STATUS_OK)
     {
+        FLAC__stream_decoder_delete(decoder);
         free(ctx);
-        return -1;
+        return 0;
     }
 
-    // TODO: Return error somehow
-    FLAC__stream_decoder_process_until_end_of_stream(decoder);
+    FLAC__bool ok = FLAC__stream_decoder_process_until_end_of_stream(decoder);
 
     FLAC__stream_decoder_delete(decoder);
 
-    ret_size = ctx->dst_pos;
+    ret_size      = ctx->dst_pos;
+    int had_error = ctx->error;
 
     free(ctx);
+
+    if(!ok || had_error) return 0;
 
     return ret_size;
 }
@@ -186,7 +191,9 @@ AARU_EXPORT size_t AARU_CALL aaruf_flac_encode_redbook_buffer(
     FLAC__int32                  *pcm         = NULL;
     int                           i           = 0;
     int16_t                      *buffer16    = (int16_t *)src_buffer;
-    FLAC__StreamMetadata         *metadata[1];
+    FLAC__StreamMetadata         *metadata[1] = {NULL};
+
+    if(ctx == NULL) return 0;
 
     memset(ctx, 0, sizeof(aaru_flac_ctx));
 
@@ -203,71 +210,74 @@ AARU_EXPORT size_t AARU_CALL aaruf_flac_encode_redbook_buffer(
     if(!encoder)
     {
         free(ctx);
-        return -1;
+        return 0;
     }
 
-    // TODO: Error detection here
-    FLAC__stream_encoder_set_verify(encoder, false);
-    FLAC__stream_encoder_set_streamable_subset(encoder, false);
-    FLAC__stream_encoder_set_channels(encoder, 2);
-    FLAC__stream_encoder_set_bits_per_sample(encoder, 16);
-    FLAC__stream_encoder_set_sample_rate(encoder, 44100);
-    FLAC__stream_encoder_set_blocksize(encoder, blocksize);
-    // true compresses more
-    FLAC__stream_encoder_set_do_mid_side_stereo(encoder, do_mid_side_stereo);
-    // false compresses more
-    FLAC__stream_encoder_set_loose_mid_side_stereo(encoder, loose_mid_side_stereo);
-    // Apodization
-    FLAC__stream_encoder_set_apodization(encoder, apodization);
-    FLAC__stream_encoder_set_max_lpc_order(encoder, max_lpc_order);
-    FLAC__stream_encoder_set_qlp_coeff_precision(encoder, qlp_coeff_precision);
-    FLAC__stream_encoder_set_do_qlp_coeff_prec_search(encoder, do_qlp_coeff_prec_search);
-    FLAC__stream_encoder_set_do_exhaustive_model_search(encoder, do_exhaustive_model_search);
-    FLAC__stream_encoder_set_min_residual_partition_order(encoder, min_residual_partition_order);
-    FLAC__stream_encoder_set_max_residual_partition_order(encoder, max_residual_partition_order);
-    FLAC__stream_encoder_set_total_samples_estimate(encoder, src_size / 4);
+    FLAC__bool ok = true;
+    ok = ok && FLAC__stream_encoder_set_verify(encoder, false);
+    ok = ok && FLAC__stream_encoder_set_streamable_subset(encoder, false);
+    ok = ok && FLAC__stream_encoder_set_channels(encoder, 2);
+    ok = ok && FLAC__stream_encoder_set_bits_per_sample(encoder, 16);
+    ok = ok && FLAC__stream_encoder_set_sample_rate(encoder, 44100);
+    ok = ok && FLAC__stream_encoder_set_blocksize(encoder, blocksize);
+    ok = ok && FLAC__stream_encoder_set_do_mid_side_stereo(encoder, do_mid_side_stereo);
+    ok = ok && FLAC__stream_encoder_set_loose_mid_side_stereo(encoder, loose_mid_side_stereo);
+    ok = ok && FLAC__stream_encoder_set_apodization(encoder, apodization);
+    ok = ok && FLAC__stream_encoder_set_max_lpc_order(encoder, max_lpc_order);
+    ok = ok && FLAC__stream_encoder_set_qlp_coeff_precision(encoder, qlp_coeff_precision);
+    ok = ok && FLAC__stream_encoder_set_do_qlp_coeff_prec_search(encoder, do_qlp_coeff_prec_search);
+    ok = ok && FLAC__stream_encoder_set_do_exhaustive_model_search(encoder, do_exhaustive_model_search);
+    ok = ok && FLAC__stream_encoder_set_min_residual_partition_order(encoder, min_residual_partition_order);
+    ok = ok && FLAC__stream_encoder_set_max_residual_partition_order(encoder, max_residual_partition_order);
+    ok = ok && FLAC__stream_encoder_set_total_samples_estimate(encoder, src_size / 4);
 
-    /* TODO: This is ignored by FLAC, need to replace it
-    if((metadata[0] = FLAC__metadata_object_new(FLAC__METADATA_TYPE_VORBIS_COMMENT)) != NULL)
+    if(!ok)
     {
-        memset(&vorbis_entry, 0, sizeof(FLAC__StreamMetadata_VorbisComment_Entry));
-        vorbis_entry.entry = (unsigned char *)"Aaru.Compression.Native";
-        vorbis_entry.length = strlen("Aaru.Compression.Native");
-
-        FLAC__metadata_object_vorbiscomment_set_vendor_string(metadata[0], vorbis_entry, true);
+        FLAC__stream_encoder_delete(encoder);
+        free(ctx);
+        return 0;
     }
-    */
 
     if(application_id_len > 0 && application_id != NULL)
         if((metadata[0] = FLAC__metadata_object_new(FLAC__METADATA_TYPE_APPLICATION)) != NULL)
             FLAC__metadata_object_application_set_data(metadata[0], (unsigned char *)application_id, application_id_len,
                                                        true);
 
-    FLAC__stream_encoder_set_metadata(encoder, metadata, 1);
+    if(metadata[0] != NULL) FLAC__stream_encoder_set_metadata(encoder, metadata, 1);
 
     init_status = FLAC__stream_encoder_init_stream(encoder, encoder_write_callback, NULL, NULL, NULL, ctx);
 
     if(init_status != FLAC__STREAM_ENCODER_INIT_STATUS_OK)
     {
+        FLAC__stream_encoder_delete(encoder);
+        if(metadata[0] != NULL) FLAC__metadata_object_delete(metadata[0]);
         free(ctx);
-        return -1;
+        return 0;
     }
 
     pcm = malloc((src_size / 2) * sizeof(FLAC__int32));
 
+    if(pcm == NULL)
+    {
+        FLAC__stream_encoder_delete(encoder);
+        if(metadata[0] != NULL) FLAC__metadata_object_delete(metadata[0]);
+        free(ctx);
+        return 0;
+    }
+
     for(i = 0; i < src_size / 2; i++) pcm[i] = (FLAC__int32) * (buffer16++);
 
-    FLAC__stream_encoder_process_interleaved(encoder, pcm, src_size / 4);
+    ok = FLAC__stream_encoder_process_interleaved(encoder, pcm, src_size / 4);
 
     FLAC__stream_encoder_finish(encoder);
 
     FLAC__stream_encoder_delete(encoder);
 
-    ret_size = ctx->dst_pos;
+    ret_size = ok ? ctx->dst_pos : 0;
 
     free(ctx);
     free(pcm);
-    FLAC__metadata_object_delete(metadata[0]);
+    if(metadata[0] != NULL) FLAC__metadata_object_delete(metadata[0]);
 
     return ret_size;
 }
