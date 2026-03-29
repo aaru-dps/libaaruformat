@@ -23,6 +23,13 @@ font:
       bold: NotoSans-Bold.ttf
       italic: NotoSans-Italic.ttf
       bold_italic: NotoSans-BoldItalic.ttf
+    Noto Emoji:
+      normal: NotoEmoji-Regular.ttf
+      bold: NotoEmoji-Regular.ttf
+      italic: NotoEmoji-Regular.ttf
+      bold_italic: NotoEmoji-Regular.ttf
+  fallbacks:
+    - Noto Emoji
 
 base:
   font_color: #212121
