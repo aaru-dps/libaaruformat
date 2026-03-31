@@ -1855,8 +1855,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                         else
                         {
                             // Mode 2 where ECC/EDC failed — restore user data + stored suffix.
-                            // Check subheader (already copied to data+16) to determine form.
-                            if(data[0x12] & 0x20)
+                            // Check both subheader copies to match write path form detection.
+                            if((data[0x12] & 0x20) || (data[0x16] & 0x20))
                             {
                                 // Form 2: 2324 bytes user data, 4 bytes EDC suffix
                                 memcpy(data + 24, bare_data, 2324);
@@ -1893,9 +1893,10 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                         else
                         {
                             // Mode 2 where ECC/EDC failed — restore user data + stored suffix.
+                            // Check both subheader copies to match write path form detection.
                             const uint32_t sfx_index =
                                 (ctx->sector_suffix_ddt[corrected_sector_address] & CD_DFIX_MASK) - 1;
-                            if(data[0x12] & 0x20)
+                            if((data[0x12] & 0x20) || (data[0x16] & 0x20))
                             {
                                 memcpy(data + 24, bare_data, 2324);
                                 memcpy(data + 2348, ctx->sector_suffix_corrected + sfx_index * 288, 4);
