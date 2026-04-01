@@ -1020,6 +1020,76 @@ static int32_t read_lzma_compressed_payload(const aaruformat_context *ctx, size_
 }
 
 /**
+ * @brief Read and decompress a Zstandard-compressed flux payload.
+ *
+ * @param ctx       Image context (file stream positioned at start of compressed data).
+ * @param cmp_length Compressed payload length in bytes.
+ * @param raw_length Expected decompressed length in bytes.
+ * @param cmp_buffer Output: receives allocated buffer with compressed data (caller must free).
+ * @param payload    Output: receives allocated buffer with decompressed data (caller must free).
+ * @return AARUF_STATUS_OK on success; error code on failure.
+ * @internal
+ */
+static int32_t read_zstd_compressed_payload(const aaruformat_context *ctx, size_t cmp_length, size_t raw_length,
+                                            uint8_t **cmp_buffer, uint8_t **payload)
+{
+    if(cmp_length == 0)
+    {
+        FATAL("Flux payload compressed length is zero for zstd");
+        TRACE("Exiting read_zstd_compressed_payload() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK\n");
+        return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+    }
+
+    *cmp_buffer = (uint8_t *)malloc(cmp_length);
+    if(*cmp_buffer == NULL)
+    {
+        FATAL("Could not allocate %zu bytes for flux payload", cmp_length);
+        TRACE("Exiting read_zstd_compressed_payload() = AARUF_ERROR_NOT_ENOUGH_MEMORY\n");
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    size_t read_bytes = fread(*cmp_buffer, 1, cmp_length, ctx->imageStream);
+    if(read_bytes != cmp_length)
+    {
+        FATAL("Could not read %zu bytes of flux payload", cmp_length);
+        free(*cmp_buffer);
+        *cmp_buffer = NULL;
+        TRACE("Exiting read_zstd_compressed_payload() = AARUF_ERROR_CANNOT_READ_BLOCK\n");
+        return AARUF_ERROR_CANNOT_READ_BLOCK;
+    }
+
+    if(raw_length == 0)
+    {
+        *payload = NULL;
+        return AARUF_STATUS_OK;
+    }
+
+    *payload = (uint8_t *)malloc(raw_length);
+    if(*payload == NULL)
+    {
+        FATAL("Could not allocate %zu bytes for decompressed flux payload", raw_length);
+        free(*cmp_buffer);
+        *cmp_buffer = NULL;
+        TRACE("Exiting read_zstd_compressed_payload() = AARUF_ERROR_NOT_ENOUGH_MEMORY\n");
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    size_t dst_len = aaruf_zstd_decode_buffer(*payload, raw_length, *cmp_buffer, cmp_length);
+    if(dst_len != raw_length)
+    {
+        FATAL("Zstd decompression failed for flux payload (dst=%zu/%zu)", dst_len, raw_length);
+        free(*payload);
+        free(*cmp_buffer);
+        *payload    = NULL;
+        *cmp_buffer = NULL;
+        TRACE("Exiting read_zstd_compressed_payload() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK\n");
+        return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+    }
+
+    return AARUF_STATUS_OK;
+}
+
+/**
  * @brief Validate CRC64 checksums for a flux payload block.
  *
  * @param cmp_buffer Compressed buffer to validate. Can be NULL if cmp_length is 0.
@@ -1275,6 +1345,10 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_flux_capture(void *context, uint32_t he
     else if(compression == kCompressionLzma)
     {
         res = read_lzma_compressed_payload(ctx, cmp_length, raw_length, &cmp_buffer, &payload);
+    }
+    else if(compression == kCompressionZstd)
+    {
+        res = read_zstd_compressed_payload(ctx, cmp_length, raw_length, &cmp_buffer, &payload);
     }
     else
     {

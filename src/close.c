@@ -108,7 +108,8 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
     DdtHeader2 ddt_header          = {0};
     ddt_header.identifier          = DeDuplicationTableSecondary;
     ddt_header.type                = kDataTypeUserData;
-    ddt_header.compression         = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
+    ddt_header.compression =
+        ctx->compression_enabled ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma) : kCompressionNone;
     ddt_header.levels              = ctx->user_data_ddt_header.levels;
     ddt_header.tableLevel          = ctx->user_data_ddt_header.tableLevel + 1;
     ddt_header.previousLevelOffset = ctx->primary_ddt_offset;
@@ -157,12 +158,23 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
             return AARUF_ERROR_NOT_ENOUGH_MEMORY;
         }
 
-        size_t dst_size   = (size_t)ddt_header.length * 2 * 2;
-        size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(buffer, &dst_size,
+        size_t dst_size;
 
-                                 (uint8_t *)ctx->cached_secondary_ddt2, ddt_header.length, lzma_properties, &props_size,
-                                 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        if(ctx->use_zstd)
+        {
+            dst_size = aaruf_zstd_encode_buffer(buffer, (size_t)ddt_header.length * 2,
+                                                 (uint8_t *)ctx->cached_secondary_ddt2, ddt_header.length,
+                                                 ctx->zstd_level, ctx->num_threads);
+            if(dst_size == 0) dst_size = ddt_header.length;  // compression failed, fall through to None
+        }
+        else
+        {
+            dst_size          = (size_t)ddt_header.length * 2 * 2;
+            size_t props_size = LZMA_PROPERTIES_LENGTH;
+            aaruf_lzma_encode_buffer(buffer, &dst_size, (uint8_t *)ctx->cached_secondary_ddt2, ddt_header.length,
+                                     lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273,
+                                     LZMA_THREADS(ctx));
+        }
 
         ddt_header.cmpLength = (uint32_t)dst_size;
 
@@ -180,7 +192,10 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
         ddt_header.cmpCrc64  = ddt_header.crc64;
     }
     else
+    {
         ddt_header.cmpCrc64 = aaruf_crc64_data(buffer, ddt_header.cmpLength);
+        if(ctx->use_zstd) ctx->has_zstd_blocks = true;
+    }
 
     if(ddt_header.compression == kCompressionLzma) ddt_header.cmpLength += LZMA_PROPERTIES_LENGTH;
 
@@ -264,7 +279,7 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
     // Set position
     fseek(ctx->imageStream, 0, SEEK_END);
 
-    if(ddt_header.compression == kCompressionLzma) free(buffer);
+    if(ddt_header.compression != kCompressionNone) free(buffer);
 
     return AARUF_STATUS_OK;
 }
@@ -399,9 +414,10 @@ static int32_t write_single_level_ddt(aaruformat_context *ctx)
     const size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint64_t);
 
     // Properly populate all header fields
-    ctx->user_data_ddt_header.identifier          = DeDuplicationTable2;
-    ctx->user_data_ddt_header.type                = kDataTypeUserData;
-    ctx->user_data_ddt_header.compression         = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
+    ctx->user_data_ddt_header.identifier  = DeDuplicationTable2;
+    ctx->user_data_ddt_header.type        = kDataTypeUserData;
+    ctx->user_data_ddt_header.compression =
+        ctx->compression_enabled ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma) : kCompressionNone;
     ctx->user_data_ddt_header.levels              = 1;  // Single level
     ctx->user_data_ddt_header.tableLevel          = 0;  // Top level
     ctx->user_data_ddt_header.previousLevelOffset = 0;  // No previous level for single-level DDT
@@ -432,11 +448,23 @@ static int32_t write_single_level_ddt(aaruformat_context *ctx)
             return AARUF_ERROR_NOT_ENOUGH_MEMORY;
         }
 
-        size_t dst_size   = (size_t)ctx->user_data_ddt_header.length * 2 * 2;
-        size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, (uint8_t *)ctx->user_data_ddt2,
-                                 ctx->user_data_ddt_header.length, lzma_properties, &props_size, 9, ctx->lzma_dict_size,
-                                 4, 0, 2, 273, LZMA_THREADS(ctx));
+        size_t dst_size;
+
+        if(ctx->use_zstd)
+        {
+            dst_size = aaruf_zstd_encode_buffer(cmp_buffer, (size_t)ctx->user_data_ddt_header.length * 2,
+                                                 (uint8_t *)ctx->user_data_ddt2, ctx->user_data_ddt_header.length,
+                                                 ctx->zstd_level, ctx->num_threads);
+            if(dst_size == 0) dst_size = ctx->user_data_ddt_header.length;  // fall through to None
+        }
+        else
+        {
+            dst_size          = (size_t)ctx->user_data_ddt_header.length * 2 * 2;
+            size_t props_size = LZMA_PROPERTIES_LENGTH;
+            aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, (uint8_t *)ctx->user_data_ddt2,
+                                     ctx->user_data_ddt_header.length, lzma_properties, &props_size, 9,
+                                     ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        }
 
         ctx->user_data_ddt_header.cmpLength = (uint32_t)dst_size;
 
@@ -455,8 +483,11 @@ static int32_t write_single_level_ddt(aaruformat_context *ctx)
         ctx->user_data_ddt_header.cmpCrc64  = ctx->user_data_ddt_header.crc64;
     }
     else
+    {
         ctx->user_data_ddt_header.cmpCrc64 =
             aaruf_crc64_data(cmp_buffer, (uint32_t)ctx->user_data_ddt_header.cmpLength);
+        if(ctx->use_zstd) ctx->has_zstd_blocks = true;
+    }
 
     if(ctx->user_data_ddt_header.compression == kCompressionLzma)
         ctx->user_data_ddt_header.cmpLength += LZMA_PROPERTIES_LENGTH;
@@ -644,9 +675,10 @@ static int32_t write_tape_ddt(aaruformat_context *ctx)
     if(entry->key > max_key) max_key = entry->key;
 
     // Initialize context user data DDT header
-    ctx->user_data_ddt_header.identifier          = DeDuplicationTable2;
-    ctx->user_data_ddt_header.type                = kDataTypeUserData;
-    ctx->user_data_ddt_header.compression         = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
+    ctx->user_data_ddt_header.identifier  = DeDuplicationTable2;
+    ctx->user_data_ddt_header.type        = kDataTypeUserData;
+    ctx->user_data_ddt_header.compression =
+        ctx->compression_enabled ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma) : kCompressionNone;
     ctx->user_data_ddt_header.levels              = 1;  // Single level
     ctx->user_data_ddt_header.tableLevel          = 0;  // Top level
     ctx->user_data_ddt_header.previousLevelOffset = 0;  // No previous level for single-level DDT
@@ -934,7 +966,8 @@ static void write_mode2_subheaders_block(aaruformat_context *ctx)
     BlockHeader subheaders_block = {0};
     subheaders_block.identifier  = DataBlock;
     subheaders_block.type        = kDataTypeCdSubHeader;
-    subheaders_block.compression = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
+    subheaders_block.compression =
+        ctx->compression_enabled ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma) : kCompressionNone;
     subheaders_block.length =
         (uint32_t)(ctx->user_data_ddt_header.negative + ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow) *
         8;
@@ -959,10 +992,21 @@ static void write_mode2_subheaders_block(aaruformat_context *ctx)
             return;
         }
 
-        size_t dst_size   = (size_t)subheaders_block.length * 2 * 2;
-        size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->mode2_subheaders, subheaders_block.length, lzma_properties,
-                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        size_t dst_size;
+
+        if(ctx->use_zstd)
+        {
+            dst_size = aaruf_zstd_encode_buffer(buffer, (size_t)subheaders_block.length * 2, ctx->mode2_subheaders,
+                                                 subheaders_block.length, ctx->zstd_level, ctx->num_threads);
+            if(dst_size == 0) dst_size = subheaders_block.length;
+        }
+        else
+        {
+            dst_size          = (size_t)subheaders_block.length * 2 * 2;
+            size_t props_size = LZMA_PROPERTIES_LENGTH;
+            aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->mode2_subheaders, subheaders_block.length, lzma_properties,
+                                     &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        }
 
         subheaders_block.cmpLength = (uint32_t)dst_size;
 
@@ -980,7 +1024,10 @@ static void write_mode2_subheaders_block(aaruformat_context *ctx)
         subheaders_block.cmpCrc64  = subheaders_block.crc64;
     }
     else
+    {
         subheaders_block.cmpCrc64 = aaruf_crc64_data(buffer, subheaders_block.cmpLength);
+        if(ctx->use_zstd) ctx->has_zstd_blocks = true;
+    }
 
     const size_t length_to_write = subheaders_block.cmpLength;
     if(subheaders_block.compression == kCompressionLzma) subheaders_block.cmpLength += LZMA_PROPERTIES_LENGTH;
@@ -1021,7 +1068,7 @@ static void write_mode2_subheaders_block(aaruformat_context *ctx)
         }
     }
 
-    if(subheaders_block.compression == kCompressionLzma) free(buffer);
+    if(subheaders_block.compression != kCompressionNone) free(buffer);
 }
 
 /**
@@ -1065,7 +1112,8 @@ static void write_sector_prefix(aaruformat_context *ctx)
     BlockHeader prefix_block = {0};
     prefix_block.identifier  = DataBlock;
     prefix_block.type        = kDataTypeCdSectorPrefix;
-    prefix_block.compression = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
+    prefix_block.compression =
+        ctx->compression_enabled ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma) : kCompressionNone;
     prefix_block.length      = (uint32_t)ctx->sector_prefix_offset;
 
     // Calculate CRC64
@@ -1088,10 +1136,21 @@ static void write_sector_prefix(aaruformat_context *ctx)
             return;
         }
 
-        size_t dst_size   = (size_t)prefix_block.length * 2 * 2;
-        size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_prefix, prefix_block.length, lzma_properties,
-                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        size_t dst_size;
+
+        if(ctx->use_zstd)
+        {
+            dst_size = aaruf_zstd_encode_buffer(buffer, (size_t)prefix_block.length * 2, ctx->sector_prefix,
+                                                 prefix_block.length, ctx->zstd_level, ctx->num_threads);
+            if(dst_size == 0) dst_size = prefix_block.length;
+        }
+        else
+        {
+            dst_size          = (size_t)prefix_block.length * 2 * 2;
+            size_t props_size = LZMA_PROPERTIES_LENGTH;
+            aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_prefix, prefix_block.length, lzma_properties,
+                                     &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        }
 
         prefix_block.cmpLength = (uint32_t)dst_size;
 
@@ -1109,7 +1168,10 @@ static void write_sector_prefix(aaruformat_context *ctx)
         prefix_block.cmpCrc64  = prefix_block.crc64;
     }
     else
+    {
         prefix_block.cmpCrc64 = aaruf_crc64_data(buffer, prefix_block.cmpLength);
+        if(ctx->use_zstd) ctx->has_zstd_blocks = true;
+    }
 
     const size_t length_to_write = prefix_block.cmpLength;
     if(prefix_block.compression == kCompressionLzma) prefix_block.cmpLength += LZMA_PROPERTIES_LENGTH;
@@ -1150,7 +1212,7 @@ static void write_sector_prefix(aaruformat_context *ctx)
         }
     }
 
-    if(prefix_block.compression == kCompressionLzma) free(buffer);
+    if(prefix_block.compression != kCompressionNone) free(buffer);
 }
 
 /**
@@ -1203,7 +1265,8 @@ static void write_sector_suffix(aaruformat_context *ctx)
     BlockHeader suffix_block = {0};
     suffix_block.identifier  = DataBlock;
     suffix_block.type        = kDataTypeCdSectorSuffix;
-    suffix_block.compression = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
+    suffix_block.compression =
+        ctx->compression_enabled ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma) : kCompressionNone;
     suffix_block.length      = (uint32_t)ctx->sector_suffix_offset;
 
     // Calculate CRC64
@@ -1226,10 +1289,21 @@ static void write_sector_suffix(aaruformat_context *ctx)
             return;
         }
 
-        size_t dst_size   = (size_t)suffix_block.length * 2 * 2;
-        size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_suffix, suffix_block.length, lzma_properties,
-                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        size_t dst_size;
+
+        if(ctx->use_zstd)
+        {
+            dst_size = aaruf_zstd_encode_buffer(buffer, (size_t)suffix_block.length * 2, ctx->sector_suffix,
+                                                 suffix_block.length, ctx->zstd_level, ctx->num_threads);
+            if(dst_size == 0) dst_size = suffix_block.length;
+        }
+        else
+        {
+            dst_size          = (size_t)suffix_block.length * 2 * 2;
+            size_t props_size = LZMA_PROPERTIES_LENGTH;
+            aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_suffix, suffix_block.length, lzma_properties,
+                                     &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        }
 
         suffix_block.cmpLength = (uint32_t)dst_size;
 
@@ -1247,7 +1321,10 @@ static void write_sector_suffix(aaruformat_context *ctx)
         suffix_block.cmpCrc64  = suffix_block.crc64;
     }
     else
+    {
         suffix_block.cmpCrc64 = aaruf_crc64_data(buffer, suffix_block.cmpLength);
+        if(ctx->use_zstd) ctx->has_zstd_blocks = true;
+    }
 
     const size_t length_to_write = suffix_block.cmpLength;
     if(suffix_block.compression == kCompressionLzma) suffix_block.cmpLength += LZMA_PROPERTIES_LENGTH;
@@ -1288,7 +1365,7 @@ static void write_sector_suffix(aaruformat_context *ctx)
         }
     }
 
-    if(suffix_block.compression == kCompressionLzma) free(buffer);
+    if(suffix_block.compression != kCompressionNone) free(buffer);
 }
 
 /**
@@ -1336,8 +1413,9 @@ static void write_sector_prefix_ddt(aaruformat_context *ctx)
     TRACE("Writing sector prefix DDT v2 at position %ld", prefix_ddt_position);
     DdtHeader2 ddt_header2          = {0};
     ddt_header2.identifier          = DeDuplicationTable2;
-    ddt_header2.type                = kDataTypeCdSectorPrefix;
-    ddt_header2.compression         = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
+    ddt_header2.type        = kDataTypeCdSectorPrefix;
+    ddt_header2.compression =
+        ctx->compression_enabled ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma) : kCompressionNone;
     ddt_header2.levels              = 1;
     ddt_header2.tableLevel          = 0;
     ddt_header2.negative            = ctx->user_data_ddt_header.negative;
@@ -1370,10 +1448,23 @@ static void write_sector_prefix_ddt(aaruformat_context *ctx)
             return;
         }
 
-        size_t dst_size   = (size_t)ddt_header2.length * 2 * 2;
-        size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(buffer, &dst_size, (uint8_t *)ctx->sector_prefix_ddt2, ddt_header2.length,
-                                 lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        size_t dst_size;
+
+        if(ctx->use_zstd)
+        {
+            dst_size = aaruf_zstd_encode_buffer(buffer, (size_t)ddt_header2.length * 2,
+                                                 (uint8_t *)ctx->sector_prefix_ddt2, ddt_header2.length,
+                                                 ctx->zstd_level, ctx->num_threads);
+            if(dst_size == 0) dst_size = ddt_header2.length;
+        }
+        else
+        {
+            dst_size          = (size_t)ddt_header2.length * 2 * 2;
+            size_t props_size = LZMA_PROPERTIES_LENGTH;
+            aaruf_lzma_encode_buffer(buffer, &dst_size, (uint8_t *)ctx->sector_prefix_ddt2, ddt_header2.length,
+                                     lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273,
+                                     LZMA_THREADS(ctx));
+        }
 
         ddt_header2.cmpLength = (uint32_t)dst_size;
 
@@ -1391,7 +1482,10 @@ static void write_sector_prefix_ddt(aaruformat_context *ctx)
         ddt_header2.cmpCrc64  = ddt_header2.crc64;
     }
     else
+    {
         ddt_header2.cmpCrc64 = aaruf_crc64_data(buffer, (uint32_t)ddt_header2.cmpLength);
+        if(ctx->use_zstd) ctx->has_zstd_blocks = true;
+    }
 
     const size_t length_to_write = ddt_header2.cmpLength;
     if(ddt_header2.compression == kCompressionLzma) ddt_header2.cmpLength += LZMA_PROPERTIES_LENGTH;
@@ -1432,7 +1526,7 @@ static void write_sector_prefix_ddt(aaruformat_context *ctx)
         }
     }
 
-    if(ddt_header2.compression == kCompressionLzma) free(buffer);
+    if(ddt_header2.compression != kCompressionNone) free(buffer);
 }
 
 /**
@@ -1496,8 +1590,9 @@ static void write_sector_suffix_ddt(aaruformat_context *ctx)
     TRACE("Writing sector suffix DDT v2 at position %ld", suffix_ddt_position);
     DdtHeader2 ddt_header2          = {0};
     ddt_header2.identifier          = DeDuplicationTable2;
-    ddt_header2.type                = kDataTypeCdSectorSuffix;
-    ddt_header2.compression         = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
+    ddt_header2.type        = kDataTypeCdSectorSuffix;
+    ddt_header2.compression =
+        ctx->compression_enabled ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma) : kCompressionNone;
     ddt_header2.levels              = 1;
     ddt_header2.tableLevel          = 0;
     ddt_header2.negative            = ctx->user_data_ddt_header.negative;
@@ -1530,10 +1625,23 @@ static void write_sector_suffix_ddt(aaruformat_context *ctx)
             return;
         }
 
-        size_t dst_size   = (size_t)ddt_header2.length * 2 * 2;
-        size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(buffer, &dst_size, (uint8_t *)ctx->sector_suffix_ddt2, ddt_header2.length,
-                                 lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        size_t dst_size;
+
+        if(ctx->use_zstd)
+        {
+            dst_size = aaruf_zstd_encode_buffer(buffer, (size_t)ddt_header2.length * 2,
+                                                 (uint8_t *)ctx->sector_suffix_ddt2, ddt_header2.length,
+                                                 ctx->zstd_level, ctx->num_threads);
+            if(dst_size == 0) dst_size = ddt_header2.length;
+        }
+        else
+        {
+            dst_size          = (size_t)ddt_header2.length * 2 * 2;
+            size_t props_size = LZMA_PROPERTIES_LENGTH;
+            aaruf_lzma_encode_buffer(buffer, &dst_size, (uint8_t *)ctx->sector_suffix_ddt2, ddt_header2.length,
+                                     lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273,
+                                     LZMA_THREADS(ctx));
+        }
 
         ddt_header2.cmpLength = (uint32_t)dst_size;
 
@@ -1551,7 +1659,10 @@ static void write_sector_suffix_ddt(aaruformat_context *ctx)
         ddt_header2.cmpCrc64  = ddt_header2.crc64;
     }
     else
+    {
         ddt_header2.cmpCrc64 = aaruf_crc64_data(buffer, (uint32_t)ddt_header2.cmpLength);
+        if(ctx->use_zstd) ctx->has_zstd_blocks = true;
+    }
 
     const size_t length_to_write = ddt_header2.cmpLength;
     if(ddt_header2.compression == kCompressionLzma) ddt_header2.cmpLength += LZMA_PROPERTIES_LENGTH;
@@ -1592,7 +1703,7 @@ static void write_sector_suffix_ddt(aaruformat_context *ctx)
         }
     }
 
-    if(ddt_header2.compression == kCompressionLzma) free(buffer);
+    if(ddt_header2.compression != kCompressionNone) free(buffer);
 }
 
 /**
@@ -1813,7 +1924,10 @@ static void write_sector_subchannel(aaruformat_context *ctx)
     if(subchannel_block.compression == kCompressionNone)
         subchannel_block.cmpCrc64 = subchannel_block.crc64;
     else
+    {
         subchannel_block.cmpCrc64 = aaruf_crc64_data(buffer, subchannel_block.cmpLength);
+        if(ctx->use_zstd) ctx->has_zstd_blocks = true;
+    }
 
     const size_t length_to_write = subchannel_block.cmpLength;
     const bool   has_lzma_props = subchannel_block.compression == kCompressionLzma ||
@@ -2017,7 +2131,8 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
     BlockHeader id_block = {0};
     id_block.identifier  = DataBlock;
     id_block.type        = kDataTypeDvdSectorId;
-    id_block.compression = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
+    id_block.compression =
+        ctx->compression_enabled ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma) : kCompressionNone;
     id_block.length      = (uint32_t)total_sectors * 4;
 
     // Calculate CRC64
@@ -2040,10 +2155,21 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
             return;
         }
 
-        size_t dst_size   = (size_t)id_block.length * 2 * 2;
-        size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_id, id_block.length, lzma_properties, &props_size, 9,
-                                 ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        size_t dst_size;
+
+        if(ctx->use_zstd)
+        {
+            dst_size = aaruf_zstd_encode_buffer(buffer, (size_t)id_block.length * 2, ctx->sector_id, id_block.length,
+                                                 ctx->zstd_level, ctx->num_threads);
+            if(dst_size == 0) dst_size = id_block.length;
+        }
+        else
+        {
+            dst_size          = (size_t)id_block.length * 2 * 2;
+            size_t props_size = LZMA_PROPERTIES_LENGTH;
+            aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_id, id_block.length, lzma_properties, &props_size,
+                                     9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        }
 
         id_block.cmpLength = (uint32_t)dst_size;
 
@@ -2061,7 +2187,10 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         id_block.cmpCrc64  = id_block.crc64;
     }
     else
+    {
         id_block.cmpCrc64 = aaruf_crc64_data(buffer, id_block.cmpLength);
+        if(ctx->use_zstd) ctx->has_zstd_blocks = true;
+    }
 
     size_t length_to_write = id_block.cmpLength;
     if(id_block.compression == kCompressionLzma) id_block.cmpLength += LZMA_PROPERTIES_LENGTH;
@@ -2102,7 +2231,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         }
     }
 
-    if(id_block.compression == kCompressionLzma) free(buffer);
+    if(id_block.compression != kCompressionNone) free(buffer);
 
     // Write DVD sector IED block
     fseek(ctx->imageStream, 0, SEEK_END);
@@ -2117,7 +2246,8 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
     BlockHeader ied_block = {0};
     ied_block.identifier  = DataBlock;
     ied_block.type        = kDataTypeDvdSectorIed;
-    ied_block.compression = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
+    ied_block.compression =
+        ctx->compression_enabled ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma) : kCompressionNone;
     ied_block.length      = (uint32_t)total_sectors * 2;
     // Calculate CRC64
     ied_block.crc64       = aaruf_crc64_data(ctx->sector_ied, ied_block.length);
@@ -2138,10 +2268,21 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
             return;
         }
 
-        size_t dst_size   = (size_t)ied_block.length * 2 * 2;
-        size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_ied, ied_block.length, lzma_properties, &props_size, 9,
-                                 ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        size_t dst_size;
+
+        if(ctx->use_zstd)
+        {
+            dst_size = aaruf_zstd_encode_buffer(buffer, (size_t)ied_block.length * 2, ctx->sector_ied,
+                                                 ied_block.length, ctx->zstd_level, ctx->num_threads);
+            if(dst_size == 0) dst_size = ied_block.length;
+        }
+        else
+        {
+            dst_size          = (size_t)ied_block.length * 2 * 2;
+            size_t props_size = LZMA_PROPERTIES_LENGTH;
+            aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_ied, ied_block.length, lzma_properties, &props_size,
+                                     9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        }
 
         ied_block.cmpLength = (uint32_t)dst_size;
 
@@ -2159,7 +2300,10 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         ied_block.cmpCrc64  = ied_block.crc64;
     }
     else
+    {
         ied_block.cmpCrc64 = aaruf_crc64_data(buffer, ied_block.cmpLength);
+        if(ctx->use_zstd) ctx->has_zstd_blocks = true;
+    }
 
     length_to_write = ied_block.cmpLength;
     if(ied_block.compression == kCompressionLzma) ied_block.cmpLength += LZMA_PROPERTIES_LENGTH;
@@ -2200,7 +2344,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         }
     }
 
-    if(ied_block.compression == kCompressionLzma) free(buffer);
+    if(ied_block.compression != kCompressionNone) free(buffer);
 
     // Write DVD sector CPR/MAI block
     fseek(ctx->imageStream, 0, SEEK_END);
@@ -2215,7 +2359,8 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
     BlockHeader cpr_mai_block = {0};
     cpr_mai_block.identifier  = DataBlock;
     cpr_mai_block.type        = kDataTypeDvdSectorCprMai;
-    cpr_mai_block.compression = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
+    cpr_mai_block.compression =
+        ctx->compression_enabled ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma) : kCompressionNone;
     cpr_mai_block.length      = (uint32_t)total_sectors * 6;
     // Calculate CRC64
     cpr_mai_block.crc64       = aaruf_crc64_data(ctx->sector_cpr_mai, cpr_mai_block.length);
@@ -2236,10 +2381,21 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
             return;
         }
 
-        size_t dst_size   = (size_t)cpr_mai_block.length * 2 * 2;
-        size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_cpr_mai, cpr_mai_block.length, lzma_properties,
-                                 &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        size_t dst_size;
+
+        if(ctx->use_zstd)
+        {
+            dst_size = aaruf_zstd_encode_buffer(buffer, (size_t)cpr_mai_block.length * 2, ctx->sector_cpr_mai,
+                                                 cpr_mai_block.length, ctx->zstd_level, ctx->num_threads);
+            if(dst_size == 0) dst_size = cpr_mai_block.length;
+        }
+        else
+        {
+            dst_size          = (size_t)cpr_mai_block.length * 2 * 2;
+            size_t props_size = LZMA_PROPERTIES_LENGTH;
+            aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_cpr_mai, cpr_mai_block.length, lzma_properties,
+                                     &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        }
 
         cpr_mai_block.cmpLength = (uint32_t)dst_size;
 
@@ -2257,7 +2413,10 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         cpr_mai_block.cmpCrc64  = cpr_mai_block.crc64;
     }
     else
+    {
         cpr_mai_block.cmpCrc64 = aaruf_crc64_data(buffer, cpr_mai_block.cmpLength);
+        if(ctx->use_zstd) ctx->has_zstd_blocks = true;
+    }
 
     length_to_write = cpr_mai_block.cmpLength;
     if(cpr_mai_block.compression == kCompressionLzma) cpr_mai_block.cmpLength += LZMA_PROPERTIES_LENGTH;
@@ -2298,7 +2457,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         }
     }
 
-    if(cpr_mai_block.compression == kCompressionLzma) free(buffer);
+    if(cpr_mai_block.compression != kCompressionNone) free(buffer);
 
     // Write DVD sector EDC block
     fseek(ctx->imageStream, 0, SEEK_END);
@@ -2313,7 +2472,8 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
     BlockHeader edc_block = {0};
     edc_block.identifier  = DataBlock;
     edc_block.type        = kDataTypeDvdSectorEdc;
-    edc_block.compression = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
+    edc_block.compression =
+        ctx->compression_enabled ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma) : kCompressionNone;
     edc_block.length      = (uint32_t)total_sectors * 4;
     // Calculate CRC64
     edc_block.crc64       = aaruf_crc64_data(ctx->sector_edc, edc_block.length);
@@ -2334,10 +2494,21 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
             return;
         }
 
-        size_t dst_size   = (size_t)edc_block.length * 2 * 2;
-        size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_edc, edc_block.length, lzma_properties, &props_size, 9,
-                                 ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        size_t dst_size;
+
+        if(ctx->use_zstd)
+        {
+            dst_size = aaruf_zstd_encode_buffer(buffer, (size_t)edc_block.length * 2, ctx->sector_edc,
+                                                 edc_block.length, ctx->zstd_level, ctx->num_threads);
+            if(dst_size == 0) dst_size = edc_block.length;
+        }
+        else
+        {
+            dst_size          = (size_t)edc_block.length * 2 * 2;
+            size_t props_size = LZMA_PROPERTIES_LENGTH;
+            aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_edc, edc_block.length, lzma_properties,
+                                     &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        }
 
         edc_block.cmpLength = (uint32_t)dst_size;
 
@@ -2355,7 +2526,10 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         edc_block.cmpCrc64  = edc_block.crc64;
     }
     else
+    {
         edc_block.cmpCrc64 = aaruf_crc64_data(buffer, edc_block.cmpLength);
+        if(ctx->use_zstd) ctx->has_zstd_blocks = true;
+    }
 
     length_to_write = edc_block.cmpLength;
     if(edc_block.compression == kCompressionLzma) edc_block.cmpLength += LZMA_PROPERTIES_LENGTH;
@@ -2396,7 +2570,7 @@ void write_dvd_long_sector_blocks(aaruformat_context *ctx)
         }
     }
 
-    if(edc_block.compression == kCompressionLzma) free(buffer);
+    if(edc_block.compression != kCompressionNone) free(buffer);
 }
 
 /**
@@ -2513,7 +2687,8 @@ static void write_dvd_title_key_decrypted_block(aaruformat_context *ctx)
     BlockHeader decrypted_title_key_block = {0};
     decrypted_title_key_block.identifier  = DataBlock;
     decrypted_title_key_block.type        = kDataTypeDvdTitleKeyDecrypted;
-    decrypted_title_key_block.compression = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
+    decrypted_title_key_block.compression =
+        ctx->compression_enabled ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma) : kCompressionNone;
     decrypted_title_key_block.length =
         (uint32_t)(ctx->user_data_ddt_header.negative + ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow) *
         5;
@@ -2538,10 +2713,23 @@ static void write_dvd_title_key_decrypted_block(aaruformat_context *ctx)
             return;
         }
 
-        size_t dst_size   = (size_t)decrypted_title_key_block.length * 2 * 2;
-        size_t props_size = LZMA_PROPERTIES_LENGTH;
-        aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_decrypted_title_key, decrypted_title_key_block.length,
-                                 lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        size_t dst_size;
+
+        if(ctx->use_zstd)
+        {
+            dst_size = aaruf_zstd_encode_buffer(buffer, (size_t)decrypted_title_key_block.length * 2,
+                                                 ctx->sector_decrypted_title_key, decrypted_title_key_block.length,
+                                                 ctx->zstd_level, ctx->num_threads);
+            if(dst_size == 0) dst_size = decrypted_title_key_block.length;
+        }
+        else
+        {
+            dst_size          = (size_t)decrypted_title_key_block.length * 2 * 2;
+            size_t props_size = LZMA_PROPERTIES_LENGTH;
+            aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_decrypted_title_key,
+                                     decrypted_title_key_block.length, lzma_properties, &props_size, 9,
+                                     ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        }
 
         decrypted_title_key_block.cmpLength = (uint32_t)dst_size;
 
@@ -2559,7 +2747,10 @@ static void write_dvd_title_key_decrypted_block(aaruformat_context *ctx)
         decrypted_title_key_block.cmpCrc64  = decrypted_title_key_block.crc64;
     }
     else
+    {
         decrypted_title_key_block.cmpCrc64 = aaruf_crc64_data(buffer, decrypted_title_key_block.cmpLength);
+        if(ctx->use_zstd) ctx->has_zstd_blocks = true;
+    }
 
     const size_t length_to_write = decrypted_title_key_block.cmpLength;
     if(decrypted_title_key_block.compression == kCompressionLzma)
@@ -2602,7 +2793,7 @@ static void write_dvd_title_key_decrypted_block(aaruformat_context *ctx)
         }
     }
 
-    if(decrypted_title_key_block.compression == kCompressionLzma) free(buffer);
+    if(decrypted_title_key_block.compression != kCompressionNone) free(buffer);
 }
 
 /**
@@ -2700,7 +2891,8 @@ static void write_media_tags(aaruformat_context *ctx)
         BlockHeader tag_block = {0};
         tag_block.identifier  = DataBlock;
         tag_block.type        = (uint16_t)aaruf_get_datatype_for_media_tag_type(media_tag->type);
-        tag_block.compression = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
+        tag_block.compression =
+            ctx->compression_enabled ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma) : kCompressionNone;
         tag_block.length      = media_tag->length;
 
         // Calculate CRC64
@@ -2723,10 +2915,21 @@ static void write_media_tags(aaruformat_context *ctx)
                 return;
             }
 
-            size_t dst_size   = (size_t)tag_block.length * 2 * 2;
-            size_t props_size = LZMA_PROPERTIES_LENGTH;
-            aaruf_lzma_encode_buffer(buffer, &dst_size, media_tag->data, tag_block.length, lzma_properties, &props_size,
-                                     9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+            size_t dst_size;
+
+            if(ctx->use_zstd)
+            {
+                dst_size = aaruf_zstd_encode_buffer(buffer, (size_t)tag_block.length * 2, media_tag->data,
+                                                     tag_block.length, ctx->zstd_level, ctx->num_threads);
+                if(dst_size == 0) dst_size = tag_block.length;
+            }
+            else
+            {
+                dst_size          = (size_t)tag_block.length * 2 * 2;
+                size_t props_size = LZMA_PROPERTIES_LENGTH;
+                aaruf_lzma_encode_buffer(buffer, &dst_size, media_tag->data, tag_block.length, lzma_properties,
+                                         &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+            }
 
             tag_block.cmpLength = (uint32_t)dst_size;
 
@@ -2744,7 +2947,10 @@ static void write_media_tags(aaruformat_context *ctx)
             tag_block.cmpCrc64  = tag_block.crc64;
         }
         else
+        {
             tag_block.cmpCrc64 = aaruf_crc64_data(buffer, tag_block.cmpLength);
+            if(ctx->use_zstd) ctx->has_zstd_blocks = true;
+        }
 
         const size_t length_to_write = tag_block.cmpLength;
         if(tag_block.compression == kCompressionLzma) tag_block.cmpLength += LZMA_PROPERTIES_LENGTH;
@@ -2786,7 +2992,7 @@ static void write_media_tags(aaruformat_context *ctx)
             }
         }
 
-        if(tag_block.compression == kCompressionLzma) free(buffer);
+        if(tag_block.compression != kCompressionNone) free(buffer);
     }
 }
 
@@ -4436,7 +4642,8 @@ static int32_t write_flux_capture_payload(aaruformat_context *ctx, FluxCaptureRe
 
     uint64_t raw_crc = raw_length != 0 && raw_buffer != NULL ? aaruf_crc64_data(raw_buffer, raw_length) : 0;
 
-    CompressionType compression = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
+    CompressionType compression =
+        ctx->compression_enabled ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma) : kCompressionNone;
 
     uint8_t *compressed_buffer = NULL;
     uint32_t cmp_length        = 0;
@@ -4484,6 +4691,38 @@ static int32_t write_flux_capture_payload(aaruformat_context *ctx, FluxCaptureRe
             memcpy(compressed_buffer + LZMA_PROPERTIES_LENGTH, cmp_stream, dst_size);
             cmp_crc = aaruf_crc64_data(compressed_buffer, cmp_length);
             free(cmp_stream);
+            free(raw_buffer);
+            raw_buffer = NULL;
+        }
+    }
+    else if(compression == kCompressionZstd)
+    {
+        size_t cmp_capacity = raw_length ? raw_length * 2 + 65536 : 16;
+
+        uint8_t *cmp_stream = malloc(cmp_capacity);
+        if(cmp_stream == NULL)
+        {
+            free(raw_buffer);
+            FATAL("Could not allocate %zu bytes for zstd flux compression", cmp_capacity);
+            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        }
+
+        size_t dst_size =
+            aaruf_zstd_encode_buffer(cmp_stream, cmp_capacity, raw_buffer, raw_length, ctx->zstd_level, ctx->num_threads);
+
+        if(dst_size == 0 || dst_size >= raw_length)
+        {
+            TRACE("Flux capture zstd compression fell back to uncompressed (dst=%zu, raw=%" PRIu64 ")", dst_size,
+                  raw_length);
+            compression = kCompressionNone;
+            free(cmp_stream);
+        }
+        else
+        {
+            cmp_length        = (uint32_t)dst_size;
+            compressed_buffer      = cmp_stream;
+            cmp_crc                = aaruf_crc64_data(compressed_buffer, cmp_length);
+            ctx->has_zstd_blocks = true;
             free(raw_buffer);
             raw_buffer = NULL;
         }
@@ -5073,6 +5312,8 @@ AARU_EXPORT int AARU_CALL aaruf_close(void *context)
     if(ctx->is_writing)
     {
         TRACE("File is writing");
+
+        if(ctx->has_zstd_blocks) ctx->header.featureIncompatible |= AARU_FEATURE_INCOMPAT_ZSTD;
 
         TRACE("Seeking to start of image");
         // Write the header at the beginning of the file

@@ -251,6 +251,80 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
                 *found_user_data_ddt = true;
 
                 break;
+            case kCompressionZstd:
+                if(ddt_header.cmpLength == 0)
+                {
+                    FATAL("Compressed DDT payload has zero length for zstd.");
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                    return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                }
+
+                cmp_data = (uint8_t *)malloc(ddt_header.cmpLength);
+                if(cmp_data == NULL)
+                {
+                    TRACE("Cannot allocate memory for DDT, continuing...");
+                    break;
+                }
+
+                buffer = malloc(ddt_header.length);
+                if(buffer == NULL)
+                {
+                    TRACE("Cannot allocate memory for DDT, continuing...");
+                    free(cmp_data);
+                    break;
+                }
+
+                read_bytes = fread(cmp_data, 1, ddt_header.cmpLength, ctx->imageStream);
+                if(read_bytes != ddt_header.cmpLength)
+                {
+                    TRACE("Could not read compressed block, continuing...");
+                    free(cmp_data);
+                    free(buffer);
+                    break;
+                }
+
+                read_bytes =
+                    aaruf_zstd_decode_buffer(buffer, ddt_header.length, cmp_data, ddt_header.cmpLength);
+
+                if(read_bytes != ddt_header.length)
+                {
+                    FATAL("Error decompressing zstd DDT, expected %zu got %zu", ddt_header.length, read_bytes);
+                    free(cmp_data);
+                    free(buffer);
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                    return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                }
+
+                free(cmp_data);
+
+                crc64_context = aaruf_crc64_init();
+
+                if(crc64_context == NULL)
+                {
+                    FATAL("Could not initialize CRC64.");
+                    free(buffer);
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
+                    return AARUF_ERROR_CANNOT_READ_BLOCK;
+                }
+
+                aaruf_crc64_update(crc64_context, buffer, read_bytes);
+                aaruf_crc64_final(crc64_context, &crc64);
+                aaruf_crc64_free(crc64_context);
+
+                if(crc64 != ddt_header.crc64)
+                {
+                    FATAL("Expected DDT CRC 0x%16lX but got 0x%16lX.", ddt_header.crc64, crc64);
+                    free(buffer);
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_INVALID_BLOCK_CRC");
+                    return AARUF_ERROR_INVALID_BLOCK_CRC;
+                }
+
+                ctx->user_data_ddt2 = (uint64_t *)buffer;
+
+                ctx->in_memory_ddt   = true;
+                *found_user_data_ddt = true;
+
+                break;
             case kCompressionNone:
                 buffer = malloc(ddt_header.length);
 
@@ -367,6 +441,83 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
                 if(read_bytes != ddt_header.length)
                 {
                     FATAL("Error decompressing block, should be {0} bytes but got {1} bytes., stopping...");
+                    free(cmp_data);
+                    free(buffer);
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                    return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                }
+
+                free(cmp_data);
+                cmp_data = NULL;
+
+                crc64_context = aaruf_crc64_init();
+
+                if(crc64_context == NULL)
+                {
+                    FATAL("Could not initialize CRC64.");
+                    free(buffer);
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
+                    return AARUF_ERROR_CANNOT_READ_BLOCK;
+                }
+
+                aaruf_crc64_update(crc64_context, buffer, read_bytes);
+                aaruf_crc64_final(crc64_context, &crc64);
+                aaruf_crc64_free(crc64_context);
+
+                if(crc64 != ddt_header.crc64)
+                {
+                    FATAL("Expected DDT CRC 0x%16lX but got 0x%16lX.", ddt_header.crc64, crc64);
+                    free(buffer);
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_INVALID_BLOCK_CRC");
+                    return AARUF_ERROR_INVALID_BLOCK_CRC;
+                }
+
+                if(entry->dataType == kDataTypeCdSectorPrefix)
+                    ctx->sector_prefix_ddt2 = (uint64_t *)buffer;
+                else if(entry->dataType == kDataTypeCdSectorSuffix)
+                    ctx->sector_suffix_ddt2 = (uint64_t *)buffer;
+                else
+                    free(buffer);
+
+                break;
+            case kCompressionZstd:
+                if(ddt_header.cmpLength == 0)
+                {
+                    FATAL("Compressed DDT payload has zero length for zstd.");
+                    TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                    return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                }
+
+                cmp_data = (uint8_t *)malloc(ddt_header.cmpLength);
+                if(cmp_data == NULL)
+                {
+                    TRACE("Cannot allocate memory for DDT, continuing...");
+                    break;
+                }
+
+                buffer = malloc(ddt_header.length);
+                if(buffer == NULL)
+                {
+                    TRACE("Cannot allocate memory for DDT, continuing...");
+                    free(cmp_data);
+                    break;
+                }
+
+                read_bytes = fread(cmp_data, 1, ddt_header.cmpLength, ctx->imageStream);
+                if(read_bytes != ddt_header.cmpLength)
+                {
+                    TRACE("Could not read compressed block, continuing...");
+                    free(cmp_data);
+                    free(buffer);
+                    break;
+                }
+
+                read_bytes =
+                    aaruf_zstd_decode_buffer(buffer, ddt_header.length, cmp_data, ddt_header.cmpLength);
+
+                if(read_bytes != ddt_header.length)
+                {
+                    FATAL("Error decompressing zstd DDT, expected %zu got %zu", ddt_header.length, read_bytes);
                     free(cmp_data);
                     free(buffer);
                     TRACE("Exiting process_ddt_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
@@ -900,6 +1051,85 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
                 ctx->cached_ddt_offset = secondary_ddt_offset;
 
                 break;
+            case kCompressionZstd:
+                if(ddt_header.cmpLength == 0)
+                {
+                    FATAL("Compressed DDT payload has zero length for zstd.");
+                    TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                    return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                }
+
+                cmp_data = (uint8_t *)malloc(ddt_header.cmpLength);
+                if(cmp_data == NULL)
+                {
+                    FATAL("Cannot allocate memory for DDT, stopping...");
+                    TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                    return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                }
+
+                buffer = malloc(ddt_header.length);
+                if(buffer == NULL)
+                {
+                    FATAL("Cannot allocate memory for DDT, stopping...");
+                    free(cmp_data);
+                    return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                }
+
+                read_bytes = fread(cmp_data, 1, ddt_header.cmpLength, ctx->imageStream);
+                if(read_bytes != ddt_header.cmpLength)
+                {
+                    FATAL("Could not read compressed block, stopping...");
+                    free(cmp_data);
+                    free(buffer);
+                    TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                    return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                }
+
+                TRACE("Decompressing block of size %zu bytes", ddt_header.length);
+                read_bytes =
+                    aaruf_zstd_decode_buffer(buffer, ddt_header.length, cmp_data, ddt_header.cmpLength);
+
+                if(read_bytes != ddt_header.length)
+                {
+                    FATAL("Error decompressing zstd DDT, expected %zu got %zu", ddt_header.length, read_bytes);
+                    free(cmp_data);
+                    free(buffer);
+                    TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+                    return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                }
+
+                free(cmp_data);
+
+                crc64_context = aaruf_crc64_init();
+
+                if(crc64_context == NULL)
+                {
+                    FATAL("Could not initialize CRC64.");
+                    free(buffer);
+                    TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_CANNOT_READ_BLOCK");
+                    return AARUF_ERROR_CANNOT_READ_BLOCK;
+                }
+
+                aaruf_crc64_update(crc64_context, buffer, read_bytes);
+                aaruf_crc64_final(crc64_context, &crc64);
+                aaruf_crc64_free(crc64_context);
+
+                if(crc64 != ddt_header.crc64)
+                {
+                    FATAL("Expected DDT CRC 0x%16lX but got 0x%16lX.", ddt_header.crc64, crc64);
+                    free(buffer);
+                    TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_ERROR_INVALID_BLOCK_CRC");
+                    return AARUF_ERROR_INVALID_BLOCK_CRC;
+                }
+
+                // Free old cached DDT before replacing it
+                free(ctx->cached_secondary_ddt2);
+
+                ctx->cached_secondary_ddt2 = (uint64_t *)buffer;
+
+                ctx->cached_ddt_offset = secondary_ddt_offset;
+
+                break;
             case kCompressionNone:
                 buffer = malloc(ddt_header.length);
 
@@ -1217,8 +1447,9 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             memset(&ddt_header, 0, sizeof(DdtHeader2));
             ddt_header.identifier = DeDuplicationTableSecondary;
             ddt_header.type       = kDataTypeUserData;
-            ddt_header.compression =
-                ctx->compression_enabled ? kCompressionLzma : kCompressionNone;  // Use no compression for simplicity
+            ddt_header.compression = ctx->compression_enabled
+                                         ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma)
+                                         : kCompressionNone;
             ddt_header.levels              = ctx->user_data_ddt_header.levels;
             ddt_header.tableLevel          = ctx->user_data_ddt_header.tableLevel + 1;
             ddt_header.previousLevelOffset = ctx->primary_ddt_offset;
@@ -1268,11 +1499,23 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
                     return AARUF_ERROR_NOT_ENOUGH_MEMORY;
                 }
 
-                size_t dst_size   = (size_t)ddt_header.length * 2 * 2;
-                size_t props_size = LZMA_PROPERTIES_LENGTH;
-                aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, (uint8_t *)ctx->cached_secondary_ddt2,
-                                         ddt_header.length, lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0,
-                                         2, 273, LZMA_THREADS(ctx));
+                size_t dst_size;
+
+                if(ctx->use_zstd)
+                {
+                    dst_size = aaruf_zstd_encode_buffer(cmp_buffer, (size_t)ddt_header.length * 2,
+                                                         (uint8_t *)ctx->cached_secondary_ddt2, ddt_header.length,
+                                                         ctx->zstd_level, ctx->num_threads);
+                    if(dst_size == 0) dst_size = ddt_header.length;
+                }
+                else
+                {
+                    dst_size          = (size_t)ddt_header.length * 2 * 2;
+                    size_t props_size = LZMA_PROPERTIES_LENGTH;
+                    aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, (uint8_t *)ctx->cached_secondary_ddt2,
+                                             ddt_header.length, lzma_properties, &props_size, 9, ctx->lzma_dict_size,
+                                             4, 0, 2, 273, LZMA_THREADS(ctx));
+                }
 
                 ddt_header.cmpLength = (uint32_t)dst_size;
 
@@ -1291,7 +1534,10 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
                 ddt_header.cmpCrc64  = ddt_header.crc64;
             }
             else
+            {
                 ddt_header.cmpCrc64 = aaruf_crc64_data(cmp_buffer, (uint32_t)ddt_header.cmpLength);
+                if(ctx->use_zstd) ctx->has_zstd_blocks = true;
+            }
 
             if(ddt_header.compression == kCompressionLzma) ddt_header.cmpLength += LZMA_PROPERTIES_LENGTH;
 
@@ -1315,7 +1561,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
                 return false;
             }
 
-            if(ddt_header.compression == kCompressionLzma) free(cmp_buffer);
+            if(ddt_header.compression != kCompressionNone) free(cmp_buffer);
 
             // Add index entry for the newly written secondary DDT
             IndexEntry new_ddt_entry;
@@ -1396,7 +1642,8 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
         memset(&ddt_header, 0, sizeof(DdtHeader2));
         ddt_header.identifier          = DeDuplicationTableSecondary;
         ddt_header.type                = kDataTypeUserData;
-        ddt_header.compression         = ctx->compression_enabled ? kCompressionLzma : kCompressionNone;
+        ddt_header.compression =
+            ctx->compression_enabled ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma) : kCompressionNone;
         ddt_header.levels              = ctx->user_data_ddt_header.levels;
         ddt_header.tableLevel          = ctx->user_data_ddt_header.tableLevel + 1;
         ddt_header.previousLevelOffset = ctx->primary_ddt_offset;  // Set to primary DDT table location
@@ -1446,10 +1693,23 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
 
-            size_t dst_size   = (size_t)ddt_header.length * 2 * 2;
-            size_t props_size = LZMA_PROPERTIES_LENGTH;
-            aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, (uint8_t *)ctx->cached_secondary_ddt2, ddt_header.length,
-                                     lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+            size_t dst_size;
+
+            if(ctx->use_zstd)
+            {
+                dst_size = aaruf_zstd_encode_buffer(cmp_buffer, (size_t)ddt_header.length * 2,
+                                                     (uint8_t *)ctx->cached_secondary_ddt2, ddt_header.length,
+                                                     ctx->zstd_level, ctx->num_threads);
+                if(dst_size == 0) dst_size = ddt_header.length;
+            }
+            else
+            {
+                dst_size          = (size_t)ddt_header.length * 2 * 2;
+                size_t props_size = LZMA_PROPERTIES_LENGTH;
+                aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, (uint8_t *)ctx->cached_secondary_ddt2,
+                                         ddt_header.length, lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0,
+                                         2, 273, LZMA_THREADS(ctx));
+            }
 
             ddt_header.cmpLength = (uint32_t)dst_size;
 
@@ -1468,7 +1728,10 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             ddt_header.cmpCrc64  = ddt_header.crc64;
         }
         else
+        {
             ddt_header.cmpCrc64 = aaruf_crc64_data(cmp_buffer, (uint32_t)ddt_header.cmpLength);
+            if(ctx->use_zstd) ctx->has_zstd_blocks = true;
+        }
 
         if(ddt_header.compression == kCompressionLzma) ddt_header.cmpLength += LZMA_PROPERTIES_LENGTH;
 
@@ -1494,7 +1757,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             return false;
         }
 
-        if(ddt_header.compression == kCompressionLzma) free(cmp_buffer);
+        if(ddt_header.compression != kCompressionNone) free(cmp_buffer);
 
         // Update index: remove old entry and add new one for the evicted secondary DDT
         TRACE("Updating index for evicted secondary DDT");

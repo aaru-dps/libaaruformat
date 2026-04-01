@@ -215,6 +215,50 @@ int32_t process_ddt_v1(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
                 *found_user_data_ddt = true;
 
                 break;
+            case kCompressionZstd:
+                cmp_data = (uint8_t *)malloc(ddt_header.cmpLength);
+                if(cmp_data == NULL)
+                {
+                    TRACE("Cannot allocate memory for DDT, continuing...");
+                    break;
+                }
+
+                ctx->user_data_ddt = (uint64_t *)malloc(ddt_header.length);
+                if(ctx->user_data_ddt == NULL)
+                {
+                    TRACE("Cannot allocate memory for DDT, continuing...");
+                    free(cmp_data);
+                    break;
+                }
+
+                read_bytes = fread(cmp_data, 1, ddt_header.cmpLength, ctx->imageStream);
+                if(read_bytes != ddt_header.cmpLength)
+                {
+                    TRACE("Could not read compressed block, continuing...");
+                    free(cmp_data);
+                    free(ctx->user_data_ddt);
+                    ctx->user_data_ddt = NULL;
+                    break;
+                }
+
+                read_bytes = aaruf_zstd_decode_buffer((uint8_t *)ctx->user_data_ddt, ddt_header.length, cmp_data,
+                                                       ddt_header.cmpLength);
+                if(read_bytes != ddt_header.length)
+                {
+                    FATAL("Error decompressing zstd DDT block, expected %zu got %zu", ddt_header.length, read_bytes);
+                    free(cmp_data);
+                    free(ctx->user_data_ddt);
+                    ctx->user_data_ddt = NULL;
+                    return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                }
+
+                free(cmp_data);
+                cmp_data = NULL;
+
+                ctx->in_memory_ddt   = true;
+                *found_user_data_ddt = true;
+
+                break;
             // TODO: Check CRC
             case kCompressionNone:
                 ctx->user_data_ddt = (uint64_t *)malloc(ddt_header.length);
@@ -306,6 +350,52 @@ int32_t process_ddt_v1(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
                 if(read_bytes != ddt_header.length)
                 {
                     FATAL("Error decompressing block, should be {0} bytes but got {1} bytes., stopping...");
+                    free(cmp_data);
+                    free(cd_ddt);
+                    return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                }
+
+                free(cmp_data);
+                cmp_data = NULL;
+
+                if(entry->dataType == kDataTypeCdSectorPrefixCorrected)
+                    ctx->sector_prefix_ddt = cd_ddt;
+                else if(entry->dataType == kDataTypeCdSectorSuffixCorrected)
+                    ctx->sector_suffix_ddt = cd_ddt;
+                else
+                    free(cd_ddt);
+
+                break;
+            case kCompressionZstd:
+                cmp_data = (uint8_t *)malloc(ddt_header.cmpLength);
+                if(cmp_data == NULL)
+                {
+                    TRACE("Cannot allocate memory for DDT, continuing...");
+                    break;
+                }
+
+                cd_ddt = (uint32_t *)malloc(ddt_header.length);
+                if(cd_ddt == NULL)
+                {
+                    TRACE("Cannot allocate memory for DDT, continuing...");
+                    free(cmp_data);
+                    break;
+                }
+
+                read_bytes = fread(cmp_data, 1, ddt_header.cmpLength, ctx->imageStream);
+                if(read_bytes != ddt_header.cmpLength)
+                {
+                    TRACE("Could not read compressed block, continuing...");
+                    free(cmp_data);
+                    free(cd_ddt);
+                    break;
+                }
+
+                read_bytes = aaruf_zstd_decode_buffer((uint8_t *)cd_ddt, ddt_header.length, cmp_data,
+                                                       ddt_header.cmpLength);
+                if(read_bytes != ddt_header.length)
+                {
+                    FATAL("Error decompressing zstd DDT block, expected %zu got %zu", ddt_header.length, read_bytes);
                     free(cmp_data);
                     free(cd_ddt);
                     return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
