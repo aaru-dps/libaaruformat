@@ -259,11 +259,13 @@ AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context)
                     goto cleanup;
                 }
 
-                // For LZMA compression, skip the 5-byte properties header
+                // For LZMA compression in v2+, skip the 5-byte properties header.
+                // V1 images included LZMA properties in cmpCrc64; v2+ excludes them.
                 crc_length = block_header.cmpLength;
-                if(block_header.compression == kCompressionLzma || block_header.compression == kCompressionLzmaCst)
+                if((block_header.compression == kCompressionLzma || block_header.compression == kCompressionLzmaCst) &&
+                   ctx->header.imageMajorVersion > AARUF_VERSION_V1)
                 {
-                    // Skip LZMA properties
+                    // Skip LZMA properties (v2+ only)
                     uint8_t props[LZMA_PROPERTIES_LENGTH];
                     size_t  read_props = fread(props, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
                     if(read_props != LZMA_PROPERTIES_LENGTH)
@@ -315,11 +317,13 @@ AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context)
                     goto cleanup;
                 }
 
-                // For LZMA compression, skip the 5-byte properties header
+                // For LZMA compression in v2+, skip the 5-byte properties header.
+                // V1 images included LZMA properties in cmpCrc64; v2+ excludes them.
                 crc_length = ddt_header.cmpLength;
-                if(ddt_header.compression == kCompressionLzma || ddt_header.compression == kCompressionLzmaCst)
+                if((ddt_header.compression == kCompressionLzma || ddt_header.compression == kCompressionLzmaCst) &&
+                   ctx->header.imageMajorVersion > AARUF_VERSION_V1)
                 {
-                    // Skip LZMA properties
+                    // Skip LZMA properties (v2+ only)
                     uint8_t props[LZMA_PROPERTIES_LENGTH];
                     size_t  read_props = fread(props, 1, LZMA_PROPERTIES_LENGTH, ctx->imageStream);
                     if(read_props != LZMA_PROPERTIES_LENGTH)
@@ -332,7 +336,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context)
                 }
 
                 status = update_crc64_from_stream(ctx->imageStream, crc_length, buffer, VERIFY_SIZE, crc64_context,
-                                                  "data block");
+                                                  "DDT block");
                 if(status != AARUF_STATUS_OK) goto cleanup;
 
                 if(aaruf_crc64_final(crc64_context, &crc64) != 0)
@@ -371,7 +375,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context)
                     goto cleanup;
                 }
 
-                // For LZMA compression, skip the 5-byte properties header
+                // DDT2 only appears in v2+ images, so always skip LZMA properties.
                 crc_length = ddt2_header.cmpLength;
                 if(ddt2_header.compression == kCompressionLzma || ddt2_header.compression == kCompressionLzmaCst)
                 {
@@ -388,7 +392,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context)
                 }
 
                 status = update_crc64_from_stream(ctx->imageStream, crc_length, buffer, VERIFY_SIZE, crc64_context,
-                                                  "data block");
+                                                  "DDT2 block");
                 if(status != AARUF_STATUS_OK) goto cleanup;
 
                 if(aaruf_crc64_final(crc64_context, &crc64) != 0)

@@ -90,6 +90,7 @@ add_executable(tests_run
     sha1.cpp
     open_image.cpp
     create_image.cpp
+    verify_image.cpp
     ps3_aes.cpp
     ps3_crypto.cpp
     ps3_encryption_map.cpp
