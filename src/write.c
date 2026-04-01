@@ -1621,6 +1621,8 @@ int32_t aaruf_close_current_block(aaruformat_context *ctx)
                     free(cmp_buffer);
                     cmp_buffer = NULL;
                 }
+                else
+                    ctx->has_zstd_blocks = true;
             }
 
             break;

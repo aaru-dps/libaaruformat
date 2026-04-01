@@ -285,6 +285,19 @@ typedef enum
     AARU_FEATURE_RW_BLAKE3 = 0x1,  ///< BLAKE3 checksum is present (read/write support for BLAKE3 hashes).
 } FeaturesCompatible;
 
+/**
+ * @brief Incompatible feature flags for AaruHeader V2.
+ *
+ * If any bit in featureIncompatible is not understood by a reader, the image
+ * MUST NOT be opened (the reader cannot safely interpret the data).
+ *
+ * Future incompatible features SHALL use the next available bit (1ULL << n).
+ */
+typedef enum
+{
+    AARU_FEATURE_INCOMPAT_ZSTD = 0x1,  ///< Image contains Zstandard-compressed blocks.
+} FeaturesIncompatible;
+
 #ifndef _MSC_VER
 #pragma clang diagnostic pop
 #endif

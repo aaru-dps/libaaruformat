@@ -302,6 +302,7 @@ typedef struct aaruformat_context
     bool     deduplicate;          ///< Storage deduplication active (duplicates coalesce).
     bool     compression_enabled;  ///< True if block compression enabled (writing path).
     bool     use_zstd;             ///< Use Zstandard instead of LZMA for data blocks.
+    bool     has_zstd_blocks;     ///< True if any block was actually written with Zstandard compression.
     int      zstd_level;           ///< Zstandard compression level (writing path, default 19).
     int      num_threads;          ///< Compression worker threads (1 = single-threaded, default).
 
