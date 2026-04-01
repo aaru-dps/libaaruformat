@@ -1180,3 +1180,359 @@ TEST_F(CreateImageFixture, create_subchannel_compressed_image)
     close_result = aaruf_close(context);
     EXPECT_EQ(close_result, AARUF_STATUS_OK) << "Failed to close image";
 }
+TEST_F(CreateImageFixture, create_image_zstd_compresed_deduplicated)
+{
+    char path[PATH_MAX];
+    char filename[PATH_MAX];
+
+    getcwd(path, PATH_MAX);
+    snprintf(filename, PATH_MAX, "%s/data/random", path);
+
+    FILE *f = fopen(filename, "rb");
+    ASSERT_NE(f, nullptr) << "Failed to open random data file";
+
+    uint8_t *buffer = static_cast<uint8_t *>(malloc(1048576));
+    fread(buffer, 1, 1048576, f);
+    fclose(f);
+
+    constexpr size_t total_sectors = 128 * 1024 * 1024 / 512;
+
+    void *context =
+        aaruf_create("test_zstd.aif", 1, 512, total_sectors, 0, 0,
+                     "deduplicate=true;compress=true;zstd=true;zstd_level=19",
+                     reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0, false);
+
+    ASSERT_NE(context, nullptr) << "Failed to create test_zstd.aif";
+
+    crc64_ctx *ctx           = aaruf_crc64_init();
+    uint64_t   generated_crc = 0;
+
+    for(size_t sector = 0; sector < total_sectors; ++sector)
+    {
+        const size_t  buffer_offset = sector * 512 % 1048576;
+        const int32_t write_result =
+            aaruf_write_sector(context, sector, false, buffer + buffer_offset, SectorStatusDumped, 512);
+        ASSERT_EQ(write_result, AARUF_STATUS_OK) << "Failed to write sector " << sector;
+        aaruf_crc64_update(ctx, buffer + buffer_offset, 512);
+    }
+
+    aaruf_crc64_final(ctx, &generated_crc);
+    aaruf_crc64_free(ctx);
+
+    int32_t close_result = aaruf_close(context);
+    ASSERT_EQ(close_result, AARUF_STATUS_OK) << "Failed to close image";
+    free(buffer);
+
+    context = aaruf_open("test_zstd.aif", false, NULL);
+    ASSERT_NE(context, nullptr) << "Failed to open test_zstd.aif";
+
+    ImageInfo     image_info;
+    const int32_t result = aaruf_get_image_info(context, &image_info);
+    ASSERT_EQ(result, AARUF_STATUS_OK) << "Failed to get image info";
+    ASSERT_EQ(image_info.Sectors, total_sectors) << "Unexpected number of sectors";
+    ASSERT_EQ(image_info.SectorSize, 512) << "Unexpected sector size";
+
+    ctx          = aaruf_crc64_init();
+    uint64_t crc = 0;
+
+    for(int i = 0; i < total_sectors; i++)
+    {
+        uint8_t  sector_buffer[512];
+        uint32_t length        = sizeof(sector_buffer);
+        uint8_t  sector_status = 0;
+
+        const int32_t read_result = aaruf_read_sector(context, i, false, sector_buffer, &length, &sector_status);
+        EXPECT_EQ(read_result, AARUF_STATUS_OK) << "Failed to read sector " << i;
+        EXPECT_EQ(length, 512U) << "Unexpected length for sector " << i;
+        aaruf_crc64_update(ctx, sector_buffer, 512);
+    }
+
+    aaruf_crc64_final(ctx, &crc);
+    aaruf_crc64_free(ctx);
+    ASSERT_EQ(crc, generated_crc) << "Unexpected CRC64 for image data";
+
+    close_result = aaruf_close(context);
+    EXPECT_EQ(close_result, AARUF_STATUS_OK) << "Failed to close image";
+}
+
+TEST_F(CreateImageFixture, create_image_zstd_negative_sectors)
+{
+    char path[PATH_MAX];
+    char filename[PATH_MAX];
+
+    getcwd(path, PATH_MAX);
+    snprintf(filename, PATH_MAX, "%s/data/random", path);
+
+    FILE *f = fopen(filename, "rb");
+    ASSERT_NE(f, nullptr) << "Failed to open random data file";
+
+    uint8_t *buffer = static_cast<uint8_t *>(malloc(1048576));
+    fread(buffer, 1, 1048576, f);
+    fclose(f);
+
+    constexpr size_t total_sectors = 128 * 1024 * 1024 / 512;
+
+    void *context =
+        aaruf_create("test_zstd.aif", 1, 512, total_sectors, 300, 0,
+                     "deduplicate=true;compress=true;zstd=true;zstd_level=19",
+                     reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0, false);
+
+    ASSERT_NE(context, nullptr) << "Failed to create test_zstd.aif";
+
+    crc64_ctx *ctx           = aaruf_crc64_init();
+    uint64_t   generated_crc = 0;
+
+    for(size_t sector = 1; sector <= 150; ++sector)
+    {
+        const size_t  buffer_offset = sector * 512 % 1048576;
+        const int32_t write_result =
+            aaruf_write_sector(context, sector, true, buffer + buffer_offset, SectorStatusDumped, 512);
+        ASSERT_EQ(write_result, AARUF_STATUS_OK) << "Failed to write negative sector " << sector;
+        aaruf_crc64_update(ctx, buffer + buffer_offset, 512);
+    }
+
+    for(size_t sector = 0; sector < total_sectors; ++sector)
+    {
+        const size_t  buffer_offset = sector * 512 % 1048576;
+        const int32_t write_result =
+            aaruf_write_sector(context, sector, false, buffer + buffer_offset, SectorStatusDumped, 512);
+        ASSERT_EQ(write_result, AARUF_STATUS_OK) << "Failed to write sector " << sector;
+        aaruf_crc64_update(ctx, buffer + buffer_offset, 512);
+    }
+
+    aaruf_crc64_final(ctx, &generated_crc);
+    aaruf_crc64_free(ctx);
+
+    int32_t close_result = aaruf_close(context);
+    ASSERT_EQ(close_result, AARUF_STATUS_OK) << "Failed to close image";
+    free(buffer);
+
+    context = aaruf_open("test_zstd.aif", false, NULL);
+    ASSERT_NE(context, nullptr) << "Failed to open test_zstd.aif";
+
+    ImageInfo     image_info;
+    const int32_t result = aaruf_get_image_info(context, &image_info);
+    ASSERT_EQ(result, AARUF_STATUS_OK) << "Failed to get image info";
+    ASSERT_EQ(image_info.Sectors, total_sectors) << "Unexpected number of sectors";
+
+    ctx          = aaruf_crc64_init();
+    uint64_t crc = 0;
+
+    for(int i = 1; i <= 150; i++)
+    {
+        uint8_t  sector_buffer[512];
+        uint32_t length        = sizeof(sector_buffer);
+        uint8_t  sector_status = 0;
+
+        const int32_t read_result = aaruf_read_sector(context, i, true, sector_buffer, &length, &sector_status);
+        EXPECT_EQ(read_result, AARUF_STATUS_OK) << "Failed to read negative sector " << i;
+        EXPECT_EQ(length, 512U) << "Unexpected length for negative sector " << i;
+        aaruf_crc64_update(ctx, sector_buffer, 512);
+    }
+
+    for(int i = 0; i < total_sectors; i++)
+    {
+        uint8_t  sector_buffer[512];
+        uint32_t length        = sizeof(sector_buffer);
+        uint8_t  sector_status = 0;
+
+        const int32_t read_result = aaruf_read_sector(context, i, false, sector_buffer, &length, &sector_status);
+        EXPECT_EQ(read_result, AARUF_STATUS_OK) << "Failed to read sector " << i;
+        EXPECT_EQ(length, 512U) << "Unexpected length for sector " << i;
+        aaruf_crc64_update(ctx, sector_buffer, 512);
+    }
+
+    aaruf_crc64_final(ctx, &crc);
+    aaruf_crc64_free(ctx);
+    ASSERT_EQ(crc, generated_crc) << "Unexpected CRC64 for image data";
+
+    close_result = aaruf_close(context);
+    EXPECT_EQ(close_result, AARUF_STATUS_OK) << "Failed to close image";
+}
+
+TEST_F(CreateImageFixture, create_subchannel_zstd_compressed_image)
+{
+    char path[PATH_MAX];
+    char filename[PATH_MAX];
+
+    getcwd(path, PATH_MAX);
+    snprintf(filename, PATH_MAX, "%s/data/audio.bin", path);
+
+    FILE *f = fopen(filename, "rb");
+    ASSERT_NE(f, nullptr) << "Failed to open audio.bin data file";
+
+    fseek(f, 0, SEEK_END);
+    const long audio_size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    uint8_t *buffer = static_cast<uint8_t *>(malloc(audio_size));
+    ASSERT_NE(buffer, nullptr) << "Failed to allocate memory for audio data";
+
+    size_t bytes_read = fread(buffer, 1, audio_size, f);
+    fclose(f);
+    ASSERT_EQ(bytes_read, static_cast<size_t>(audio_size)) << "Failed to read complete audio data";
+
+    const size_t total_size = audio_size * 3;
+
+    void *context =
+        aaruf_create("test_audio_zstd.aif", 11, 2352, total_size / 2352, 0, 0,
+                     "compress=true;zstd=true;zstd_level=19",
+                     reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0, false);
+
+    ASSERT_NE(context, nullptr) << "Failed to create test_audio_zstd.aif";
+
+    TrackEntry track;
+    memset(&track, 0, sizeof(TrackEntry));
+    track.sequence = 1;
+    track.type     = kTrackTypeAudio;
+    track.start    = 0;
+    track.end      = (audio_size * 3 / 2352) - 1;
+    track.pregap   = 0;
+    track.session  = 1;
+    memset(track.isrc, 0, 13);
+    track.flags = 0;
+
+    int32_t track_result = aaruf_set_tracks(context, &track, 1);
+    ASSERT_EQ(track_result, AARUF_STATUS_OK) << "Failed to set tracks";
+
+    crc64_ctx *ctx           = aaruf_crc64_init();
+    uint64_t   generated_crc = 0;
+
+    size_t total_sectors = total_size / 2352;
+
+    for(size_t sector = 0; sector < total_sectors; ++sector)
+    {
+        const size_t  buffer_offset = (sector * 2352) % audio_size;
+        const int32_t write_result =
+            aaruf_write_sector_long(context, sector, false, buffer + buffer_offset, SectorStatusDumped, 2352);
+        ASSERT_EQ(write_result, AARUF_STATUS_OK) << "Failed to write sector " << sector;
+        aaruf_crc64_update(ctx, buffer + buffer_offset, 2352);
+    }
+
+    aaruf_crc64_final(ctx, &generated_crc);
+    aaruf_crc64_free(ctx);
+
+    crc64_ctx *subchannel_ctx           = aaruf_crc64_init();
+    uint64_t   generated_subchannel_crc = 0;
+    uint8_t    subchannel_data[96];
+
+    for(size_t sector = 0; sector < total_sectors; ++sector)
+    {
+        for(size_t i = 0; i < 96; ++i) { subchannel_data[i] = static_cast<uint8_t>((sector * 96 + i) & 0xFF); }
+
+        const int32_t subchannel_result =
+            aaruf_write_sector_tag(context, sector, false, subchannel_data, 96, kSectorTagCdSubchannel);
+        ASSERT_EQ(subchannel_result, AARUF_STATUS_OK) << "Failed to write subchannel for sector " << sector;
+        aaruf_crc64_update(subchannel_ctx, subchannel_data, 96);
+    }
+
+    aaruf_crc64_final(subchannel_ctx, &generated_subchannel_crc);
+    aaruf_crc64_free(subchannel_ctx);
+
+    int32_t close_result = aaruf_close(context);
+    ASSERT_EQ(close_result, AARUF_STATUS_OK) << "Failed to close image";
+    free(buffer);
+
+    context = aaruf_open("test_audio_zstd.aif", false, NULL);
+    ASSERT_NE(context, nullptr) << "Failed to open test_audio_zstd.aif";
+
+    ImageInfo     image_info;
+    const int32_t result = aaruf_get_image_info(context, &image_info);
+    ASSERT_EQ(result, AARUF_STATUS_OK) << "Failed to get image info";
+    ASSERT_EQ(image_info.Sectors, total_sectors) << "Unexpected number of sectors";
+    ASSERT_EQ(image_info.SectorSize, 2352) << "Unexpected sector size";
+
+    ctx          = aaruf_crc64_init();
+    uint64_t crc = 0;
+
+    for(size_t i = 0; i < total_sectors; i++)
+    {
+        uint8_t  sector_buffer[2352];
+        uint32_t length        = sizeof(sector_buffer);
+        uint8_t  sector_status = 0;
+
+        const int32_t read_result = aaruf_read_sector_long(context, i, false, sector_buffer, &length, &sector_status);
+        EXPECT_EQ(read_result, AARUF_STATUS_OK) << "Failed to read sector " << i;
+        EXPECT_EQ(length, 2352U) << "Unexpected length for sector " << i;
+        aaruf_crc64_update(ctx, sector_buffer, 2352);
+    }
+
+    aaruf_crc64_final(ctx, &crc);
+    aaruf_crc64_free(ctx);
+    ASSERT_EQ(crc, generated_crc) << "Unexpected CRC64 for image data";
+
+    crc64_ctx *subchannel_read_ctx = aaruf_crc64_init();
+    uint64_t   read_subchannel_crc = 0;
+
+    for(size_t i = 0; i < total_sectors; i++)
+    {
+        uint8_t  subchannel_buffer[96];
+        uint32_t subchannel_length = sizeof(subchannel_buffer);
+
+        const int32_t subchannel_read_result =
+            aaruf_read_sector_tag(context, i, false, subchannel_buffer, &subchannel_length, kSectorTagCdSubchannel);
+        EXPECT_EQ(subchannel_read_result, AARUF_STATUS_OK) << "Failed to read subchannel for sector " << i;
+        EXPECT_EQ(subchannel_length, 96U) << "Unexpected subchannel length for sector " << i;
+        aaruf_crc64_update(subchannel_read_ctx, subchannel_buffer, 96);
+    }
+
+    aaruf_crc64_final(subchannel_read_ctx, &read_subchannel_crc);
+    aaruf_crc64_free(subchannel_read_ctx);
+    ASSERT_EQ(read_subchannel_crc, generated_subchannel_crc) << "Unexpected CRC64 for subchannel data";
+
+    close_result = aaruf_close(context);
+    EXPECT_EQ(close_result, AARUF_STATUS_OK) << "Failed to close image";
+}
+
+TEST_F(CreateImageFixture, create_image_zstd_flag_uncompressed_no_feature_bit)
+{
+    char path[PATH_MAX];
+    char filename[PATH_MAX];
+
+    getcwd(path, PATH_MAX);
+    snprintf(filename, PATH_MAX, "%s/data/random", path);
+
+    FILE *f = fopen(filename, "rb");
+    ASSERT_NE(f, nullptr) << "Failed to open random data file";
+
+    uint8_t *buffer = static_cast<uint8_t *>(malloc(1048576));
+    fread(buffer, 1, 1048576, f);
+    fclose(f);
+
+    constexpr size_t total_sectors = 128 * 1024 * 1024 / 512;
+
+    // zstd=true but compress=false: no zstd blocks should be emitted,
+    // featureIncompatible must NOT contain the zstd bit.
+    void *context =
+        aaruf_create("test_zstd_nocompress.aif", 1, 512, total_sectors, 0, 0,
+                     "deduplicate=true;compress=false;zstd=true",
+                     reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0, false);
+
+    ASSERT_NE(context, nullptr) << "Failed to create test_zstd_nocompress.aif";
+
+    for(size_t sector = 0; sector < total_sectors; ++sector)
+    {
+        const size_t  buffer_offset = sector * 512 % 1048576;
+        const int32_t write_result =
+            aaruf_write_sector(context, sector, false, buffer + buffer_offset, SectorStatusDumped, 512);
+        ASSERT_EQ(write_result, AARUF_STATUS_OK) << "Failed to write sector " << sector;
+    }
+
+    int32_t close_result = aaruf_close(context);
+    ASSERT_EQ(close_result, AARUF_STATUS_OK) << "Failed to close image";
+    free(buffer);
+
+    // The image must open without being rejected for featureIncompatible.
+    // If has_zstd_blocks is incorrectly set, the header would carry the zstd
+    // incompatible bit and a reader without zstd support would reject it.
+    context = aaruf_open("test_zstd_nocompress.aif", false, NULL);
+    ASSERT_NE(context, nullptr) << "Failed to open test_zstd_nocompress.aif";
+
+    ImageInfo     image_info;
+    const int32_t result = aaruf_get_image_info(context, &image_info);
+    ASSERT_EQ(result, AARUF_STATUS_OK) << "Failed to get image info";
+    ASSERT_EQ(image_info.Sectors, total_sectors) << "Unexpected number of sectors";
+
+    close_result = aaruf_close(context);
+    EXPECT_EQ(close_result, AARUF_STATUS_OK) << "Failed to close image";
+}
