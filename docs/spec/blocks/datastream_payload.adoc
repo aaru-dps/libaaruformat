@@ -54,7 +54,7 @@ typedef struct DataStreamPayloadHeader
 |uint32_t
 |4 bytes
 |cmpLength
-|Compressed length in bytes (includes LZMA properties if compression = Lzma)
+|Total compressed payload size in bytes. For LZMA this includes the 5-byte properties prefix; see Appendix C.
 
 |uint32_t
 |4 bytes
@@ -64,7 +64,7 @@ typedef struct DataStreamPayloadHeader
 |uint64_t
 |8 bytes
 |cmpCrc64
-|CRC64-ECMA checksum of the compressed payload data
+|CRC64-ECMA of the compressed payload. For LZMA this covers the compressed stream only, excluding the 5-byte properties prefix; see Appendix C.
 
 |uint64_t
 |8 bytes

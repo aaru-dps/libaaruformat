@@ -56,7 +56,7 @@ typedef struct BlockHeader
 |uint32_t
 |4 bytes
 |cmpLength
-|The size in bytes of the compressed data that follows this header.
+|The total size in bytes of the compressed payload that follows this header. For LZMA (IDs 1, 3) this includes the 5-byte properties prefix; see Appendix C for details.
 
 |uint32_t
 |4 bytes
@@ -66,7 +66,7 @@ typedef struct BlockHeader
 |uint64_t
 |8 bytes
 |cmpCrc64
-|The CRC64-ECMA checksum of the compressed data that follows this header.
+|CRC64-ECMA of the compressed payload. For LZMA (IDs 1, 3) this covers the compressed stream only, excluding the 5-byte properties prefix; see Appendix C for details.
 
 |uint64_t
 |8 bytes
