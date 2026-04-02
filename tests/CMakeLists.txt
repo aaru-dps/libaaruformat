@@ -143,6 +143,39 @@ endif()
 # Ensure test data is copied before running tests
 add_dependencies(tests_run copy_test_data)
 
+# On Windows, copy all runtime DLLs (aaruformat, gtest, ZLIB, etc.) next to the
+# test executable so it can be discovered and run without PATH manipulation.
+if(WIN32)
+  add_custom_command(TARGET tests_run POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      $<TARGET_FILE:aaruformat>
+      $<TARGET_FILE_DIR:tests_run>
+    COMMENT "Copying libaaruformat DLL next to tests_run"
+  )
+  add_custom_command(TARGET tests_run POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      $<TARGET_FILE:gtest>
+      $<TARGET_FILE_DIR:tests_run>
+    COMMENT "Copying libgtest DLL next to tests_run"
+  )
+  add_custom_command(TARGET tests_run POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      $<TARGET_FILE:gtest_main>
+      $<TARGET_FILE_DIR:tests_run>
+    COMMENT "Copying libgtest_main DLL next to tests_run"
+  )
+  # Copy all remaining runtime DLLs (e.g. ZLIB from vcpkg) if CMake >= 3.21
+  if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.21")
+    add_custom_command(TARGET tests_run POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_RUNTIME_DLLS:tests_run>
+        $<TARGET_FILE_DIR:tests_run>
+      COMMAND_EXPAND_LISTS
+      COMMENT "Copying remaining runtime DLLs next to tests_run"
+    )
+  endif()
+endif()
+
 # Integrate with CTest (per-test reporting)
 enable_testing()
 include(GoogleTest)
@@ -158,14 +191,19 @@ if(USE_ASAN)
     set(ENV{ASAN_OPTIONS} "detect_leaks=0:print_stats=0")
   endif()
 
-  # Discover tests - this runs with the ASAN_OPTIONS we just set
+  # Discover tests at ctest-run time (PRE_TEST) to avoid running the exe during the
+  # build phase where the ASAN runtime or DLLs may not yet be in PATH.
   gtest_discover_tests(tests_run
     DISCOVERY_TIMEOUT 30
+    DISCOVERY_MODE PRE_TEST
   )
 
   # Clear the environment variable so it doesn't affect the actual test runs
   unset(ENV{ASAN_OPTIONS})
 else()
-  gtest_discover_tests(tests_run)
+  # PRE_TEST defers discovery to ctest time, avoiding the 0xC0000135 DLL-not-found
+  # error that occurs when CMake tries to run tests_run.exe immediately after linking
+  # (before the POST_BUILD DLL-copy commands have finished, or when PATH lacks MinGW).
+  gtest_discover_tests(tests_run DISCOVERY_MODE PRE_TEST)
 endif()
 
