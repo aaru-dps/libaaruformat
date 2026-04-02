@@ -104,8 +104,8 @@ TEST(PS3EncMap, ParseTooManyRegions)
 {
     uint8_t sector0[2048];
     memset(sector0, 0, 2048);
-    /* region_count = 33 (> max 32) */
-    sector0[3] = 33;
+    /* region_count = 65 (> max 64) */
+    sector0[3] = 65;
 
     Ps3PlaintextRegion *regions = NULL;
     uint32_t            count   = 0;
