@@ -185,7 +185,9 @@ else()
   message(STATUS "Building static library")
 endif()
 
-add_library(aaruformat
+# Sources shared between full (aaruformat) and reader-only (aaruformatread) targets.
+# Writer-only functions in some of these files are guarded by #ifndef AARUFORMAT_READER_ONLY.
+set(AARUFORMAT_COMMON_SOURCES
             include/aaruformat/consts.h
             include/aaruformat/enums.h
             include/aaru.h
@@ -196,7 +198,6 @@ add_library(aaruformat
             src/open.c
             include/aaruformat/context.h
             src/close.c
-            src/close_write.c
             include/aaruformat/errors.h
             src/read.c
             include/aaruformat/crc64.h
@@ -240,9 +241,7 @@ add_library(aaruformat
             src/ddt/ddt_v2.c
             include/aaruformat/structs/options.h
             src/options.c
-            src/create.c
             src/time.c
-            src/write.c
             include/log.h
             src/ddt/hash_map.c
             include/aaruformat/hash_map.h
@@ -257,7 +256,6 @@ add_library(aaruformat
             src/lisa_tag.c
             include/aaruformat/structs/lisa_tag.h
             src/metadata.c
-            src/metadata_write.c
             src/dump.c
             include/aaruformat/structs/tape.h
             src/blocks/tape.c
@@ -278,15 +276,33 @@ add_library(aaruformat
             src/ngcw/wii_crypto.h
             src/compression/zstd.c)
 
-# Set up include directories for the target
-target_include_directories(aaruformat
-                           PUBLIC
-                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/aaruformat>
-                           $<INSTALL_INTERFACE:include>
-                           ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/uthash/include
-                           ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/uthash/src
-)
+# Writer-only sources — excluded from the reader-only target.
+set(AARUFORMAT_WRITER_SOURCES
+            src/create.c
+            src/write.c
+            src/close_write.c
+            src/metadata_write.c)
+
+# Full library (LGPL 2.1) — read + write
+add_library(aaruformat ${AARUFORMAT_COMMON_SOURCES} ${AARUFORMAT_WRITER_SOURCES})
+
+# Reader-only library (MIT) — read, identify, open, verify, get-metadata
+add_library(aaruformatread ${AARUFORMAT_COMMON_SOURCES})
+target_compile_definitions(aaruformatread PRIVATE AARUFORMAT_READER_ONLY)
+
+# Both targets share the same include directories, dependencies, and flags.
+set(AARUFORMAT_TARGETS aaruformat aaruformatread)
+
+foreach(_target ${AARUFORMAT_TARGETS})
+  target_include_directories(${_target}
+                             PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/aaruformat>
+                             $<INSTALL_INTERFACE:include>
+                             ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/uthash/include
+                             ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/uthash/src
+  )
+endforeach()
 
 # Load third-party dependencies
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake-modules")
@@ -297,9 +313,11 @@ include(3rdparty/xxhash.cmake)
 include(3rdparty/blake3.cmake)
 include(3rdparty/zstd.cmake)
 
-if(TARGET blake3)
-  target_link_libraries(aaruformat blake3)
-endif()
+foreach(_target ${AARUFORMAT_TARGETS})
+  if(TARGET blake3)
+    target_link_libraries(${_target} blake3)
+  endif()
+endforeach()
 
 macro(TARGET_LINK_LIBRARIES_WHOLE_ARCHIVE target)
   if(MSVC)
@@ -318,13 +336,15 @@ macro(TARGET_LINK_LIBRARIES_WHOLE_ARCHIVE target)
 endmacro()
 
 # MinGW/ARM specific: disable PIC
-if(NOT "${CMAKE_C_PLATFORM_ID}" MATCHES "MinGW"
-   OR (NOT ${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm"
-   AND NOT ${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64"))
-  set_property(TARGET aaruformat PROPERTY POSITION_INDEPENDENT_CODE TRUE)
-else()
-  set_property(TARGET aaruformat PROPERTY POSITION_INDEPENDENT_CODE FALSE)
-endif()
+foreach(_target ${AARUFORMAT_TARGETS})
+  if(NOT "${CMAKE_C_PLATFORM_ID}" MATCHES "MinGW"
+     OR (NOT ${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm"
+     AND NOT ${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64"))
+    set_property(TARGET ${_target} PROPERTY POSITION_INDEPENDENT_CODE TRUE)
+  else()
+    set_property(TARGET ${_target} PROPERTY POSITION_INDEPENDENT_CODE FALSE)
+  endif()
+endforeach()
 
 # Add slog submodule
 if(POLICY CMP0000)
@@ -335,14 +355,11 @@ endif()
 if(USE_SLOG)
   add_subdirectory(3rdparty/slog)
 
-  # Include slog headers
-  target_include_directories(aaruformat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/slog/src)
-
-  # Enable TRACE and slog output
-  target_compile_definitions(aaruformat PRIVATE ENABLE_TRACE ENABLE_FATAL USE_SLOG)
-
-  # Link slog
-  target_link_libraries(aaruformat slog)
+  foreach(_target ${AARUFORMAT_TARGETS})
+    target_include_directories(${_target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/slog/src)
+    target_compile_definitions(${_target} PRIVATE ENABLE_TRACE ENABLE_FATAL USE_SLOG)
+    target_link_libraries(${_target} slog)
+  endforeach()
 
   message(STATUS "slog logging enabled")
 else()
@@ -354,7 +371,9 @@ include(CheckLibraryExists)
 
 check_library_exists(m cos "" HAVE_LIB_M)
 if(HAVE_LIB_M)
-  target_link_libraries(aaruformat m)
+  foreach(_target ${AARUFORMAT_TARGETS})
+    target_link_libraries(${_target} m)
+  endforeach()
 endif()
 
 # Find Doxygen for documentation generation

@@ -328,6 +328,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_tracks(const void *context, uint8_t *buf
     return AARUF_STATUS_OK;
 }
 
+#ifndef AARUFORMAT_READER_ONLY
+
 /**
  * @brief Replace (or clear) the in-memory track table for an AaruFormat image context.
  *
@@ -489,3 +491,5 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_tracks(void *context, TrackEntry *tracks
     TRACE("Exiting aaruf_set_tracks() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
 }
+
+#endif  // !AARUFORMAT_READER_ONLY

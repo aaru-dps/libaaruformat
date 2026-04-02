@@ -368,6 +368,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_dumphw(void *context, uint8_t *buffer, s
     return AARUF_STATUS_OK;
 }
 
+#ifndef AARUFORMAT_READER_ONLY
+
 /**
  * @brief Sets the dump hardware block for the image during creation.
  *
@@ -697,3 +699,5 @@ free_copy_and_error:
     TRACE("Exiting aaruf_set_dumphw() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
     return AARUF_ERROR_NOT_ENOUGH_MEMORY;
 }
+
+#endif  // !AARUFORMAT_READER_ONLY

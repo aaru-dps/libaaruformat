@@ -1213,6 +1213,8 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
     return AARUF_STATUS_OK;
 }
 
+#ifndef AARUFORMAT_READER_ONLY
+
 /**
  * @brief Sets a DDT v2 entry for a given sector address.
  *
@@ -2124,3 +2126,5 @@ bool set_ddt_tape(aaruformat_context *ctx, uint64_t sector_address, const uint64
     TRACE("Exiting set_ddt_tape() = true");
     return true;
 }
+
+#endif  // !AARUFORMAT_READER_ONLY

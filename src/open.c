@@ -677,6 +677,13 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
         return ctx;
     }
 
+#ifdef AARUFORMAT_READER_ONLY
+    // Reader-only builds do not support resume mode
+    FATAL("Resume mode not available in reader-only library");
+    errno = AARUF_ERROR_INCOMPATIBLE_VERSION;
+    cleanup_open_failure(ctx);
+    return NULL;
+#else
     // Parse the options
     TRACE("Parsing options");
     bool               table_shift_found = false;
@@ -720,4 +727,5 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     TRACE("Exiting aaruf_open() = %p", ctx);
     // Return context
     return ctx;
+#endif  // !AARUFORMAT_READER_ONLY
 }
