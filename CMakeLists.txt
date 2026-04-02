@@ -257,6 +257,7 @@ add_library(aaruformat
             src/lisa_tag.c
             include/aaruformat/structs/lisa_tag.h
             src/metadata.c
+            src/metadata_write.c
             src/dump.c
             include/aaruformat/structs/tape.h
             src/blocks/tape.c
