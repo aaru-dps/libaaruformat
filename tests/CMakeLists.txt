@@ -98,6 +98,8 @@ add_executable(tests_run
     ps3_sfo.cpp
     ps3_iso9660.cpp
     ngcw.cpp
+    mode2_nocrc.cpp
+    mode2_errored.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/lib/aes128.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_crypto.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_encryption_map.c
