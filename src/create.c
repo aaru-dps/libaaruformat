@@ -566,7 +566,8 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
     }
 
     // Is writing
-    ctx->is_writing = true;
+    ctx->is_writing      = true;
+    ctx->finalize_write  = aaruf_finalize_write;
 
     // Initialize dirty flags - all true by default for new images
     ctx->dirty_secondary_ddt                 = true;
