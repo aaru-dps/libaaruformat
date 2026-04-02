@@ -63,6 +63,7 @@ bool    set_ddt_tape(aaruformat_context *ctx, uint64_t sector_address, uint64_t 
 aaru_options parse_options(const char *options, bool *table_shift_found);
 uint64_t     get_filetime_uint64();
 int32_t      aaruf_close_current_block(aaruformat_context *ctx);
+int32_t      aaruf_finalize_write(aaruformat_context *ctx);
 int          compare_extents(const void *a, const void *b);
 void         generate_random_bytes(uint8_t *buffer, size_t length);
 

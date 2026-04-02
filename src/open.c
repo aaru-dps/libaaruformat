@@ -714,7 +714,8 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     ctx->rewinded = true;
 
     // Is writing
-    ctx->is_writing = true;
+    ctx->is_writing     = true;
+    ctx->finalize_write = aaruf_finalize_write;
 
     TRACE("Exiting aaruf_open() = %p", ctx);
     // Return context

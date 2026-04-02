@@ -196,6 +196,7 @@ add_library(aaruformat
             src/open.c
             include/aaruformat/context.h
             src/close.c
+            src/close_write.c
             include/aaruformat/errors.h
             src/read.c
             include/aaruformat/crc64.h
