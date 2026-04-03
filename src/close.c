@@ -32,6 +32,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#endif
+
 #ifdef __linux__
 #include <sys/mman.h>
 #endif
@@ -40,6 +44,14 @@
 
 #include "internal.h"
 #include "log.h"
+
+static inline void aaruf_set_close_error(const int error_code)
+{
+    errno = error_code;
+#if defined(_WIN32) || defined(_WIN64)
+    SetLastError((DWORD)error_code);
+#endif
+}
 
 /**
  * @brief Close an Aaru image context, flushing pending data structures and releasing resources.
@@ -67,6 +79,7 @@
 AARU_EXPORT int AARU_CALL aaruf_close(void *context)
 {
     TRACE("Entering aaruf_close(%p)", context);
+    aaruf_set_close_error(0);
 
     mediaTagEntry *media_tag     = NULL;
     mediaTagEntry *tmp_media_tag = NULL;
@@ -74,7 +87,7 @@ AARU_EXPORT int AARU_CALL aaruf_close(void *context)
     if(context == NULL)
     {
         FATAL("Invalid context");
-        errno = EINVAL;
+        aaruf_set_close_error(EINVAL);
         return -1;
     }
 
@@ -84,14 +97,18 @@ AARU_EXPORT int AARU_CALL aaruf_close(void *context)
     if(ctx->magic != AARU_MAGIC)
     {
         FATAL("Invalid context");
-        errno = EINVAL;
+        aaruf_set_close_error(EINVAL);
         return -1;
     }
 
     if(ctx->finalize_write != NULL)
     {
         int32_t res = ctx->finalize_write(ctx);
-        if(res != AARUF_STATUS_OK) return res;
+        if(res != AARUF_STATUS_OK)
+        {
+            aaruf_set_close_error(errno != 0 ? errno : res);
+            return res;
+        }
     }
 
     TRACE("Freeing memory pointers");

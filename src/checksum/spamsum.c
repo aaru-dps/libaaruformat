@@ -25,9 +25,21 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#endif
+
 #include "aaruformat.h"
 
 #include "spamsum.h"
+
+static inline void aaruf_set_spamsum_error(const int error_code)
+{
+    errno = error_code;
+#if defined(_WIN32) || defined(_WIN64)
+    SetLastError((DWORD)error_code);
+#endif
+}
 
 static uint8_t b64[] = {0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50,
                         0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,
@@ -190,6 +202,8 @@ AARU_LOCAL inline void fuzzy_try_fork_blockhash(spamsum_ctx *ctx)
 
 AARU_EXPORT int AARU_CALL aaruf_spamsum_final(spamsum_ctx *ctx, uint8_t *result)
 {
+    aaruf_set_spamsum_error(0);
+
     uint32_t bi     = ctx->bh_start;
     uint32_t h      = ROLL_SUM(ctx);
     int      remain = FUZZY_MAX_RESULT - 1; /* Exclude terminating '\0'. */
@@ -206,7 +220,7 @@ AARU_EXPORT int AARU_CALL aaruf_spamsum_final(spamsum_ctx *ctx, uint8_t *result)
 
         if(bi >= NUM_BLOCKHASHES)
         {
-            errno = EOVERFLOW;
+            aaruf_set_spamsum_error(EOVERFLOW);
             return -1;
         }
     }

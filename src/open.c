@@ -22,11 +22,23 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#endif
+
 #include <aaruformat.h>
 
 #include "internal.h"
 #include "log.h"
 #include "utarray.h"
+
+static inline void aaruf_set_open_error(const int error_code)
+{
+    errno = error_code;
+#if defined(_WIN32) || defined(_WIN64)
+    SetLastError((DWORD)error_code);
+#endif
+}
 
 static void cleanup_open_failure(aaruformat_context *ctx)
 {
@@ -240,6 +252,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     TRACE("Logging initialized");
 
     TRACE("Entering aaruf_open(%s)", filepath);
+    aaruf_set_open_error(0);
 
     TRACE("Allocating memory for context");
     ctx = (aaruformat_context *)malloc(sizeof(aaruformat_context));
@@ -247,7 +260,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     if(ctx == NULL)
     {
         FATAL("Not enough memory to create context");
-        errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        aaruf_set_open_error(AARUF_ERROR_NOT_ENOUGH_MEMORY);
 
         TRACE("Exiting aaruf_open() = NULL");
         return NULL;
@@ -266,7 +279,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
         FATAL("Error %d opening file %s for reading", errno, filepath);
         error_no = errno;
         cleanup_open_failure(ctx);
-        errno = error_no;
+        aaruf_set_open_error(error_no);
 
         TRACE("Exiting aaruf_open() = NULL");
         return NULL;
@@ -280,7 +293,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     {
         FATAL("Could not read header");
         cleanup_open_failure(ctx);
-        errno = AARUF_ERROR_FILE_TOO_SMALL;
+        aaruf_set_open_error(AARUF_ERROR_FILE_TOO_SMALL);
 
         TRACE("Exiting aaruf_open() = NULL");
         return NULL;
@@ -290,7 +303,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     {
         FATAL("Incorrect identifier for AaruFormat file: %8.8s", (char *)&ctx->header.identifier);
         cleanup_open_failure(ctx);
-        errno = AARUF_ERROR_NOT_AARUFORMAT;
+        aaruf_set_open_error(AARUF_ERROR_NOT_AARUFORMAT);
 
         TRACE("Exiting aaruf_open() = NULL");
         return NULL;
@@ -300,7 +313,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     {
         TRACE("Cannot write to old images");
         cleanup_open_failure(ctx);
-        errno = AARUF_ERROR_INCOMPATIBLE_VERSION;
+        aaruf_set_open_error(AARUF_ERROR_INCOMPATIBLE_VERSION);
         TRACE("Exiting aaruf_open() = NULL");
         return NULL;
     }
@@ -315,7 +328,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
         if(read_bytes != sizeof(AaruHeaderV2))
         {
             cleanup_open_failure(ctx);
-            errno = AARUF_ERROR_FILE_TOO_SMALL;
+            aaruf_set_open_error(AARUF_ERROR_FILE_TOO_SMALL);
 
             return NULL;
         }
@@ -326,7 +339,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
         FATAL("Incompatible AaruFormat version %d.%d found, maximum supported is %d.%d", ctx->header.imageMajorVersion,
               ctx->header.imageMinorVersion, AARUF_VERSION_V2, 0);
         cleanup_open_failure(ctx);
-        errno = AARUF_ERROR_INCOMPATIBLE_VERSION;
+        aaruf_set_open_error(AARUF_ERROR_INCOMPATIBLE_VERSION);
 
         TRACE("Exiting aaruf_open() = NULL");
         return NULL;
@@ -341,7 +354,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
         {
             FATAL("Image requires unsupported incompatible features: 0x%016" PRIX64, unknown_incompat);
             cleanup_open_failure(ctx);
-            errno = AARUF_ERROR_INCOMPATIBLE_FEATURES;
+            aaruf_set_open_error(AARUF_ERROR_INCOMPATIBLE_FEATURES);
 
             TRACE("Exiting aaruf_open() = NULL");
             return NULL;
@@ -356,7 +369,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
                 FATAL("Image has unsupported read-only compatible features: 0x%016" PRIX64 ", cannot open for writing",
                       unknown_rocompat);
                 cleanup_open_failure(ctx);
-                errno = AARUF_ERROR_INCOMPATIBLE_FEATURES;
+                aaruf_set_open_error(AARUF_ERROR_INCOMPATIBLE_FEATURES);
 
                 TRACE("Exiting aaruf_open() = NULL");
                 return NULL;
@@ -376,7 +389,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     {
         FATAL("Could not allocate memory for readable sector tags bitmap");
         cleanup_open_failure(ctx);
-        errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        aaruf_set_open_error(AARUF_ERROR_NOT_ENOUGH_MEMORY);
 
         TRACE("Exiting aaruf_open() = NULL");
         return NULL;
@@ -429,7 +442,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     if(pos < 0)
     {
         cleanup_open_failure(ctx);
-        errno = AARUF_ERROR_CANNOT_READ_INDEX;
+        aaruf_set_open_error(AARUF_ERROR_CANNOT_READ_INDEX);
 
         return NULL;
     }
@@ -438,7 +451,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     if(pos != ctx->header.indexOffset)
     {
         cleanup_open_failure(ctx);
-        errno = AARUF_ERROR_CANNOT_READ_INDEX;
+        aaruf_set_open_error(AARUF_ERROR_CANNOT_READ_INDEX);
 
         return NULL;
     }
@@ -450,7 +463,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     {
         FATAL("Could not read index header or incorrect identifier %4.4s", (char *)&signature);
         cleanup_open_failure(ctx);
-        errno = AARUF_ERROR_CANNOT_READ_INDEX;
+        aaruf_set_open_error(AARUF_ERROR_CANNOT_READ_INDEX);
 
         TRACE("Exiting aaruf_open() = NULL");
         return NULL;
@@ -468,7 +481,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
         FATAL("Could not process index.");
         utarray_free(index_entries);
         cleanup_open_failure(ctx);
-        errno = AARUF_ERROR_CANNOT_READ_INDEX;
+        aaruf_set_open_error(AARUF_ERROR_CANNOT_READ_INDEX);
 
         TRACE("Exiting aaruf_open() = NULL");
         return NULL;
@@ -510,7 +523,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
                 {
                     utarray_free(index_entries);
                     cleanup_open_failure(ctx);
-                    errno = error_no;
+                    aaruf_set_open_error(error_no);
 
                     return NULL;
                 }
@@ -524,7 +537,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
                 {
                     utarray_free(index_entries);
                     cleanup_open_failure(ctx);
-                    errno = error_no;
+                    aaruf_set_open_error(error_no);
 
                     return NULL;
                 }
@@ -537,7 +550,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
                 {
                     utarray_free(index_entries);
                     cleanup_open_failure(ctx);
-                    errno = error_no;
+                    aaruf_set_open_error(error_no);
 
                     return NULL;
                 }
@@ -618,6 +631,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     {
         FATAL("Could not find user data deduplication table, aborting...");
         aaruf_close(ctx);
+        aaruf_set_open_error(AARUF_ERROR_CANNOT_READ_INDEX);
 
         TRACE("Exiting aaruf_open() = NULL");
         return NULL;
@@ -697,9 +711,9 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     if(fseek(ctx->imageStream, ctx->next_block_position, SEEK_SET) != 0)
     {
         FATAL("Could not seek to data start position");
-        errno = AARUF_ERROR_CANNOT_CREATE_FILE;
         TRACE("Exiting aaruf_open() = NULL");
         cleanup_open_failure(ctx);
+        aaruf_set_open_error(AARUF_ERROR_CANNOT_CREATE_FILE);
         return NULL;
     }
 

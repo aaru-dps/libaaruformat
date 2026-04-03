@@ -22,10 +22,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#endif
+
 #include "aaruformat.h"
 #include "enums.h"
 #include "internal.h"
 #include "log.h"
+
+static inline void aaruf_set_create_error(const int error_code)
+{
+    errno = error_code;
+#if defined(_WIN32) || defined(_WIN64)
+    SetLastError((DWORD)error_code);
+#endif
+}
 
 static void cleanup_failed_create(aaruformat_context *ctx)
 {
@@ -287,6 +299,7 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
           sector_size, user_sectors, negative_sectors, overflow_sectors, options,
           application_name ? (const char *)application_name : "NULL", application_name_length,
           application_major_version, application_minor_version, is_tape);
+    aaruf_set_create_error(0);
 
     // Parse the options
     TRACE("Parsing options");
@@ -299,7 +312,7 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
     if(ctx == NULL)
     {
         FATAL("Not enough memory to create context");
-        errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
+        aaruf_set_create_error(AARUF_ERROR_NOT_ENOUGH_MEMORY);
 
         TRACE("Exiting aaruf_create() = NULL");
         return NULL;
@@ -313,10 +326,10 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
     if(ctx->imageStream == NULL)
     {
         FATAL("Error %d opening file %s for writing", errno, filepath);
-        errno = AARUF_ERROR_CANNOT_CREATE_FILE;
 
         TRACE("Exiting aaruf_create() = NULL");
         cleanup_failed_create(ctx);
+        aaruf_set_create_error(AARUF_ERROR_CANNOT_CREATE_FILE);
         return NULL;
     }
 
@@ -324,10 +337,10 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
     {
         FATAL("Application name too long (%u bytes, maximum %u bytes)", application_name_length,
               AARU_HEADER_APP_NAME_LEN);
-        errno = AARUF_ERROR_INVALID_APP_NAME_LENGTH;
 
         TRACE("Exiting aaruf_create() = NULL");
         cleanup_failed_create(ctx);
+        aaruf_set_create_error(AARUF_ERROR_INVALID_APP_NAME_LENGTH);
         return NULL;
     }
 
@@ -352,10 +365,9 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
 
     if(ctx->readableSectorTags == NULL)
     {
-        errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
-
         TRACE("Exiting aaruf_create() = NULL");
         cleanup_failed_create(ctx);
+        aaruf_set_create_error(AARUF_ERROR_NOT_ENOUGH_MEMORY);
         return NULL;
     }
 
@@ -456,9 +468,9 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
         if(ctx->user_data_ddt2 == NULL)
         {
             FATAL("Not enough memory to allocate primary DDT (big)");
-            errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
             TRACE("Exiting aaruf_create() = NULL");
             cleanup_failed_create(ctx);
+            aaruf_set_create_error(AARUF_ERROR_NOT_ENOUGH_MEMORY);
             return NULL;
         }
 
@@ -502,9 +514,9 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
     if(fseek(ctx->imageStream, ctx->next_block_position, SEEK_SET) != 0)
     {
         FATAL("Could not seek to data start position");
-        errno = AARUF_ERROR_CANNOT_CREATE_FILE;
         TRACE("Exiting aaruf_create() = NULL");
         cleanup_failed_create(ctx);
+        aaruf_set_create_error(AARUF_ERROR_CANNOT_CREATE_FILE);
         return NULL;
     }
 
@@ -516,10 +528,10 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
     if(ctx->index_entries == NULL)
     {
         FATAL("Not enough memory to create index entries array");
-        errno = AARUF_ERROR_NOT_ENOUGH_MEMORY;
 
         TRACE("Exiting aaruf_create() = NULL");
         cleanup_failed_create(ctx);
+        aaruf_set_create_error(AARUF_ERROR_NOT_ENOUGH_MEMORY);
         return NULL;
     }
 
