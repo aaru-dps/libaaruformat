@@ -74,6 +74,16 @@
 #ifndef MD5_ENABLE_PREFETCH
 #define MD5_ENABLE_PREFETCH 1
 #endif
+#ifndef AARU_PREFETCH
+#if defined(_MSC_VER) && (defined(__SSE2__) || defined(__AVX2__) || defined(__SSSE3__) || defined(__SSE4_1__) || \
+                          defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86))
+#define AARU_PREFETCH(addr) _mm_prefetch((const char *)(addr), _MM_HINT_T0)
+#elif defined(__GNUC__) || defined(__clang__)
+#define AARU_PREFETCH(addr) __builtin_prefetch((addr), 0, 3)
+#else
+#define AARU_PREFETCH(addr) ((void)0)
+#endif
+#endif
 #ifndef MD5_UNROLL8_THRESHOLD
 #define MD5_UNROLL8_THRESHOLD 8192UL
 #endif
@@ -276,8 +286,8 @@ static HOT const void *body(md5_ctx *ctx, const void *data, unsigned long size)
     while(size >= 512 && size >= MD5_UNROLL8_THRESHOLD)
     {
 #if MD5_ENABLE_PREFETCH
-        __builtin_prefetch(ptr + 64 * (MD5_PREFETCH_DISTANCE_BLOCKS + 8), 0, 3);
-        __builtin_prefetch(ptr + 64 * (MD5_PREFETCH_DISTANCE_BLOCKS + 10), 0, 3);
+        AARU_PREFETCH(ptr + 64 * (MD5_PREFETCH_DISTANCE_BLOCKS + 8));
+        AARU_PREFETCH(ptr + 64 * (MD5_PREFETCH_DISTANCE_BLOCKS + 10));
 #endif
         md5_process_block_loaded(&a, &b, &c, &d, ptr + 64 * 0);
         md5_process_block_loaded(&a, &b, &c, &d, ptr + 64 * 1);
@@ -295,8 +305,8 @@ static HOT const void *body(md5_ctx *ctx, const void *data, unsigned long size)
     while(size >= 256 && size >= MD5_UNROLL4_THRESHOLD)
     {
 #if MD5_ENABLE_PREFETCH
-        __builtin_prefetch(ptr + 64 * (MD5_PREFETCH_DISTANCE_BLOCKS), 0, 3);
-        __builtin_prefetch(ptr + 64 * (MD5_PREFETCH_DISTANCE_BLOCKS + 2), 0, 3);
+        AARU_PREFETCH(ptr + 64 * (MD5_PREFETCH_DISTANCE_BLOCKS));
+        AARU_PREFETCH(ptr + 64 * (MD5_PREFETCH_DISTANCE_BLOCKS + 2));
 #endif
         md5_process_block_loaded(&a, &b, &c, &d, ptr);
         md5_process_block_loaded(&a, &b, &c, &d, ptr + 64);
@@ -309,7 +319,7 @@ static HOT const void *body(md5_ctx *ctx, const void *data, unsigned long size)
     while(size >= 128 && size >= MD5_UNROLL2_THRESHOLD)
     {
 #if MD5_ENABLE_PREFETCH
-        __builtin_prefetch(ptr + 64 * (MD5_PREFETCH_DISTANCE_BLOCKS - 2), 0, 3);
+        AARU_PREFETCH(ptr + 64 * (MD5_PREFETCH_DISTANCE_BLOCKS - 2));
 #endif
         md5_process_block_loaded(&a, &b, &c, &d, ptr);
         md5_process_block_loaded(&a, &b, &c, &d, ptr + 64);
@@ -322,8 +332,8 @@ static HOT const void *body(md5_ctx *ctx, const void *data, unsigned long size)
 #if MD5_ENABLE_PREFETCH
         if(size >= 64 * (MD5_PREFETCH_DISTANCE_BLOCKS))
         {
-            __builtin_prefetch(ptr + 64 * (MD5_PREFETCH_DISTANCE_BLOCKS / 2), 0, 3);
-            __builtin_prefetch(ptr + 64 * (MD5_PREFETCH_DISTANCE_BLOCKS / 2 + 2), 0, 3);
+            AARU_PREFETCH(ptr + 64 * (MD5_PREFETCH_DISTANCE_BLOCKS / 2));
+            AARU_PREFETCH(ptr + 64 * (MD5_PREFETCH_DISTANCE_BLOCKS / 2 + 2));
         }
 #endif
         md5_process_block_loaded(&a, &b, &c, &d, ptr);
@@ -339,12 +349,10 @@ static HOT const void *body(md5_ctx *ctx, const void *data, unsigned long size)
     {
         if(sz >= 64 * 8)
         {
-#if defined(__SSE2__) || defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
-            __builtin_prefetch(p2 + 64 * 4, 0, 3);
-            __builtin_prefetch(p2 + 64 * 6, 0, 3);
-#elif defined(__ARM_NEON) || defined(__aarch64__) || defined(_M_ARM64) || defined(__arm__) || defined(_M_ARM)
-            __builtin_prefetch((const void *)(p2 + 64 * 4));
-            __builtin_prefetch((const void *)(p2 + 64 * 6));
+#if defined(__SSE2__) || defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86) || \
+    defined(__ARM_NEON) || defined(__aarch64__) || defined(_M_ARM64) || defined(__arm__) || defined(_M_ARM)
+            AARU_PREFETCH(p2 + 64 * 4);
+            AARU_PREFETCH(p2 + 64 * 6);
 #endif
         }
         saved_a = a;
