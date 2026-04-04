@@ -80,3 +80,39 @@ endif()
 if(APPLE)
   target_link_libraries(aaruformattool PRIVATE "-lc++")
 endif()
+
+# On Windows, copy libaaruformat.dll and MinGW runtime DLLs to the output directory
+if(WIN32)
+  # Copy libaaruformat.dll
+  add_custom_command(TARGET aaruformattool POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      $<TARGET_FILE:aaruformat>
+      $<TARGET_FILE_DIR:aaruformattool>
+    COMMENT "Copying libaaruformat.dll"
+  )
+
+  # Copy MinGW runtime DLLs (GCC/MinGW builds only)
+  if(CMAKE_C_COMPILER_ID MATCHES "GNU")
+    get_filename_component(MINGW_BIN_DIR "${CMAKE_C_COMPILER}" DIRECTORY)
+
+    # DLLs to copy — cover both SEH (64-bit) and DWARF (32-bit) libgcc variants
+    set(MINGW_RUNTIME_DLLS
+      libgcc_s_seh-1.dll
+      libgcc_s_dw2-1.dll
+      libstdc++-6.dll
+      libwinpthread-1.dll
+    )
+
+    foreach(MINGW_DLL IN LISTS MINGW_RUNTIME_DLLS)
+      if(EXISTS "${MINGW_BIN_DIR}/${MINGW_DLL}")
+        add_custom_command(TARGET aaruformattool POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${MINGW_BIN_DIR}/${MINGW_DLL}"
+            $<TARGET_FILE_DIR:aaruformattool>
+          COMMENT "Copying ${MINGW_DLL}"
+        )
+      endif()
+    endforeach()
+  endif()
+endif()
+

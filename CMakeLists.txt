@@ -102,7 +102,11 @@ if("${CMAKE_C_PLATFORM_ID}" MATCHES "MinGW")
   if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64" OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm")
     set(WIN32 TRUE)
   endif()
-  add_link_options(-static-libgcc)
+  # Statically link the MinGW/GCC runtime and winpthread so the executable
+  # does not depend on libgcc_s_*.dll or libwinpthread-1.dll at runtime.
+  add_link_options(-static-libgcc -static-libstdc++
+                   -Wl,-Bstatic,--whole-archive -lwinpthread
+                   -Wl,--no-whole-archive,-Bdynamic)
 endif()
 
 message(STATUS "Detected system processor: ${CMAKE_SYSTEM_PROCESSOR}")
