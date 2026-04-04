@@ -24,7 +24,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#ifndef strcasecmp
+#define strcasecmp _stricmp
+#endif
+#else
 #include <sys/time.h>
+#endif
 
 #include <aaru.h>
 #include <aaruformat.h>
@@ -292,6 +300,16 @@ static int32_t get_datatype_for_media_tag_type(MediaTagType tag_type)
  */
 static uint64_t get_current_filetime(void)
 {
+#if defined(_WIN32) || defined(_WIN64)
+    FILETIME       ft;
+    ULARGE_INTEGER uli;
+
+    GetSystemTimeAsFileTime(&ft);
+    uli.LowPart  = ft.dwLowDateTime;
+    uli.HighPart = ft.dwHighDateTime;
+
+    return uli.QuadPart;
+#else
     struct timeval tv;
     gettimeofday(&tv, NULL);
 
@@ -301,6 +319,7 @@ static uint64_t get_current_filetime(void)
     filetime += (uint64_t)tv.tv_usec * 10ULL;
 
     return filetime;
+#endif
 }
 
 /**
