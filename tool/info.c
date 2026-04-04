@@ -25,7 +25,18 @@
 #include <time.h>
 #include <unicode/ucnv.h>
 #include <unicode/ustring.h>
+
+#if defined(_WIN32) || defined(_WIN64)
+#include <io.h>
+#ifndef isatty
+#define isatty _isatty
+#endif
+#ifndef STDOUT_FILENO
+#define STDOUT_FILENO _fileno(stdout)
+#endif
+#else
 #include <unistd.h>
+#endif
 
 #include <aaruformat.h>
 #include <sys/types.h>
