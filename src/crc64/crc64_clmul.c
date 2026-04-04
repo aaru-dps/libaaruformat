@@ -28,6 +28,9 @@
 
 #ifdef _MSC_VER
 #include <intrin.h>
+#define AARU_ALIGN16 __declspec(align(16))
+#else
+#define AARU_ALIGN16 __attribute__((aligned(16)))
 #endif
 
 #include <aaruformat.h>
@@ -196,7 +199,7 @@ AARU_EXPORT CLMUL uint64_t AARU_CALL aaruf_crc64_clmul(const uint64_t crc, const
 
             // For the second block, safely handle the case where it extends past the actual data
             // Always use safe copy approach to avoid ASan buffer overflow detection
-            uint8_t temp[16] __attribute__((aligned(16))) = {0};
+            AARU_ALIGN16 uint8_t temp[16] = {0};
             const uint8_t *next_block_addr = (const uint8_t *)(aligned_data + 1);
 
             // Only copy bytes that are actually within the original buffer

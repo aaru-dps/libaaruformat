@@ -23,6 +23,12 @@
 #include <stdint.h>
 #include <string.h>
 
+#if defined(_MSC_VER)
+#define AARU_ALIGN16 __declspec(align(16))
+#else
+#define AARU_ALIGN16 __attribute__((aligned(16)))
+#endif
+
 #include <aaruformat.h>
 
 #include "arm_vmull.h"
@@ -170,7 +176,7 @@ AARU_EXPORT TARGET_WITH_SIMD uint64_t AARU_CALL aaruf_crc64_vmull(uint64_t previ
 
             // For the second block, always use safe copy to avoid buffer overflow
             // The algorithm expects to read up to alignedEnd, but ASan prevents over-reading
-            uint8_t temp[16] __attribute__((aligned(16))) = {0};
+            AARU_ALIGN16 uint8_t temp[16] = {0};
             const uint8_t *nextBlockAddr = (const uint8_t *)(alignedData + 1);
 
             // Only copy bytes that are actually within the original buffer
