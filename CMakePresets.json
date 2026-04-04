@@ -1,0 +1,84 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "BUILD_TOOL": "1"
+      }
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "description": "Portable debug configure preset. If VCPKG_ROOT is set, the repo CMakeLists.txt will use it automatically.",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "description": "Portable release configure preset. If VCPKG_ROOT is set, the repo CMakeLists.txt will use it automatically.",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "debug-vcpkg",
+      "displayName": "Debug (explicit vcpkg)",
+      "description": "Portable debug preset that explicitly uses $env{VCPKG_ROOT} for the vcpkg toolchain.",
+      "inherits": "debug",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+      }
+    },
+    {
+      "name": "release-vcpkg",
+      "displayName": "Release (explicit vcpkg)",
+      "description": "Portable release preset that explicitly uses $env{VCPKG_ROOT} for the vcpkg toolchain.",
+      "inherits": "release",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "debug-vcpkg",
+      "configurePreset": "debug-vcpkg"
+    },
+    {
+      "name": "release-vcpkg",
+      "configurePreset": "release-vcpkg"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "debug-vcpkg",
+      "configurePreset": "debug-vcpkg",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}
