@@ -27,6 +27,15 @@
 
 #include "log.h"
 
+static char *aaru_strtok_reentrant(char *str, const char *delim, char **saveptr)
+{
+#if defined(_MSC_VER)
+    return strtok_s(str, delim, saveptr);
+#else
+    return strtok_r(str, delim, saveptr);
+#endif
+}
+
 /**
  * @brief Parses the options string for AaruFormat image creation/opening.
  *
@@ -71,7 +80,7 @@ aaru_options parse_options(const char *options, bool *table_shift_found)
     buffer[sizeof(buffer) - 1] = '\0';
 
     char *saveptr = NULL;
-    char *token   = strtok_r(buffer, ";", &saveptr);
+    char *token   = aaru_strtok_reentrant(buffer, ";", &saveptr);
     while(token != NULL)
     {
         char *equal = strchr(token, '=');
@@ -153,7 +162,7 @@ aaru_options parse_options(const char *options, bool *table_shift_found)
                 if(parsed.num_threads < 1) parsed.num_threads = 1;
             }
         }
-        token = strtok_r(NULL, ";", &saveptr);
+        token = aaru_strtok_reentrant(NULL, ";", &saveptr);
     }
 
     TRACE("Exiting parse_options() = {compress: %d, deduplicate: %d, dictionary: %u, table_shift: %d, "
