@@ -83,6 +83,20 @@ if(NOT WIN32)
   add_compile_definitions(_POSIX_C_SOURCE=200809L)
 endif()
 
+# Configure large-file support consistently across compilers and architectures.
+# POSIX builds use fseeko()/ftello() with 64-bit file offsets, while Windows
+# builds route stdio positioning through the native 64-bit APIs.
+function(aaru_enable_large_file_support target)
+  if(WIN32)
+    target_compile_definitions(${target} PRIVATE AARU_USE_WIN32_FILEIO64)
+  else()
+    target_compile_definitions(${target} PRIVATE
+                               _FILE_OFFSET_BITS=64
+                               _LARGEFILE_SOURCE
+                               AARU_USE_POSIX_FILEIO64)
+  endif()
+endfunction()
+
 # MinGW specific configuration
 if("${CMAKE_C_PLATFORM_ID}" MATCHES "MinGW")
   if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64" OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm")
@@ -287,6 +301,8 @@ target_include_directories(aaruformat
                            ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/uthash/include
                            ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/uthash/src
 )
+
+aaru_enable_large_file_support(aaruformat)
 
 # Load third-party dependencies
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake-modules")

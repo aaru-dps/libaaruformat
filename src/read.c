@@ -923,7 +923,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
 
-            fseek(ctx->imageStream, (long)(block_offset + sizeof(BlockHeader)), SEEK_SET);
+            fseek(ctx->imageStream, (aaru_off_t)(block_offset + sizeof(BlockHeader)), SEEK_SET);
 
             read_bytes = fread(cmp_data, 1, block_header->cmpLength, ctx->imageStream);
             if(read_bytes != block_header->cmpLength)

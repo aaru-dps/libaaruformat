@@ -26,6 +26,7 @@
 #include "aaruformat/structs/index.h"
 #include "consts.h"
 #include "decls.h"
+#include "internal.h"
 #include "log.h"
 #include "utarray.h"
 #include "uthash.h"
@@ -857,7 +858,7 @@ static int32_t read_flux_payload_header(const aaruformat_context *ctx, uint64_t 
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
-    long file_position = ftell(ctx->imageStream);
+    aaru_off_t file_position = ftell(ctx->imageStream);
     if(file_position < 0 || (uint64_t)file_position != payload_offset)
     {
         FATAL("Invalid flux payload position (expected %" PRIu64 ", got %ld)", payload_offset, file_position);

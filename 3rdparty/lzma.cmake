@@ -3,10 +3,10 @@ set("LZMA_ASM_DIRECTORY" "3rdparty/lzma-21.03beta/Asm")
 
 message(STATUS "LZMA VERSION: 21.03beta")
 
-target_compile_definitions(aaruformat PUBLIC _REENTRANT)
-target_compile_definitions(aaruformat PUBLIC _FILE_OFFSET_BITS)
-target_compile_definitions(aaruformat PUBLIC _LARGEFILE_SOURCE)
-target_compile_definitions(aaruformat PUBLIC _7ZIP_ST)
+target_compile_definitions(aaruformat PRIVATE _REENTRANT)
+target_compile_definitions(aaruformat PRIVATE _FILE_OFFSET_BITS=64)
+target_compile_definitions(aaruformat PRIVATE _LARGEFILE_SOURCE)
+target_compile_definitions(aaruformat PRIVATE _7ZIP_ST)
 
 # All assembly for x86 and x64 disabled because it uses a custom, non GAS, non MASM, assembler
 

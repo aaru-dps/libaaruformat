@@ -19,6 +19,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -404,9 +405,9 @@ int inject_media_tag(const char *tag_type_str, const char *media_tag_file, const
     }
 
     // Get file size
-    fseek(tag_file, 0, SEEK_END);
-    long tag_file_size = ftell(tag_file);
-    fseek(tag_file, 0, SEEK_SET);
+    aaruf_fseek(tag_file, 0, SEEK_END);
+    aaru_off_t tag_file_size = aaruf_ftell(tag_file);
+    aaruf_fseek(tag_file, 0, SEEK_SET);
 
     if(tag_file_size <= 0)
     {
@@ -419,7 +420,7 @@ int inject_media_tag(const char *tag_type_str, const char *media_tag_file, const
     uint8_t *tag_data = (uint8_t *)malloc((size_t)tag_file_size);
     if(tag_data == NULL)
     {
-        fprintf(stderr, "ERROR: Cannot allocate memory for media tag data (%ld bytes)\n", tag_file_size);
+        fprintf(stderr, "ERROR: Cannot allocate memory for media tag data (%" PRId64 " bytes)\n", tag_file_size);
         fclose(tag_file);
         return -1;
     }
@@ -494,7 +495,7 @@ int inject_media_tag(const char *tag_type_str, const char *media_tag_file, const
     }
 
     // Seek to index position
-    if(fseek(image_stream, (long)header_v2.indexOffset, SEEK_SET) != 0)
+    if(aaruf_fseek(image_stream, (aaru_off_t)header_v2.indexOffset, SEEK_SET) != 0)
     {
         fprintf(stderr, "ERROR: Cannot seek to index offset %llu: %s\n", (unsigned long long)header_v2.indexOffset,
                 strerror(errno));
@@ -604,7 +605,7 @@ int inject_media_tag(const char *tag_type_str, const char *media_tag_file, const
         return -1;
     }
 
-    if(fseek(image_stream, (long)userdata_ddt->offset, SEEK_SET) != 0)
+    if(aaruf_fseek(image_stream, (aaru_off_t)userdata_ddt->offset, SEEK_SET) != 0)
     {
         fprintf(stderr, "ERROR: Cannot seek to DDT2 offset %llu: %s\n", (unsigned long long)userdata_ddt->offset,
                 strerror(errno));
@@ -649,7 +650,7 @@ int inject_media_tag(const char *tag_type_str, const char *media_tag_file, const
 
     printf("Injecting media tag into image...\n");
     printf("  tag-type: %s (%d) -> DataType %d\n", media_tag_type_to_string(tag_type), tag_type, data_type);
-    printf("  media-tag-file: %s (%ld bytes)\n", media_tag_file, tag_file_size);
+    printf("  media-tag-file: %s (%" PRId64 " bytes)\n", media_tag_file, tag_file_size);
     printf("  image-file: %s\n", image_file);
     printf("  index entries: %llu\n", (unsigned long long)index_header.entries);
     printf("  blockAlignmentShift: %u\n", block_alignment_shift);
@@ -691,16 +692,16 @@ int inject_media_tag(const char *tag_type_str, const char *media_tag_file, const
     }
 
     // Seek to end of file to find where to write the new data block
-    fseek(image_stream, 0, SEEK_END);
-    long current_position = ftell(image_stream);
+    aaruf_fseek(image_stream, 0, SEEK_END);
+    aaru_off_t current_position = aaruf_ftell(image_stream);
 
     // Align the position
     uint64_t alignment_mask = (1ULL << block_alignment_shift) - 1;
     if((uint64_t)current_position & alignment_mask)
     {
         uint64_t aligned_position = ((uint64_t)current_position + alignment_mask) & ~alignment_mask;
-        fseek(image_stream, (long)aligned_position, SEEK_SET);
-        current_position = (long)aligned_position;
+        aaruf_fseek(image_stream, (aaru_off_t)aligned_position, SEEK_SET);
+        current_position = (aaru_off_t)aligned_position;
     }
 
     uint64_t data_block_position = (uint64_t)current_position;
@@ -739,7 +740,7 @@ int inject_media_tag(const char *tag_type_str, const char *media_tag_file, const
         return -1;
     }
 
-    printf("  Written data block (%zu + %ld bytes)\n", sizeof(BlockHeader), tag_file_size);
+    printf("  Written data block (%zu + %" PRId64 " bytes)\n", sizeof(BlockHeader), tag_file_size);
 
     // Add new index entry
     entries = realloc(entries, sizeof(IndexEntry) * (new_entry_count + 1));
@@ -761,12 +762,12 @@ int inject_media_tag(const char *tag_type_str, const char *media_tag_file, const
            (unsigned long long)data_block_position);
 
     // Align position for index
-    current_position = ftell(image_stream);
+    current_position = aaruf_ftell(image_stream);
     if((uint64_t)current_position & alignment_mask)
     {
         uint64_t aligned_position = ((uint64_t)current_position + alignment_mask) & ~alignment_mask;
-        fseek(image_stream, (long)aligned_position, SEEK_SET);
-        current_position = (long)aligned_position;
+        aaruf_fseek(image_stream, (aaru_off_t)aligned_position, SEEK_SET);
+        current_position = (aaru_off_t)aligned_position;
     }
 
     uint64_t new_index_position = (uint64_t)current_position;

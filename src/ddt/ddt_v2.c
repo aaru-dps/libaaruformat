@@ -1580,7 +1580,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             ctx->dirty_primary_ddt                        = true;  // Mark primary DDT as dirty
 
             // Write the updated primary table back to its original position in the file
-            long saved_pos = ftell(ctx->imageStream);
+            aaru_off_t saved_pos = ftell(ctx->imageStream);
             fseek(ctx->imageStream, ctx->primary_ddt_offset + sizeof(DdtHeader2), SEEK_SET);
 
             size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint64_t);
@@ -1802,7 +1802,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
         ctx->dirty_primary_ddt            = true;  // Mark primary DDT as dirty
 
         // Write the updated primary table back to its original position in the file
-        long saved_pos = ftell(ctx->imageStream);
+        aaru_off_t saved_pos = ftell(ctx->imageStream);
         fseek(ctx->imageStream, ctx->primary_ddt_offset + sizeof(DdtHeader2), SEEK_SET);
 
         size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint64_t);

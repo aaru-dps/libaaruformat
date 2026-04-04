@@ -21,6 +21,7 @@
 #include <stdlib.h>
 
 #include "aaruformat.h"
+#include "internal.h"
 #include "log.h"
 #include "utarray.h"
 

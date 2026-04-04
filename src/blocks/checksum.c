@@ -26,6 +26,7 @@
 #include "aaruformat/enums.h"
 #include "aaruformat/structs/checksum.h"
 #include "aaruformat/structs/index.h"
+#include "internal.h"
 #include "log.h"
 
 /**

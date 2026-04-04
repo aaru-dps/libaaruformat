@@ -78,7 +78,7 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
     TRACE("Writing cached secondary DDT table to file");
 
     fseek(ctx->imageStream, 0, SEEK_END);
-    long end_of_file = ftell(ctx->imageStream);
+    aaru_off_t end_of_file = ftell(ctx->imageStream);
 
     // Align the position according to block alignment shift
     uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
@@ -241,7 +241,7 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
             TRACE("Added new DDT index entry at offset %" PRIu64, end_of_file);
 
             // Write the updated primary table back to its original position in the file
-            long saved_pos = ftell(ctx->imageStream);
+            aaru_off_t saved_pos = ftell(ctx->imageStream);
             fseek(ctx->imageStream, ctx->primary_ddt_offset + sizeof(DdtHeader2), SEEK_SET);
 
             size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint64_t);
@@ -486,7 +486,7 @@ static int32_t write_single_level_ddt(aaruformat_context *ctx)
 
     // Write the DDT header first
     fseek(ctx->imageStream, 0, SEEK_END);
-    long           ddt_position   = ftell(ctx->imageStream);
+    aaru_off_t     ddt_position   = ftell(ctx->imageStream);
     // Align index position to block boundary if needed
     const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(ddt_position & alignment_mask)
@@ -760,7 +760,7 @@ static void write_checksum_block(aaruformat_context *ctx)
     checksum_header.identifier     = ChecksumBlock;
 
     fseek(ctx->imageStream, 0, SEEK_END);
-    long checksum_position = ftell(ctx->imageStream);
+    aaru_off_t checksum_position = ftell(ctx->imageStream);
     // Align index position to block boundary if needed
     alignment_mask         = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(checksum_position & alignment_mask)
@@ -878,7 +878,7 @@ static void write_tracks_block(aaruformat_context *ctx)
     if(ctx->tracks_header.entries <= 0 || ctx->track_entries == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
-    long     tracks_position = ftell(ctx->imageStream);
+    aaru_off_t tracks_position = ftell(ctx->imageStream);
     // Align index position to block boundary if needed
     uint64_t alignment_mask  = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(tracks_position & alignment_mask)
@@ -944,7 +944,7 @@ static void write_mode2_subheaders_block(aaruformat_context *ctx)
     if(ctx->mode2_subheaders == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
-    long     mode2_subheaders_position = ftell(ctx->imageStream);
+    aaru_off_t mode2_subheaders_position = ftell(ctx->imageStream);
     // Align index position to block boundary if needed
     uint64_t alignment_mask            = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(mode2_subheaders_position & alignment_mask)
@@ -1090,7 +1090,7 @@ static void write_sector_prefix(aaruformat_context *ctx)
     if(ctx->sector_prefix == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
-    long     prefix_position = ftell(ctx->imageStream);
+    aaru_off_t prefix_position = ftell(ctx->imageStream);
     // Align index position to block boundary if needed
     uint64_t alignment_mask  = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(prefix_position & alignment_mask)
@@ -1243,7 +1243,7 @@ static void write_sector_suffix(aaruformat_context *ctx)
     if(ctx->sector_suffix == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
-    long           suffix_position = ftell(ctx->imageStream);
+    aaru_off_t     suffix_position = ftell(ctx->imageStream);
     // Align index position to block boundary if needed
     const uint64_t alignment_mask  = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(suffix_position & alignment_mask)
@@ -1392,7 +1392,7 @@ static void write_sector_prefix_ddt(aaruformat_context *ctx)
     if(ctx->sector_prefix_ddt2 == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
-    long           prefix_ddt_position = ftell(ctx->imageStream);
+    aaru_off_t     prefix_ddt_position = ftell(ctx->imageStream);
     // Align index position to block boundary if needed
     const uint64_t alignment_mask      = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(prefix_ddt_position & alignment_mask)
@@ -1569,7 +1569,7 @@ static void write_sector_suffix_ddt(aaruformat_context *ctx)
     if(ctx->sector_suffix_ddt2 == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
-    long           suffix_ddt_position = ftell(ctx->imageStream);
+    aaru_off_t     suffix_ddt_position = ftell(ctx->imageStream);
     // Align index position to block boundary if needed
     const uint64_t alignment_mask      = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(suffix_ddt_position & alignment_mask)
@@ -1760,7 +1760,7 @@ static void write_sector_subchannel(aaruformat_context *ctx)
     if(ctx->sector_subchannel == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
-    long           block_position = ftell(ctx->imageStream);
+    aaru_off_t     block_position = ftell(ctx->imageStream);
     // Align index position to block boundary if needed
     const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(block_position & alignment_mask)
@@ -2111,7 +2111,7 @@ static void write_dvd_long_sector_blocks(aaruformat_context *ctx)
 
     // Write DVD sector ID block
     fseek(ctx->imageStream, 0, SEEK_END);
-    long           id_position    = ftell(ctx->imageStream);
+    aaru_off_t     id_position    = ftell(ctx->imageStream);
     const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(id_position & alignment_mask)
     {
@@ -2227,7 +2227,7 @@ static void write_dvd_long_sector_blocks(aaruformat_context *ctx)
 
     // Write DVD sector IED block
     fseek(ctx->imageStream, 0, SEEK_END);
-    long ied_position = ftell(ctx->imageStream);
+    aaru_off_t ied_position = ftell(ctx->imageStream);
     if(ied_position & alignment_mask)
     {
         const uint64_t aligned_position = ied_position + alignment_mask & ~alignment_mask;
@@ -2340,7 +2340,7 @@ static void write_dvd_long_sector_blocks(aaruformat_context *ctx)
 
     // Write DVD sector CPR/MAI block
     fseek(ctx->imageStream, 0, SEEK_END);
-    long cpr_mai_position = ftell(ctx->imageStream);
+    aaru_off_t cpr_mai_position = ftell(ctx->imageStream);
     if(cpr_mai_position & alignment_mask)
     {
         const uint64_t aligned_position = cpr_mai_position + alignment_mask & ~alignment_mask;
@@ -2453,7 +2453,7 @@ static void write_dvd_long_sector_blocks(aaruformat_context *ctx)
 
     // Write DVD sector EDC block
     fseek(ctx->imageStream, 0, SEEK_END);
-    long edc_position = ftell(ctx->imageStream);
+    aaru_off_t edc_position = ftell(ctx->imageStream);
     if(edc_position & alignment_mask)
     {
         const uint64_t aligned_position = edc_position + alignment_mask & ~alignment_mask;
@@ -2667,7 +2667,7 @@ static void write_dvd_title_key_decrypted_block(aaruformat_context *ctx)
     if(ctx->sector_decrypted_title_key == NULL) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
-    long           block_position = ftell(ctx->imageStream);
+    aaru_off_t     block_position = ftell(ctx->imageStream);
     const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(block_position & alignment_mask)
     {
@@ -2869,7 +2869,7 @@ static void write_media_tags(aaruformat_context *ctx)
     HASH_ITER(hh, ctx->mediaTags, media_tag, tmp_media_tag)
     {
         fseek(ctx->imageStream, 0, SEEK_END);
-        long           tag_position   = ftell(ctx->imageStream);
+        aaru_off_t     tag_position   = ftell(ctx->imageStream);
         const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
         if(tag_position & alignment_mask)
         {
@@ -3185,7 +3185,7 @@ static void write_tape_file_block(aaruformat_context *ctx)
 
     // Write tape file block to file, block aligned
     fseek(ctx->imageStream, 0, SEEK_END);
-    long           block_position = ftell(ctx->imageStream);
+    aaru_off_t     block_position = ftell(ctx->imageStream);
     const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(block_position & alignment_mask)
     {
@@ -3431,7 +3431,7 @@ static void write_tape_partition_block(aaruformat_context *ctx)
 
     // Write tape partition block to partition, block aligned
     fseek(ctx->imageStream, 0, SEEK_END);
-    long           block_position = ftell(ctx->imageStream);
+    aaru_off_t     block_position = ftell(ctx->imageStream);
     const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(block_position & alignment_mask)
     {
@@ -3540,7 +3540,7 @@ static void write_geometry_block(aaruformat_context *ctx)
     if(ctx->geometry_block.identifier != GeometryBlock) return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
-    long           block_position = ftell(ctx->imageStream);
+    aaru_off_t     block_position = ftell(ctx->imageStream);
     const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(block_position & alignment_mask)
     {
@@ -3794,7 +3794,7 @@ static void write_metadata_block(aaruformat_context *ctx)
     }
 
     fseek(ctx->imageStream, 0, SEEK_END);
-    long           block_position = ftell(ctx->imageStream);
+    aaru_off_t     block_position = ftell(ctx->imageStream);
     const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(block_position & alignment_mask)
     {
@@ -4092,7 +4092,7 @@ static void write_dumphw_block(aaruformat_context *ctx)
     memcpy(buffer, &ctx->dump_hardware_header, sizeof(DumpHardwareHeader));
 
     fseek(ctx->imageStream, 0, SEEK_END);
-    long           block_position = ftell(ctx->imageStream);
+    aaru_off_t     block_position = ftell(ctx->imageStream);
     const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(block_position & alignment_mask)
     {
@@ -4231,7 +4231,7 @@ static void write_cicm_block(aaruformat_context *ctx)
         return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
-    long           block_position = ftell(ctx->imageStream);
+    aaru_off_t     block_position = ftell(ctx->imageStream);
     const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
 
     if(block_position & alignment_mask)
@@ -4382,7 +4382,7 @@ static void write_aaru_json_block(aaruformat_context *ctx)
         return;
 
     fseek(ctx->imageStream, 0, SEEK_END);
-    long           block_position = ftell(ctx->imageStream);
+    aaru_off_t     block_position = ftell(ctx->imageStream);
     const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
 
     if(block_position & alignment_mask)
@@ -4730,7 +4730,7 @@ static int32_t write_flux_capture_payload(aaruformat_context *ctx, FluxCaptureRe
 
     // Align stream position to block boundary
     fseek(ctx->imageStream, 0, SEEK_END);
-    long           payload_position = ftell(ctx->imageStream);
+    aaru_off_t     payload_position = ftell(ctx->imageStream);
     const uint64_t alignment_mask   = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(payload_position & alignment_mask)
     {
@@ -5076,7 +5076,7 @@ static int32_t write_flux_blocks(aaruformat_context *ctx)
 
     // Align stream position to block boundary
     fseek(ctx->imageStream, 0, SEEK_END);
-    long           metadata_position = ftell(ctx->imageStream);
+    aaru_off_t     metadata_position = ftell(ctx->imageStream);
     const uint64_t alignment_mask    = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     if(metadata_position & alignment_mask)
     {
@@ -5146,7 +5146,7 @@ static int32_t write_index_block(aaruformat_context *ctx)
     // Write the complete index at the end of the file
     TRACE("Writing index at the end of the file");
     fseek(ctx->imageStream, 0, SEEK_END);
-    long index_position = ftell(ctx->imageStream);
+    aaru_off_t index_position = ftell(ctx->imageStream);
 
     // Align index position to block boundary if needed
     uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;

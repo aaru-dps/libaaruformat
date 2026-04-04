@@ -20,8 +20,38 @@
 #define LIBAARUFORMAT_TOOL_AARUFORMATTOOL_H_
 
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
 
 #include <aaruformat.h>
+
+#if defined(AARU_USE_WIN32_FILEIO64)
+#define AARU_FSEEK _fseeki64
+#define AARU_FTELL _ftelli64
+#elif defined(AARU_USE_POSIX_FILEIO64)
+#define AARU_FSEEK fseeko
+#define AARU_FTELL ftello
+#else
+#define AARU_FSEEK fseek
+#define AARU_FTELL ftell
+#endif
+
+typedef int64_t aaru_off_t;
+
+static inline int aaruf_fseek(FILE *stream, aaru_off_t offset, int origin)
+{
+    return AARU_FSEEK(stream, offset, origin);
+}
+
+static inline aaru_off_t aaruf_ftell(FILE *stream)
+{
+    return (aaru_off_t)AARU_FTELL(stream);
+}
+
+#ifndef AARU_NO_FILEIO_REMAP
+#define fseek(stream, offset, origin) aaruf_fseek((stream), (aaru_off_t)(offset), (origin))
+#define ftell(stream) aaruf_ftell((stream))
+#endif
 
 int         identify(const char *path);
 int         info(const char *path);

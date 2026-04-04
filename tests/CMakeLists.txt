@@ -99,6 +99,7 @@ add_executable(tests_run
     ps3_sfo.cpp
     ps3_iso9660.cpp
     ngcw.cpp
+    large_file_io.cpp
     mode2_nocrc.cpp
     mode2_errored.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/lib/aes128.c
@@ -111,6 +112,8 @@ add_executable(tests_run
                ../tool/ps3/sfo.c
                ../tool/ps3/iso9660_mini.c
 )
+
+aaru_enable_large_file_support(tests_run)
 
 # Set up include directories using modern target-specific approach
 target_include_directories(tests_run

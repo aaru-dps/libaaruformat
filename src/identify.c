@@ -21,6 +21,8 @@
 
 #include <aaruformat.h>
 
+#include "internal.h"
+
 /**
  * @brief Identifies a file as an AaruFormat image using a file path.
  *

@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "aaruformat.h"
+#include "internal.h"
 #include "log.h"
 
 /**

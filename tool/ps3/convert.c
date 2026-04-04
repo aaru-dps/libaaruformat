@@ -21,6 +21,7 @@
  */
 
 #include <errno.h>
+#include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -149,7 +150,7 @@ static int32_t iso_read_sector_cb(void *user_data, uint64_t sector, uint8_t *buf
 
     if(sector >= ctx->total_sectors) return -1;
 
-    if(fseek(ctx->fp, (long)(sector * PS3_SECTOR_SIZE), SEEK_SET) != 0) return -1;
+    if(aaruf_fseek(ctx->fp, (aaru_off_t)(sector * PS3_SECTOR_SIZE), SEEK_SET) != 0) return -1;
 
     if(fread(buffer, 1, PS3_SECTOR_SIZE, ctx->fp) != PS3_SECTOR_SIZE) return -1;
 
@@ -403,14 +404,14 @@ int convert_ps3(const char *input_path, const char *output_path, const char *dis
             return -1;
         }
 
-        fseek(iso_fp, 0, SEEK_END);
-        long file_size = ftell(iso_fp);
+        aaruf_fseek(iso_fp, 0, SEEK_END);
+        aaru_off_t file_size = aaruf_ftell(iso_fp);
         rewind(iso_fp);
 
         if(file_size <= 0 || file_size % PS3_SECTOR_SIZE != 0)
         {
-            snprintf(buffer, sizeof(buffer), "Invalid ISO file size (%ld bytes, not a multiple of %d)", file_size,
-                     PS3_SECTOR_SIZE);
+            snprintf(buffer, sizeof(buffer), "Invalid ISO file size (%" PRId64 " bytes, not a multiple of %d)",
+                     file_size, PS3_SECTOR_SIZE);
             print_error_ps3(buffer);
             fclose(iso_fp);
             ps3_free_ird(&ird);
@@ -627,7 +628,7 @@ int convert_ps3(const char *input_path, const char *output_path, const char *dis
         /* Read sector from source */
         if(is_iso)
         {
-            if(fseek(iso_fp, (long)(sector * PS3_SECTOR_SIZE), SEEK_SET) != 0 ||
+            if(aaruf_fseek(iso_fp, (aaru_off_t)(sector * PS3_SECTOR_SIZE), SEEK_SET) != 0 ||
                fread(sector_data, 1, PS3_SECTOR_SIZE, iso_fp) != PS3_SECTOR_SIZE)
             {
                 printf("\n");

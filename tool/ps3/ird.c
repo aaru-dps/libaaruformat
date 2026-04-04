@@ -23,6 +23,8 @@
 
 #include "ird.h"
 
+#include "../aaruformattool.h"
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,13 +44,13 @@ int32_t ps3_parse_ird(const char *path, IrdFile *ird)
     if(fp == NULL) return -2;
 
     /* Get file size */
-    if(fseek(fp, 0, SEEK_END) != 0)
+    if(aaruf_fseek(fp, 0, SEEK_END) != 0)
     {
         fclose(fp);
         return -3;
     }
 
-    long file_size = ftell(fp);
+    aaru_off_t file_size = aaruf_ftell(fp);
 
     if(file_size <= 0)
     {

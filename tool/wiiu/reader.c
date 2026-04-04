@@ -20,6 +20,8 @@
 
 #include "reader.h"
 
+#include "../aaruformattool.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,7 +34,7 @@ static int wux_init(WiiuReader *reader)
 {
     WuxHeader hdr;
 
-    if(fseek(reader->fp, 0, SEEK_SET) != 0) return -1;
+    if(aaruf_fseek(reader->fp, 0, SEEK_SET) != 0) return -1;
 
     if(fread(&hdr, 1, sizeof(hdr), reader->fp) != sizeof(hdr)) return -1;
 
@@ -58,7 +60,7 @@ static int wux_init(WiiuReader *reader)
         return -1;
     }
 
-    if(fseek(reader->fp, 0x20, SEEK_SET) != 0)
+    if(aaruf_fseek(reader->fp, 0x20, SEEK_SET) != 0)
     {
         free(reader->wux_index);
         reader->wux_index = NULL;
@@ -98,7 +100,7 @@ int wiiu_reader_open(const char *path, WiiuReader *reader)
     /* Fallback: raw WUD — get file size */
     reader->is_wux = 0;
 
-    if(fseek(reader->fp, 0, SEEK_END) != 0)
+    if(aaruf_fseek(reader->fp, 0, SEEK_END) != 0)
     {
         fprintf(stderr, "Error: cannot determine file size for %s\n", path);
         fclose(reader->fp);
@@ -106,7 +108,7 @@ int wiiu_reader_open(const char *path, WiiuReader *reader)
         return -1;
     }
 
-    long file_size = ftell(reader->fp);
+    aaru_off_t file_size = aaruf_ftell(reader->fp);
 
     if(file_size <= 0)
     {
@@ -143,7 +145,7 @@ int64_t wiiu_reader_read_at(WiiuReader *reader, void *buf, size_t count, uint64_
     if(!reader->is_wux)
     {
         /* Raw WUD: direct seek + read */
-        if(fseek(reader->fp, (long)offset, SEEK_SET) != 0) return -1;
+        if(aaruf_fseek(reader->fp, (aaru_off_t)offset, SEEK_SET) != 0) return -1;
 
         size_t n = fread(buf, 1, count, reader->fp);
 
@@ -172,7 +174,7 @@ int64_t wiiu_reader_read_at(WiiuReader *reader, void *buf, size_t count, uint64_
 
         if(chunk > count - done) chunk = count - done;
 
-        if(fseek(reader->fp, (long)file_offset, SEEK_SET) != 0) break;
+        if(aaruf_fseek(reader->fp, (aaru_off_t)file_offset, SEEK_SET) != 0) break;
 
         size_t n = fread(out + done, 1, chunk, reader->fp);
 

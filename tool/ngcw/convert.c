@@ -325,7 +325,7 @@ static int parse_wii_partitions(FILE *iso, uint16_t *part_count, NgcwPartition *
             return -1;
         }
 
-        if(fseek(iso, (long)table_offset, SEEK_SET) != 0 || fread(table_data, 1, table_size, iso) != table_size)
+        if(aaruf_fseek(iso, (aaru_off_t)table_offset, SEEK_SET) != 0 || fread(table_data, 1, table_size, iso) != table_size)
         {
             free(table_data);
             free(*parts);
@@ -342,7 +342,7 @@ static int parse_wii_partitions(FILE *iso, uint16_t *part_count, NgcwPartition *
             /* Read ticket */
             uint8_t ticket[0x2A4];
 
-            if(fseek(iso, (long)part_offset, SEEK_SET) != 0 || fread(ticket, 1, sizeof(ticket), iso) != sizeof(ticket))
+            if(aaruf_fseek(iso, (aaru_off_t)part_offset, SEEK_SET) != 0 || fread(ticket, 1, sizeof(ticket), iso) != sizeof(ticket))
             {
                 free(table_data);
                 free(*parts);
@@ -364,7 +364,7 @@ static int parse_wii_partitions(FILE *iso, uint16_t *part_count, NgcwPartition *
             /* Read partition header for data offset/size */
             uint8_t phdr[8];
 
-            if(fseek(iso, (long)(part_offset + 0x2B8), SEEK_SET) != 0 || fread(phdr, 1, 8, iso) != 8)
+            if(aaruf_fseek(iso, (aaru_off_t)(part_offset + 0x2B8), SEEK_SET) != 0 || fread(phdr, 1, 8, iso) != 8)
             {
                 free(table_data);
                 free(*parts);
@@ -1122,7 +1122,7 @@ int convert_ngcw(const char *input_path, const char *output_path)
 
                 if(is_raw)
                 {
-                    if(fseek(iso_file, (long)fst_offset, SEEK_SET) == 0 &&
+                    if(aaruf_fseek(iso_file, (aaru_off_t)fst_offset, SEEK_SET) == 0 &&
                        fread(fst, 1, fst_size, iso_file) == fst_size)
                         fst_ok = true;
                 }
@@ -1202,7 +1202,7 @@ int convert_ngcw(const char *input_path, const char *output_path)
             /* Read block */
             if(is_raw)
             {
-                if(fseek(iso_file, (long)block_off, SEEK_SET) != 0)
+                if(aaruf_fseek(iso_file, (aaru_off_t)block_off, SEEK_SET) != 0)
                     memset(block_buf, 0, block_bytes);
                 else
                 {
@@ -1272,7 +1272,7 @@ int convert_ngcw(const char *input_path, const char *output_path)
                 /* Read and decrypt first group to get boot block */
                 uint8_t enc_grp0[WII_GROUP_SIZE];
 
-                if(fseek(iso_file, (long)parts[p].data_offset, SEEK_SET) != 0 ||
+                if(aaruf_fseek(iso_file, (aaru_off_t)parts[p].data_offset, SEEK_SET) != 0 ||
                    fread(enc_grp0, 1, WII_GROUP_SIZE, iso_file) != WII_GROUP_SIZE)
                     continue;
 
@@ -1303,7 +1303,7 @@ int convert_ngcw(const char *input_path, const char *output_path)
 
                             uint8_t enc_g[WII_GROUP_SIZE];
 
-                            if(fseek(iso_file, (long)disc_off, SEEK_SET) != 0 ||
+                            if(aaruf_fseek(iso_file, (aaru_off_t)disc_off, SEEK_SET) != 0 ||
                                fread(enc_g, 1, WII_GROUP_SIZE, iso_file) != WII_GROUP_SIZE)
                             {
                                 fst_ok = 0;
@@ -1379,7 +1379,7 @@ int convert_ngcw(const char *input_path, const char *output_path)
 
                 uint8_t enc_grp[WII_GROUP_SIZE];
 
-                if(fseek(iso_file, (long)group_disc_off, SEEK_SET) != 0)
+                if(aaruf_fseek(iso_file, (aaru_off_t)group_disc_off, SEEK_SET) != 0)
                     memset(enc_grp, 0, WII_GROUP_SIZE);
                 else
                 {
@@ -1570,7 +1570,7 @@ int convert_ngcw(const char *input_path, const char *output_path)
 
                 if(is_raw)
                 {
-                    if(fseek(iso_file, (long)aligned_off, SEEK_SET) != 0)
+                    if(aaruf_fseek(iso_file, (aaru_off_t)aligned_off, SEEK_SET) != 0)
                         memset(block_buf, 0, block_bytes);
                     else
                     {

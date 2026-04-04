@@ -201,7 +201,7 @@ void process_dumphw_block(aaruformat_context *ctx, const IndexEntry *entry)
 
         free(payload);
 
-        if(fseek(ctx->imageStream, -(long)payload_length, SEEK_CUR) != 0)
+        if(fseek(ctx->imageStream, -(aaru_off_t)payload_length, SEEK_CUR) != 0)
         {
             TRACE("Could not rewind after CRC verification");
             reset_dump_hardware_context(ctx);
