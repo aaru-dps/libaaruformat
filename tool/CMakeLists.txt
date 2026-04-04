@@ -4,8 +4,14 @@ project(aaruformattool C CXX)
 # Find required dependencies
 find_package(ICU COMPONENTS uc REQUIRED)
 find_package(Argtable3 CONFIG REQUIRED)
-find_package(Curses REQUIRED)
 find_package(ZLIB REQUIRED)
+
+# termbox2-based compare is POSIX-only; on Windows use cli-compare instead
+if(NOT WIN32)
+    set(AARUFORMATTOOL_COMPARE_SOURCES compare.c termbox2.h)
+else()
+    set(AARUFORMATTOOL_COMPARE_SOURCES "")
+endif()
 
 # Tool executable
 add_executable(aaruformattool
@@ -23,7 +29,7 @@ add_executable(aaruformattool
                commands.c
                usage.h
                usage.c
-               compare.c
+               ${AARUFORMATTOOL_COMPARE_SOURCES}
                cli_compare.c
                convert.c
                upgrade_ddt_to_alpha21.c
@@ -46,14 +52,15 @@ add_executable(aaruformattool
                ${CMAKE_CURRENT_SOURCE_DIR}/../src/ngcw/lfg.c
                ${CMAKE_CURRENT_SOURCE_DIR}/../src/ngcw/ngcw_junk.c
                ${CMAKE_CURRENT_SOURCE_DIR}/../src/ngcw/wii_crypto.c
-               termbox2.h
 )
 
 # Set C as the linker language (even though we enable CXX for stdlib)
 set_target_properties(aaruformattool PROPERTIES LINKER_LANGUAGE C)
 
+aaru_enable_large_file_support(aaruformattool)
+
 # Set up include directories
-target_include_directories(aaruformattool PRIVATE ${ICU_INCLUDE_DIRS} ${CURSES_INCLUDE_DIRS})
+target_include_directories(aaruformattool PRIVATE ${ICU_INCLUDE_DIRS})
 
 # Link libraries
 target_link_libraries(aaruformattool
@@ -62,7 +69,6 @@ target_link_libraries(aaruformattool
                       argtable3::argtable3
                       ICU::uc
                       ZLIB::ZLIB
-                      ${CURSES_LIBRARIES}
 )
 
 # On Linux, enable GNU/POSIX feature test macros so functions like strerror_r

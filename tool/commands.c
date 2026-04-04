@@ -63,6 +63,7 @@ int cmd_info(int argc, char *argv[])
     return result;
 }
 
+#if !defined(_WIN32) && !defined(_WIN64)
 int cmd_compare(int argc, char *argv[])
 {
     struct arg_str *filename1  = arg_str1(NULL, NULL, "<filename1>", "First image to compare");
@@ -82,6 +83,7 @@ int cmd_compare(int argc, char *argv[])
     arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
     return result;
 }
+#endif /* !_WIN32 && !_WIN64 */
 
 int cmd_cli_compare(int argc, char *argv[])
 {
@@ -293,7 +295,9 @@ Command commands[] = {
     {             "read_long",              cmd_read_long},
     {                "verify",                 cmd_verify},
     {        "verify_sectors",         cmd_verify_sectors},
+#if !defined(_WIN32) && !defined(_WIN64)
     {               "compare",                cmd_compare},
+#endif
     {           "cli-compare",            cmd_cli_compare},
     {               "convert",                cmd_convert},
     {"upgrade-ddt-to-alpha21", cmd_upgrade_ddt_to_alpha21},

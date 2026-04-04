@@ -38,7 +38,9 @@ int cmd_read(int argc, char *argv[]);
 int cmd_read_long(int argc, char *argv[]);
 int cmd_verify(int argc, char *argv[]);
 int cmd_verify_sectors(int argc, char *argv[]);
+#if !defined(_WIN32) && !defined(_WIN64)
 int cmd_compare(int argc, char *argv[]);
+#endif
 int cmd_cli_compare(int argc, char *argv[]);
 int cmd_convert(int argc, char *argv[]);
 int cmd_upgrade_ddt_to_alpha21(int argc, char *argv[]);
