@@ -89,6 +89,15 @@ endif()
 function(aaru_enable_large_file_support target)
   if(WIN32)
     target_compile_definitions(${target} PRIVATE AARU_USE_WIN32_FILEIO64)
+
+    # Some bundled third-party sources use POSIX large-file APIs directly.
+    # On MSVC, remap them to the native 64-bit stdio functions without
+    # modifying the vendored sources.
+    if(MSVC)
+      target_compile_definitions(${target} PRIVATE
+                                 fseeko=_fseeki64
+                                 ftello=_ftelli64)
+    endif()
   else()
     target_compile_definitions(${target} PRIVATE
                                _FILE_OFFSET_BITS=64
