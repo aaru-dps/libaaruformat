@@ -6,7 +6,11 @@
  * Validates implementation against standard FIPS 180-4 test vectors and the bundled random file.
  */
 
+#if defined(_WIN32)
+#include <direct.h>
+#else
 #include <unistd.h>
+#endif
 #include <climits>
 #include <cstdint>
 #include <cstdio>

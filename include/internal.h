@@ -22,8 +22,11 @@
 /** @brief Clamp num_threads to LZMA's valid range [1, 2]. */
 #define LZMA_THREADS(ctx) ((ctx)->num_threads > 1 ? 2 : 1)
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+
+#include "aaruformat/context.h"
 
 #if defined(AARU_USE_WIN32_FILEIO64)
 #define AARU_FSEEK _fseeki64

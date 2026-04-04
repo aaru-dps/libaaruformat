@@ -1,7 +1,11 @@
 // SHA-1 tests (public domain / MIT implementation integration)
 // Uses standard FIPS 180-1 test vectors.
 
+#if defined(_WIN32)
+#include <direct.h>
+#else
 #include <unistd.h>
+#endif
 #include <climits>
 #include <cstdint>
 #include <cstdio>

@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <cstring>
 
+#include "decls.h"
 #include "gtest/gtest.h"
 
 extern "C"
