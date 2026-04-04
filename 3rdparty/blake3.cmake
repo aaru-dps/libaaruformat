@@ -27,14 +27,16 @@ target_sources(blake3 PRIVATE ${BLAKE3_CORE_SOURCES})
 # Architecture-specific optimizations / assembly
 if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
     # MSVC path: decide between assembly or portable-only (no intrinsics C files if assembly enabled)
-    if(ENABLE_BLAKE3_ASM AND (CMAKE_SYSTEM_PROCESSOR MATCHES "[Xx]64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64"))
+    if(ENABLE_BLAKE3_ASM AND ((DEFINED CMAKE_C_COMPILER_ARCHITECTURE_ID AND CMAKE_C_COMPILER_ARCHITECTURE_ID MATCHES "[Xx]64") OR CMAKE_SYSTEM_PROCESSOR MATCHES "[Xx]64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64"))
         message(STATUS "BLAKE3: Using MSVC x86-64 MASM assembly implementation")
         enable_language(ASM_MASM)
-        target_sources(blake3 PRIVATE
+        set(BLAKE3_MASM_SOURCES
             ${BLAKE3_C_DIRECTORY}/blake3_avx2_x86-64_windows_msvc.asm
             ${BLAKE3_C_DIRECTORY}/blake3_avx512_x86-64_windows_msvc.asm
             ${BLAKE3_C_DIRECTORY}/blake3_sse2_x86-64_windows_msvc.asm
             ${BLAKE3_C_DIRECTORY}/blake3_sse41_x86-64_windows_msvc.asm)
+        set_source_files_properties(${BLAKE3_MASM_SOURCES} PROPERTIES LANGUAGE ASM_MASM)
+        target_sources(blake3 PRIVATE ${BLAKE3_MASM_SOURCES})
     else()
         message(STATUS "BLAKE3: Using portable-only (MSVC minimal) variant")
     endif()
