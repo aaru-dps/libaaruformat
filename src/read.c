@@ -575,7 +575,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
         }
 
         TRACE("Reading block header");
-        if(fseek(ctx->imageStream, block_offset, SEEK_SET) != 0)
+        if(aaruf_fseek(ctx->imageStream, (aaru_off_t)block_offset, SEEK_SET) != 0)
         {
             FATAL("Could not seek to block header");
             free(block_header);
@@ -598,7 +598,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
         TRACE("Adding block header to cache");
         add_to_cache_uint64(&ctx->block_header_cache, block_offset, block_header);
     }
-    else if(fseek(ctx->imageStream, block_offset + sizeof(BlockHeader), SEEK_SET) != 0)
+    else if(aaruf_fseek(ctx->imageStream, (aaru_off_t)(block_offset + sizeof(BlockHeader)), SEEK_SET) != 0)
     {
         FATAL("Could not seek past cached block header");
 
@@ -923,7 +923,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
 
-            fseek(ctx->imageStream, (aaru_off_t)(block_offset + sizeof(BlockHeader)), SEEK_SET);
+            aaruf_fseek(ctx->imageStream, (aaru_off_t)(block_offset + sizeof(BlockHeader)), SEEK_SET);
 
             read_bytes = fread(cmp_data, 1, block_header->cmpLength, ctx->imageStream);
             if(read_bytes != block_header->cmpLength)

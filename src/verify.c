@@ -167,7 +167,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context)
         goto cleanup;
     }
 
-    if(fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET) != 0)
+    if(aaruf_fseek(ctx->imageStream, (aaru_off_t)ctx->header.indexOffset, SEEK_SET) != 0)
     {
         FATAL("Could not seek to index offset %" PRIu64, ctx->header.indexOffset);
         status = AARUF_ERROR_CANNOT_READ_HEADER;
@@ -233,7 +233,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context)
         IndexEntry *entry = utarray_eltptr(index_entries, i);
         TRACE("Checking block with type %4.4s at position %" PRIu64, (char *)&entry->blockType, entry->offset);
 
-        if(fseek(ctx->imageStream, entry->offset, SEEK_SET) != 0)
+        if(aaruf_fseek(ctx->imageStream, (aaru_off_t)entry->offset, SEEK_SET) != 0)
         {
             FATAL("Could not seek to block at offset %" PRIu64, entry->offset);
             status = AARUF_ERROR_CANNOT_READ_BLOCK;

@@ -41,11 +41,14 @@
 
 typedef int64_t aaru_off_t;
 
+/* Seek using a 64-bit offset. Returns 0 on success, non-zero on failure, just
+ * like fseek()/_fseeki64(). Use aaruf_ftell() to retrieve the current offset. */
 static inline int aaruf_fseek(FILE *stream, aaru_off_t offset, int origin)
 {
     return AARU_FSEEK(stream, offset, origin);
 }
 
+/* Return the current file offset as a signed 64-bit value. */
 static inline aaru_off_t aaruf_ftell(FILE *stream)
 {
     return (aaru_off_t)AARU_FTELL(stream);

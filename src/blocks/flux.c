@@ -335,8 +335,8 @@ void process_flux_data_block(aaruformat_context *ctx, const IndexEntry *entry)
     memset(&ctx->flux_data_header, 0, sizeof(FluxHeader));
 
     // Seek to block
-    pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
-    if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
+    pos = aaruf_fseek(ctx->imageStream, (aaru_off_t)entry->offset, SEEK_SET);
+    if(pos < 0 || aaruf_ftell(ctx->imageStream) != (aaru_off_t)entry->offset)
     {
         FATAL("Could not seek to %" PRIu64 " as indicated by index entry...\n", entry->offset);
         return;
@@ -851,14 +851,14 @@ static const FluxEntry *find_flux_entry_by_key(const aaruformat_context *ctx, co
 static int32_t read_flux_payload_header(const aaruformat_context *ctx, uint64_t payload_offset,
                                         DataStreamPayloadHeader *header)
 {
-    if(fseek(ctx->imageStream, payload_offset, SEEK_SET) < 0)
+    if(aaruf_fseek(ctx->imageStream, (aaru_off_t)payload_offset, SEEK_SET) < 0)
     {
         FATAL("Could not seek to flux payload at offset %" PRIu64, payload_offset);
         TRACE("Exiting read_flux_payload_header() = AARUF_ERROR_CANNOT_READ_BLOCK\n");
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
-    aaru_off_t file_position = ftell(ctx->imageStream);
+    aaru_off_t file_position = aaruf_ftell(ctx->imageStream);
     if(file_position < 0 || (uint64_t)file_position != payload_offset)
     {
         FATAL("Invalid flux payload position (expected %" PRIu64 ", got %ld)", payload_offset, file_position);

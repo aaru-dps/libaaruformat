@@ -57,8 +57,8 @@ void process_checksum_block(aaruformat_context *ctx, const IndexEntry *entry)
     }
 
     // Seek to block
-    seek_result = fseek(ctx->imageStream, entry->offset, SEEK_SET);
-    if(seek_result < 0 || ftell(ctx->imageStream) != entry->offset)
+    seek_result = aaruf_fseek(ctx->imageStream, (aaru_off_t)entry->offset, SEEK_SET);
+    if(seek_result < 0 || aaruf_ftell(ctx->imageStream) != (aaru_off_t)entry->offset)
     {
         FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
 

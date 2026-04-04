@@ -138,8 +138,8 @@ void process_tape_files_block(aaruformat_context *ctx, const IndexEntry *entry)
     }
 
     // Seek to block
-    pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
-    if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
+    pos = aaruf_fseek(ctx->imageStream, (aaru_off_t)entry->offset, SEEK_SET);
+    if(pos < 0 || aaruf_ftell(ctx->imageStream) != (aaru_off_t)entry->offset)
     {
         FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
 
@@ -359,8 +359,8 @@ void process_tape_partitions_block(aaruformat_context *ctx, const IndexEntry *en
     }
 
     // Seek to block
-    pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
-    if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
+    pos = aaruf_fseek(ctx->imageStream, (aaru_off_t)entry->offset, SEEK_SET);
+    if(pos < 0 || aaruf_ftell(ctx->imageStream) != (aaru_off_t)entry->offset)
     {
         FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
 

@@ -49,8 +49,8 @@ void process_metadata_block(aaruformat_context *ctx, const IndexEntry *entry)
 
     // Seek to block
     TRACE("Seeking to metadata block at position %" PRIu64, entry->offset);
-    pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
-    if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
+    pos = aaruf_fseek(ctx->imageStream, (aaru_off_t)entry->offset, SEEK_SET);
+    if(pos < 0 || aaruf_ftell(ctx->imageStream) != (aaru_off_t)entry->offset)
     {
         FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
 
@@ -96,7 +96,7 @@ void process_metadata_block(aaruformat_context *ctx, const IndexEntry *entry)
     TRACE("Reading metadata block of size %u at position %" PRIu64,
           ctx->metadata_block_header.blockSize + sizeof(MetadataBlockHeader), entry->offset);
 
-    fseek(ctx->imageStream, entry->offset, SEEK_SET);
+    aaruf_fseek(ctx->imageStream, (aaru_off_t)entry->offset, SEEK_SET);
     read_bytes = fread(ctx->metadata_block, 1, ctx->metadata_block_header.blockSize + sizeof(MetadataBlockHeader),
                        ctx->imageStream);
 
@@ -264,7 +264,7 @@ void process_geometry_block(aaruformat_context *ctx, const IndexEntry *entry)
     }
 
     // Seek to block
-    if(fseek(ctx->imageStream, entry->offset, SEEK_SET) != 0)
+    if(aaruf_fseek(ctx->imageStream, (aaru_off_t)entry->offset, SEEK_SET) != 0)
     {
         FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
 
@@ -326,8 +326,8 @@ void process_cicm_block(aaruformat_context *ctx, const IndexEntry *entry)
 
     // Seek to block
     TRACE("Seeking to CICM XML metadata block at position %" PRIu64, entry->offset);
-    pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
-    if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
+    pos = aaruf_fseek(ctx->imageStream, (aaru_off_t)entry->offset, SEEK_SET);
+    if(pos < 0 || aaruf_ftell(ctx->imageStream) != (aaru_off_t)entry->offset)
     {
         FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
 
@@ -490,8 +490,8 @@ void process_aaru_metadata_json_block(aaruformat_context *ctx, const IndexEntry 
 
     // Seek to block
     TRACE("Seeking to Aaru metadata JSON block at position %" PRIu64, entry->offset);
-    pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
-    if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
+    pos = aaruf_fseek(ctx->imageStream, (aaru_off_t)entry->offset, SEEK_SET);
+    if(pos < 0 || aaruf_ftell(ctx->imageStream) != (aaru_off_t)entry->offset)
     {
         FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
 

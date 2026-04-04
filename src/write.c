@@ -1656,7 +1656,7 @@ int32_t aaruf_close_current_block(aaruformat_context *ctx)
     // Write block header to file
 
     // Move to expected block position
-    fseek(ctx->imageStream, ctx->next_block_position, SEEK_SET);
+    aaruf_fseek(ctx->imageStream, (aaru_off_t)ctx->next_block_position, SEEK_SET);
 
     // Write block header
     if(fwrite(&ctx->current_block_header, sizeof(BlockHeader), 1, ctx->imageStream) != 1)

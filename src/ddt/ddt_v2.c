@@ -50,7 +50,7 @@
  * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context or image stream is invalid (NULL pointers).
  *
  * @retval AARUF_ERROR_CANNOT_READ_BLOCK (-7) Failed to access the DDT block in the image stream. This occurs when:
- *         - fseek() fails to position at the DDT block offset
+ *         - aaruf_fseek() fails to position at the DDT block offset
  *         - The file position doesn't match the expected offset after seeking
  *         - Failed to read the DDT header from the image stream
  *         - The number of bytes read for the DDT header is insufficient
@@ -118,8 +118,8 @@ int32_t process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
     }
 
     // Seek to block
-    pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
-    if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
+    pos = aaruf_fseek(ctx->imageStream, (aaru_off_t)entry->offset, SEEK_SET);
+    if(pos < 0 || aaruf_ftell(ctx->imageStream) != (aaru_off_t)entry->offset)
     {
         FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
 
@@ -927,7 +927,7 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
     if(ctx->cached_ddt_offset != secondary_ddt_offset)
     {
         int32_t error_no = 0;
-        fseek(ctx->imageStream, secondary_ddt_offset, SEEK_SET);
+        aaruf_fseek(ctx->imageStream, (aaru_off_t)secondary_ddt_offset, SEEK_SET);
         DdtHeader2 ddt_header;
         size_t     read_bytes = fread(&ddt_header, 1, sizeof(DdtHeader2), ctx->imageStream);
 
@@ -1435,13 +1435,13 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             if(ctx->writing_buffer != NULL) aaruf_close_current_block(ctx);
 
             // Get current position and seek to end of file
-            fseek(ctx->imageStream, 0, SEEK_END);
-            end_of_file = ftell(ctx->imageStream);
+            aaruf_fseek(ctx->imageStream, 0, SEEK_END);
+            end_of_file = aaruf_ftell(ctx->imageStream);
 
             // Align to block boundary
             uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
             end_of_file             = end_of_file + alignment_mask & ~alignment_mask;
-            fseek(ctx->imageStream, end_of_file, SEEK_SET);
+            aaruf_fseek(ctx->imageStream, end_of_file, SEEK_SET);
 
             // Prepare DDT header for the never-written cached table
             memset(&ddt_header, 0, sizeof(DdtHeader2));
@@ -1580,8 +1580,8 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             ctx->dirty_primary_ddt                        = true;  // Mark primary DDT as dirty
 
             // Write the updated primary table back to its original position in the file
-            aaru_off_t saved_pos = ftell(ctx->imageStream);
-            fseek(ctx->imageStream, ctx->primary_ddt_offset + sizeof(DdtHeader2), SEEK_SET);
+            aaru_off_t saved_pos = aaruf_ftell(ctx->imageStream);
+            aaruf_fseek(ctx->imageStream, (aaru_off_t)(ctx->primary_ddt_offset + sizeof(DdtHeader2)), SEEK_SET);
 
             size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint64_t);
 
@@ -1611,7 +1611,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
             ctx->cached_ddt_position = 0;
 
             // Restore file position
-            fseek(ctx->imageStream, saved_pos, SEEK_SET);
+            aaruf_fseek(ctx->imageStream, saved_pos, SEEK_SET);
 
             TRACE("Successfully wrote never-written cached secondary DDT to disk");
         }
@@ -1624,19 +1624,19 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
     // Step 3: Write the currently in-memory cached secondary level table to the end of the file
     if(ctx->cached_ddt_offset != 0)
     {
-        long current_pos = 0;
+        aaru_off_t current_pos = 0;
         // Close the current data block first
         if(ctx->writing_buffer != NULL) aaruf_close_current_block(ctx);
 
         // Get current position and seek to end of file
-        current_pos = ftell(ctx->imageStream);
-        fseek(ctx->imageStream, 0, SEEK_END);
-        end_of_file = ftell(ctx->imageStream);
+        current_pos = aaruf_ftell(ctx->imageStream);
+        aaruf_fseek(ctx->imageStream, 0, SEEK_END);
+        end_of_file = aaruf_ftell(ctx->imageStream);
 
         // Align to block boundary
         uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
         end_of_file             = end_of_file + alignment_mask & ~alignment_mask;
-        fseek(ctx->imageStream, end_of_file, SEEK_SET);
+        aaruf_fseek(ctx->imageStream, end_of_file, SEEK_SET);
 
         // Prepare DDT header for the cached table
         memset(&ddt_header, 0, sizeof(DdtHeader2));
@@ -1802,8 +1802,8 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
         ctx->dirty_primary_ddt            = true;  // Mark primary DDT as dirty
 
         // Write the updated primary table back to its original position in the file
-        aaru_off_t saved_pos = ftell(ctx->imageStream);
-        fseek(ctx->imageStream, ctx->primary_ddt_offset + sizeof(DdtHeader2), SEEK_SET);
+        aaru_off_t saved_pos = aaruf_ftell(ctx->imageStream);
+        aaruf_fseek(ctx->imageStream, (aaru_off_t)(ctx->primary_ddt_offset + sizeof(DdtHeader2)), SEEK_SET);
 
         size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint64_t);
 
@@ -1823,7 +1823,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
         offset                   = 0;
         TRACE("Updated nextBlockPosition after DDT write to %" PRIu64, ctx->next_block_position);
 
-        fseek(ctx->imageStream, saved_pos, SEEK_SET);
+        aaruf_fseek(ctx->imageStream, saved_pos, SEEK_SET);
 
         // Free the cached table
 
@@ -1831,7 +1831,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
         ctx->cached_secondary_ddt2 = NULL;
 
         // Restore file position
-        fseek(ctx->imageStream, current_pos, SEEK_SET);
+        aaruf_fseek(ctx->imageStream, current_pos, SEEK_SET);
     }
 
     // Step 5: Check if the specified block already has an existing secondary level table
@@ -1840,7 +1840,7 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
     if(!create_new_table && secondary_ddt_offset != 0)
     {
         // Load existing table
-        fseek(ctx->imageStream, secondary_ddt_offset, SEEK_SET);
+        aaruf_fseek(ctx->imageStream, (aaru_off_t)secondary_ddt_offset, SEEK_SET);
         size_t read_bytes = fread(&ddt_header, 1, sizeof(DdtHeader2), ctx->imageStream);
 
         if(read_bytes != sizeof(DdtHeader2) || ddt_header.identifier != DeDuplicationTable2 ||

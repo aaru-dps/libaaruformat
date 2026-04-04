@@ -107,8 +107,8 @@ int32_t process_ddt_v1(aaruformat_context *ctx, IndexEntry *entry, bool *found_u
 
     // Seek to block
     TRACE("Seeking to DDT block at position %" PRIu64, entry->offset);
-    pos = fseek(ctx->imageStream, entry->offset, SEEK_SET);
-    if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
+    pos = aaruf_fseek(ctx->imageStream, (aaru_off_t)entry->offset, SEEK_SET);
+    if(pos < 0 || aaruf_ftell(ctx->imageStream) != (aaru_off_t)entry->offset)
     {
         FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
 

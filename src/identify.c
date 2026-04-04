@@ -166,7 +166,7 @@ AARU_EXPORT int AARU_CALL aaruf_identify_stream(FILE *image_stream)
 {
     if(image_stream == NULL) return 0;
 
-    if(fseek(image_stream, 0, SEEK_SET) != 0) return 0;
+    if(aaruf_fseek(image_stream, 0, SEEK_SET) != 0) return 0;
 
     AaruHeader header;
 

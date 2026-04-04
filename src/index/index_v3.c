@@ -118,7 +118,7 @@ UT_array *process_index_v3(aaruformat_context *ctx)
 
     // Read the index header
     TRACE("Reading index header at position %llu", ctx->header.indexOffset);
-    if(fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET) != 0)
+    if(aaruf_fseek(ctx->imageStream, (aaru_off_t)ctx->header.indexOffset, SEEK_SET) != 0)
     {
         FATAL("Could not seek to index header at %llu.", ctx->header.indexOffset);
         utarray_free(index_entries);
@@ -258,7 +258,7 @@ static bool add_subindex_entries(aaruformat_context *ctx, UT_array *index_entrie
     }
 
     // Seek to the subindex
-    if(fseek(ctx->imageStream, subindex_entry->offset, SEEK_SET) != 0)
+    if(aaruf_fseek(ctx->imageStream, (aaru_off_t)subindex_entry->offset, SEEK_SET) != 0)
     {
         FATAL("Could not seek to subindex header at %llu.", (unsigned long long)subindex_entry->offset);
         TRACE("Exiting add_subindex_entries() = false (seek failed)");
@@ -424,7 +424,7 @@ int32_t verify_index_v3(aaruformat_context *ctx)
 
     // This will traverse all blocks and check their CRC64 without uncompressing them
     TRACE("Checking index integrity at %llu.", ctx->header.indexOffset);
-    if(fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET) != 0)
+    if(aaruf_fseek(ctx->imageStream, (aaru_off_t)ctx->header.indexOffset, SEEK_SET) != 0)
     {
         FATAL("Could not seek to index header at %llu.", ctx->header.indexOffset);
 

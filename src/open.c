@@ -238,7 +238,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     aaruformat_context *ctx           = NULL;
     int                 error_no      = 0;
     size_t              read_bytes    = 0;
-    long                pos           = 0;
+    aaru_off_t          pos           = 0;
     int                 i             = 0;
     uint32_t            signature     = 0;
     UT_array           *index_entries = NULL;
@@ -286,7 +286,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     }
 
     TRACE("Reading header at position 0");
-    fseek(ctx->imageStream, 0, SEEK_SET);
+    aaruf_fseek(ctx->imageStream, 0, SEEK_SET);
     read_bytes = fread(&ctx->header, 1, sizeof(AaruHeader), ctx->imageStream);
 
     if(read_bytes != sizeof(AaruHeader))
@@ -322,7 +322,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     if(ctx->header.imageMajorVersion >= AARUF_VERSION_V2)
     {
         TRACE("Reading new header version at position 0");
-        fseek(ctx->imageStream, 0, SEEK_SET);
+        aaruf_fseek(ctx->imageStream, 0, SEEK_SET);
         read_bytes = fread(&ctx->header, 1, sizeof(AaruHeaderV2), ctx->imageStream);
 
         if(read_bytes != sizeof(AaruHeaderV2))
@@ -438,8 +438,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
 
     // Read the index header
     TRACE("Reading index header at position %" PRIu64, ctx->header.indexOffset);
-    pos = fseek(ctx->imageStream, ctx->header.indexOffset, SEEK_SET);
-    if(pos < 0)
+    if(aaruf_fseek(ctx->imageStream, (aaru_off_t)ctx->header.indexOffset, SEEK_SET) != 0)
     {
         cleanup_open_failure(ctx);
         aaruf_set_open_error(AARUF_ERROR_CANNOT_READ_INDEX);
@@ -447,7 +446,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
         return NULL;
     }
 
-    pos = ftell(ctx->imageStream);
+    pos = aaruf_ftell(ctx->imageStream);
     if(pos != ctx->header.indexOffset)
     {
         cleanup_open_failure(ctx);
@@ -501,9 +500,9 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     for(i = 0; i < utarray_len(index_entries); i++)
     {
         IndexEntry *entry = utarray_eltptr(index_entries, i);
-        pos               = fseek(ctx->imageStream, entry->offset, SEEK_SET);
 
-        if(pos < 0 || ftell(ctx->imageStream) != entry->offset)
+        if(aaruf_fseek(ctx->imageStream, (aaru_off_t)entry->offset, SEEK_SET) != 0 ||
+           aaruf_ftell(ctx->imageStream) != (aaru_off_t)entry->offset)
         {
             TRACE("Could not seek to %" PRIu64 " as indicated by index entry %d, continuing...", entry->offset, i);
 
@@ -700,15 +699,15 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     ctx->image_info.LastModificationTime = ctx->header.lastWrittenTime;
 
     // Calculate aligned next block position
-    fseek(ctx->imageStream, 0, SEEK_END);
+    aaruf_fseek(ctx->imageStream, 0, SEEK_END);
     const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
-    ctx->next_block_position      = ftell(ctx->imageStream);  // Start just after the header
+    ctx->next_block_position      = (uint64_t)aaruf_ftell(ctx->imageStream);  // Start just after the header
     ctx->next_block_position      = ctx->next_block_position + alignment_mask & ~alignment_mask;
 
     TRACE("Data blocks will start at position %" PRIu64, ctx->next_block_position);
 
     // Position file pointer at the data start position
-    if(fseek(ctx->imageStream, ctx->next_block_position, SEEK_SET) != 0)
+    if(aaruf_fseek(ctx->imageStream, (aaru_off_t)ctx->next_block_position, SEEK_SET) != 0)
     {
         FATAL("Could not seek to data start position");
         TRACE("Exiting aaruf_open() = NULL");

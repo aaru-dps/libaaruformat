@@ -511,7 +511,7 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
     TRACE("Data blocks will start at position %" PRIu64, ctx->next_block_position);
 
     // Position file pointer at the data start position
-    if(fseek(ctx->imageStream, ctx->next_block_position, SEEK_SET) != 0)
+    if(aaruf_fseek(ctx->imageStream, (aaru_off_t)ctx->next_block_position, SEEK_SET) != 0)
     {
         FATAL("Could not seek to data start position");
         TRACE("Exiting aaruf_create() = NULL");

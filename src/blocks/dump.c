@@ -124,7 +124,8 @@ void process_dumphw_block(aaruformat_context *ctx, const IndexEntry *entry)
         return;
     }
 
-    if(fseek(ctx->imageStream, entry->offset, SEEK_SET) < 0 || ftell(ctx->imageStream) != entry->offset)
+    if(aaruf_fseek(ctx->imageStream, (aaru_off_t)entry->offset, SEEK_SET) < 0 ||
+       aaruf_ftell(ctx->imageStream) != (aaru_off_t)entry->offset)
     {
         FATAL("Could not seek to %" PRIu64 " as indicated by index entry...", entry->offset);
         reset_dump_hardware_context(ctx);
@@ -201,7 +202,7 @@ void process_dumphw_block(aaruformat_context *ctx, const IndexEntry *entry)
 
         free(payload);
 
-        if(fseek(ctx->imageStream, -(aaru_off_t)payload_length, SEEK_CUR) != 0)
+        if(aaruf_fseek(ctx->imageStream, -(aaru_off_t)payload_length, SEEK_CUR) != 0)
         {
             TRACE("Could not rewind after CRC verification");
             reset_dump_hardware_context(ctx);
