@@ -145,6 +145,9 @@ typedef enum
     kDataTypeWiiUPartitionKeyMap     = 98,  ///< Nintendo Wii U partition-to-key mapping with regions
     kDataTypeWiiPartitionKeyMap      = 99,  ///< Nintendo Wii partition-to-key mapping with regions
     kDataTypeNgcwJunkMap             = 100, ///< Nintendo GameCube/Wii junk region map with LFG seeds
+    kDataTypeAacsMediaKey            = 101, ///< AACS Media Key
+    kDataTypeAacsVolumeUniqueKey     = 102, ///< AACS Volume Unique Key
+    kDataTypeBdSectorEdc             = 103, ///< Blu-ray Sector EDC
 } DataType;
 
 /**

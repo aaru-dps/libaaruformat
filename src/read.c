@@ -1542,70 +1542,134 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
             }
 
             if(ctx->image_info.MediaType == GOD || ctx->image_info.MediaType == WOD)
-             {
-                 if(ctx->sector_id == NULL || ctx->sector_ied == NULL || ctx->sector_cpr_mai == NULL ||
-                    ctx->sector_edc == NULL)
-                     return aaruf_read_sector(context, sector_address, negative, data, length, sector_status);
- 
-                 if(*length < 2064 || data == NULL)
-                 {
-                     *length = 2064;
-                     FATAL("Buffer too small for sector, required %u bytes", *length);
- 
-                     TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_BUFFER_TOO_SMALL");
-                     return AARUF_ERROR_BUFFER_TOO_SMALL;
-                 }
- 
-                 bare_length  = 0;
-                 query_status = aaruf_read_sector(context, sector_address, negative, NULL, &bare_length, sector_status);
- 
-                 if(query_status != AARUF_ERROR_BUFFER_TOO_SMALL && query_status != AARUF_STATUS_OK)
-                 {
-                     TRACE("Exiting aaruf_read_sector_long() = %d", query_status);
-                     return query_status;
-                 }
- 
-                 if(bare_length == 0)
-                 {
-                     FATAL("Invalid bare sector length (0)");
- 
-                     TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_INCORRECT_DATA_SIZE");
-                     return AARUF_ERROR_INCORRECT_DATA_SIZE;
-                 }
- 
-                 TRACE("Allocating memory for bare data");
-                 bare_data = (uint8_t *)malloc(bare_length);
- 
-                 if(bare_data == NULL)
-                 {
-                     FATAL("Could not allocate memory for bare data");
- 
-                     TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
-                     return AARUF_ERROR_NOT_ENOUGH_MEMORY;
-                 }
- 
-                 res = aaruf_read_sector(context, sector_address, negative, bare_data, &bare_length, sector_status);
- 
-                 if(res != AARUF_STATUS_OK)
-                 {
-                     *length = 2064;
-                     free(bare_data);
- 
-                     TRACE("Exiting aaruf_read_sector_long() = %d", res);
-                     return res;
-                 }
- 
-                 memcpy(data, ctx->sector_id + corrected_sector_address * 4, 4);
-                 memcpy(data + 4, ctx->sector_ied + corrected_sector_address * 2, 2);
-                 memcpy(data + 6, bare_data, 2048);
-                 memcpy(data + 2054, ctx->sector_cpr_mai + corrected_sector_address * 6, 6);
-                 memcpy(data + 2060, ctx->sector_edc + corrected_sector_address * 4, 4);
- 
-                 *length = 2064;
- 
-                 free(bare_data);
-                 return AARUF_STATUS_OK;
-             }
+            {
+                if(ctx->sector_id == NULL || ctx->sector_ied == NULL || ctx->sector_cpr_mai == NULL ||
+                ctx->sector_edc == NULL)
+                    return aaruf_read_sector(context, sector_address, negative, data, length, sector_status);
+
+                if(*length < 2064 || data == NULL)
+                {
+                    *length = 2064;
+                    FATAL("Buffer too small for sector, required %u bytes", *length);
+
+                    TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_BUFFER_TOO_SMALL");
+                    return AARUF_ERROR_BUFFER_TOO_SMALL;
+                }
+
+                bare_length  = 0;
+                query_status = aaruf_read_sector(context, sector_address, negative, NULL, &bare_length, sector_status);
+
+                if(query_status != AARUF_ERROR_BUFFER_TOO_SMALL && query_status != AARUF_STATUS_OK)
+                {
+                    TRACE("Exiting aaruf_read_sector_long() = %d", query_status);
+                    return query_status;
+                }
+
+                if(bare_length == 0)
+                {
+                    FATAL("Invalid bare sector length (0)");
+
+                    TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                    return AARUF_ERROR_INCORRECT_DATA_SIZE;
+                }
+
+                TRACE("Allocating memory for bare data");
+                bare_data = (uint8_t *)malloc(bare_length);
+
+                if(bare_data == NULL)
+                {
+                    FATAL("Could not allocate memory for bare data");
+
+                    TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                    return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                }
+
+                res = aaruf_read_sector(context, sector_address, negative, bare_data, &bare_length, sector_status);
+
+                if(res != AARUF_STATUS_OK)
+                {
+                    *length = 2064;
+                    free(bare_data);
+
+                    TRACE("Exiting aaruf_read_sector_long() = %d", res);
+                    return res;
+                }
+
+                memcpy(data, ctx->sector_id + corrected_sector_address * 4, 4);
+                memcpy(data + 4, ctx->sector_ied + corrected_sector_address * 2, 2);
+                memcpy(data + 6, bare_data, 2048);
+                memcpy(data + 2054, ctx->sector_cpr_mai + corrected_sector_address * 6, 6);
+                memcpy(data + 2060, ctx->sector_edc + corrected_sector_address * 4, 4);
+
+                *length = 2064;
+
+                free(bare_data);
+                return AARUF_STATUS_OK;
+            }
+
+            if(ctx->image_info.MediaType == BDROM || ctx->image_info.MediaType == BDR ||
+               ctx->image_info.MediaType == BDRE || ctx->image_info.MediaType == BDRXL ||
+               ctx->image_info.MediaType == BDREXL || ctx->image_info.MediaType == UHDBD ||
+               ctx->image_info.MediaType == XGD4 || ctx->image_info.MediaType == PS3BD ||
+               ctx->image_info.MediaType == PS4BD || ctx->image_info.MediaType == PS5BD)
+            {
+                if(ctx->sector_edc == NULL) return aaruf_read_sector(context, sector_address, negative, data, length, sector_status);
+
+                if(*length < 2052 || data == NULL)
+                {
+                    *length = 2052;
+                    FATAL("Buffer too small for sector, required %u bytes", *length);
+
+                    TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_BUFFER_TOO_SMALL");
+                    return AARUF_ERROR_BUFFER_TOO_SMALL;
+                }
+
+                bare_length  = 0;
+                query_status = aaruf_read_sector(context, sector_address, negative, NULL, &bare_length, sector_status);
+
+                if(query_status != AARUF_ERROR_BUFFER_TOO_SMALL && query_status != AARUF_STATUS_OK)
+                {
+                    TRACE("Exiting aaruf_read_sector_long() = %d", query_status);
+                    return query_status;
+                }
+
+                if(bare_length == 0)
+                {
+                    FATAL("Invalid bare sector length (0)");
+
+                    TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                    return AARUF_ERROR_INCORRECT_DATA_SIZE;
+                }
+
+                TRACE("Allocating memory for bare data");
+                bare_data = (uint8_t *)malloc(bare_length);
+
+                if(bare_data == NULL)
+                {
+                    FATAL("Could not allocate memory for bare data");
+
+                    TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                    return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                }
+
+                res = aaruf_read_sector(context, sector_address, negative, bare_data, &bare_length, sector_status);
+
+                if(res != AARUF_STATUS_OK)
+                {
+                    free(bare_data);
+
+                    TRACE("Exiting aaruf_read_sector_long() = %d", res);
+                    return res;
+                }
+
+                memcpy(data, bare_data, 2048);
+                memcpy(data + 2048, ctx->sector_edc + corrected_sector_address * 4, 4);
+
+                *length = 2052;
+
+                free(bare_data);
+                return AARUF_STATUS_OK;
+            }
 
             if(*length < 2352 || data == NULL)
             {
