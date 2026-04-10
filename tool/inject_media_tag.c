@@ -134,6 +134,8 @@ static const MediaTagTypeMapping media_tag_mappings[] = {
     {"kMediaTagDvdDiscKeyDecrypted",         kMediaTagDvdDiscKeyDecrypted},
     {"kMediaTagDvdPfi2ndLayer",              kMediaTagDvdPfi2ndLayer},
     {"kMediaTagFloppyWriteProtect",           kMediaTagFloppyWriteProtect},
+    {"kMediaTagAacsMediaKey",                 kMediaTagAacsMediaKey},
+    {"kMediaTagAacsVolumeUniqueKey",          kMediaTagAacsVolumeUniqueKey},
 };
 // clang-format on
 
@@ -290,6 +292,10 @@ static int32_t get_datatype_for_media_tag_type(MediaTagType tag_type)
             return kDataTypeDvdDiscKeyDecrypted;
         case kMediaTagFloppyWriteProtect:
             return kDataTypeFloppyWriteProtect;
+        case kMediaTagAacsMediaKey:
+            return kDataTypeAacsMediaKey;
+        case kMediaTagAacsVolumeUniqueKey:
+            return kDataTypeAacsVolumeUniqueKey;
         default:
             return -1;
     }

@@ -206,6 +206,10 @@ const char *media_tag_type_to_string(int32_t type)
             return "DVD Physical Format Information (2nd layer)";
         case kMediaTagFloppyWriteProtect:
             return "Floppy Write-Protect Status";
+        case kMediaTagAacsMediaKey:
+            return "AACS Media Key";
+        case kMediaTagAacsVolumeUniqueKey:
+            return "AACS Volume Unique Key";
         default:
             return "Unknown Media Tag";
     }
@@ -391,6 +395,12 @@ const char *data_type_to_string(uint16_t type)
             return "DVD Physical Format Info (2nd layer)";
         case kDataTypeFloppyWriteProtect:
             return "Floppy Write-Protect Status";
+        case kDataTypeAacsMediaKey:
+            return "AACS Media Key";
+        case kDataTypeAacsVolumeUniqueKey:
+            return "AACS Volume Unique Key";
+        case kDataTypeBdSectorEdc:
+            return "Blu-ray Sector EDC";
         default:
             return "Unknown Data Type";
     }
@@ -1587,6 +1597,8 @@ const char *sector_tag_type_to_string(int32_t type)
             return "Apple Profile Tag";
         case kSectorTagPriamDataTower:
             return "Priam DataTower Tag";
+        case kSectorTagBdSectorEdc:
+            return "Blu-ray Sector EDC";
         default:
             return "Unknown Sector Tag";
     }

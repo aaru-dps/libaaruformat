@@ -202,6 +202,10 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_media_tag_type_for_datatype(const int32_t
             return kMediaTagWiiPartitionKeyMap;
         case kDataTypeNgcwJunkMap:
             return kMediaTagNgcwJunkMap;
+        case kDataTypeAacsMediaKey:
+            return kMediaTagAacsMediaKey;
+        case kDataTypeAacsVolumeUniqueKey:
+            return kMediaTagAacsVolumeUniqueKey;
         default:
             return -1;
     }
@@ -382,6 +386,10 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_datatype_for_media_tag_type(const int32_t
             return kDataTypeWiiPartitionKeyMap;
         case kMediaTagNgcwJunkMap:
             return kDataTypeNgcwJunkMap;
+        case kMediaTagAacsMediaKey:
+            return kDataTypeAacsMediaKey;
+        case kMediaTagAacsVolumeUniqueKey:
+            return kDataTypeAacsVolumeUniqueKey;
         default:
             return -1;
     }

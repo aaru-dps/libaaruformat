@@ -161,6 +161,7 @@ typedef enum
     BDRE   = 62,  ///< BD-RE
     BDRXL  = 63,  ///< BD-R XL
     BDREXL = 64,  ///< BD-RE XL
+    UHDBD  = 65,  ///< Ultra HD Blu-ray
     // Standard Blu-ray formats, types 60 to 69
 
     // Rare or uncommon optical standards, types 70 to 79
@@ -211,6 +212,7 @@ typedef enum
     PS4BD                   = 117,  ///< Sony PlayStation 4 game Blu-ray
     UMD                     = 118,  ///< Sony PlayStation Portable Universal Media Disc (ECMA-365)
     PlayStationVitaGameCard = 119,  ///< PS Vita NV memory card (proprietary flash)
+    PS5BD                   = 120,  ///< Sony PlayStation 5 game Blu-ray
     // Sony game media, types 110 to 129
 
     // Microsoft game media, types 130 to 149
@@ -977,6 +979,7 @@ typedef enum
     kSectorTagDvdSectorEdc         = 19,  ///< DVD sector EDC, 4 bytes
     kSectorTagAppleProfile         = 20,  ///< Apple's Profile sector tags, 20 bytes
     kSectorTagPriamDataTower       = 21,  ///< Priam DataTower sector tags, 24 bytes
+    kSectorTagBdSectorEdc          = 22,  ///< Blu-ray sector EDC, 4 bytes
     MaxSectorTag                   = kSectorTagPriamDataTower
 } SectorTagType;
 
@@ -1082,6 +1085,8 @@ typedef enum
     kMediaTagWiiUPartitionKeyMap = 82,  ///< Nintendo Wii U partition-to-key mapping with regions
     kMediaTagWiiPartitionKeyMap  = 83,  ///< Nintendo Wii partition-to-key mapping with regions
     kMediaTagNgcwJunkMap         = 84,  ///< Nintendo GameCube/Wii junk region map with LFG seeds
+    kMediaTagAacsMediaKey        = 85,  ///< AACS Media Key
+    kMediaTagAacsVolumeUniqueKey = 86,  ///< AACS Volume Unique Key
     MaxMediaTag                  = kMediaTagNgcwJunkMap
 } MediaTagType;
 

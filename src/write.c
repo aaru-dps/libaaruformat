@@ -735,6 +735,20 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                 return aaruf_write_sector(context, sector_address, negative, data + 6, sector_status, 2048);
             }
 
+            // Blu-ray long sector
+            if(length == 2052 && (ctx->image_info.MediaType == BDROM || ctx->image_info.MediaType == BDR ||
+                                  ctx->image_info.MediaType == BDRE || ctx->image_info.MediaType == BDRXL ||
+                                  ctx->image_info.MediaType == BDREXL || ctx->image_info.MediaType == UHDBD ||
+                                  ctx->image_info.MediaType == XGD4 || ctx->image_info.MediaType == PS3BD ||
+                                  ctx->image_info.MediaType == PS4BD || ctx->image_info.MediaType == PS5BD))
+            {
+                if(ctx->sector_edc == NULL) ctx->sector_edc = calloc(1, 4 * total_sectors);
+
+                memcpy(ctx->sector_edc + corrected_sector_address * 4, data + 2048, 4);
+
+                return aaruf_write_sector(context, sector_address, negative, data, sector_status, 2048);
+            }
+
             if(length != 2352)
             {
                 FATAL("Incorrect sector size");
