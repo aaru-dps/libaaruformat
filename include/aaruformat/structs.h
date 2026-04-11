@@ -40,6 +40,7 @@
 #include "structs/options.h"
 #include "structs/tape.h"
 #include "structs/flux.h"
+#include "structs/erasure.h"
 
 #endif  // LIBAARUFORMAT_STRUCTS_H
 

@@ -926,75 +926,116 @@ void ec_load_ecmb(aaruformat_context *ctx)
         return;
     }
 
-    /* Parse stripe group descriptor */
-    if(ecmb.length < sizeof(StripeGroupDescriptor)) { free(payload); return; }
+    ctx->ec_algorithm = ecmb.algorithm;
 
-    StripeGroupDescriptor group;
-    memcpy(&group, payload, sizeof(StripeGroupDescriptor));
-
-    ctx->ec_algorithm       = ecmb.algorithm;
-    ctx->ec_K               = group.K;
-    ctx->ec_M               = group.M;
-    ctx->ec_data_shard_size = group.shardSize;
-
-    /* Parse stripe descriptors */
-    uint8_t *p = payload + sizeof(StripeGroupDescriptor);
-    size_t   remaining = (size_t)ecmb.length - sizeof(StripeGroupDescriptor);
-
-    EcReadStripe *stripes = (EcReadStripe *)calloc(group.stripeCount, sizeof(EcReadStripe));
-    if(!stripes) { free(payload); return; }
+    /* Parse all stripe groups */
+    uint8_t *p = payload;
+    size_t   remaining = (size_t)ecmb.length;
 
     EcBlockLookupEntry *lookup_root = NULL;
+    EcReadStripe *data_stripes = NULL;
+    uint32_t      data_stripe_count = 0;
 
-    for(uint32_t s = 0; s < group.stripeCount; s++)
+    for(uint8_t g = 0; g < ecmb.stripeGroupCount && remaining >= sizeof(StripeGroupDescriptor); g++)
     {
-        if(remaining < sizeof(uint16_t)) break;
-        uint16_t ak;
-        memcpy(&ak, p, sizeof(uint16_t)); p += sizeof(uint16_t); remaining -= sizeof(uint16_t);
-        stripes[s].actual_k = ak;
+        StripeGroupDescriptor group;
+        memcpy(&group, p, sizeof(StripeGroupDescriptor));
+        p += sizeof(StripeGroupDescriptor);
+        remaining -= sizeof(StripeGroupDescriptor);
 
-        size_t data_bytes = (size_t)ak * sizeof(StripeDataBlockEntry);
-        size_t parity_bytes = (size_t)group.M * sizeof(StripeParityBlockEntry);
-        if(remaining < data_bytes + parity_bytes) break;
-
-        stripes[s].data_entries = (StripeDataBlockEntry *)malloc(data_bytes);
-        if(!stripes[s].data_entries) break;
-        memcpy(stripes[s].data_entries, p, data_bytes); p += data_bytes; remaining -= data_bytes;
-
-        stripes[s].parity_offsets = (uint64_t *)malloc((size_t)group.M * sizeof(uint64_t));
-        if(!stripes[s].parity_offsets) break;
-        for(uint16_t m = 0; m < group.M; m++)
+        /* Parse stripes for this group */
+        EcReadStripe *grp_stripes = NULL;
+        if(group.stripeCount > 0)
         {
-            StripeParityBlockEntry pe;
-            memcpy(&pe, p, sizeof(StripeParityBlockEntry)); p += sizeof(StripeParityBlockEntry);
-            remaining -= sizeof(StripeParityBlockEntry);
-            stripes[s].parity_offsets[m] = pe.offset;
+            grp_stripes = (EcReadStripe *)calloc(group.stripeCount, sizeof(EcReadStripe));
+            if(!grp_stripes) break;
         }
 
-        /* Build lookup hashmap entries for each data block in this stripe */
-        for(uint16_t k = 0; k < ak; k++)
+        for(uint32_t s = 0; s < group.stripeCount; s++)
         {
-            EcBlockLookupEntry *le = (EcBlockLookupEntry *)calloc(1, sizeof(EcBlockLookupEntry));
-            if(!le) break;
-            le->block_offset = stripes[s].data_entries[k].offset;
-            le->stripe_index = s;
-            le->position     = k;
-            HASH_ADD(hh, lookup_root, block_offset, sizeof(uint64_t), le);
+            if(remaining < sizeof(uint16_t)) break;
+            uint16_t ak;
+            memcpy(&ak, p, sizeof(uint16_t)); p += sizeof(uint16_t); remaining -= sizeof(uint16_t);
+            if(grp_stripes) grp_stripes[s].actual_k = ak;
+
+            size_t data_bytes   = (size_t)ak * sizeof(StripeDataBlockEntry);
+            size_t parity_bytes = (size_t)group.M * sizeof(StripeParityBlockEntry);
+            if(remaining < data_bytes + parity_bytes) break;
+
+            if(grp_stripes)
+            {
+                grp_stripes[s].data_entries = (StripeDataBlockEntry *)malloc(data_bytes);
+                if(grp_stripes[s].data_entries)
+                    memcpy(grp_stripes[s].data_entries, p, data_bytes);
+
+                grp_stripes[s].parity_offsets = (uint64_t *)malloc((size_t)group.M * sizeof(uint64_t));
+            }
+
+            p += data_bytes; remaining -= data_bytes;
+
+            for(uint16_t m = 0; m < group.M; m++)
+            {
+                StripeParityBlockEntry pe;
+                memcpy(&pe, p, sizeof(StripeParityBlockEntry));
+                p += sizeof(StripeParityBlockEntry); remaining -= sizeof(StripeParityBlockEntry);
+                if(grp_stripes && grp_stripes[s].parity_offsets)
+                    grp_stripes[s].parity_offsets[m] = pe.offset;
+            }
+
+            /* Build lookup hashmap for data group blocks */
+            if(group.groupType == kECGroupData && grp_stripes && grp_stripes[s].data_entries)
+            {
+                for(uint16_t k = 0; k < ak; k++)
+                {
+                    EcBlockLookupEntry *le = (EcBlockLookupEntry *)calloc(1, sizeof(EcBlockLookupEntry));
+                    if(!le) break;
+                    le->block_offset = grp_stripes[s].data_entries[k].offset;
+                    le->stripe_index = s;
+                    le->position     = k;
+                    HASH_ADD(hh, lookup_root, block_offset, sizeof(uint64_t), le);
+                }
+            }
+        }
+
+        /* Store parsed data based on group type */
+        if(group.groupType == kECGroupData)
+        {
+            ctx->ec_K               = group.K;
+            ctx->ec_M               = group.M;
+            ctx->ec_data_shard_size = group.shardSize;
+            data_stripes            = grp_stripes;
+            data_stripe_count       = group.stripeCount;
+        }
+        else
+        {
+            /* For non-data groups, free the parsed stripes for now.
+             * Recovery for DDT/metadata/index groups would use these,
+             * but the current read path only recovers data blocks. */
+            if(grp_stripes)
+            {
+                for(uint32_t s = 0; s < group.stripeCount; s++)
+                {
+                    free(grp_stripes[s].data_entries);
+                    free(grp_stripes[s].parity_offsets);
+                }
+                free(grp_stripes);
+            }
         }
     }
 
     free(payload);
 
-    ctx->ec_read_stripes      = stripes;
-    ctx->ec_read_stripe_count = group.stripeCount;
-    ctx->ec_block_lookup      = lookup_root;
-    ctx->ec_recovery_available = true;
+    ctx->ec_read_stripes       = data_stripes;
+    ctx->ec_read_stripe_count  = data_stripe_count;
+    ctx->ec_block_lookup       = lookup_root;
+    ctx->ec_recovery_available = (data_stripes != NULL && data_stripe_count > 0);
 
     /* Create RS codec for decoding */
-    if(!ctx->ec_rs_ctx)
-        ctx->ec_rs_ctx = rs_create(group.K, group.M);
+    if(ctx->ec_recovery_available && !ctx->ec_rs_ctx)
+        ctx->ec_rs_ctx = rs_create(ctx->ec_K, ctx->ec_M);
 
-    TRACE("ECMB loaded: K=%u M=%u shard_size=%u stripes=%u", group.K, group.M, group.shardSize, group.stripeCount);
+    TRACE("ECMB loaded: %u groups, K=%u M=%u shard_size=%u data_stripes=%u",
+          ecmb.stripeGroupCount, ctx->ec_K, ctx->ec_M, ctx->ec_data_shard_size, data_stripe_count);
 }
 
 /* =========================================================================
