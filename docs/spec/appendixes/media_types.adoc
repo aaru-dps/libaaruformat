@@ -93,6 +93,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |62 |BDRE |BD-RE
 |63 |BDRXL |BD-R XL
 |64 |BDREXL |BD-RE XL
+|65 |UHDBD |Ultra HD Blu-ray
 |===
 
 === 📀 Rare/Uncommon Optical (70–79)
@@ -161,6 +162,7 @@ The most accurate and current list originates from the `libaaruformat` source.
 |117 |PS4BD |Sony PlayStation 4 game Blu-ray
 |118 |UMD |Sony PlayStation Portable Universal Media Disc (ECMA-365)
 |119 |PlayStationVitaGameCard |PS Vita NV memory card
+|120 |PS5BD |Sony PlayStation 5 game Blu-ray
 |===
 
 === 🎮 Microsoft Game Media (130–149)
