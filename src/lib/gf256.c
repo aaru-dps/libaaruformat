@@ -280,6 +280,8 @@ TARGET_WITH_SIMD static void gf256_mul_region_neon(uint8_t *dst, const uint8_t *
     uint8_t low_tbl[16], hi_tbl[16];
     gf256_build_mul_tables(coeff, low_tbl, hi_tbl);
 
+#if defined(__aarch64__) || defined(_M_ARM64)
+    /* AArch64: vqtbl1q_u8 does 16-byte table lookup directly */
     const uint8x16_t low_v = vld1q_u8(low_tbl);
     const uint8x16_t hi_v  = vld1q_u8(hi_tbl);
     const uint8x16_t mask  = vdupq_n_u8(0x0F);
@@ -296,6 +298,30 @@ TARGET_WITH_SIMD static void gf256_mul_region_neon(uint8_t *dst, const uint8_t *
         uint8x16_t r    = veorq_u8(veorq_u8(lo, hi), d);
         vst1q_u8(dst + i, r);
     }
+#else
+    /* ARMv7 32-bit: vtbl2_u8 uses two 8-byte register pairs for 16-byte table.
+     * Process 8 bytes at a time. */
+    uint8x8x2_t low_v2;
+    low_v2.val[0] = vld1_u8(low_tbl);
+    low_v2.val[1] = vld1_u8(low_tbl + 8);
+    uint8x8x2_t hi_v2;
+    hi_v2.val[0] = vld1_u8(hi_tbl);
+    hi_v2.val[1] = vld1_u8(hi_tbl + 8);
+    const uint8x8_t mask8 = vdup_n_u8(0x0F);
+
+    size_t i = 0;
+    for(; i + 8 <= len; i += 8)
+    {
+        uint8x8_t s    = vld1_u8(src + i);
+        uint8x8_t d    = vld1_u8(dst + i);
+        uint8x8_t s_lo = vand_u8(s, mask8);
+        uint8x8_t s_hi = vand_u8(vshr_n_u8(s, 4), mask8);
+        uint8x8_t lo   = vtbl2_u8(low_v2, s_lo);
+        uint8x8_t hi   = vtbl2_u8(hi_v2,  s_hi);
+        uint8x8_t r    = veor_u8(veor_u8(lo, hi), d);
+        vst1_u8(dst + i, r);
+    }
+#endif
 
     for(; i < len; i++)
         dst[i] ^= low_tbl[src[i] & 0x0F] ^ hi_tbl[src[i] >> 4];
