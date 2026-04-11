@@ -42,6 +42,7 @@
 
 #include <aaruformat.h>
 
+#include "erasure_internal.h"
 #include "internal.h"
 #include "log.h"
 
@@ -280,6 +281,9 @@ AARU_EXPORT int AARU_CALL aaruf_close(void *context)
     free(ctx->user_data_ddt);          // Legacy v1 DDT
     free(ctx->user_data_ddt2);         // v2 DDT primary/secondary
     free(ctx->cached_secondary_ddt2);  // Cached secondary DDT (read operations)
+
+    // Free erasure coding state
+    ec_free(ctx);
 
     // Free LRU caches (uses cache->free_func to free cached values)
     free_cache(&ctx->block_header_cache);

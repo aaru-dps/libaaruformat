@@ -374,6 +374,21 @@ typedef struct aaruformat_context
     uint64_t wii_cached_physical_group;   ///< Physical group number of cached block
     bool     wii_cache_valid;             ///< Whether the encrypted group cache is valid
     bool     wii_building_crypto_block;   ///< True while gathering sectors for re-encryption (suppresses recursion)
+
+    /* Erasure coding (write path) */
+    uint8_t   ec_algorithm;           ///< ErasureCodingAlgorithm (0=XOR, 1=RS-Vandermonde).
+    uint16_t  ec_K;                   ///< Data blocks per stripe.
+    uint16_t  ec_M;                   ///< Parity blocks per stripe.
+    uint32_t  ec_data_shard_size;     ///< Max on-disk block size for data blocks (fixed at creation).
+    void     *ec_rs_ctx;              ///< rs_context* (opaque RS codec), NULL if EC disabled.
+    uint8_t **ec_data_parity;         ///< Array of K * M parity buffers (interleaved stripe slots).
+    uint64_t *ec_data_block_offsets;  ///< Array of K * K file offsets for blocks in active stripes.
+    uint32_t *ec_data_block_sizes;    ///< Array of K * K actual on-disk sizes for blocks in active stripes.
+    uint64_t *ec_data_shard_crcs;     ///< Array of K * K CRC64 values for blocks in active stripes.
+    uint16_t *ec_data_stripe_counts;  ///< Array of K: blocks accumulated per stripe slot.
+    uint32_t  ec_total_data_blocks;   ///< Total data blocks written (counter for round-robin assignment).
+    UT_array *ec_data_stripes;        ///< Completed data stripe descriptors (serialized to ECMB).
+    bool      ec_enabled;             ///< True if erasure coding is active.
 } aaruformat_context;
 
 #ifndef AARUFORMAT_CONTEXT_DECLARED

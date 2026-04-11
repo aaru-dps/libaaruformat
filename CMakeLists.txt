@@ -308,6 +308,8 @@ add_library(aaruformat
             src/lib/gf256.h
             src/lib/reed_solomon.c
             src/lib/reed_solomon.h
+            src/erasure.c
+            include/erasure_internal.h
             include/aaruformat/structs/erasure.h)
 
 # Set up include directories for the target

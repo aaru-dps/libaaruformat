@@ -292,4 +292,7 @@ AARU_EXPORT int have_arm_crypto();
 AARU_EXPORT TARGET_WITH_SIMD uint64_t AARU_CALL aaruf_crc64_vmull(uint64_t previous_crc, const uint8_t *data, long len);
 #endif
 
+/* Erasure coding */
+AARU_EXPORT int32_t AARU_CALL aaruf_set_erasure_coding(void *context, uint8_t algorithm, uint16_t K, uint16_t M);
+
 #endif  // LIBAARUFORMAT_DECLS_H

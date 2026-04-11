@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "aaruformat.h"
+#include "erasure_internal.h"
 #include "internal.h"
 #include "log.h"
 #include "ps3/ps3_crypto.h"
@@ -731,7 +732,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                 memcpy(ctx->sector_ied + corrected_sector_address * 2, data + 4, 2);
                 memcpy(ctx->sector_cpr_mai + corrected_sector_address * 6, data + 2054, 6);
                 memcpy(ctx->sector_edc + corrected_sector_address * 4, data + 2060, 4);
-    
+
                 return aaruf_write_sector(context, sector_address, negative, data + 6, sector_status, 2048);
             }
 
@@ -1696,9 +1697,44 @@ int32_t aaruf_close_current_block(aaruformat_context *ctx)
             free(cmp_buffer);
             return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
         }
-
-        free(cmp_buffer);
     }
+
+    /* --- Erasure coding parity accumulation ---
+     * Call BEFORE freeing cmp_buffer / writing_buffer.
+     * For LZMA: cmpLength already includes LZMA_PROPERTIES_LENGTH, but the properties
+     * were written separately. We pass them as lzma_props parameter.
+     * For non-LZMA compressed: cmp_buffer holds all payload.
+     * For uncompressed: writing_buffer holds payload. */
+    if(ctx->ec_enabled)
+    {
+        const uint8_t *ec_payload;
+        uint32_t ec_payload_size;
+        const uint8_t *ec_lzma_props = NULL;
+
+        if(ctx->current_block_header.compression == kCompressionNone)
+        {
+            ec_payload      = ctx->writing_buffer;
+            ec_payload_size = ctx->current_block_header.length;
+        }
+        else if(ctx->current_block_header.compression == kCompressionLzma)
+        {
+            ec_payload      = cmp_buffer;
+            ec_payload_size = ctx->current_block_header.cmpLength - LZMA_PROPERTIES_LENGTH;
+            ec_lzma_props   = lzma_properties;
+        }
+        else
+        {
+            ec_payload      = cmp_buffer;
+            ec_payload_size = ctx->current_block_header.cmpLength;
+        }
+
+        ec_accumulate_data_block(ctx, &ctx->current_block_header, ec_lzma_props,
+                                 ec_payload, ec_payload_size, index_entry.offset);
+    }
+
+    /* Free compressed buffer (if compression was used) */
+    if(ctx->current_block_header.compression != kCompressionNone)
+        free(cmp_buffer);
 
     // Update nextBlockPosition to point to the next available aligned position
     const uint64_t block_total_size = sizeof(BlockHeader) + ctx->current_block_header.cmpLength;

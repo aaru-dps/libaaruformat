@@ -36,6 +36,7 @@
 
 #include <aaruformat.h>
 
+#include "erasure_internal.h"
 #include "internal.h"
 #include "log.h"
 
@@ -5382,6 +5383,9 @@ int32_t aaruf_finalize_write(aaruformat_context *ctx)
         res = write_index_block(ctx);
         if(res != AARUF_STATUS_OK) return res;
     }
+
+    // Write erasure coding parity, ECMB, and recovery footer
+    ec_finalize(ctx);
 
     if(ctx->deduplicate && ctx->sector_hash_map != NULL)
     {
