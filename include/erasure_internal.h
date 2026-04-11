@@ -22,31 +22,45 @@
 #include "aaruformat/context.h"
 #include "aaruformat/structs/data.h"
 
-/**
- * @brief Accumulate parity for a data block just written to disk.
- *
- * Called from aaruf_close_current_block() after writing header + payload.
- */
+/* ---- Write path ---- */
+
 void ec_accumulate_data_block(aaruformat_context *ctx, const BlockHeader *block_header, const uint8_t *lzma_props,
                               const uint8_t *payload, uint32_t payload_size, uint64_t file_offset);
 
-/**
- * @brief Flush a completed data stripe slot: write parity blocks and record descriptor.
- */
 void ec_flush_data_stripe(aaruformat_context *ctx, uint32_t slot);
 
-/**
- * @brief Flush partial stripes, write ECMB and recovery footer.
- *
- * Called from aaruf_finalize_write() after index is written.
- */
 void ec_finalize(aaruformat_context *ctx);
 
+/* ---- Read path ---- */
+
 /**
- * @brief Free all erasure coding state.
+ * @brief Try to load the ECMB from the recovery footer at EOF.
  *
- * Called from aaruf_close().
+ * Reads the last 160 bytes, checks for footerMagic, parses ECMB,
+ * and populates the ec_read_* fields and block lookup hashmap.
+ * Called from aaruf_open().
  */
+void ec_load_ecmb(aaruformat_context *ctx);
+
+/**
+ * @brief Attempt to recover a data block that failed decompression or CRC verification.
+ *
+ * Looks up the block's stripe via the ECMB, reads surviving stripe members + parity,
+ * RS-decodes the erased shard, and decompresses the recovered block.
+ *
+ * @param ctx Context with ec_recovery_available == true.
+ * @param block_offset File offset of the corrupted block.
+ * @param offset Sector offset within the block.
+ * @param data Output buffer for the recovered sector.
+ * @param length Output: bytes written to data.
+ * @param sector_status Sector status from DDT.
+ * @return AARUF_STATUS_OK on success, negative error code on failure.
+ */
+int32_t ec_recover_data_block(aaruformat_context *ctx, uint64_t block_offset, uint64_t offset,
+                              uint8_t *data, uint32_t *length, uint8_t sector_status);
+
+/* ---- Cleanup ---- */
+
 void ec_free(aaruformat_context *ctx);
 
 #endif /* LIBAARUFORMAT_ERASURE_INTERNAL_H */

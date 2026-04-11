@@ -21,6 +21,7 @@
 
 #include <aaruformat.h>
 
+#include "erasure_internal.h"
 #include "internal.h"
 #include "log.h"
 #include "ngcw/lfg.h"
@@ -818,7 +819,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
                       block_header->length);
 
                 TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
-                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                goto ec_try_recovery;
             }
 
             lzma_size = block_header->cmpLength - LZMA_PROPERTIES_LENGTH;
@@ -853,7 +854,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
                 free(cmp_data);
 
                 TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
-                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                goto ec_try_recovery;
             }
 
             read_bytes = fread(cmp_data, 1, lzma_size, ctx->imageStream);
@@ -864,7 +865,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
                 free(block);
 
                 TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
-                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                goto ec_try_recovery;
             }
 
             TRACE("Decompressing block of size %zu bytes", block_header->length);
@@ -879,7 +880,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
                 free(block);
 
                 TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
-                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                goto ec_try_recovery;
             }
 
             if(read_bytes != block_header->length)
@@ -889,7 +890,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
                 free(block);
 
                 TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
-                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                goto ec_try_recovery;
             }
 
             free(cmp_data);
@@ -901,7 +902,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
                 FATAL("Invalid zstd block lengths (cmpLength=%u, length=%u)", block_header->cmpLength,
                       block_header->length);
                 TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
-                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                goto ec_try_recovery;
             }
 
             TRACE("Allocating memory for block of size %zu bytes", block_header->length);
@@ -932,7 +933,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
                 free(cmp_data);
                 free(block);
                 TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
-                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                goto ec_try_recovery;
             }
 
             read_bytes = aaruf_zstd_decode_buffer(block, block_header->length, cmp_data, block_header->cmpLength);
@@ -942,7 +943,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
                 free(cmp_data);
                 free(block);
                 TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
-                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                goto ec_try_recovery;
             }
 
             free(cmp_data);
@@ -980,7 +981,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
                 free(block);
 
                 TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
-                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                goto ec_try_recovery;
             }
 
             TRACE("Decompressing block of size %zu bytes", block_header->length);
@@ -994,7 +995,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
                 free(block);
 
                 TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
-                return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                goto ec_try_recovery;
             }
 
             free(cmp_data);
@@ -1003,7 +1004,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
         default:
             FATAL("Unsupported compression %d", block_header->compression);
             TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_UNSUPPORTED_COMPRESSION");
-            return AARUF_ERROR_UNSUPPORTED_COMPRESSION;
+            goto ec_try_recovery;
     }
 
     // Add block to cache
@@ -1166,6 +1167,26 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
 
     TRACE("Exiting aaruf_read_sector() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
+
+    /* Erasure coding recovery: attempt to reconstruct a block that failed
+     * decompression due to on-disk corruption. ec_recover_data_block()
+     * reads the stripe, RS-decodes the erased shard, decompresses it,
+     * and extracts the requested sector. */
+ec_try_recovery:
+    if(ctx->ec_recovery_available && !ctx->ec_recovery_in_progress)
+    {
+        TRACE("Attempting erasure coding recovery for block at offset %" PRIu64, block_offset);
+        int32_t rc = ec_recover_data_block(ctx, block_offset, offset, data, length, *sector_status);
+        if(rc == AARUF_STATUS_OK)
+        {
+            TRACE("Erasure coding recovery succeeded");
+            return AARUF_STATUS_OK;
+        }
+        TRACE("Erasure coding recovery failed: %d", rc);
+    }
+
+    TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK");
+    return AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
 }
 
 /**

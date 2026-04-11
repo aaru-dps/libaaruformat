@@ -28,6 +28,7 @@
 
 #include <aaruformat.h>
 
+#include "erasure_internal.h"
 #include "internal.h"
 #include "log.h"
 #include "utarray.h"
@@ -683,6 +684,9 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     ctx->magic                 = AARU_MAGIC;
     ctx->library_major_version = LIBAARUFORMAT_MAJOR_VERSION;
     ctx->library_minor_version = LIBAARUFORMAT_MINOR_VERSION;
+
+    /* Try to load erasure coding recovery metadata from EOF footer */
+    ec_load_ecmb(ctx);
 
     if(!resume_mode)
     {

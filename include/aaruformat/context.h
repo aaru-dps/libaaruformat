@@ -389,6 +389,13 @@ typedef struct aaruformat_context
     uint32_t  ec_total_data_blocks;   ///< Total data blocks written (counter for round-robin assignment).
     UT_array *ec_data_stripes;        ///< Completed data stripe descriptors (serialized to ECMB).
     bool      ec_enabled;             ///< True if erasure coding is active.
+
+    /* Erasure coding (read path) */
+    void    *ec_read_stripes;         ///< Parsed EcReadStripe array for data group, NULL if no ECMB.
+    uint32_t ec_read_stripe_count;    ///< Number of data stripes parsed from ECMB.
+    void    *ec_block_lookup;         ///< uthash: block file offset → stripe index + position.
+    bool     ec_recovery_available;   ///< True if ECMB loaded and recovery is possible.
+    bool     ec_recovery_in_progress; ///< Recursion guard for recovery (prevents infinite loops).
 } aaruformat_context;
 
 #ifndef AARUFORMAT_CONTEXT_DECLARED
