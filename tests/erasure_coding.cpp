@@ -284,9 +284,19 @@ TEST_F(ErasureCodingTest, RecoverCorruptedDataBlock)
  */
 TEST_F(ErasureCodingTest, RecoverCorruptedBlockHeader)
 {
-    /* NOTE: Corrupted BlockHeader recovery requires cache invalidation
-     * which is not yet implemented. Skipping for now. */
-    GTEST_SKIP() << "BlockHeader corruption recovery requires cache invalidation (TODO)";
+    uint64_t golden_crc = 0;
+    ASSERT_TRUE(create_ec_image("data/mf2hd.aif", "ec_test_output.aif", 4, 2, &golden_crc));
+
+    ASSERT_TRUE(copy_file("ec_test_output.aif", "ec_test_corrupt.aif"));
+
+    /* Corrupt the first block's header at offset 512 (after alignment).
+     * Corrupt 32 bytes = entire BlockHeader, making identifier/compression/sectorSize garbage. */
+    corrupt_file("ec_test_corrupt.aif", 512, 32);
+
+    bool success = false;
+    uint64_t read_crc = compute_image_crc("ec_test_corrupt.aif", &success);
+    ASSERT_TRUE(success) << "EC recovery failed on corrupted BlockHeader";
+    EXPECT_EQ(read_crc, golden_crc);
 }
 
 /**

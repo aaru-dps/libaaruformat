@@ -607,6 +607,16 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
         return AARUF_ERROR_CANNOT_READ_HEADER;
     }
 
+    /* Sanity check: if the cached/read block header looks corrupt, skip directly to EC recovery.
+     * A corrupt header will have garbage sectorSize, compression, or identifier fields. */
+    if(block_header->identifier != DataBlock ||
+       block_header->sectorSize == 0 || block_header->sectorSize > 65536)
+    {
+        TRACE("Block header at offset %" PRIu64 " appears corrupt (id=0x%08X sectorSize=%u)",
+              block_offset, block_header->identifier, block_header->sectorSize);
+        goto ec_try_recovery;
+    }
+
     if(data == NULL || *length < block_header->sectorSize)
     {
         TRACE("Buffer too small for sector, required %u bytes", block_header->sectorSize);
