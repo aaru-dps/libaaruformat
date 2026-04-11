@@ -355,3 +355,23 @@ TEST_F(ErasureCodingTest, RecoverWithXOR_M1)
     ASSERT_TRUE(success) << "XOR recovery failed";
     EXPECT_EQ(read_crc, golden_crc);
 }
+
+/**
+ * @test Corrupt the primary header (first 128 bytes), verify backup header from recovery footer is used.
+ */
+TEST_F(ErasureCodingTest, BackupHeaderRecovery)
+{
+    uint64_t golden_crc = 0;
+    ASSERT_TRUE(create_ec_image("data/mf2hd.aif", "ec_test_output.aif", 4, 2, &golden_crc));
+
+    ASSERT_TRUE(copy_file("ec_test_output.aif", "ec_test_corrupt.aif"));
+
+    /* Corrupt the first 64 bytes of the file (part of AaruHeaderV2, including the magic) */
+    corrupt_file("ec_test_corrupt.aif", 0, 64);
+
+    /* Open should succeed using the backup header from the recovery footer */
+    bool success = false;
+    uint64_t read_crc = compute_image_crc("ec_test_corrupt.aif", &success);
+    ASSERT_TRUE(success) << "Backup header recovery failed — could not open/read corrupted image";
+    EXPECT_EQ(read_crc, golden_crc) << "CRC mismatch after backup header recovery";
+}

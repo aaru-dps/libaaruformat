@@ -302,12 +302,58 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
 
     if(ctx->header.identifier != DIC_MAGIC && ctx->header.identifier != AARU_MAGIC)
     {
-        FATAL("Incorrect identifier for AaruFormat file: %8.8s", (char *)&ctx->header.identifier);
-        cleanup_open_failure(ctx);
-        aaruf_set_open_error(AARUF_ERROR_NOT_AARUFORMAT);
+        /* Primary header corrupt — try recovery footer backup header */
+        TRACE("Primary header invalid, trying recovery footer backup header");
 
-        TRACE("Exiting aaruf_open() = NULL");
-        return NULL;
+        aaruf_fseek(ctx->imageStream, 0, SEEK_END);
+        int64_t file_size = aaruf_ftell(ctx->imageStream);
+
+        if(file_size >= (int64_t)sizeof(AaruRecoveryFooter))
+        {
+            aaruf_fseek(ctx->imageStream,
+                        (aaru_off_t)(file_size - (int64_t)sizeof(AaruRecoveryFooter)), SEEK_SET);
+            AaruRecoveryFooter recovery_footer;
+            if(fread(&recovery_footer, sizeof(AaruRecoveryFooter), 1, ctx->imageStream) == 1 &&
+               recovery_footer.footerMagic == AARU_RECOVERY_FOOTER_MAGIC)
+            {
+                /* Verify the backup header's CRC matches what was recorded */
+                uint64_t backup_crc = aaruf_crc64_data(
+                    (const uint8_t *)&recovery_footer.backupHeader, sizeof(AaruHeaderV2));
+                if(backup_crc == recovery_footer.headerCrc64 &&
+                   (recovery_footer.backupHeader.identifier == DIC_MAGIC ||
+                    recovery_footer.backupHeader.identifier == AARU_MAGIC))
+                {
+                    TRACE("Recovery footer backup header valid, using it");
+                    memcpy(&ctx->header, &recovery_footer.backupHeader, sizeof(AaruHeaderV2));
+                    /* Seek past the header for the next read */
+                    aaruf_fseek(ctx->imageStream, (aaru_off_t)sizeof(AaruHeaderV2), SEEK_SET);
+                }
+                else
+                {
+                    FATAL("Recovery footer backup header also invalid");
+                    cleanup_open_failure(ctx);
+                    aaruf_set_open_error(AARUF_ERROR_NOT_AARUFORMAT);
+                    TRACE("Exiting aaruf_open() = NULL");
+                    return NULL;
+                }
+            }
+            else
+            {
+                FATAL("No recovery footer found, cannot recover from corrupt header");
+                cleanup_open_failure(ctx);
+                aaruf_set_open_error(AARUF_ERROR_NOT_AARUFORMAT);
+                TRACE("Exiting aaruf_open() = NULL");
+                return NULL;
+            }
+        }
+        else
+        {
+            FATAL("Incorrect identifier for AaruFormat file: %8.8s", (char *)&ctx->header.identifier);
+            cleanup_open_failure(ctx);
+            aaruf_set_open_error(AARUF_ERROR_NOT_AARUFORMAT);
+            TRACE("Exiting aaruf_open() = NULL");
+            return NULL;
+        }
     }
 
     if(ctx->header.imageMajorVersion < AARUF_VERSION_V2 && resume_mode)
