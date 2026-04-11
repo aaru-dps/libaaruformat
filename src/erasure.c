@@ -165,6 +165,54 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_erasure_coding(void *context, uint8_t al
 }
 
 /**
+ * @brief Configure erasure coding from a desired recovery fraction.
+ *
+ * Computes K and M from the requested fraction of data that should be
+ * recoverable. Prefers M=2 (Reed-Solomon) for better burst-corruption
+ * resilience. Falls back to M=1 only when the requested fraction is so
+ * large that K would be 1 with M=2 (i.e., recovery_fraction >= 1.0).
+ *
+ * Strategy (M=2 preferred):
+ *   K = floor(M / recovery_fraction), clamped to [1, 253].
+ *   If K < 2 with M=2, try M=1 with K = floor(1 / recovery_fraction).
+ *
+ * Examples:
+ *   0.01 (1%)  → M=2, K=200  (burst tolerance: 2 blocks per stripe)
+ *   0.05 (5%)  → M=2, K=40
+ *   0.10 (10%) → M=2, K=20
+ *   0.25 (25%) → M=2, K=8
+ *   0.50 (50%) → M=2, K=4
+ *   1.00 (100%)→ M=1, K=1   (full mirror)
+ *
+ * @param context Opaque context from aaruf_create().
+ * @param recovery_fraction Desired recoverable fraction (0.0 < r <= 1.0).
+ * @return AARUF_STATUS_OK on success, error code otherwise.
+ */
+AARU_EXPORT int32_t AARU_CALL aaruf_set_erasure_coding_auto(void *context, double recovery_fraction)
+{
+    TRACE("Entering aaruf_set_erasure_coding_auto(%p, %f)", context, recovery_fraction);
+
+    if(recovery_fraction <= 0.0 || recovery_fraction > 1.0)
+        return AARUF_ERROR_INCORRECT_DATA_SIZE;
+
+    uint16_t M = 2;
+    uint16_t K = (uint16_t)(M / recovery_fraction);
+
+    /* Clamp K to valid range */
+    if(K < 1) K = 1;
+    if(K > 253) K = 253; /* K + M <= 255 */
+
+    /* If K=1 with M=2 means >=200% overhead — fall back to M=1 for a full mirror */
+    if(K == 1 && recovery_fraction >= 1.0)
+        M = 1;
+
+    uint8_t algorithm = (M == 1) ? kErasureCodingXor : kErasureCodingRsVandermonde;
+
+    TRACE("Auto EC: recovery_fraction=%f -> K=%u M=%u algorithm=%u", recovery_fraction, K, M, algorithm);
+    return aaruf_set_erasure_coding(context, algorithm, K, M);
+}
+
+/**
  * @brief Accumulate parity for a data block that was just written to disk.
  *
  * Called from aaruf_close_current_block() after writing BlockHeader + payload
