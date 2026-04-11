@@ -114,7 +114,7 @@ if("${CMAKE_C_PLATFORM_ID}" MATCHES "MinGW")
   # Statically link the MinGW/GCC runtime and winpthread so the executable
   # does not depend on libgcc_s_*.dll or libwinpthread-1.dll at runtime.
   add_link_options(-static-libgcc -static-libstdc++
-                   -Wl,-Bstatic,--whole-archive -lwinpthread
+                   -Wl,-Bstatic,--whole-archive
                    -Wl,--no-whole-archive,-Bdynamic)
 endif()
 
