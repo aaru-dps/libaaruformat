@@ -980,7 +980,7 @@ typedef enum
     kSectorTagAppleProfile         = 20,  ///< Apple's Profile sector tags, 20 bytes
     kSectorTagPriamDataTower       = 21,  ///< Priam DataTower sector tags, 24 bytes
     kSectorTagBdSectorEdc          = 22,  ///< Blu-ray sector EDC, 4 bytes
-    MaxSectorTag                   = kSectorTagPriamDataTower
+    MaxSectorTag                   = kSectorTagBdSectorEdc
 } SectorTagType;
 
 /** @} */ /* end of SectorTags group */
@@ -1087,7 +1087,7 @@ typedef enum
     kMediaTagNgcwJunkMap         = 84,  ///< Nintendo GameCube/Wii junk region map with LFG seeds
     kMediaTagAacsMediaKey        = 85,  ///< AACS Media Key
     kMediaTagAacsVolumeUniqueKey = 86,  ///< AACS Volume Unique Key
-    MaxMediaTag                  = kMediaTagNgcwJunkMap
+    MaxMediaTag                  = kMediaTagAacsVolumeUniqueKey
 } MediaTagType;
 
 /** @} */ /* end of MediaTags group */
