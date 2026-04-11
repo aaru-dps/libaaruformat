@@ -510,15 +510,67 @@ static void ec_write_batch_parity(aaruformat_context *ctx,
     {
         BlockHeader ph;
         memset(&ph, 0, sizeof(ph));
-        ph.identifier = DataBlock; ph.type = parity_data_type; ph.compression = kCompressionNone;
+        ph.identifier = DataBlock; ph.type = parity_data_type;
+        ph.compression = kCompressionNone;
         ph.length = shard_size; ph.cmpLength = shard_size;
         ph.crc64 = aaruf_crc64_data(parity[m], shard_size); ph.cmpCrc64 = ph.crc64;
+
+        uint8_t *write_data = parity[m];
+        uint32_t write_size = shard_size;
+        uint8_t *cmp_buf = NULL;
+        uint8_t lzma_props_buf[LZMA_PROPERTIES_LENGTH] = {0};
+        bool used_lzma = false;
+
+        /* Try compression */
+        if(ctx->compression_enabled)
+        {
+            cmp_buf = (uint8_t *)malloc((size_t)shard_size * 2);
+            if(cmp_buf)
+            {
+                if(ctx->use_zstd)
+                {
+                    size_t cmp_size = aaruf_zstd_encode_buffer(cmp_buf, (size_t)shard_size * 2,
+                                                               parity[m], shard_size,
+                                                               ctx->zstd_level, ctx->num_threads);
+                    if(cmp_size > 0 && cmp_size < shard_size)
+                    {
+                        ph.compression = kCompressionZstd;
+                        ph.cmpLength = (uint32_t)cmp_size;
+                        ph.cmpCrc64 = aaruf_crc64_data(cmp_buf, (uint32_t)cmp_size);
+                        ctx->has_zstd_blocks = true;
+                        write_data = cmp_buf;
+                        write_size = (uint32_t)cmp_size;
+                    }
+                    else { free(cmp_buf); cmp_buf = NULL; }
+                }
+                else
+                {
+                    size_t dst_size = (size_t)shard_size * 2;
+                    size_t props_size = LZMA_PROPERTIES_LENGTH;
+                    aaruf_lzma_encode_buffer(cmp_buf, &dst_size, parity[m], shard_size,
+                                             lzma_props_buf, &props_size, 9,
+                                             ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+                    if(dst_size + LZMA_PROPERTIES_LENGTH < shard_size)
+                    {
+                        ph.compression = kCompressionLzma;
+                        ph.cmpLength = (uint32_t)(dst_size + LZMA_PROPERTIES_LENGTH);
+                        ph.cmpCrc64 = aaruf_crc64_data(cmp_buf, (uint32_t)dst_size);
+                        write_data = cmp_buf;
+                        write_size = (uint32_t)dst_size;
+                        used_lzma = true;
+                    }
+                    else { free(cmp_buf); cmp_buf = NULL; }
+                }
+            }
+        }
 
         aaruf_fseek(ctx->imageStream, 0, SEEK_END);
         uint64_t po = ((uint64_t)aaruf_ftell(ctx->imageStream) + alignment_mask) & ~alignment_mask;
         aaruf_fseek(ctx->imageStream, (aaru_off_t)po, SEEK_SET);
         fwrite(&ph, sizeof(BlockHeader), 1, ctx->imageStream);
-        fwrite(parity[m], shard_size, 1, ctx->imageStream);
+        if(used_lzma) fwrite(lzma_props_buf, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
+        fwrite(write_data, write_size, 1, ctx->imageStream);
+        free(cmp_buf);
 
         StripeParityBlockEntry pe; pe.offset = po;
         memcpy(dp, &pe, sizeof(StripeParityBlockEntry)); dp += sizeof(StripeParityBlockEntry);
