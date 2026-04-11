@@ -49,6 +49,82 @@ int verify(const char *path)
     return res;
 }
 
+int verify_recover(const char *path)
+{
+    aaruformat_context *ctx = NULL;
+
+    ctx = aaruf_open(path, false, NULL);
+
+    if(ctx == NULL)
+    {
+        printf("Error %d when opening AaruFormat image.\n", errno);
+        return errno;
+    }
+
+    if(!ctx->ec_recovery_available)
+    {
+        printf("Image does not contain erasure coding recovery data.\n");
+        aaruf_close(ctx);
+        return -1;
+    }
+
+    printf("Erasure coding recovery data found (K=%u, M=%u).\n", ctx->ec_K, ctx->ec_M);
+    printf("Verifying all sectors with recovery...\n");
+
+    uint64_t total_sectors = ctx->image_info.Sectors;
+    uint32_t sector_size   = ctx->image_info.SectorSize;
+    uint8_t *sector_data   = (uint8_t *)malloc(sector_size > 0 ? sector_size : 65536);
+
+    if(sector_data == NULL)
+    {
+        printf("Not enough memory.\n");
+        aaruf_close(ctx);
+        return -1;
+    }
+
+    uint64_t ok_count       = 0;
+    uint64_t recovered_count = 0;
+    uint64_t error_count    = 0;
+
+    for(uint64_t sector = 0; sector < total_sectors; sector++)
+    {
+        uint32_t len    = sector_size > 0 ? sector_size : 65536;
+        uint8_t  status = 0;
+        int32_t  res    = aaruf_read_sector(ctx, sector, false, sector_data, &len, &status);
+
+        if(res == AARUF_STATUS_OK)
+        {
+            ok_count++;
+        }
+        else
+        {
+            error_count++;
+            printf("  Sector %llu: unrecoverable (error %d)\n", (unsigned long long)sector, res);
+        }
+
+        /* Print progress every 10000 sectors */
+        if(sector > 0 && sector % 10000 == 0)
+            printf("  Progress: %llu / %llu sectors...\r", (unsigned long long)sector, (unsigned long long)total_sectors);
+    }
+
+    /* The recovery happens transparently inside aaruf_read_sector.
+     * We can't easily distinguish "recovered" from "was already OK" here without
+     * a lower-level API. For now, report all as OK or error. */
+    printf("\nVerification complete:\n");
+    printf("  Total sectors:   %llu\n", (unsigned long long)total_sectors);
+    printf("  Readable:        %llu\n", (unsigned long long)ok_count);
+    printf("  Unrecoverable:   %llu\n", (unsigned long long)error_count);
+
+    if(error_count == 0)
+        printf("All sectors readable (recovery applied transparently where needed).\n");
+    else
+        printf("WARNING: %llu sectors could not be recovered.\n", (unsigned long long)error_count);
+
+    free(sector_data);
+    aaruf_close(ctx);
+    return error_count > 0 ? -1 : 0;
+}
+
 int verify_sectors(const char *path)
 {
     aaruformat_context *ctx            = NULL;

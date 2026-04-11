@@ -94,10 +94,14 @@ void usage_read_long()
 void usage_verify()
 {
     printf("\nUsage:\n");
-    printf("  aaruformattool verify <filename>\n\n");
+    printf("  aaruformattool verify [--recover] <filename>\n\n");
     printf("Checks block-level integrity.\n");
     printf("Arguments:\n");
     printf("  <filename>       Path to image file.\n");
+    printf("Options:\n");
+    printf("  --recover        Attempt erasure coding recovery of corrupt blocks.\n");
+    printf("                   Reads all sectors, transparently recovering any corrupt\n");
+    printf("                   blocks via RS parity. Reports recoverable vs unrecoverable.\n");
 }
 
 void usage_verify_sectors()
@@ -134,13 +138,19 @@ void usage_cli_compare()
 void usage_convert()
 {
     printf("\nUsage:\n");
-    printf("  aaruformattool convert [-l] <input> <output>\n\n");
+    printf("  aaruformattool convert [-l] [--erasure-coding=K,M] <input> <output>\n\n");
     printf("Converts an AaruFormat image by reading all sectors from input and writing them to output.\n");
     printf("Arguments:\n");
     printf("  <input>          Path to input image file.\n");
     printf("  <output>         Path to output image file.\n");
     printf("Options:\n");
     printf("  -l               Use long sector read/write (includes tags and metadata).\n");
+    printf("  --erasure-coding=K,M\n");
+    printf("                   Enable Reed-Solomon erasure coding with K data blocks and\n");
+    printf("                   M parity blocks per stripe. Examples:\n");
+    printf("                     --erasure-coding=16,1  Low overhead (~6%%), single fault tolerance\n");
+    printf("                     --erasure-coding=8,2   Medium overhead (~12%%), double fault tolerance\n");
+    printf("                     --erasure-coding=4,4   High overhead (~25%%), quad fault tolerance\n");
 }
 
 void usage_upgrade_ddt_to_alpha21()

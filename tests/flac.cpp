@@ -216,8 +216,8 @@ TEST_F(flacFixture, flac)
 TEST_F(flacFixture, flacCompress)
 {
     size_t original_len = 9633792;
-    uint   cmp_len      = original_len;
-    uint   decmp_len    = original_len;
+    uint32_t   cmp_len      = original_len;
+    uint32_t   decmp_len    = original_len;
     char   path[PATH_MAX];
     char   filename[PATH_MAX * 2];
 
