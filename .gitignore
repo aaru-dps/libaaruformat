@@ -566,3 +566,27 @@ fabric.properties
 .DS_Store
 .cache
 _deps
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CMakeDoxyfile.in
+CMakeDoxygenDefaults.cmake
+CPackConfig.cmake
+CPackSourceConfig.cmake
+CTestTestfile.cmake
+DartConfiguration.tcl
+Makefile
+Doxyfile
+.cmake/
+
+# Build output directories
+build-*/
+benchmark/CMakeFiles/
+Testing/
+
+# CMake build output (in-tree builds)
+tests/tests_run
+tests/tests_run[[]1[]]*
+tool/aaruformattool
