@@ -303,7 +303,12 @@ add_library(aaruformat
             src/ngcw/ngcw_junk.h
             src/ngcw/wii_crypto.c
             src/ngcw/wii_crypto.h
-            src/compression/zstd.c)
+            src/compression/zstd.c
+            src/lib/gf256.c
+            src/lib/gf256.h
+            src/lib/reed_solomon.c
+            src/lib/reed_solomon.h
+            include/aaruformat/structs/erasure.h)
 
 # Set up include directories for the target
 target_include_directories(aaruformat
