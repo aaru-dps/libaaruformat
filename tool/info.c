@@ -1036,6 +1036,37 @@ int info(const char *path)
         draw_box_bottom(COLOR_HEADER);
     }
 
+    // Erasure Coding Recovery Section
+    if(ctx->ec_recovery_available)
+    {
+        draw_box_top("ERASURE CODING RECOVERY", COLOR_HEADER);
+
+        char ec_info[64];
+        const char *algo = ctx->ec_algorithm == 0 ? "XOR" : "Reed-Solomon (Vandermonde)";
+        print_field("Algorithm", algo, 0);
+
+        snprintf(ec_info, sizeof(ec_info), "%u", ctx->ec_K);
+        print_field("Data blocks per stripe (K)", ec_info, 0);
+
+        snprintf(ec_info, sizeof(ec_info), "%u", ctx->ec_M);
+        print_field("Parity blocks per stripe (M)", ec_info, 0);
+
+        snprintf(ec_info, sizeof(ec_info), "%u bytes", ctx->ec_data_shard_size);
+        print_field("Shard size", ec_info, 0);
+
+        snprintf(ec_info, sizeof(ec_info), "%u", ctx->ec_read_stripe_count);
+        print_field("Data stripes", ec_info, 0);
+
+        double overhead = ctx->ec_K > 0 ? (double)ctx->ec_M / (double)ctx->ec_K * 100.0 : 0;
+        snprintf(ec_info, sizeof(ec_info), "%.1f%% (before compression)", overhead);
+        print_field("Parity overhead", ec_info, 0);
+
+        snprintf(ec_info, sizeof(ec_info), "Tolerates up to %u corrupted block(s) per stripe", ctx->ec_M);
+        print_field("Fault tolerance", ec_info, 0);
+
+        draw_box_bottom(COLOR_HEADER);
+    }
+
     printf("================================================================================\n\n");
 
     aaruf_close(ctx);
