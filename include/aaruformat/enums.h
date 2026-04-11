@@ -148,6 +148,11 @@ typedef enum
     kDataTypeAacsMediaKey            = 101, ///< AACS Media Key
     kDataTypeAacsVolumeUniqueKey     = 102, ///< AACS Volume Unique Key
     kDataTypeBdSectorEdc             = 103, ///< Blu-ray Sector EDC
+    kDataTypeErasureParity           = 104, ///< Erasure coding parity shard for data blocks.
+    kDataTypeErasureParityDdt        = 105, ///< Erasure coding parity shard for DDT secondary blocks.
+    kDataTypeErasureParityDdtPrimary = 106, ///< Erasure coding parity replica for DDT primary block.
+    kDataTypeErasureParityMeta       = 107, ///< Erasure coding parity shard for metadata blocks.
+    kDataTypeErasureParityIndex      = 108, ///< Erasure coding parity replica for index block.
 } DataType;
 
 /**
@@ -178,7 +183,8 @@ typedef enum
     AaruMetadataJsonBlock        = 0x444D534A,  ///< Block containing JSON version of Aaru Metadata
     FluxDataBlock                = 0x58554C46,  ///< Block containing flux data metadata.
     DataStreamPayloadBlock =
-        0x4C505344  ///< Block containing compressed data stream payload (e.g., flux data, bitstreams).
+        0x4C505344,  ///< Block containing compressed data stream payload (e.g., flux data, bitstreams).
+    ErasureCodingMapBlock = 0x424D4345  ///< Block containing erasure coding stripe map and recovery metadata.
 } BlockType;
 
 /**
@@ -300,6 +306,41 @@ typedef enum
 {
     AARU_FEATURE_INCOMPAT_ZSTD = 0x1,  ///< Image contains Zstandard-compressed blocks.
 } FeaturesIncompatible;
+
+/**
+ * @brief Read-only compatible feature flags for AaruHeader V2.
+ *
+ * If any bit in featureCompatibleRo is not understood by a reader, the image
+ * SHOULD be opened read-only (the reader cannot safely modify the data without
+ * understanding these features).
+ */
+typedef enum
+{
+    AARU_FEATURE_ROCOMPAT_ERASURE = 0x1,  ///< Image contains erasure coding parity blocks and recovery metadata.
+} FeaturesCompatibleRo;
+
+/**
+ * \enum ErasureCodingAlgorithm
+ * \brief Erasure coding algorithms supported by the ECMB.
+ */
+typedef enum
+{
+    kErasureCodingXor          = 0,  ///< Simple XOR parity (M must be 1).
+    kErasureCodingRsVandermonde = 1   ///< Reed-Solomon with Vandermonde generator matrix over GF(2^8).
+} ErasureCodingAlgorithm;
+
+/**
+ * \enum ErasureCodingGroupType
+ * \brief Identifies which protection group a stripe belongs to.
+ */
+typedef enum
+{
+    kECGroupData       = 0,  ///< User data blocks (DBLK).
+    kECGroupDdtSecondary = 1, ///< Secondary DDT subtables.
+    kECGroupDdtPrimary  = 2,  ///< Primary DDT (K=1, M replicas).
+    kECGroupMetadata    = 3,  ///< Metadata/media tag blocks.
+    kECGroupIndex       = 4   ///< Index block (K=1, M replicas).
+} ErasureCodingGroupType;
 
 #ifndef _MSC_VER
 #pragma clang diagnostic pop

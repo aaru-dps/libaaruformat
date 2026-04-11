@@ -103,13 +103,16 @@
  *  Bit 0 = AARU_FEATURE_INCOMPAT_ZSTD (Zstandard compression). */
 #define AARUF_KNOWN_INCOMPAT_FEATURES   0x1ULL
 /** Bitmask of all featureCompatibleRo bits understood by this library version.
- *  Currently no read-only-compatible features are defined. */
-#define AARUF_KNOWN_ROCOMPAT_FEATURES   0ULL
+ *  Bit 0 = AARU_FEATURE_ROCOMPAT_ERASURE (erasure coding parity data). */
+#define AARUF_KNOWN_ROCOMPAT_FEATURES   0x1ULL
 /** Bitmask of all featureCompatible bits understood by this library version.
  *  Bit 0 = AARU_FEATURE_RW_BLAKE3 (BLAKE3 checksums). */
 #define AARUF_KNOWN_COMPAT_FEATURES     0x1ULL
 /** Mask for extracting positional index (lower 24 bits) in Compact Disc suffix/prefix deduplicated block entries. */
 #define CD_DFIX_MASK 0x00FFFFFFU
+
+/** Magic number at the end of the recovery footer: "AVRECMFR" in ASCII little-endian. */
+#define AARU_RECOVERY_FOOTER_MAGIC 0x52464D4345525641ULL
 
 #ifndef _MSC_VER
 #pragma clang diagnostic pop
