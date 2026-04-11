@@ -103,6 +103,7 @@ add_executable(tests_run
     mode2_nocrc.cpp
     mode2_errored.cpp
     reed_solomon.cpp
+    erasure_coding.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/lib/aes128.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_crypto.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_encryption_map.c
