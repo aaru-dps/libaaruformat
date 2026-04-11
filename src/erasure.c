@@ -30,7 +30,9 @@
 #include "aaruformat/enums.h"
 #include "aaruformat/errors.h"
 #include "aaruformat/structs/data.h"
+#include "aaruformat/structs/ddt.h"
 #include "aaruformat/structs/erasure.h"
+#include "aaruformat/structs/index.h"
 #include "internal.h"
 #include "log.h"
 #include "lib/gf256.h"
@@ -437,30 +439,167 @@ void ec_flush_data_stripe(aaruformat_context *ctx, uint32_t slot)
 }
 
 /**
- * @brief Flush all partial data stripes and write the ECMB + recovery footer.
+ * @brief Compute and write batch parity for a set of blocks already on disk.
  *
- * Called from aaruf_finalize_write() after all metadata/DDT/index blocks are written.
- *
- * @param ctx Context with EC enabled.
+ * Reads each block's on-disk bytes from file, computes RS parity, writes
+ * M parity DLBKs, returns serialized stripe descriptor bytes.
+ */
+static void ec_write_batch_parity(aaruformat_context *ctx,
+                                  const uint64_t *offsets, const uint32_t *sizes,
+                                  uint32_t block_count, uint8_t group_type,
+                                  uint16_t parity_data_type,
+                                  uint8_t **out_desc, size_t *out_desc_len,
+                                  StripeGroupDescriptor *out_group)
+{
+    *out_desc = NULL;
+    *out_desc_len = 0;
+    if(block_count == 0) return;
+
+    const uint16_t M = ctx->ec_M;
+    uint16_t actual_k = (uint16_t)(block_count > (uint32_t)(255 - M) ? 255 - M : block_count);
+
+    uint32_t shard_size = 0;
+    for(uint32_t i = 0; i < actual_k; i++)
+        if(sizes[i] > shard_size) shard_size = sizes[i];
+
+    rs_context *rs = rs_create(actual_k, M);
+    if(!rs) return;
+
+    uint8_t **parity = (uint8_t **)calloc(M, sizeof(uint8_t *));
+    if(!parity) { rs_free(rs); return; }
+    for(uint16_t m = 0; m < M; m++)
+    {
+        parity[m] = (uint8_t *)calloc(1, shard_size);
+        if(!parity[m]) { for(uint16_t j = 0; j < m; j++) free(parity[j]); free(parity); rs_free(rs); return; }
+    }
+
+    size_t desc_size = sizeof(uint16_t) + (size_t)actual_k * sizeof(StripeDataBlockEntry) +
+                       (size_t)M * sizeof(StripeParityBlockEntry);
+    uint8_t *desc = (uint8_t *)calloc(1, desc_size);
+    if(!desc) { for(uint16_t m = 0; m < M; m++) free(parity[m]); free(parity); rs_free(rs); return; }
+
+    uint8_t *dp = desc;
+    memcpy(dp, &actual_k, sizeof(uint16_t)); dp += sizeof(uint16_t);
+
+    uint8_t *shard_buf = (uint8_t *)calloc(1, shard_size);
+    if(!shard_buf) { free(desc); for(uint16_t m = 0; m < M; m++) free(parity[m]); free(parity); rs_free(rs); return; }
+
+    for(uint16_t k = 0; k < actual_k; k++)
+    {
+        memset(shard_buf, 0, shard_size);
+        aaruf_fseek(ctx->imageStream, (aaru_off_t)offsets[k], SEEK_SET);
+        uint32_t read_size = sizes[k] > shard_size ? shard_size : sizes[k];
+        fread(shard_buf, read_size, 1, ctx->imageStream);
+
+        uint64_t shard_crc = aaruf_crc64_data(shard_buf, shard_size);
+
+        StripeDataBlockEntry entry;
+        entry.offset = offsets[k]; entry.onDiskSize = sizes[k]; entry.shardCrc64 = shard_crc;
+        memcpy(dp, &entry, sizeof(StripeDataBlockEntry)); dp += sizeof(StripeDataBlockEntry);
+
+        for(uint16_t m = 0; m < M; m++)
+        {
+            uint8_t coeff = rs_get_coefficient(rs, m, k);
+            rs_encode_incremental(coeff, shard_buf, parity[m], shard_size);
+        }
+    }
+    free(shard_buf);
+
+    uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
+    for(uint16_t m = 0; m < M; m++)
+    {
+        BlockHeader ph;
+        memset(&ph, 0, sizeof(ph));
+        ph.identifier = DataBlock; ph.type = parity_data_type; ph.compression = kCompressionNone;
+        ph.length = shard_size; ph.cmpLength = shard_size;
+        ph.crc64 = aaruf_crc64_data(parity[m], shard_size); ph.cmpCrc64 = ph.crc64;
+
+        aaruf_fseek(ctx->imageStream, 0, SEEK_END);
+        uint64_t po = ((uint64_t)aaruf_ftell(ctx->imageStream) + alignment_mask) & ~alignment_mask;
+        aaruf_fseek(ctx->imageStream, (aaru_off_t)po, SEEK_SET);
+        fwrite(&ph, sizeof(BlockHeader), 1, ctx->imageStream);
+        fwrite(parity[m], shard_size, 1, ctx->imageStream);
+
+        StripeParityBlockEntry pe; pe.offset = po;
+        memcpy(dp, &pe, sizeof(StripeParityBlockEntry)); dp += sizeof(StripeParityBlockEntry);
+
+        IndexEntry ie = {.blockType = DataBlock, .dataType = parity_data_type, .offset = po};
+        utarray_push_back(ctx->index_entries, &ie);
+        ctx->dirty_index_block = true;
+        free(parity[m]);
+    }
+    free(parity); rs_free(rs);
+
+    memset(out_group, 0, sizeof(StripeGroupDescriptor));
+    out_group->groupType = group_type; out_group->K = actual_k; out_group->M = M;
+    out_group->shardSize = shard_size; out_group->stripeCount = 1; out_group->interleaveDepth = 1;
+    *out_desc = desc; *out_desc_len = desc_size;
+}
+
+/**
+ * @brief Collect file offsets and on-disk sizes for index entries matching a block type.
+ */
+static void ec_collect_blocks_by_type(aaruformat_context *ctx, uint32_t block_type,
+                                      uint64_t **out_offsets, uint32_t **out_sizes, uint32_t *out_count)
+{
+    *out_offsets = NULL; *out_sizes = NULL; *out_count = 0;
+    uint32_t n = (uint32_t)utarray_len(ctx->index_entries);
+    if(n == 0) return;
+
+    uint32_t count = 0;
+    for(uint32_t i = 0; i < n; i++)
+    {
+        IndexEntry *ie = (IndexEntry *)utarray_eltptr(ctx->index_entries, i);
+        if(ie->blockType == block_type) count++;
+    }
+    if(count == 0) return;
+
+    uint64_t *offsets = (uint64_t *)malloc(count * sizeof(uint64_t));
+    uint32_t *sizes   = (uint32_t *)malloc(count * sizeof(uint32_t));
+    if(!offsets || !sizes) { free(offsets); free(sizes); return; }
+
+    uint32_t idx = 0;
+    for(uint32_t i = 0; i < n && idx < count; i++)
+    {
+        IndexEntry *ie = (IndexEntry *)utarray_eltptr(ctx->index_entries, i);
+        if(ie->blockType != block_type) continue;
+        offsets[idx] = ie->offset;
+        aaruf_fseek(ctx->imageStream, (aaru_off_t)ie->offset, SEEK_SET);
+        if(block_type == DeDuplicationTable2 || block_type == DeDuplicationTableSecondary)
+        {
+            DdtHeader2 ddt_hdr;
+            if(fread(&ddt_hdr, sizeof(DdtHeader2), 1, ctx->imageStream) == 1)
+                sizes[idx] = (uint32_t)(sizeof(DdtHeader2) + ddt_hdr.cmpLength);
+            else sizes[idx] = sizeof(DdtHeader2);
+        }
+        else
+        {
+            BlockHeader blk_hdr;
+            if(fread(&blk_hdr, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
+                sizes[idx] = (uint32_t)(sizeof(BlockHeader) + blk_hdr.cmpLength);
+            else sizes[idx] = sizeof(BlockHeader);
+        }
+        idx++;
+    }
+    *out_offsets = offsets; *out_sizes = sizes; *out_count = idx;
+}
+
+/**
+ * @brief Flush all partial data stripes and write parity for all groups + ECMB + recovery footer.
  */
 void ec_finalize(aaruformat_context *ctx)
 {
     if(!ctx->ec_enabled) return;
 
     const uint16_t K = ctx->ec_K;
+    const uint16_t M = ctx->ec_M;
 
-    /* Flush any partial stripe slots */
+    /* --- Group 0: Data blocks (flush partial stripes) --- */
     for(uint16_t slot = 0; slot < K; slot++)
-    {
         if(ctx->ec_data_stripe_counts[slot] > 0)
             ec_flush_data_stripe(ctx, slot);
-    }
 
-    /* Count completed stripes */
-    uint32_t stripe_count = 0;
-    /* Walk the flat stripe descriptor array to count entries.
-     * Each stripe starts with a uint16_t actualK, followed by actualK × 20-byte entries + M × 8-byte entries.
-     * Since we appended byte-by-byte, we need to parse. */
+    uint32_t data_stripe_count = 0;
     {
         size_t total_bytes = utarray_len(ctx->ec_data_stripes);
         uint8_t *base = (uint8_t *)utarray_front(ctx->ec_data_stripes);
@@ -469,75 +608,153 @@ void ec_finalize(aaruformat_context *ctx)
         {
             uint16_t ak;
             memcpy(&ak, base + pos, sizeof(uint16_t));
-            pos += sizeof(uint16_t);
-            pos += (size_t)ak * sizeof(StripeDataBlockEntry);
-            pos += (size_t)ctx->ec_M * sizeof(StripeParityBlockEntry);
-            stripe_count++;
+            pos += sizeof(uint16_t) + (size_t)ak * sizeof(StripeDataBlockEntry) + (size_t)M * sizeof(StripeParityBlockEntry);
+            data_stripe_count++;
         }
     }
 
-    /* Build ECMB payload: 1 stripe group (data only for now) */
-    StripeGroupDescriptor group;
-    memset(&group, 0, sizeof(group));
-    group.groupType       = kECGroupData;
-    group.K               = ctx->ec_K;
-    group.M               = ctx->ec_M;
-    group.shardSize       = ctx->ec_data_shard_size;
-    group.stripeCount     = stripe_count;
-    group.interleaveDepth = ctx->ec_K; /* full interleave */
+    StripeGroupDescriptor data_group;
+    memset(&data_group, 0, sizeof(data_group));
+    data_group.groupType = kECGroupData; data_group.K = K; data_group.M = M;
+    data_group.shardSize = ctx->ec_data_shard_size; data_group.stripeCount = data_stripe_count;
+    data_group.interleaveDepth = K;
+    size_t data_stripe_data_len = utarray_len(ctx->ec_data_stripes);
 
-    size_t stripe_data_len = utarray_len(ctx->ec_data_stripes);
-    size_t payload_len = sizeof(StripeGroupDescriptor) + stripe_data_len;
-    uint8_t *payload = (uint8_t *)malloc(payload_len);
-    if(!payload) return;
-
-    memcpy(payload, &group, sizeof(StripeGroupDescriptor));
-    if(stripe_data_len > 0)
+    /* --- Group 1: DDT secondary --- */
+    uint8_t *ddt_sec_desc = NULL; size_t ddt_sec_desc_len = 0;
+    StripeGroupDescriptor ddt_sec_group; memset(&ddt_sec_group, 0, sizeof(ddt_sec_group));
     {
-        uint8_t *base = (uint8_t *)utarray_front(ctx->ec_data_stripes);
-        if(base) memcpy(payload + sizeof(StripeGroupDescriptor), base, stripe_data_len);
+        uint64_t *off; uint32_t *sz; uint32_t cnt;
+        ec_collect_blocks_by_type(ctx, DeDuplicationTableSecondary, &off, &sz, &cnt);
+        if(cnt > 0) { ec_write_batch_parity(ctx, off, sz, cnt, kECGroupDdtSecondary, kDataTypeErasureParityDdt, &ddt_sec_desc, &ddt_sec_desc_len, &ddt_sec_group); free(off); free(sz); }
     }
 
-    /* CRC64 of payload */
+    /* --- Group 2: DDT primary --- */
+    uint8_t *ddt_pri_desc = NULL; size_t ddt_pri_desc_len = 0;
+    StripeGroupDescriptor ddt_pri_group; memset(&ddt_pri_group, 0, sizeof(ddt_pri_group));
+    {
+        uint64_t *off; uint32_t *sz; uint32_t cnt;
+        ec_collect_blocks_by_type(ctx, DeDuplicationTable2, &off, &sz, &cnt);
+        if(cnt > 0) { ec_write_batch_parity(ctx, off, sz, cnt, kECGroupDdtPrimary, kDataTypeErasureParityDdtPrimary, &ddt_pri_desc, &ddt_pri_desc_len, &ddt_pri_group); free(off); free(sz); }
+    }
+
+    /* --- Group 3: Metadata (non-DDT, non-data, non-index, non-parity) --- */
+    uint8_t *meta_desc = NULL; size_t meta_desc_len = 0;
+    StripeGroupDescriptor meta_group; memset(&meta_group, 0, sizeof(meta_group));
+    {
+        uint32_t n = (uint32_t)utarray_len(ctx->index_entries);
+        uint32_t count = 0;
+        for(uint32_t i = 0; i < n; i++)
+        {
+            IndexEntry *ie = (IndexEntry *)utarray_eltptr(ctx->index_entries, i);
+            if(ie->blockType == DataBlock && (ie->dataType == kDataTypeUserData ||
+               (ie->dataType >= kDataTypeErasureParity && ie->dataType <= kDataTypeErasureParityIndex))) continue;
+            if(ie->blockType == DeDuplicationTable2 || ie->blockType == DeDuplicationTableSecondary || ie->blockType == DeDuplicationTable) continue;
+            if(ie->blockType == IndexBlock || ie->blockType == IndexBlock2 || ie->blockType == IndexBlock3) continue;
+            count++;
+        }
+        if(count > 0 && count <= (uint32_t)(255 - M))
+        {
+            uint64_t *off = (uint64_t *)malloc(count * sizeof(uint64_t));
+            uint32_t *sz  = (uint32_t *)malloc(count * sizeof(uint32_t));
+            if(off && sz)
+            {
+                uint32_t idx = 0;
+                for(uint32_t i = 0; i < n && idx < count; i++)
+                {
+                    IndexEntry *ie = (IndexEntry *)utarray_eltptr(ctx->index_entries, i);
+                    if(ie->blockType == DataBlock && (ie->dataType == kDataTypeUserData ||
+                       (ie->dataType >= kDataTypeErasureParity && ie->dataType <= kDataTypeErasureParityIndex))) continue;
+                    if(ie->blockType == DeDuplicationTable2 || ie->blockType == DeDuplicationTableSecondary || ie->blockType == DeDuplicationTable) continue;
+                    if(ie->blockType == IndexBlock || ie->blockType == IndexBlock2 || ie->blockType == IndexBlock3) continue;
+                    off[idx] = ie->offset;
+                    aaruf_fseek(ctx->imageStream, (aaru_off_t)ie->offset, SEEK_SET);
+                    BlockHeader bh; if(fread(&bh, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
+                        sz[idx] = (uint32_t)(sizeof(BlockHeader) + bh.cmpLength); else sz[idx] = sizeof(BlockHeader);
+                    idx++;
+                }
+                ec_write_batch_parity(ctx, off, sz, idx, kECGroupMetadata, kDataTypeErasureParityMeta, &meta_desc, &meta_desc_len, &meta_group);
+            }
+            free(off); free(sz);
+        }
+    }
+
+    /* --- Group 4: Index (K=1, M replicas) --- */
+    uint8_t *idx_desc = NULL; size_t idx_desc_len = 0;
+    StripeGroupDescriptor idx_group; memset(&idx_group, 0, sizeof(idx_group));
+    if(ctx->header.indexOffset > 0)
+    {
+        uint64_t io = ctx->header.indexOffset;
+        aaruf_fseek(ctx->imageStream, (aaru_off_t)io, SEEK_SET);
+        IndexHeader3 ih;
+        if(fread(&ih, sizeof(IndexHeader3), 1, ctx->imageStream) == 1)
+        {
+            uint32_t isz = (uint32_t)(sizeof(IndexHeader3) + ih.entries * sizeof(IndexEntry));
+            ec_write_batch_parity(ctx, &io, &isz, 1, kECGroupIndex, kDataTypeErasureParityIndex, &idx_desc, &idx_desc_len, &idx_group);
+        }
+    }
+
+    /* --- Build ECMB with all groups --- */
+    uint8_t group_count = 1; /* data always present */
+    if(ddt_sec_desc) group_count++;
+    if(ddt_pri_desc) group_count++;
+    if(meta_desc) group_count++;
+    if(idx_desc) group_count++;
+
+    size_t payload_len = sizeof(StripeGroupDescriptor) + data_stripe_data_len;
+    if(ddt_sec_desc) payload_len += sizeof(StripeGroupDescriptor) + ddt_sec_desc_len;
+    if(ddt_pri_desc) payload_len += sizeof(StripeGroupDescriptor) + ddt_pri_desc_len;
+    if(meta_desc)    payload_len += sizeof(StripeGroupDescriptor) + meta_desc_len;
+    if(idx_desc)     payload_len += sizeof(StripeGroupDescriptor) + idx_desc_len;
+
+    uint8_t *payload = (uint8_t *)malloc(payload_len);
+    if(!payload) { free(ddt_sec_desc); free(ddt_pri_desc); free(meta_desc); free(idx_desc); return; }
+
+    uint8_t *wp = payload;
+    /* Data group */
+    memcpy(wp, &data_group, sizeof(StripeGroupDescriptor)); wp += sizeof(StripeGroupDescriptor);
+    if(data_stripe_data_len > 0) { uint8_t *b = (uint8_t *)utarray_front(ctx->ec_data_stripes); if(b) { memcpy(wp, b, data_stripe_data_len); wp += data_stripe_data_len; } }
+
+#define WRITE_GROUP(desc, desc_len, grp) \
+    if(desc) { memcpy(wp, &(grp), sizeof(StripeGroupDescriptor)); wp += sizeof(StripeGroupDescriptor); \
+               memcpy(wp, (desc), (desc_len)); wp += (desc_len); }
+
+    WRITE_GROUP(ddt_sec_desc, ddt_sec_desc_len, ddt_sec_group)
+    WRITE_GROUP(ddt_pri_desc, ddt_pri_desc_len, ddt_pri_group)
+    WRITE_GROUP(meta_desc, meta_desc_len, meta_group)
+    WRITE_GROUP(idx_desc, idx_desc_len, idx_group)
+#undef WRITE_GROUP
+
+    free(ddt_sec_desc); free(ddt_pri_desc); free(meta_desc); free(idx_desc);
+
     uint64_t payload_crc = aaruf_crc64_data(payload, (uint32_t)payload_len);
 
-    /* Build ECMB header */
     ErasureCodingMapHeader ecmb;
     memset(&ecmb, 0, sizeof(ecmb));
-    ecmb.identifier       = ErasureCodingMapBlock;
-    ecmb.algorithm        = ctx->ec_algorithm;
-    ecmb.stripeGroupCount = 1;
-    ecmb.compression      = kCompressionNone;
-    ecmb.length           = payload_len;
-    ecmb.cmpLength        = payload_len;
-    ecmb.crc64            = payload_crc;
-    ecmb.cmpCrc64         = payload_crc;
+    ecmb.identifier = ErasureCodingMapBlock; ecmb.algorithm = ctx->ec_algorithm;
+    ecmb.stripeGroupCount = group_count; ecmb.compression = kCompressionNone;
+    ecmb.length = payload_len; ecmb.cmpLength = payload_len;
+    ecmb.crc64 = payload_crc; ecmb.cmpCrc64 = payload_crc;
 
-    /* Write ECMB to file */
     uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     aaruf_fseek(ctx->imageStream, 0, SEEK_END);
-    uint64_t ecmb_offset = (uint64_t)aaruf_ftell(ctx->imageStream);
-    ecmb_offset = (ecmb_offset + alignment_mask) & ~alignment_mask;
+    uint64_t ecmb_offset = ((uint64_t)aaruf_ftell(ctx->imageStream) + alignment_mask) & ~alignment_mask;
     aaruf_fseek(ctx->imageStream, (aaru_off_t)ecmb_offset, SEEK_SET);
-
     fwrite(&ecmb, sizeof(ErasureCodingMapHeader), 1, ctx->imageStream);
     fwrite(payload, payload_len, 1, ctx->imageStream);
-
     uint64_t ecmb_total = sizeof(ErasureCodingMapHeader) + payload_len;
 
-    /* Write duplicate ECMB */
+    /* Duplicate ECMB */
     uint64_t ecmb2_offset = (ecmb_offset + ecmb_total + alignment_mask) & ~alignment_mask;
     aaruf_fseek(ctx->imageStream, (aaru_off_t)ecmb2_offset, SEEK_SET);
     fwrite(&ecmb, sizeof(ErasureCodingMapHeader), 1, ctx->imageStream);
     fwrite(payload, payload_len, 1, ctx->imageStream);
-
     free(payload);
 
-    /* Write recovery footer */
+    /* Recovery footer */
     AaruRecoveryFooter footer;
     memset(&footer, 0, sizeof(footer));
-    footer.ecmbOffset  = ecmb_offset;
-    footer.ecmbLength  = ecmb_total;
+    footer.ecmbOffset = ecmb_offset; footer.ecmbLength = ecmb_total;
     footer.headerCrc64 = aaruf_crc64_data((const uint8_t *)&ctx->header, sizeof(AaruHeaderV2));
     memcpy(&footer.backupHeader, &ctx->header, sizeof(AaruHeaderV2));
     footer.footerMagic = AARU_RECOVERY_FOOTER_MAGIC;
@@ -545,7 +762,8 @@ void ec_finalize(aaruformat_context *ctx)
     aaruf_fseek(ctx->imageStream, 0, SEEK_END);
     fwrite(&footer, sizeof(AaruRecoveryFooter), 1, ctx->imageStream);
 
-    TRACE("Wrote ECMB at offset %" PRIu64 " (%" PRIu64 " bytes), footer at EOF", ecmb_offset, ecmb_total);
+    TRACE("Wrote ECMB at offset %" PRIu64 " (%u groups, %" PRIu64 " bytes), footer at EOF",
+          ecmb_offset, group_count, ecmb_total);
 }
 
 /**
