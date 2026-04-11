@@ -16,6 +16,7 @@ var flux_8c =
     [ "read_flux_payload_header", "flux_8c.html#ac9145d7789804958ea126d136a45231b", null ],
     [ "read_lzma_compressed_payload", "flux_8c.html#a8b2e6d3cc3b80a282d15c2a737eb427c", null ],
     [ "read_uncompressed_payload", "flux_8c.html#a99b0c18957e1cb755c1c5e967bb9b97b", null ],
+    [ "read_zstd_compressed_payload", "flux_8c.html#a1a2bf6eba325d21e56119000f90df654", null ],
     [ "validate_flux_payload_crcs", "flux_8c.html#a0c36f4d6d0d0cec73810133a28c0eb6f", null ],
     [ "FLUX_CAPTURE_RECORD_ICD", "flux_8c.html#af25f05916bee2f8489613b6a096c2cec", null ]
 ];

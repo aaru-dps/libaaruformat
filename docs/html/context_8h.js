@@ -9,6 +9,7 @@ var context_8h =
     [ "aaruformat_context", "structaaruformat__context.html", "structaaruformat__context" ],
     [ "DumpHardwareEntriesWithData", "structDumpHardwareEntriesWithData.html", "structDumpHardwareEntriesWithData" ],
     [ "DumpExtent", "structDumpExtent.html", "structDumpExtent" ],
+    [ "AARUFORMAT_CONTEXT_DECLARED", "context_8h.html#ad8587c84f30a3f328869e304138d3ad8", null ],
     [ "MD5_DIGEST_LENGTH", "context_8h.html#a09a4f4b2f28cbe522d9b80153666029c", null ],
     [ "aaruformat_context", "context_8h.html#a07c6208ca3659883538a68592b40b53b", null ],
     [ "CdEccContext", "context_8h.html#a32dcff5b3409f48aa8f6741695193e9a", null ],

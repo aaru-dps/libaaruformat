@@ -19,7 +19,5 @@ var searchData=
   ['lto6worm_16',['LTO6WORM',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa5e301457517e12fe8832c90eb9c053fc',1,'aaru.h']]],
   ['lto7_17',['LTO7',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aab0a82fc1dd86af5c361d7c549b001f6b',1,'aaru.h']]],
   ['lto7worm_18',['LTO7WORM',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa7d3400fe55bbbb17b6ec7612a7092453',1,'aaru.h']]],
-  ['lvrom_19',['LVROM',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aadcf43ad5c010a9983baca9265c7cc4ae',1,'aaru.h']]],
-  ['lzma_20',['Lzma',['../enums_8h.html#affec749ed88365143745313ae9168263a002db7938c70152bf9af1797cb87c32f',1,'enums.h']]],
-  ['lzmaclauniasubchanneltransform_21',['LzmaClauniaSubchannelTransform',['../enums_8h.html#affec749ed88365143745313ae9168263ab6147cfb5a7f96c11a4e4aafd9cc8ce0',1,'enums.h']]]
+  ['lvrom_19',['LVROM',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aadcf43ad5c010a9983baca9265c7cc4ae',1,'aaru.h']]]
 ];

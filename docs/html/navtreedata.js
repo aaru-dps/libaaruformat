@@ -25,11 +25,13 @@
 var NAVTREE =
 [
   [ "libaaruformat", "index.html", [
-    [ "Building and Testing", "index.html#autotoc_md1", [
-      [ "Standard Build", "index.html#autotoc_md2", null ],
-      [ "Running Tests", "index.html#autotoc_md3", null ],
-      [ "Building with Address Sanitizer", "index.html#autotoc_md4", null ],
-      [ "Other Build Options", "index.html#autotoc_md5", null ]
+    [ "libaaruformat", "md_README.html", [
+      [ "Building and Testing", "md_README.html#autotoc_md1", [
+        [ "Standard Build", "md_README.html#autotoc_md2", null ],
+        [ "Running Tests", "md_README.html#autotoc_md3", null ],
+        [ "Building with Address Sanitizer", "md_README.html#autotoc_md4", null ],
+        [ "Other Build Options", "md_README.html#autotoc_md5", null ]
+      ] ]
     ] ],
     [ "Topics", "topics.html", "topics" ],
     [ "Data Structures", "annotated.html", [
@@ -58,14 +60,16 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "aaru_8h.html",
-"decls_8h.html#abe1156eceb456b48e92389d9f2a20601",
-"errors_8h.html#acebe3e4bcc498066fe65d9e24e16c7f5",
-"group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebeaffb17871a6a508af15eacc2f96349f61",
-"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa78da2407a2effb99c6580eacf184d0f0",
-"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaee394a7c6e389c9b3734850e1666ee04",
-"metadata_8c.html#a38d72be7e7854d6cb0bba89172e27b03",
-"structDdtHeader.html#a7d0eb9ac1d810626e9f86b7f8c8655f5",
-"structaaruformat__context.html#a468632adcfc1f6b884b8906835c3228b"
+"decls_8h.html#a69ca66242c0becf7640b3d1cc8da8f9c",
+"enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a866d70f75c49577c91296f2598347663",
+"globals_eval_d.html",
+"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa30d4793d280426cf5f04f93f5b5978a6",
+"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaa73cc08581063a7bb0353bf4a7919a94",
+"index_8h_source.html",
+"optical_8c.html#a2ce65757ca5209f17d467c51ba7d445d",
+"structDataStreamPayloadHeader.html#a55c9590fb1c3d87a9cce3b389826c1a5",
+"structWiiPartitionRegion.html#a99f8cd96b1258c9174988fcb3db1c92d",
+"structpriam__tag.html#a5a87eb133113df721274e6eda73435a4"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronization';

@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['mediatagtype_0',['MediaTagType',['../group__MediaTags.html#gabdd09c559df8f34ae68fcb2ff1892ebe',1,'aaru.h']]],
-  ['mediatype_1',['MediaType',['../group__MediaTypes.html#ga1499e9f8a76cb81b43b7a4b0dbe7e44a',1,'aaru.h']]]
+  ['featurescompatible_0',['FeaturesCompatible',['../enums_8h.html#af104aa102cdba100b9f245bef4abd42d',1,'enums.h']]],
+  ['featurescompatiblero_1',['FeaturesCompatibleRo',['../enums_8h.html#a8224cd67a8e4e3d365e0371899c7065f',1,'enums.h']]],
+  ['featuresincompatible_2',['FeaturesIncompatible',['../enums_8h.html#a993230a3978041acdc4e9ba46e4c9f25',1,'enums.h']]]
 ];

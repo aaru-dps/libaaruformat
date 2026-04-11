@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['tracktype_0',['TrackType',['../enums_8h.html#ad80740dd555f7d3688d2c4d9f44d3b04',1,'enums.h']]]
+  ['sectorstatus_0',['SectorStatus',['../enums_8h.html#a74e216af87b18a5fbf0204a52dd1bba0',1,'enums.h']]],
+  ['sectortagtype_1',['SectorTagType',['../group__SectorTags.html#gaf863e81d172ce7a216d8687a8a23293a',1,'aaru.h']]]
 ];

@@ -1,7 +1,22 @@
 var searchData=
 [
-  ['window_0',['window',['../structroll__state.html#af671026012e05658f8e1247b89e26ff8',1,'roll_state']]],
-  ['writing_5fbuffer_1',['writing_buffer',['../structaaruformat__context.html#a80b7de958916f11cc61ef6871a376a92',1,'aaruformat_context']]],
-  ['writing_5fbuffer_5fposition_2',['writing_buffer_position',['../structaaruformat__context.html#aab497e0a30c0001b2ca181467973927c',1,'aaruformat_context']]],
-  ['writing_5flong_3',['writing_long',['../structaaruformat__context.html#ae867f128af265e78c6ef2da6baa9069a',1,'aaruformat_context']]]
+  ['wii_5fbuilding_5fcrypto_5fblock_0',['wii_building_crypto_block',['../structaaruformat__context.html#a89ccabe4312ac3ea706c594bf4db4753',1,'aaruformat_context']]],
+  ['wii_5fcache_5fvalid_1',['wii_cache_valid',['../structaaruformat__context.html#ac9f970fc840120793cb8edb909a664f8',1,'aaruformat_context']]],
+  ['wii_5fcached_5fphysical_5fgroup_2',['wii_cached_physical_group',['../structaaruformat__context.html#a4313dd92399b83805575096514d0f473',1,'aaruformat_context']]],
+  ['wii_5fencrypted_5fgroup_5fcache_3',['wii_encrypted_group_cache',['../structaaruformat__context.html#ae1b2a0044c769c469ae161df9ed6de50',1,'aaruformat_context']]],
+  ['wii_5fencryption_5finitialized_4',['wii_encryption_initialized',['../structaaruformat__context.html#aa97751408e9681a348b9385e28c15680',1,'aaruformat_context']]],
+  ['wii_5fpartition_5fregion_5fcount_5',['wii_partition_region_count',['../structaaruformat__context.html#aa3dd955c7f01ecb619b3862fecce7110',1,'aaruformat_context']]],
+  ['wii_5fpartition_5fregions_6',['wii_partition_regions',['../structaaruformat__context.html#aaf475c0a1941563a9e1598f02ac48b66',1,'aaruformat_context']]],
+  ['wiiu_5fbuilding_5fcrypto_5fblock_7',['wiiu_building_crypto_block',['../structaaruformat__context.html#a02680ed9c8af17fe614dc0fc96549f8f',1,'aaruformat_context']]],
+  ['wiiu_5fcache_5fvalid_8',['wiiu_cache_valid',['../structaaruformat__context.html#adc79d62a5bbb4d1db9aa35a36e0d2396',1,'aaruformat_context']]],
+  ['wiiu_5fcached_5fphysical_5fsector_9',['wiiu_cached_physical_sector',['../structaaruformat__context.html#a5cbb6adfdc95162c1723955730a7b26d',1,'aaruformat_context']]],
+  ['wiiu_5fdisc_5fkey_10',['wiiu_disc_key',['../structaaruformat__context.html#a8c1021af5f2c1b0a14fb5b559294975f',1,'aaruformat_context']]],
+  ['wiiu_5fencrypted_5fblock_5fcache_11',['wiiu_encrypted_block_cache',['../structaaruformat__context.html#a35916280b5c71a844f41aeaf4cc28a3e',1,'aaruformat_context']]],
+  ['wiiu_5fencryption_5finitialized_12',['wiiu_encryption_initialized',['../structaaruformat__context.html#aa518fbc0528e85d7bd69dd331433b4bf',1,'aaruformat_context']]],
+  ['wiiu_5fpartition_5fregion_5fcount_13',['wiiu_partition_region_count',['../structaaruformat__context.html#a1d6387bb1c83151c5096beb51de37a8d',1,'aaruformat_context']]],
+  ['wiiu_5fpartition_5fregions_14',['wiiu_partition_regions',['../structaaruformat__context.html#a12239886f41707864eafb8e2d5a79cb9',1,'aaruformat_context']]],
+  ['window_15',['window',['../structroll__state.html#af671026012e05658f8e1247b89e26ff8',1,'roll_state']]],
+  ['writing_5fbuffer_16',['writing_buffer',['../structaaruformat__context.html#a80b7de958916f11cc61ef6871a376a92',1,'aaruformat_context']]],
+  ['writing_5fbuffer_5fposition_17',['writing_buffer_position',['../structaaruformat__context.html#aab497e0a30c0001b2ca181467973927c',1,'aaruformat_context']]],
+  ['writing_5flong_18',['writing_long',['../structaaruformat__context.html#ae867f128af265e78c6ef2da6baa9069a',1,'aaruformat_context']]]
 ];

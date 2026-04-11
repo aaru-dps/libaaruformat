@@ -1,6 +1,15 @@
 var internal_8h =
 [
+    [ "AARU_FSEEK", "internal_8h.html#aa2532365d21906273c41af7573f90148", null ],
+    [ "AARU_FTELL", "internal_8h.html#ad20841fc34b977d6f7e83c091a5438aa", null ],
+    [ "fseek", "internal_8h.html#aa083b8d40680af41008094ea2ffd5c59", null ],
+    [ "ftell", "internal_8h.html#a7a6b9e94ab3b2ba72ab920a47fbe6ec1", null ],
+    [ "LZMA_THREADS", "internal_8h.html#a96247194f6c1e4090020e2a3691f8c9d", null ],
+    [ "aaru_off_t", "internal_8h.html#afb4a123eeae51c668333248fb666e0f2", null ],
     [ "aaruf_close_current_block", "internal_8h.html#a2402812f5e04ba16765208c0b70fa6c5", null ],
+    [ "aaruf_finalize_write", "internal_8h.html#a750c966846027990bb0914760758c84c", null ],
+    [ "aaruf_fseek", "internal_8h.html#a60c57e3b2e8e233d0be91f3690bf077c", null ],
+    [ "aaruf_ftell", "internal_8h.html#a697ee4ab2c7adc710e56b0ef868596d7", null ],
     [ "compare_extents", "internal_8h.html#ac93ebc6d918745be56b680e19bf7e8d5", null ],
     [ "decode_ddt_entry_v1", "internal_8h.html#a26e5fd58cdfd39948f1b724fafffcdc2", null ],
     [ "decode_ddt_entry_v2", "internal_8h.html#a805d607b45bb8ad8a3e6b0bcfabe3265", null ],

@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['roll_5fstate_0',['roll_state',['../structroll__state.html',1,'']]]
+  ['ngc_5flfg_5fctx_0',['ngc_lfg_ctx',['../structngc__lfg__ctx.html',1,'']]],
+  ['ngcwjunkentry_1',['NgcwJunkEntry',['../structNgcwJunkEntry.html',1,'']]]
 ];

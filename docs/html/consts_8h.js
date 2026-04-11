@@ -1,6 +1,10 @@
 var consts_8h =
 [
     [ "AARU_MAGIC", "consts_8h.html#a3c3ba66fe2b547655c9e4b16a1ba519a", null ],
+    [ "AARU_RECOVERY_FOOTER_MAGIC", "consts_8h.html#a1d7434dbf5927484a6d767b8a27c3cd4", null ],
+    [ "AARUF_KNOWN_COMPAT_FEATURES", "consts_8h.html#a7c3ad1bcc6a47eb763de189b140189a4", null ],
+    [ "AARUF_KNOWN_INCOMPAT_FEATURES", "consts_8h.html#acedc8f92be5e77817d5c902ffba6e77c", null ],
+    [ "AARUF_KNOWN_ROCOMPAT_FEATURES", "consts_8h.html#a72b0f7dd20ba51e607e42b6e2d6970e5", null ],
     [ "AARUF_VERSION", "consts_8h.html#adbbd4387273589f1c76a5f5786607013", null ],
     [ "AARUF_VERSION_V1", "consts_8h.html#ac837e146bff4d0f3603e4a9e444358c6", null ],
     [ "AARUF_VERSION_V2", "consts_8h.html#ad2fdced5805aa0364f1c5b073f81dd76", null ],

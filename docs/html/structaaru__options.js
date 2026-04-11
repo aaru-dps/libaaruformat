@@ -7,8 +7,11 @@ var structaaru__options =
     [ "deduplicate", "structaaru__options.html#a2d62d4cd6f1e59c145e3c4bc621f7d43", null ],
     [ "dictionary", "structaaru__options.html#a471cdd9988e95b36ee132cd047576237", null ],
     [ "md5", "structaaru__options.html#a93c09eed5b0613fa25dd84c7d3c2a416", null ],
+    [ "num_threads", "structaaru__options.html#a8fd937eb8cc58a3e83e1318d38b3345a", null ],
     [ "sha1", "structaaru__options.html#ae3ff963481af06c7e097bdaa0c925bb6", null ],
     [ "sha256", "structaaru__options.html#a522d922c2ab6e04ce8e7051aaf953093", null ],
     [ "spamsum", "structaaru__options.html#a623a984dfec7abd375e7ef3d97333a4f", null ],
-    [ "table_shift", "structaaru__options.html#a8b82ce71c52cc737f7b73334e094a795", null ]
+    [ "table_shift", "structaaru__options.html#a8b82ce71c52cc737f7b73334e094a795", null ],
+    [ "zstd", "structaaru__options.html#a1aa493849a34cecf06f19b34ee02ae05", null ],
+    [ "zstd_level", "structaaru__options.html#a2d8010e4373bb5a97e59a3268b301d74", null ]
 ];

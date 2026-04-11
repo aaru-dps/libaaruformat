@@ -1,11 +1,21 @@
 var searchData=
 [
-  ['partition_0',['Partition',['../structTapeFileEntry.html#acef4f9b9acac33d1e5f08f6cd62afab3',1,'TapeFileEntry']]],
-  ['partitionentry_1',['partitionEntry',['../structTapePartitionHashEntry.html#af7c9f8904da9a0a21171ff3c04ec4379',1,'TapePartitionHashEntry']]],
-  ['payloadoffset_2',['payloadOffset',['../structFluxEntry.html#a3f5949d0feb9bdcf62afeb1acb1fa009',1,'FluxEntry']]],
-  ['pregap_3',['pregap',['../structTrackEntry.html#a84fbff0d6d7b4f6451386c1665fb43d6',1,'TrackEntry']]],
-  ['prev_5fblock_4',['prev_block',['../structsony__tag.html#af67234c6e985f047a3338eed5a308b82',1,'sony_tag::prev_block'],['../structprofile__tag.html#af49e5fa3d9fb6f0a69a220ce541d82f7',1,'profile_tag::prev_block'],['../structpriam__tag.html#a56681c4dc59185e989701142ff542918',1,'priam_tag::prev_block']]],
-  ['previous_5',['previous',['../structIndexHeader3.html#a33743c206cb10cc1d8ff2c7f9e61ddcf',1,'IndexHeader3']]],
-  ['previousleveloffset_6',['previousLevelOffset',['../structDdtHeader2.html#af71423c2a8c7fa89dfd2313b456c57a2',1,'DdtHeader2']]],
-  ['primary_5fddt_5foffset_7',['primary_ddt_offset',['../structaaruformat__context.html#a88effb2eb082320b5b31d729981cf2d4',1,'aaruformat_context']]]
+  ['parity_5foffsets_0',['parity_offsets',['../structEcReadStripe.html#ac88d41411a685f4b7fbecb69d179ec3f',1,'EcReadStripe']]],
+  ['partition_1',['Partition',['../structTapeFileEntry.html#acef4f9b9acac33d1e5f08f6cd62afab3',1,'TapeFileEntry']]],
+  ['partition_5findex_2',['partition_index',['../structNgcwJunkEntry.html#a4ea4f27121829ac6b58029f5cea6845e',1,'NgcwJunkEntry']]],
+  ['partitionentry_3',['partitionEntry',['../structTapePartitionHashEntry.html#af7c9f8904da9a0a21171ff3c04ec4379',1,'TapePartitionHashEntry']]],
+  ['payloadoffset_4',['payloadOffset',['../structFluxEntry.html#a3f5949d0feb9bdcf62afeb1acb1fa009',1,'FluxEntry']]],
+  ['position_5',['position',['../structEcBlockLookupEntry.html#a8645b89803f927a7608a6f8d30d74292',1,'EcBlockLookupEntry']]],
+  ['position_5fbytes_6',['position_bytes',['../structngc__lfg__ctx.html#a84958bcdb9e96a4231aa4f43d5415eea',1,'ngc_lfg_ctx']]],
+  ['pregap_7',['pregap',['../structTrackEntry.html#a84fbff0d6d7b4f6451386c1665fb43d6',1,'TrackEntry']]],
+  ['prev_5fblock_8',['prev_block',['../structsony__tag.html#af67234c6e985f047a3338eed5a308b82',1,'sony_tag::prev_block'],['../structprofile__tag.html#af49e5fa3d9fb6f0a69a220ce541d82f7',1,'profile_tag::prev_block'],['../structpriam__tag.html#a56681c4dc59185e989701142ff542918',1,'priam_tag::prev_block']]],
+  ['previous_9',['previous',['../structIndexHeader3.html#a33743c206cb10cc1d8ff2c7f9e61ddcf',1,'IndexHeader3']]],
+  ['previousleveloffset_10',['previousLevelOffset',['../structDdtHeader2.html#af71423c2a8c7fa89dfd2313b456c57a2',1,'DdtHeader2']]],
+  ['primary_5fddt_5foffset_11',['primary_ddt_offset',['../structaaruformat__context.html#a88effb2eb082320b5b31d729981cf2d4',1,'aaruformat_context']]],
+  ['ps3_5fdisc_5fkey_12',['ps3_disc_key',['../structaaruformat__context.html#a016a2c15a10105ff17628c9ee7f5c424',1,'aaruformat_context']]],
+  ['ps3_5fencryption_5finitialized_13',['ps3_encryption_initialized',['../structaaruformat__context.html#a59525c7915fbc51ab0f2ef184db8bf6d',1,'aaruformat_context']]],
+  ['ps3_5ferk_14',['PS3_ERK',['../ps3__crypto_8c.html#acc35345c5e7216dd7b459a5214c560a9',1,'ps3_crypto.c']]],
+  ['ps3_5ferk_5fiv_15',['PS3_ERK_IV',['../ps3__crypto_8c.html#a1cb0bb57269e771ed42f5619ce222864',1,'ps3_crypto.c']]],
+  ['ps3_5fplaintext_5fregion_5fcount_16',['ps3_plaintext_region_count',['../structaaruformat__context.html#a1bfda8e3b76471a7b526d05f4855f8f1',1,'aaruformat_context']]],
+  ['ps3_5fplaintext_5fregions_17',['ps3_plaintext_regions',['../structaaruformat__context.html#acf62eadb2e019323fdbe8bbf536ad82c',1,'aaruformat_context']]]
 ];

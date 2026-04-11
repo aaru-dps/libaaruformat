@@ -7,16 +7,11 @@ var searchData=
   ['fdformat_5f35_5fhd_4',['FDFORMAT_35_HD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa9c675c3ce576cbdb97c140a7d4c47077',1,'aaru.h']]],
   ['fdformat_5f525_5fdd_5',['FDFORMAT_525_DD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa9fd7230dedb4b9f8eb191bf3f7ed480a',1,'aaru.h']]],
   ['fdformat_5f525_5fhd_6',['FDFORMAT_525_HD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa77c42e046250bf7227cd7e250f8ccf86',1,'aaru.h']]],
-  ['flac_7',['Flac',['../enums_8h.html#affec749ed88365143745313ae9168263adce52e91e4d88a577ecf67cbe7beac31',1,'enums.h']]],
-  ['flashdrive_8',['FlashDrive',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa57ae1fe6db732532ab7ffc732f826a23',1,'aaru.h']]],
-  ['flextra3020_9',['Flextra3020',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa9ed0152cefe8a3e5a9372ec104daeb54',1,'aaru.h']]],
-  ['flextra3225_10',['Flextra3225',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaced988167a2dd863b2a3548c8fb4c67f',1,'aaru.h']]],
-  ['floppy_5fleadout_11',['Floppy_LeadOut',['../group__MediaTags.html#ggabdd09c559df8f34ae68fcb2ff1892ebea8588ae2ee995dfda8014f67a8072c59a',1,'aaru.h']]],
-  ['floppyaddressmark_12',['FloppyAddressMark',['../group__SectorTags.html#ggaf863e81d172ce7a216d8687a8a23293aa440e8a66ac1ffbbae3347b72728da547',1,'aaru.h']]],
-  ['floppyleadout_13',['FloppyLeadOut',['../enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6ad28a6e4b3a2ac2917dec6684f2e6a08e',1,'enums.h']]],
-  ['floptical_14',['Floptical',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa7167e5fc54a519ec2c5f7997ac8c1180',1,'aaru.h']]],
-  ['fluxdata_15',['FluxData',['../enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a390407e323208ceb978198c5d993ea80',1,'enums.h']]],
-  ['fluxdatablock_16',['FluxDataBlock',['../enums_8h.html#a54420623f26ab6bb61042b41cccf37a3aeaee7c0287e406b4b09ad4b8954e46a3',1,'enums.h']]],
-  ['fmtowns_17',['FMTOWNS',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa54a5601323f7c9935ba35beb1da5abcd',1,'aaru.h']]],
-  ['fvd_18',['FVD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aad0c431131a66081e6b394fafdb9828c4',1,'aaru.h']]]
+  ['flashdrive_7',['FlashDrive',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa57ae1fe6db732532ab7ffc732f826a23',1,'aaru.h']]],
+  ['flextra3020_8',['Flextra3020',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa9ed0152cefe8a3e5a9372ec104daeb54',1,'aaru.h']]],
+  ['flextra3225_9',['Flextra3225',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaced988167a2dd863b2a3548c8fb4c67f',1,'aaru.h']]],
+  ['floptical_10',['Floptical',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa7167e5fc54a519ec2c5f7997ac8c1180',1,'aaru.h']]],
+  ['fluxdatablock_11',['FluxDataBlock',['../enums_8h.html#a54420623f26ab6bb61042b41cccf37a3aeaee7c0287e406b4b09ad4b8954e46a3',1,'enums.h']]],
+  ['fmtowns_12',['FMTOWNS',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa54a5601323f7c9935ba35beb1da5abcd',1,'aaru.h']]],
+  ['fvd_13',['FVD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aad0c431131a66081e6b394fafdb9828c4',1,'aaru.h']]]
 ];

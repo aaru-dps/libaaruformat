@@ -3,6 +3,7 @@ var spamsum_8c =
     [ "ROLL_SUM", "spamsum_8c.html#a707b15790ae068604c385681b164b64d", null ],
     [ "SSDEEP_BS", "spamsum_8c.html#a32e1f1b80d38adcc429fdd861289fe12", null ],
     [ "SUM_HASH", "spamsum_8c.html#a0e886062da69d341fbee947ba56cae96", null ],
+    [ "aaruf_set_spamsum_error", "spamsum_8c.html#ab068520cf73294d7e74c1e583fb35c89", null ],
     [ "aaruf_spamsum_final", "spamsum_8c.html#ab1f4894af1962e933767248c4fb0e2e8", null ],
     [ "aaruf_spamsum_free", "spamsum_8c.html#a6fe74704e44be7adfaa2ce676f3c3de4", null ],
     [ "aaruf_spamsum_init", "spamsum_8c.html#a793dac760aedda6414ba4014eb2ed0c7", null ],

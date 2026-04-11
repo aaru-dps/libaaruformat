@@ -5,5 +5,7 @@ var searchData=
   ['aaruformat_5fcontext_2',['aaruformat_context',['../structaaruformat__context.html',1,'']]],
   ['aaruheader_3',['AaruHeader',['../structAaruHeader.html',1,'']]],
   ['aaruheaderv2_4',['AaruHeaderV2',['../structAaruHeaderV2.html',1,'']]],
-  ['aarumetadatajsonblockheader_5',['AaruMetadataJsonBlockHeader',['../structAaruMetadataJsonBlockHeader.html',1,'']]]
+  ['aarumetadatajsonblockheader_5',['AaruMetadataJsonBlockHeader',['../structAaruMetadataJsonBlockHeader.html',1,'']]],
+  ['aarurecoveryfooter_6',['AaruRecoveryFooter',['../structAaruRecoveryFooter.html',1,'']]],
+  ['aes128_5fctx_7',['aes128_ctx',['../structaes128__ctx.html',1,'']]]
 ];

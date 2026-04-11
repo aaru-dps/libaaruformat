@@ -1,5 +1,6 @@
 var md5_8c =
 [
+    [ "AARU_PREFETCH", "md5_8c.html#a2ae621e934707fc5e224c3f04611bf95", null ],
     [ "AARU_RESTRICT", "md5_8c.html#a72527e2d7597b0307a701a6954a0b19a", null ],
     [ "F", "md5_8c.html#a96d73bbd7af15cb1fc38c3f4a3bd82e9", null ],
     [ "G", "md5_8c.html#ad96b7cf3182ce2ba85e5a7a93b12c441", null ],

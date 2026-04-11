@@ -16,8 +16,6 @@ var searchData=
   ['nintendodiskcard_13',['NintendoDiskCard',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aab7736e1bdc9cb153900086bba46c3e06',1,'aaru.h']]],
   ['nintendodsgamecard_14',['NintendoDSGameCard',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa3d2a7b0cb27faa50e558f5dfcc4c52d5',1,'aaru.h']]],
   ['nintendodsigamecard_15',['NintendoDSiGameCard',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaab027fb2aa926f3ca765562d1fd09696',1,'aaru.h']]],
-  ['nodata_16',['NoData',['../enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a7f6b1dc06a7ab741e7f56df8050b05b6',1,'enums.h']]],
-  ['none_17',['None',['../enums_8h.html#affec749ed88365143745313ae9168263ac9d3e887722f2bc482bcca9d41c512af',1,'enums.h']]],
-  ['notdumped_18',['NotDumped',['../enums_8h.html#ab72dc399e3946b3c40a5ad8c8e3254b7ab3fac5cd103786d64f7ee67bcb9ac458',1,'enums.h']]],
-  ['nuon_19',['Nuon',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aad730786bd592903cc42ad7f5a5847171',1,'aaru.h']]]
+  ['notdumped_16',['NotDumped',['../enums_8h.html#ab72dc399e3946b3c40a5ad8c8e3254b7ab3fac5cd103786d64f7ee67bcb9ac458',1,'enums.h']]],
+  ['nuon_17',['Nuon',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aad730786bd592903cc42ad7f5a5847171',1,'aaru.h']]]
 ];

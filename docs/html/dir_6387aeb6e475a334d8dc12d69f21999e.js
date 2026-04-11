@@ -4,6 +4,7 @@ var dir_6387aeb6e475a334d8dc12d69f21999e =
     [ "data.h", "data_8h.html", "data_8h" ],
     [ "ddt.h", "ddt_8h.html", "ddt_8h" ],
     [ "dump.h", "dump_8h.html", "dump_8h" ],
+    [ "erasure.h", "erasure_8h.html", "erasure_8h" ],
     [ "flux.h", "flux_8h.html", "flux_8h" ],
     [ "header.h", "header_8h.html", "header_8h" ],
     [ "index.h", "index_8h.html", "index_8h" ],

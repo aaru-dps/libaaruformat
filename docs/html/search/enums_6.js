@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['sectorstatus_0',['SectorStatus',['../enums_8h.html#a74e216af87b18a5fbf0204a52dd1bba0',1,'enums.h']]],
-  ['sectortagtype_1',['SectorTagType',['../group__SectorTags.html#gaf863e81d172ce7a216d8687a8a23293a',1,'aaru.h']]]
+  ['mediatagtype_0',['MediaTagType',['../group__MediaTags.html#gabdd09c559df8f34ae68fcb2ff1892ebe',1,'aaru.h']]],
+  ['mediatype_1',['MediaType',['../group__MediaTypes.html#ga1499e9f8a76cb81b43b7a4b0dbe7e44a',1,'aaru.h']]]
 ];

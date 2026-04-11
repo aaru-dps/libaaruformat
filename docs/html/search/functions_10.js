@@ -1,29 +1,7 @@
 var searchData=
 [
-  ['write_5faaru_5fjson_5fblock_0',['write_aaru_json_block',['../close_8c.html#ad94331170e773c67845daa357c6ecb42',1,'close.c']]],
-  ['write_5fcached_5fsecondary_5fddt_1',['write_cached_secondary_ddt',['../close_8c.html#af0f89d22c6e2bdca261223bbdda7654c',1,'close.c']]],
-  ['write_5fcallback_2',['write_callback',['../flac_8c.html#ad65b9acb1c0c9401aacf5e711c2c6cf7',1,'flac.c']]],
-  ['write_5fchecksum_5fblock_3',['write_checksum_block',['../close_8c.html#a84f08d3fe750b46dad183b12bb3927c5',1,'close.c']]],
-  ['write_5fcicm_5fblock_4',['write_cicm_block',['../close_8c.html#a2308f1f7356e94d85c057a3d0d4ed343',1,'close.c']]],
-  ['write_5fdumphw_5fblock_5',['write_dumphw_block',['../close_8c.html#a796034966c1e918152e652635431dc39',1,'close.c']]],
-  ['write_5fdvd_5flong_5fsector_5fblocks_6',['write_dvd_long_sector_blocks',['../close_8c.html#a13f6c475294969c1eb8c59ff53c91af9',1,'close.c']]],
-  ['write_5fdvd_5ftitle_5fkey_5fdecrypted_5fblock_7',['write_dvd_title_key_decrypted_block',['../close_8c.html#a5e2cce0d9661697c767d9312224fd340',1,'close.c']]],
-  ['write_5fflux_5fblocks_8',['write_flux_blocks',['../close_8c.html#af80e68ad63df21d7eb0ff9c7212302a1',1,'close.c']]],
-  ['write_5fflux_5fcapture_5fpayload_9',['write_flux_capture_payload',['../close_8c.html#a10d7168f66ee3b1e78d17022f37f63a9',1,'close.c']]],
-  ['write_5fgeometry_5fblock_10',['write_geometry_block',['../close_8c.html#ada8f13126103c0077ddcf5e6120aea53',1,'close.c']]],
-  ['write_5findex_5fblock_11',['write_index_block',['../close_8c.html#a3532372fac3d5bb2619900820a26632e',1,'close.c']]],
-  ['write_5fmedia_5ftags_12',['write_media_tags',['../close_8c.html#a3decc41ec145e8b153a23de6389b3782',1,'close.c']]],
-  ['write_5fmetadata_5fblock_13',['write_metadata_block',['../close_8c.html#af36ba67be5e488713558202feef0eeef',1,'close.c']]],
-  ['write_5fmode2_5fsubheaders_5fblock_14',['write_mode2_subheaders_block',['../close_8c.html#ade7f81cbae198dbbea937551bf670a4f',1,'close.c']]],
-  ['write_5fprimary_5fddt_15',['write_primary_ddt',['../close_8c.html#a1bb181171eb9d0b0016cf4091ed831d7',1,'close.c']]],
-  ['write_5fsector_5fprefix_16',['write_sector_prefix',['../close_8c.html#af383051987456d1295862e395027ffa8',1,'close.c']]],
-  ['write_5fsector_5fprefix_5fddt_17',['write_sector_prefix_ddt',['../close_8c.html#ae5ee36ba745233583773cd7a644c8aa7',1,'close.c']]],
-  ['write_5fsector_5fsubchannel_18',['write_sector_subchannel',['../close_8c.html#a2b849af94084e38d2040eca1d520478a',1,'close.c']]],
-  ['write_5fsector_5fsuffix_19',['write_sector_suffix',['../close_8c.html#a8ea54bc4597be4246f2be361a5854251',1,'close.c']]],
-  ['write_5fsector_5fsuffix_5fddt_20',['write_sector_suffix_ddt',['../close_8c.html#a9d0eb026d1fa544b554493e780b7fbc1',1,'close.c']]],
-  ['write_5fsingle_5flevel_5fddt_21',['write_single_level_ddt',['../close_8c.html#a7314de0d71768709fa4ba2db7f89cdb9',1,'close.c']]],
-  ['write_5ftape_5fddt_22',['write_tape_ddt',['../close_8c.html#aed9f90614002b887ae9f3ef2333de16a',1,'close.c']]],
-  ['write_5ftape_5ffile_5fblock_23',['write_tape_file_block',['../close_8c.html#a742ec2b4d57e32fa856033b1e4a04e9f',1,'close.c']]],
-  ['write_5ftape_5fpartition_5fblock_24',['write_tape_partition_block',['../close_8c.html#ae333a9d69b81891b260907fd7d0665e1',1,'close.c']]],
-  ['write_5ftracks_5fblock_25',['write_tracks_block',['../close_8c.html#aa2451e6c0fc8d4db3bfb9874f2ca990c',1,'close.c']]]
+  ['validate_5fflux_5fpayload_5fcrcs_0',['validate_flux_payload_crcs',['../flux_8c.html#a0c36f4d6d0d0cec73810133a28c0eb6f',1,'flux.c']]],
+  ['verify_5findex_5fv1_1',['verify_index_v1',['../internal_8h.html#a89ed93d216c4dce0ae5e2acccf8cc2b4',1,'verify_index_v1(aaruformat_context *ctx):&#160;index_v1.c'],['../index__v1_8c.html#a89ed93d216c4dce0ae5e2acccf8cc2b4',1,'verify_index_v1(aaruformat_context *ctx):&#160;index_v1.c']]],
+  ['verify_5findex_5fv2_2',['verify_index_v2',['../internal_8h.html#ae234e22b16b085d18614110630034db5',1,'verify_index_v2(aaruformat_context *ctx):&#160;index_v2.c'],['../index__v2_8c.html#ae234e22b16b085d18614110630034db5',1,'verify_index_v2(aaruformat_context *ctx):&#160;index_v2.c']]],
+  ['verify_5findex_5fv3_3',['verify_index_v3',['../internal_8h.html#ad7ed9250463c320c7bc8d83689bcfefb',1,'verify_index_v3(aaruformat_context *ctx):&#160;index_v3.c'],['../index__v3_8c.html#ad7ed9250463c320c7bc8d83689bcfefb',1,'verify_index_v3(aaruformat_context *ctx):&#160;index_v3.c']]]
 ];
