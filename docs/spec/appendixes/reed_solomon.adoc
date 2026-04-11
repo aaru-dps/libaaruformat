@@ -1,0 +1,124 @@
+[appendix]
+== 🧮 Reed-Solomon Erasure Coding over GF(2^8)
+
+This appendix describes the Reed-Solomon (RS) erasure coding scheme used by AaruFormat for error recovery.
+
+=== Overview
+
+AaruFormat uses a systematic RS code over the Galois Field GF(2^8) to generate M parity shards from K data shards.
+Any M or fewer erased shards (data or parity) can be reconstructed from the remaining K surviving shards.
+
+The code operates byte-by-byte across shards: each byte position is treated as an independent GF(2^8) element.
+All K data shards and M parity shards must have the same length (the _shard size_), which is determined at image creation time as the maximum possible on-disk block size for the protection group.
+
+=== Galois Field GF(2^8)
+
+GF(2^8) is the finite field with 256 elements {0, 1, ..., 255}.
+
+Irreducible polynomial:: $x^8 + x^4 + x^3 + x^2 + 1$ (0x11D)
+Generator element:: 2
+
+Addition is XOR. Multiplication uses log/anti-log tables:
+
+----
+mul(a, b) = exp[log[a] + log[b]]       (if a ≠ 0 and b ≠ 0)
+mul(a, b) = 0                          (if a = 0 or b = 0)
+div(a, b) = exp[log[a] + 255 - log[b]] (if a ≠ 0)
+inv(a)    = exp[255 - log[a]]
+----
+
+where `log` and `exp` are lookup tables of 256 and 512 entries respectively, constructed by iterated multiplication by the generator element 2 modulo the irreducible polynomial.
+
+=== Coding Matrix
+
+The coding matrix is (K+M) × K. The top K rows form an identity matrix (data shards pass through unchanged), and the bottom M rows form the generator matrix G used to compute parity.
+
+Construction:
+
+1. Build a (K+M) × K Vandermonde matrix V where $V[i][j] = i^j$ in GF(2^8).
+2. Invert the top K × K submatrix of V to get $V_{top}^{-1}$.
+3. Compute the coding matrix as $C = V \times V_{top}^{-1}$.
+4. The top K rows of C are now the identity matrix.
+5. The bottom M rows of C are the generator matrix G.
+
+=== Encoding
+
+Encoding is incremental (streaming): for each data shard k written to disk, its contribution to each parity shard m is accumulated:
+
+----
+parity_m[j] ^= GF_mul(data_k[j], G[m][k])    for all byte positions j
+----
+
+This is equivalent to `parity_m += G[m][k] * data_k` in GF(2^8) vector arithmetic.
+The operation is implemented as `gf256_mul_region(parity_m, data_k, G[m][k], shard_size)`.
+
+Special case: when M=1, all generator coefficients are 1, and the operation reduces to XOR: `parity_0[j] ^= data_k[j]`.
+
+=== SIMD Acceleration
+
+The `gf256_mul_region` function is the computational hot path. It is accelerated using a 4-bit nibble decomposition technique:
+
+1. For a given coefficient `c`, precompute two 16-byte lookup tables:
+   - `low_tbl[i] = GF_mul(i, c)` for i = 0..15
+   - `hi_tbl[i] = GF_mul(i << 4, c)` for i = 0..15
+
+2. For each input byte `b`:
+   - `GF_mul(b, c) = low_tbl[b & 0x0F] ^ hi_tbl[b >> 4]`
+
+3. The table lookups map to SIMD shuffle instructions:
+
+[cols="2,3,2",options="header"]
+|===
+|Architecture |Intrinsic |Throughput
+|x86 AVX2 |`_mm256_shuffle_epi8` (vpshufb) |32 bytes/iteration
+|x86 SSSE3 |`_mm_shuffle_epi8` (pshufb) |16 bytes/iteration
+|ARM NEON |`vqtbl1q_u8` |16 bytes/iteration
+|Scalar |Log/anti-log table |1 byte/iteration
+|===
+
+Runtime CPU feature detection selects the fastest available path.
+
+=== Decoding (Reconstruction)
+
+When some shards are erased (corrupted), reconstruction proceeds as follows:
+
+1. Identify the set of K surviving shards (from the K+M total). At least K must survive.
+2. Build a K × K submatrix from the rows of the coding matrix C corresponding to the K surviving shards.
+3. Invert this submatrix using Gaussian elimination over GF(2^8).
+4. For each erased shard e, compute the repair coefficients:
++
+----
+repair[e][k] = sum_j C[e][j] * submatrix_inv[j][k]    (GF(2^8) arithmetic)
+----
+5. Reconstruct the erased shard:
++
+----
+shard[e] = sum_k repair[e][k] * surviving_shard[k]
+----
+
+The reconstruction uses the same `gf256_mul_region` SIMD-accelerated primitive.
+
+=== Shard Size and Zero-Padding
+
+Each protection group has a fixed shard size equal to the maximum possible on-disk block size:
+
+- **Data group:** `sizeof(BlockHeader) + LZMA_PROPERTIES_LENGTH + (1 << dataShift) × sectorSize`
+- **DDT group:** `sizeof(DdtHeader2) + max(compressed DDT table size)`
+- **Metadata group:** `max(compressed metadata block size)`
+- **Index group:** `sizeof(IndexHeader3) + entries × sizeof(IndexEntry)`
+
+Actual on-disk blocks are smaller than the shard size. The remaining bytes are implicitly zero.
+Since `GF_mul(0, c) = 0`, zero-padded regions contribute nothing to parity—only the non-zero prefix of each shard participates in the GF multiplication.
+
+=== Partial Stripes
+
+The last stripe in each group may have fewer than K data blocks (actualK < K).
+Positions actualK through K-1 are treated as all-zero shards that are always present.
+The encoding and decoding math remains valid because the zero shards were implicitly included during parity computation.
+
+=== Constraints
+
+- K ≥ 1, M ≥ 1
+- K + M ≤ 255 (GF(2^8) field size minus 1)
+- XOR mode (algorithm=0) requires M=1
+- RS-Vandermonde mode (algorithm=1) supports any M ≥ 1

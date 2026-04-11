@@ -126,6 +126,10 @@ include::blocks/bitstream.adoc[]
 
 <<<
 
+include::blocks/erasure_coding.adoc[]
+
+<<<
+
 include::blocks/track_layout.adoc[]
 
 <<<
@@ -163,3 +167,7 @@ include::appendixes/wii_encryption.adoc[]
 <<<
 
 include::appendixes/wiiu_encryption.adoc[]
+
+<<<
+
+include::appendixes/reed_solomon.adoc[]
