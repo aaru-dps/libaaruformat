@@ -294,6 +294,6 @@ AARU_EXPORT TARGET_WITH_SIMD uint64_t AARU_CALL aaruf_crc64_vmull(uint64_t previ
 
 /* Erasure coding */
 AARU_EXPORT int32_t AARU_CALL aaruf_set_erasure_coding(void *context, uint8_t algorithm, uint16_t K, uint16_t M);
-AARU_EXPORT int32_t AARU_CALL aaruf_set_erasure_coding_auto(void *context, double recovery_fraction);
+AARU_EXPORT int32_t AARU_CALL aaruf_set_erasure_coding_auto(void *context, uint8_t recovery_percent);
 
 #endif  // LIBAARUFORMAT_DECLS_H

@@ -165,51 +165,51 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_erasure_coding(void *context, uint8_t al
 }
 
 /**
- * @brief Configure erasure coding from a desired recovery fraction.
+ * @brief Configure erasure coding from a desired recovery percentage.
  *
- * Computes K and M from the requested fraction of data that should be
- * recoverable. Prefers M=2 (Reed-Solomon) for better burst-corruption
- * resilience. Falls back to M=1 only when the requested fraction is so
- * large that K would be 1 with M=2 (i.e., recovery_fraction >= 1.0).
+ * Computes K and M from the requested percentage of data that should be
+ * recoverable. Higher recovery percentages produce higher M values
+ * (more parity blocks = better burst-corruption tolerance).
  *
- * Strategy (M=2 preferred):
- *   K = floor(M / recovery_fraction), clamped to [1, 253].
- *   If K < 2 with M=2, try M=1 with K = floor(1 / recovery_fraction).
+ * Strategy:
+ *   M = max(2, min(8, round(20 * percent / 100)))
+ *   K = M * 100 / percent
  *
- * Examples:
- *   0.01 (1%)  → M=2, K=200  (burst tolerance: 2 blocks per stripe)
- *   0.05 (5%)  → M=2, K=40
- *   0.10 (10%) → M=2, K=20
- *   0.25 (25%) → M=2, K=8
- *   0.50 (50%) → M=2, K=4
- *   1.00 (100%)→ M=1, K=1   (full mirror)
+ * This keeps K roughly constant (~16–40) while scaling M monotonically
+ * with the requested recovery level:
+ *
+ *   1%   → RS(200, 2)   M=2, minimum burst tolerance
+ *   5%   → RS(40,  2)   M=2
+ *   10%  → RS(20,  2)   M=2
+ *   15%  → RS(20,  3)   M=3, burst tolerance grows
+ *   25%  → RS(20,  5)   M=5
+ *   50%  → RS(16,  8)   M=8 (capped), strong burst tolerance
+ *   100% → RS(8,   8)   M=8 (capped), maximum protection
  *
  * @param context Opaque context from aaruf_create().
- * @param recovery_fraction Desired recoverable fraction (0.0 < r <= 1.0).
+ * @param recovery_percent Desired recoverable percentage (1..100).
  * @return AARUF_STATUS_OK on success, error code otherwise.
  */
-AARU_EXPORT int32_t AARU_CALL aaruf_set_erasure_coding_auto(void *context, double recovery_fraction)
+AARU_EXPORT int32_t AARU_CALL aaruf_set_erasure_coding_auto(void *context, uint8_t recovery_percent)
 {
-    TRACE("Entering aaruf_set_erasure_coding_auto(%p, %f)", context, recovery_fraction);
+    TRACE("Entering aaruf_set_erasure_coding_auto(%p, %u)", context, recovery_percent);
 
-    if(recovery_fraction <= 0.0 || recovery_fraction > 1.0)
+    if(recovery_percent == 0 || recovery_percent > 100)
         return AARUF_ERROR_INCORRECT_DATA_SIZE;
 
-    uint16_t M = 2;
-    uint16_t K = (uint16_t)(M / recovery_fraction);
+    /* M scales with recovery percentage: more recovery = more parity blocks.
+     * Target K ≈ 20 (reasonable stripe size), so M ≈ 20 * percent / 100.
+     * Clamp to [2, 8]: minimum M=2 for RS burst tolerance, max M=8 for memory. */
+    uint16_t M = (uint16_t)((20 * (uint32_t)recovery_percent + 50) / 100);  /* rounded */
+    if(M < 2) M = 2;
+    if(M > 8) M = 8;
 
-    /* Clamp K to valid range */
+    uint16_t K = (uint16_t)(M * 100 / recovery_percent);
     if(K < 1) K = 1;
-    if(K > 253) K = 253; /* K + M <= 255 */
+    if(K + M > 255) K = 255 - M;
 
-    /* If K=1 with M=2 means >=200% overhead — fall back to M=1 for a full mirror */
-    if(K == 1 && recovery_fraction >= 1.0)
-        M = 1;
-
-    uint8_t algorithm = (M == 1) ? kErasureCodingXor : kErasureCodingRsVandermonde;
-
-    TRACE("Auto EC: recovery_fraction=%f -> K=%u M=%u algorithm=%u", recovery_fraction, K, M, algorithm);
-    return aaruf_set_erasure_coding(context, algorithm, K, M);
+    TRACE("Auto EC: recovery_percent=%u -> K=%u M=%u", recovery_percent, K, M);
+    return aaruf_set_erasure_coding(context, kErasureCodingRsVandermonde, K, M);
 }
 
 /**
