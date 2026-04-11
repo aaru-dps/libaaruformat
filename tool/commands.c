@@ -135,8 +135,9 @@ int cmd_read_long(int argc, char *argv[]) { return cmd_read_common(argc, argv, t
 int cmd_verify_common(int argc, char *argv[], bool sectors_mode)
 {
     struct arg_str *filename   = arg_str1(NULL, NULL, "<filename>", "Image file");
+    struct arg_lit *recover    = arg_lit0(NULL, "recover", "Attempt erasure coding recovery of corrupt blocks");
     struct arg_end *end        = arg_end(10);
-    void           *argtable[] = {filename, end};
+    void           *argtable[] = {recover, filename, end};
 
     if(arg_parse(argc, argv, argtable) > 0)
     {
@@ -146,7 +147,11 @@ int cmd_verify_common(int argc, char *argv[], bool sectors_mode)
         return -1;
     }
 
-    const int result = sectors_mode ? verify_sectors(filename->sval[0]) : verify(filename->sval[0]);
+    int result;
+    if(recover->count > 0 && !sectors_mode)
+        result = verify_recover(filename->sval[0]);
+    else
+        result = sectors_mode ? verify_sectors(filename->sval[0]) : verify(filename->sval[0]);
 
     arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
     return result;
@@ -159,10 +164,11 @@ int cmd_verify_sectors(int argc, char *argv[]) { return cmd_verify_common(argc, 
 int cmd_convert(int argc, char *argv[])
 {
     struct arg_lit *use_long        = arg_lit0("l", NULL, "Use long sector read/write (includes tags and metadata)");
+    struct arg_str *ec_arg          = arg_str0(NULL, "erasure-coding", "<K,M>", "Enable erasure coding with K data and M parity blocks per stripe");
     struct arg_str *input_filename  = arg_str1(NULL, NULL, "<input>", "Input image file");
     struct arg_str *output_filename = arg_str1(NULL, NULL, "<output>", "Output image file");
     struct arg_end *end             = arg_end(10);
-    void           *argtable[]      = {use_long, input_filename, output_filename, end};
+    void           *argtable[]      = {use_long, ec_arg, input_filename, output_filename, end};
 
     if(arg_parse(argc, argv, argtable) > 0)
     {
@@ -172,7 +178,18 @@ int cmd_convert(int argc, char *argv[])
         return -1;
     }
 
-    const int result = convert(input_filename->sval[0], output_filename->sval[0], use_long->count > 0);
+    uint16_t ec_k = 0, ec_m = 0;
+    if(ec_arg->count > 0)
+    {
+        if(sscanf(ec_arg->sval[0], "%hu,%hu", &ec_k, &ec_m) != 2 || ec_k == 0 || ec_m == 0)
+        {
+            fprintf(stderr, "Error: --erasure-coding must be K,M (e.g. 4,2)\n");
+            arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
+            return -1;
+        }
+    }
+
+    const int result = convert_ec(input_filename->sval[0], output_filename->sval[0], use_long->count > 0, ec_k, ec_m);
     arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
     return result;
 }

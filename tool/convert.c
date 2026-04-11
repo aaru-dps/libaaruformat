@@ -157,7 +157,7 @@ static char *utf16le_to_utf8(const uint8_t *utf16_data, int32_t utf16_length)
     return result;
 }
 
-int convert(const char *input_path, const char *output_path, bool use_long)
+int convert_ec(const char *input_path, const char *output_path, bool use_long, uint16_t ec_k, uint16_t ec_m)
 {
     aaruformat_context *input_ctx     = NULL;
     aaruformat_context *output_ctx    = NULL;
@@ -808,6 +808,22 @@ int convert(const char *input_path, const char *output_path, bool use_long)
         return errno;
     }
     print_success("Destination image created successfully");
+
+    /* Enable erasure coding if requested */
+    if(ec_k > 0 && ec_m > 0)
+    {
+        int32_t ec_res = aaruf_set_erasure_coding(output_ctx, 1 /* RS-Vandermonde */, ec_k, ec_m);
+        if(ec_res != AARUF_STATUS_OK)
+        {
+            snprintf(buffer, sizeof(buffer), "Cannot enable erasure coding (error %d)", ec_res);
+            print_error(buffer);
+            aaruf_close(output_ctx);
+            aaruf_close(input_ctx);
+            return ec_res;
+        }
+        snprintf(buffer, sizeof(buffer), "RS(%u,%u) — %u data + %u parity blocks per stripe", ec_k, ec_m, ec_k, ec_m);
+        print_info("Erasure coding:", buffer);
+    }
 
     // Copy tracks if present
     size_t tracks_size = 0;
