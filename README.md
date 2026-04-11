@@ -1,10 +1,53 @@
 # libaaruformat
 
-C implementation of the [AaruFormat](https://github.com/aaru-dps/Aaru) disk image format for the
+**libaaruformat** is a C library for reading and writing
+[AaruFormat](https://github.com/aaru-dps/Aaru) disk images — the native image format of the
 [Aaru Data Preservation Suite](https://github.com/aaru-dps/Aaru).
 
-Written in C (C99 standard) with no external runtime dependencies. All third-party code is statically
-linked from the `3rdparty/` directory.
+## What is Aaru?
+
+[Aaru](https://github.com/aaru-dps/Aaru) is an open-source application for managing and preserving
+digital storage media. It can create, convert, compare, and analyze disk images from a wide variety
+of physical formats — floppy disks, hard drives, optical discs, tapes, memory cards, and more.
+Aaru is written in C# and runs on Windows, macOS, and Linux.
+
+## What is AaruFormat?
+
+AaruFormat is Aaru's own disk image file format, designed from the ground up for long-term archival
+and data preservation. Unlike most existing image formats, which target a single media family or
+prioritize emulation speed, AaruFormat aims to be a single, universal, extensible standard capable
+of faithfully representing any kind of digital or analog storage media — from punch cards to Blu-ray
+discs to magnetic flux captures.
+
+Key design goals of the format include:
+
+- **Universality**: one format for all media types, eliminating the need for a different format per
+  storage technology.
+- **Completeness**: stores not just raw sector data, but also per-sector metadata (subchannel data,
+  error flags, tags), per-media metadata (TOCs, catalog numbers, serial numbers), dump hardware
+  information, and CHS geometry.
+- **Compression**: blocks of sectors are compressed individually (LZMA, Zstd, or FLAC for audio),
+  allowing random access without decompressing the entire image.
+- **Deduplication**: a Deduplication Table (DDT) maps each sector to a content-addressed block via
+  xxHash, so identical sectors across the image are stored only once.
+- **Integrity**: every block carries a CRC64 checksum. Hashes (MD5, SHA1, SHA256, SpamSum, BLAKE3)
+  are computed during writing and stored in the image.
+- **Resilience**: optional Reed-Solomon erasure coding protects data blocks, deduplication tables,
+  metadata, and the index against corruption, with transparent recovery on read.
+- **Openness**: the format specification is freely available in `docs/spec/` and is published under
+  the same terms as the library.
+
+## What is libaaruformat?
+
+**libaaruformat** is the reference implementation of AaruFormat, written in C. Aaru itself uses
+libaaruformat via P/Invoke, having replaced its earlier C# implementation. The library can also be
+used independently by other projects — emulators, forensic tools, archival systems, or anything
+written in C or a language with C FFI — to read and write AaruFormat images without depending on
+the .NET runtime.
+
+The library is written in C99, has no external runtime dependencies (all third-party code is
+statically linked from the `3rdparty/` directory), and builds on macOS, Linux, and Windows. It is
+licensed under the LGPL-2.1.
 
 ## Features
 
