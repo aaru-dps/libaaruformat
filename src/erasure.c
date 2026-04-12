@@ -94,36 +94,13 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_erasure_coding(void *context, uint8_t al
     if((uint32_t)K + M > 255) return AARUF_ERROR_INCORRECT_DATA_SIZE;
     if(algorithm == kErasureCodingXor && M != 1) return AARUF_ERROR_INCORRECT_DATA_SIZE;
 
-    /* Compute data shard size: max possible on-disk block size.
-     * = sizeof(BlockHeader) + LZMA_PROPERTIES_LENGTH + (1 << dataShift) * sectorSize
-     * This is the worst case: uncompressed block + LZMA properties header.
-     * Use image_info.SectorSize (set by aaruf_create) since current_block_header.sectorSize
-     * may not be set yet if called before the first write. */
-    uint32_t sectors_per_block = 1U << ctx->user_data_ddt_header.dataShift;
-    uint32_t sector_size       = ctx->image_info.SectorSize;
-    if(sector_size == 0) sector_size = 512;
-    uint32_t max_payload = sectors_per_block * sector_size;
-    uint32_t shard_size  = (uint32_t)sizeof(BlockHeader) + LZMA_PROPERTIES_LENGTH + max_payload;
-
     /* Create RS codec */
     rs_context *rs = rs_create(K, M);
     if(!rs) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
 
-    /* Allocate K stripe slots × M parity buffers */
-    uint8_t **parity = (uint8_t **)calloc((size_t)K * M, sizeof(uint8_t *));
-    if(!parity) { rs_free(rs); return AARUF_ERROR_NOT_ENOUGH_MEMORY; }
-
-    for(uint32_t i = 0; i < (uint32_t)K * M; i++)
-    {
-        parity[i] = (uint8_t *)calloc(1, shard_size);
-        if(!parity[i])
-        {
-            for(uint32_t j = 0; j < i; j++) free(parity[j]);
-            free(parity);
-            rs_free(rs);
-            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
-        }
-    }
+    /* Parity buffers are allocated lazily in ec_accumulate_data_block() when the
+     * first block's actual on-disk size is known. This avoids allocating at the
+     * theoretical maximum (which can be gigabytes with large dataShift values). */
 
     /* Allocate tracking arrays (K entries per slot × K slots) */
     uint64_t *offsets = (uint64_t *)calloc((size_t)K * K, sizeof(uint64_t));
@@ -134,8 +111,6 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_erasure_coding(void *context, uint8_t al
     if(!offsets || !sizes || !crcs || !counts)
     {
         free(offsets); free(sizes); free(crcs); free(counts);
-        for(uint32_t i = 0; i < (uint32_t)K * M; i++) free(parity[i]);
-        free(parity);
         rs_free(rs);
         return AARUF_ERROR_NOT_ENOUGH_MEMORY;
     }
@@ -148,9 +123,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_erasure_coding(void *context, uint8_t al
     ctx->ec_algorithm         = algorithm;
     ctx->ec_K                 = K;
     ctx->ec_M                 = M;
-    ctx->ec_data_shard_size   = shard_size;
+    ctx->ec_data_shard_size   = 0;  /* Will be set on first block */
     ctx->ec_rs_ctx            = rs;
-    ctx->ec_data_parity       = parity;
+    ctx->ec_data_parity       = NULL;  /* Allocated lazily */
     ctx->ec_data_block_offsets = offsets;
     ctx->ec_data_block_sizes  = sizes;
     ctx->ec_data_shard_crcs   = crcs;
@@ -162,7 +137,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_erasure_coding(void *context, uint8_t al
     /* Set feature flag so old readers know parity data exists */
     ctx->header.featureCompatibleRo |= AARU_FEATURE_ROCOMPAT_ERASURE;
 
-    TRACE("Erasure coding configured: algorithm=%u K=%u M=%u shard_size=%u", algorithm, K, M, shard_size);
+    TRACE("Erasure coding configured: algorithm=%u K=%u M=%u (parity buffers deferred)", algorithm, K, M);
     TRACE("Exiting aaruf_set_erasure_coding() = 0");
     return AARUF_STATUS_OK;
 }
@@ -235,23 +210,59 @@ void ec_accumulate_data_block(aaruformat_context *ctx, const BlockHeader *block_
 
     const uint16_t K     = ctx->ec_K;
     const uint16_t M     = ctx->ec_M;
-    const uint32_t shard = ctx->ec_data_shard_size;
 
-    /* Determine which stripe slot this block goes to (interleaved round-robin) */
-    uint32_t slot = ctx->ec_total_data_blocks % K;
+    /* Consecutive stripe assignment: fill slot 0 completely before starting slot 1.
+     * With interleaved assignment (slot = total % K), a small image with N < K*K blocks
+     * produces K partial stripes, each requiring M parity blocks → overhead = M*K/N
+     * instead of the intended M/K. Consecutive assignment produces at most 1 partial
+     * stripe at the end, giving correct M/K overhead regardless of image size. */
+    uint32_t slot = 0; /* Always use slot 0 for consecutive assignment */
 
     /* Position within this slot's stripe */
     uint16_t pos = ctx->ec_data_stripe_counts[slot];
 
-    /* Build on-disk shard in a temp buffer:
-     * [BlockHeader] [LZMA props if LZMA] [payload]
-     * Remaining bytes to shard_size are implicitly zero (parity buffers were calloc'd) */
+    /* Compute actual on-disk size of this block */
     uint32_t actual_size = (uint32_t)sizeof(BlockHeader);
     if(block_header->compression == kCompressionLzma && lzma_props)
         actual_size += LZMA_PROPERTIES_LENGTH;
     actual_size += payload_size;
 
-    /* We need a temporary flat copy of the on-disk representation for CRC64 and parity accumulation */
+    /* Lazy allocation: allocate parity buffers on first use, or grow if this
+     * block is larger than any previously seen. This avoids pre-allocating at
+     * the theoretical maximum (which can be gigabytes with large dataShift). */
+    if(ctx->ec_data_parity == NULL)
+    {
+        /* First block — allocate parity buffers at this block's size + 25% headroom */
+        ctx->ec_data_shard_size = actual_size + actual_size / 4;
+        ctx->ec_data_parity = (uint8_t **)calloc((size_t)K * M, sizeof(uint8_t *));
+        if(!ctx->ec_data_parity) return;
+        for(uint32_t i = 0; i < (uint32_t)K * M; i++)
+        {
+            ctx->ec_data_parity[i] = (uint8_t *)calloc(1, ctx->ec_data_shard_size);
+            if(!ctx->ec_data_parity[i]) return;
+        }
+        TRACE("EC parity buffers allocated: %u × %u bytes", K * M, ctx->ec_data_shard_size);
+    }
+    else if(actual_size > ctx->ec_data_shard_size)
+    {
+        /* This block is larger than current shard size — grow all parity buffers.
+         * Zero-extend the existing data (realloc + memset the new region). */
+        uint32_t old_size = ctx->ec_data_shard_size;
+        uint32_t new_size = actual_size + actual_size / 4;
+        TRACE("EC parity buffers growing: %u → %u bytes", old_size, new_size);
+        for(uint32_t i = 0; i < (uint32_t)K * M; i++)
+        {
+            uint8_t *grown = (uint8_t *)realloc(ctx->ec_data_parity[i], new_size);
+            if(!grown) return;
+            memset(grown + old_size, 0, new_size - old_size);
+            ctx->ec_data_parity[i] = grown;
+        }
+        ctx->ec_data_shard_size = new_size;
+    }
+
+    const uint32_t shard = ctx->ec_data_shard_size;
+
+    /* Build on-disk shard in a temp buffer */
     uint8_t *shard_buf = (uint8_t *)calloc(1, shard);
     if(!shard_buf) return; /* Best effort — if OOM, skip parity for this block */
 
@@ -483,6 +494,8 @@ static void ec_write_batch_parity(aaruformat_context *ctx,
     }
     free(shard_buf);
 
+    /* max_block_size = largest actual on-disk block in this stripe.
+     * Only write this many parity bytes — the rest is guaranteed zero. */
     uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
     for(uint16_t m = 0; m < M; m++)
     {
@@ -493,8 +506,6 @@ static void ec_write_batch_parity(aaruformat_context *ctx,
         ph.length = shard_size; ph.cmpLength = shard_size;
         ph.crc64 = aaruf_crc64_data(parity[m], shard_size); ph.cmpCrc64 = ph.crc64;
 
-        /* Write parity uncompressed — parity of compressed blocks is pseudo-random
-         * and incompressible, so attempting compression wastes CPU for no benefit. */
         aaruf_fseek(ctx->imageStream, 0, SEEK_END);
         uint64_t po = ((uint64_t)aaruf_ftell(ctx->imageStream) + alignment_mask) & ~alignment_mask;
         aaruf_fseek(ctx->imageStream, (aaru_off_t)po, SEEK_SET);
@@ -619,44 +630,103 @@ void ec_finalize(aaruformat_context *ctx)
         if(cnt > 0) { ec_write_batch_parity(ctx, off, sz, cnt, kECGroupDdtPrimary, kDataTypeErasureParityDdtPrimary, &ddt_pri_desc, &ddt_pri_desc_len, &ddt_pri_group); free(off); free(sz); }
     }
 
-    /* --- Group 3: Metadata (non-DDT, non-data, non-index, non-parity) --- */
+    /* --- Group 3: Metadata — all blocks that are not data/parity, DDT, or index.
+     * These include TracksBlock, ChecksumBlock, GeometryBlock, MetadataBlock, DumpHardwareBlock,
+     * CicmBlock, AaruMetadataJsonBlock, and DataBlock with non-UserData types (media tags,
+     * sector prefix/suffix, subchannel, etc.).
+     *
+     * IMPORTANT: non-DataBlock types have different header layouts. We cannot read their
+     * cmpLength via BlockHeader. Instead, compute on-disk size from index entry offsets:
+     * sort by offset, then size[i] = offset[i+1] - offset[i]. For the last entry, read
+     * from the block's header struct if it's a DataBlock, otherwise use a reasonable bound. */
     uint8_t *meta_desc = NULL; size_t meta_desc_len = 0;
     StripeGroupDescriptor meta_group; memset(&meta_group, 0, sizeof(meta_group));
     {
         uint32_t n = (uint32_t)utarray_len(ctx->index_entries);
+
+        /* Collect metadata block offsets */
         uint32_t count = 0;
         for(uint32_t i = 0; i < n; i++)
         {
             IndexEntry *ie = (IndexEntry *)utarray_eltptr(ctx->index_entries, i);
+            /* Skip user data blocks and parity blocks */
             if(ie->blockType == DataBlock && (ie->dataType == kDataTypeUserData ||
                (ie->dataType >= kDataTypeErasureParity && ie->dataType <= kDataTypeErasureParityIndex))) continue;
-            if(ie->blockType == DeDuplicationTable2 || ie->blockType == DeDuplicationTableSecondary || ie->blockType == DeDuplicationTable) continue;
+            /* Skip DDT blocks */
+            if(ie->blockType == DeDuplicationTable2 || ie->blockType == DeDuplicationTableSecondary ||
+               ie->blockType == DeDuplicationTable) continue;
+            /* Skip index blocks */
             if(ie->blockType == IndexBlock || ie->blockType == IndexBlock2 || ie->blockType == IndexBlock3) continue;
             count++;
         }
+
         if(count > 0 && count <= (uint32_t)(255 - M))
         {
             uint64_t *off = (uint64_t *)malloc(count * sizeof(uint64_t));
-            uint32_t *sz  = (uint32_t *)malloc(count * sizeof(uint32_t));
-            if(off && sz)
+            uint32_t *sz  = (uint32_t *)calloc(count, sizeof(uint32_t));
+            uint32_t *bt  = (uint32_t *)malloc(count * sizeof(uint32_t));
+            if(off && sz && bt)
             {
+                /* Collect offsets and block types */
                 uint32_t idx = 0;
                 for(uint32_t i = 0; i < n && idx < count; i++)
                 {
                     IndexEntry *ie = (IndexEntry *)utarray_eltptr(ctx->index_entries, i);
                     if(ie->blockType == DataBlock && (ie->dataType == kDataTypeUserData ||
                        (ie->dataType >= kDataTypeErasureParity && ie->dataType <= kDataTypeErasureParityIndex))) continue;
-                    if(ie->blockType == DeDuplicationTable2 || ie->blockType == DeDuplicationTableSecondary || ie->blockType == DeDuplicationTable) continue;
+                    if(ie->blockType == DeDuplicationTable2 || ie->blockType == DeDuplicationTableSecondary ||
+                       ie->blockType == DeDuplicationTable) continue;
                     if(ie->blockType == IndexBlock || ie->blockType == IndexBlock2 || ie->blockType == IndexBlock3) continue;
                     off[idx] = ie->offset;
-                    aaruf_fseek(ctx->imageStream, (aaru_off_t)ie->offset, SEEK_SET);
-                    BlockHeader bh; if(fread(&bh, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
-                        sz[idx] = (uint32_t)(sizeof(BlockHeader) + bh.cmpLength); else sz[idx] = sizeof(BlockHeader);
+                    bt[idx]  = ie->blockType;
                     idx++;
                 }
-                ec_write_batch_parity(ctx, off, sz, idx, kECGroupMetadata, kDataTypeErasureParityMeta, &meta_desc, &meta_desc_len, &meta_group);
+
+                /* Compute on-disk sizes. For DataBlock types, read cmpLength from header.
+                 * For other block types (TracksBlock, ChecksumBlock, etc.), read their
+                 * specific header to get the payload length. Use a generic approach:
+                 * read the entire block up to the next block's offset. */
+                for(uint32_t i = 0; i < idx; i++)
+                {
+                    if(bt[i] == DataBlock)
+                    {
+                        /* DataBlock: cmpLength at offset 12 in header */
+                        aaruf_fseek(ctx->imageStream, (aaru_off_t)off[i], SEEK_SET);
+                        BlockHeader bh;
+                        if(fread(&bh, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
+                            sz[i] = (uint32_t)(sizeof(BlockHeader) + bh.cmpLength);
+                        else
+                            sz[i] = sizeof(BlockHeader);
+                    }
+                    else
+                    {
+                        /* Non-DataBlock: determine size by finding the next index entry
+                         * at a higher offset. This gives the gap between this block and
+                         * the next, which is the on-disk size (aligned). */
+                        uint64_t next_offset = UINT64_MAX;
+                        for(uint32_t j = 0; j < n; j++)
+                        {
+                            IndexEntry *je = (IndexEntry *)utarray_eltptr(ctx->index_entries, j);
+                            if(je->offset > off[i] && je->offset < next_offset)
+                                next_offset = je->offset;
+                        }
+                        if(next_offset != UINT64_MAX)
+                            sz[i] = (uint32_t)(next_offset - off[i]);
+                        else
+                        {
+                            /* Last block before index — use index offset as bound */
+                            if(ctx->header.indexOffset > off[i])
+                                sz[i] = (uint32_t)(ctx->header.indexOffset - off[i]);
+                            else
+                                sz[i] = 4096; /* safe fallback */
+                        }
+                    }
+                }
+
+                ec_write_batch_parity(ctx, off, sz, idx, kECGroupMetadata, kDataTypeErasureParityMeta,
+                                      &meta_desc, &meta_desc_len, &meta_group);
             }
-            free(off); free(sz);
+            free(off); free(sz); free(bt);
         }
     }
 
