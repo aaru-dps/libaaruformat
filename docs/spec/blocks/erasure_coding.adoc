@@ -1,6 +1,279 @@
 === 🛡️ Erasure Coding Map Block (`ECMB`)
 
 This block stores the master recovery map for erasure-coded images.
+It enables reconstruction of corrupted data blocks, DDT tables, metadata blocks, and the index using Reed-Solomon parity computed over the raw on-disk bytes (block header + compressed payload).
+
+The ECMB is *not* referenced by the index, because the index itself may need recovery.
+Instead, it is located via the <<Recovery Footer>> at the end of the file.
+A duplicate copy of the ECMB is written immediately after the primary copy for redundancy.
+
+==== Feature Flag
+
+Erasure coding uses the `featureCompatibleRo` field in the image header:
+
+[cols="2,2,6",options="header"]
+|===
+|Bit |Name |Description
+|0 |`AARU_FEATURE_ROCOMPAT_ERASURE` |Image contains erasure coding parity blocks, ECMB, and recovery footer. Readers that do not understand this bit SHOULD open the image read-only but CAN safely ignore the parity data.
+|===
+
+Older readers that do not understand this bit will skip the parity blocks and ECMB, and read the image normally.
+
+==== Design Rationale
+
+Parity is computed on the *raw on-disk bytes* (block header + compressed payload), not on uncompressed sector data.
+This is because a single bit flip in a compressed LZMA, Zstandard, or FLAC block causes decompression to fail entirely—uncompressed parity would be useless for the exact scenario it is supposed to fix.
+Recovery reconstructs the original on-disk bytes, then decompresses normally.
+
+Parity blocks are always written *uncompressed*.
+Parity of compressed data is pseudo-random and incompressible—attempting compression wastes CPU time for zero benefit.
+
+==== Structure Definition
+
+[source,c]
+----
+#define ECMB_MAGIC 0x424D4345  // "ECMB" in little-endian ASCII
+
+typedef struct ErasureCodingMapHeader
+{
+    uint32_t identifier;       // Block identifier, must be 0x424D4345
+    uint8_t  algorithm;        // Erasure coding algorithm
+    uint8_t  stripeGroupCount; // Number of stripe groups in payload
+    uint16_t compression;      // Compression algorithm for the mapping payload
+    uint64_t cmpLength;        // Size in bytes of the compressed mapping payload
+    uint64_t length;           // Size in bytes of the uncompressed mapping payload
+    uint64_t cmpCrc64;         // CRC64-ECMA of the compressed mapping payload
+    uint64_t crc64;            // CRC64-ECMA of the uncompressed mapping payload
+} ErasureCodingMapHeader;
+----
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type |Size |Name |Description
+|uint32_t |4 bytes |identifier |Block identifier, always `ECMB` (0x424D4345).
+|uint8_t |1 byte |algorithm |Erasure coding algorithm (see table below).
+|uint8_t |1 byte |stripeGroupCount |Number of stripe groups in the payload (typically 1–5).
+|uint16_t |2 bytes |compression |Compression algorithm used for the ECMB payload (same enumeration as data blocks).
+|uint64_t |8 bytes |cmpLength |Size of the compressed ECMB payload in bytes.
+|uint64_t |8 bytes |length |Size of the uncompressed ECMB payload in bytes.
+|uint64_t |8 bytes |cmpCrc64 |CRC64-ECMA of the compressed ECMB payload.
+|uint64_t |8 bytes |crc64 |CRC64-ECMA of the uncompressed ECMB payload.
+|===
+
+==== Erasure Coding Algorithms
+
+[cols="1,2,6",options="header"]
+|===
+|Value |Name |Description
+|0 |XOR |Simple XOR parity. M must be 1. Fastest but tolerates only a single block loss per stripe.
+|1 |RS-Vandermonde |Reed-Solomon with Vandermonde generator matrix over GF(2^8). Supports M ≥ 1. Tolerates up to M block losses per stripe. See the Reed-Solomon appendix for details.
+|===
+
+==== Payload Structure
+
+The payload (after decompression) contains `stripeGroupCount` consecutive stripe groups.
+Each group starts with a `StripeGroupDescriptor`, followed by its stripe descriptors.
+
+===== Stripe Group Descriptor
+
+[source,c]
+----
+typedef struct StripeGroupDescriptor
+{
+    uint8_t  groupType;       // Protection group type
+    uint16_t K;               // Number of data blocks per stripe
+    uint16_t M;               // Number of parity blocks per stripe
+    uint32_t shardSize;       // Shard size used for RS math (see below)
+    uint32_t stripeCount;     // Number of stripes in this group
+    uint16_t interleaveDepth; // Interleave depth D (1 = consecutive)
+} StripeGroupDescriptor;
+----
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type |Size |Name |Description
+|uint8_t |1 byte |groupType |Protection group type (see table below).
+|uint16_t |2 bytes |K |Number of data blocks per stripe.
+|uint16_t |2 bytes |M |Number of parity blocks per stripe.
+|uint32_t |4 bytes |shardSize |Shard size in bytes for RS math. Parity buffers are allocated at this size. Actual blocks that are smaller are zero-padded to this size for RS computation.
+|uint32_t |4 bytes |stripeCount |Number of stripes in this group.
+|uint16_t |2 bytes |interleaveDepth |Interleave depth D. D=1 for consecutive assignment (current implementation). Reserved for future interleaving support.
+|===
+
+===== Protection Group Types
+
+[cols="1,2,6",options="header"]
+|===
+|Value |Name |Description
+|0 |Data |User data blocks (DBLK with DataType=UserData). Consecutive stripe assignment.
+|1 |DDT-Secondary |Secondary DDT subtables. Batch parity at finalization.
+|2 |DDT-Primary |Primary DDT block. Batch parity (K=1 typical, producing M replicas).
+|3 |Metadata |All non-data, non-DDT, non-index blocks: media tags (DBLK with non-UserData types), TracksBlock, ChecksumBlock, GeometryBlock, MetadataBlock, DumpHardwareBlock, CicmBlock, AaruMetadataJsonBlock, etc. Single batch stripe at finalization.
+|4 |Index |Index block. Batch parity (K=1, producing M replicas)—strongest protection for this critical structure.
+|===
+
+===== Stripe Descriptor
+
+Each stripe contains `actualK` data block entries followed by `M` parity block entries:
+
+[source,c]
+----
+// Per stripe:
+uint16_t actualK;  // Actual data blocks in this stripe (≤ K; last stripe may be partial)
+
+// Repeated actualK times:
+typedef struct StripeDataBlockEntry
+{
+    uint64_t offset;     // Absolute file offset of the data block
+    uint32_t onDiskSize; // Actual on-disk bytes (header + compressed payload)
+    uint64_t shardCrc64; // CRC64-ECMA of on-disk bytes (onDiskSize bytes, NOT zero-padded)
+} StripeDataBlockEntry;
+
+// Repeated M times:
+typedef struct StripeParityBlockEntry
+{
+    uint64_t offset;     // Absolute file offset of the parity DBLK
+} StripeParityBlockEntry;
+----
+
+The `shardCrc64` is computed over exactly `onDiskSize` bytes of the block's raw on-disk data.
+This is independent of `BlockHeader.cmpCrc64`—it can detect corruption even when the `BlockHeader` itself is garbled.
+
+==== Parity Block Storage
+
+Parity shards are stored as standard data blocks (`DBLK`) with the following `DataType` values:
+
+[cols="1,2,6",options="header"]
+|===
+|Value |Name |Description
+|104 |ErasureParity |Parity for user data blocks.
+|105 |ErasureParityDdt |Parity for DDT secondary blocks.
+|106 |ErasureParityDdtPrimary |Parity for DDT primary block.
+|107 |ErasureParityMeta |Parity for metadata blocks.
+|108 |ErasureParityIndex |Parity for the index block.
+|===
+
+Parity blocks are always written *uncompressed* (`compression = kCompressionNone`).
+The parity `length` and `cmpLength` fields equal the maximum actual on-disk block size across all blocks in the stripe—only the non-zero prefix of each shard participates in the RS computation (since `GF_mul(0, c) = 0` for any coefficient `c`).
+This means parity size scales with the *actual compressed* block size, not with the theoretical maximum uncompressed block size.
+
+==== Stripe Assignment (Data Group)
+
+Data blocks are assigned to stripes consecutively:
+
+----
+Blocks 0..K-1      → Stripe 0
+Blocks K..2K-1      → Stripe 1
+Blocks 2K..3K-1     → Stripe 2
+...
+Remaining blocks    → Last stripe (partial, actualK < K)
+----
+
+This produces at most one partial stripe at the end, giving correct M/K overhead regardless of image size.
+
+NOTE: Interleaved (round-robin) assignment (`block i → slot i mod K`) was considered but rejected because it produces K partial stripes for images with fewer than K² blocks, resulting in overhead far exceeding the intended M/K ratio.
+
+==== Shard Size and Parity Sizing
+
+Parity computation uses the following optimizations:
+
+* Each block in a stripe contributes only its actual on-disk bytes (`onDiskSize`) to parity accumulation—the remaining bytes to `shardSize` are implicitly zero.
+* The parity block `length`/`cmpLength` is set to `max(onDiskSize)` across all blocks in the stripe, not to `shardSize`. Parity size scales with actual compressed block sizes.
+* Parity buffer allocation is *deferred* until the first data block is written (lazy allocation), using the first block's actual size plus 25% headroom. Buffers grow via `realloc` if a later block is larger. This avoids pre-allocating gigabytes based on theoretical maximum block sizes.
+
+==== Metadata Group Block Size Determination
+
+The metadata group protects blocks with varying header formats:
+
+* **DataBlock** entries (media tags, sector prefix/suffix, subchannel, etc.): on-disk size computed as `sizeof(BlockHeader) + cmpLength`, read directly from the block's `BlockHeader`.
+* **Non-DataBlock** entries (TracksBlock, ChecksumBlock, GeometryBlock, DumpHardwareBlock, MetadataBlock, CicmBlock, AaruMetadataJsonBlock): these block types have different header layouts with no `cmpLength` field at the `BlockHeader` offset. On-disk size is computed from the gap between consecutive index entry offsets.
+
+CAUTION: Reading a non-DataBlock header as a `BlockHeader` and accessing the `cmpLength` field produces garbage values, as the bytes at that offset correspond to entirely different fields in each block type's header struct.
+
+==== Recovery Footer
+
+The last 160 bytes of the file contain the recovery footer, enabling the ECMB to be found even when the header or index is destroyed:
+
+[source,c]
+----
+typedef struct AaruRecoveryFooter
+{
+    uint64_t     ecmbOffset;   // Absolute file offset of the primary ECMB
+    uint64_t     ecmbLength;   // Total on-disk size of the ECMB (header + payload)
+    uint64_t     headerCrc64;  // CRC64-ECMA of the original AaruHeaderV2
+    AaruHeaderV2 backupHeader; // Complete copy of AaruHeaderV2 (128 bytes)
+    uint64_t     footerMagic;  // Must be 0x52464D4345525641 ("AVRECMFR")
+} AaruRecoveryFooter;
+----
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type |Size |Name |Description
+|uint64_t |8 bytes |ecmbOffset |Absolute file offset of the primary ECMB.
+|uint64_t |8 bytes |ecmbLength |Total on-disk size of the ECMB (header + payload).
+|uint64_t |8 bytes |headerCrc64 |CRC64-ECMA of the original `AaruHeaderV2` at file offset 0.
+|AaruHeaderV2 |128 bytes |backupHeader |Complete backup copy of the file header.
+|uint64_t |8 bytes |footerMagic |Must be `0x52464D4345525641` ("AVRECMFR" in ASCII little-endian).
+|===
+
+A duplicate ECMB is written at `ecmbOffset + ecmbLength` (aligned) for additional redundancy.
+
+==== Recovery Chain
+
+The recovery chain defines the fallback sequence when structures are damaged:
+
+[cols="3,7",options="header"]
+|===
+|Scenario |Recovery Path
+|Normal operation |Header → `indexOffset` → Index → ECMB (via footer) → verify/recover
+|Header corrupt |Footer `backupHeader` (verified by `headerCrc64`) → same as normal
+|Index corrupt |Footer `ecmbOffset` → ECMB → index parity stripe → RS-reconstruct index
+|DDT corrupt |ECMB → DDT parity stripe → RS-reconstruct DDT block
+|Data block corrupt |ECMB → data parity stripe → RS-reconstruct on-disk bytes → decompress
+|Metadata corrupt |ECMB → metadata parity stripe → RS-reconstruct
+|ECMB corrupt |Duplicate ECMB at secondary offset
+|===
+
+==== File Layout
+
+The erasure coding structures are written at the end of the file:
+
+----
+[AaruHeaderV2]                          offset 0, 128 bytes
+[Data blocks with consecutive parity]   variable size
+[DDT blocks (all levels)]               variable size
+[DDT parity blocks]                     M blocks (uncompressed)
+[Metadata blocks]                       variable size
+[Metadata parity blocks]                M blocks (uncompressed)
+[Index block]                           at header.indexOffset
+[Index parity blocks]                   M blocks (uncompressed)
+[ECMB (primary)]                        at footer.ecmbOffset
+[ECMB (duplicate)]                      at ecmbOffset + ecmbLength (aligned)
+[Recovery Footer]                       last 160 bytes of file
+----
+
+==== Automatic K,M Selection
+
+The library provides `aaruf_set_erasure_coding_auto(context, recovery_percent)` which computes K and M from a target recovery percentage (1–100):
+
+[cols="1,1,1,4",options="header"]
+|===
+|Percent |M |K |Notes
+|1% |2 |200 |Minimum M=2 for burst tolerance
+|5% |2 |40 |
+|10% |2 |20 |
+|15% |3 |20 |M starts growing with higher percentages
+|25% |5 |20 |Strong burst tolerance
+|50% |8 |16 |M capped at 8
+|100% |8 |8 |Maximum protection
+|===
+
+Higher recovery percentages produce higher M values (more parity blocks per stripe = better burst-corruption tolerance). K stays roughly constant (16–40) to maintain reasonable stripe sizes and memory usage. M is computed as `clamp(round(20 × percent / 100), 2, 8)`, then `K = M × 100 / percent`.
+=== 🛡️ Erasure Coding Map Block (`ECMB`)
+
+This block stores the master recovery map for erasure-coded images.
 It enables reconstruction of corrupted data blocks, DDT tables, metadata blocks, and the index using Reed-Solomon or XOR parity computed over the raw on-disk bytes (block header + compressed payload).
 
 The ECMB is *not* referenced by the index, because the index itself may need recovery.
