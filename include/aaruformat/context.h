@@ -208,7 +208,7 @@ typedef struct aaruformat_context
     uint8_t *sector_id;                   ///< DVD sector ID (4 bytes) if present.
     uint8_t *sector_ied;                  ///< DVD sector IED (2 bytes) if present.
     uint8_t *sector_cpr_mai;              ///< DVD sector CPR_MAI (6 bytes) if present.
-    uint8_t *sector_edc;                  ///< DVD sector EDC (4 bytes) if present.
+    uint8_t *sector_edc;                  ///< DVD or Blu-ray sector EDC (4 bytes) if present (see DvdSectorEdc / BdSectorEdc data types).
     uint8_t *sector_decrypted_title_key;  ///< DVD decrypted title key (5 bytes) if present.
 
     /* Metadata & geometry */
@@ -331,6 +331,7 @@ typedef struct aaruformat_context
     bool dirty_sector_suffix_ddt;              ///< True if sector suffix DDT should be written during close
     bool dirty_sector_subchannel_block;        ///< True if subchannel block should be written during close
     bool dirty_dvd_long_sector_blocks;         ///< True if DVD long sector blocks should be written during close
+    bool dirty_bd_sector_edc_block;            ///< True if Blu-ray sector EDC data block should be written during close
     bool dirty_dvd_title_key_decrypted_block;  ///< True if decrypted title key block should be written during close
     bool dirty_media_tags;                     ///< True if media tags should be written during close
     bool dirty_tape_ddt;                       ///< True if tape DDT should be written during close

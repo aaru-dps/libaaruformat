@@ -2567,6 +2567,218 @@ static void write_dvd_long_sector_blocks(aaruformat_context *ctx)
 }
 
 /**
+ * @brief Serialize Blu-ray long-sector EDC (4 bytes per sector) to the image file.
+ *
+ * Blu-ray user sectors are normally 2048 bytes; long BD sectors supplied to the library are
+ * 2052 bytes, with 4 bytes of EDC immediately following the user data. That EDC is stored in
+ * ctx->sector_edc (one uint32_t per logical sector) while the main user data path stores only
+ * 2048-byte sectors in the DDT. This function writes those EDC bytes as a single DataBlock so
+ * they round-trip on open and through aaruf_read_sector_long().
+ *
+ * This is separate from write_dvd_long_sector_blocks(): DVD long sectors require four auxiliary
+ * buffers (ID, IED, CPR/MAI, EDC) and are written only when all four are present; BD imaging
+ * only needs the EDC buffer. The on-disk layout of the payload matches the DVD EDC block (raw
+ * concatenation, 4 bytes per sector), but the block type is kDataTypeBdSectorEdc so readers
+ * distinguish BD from DVD auxiliary data.
+ *
+ * **Single auxiliary data block written:**
+ *
+ * 1. **Blu-ray Sector EDC Block (BdSectorEdc)**: 4 bytes per sector
+ *    - Contains the EDC field from long BD sectors (bytes 2048–2051 of each long sector)
+ *    - Used for error detection over the user payload; preserved for forensic and archival use
+ *
+ * **Block structure:**
+ * The block consists of:
+ *   1. BlockHeader with identifier DataBlock, type kDataTypeBdSectorEdc, compression (None,
+ *      Zstd, or Lzma when enabled), uncompressed and compressed lengths, and CRC64 checksums
+ *   2. Optional LZMA property bytes when compression is LZMA
+ *   3. Raw auxiliary data: EDC fields for all logical sectors (negative, normal, overflow),
+ *      possibly stored compressed
+ *
+ * The total number of sectors matches the user-data DDT span:
+ * total_sectors = negative + Sectors + overflow
+ *
+ * **Write sequence:**
+ * 1. Seek to end of file
+ * 2. Align file position to block boundary (using blockAlignmentShift)
+ * 3. Construct BlockHeader with type kDataTypeBdSectorEdc and length = total_sectors * 4
+ * 4. Calculate CRC64 over the uncompressed auxiliary buffer
+ * 5. Optionally compress; if compression does not shrink the payload, store uncompressed
+ * 6. Write BlockHeader (sizeof(BlockHeader) bytes), optional LZMA props, then payload
+ * 7. On success, replace any existing index entry for this block type and append a new IndexEntry
+ *
+ * **Alignment and file positioning:**
+ * The file position is moved to EOF then aligned forward so that
+ * (position & alignment_mask) == 0, with alignment_mask from ctx->user_data_ddt_header.blockAlignmentShift,
+ * matching other DataBlocks in the image.
+ *
+ * **Index registration:**
+ * After a successful write, any prior DataBlock index entry with dataType kDataTypeBdSectorEdc
+ * is removed, then a new entry is pushed with offset equal to the aligned position of the
+ * BlockHeader. ctx->dirty_index_block is set to true.
+ *
+ * **Error handling:**
+ * Write failures (fwrite returning other than 1) are not propagated; no index update occurs on
+ * failure. TRACE logs record success paths. Compression allocation failure returns early
+ * without writing.
+ *
+ * **No-op conditions:**
+ * If ctx->sector_edc is NULL, the function returns immediately without writing, allowing BD
+ * images created without long-sector EDC to close normally.
+ *
+ * @param ctx Pointer to an initialized aaruformatContext in write mode. Must not be NULL.
+ *            ctx->sector_edc holds 4 * total_sectors bytes when present (may be NULL).
+ *            ctx->imageStream must be open and writable. ctx->index_entries must be initialized
+ *            (utarray) to accept new index entries.
+ *
+ * @note BD long sector format:
+ *       - User data remains 2048 bytes per sector in the main data path
+ *       - Long sectors are 2052 bytes: 2048 bytes user + 4 bytes EDC
+ *       - EDC is stored separately under kDataTypeBdSectorEdc for parity with the format spec
+ *
+ * @note Sector coverage:
+ *       - Negative sectors: lead-in area before sector 0 (if present)
+ *       - Normal sectors: main data area (0 to Sectors-1)
+ *       - Overflow sectors: lead-out or beyond user extent (if present)
+ *       - The buffer is indexed by the same corrected sector index as DVD auxiliary data
+ *
+ * @note Memory management:
+ *       - Temporary buffers may be allocated for compression; freed before return when used
+ *       - ctx->sector_edc is owned by the context and freed on aaruf_close()
+ *
+ * @note Order in close sequence:
+ *       - Invoked from aaruf_finalize_write() when dirty_bd_sector_edc_block is set, adjacent
+ *         to write_dvd_long_sector_blocks() for optical auxiliary blocks
+ *
+ * @warning The sector_edc buffer must cover all total_sectors entries; sparse or partial buffers
+ *          produce incorrect images.
+ *
+ * @warning When compression is enabled, behavior matches other DataBlocks (Zstd or LZMA);
+ *          uncompressed storage is used if compression expands the payload.
+ *
+ * @see write_dvd_long_sector_blocks() for the four-block DVD auxiliary path.
+ * @see aaruf_write_sector() for the 2052-byte BD branch that populates sector_edc.
+ * @see BlockHeader for the block header structure definition.
+ *
+ * @internal
+ */
+static void write_bd_sector_edc_block(aaruformat_context *ctx)
+{
+    if(ctx->sector_edc == NULL) return;
+
+    uint64_t total_sectors =
+        ctx->user_data_ddt_header.negative + ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow;
+
+    const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
+
+    aaruf_fseek(ctx->imageStream, 0, SEEK_END);
+    aaru_off_t edc_position = aaruf_ftell(ctx->imageStream);
+    if(edc_position & alignment_mask)
+    {
+        const uint64_t aligned_position = edc_position + alignment_mask & ~alignment_mask;
+        aaruf_fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        edc_position = aligned_position;
+    }
+    TRACE("Writing BD sector EDC block at position %ld", edc_position);
+    BlockHeader edc_block = {0};
+    edc_block.identifier  = DataBlock;
+    edc_block.type        = kDataTypeBdSectorEdc;
+    edc_block.compression =
+        ctx->compression_enabled ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma) : kCompressionNone;
+    edc_block.length     = (uint32_t)total_sectors * 4;
+    edc_block.crc64      = aaruf_crc64_data(ctx->sector_edc, edc_block.length);
+
+    uint8_t *buffer                                  = NULL;
+    uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
+
+    if(edc_block.compression == kCompressionNone)
+    {
+        buffer             = ctx->sector_edc;
+        edc_block.cmpCrc64 = edc_block.crc64;
+    }
+    else
+    {
+        buffer = malloc((size_t)edc_block.length * 2);
+        if(buffer == NULL)
+        {
+            TRACE("Failed to allocate memory for BD sector EDC compression");
+            return;
+        }
+
+        size_t dst_size;
+
+        if(ctx->use_zstd)
+        {
+            dst_size = aaruf_zstd_encode_buffer(buffer, (size_t)edc_block.length * 2, ctx->sector_edc,
+                                                edc_block.length, ctx->zstd_level, ctx->num_threads);
+            if(dst_size == 0) dst_size = edc_block.length;
+        }
+        else
+        {
+            dst_size          = (size_t)edc_block.length * 2 * 2;
+            size_t props_size = LZMA_PROPERTIES_LENGTH;
+            aaruf_lzma_encode_buffer(buffer, &dst_size, ctx->sector_edc, edc_block.length, lzma_properties, &props_size,
+                                     9, ctx->lzma_dict_size, 4, 0, 2, 273, LZMA_THREADS(ctx));
+        }
+
+        edc_block.cmpLength = (uint32_t)dst_size;
+
+        if(edc_block.cmpLength >= edc_block.length)
+        {
+            edc_block.compression = kCompressionNone;
+            free(buffer);
+            buffer = ctx->sector_edc;
+        }
+    }
+
+    if(edc_block.compression == kCompressionNone)
+    {
+        edc_block.cmpLength = edc_block.length;
+        edc_block.cmpCrc64  = edc_block.crc64;
+    }
+    else
+    {
+        edc_block.cmpCrc64 = aaruf_crc64_data(buffer, edc_block.cmpLength);
+        if(ctx->use_zstd) ctx->has_zstd_blocks = true;
+    }
+
+    size_t length_to_write = edc_block.cmpLength;
+    if(edc_block.compression == kCompressionLzma) edc_block.cmpLength += LZMA_PROPERTIES_LENGTH;
+
+    if(fwrite(&edc_block, sizeof(BlockHeader), 1, ctx->imageStream) == 1)
+    {
+        if(edc_block.compression == kCompressionLzma)
+            fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
+
+        const size_t written_bytes = fwrite(buffer, length_to_write, 1, ctx->imageStream);
+        if(written_bytes == 1)
+        {
+            TRACE("Successfully wrote BD sector EDC block (%" PRIu64 " bytes)", edc_block.cmpLength);
+
+            for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+            {
+                const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+                if(entry && entry->blockType == DataBlock && entry->dataType == kDataTypeBdSectorEdc)
+                {
+                    TRACE("Found existing BD sector EDC block index entry at position %d, removing", k);
+                    utarray_erase(ctx->index_entries, k, 1);
+                }
+            }
+
+            IndexEntry edc_index_entry;
+            edc_index_entry.blockType = DataBlock;
+            edc_index_entry.dataType  = kDataTypeBdSectorEdc;
+            edc_index_entry.offset    = edc_position;
+            utarray_push_back(ctx->index_entries, &edc_index_entry);
+            ctx->dirty_index_block = true;
+            TRACE("Added BD sector EDC block index entry at offset %" PRIu64, edc_position);
+        }
+    }
+
+    if(edc_block.compression != kCompressionNone) free(buffer);
+}
+
+/**
  * @brief Serialize the DVD decrypted title key data block to the image file.
  *
  * This function writes a data block containing decrypted DVD title keys for all sectors
@@ -5349,6 +5561,9 @@ int32_t aaruf_finalize_write(aaruformat_context *ctx)
 
     // Write DVD long sector data blocks
     if(ctx->dirty_dvd_long_sector_blocks) write_dvd_long_sector_blocks(ctx);
+
+    // Write Blu-ray sector EDC block (long sectors)
+    if(ctx->dirty_bd_sector_edc_block) write_bd_sector_edc_block(ctx);
 
     // Write DVD decrypted title keys
     if(ctx->dirty_dvd_title_key_decrypted_block) write_dvd_title_key_decrypted_block(ctx);
