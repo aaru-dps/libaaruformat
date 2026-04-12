@@ -90,6 +90,12 @@ int32_t ec_recover_raw_block(aaruformat_context *ctx, uint64_t block_offset,
 int32_t ec_recover_meta_block(aaruformat_context *ctx, uint64_t block_offset,
                               uint8_t **recovered_data, uint32_t *recovered_size);
 
+/**
+ * @brief Attempt to recover a DDT secondary block at a given file offset.
+ */
+int32_t ec_recover_ddt_block(aaruformat_context *ctx, uint64_t block_offset,
+                             uint8_t **recovered_data, uint32_t *recovered_size);
+
 /* ---- Cleanup ---- */
 
 void ec_free(aaruformat_context *ctx);

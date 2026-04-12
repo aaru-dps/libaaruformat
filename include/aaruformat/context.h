@@ -400,6 +400,12 @@ typedef struct aaruformat_context
     uint16_t ec_meta_M;               ///< M for metadata group.
     uint32_t ec_meta_shard_size;      ///< Shard size for metadata group.
     void    *ec_meta_block_lookup;    ///< uthash: block file offset → stripe index + position (metadata group).
+    void    *ec_ddt_stripes;          ///< Parsed EcReadStripe array for DDT-secondary group.
+    uint32_t ec_ddt_stripe_count;     ///< Number of DDT-secondary stripes.
+    uint16_t ec_ddt_K;                ///< K for DDT-secondary group.
+    uint16_t ec_ddt_M;                ///< M for DDT-secondary group.
+    uint32_t ec_ddt_shard_size;       ///< Shard size for DDT-secondary group.
+    void    *ec_ddt_block_lookup;     ///< uthash: block file offset → stripe index + position (DDT group).
     bool     ec_recovery_available;   ///< True if ECMB loaded and recovery is possible.
     bool     ec_recovery_in_progress; ///< Recursion guard for recovery (prevents infinite loops).
 } aaruformat_context;

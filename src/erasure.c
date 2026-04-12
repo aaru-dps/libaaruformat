@@ -912,6 +912,15 @@ int32_t ec_recover_meta_block(aaruformat_context *ctx, uint64_t block_offset,
                                 ctx->ec_meta_K, ctx->ec_meta_M, ctx->ec_meta_shard_size);
 }
 
+int32_t ec_recover_ddt_block(aaruformat_context *ctx, uint64_t block_offset,
+                             uint8_t **recovered_data, uint32_t *recovered_size)
+{
+    if(!ctx->ec_ddt_stripes || ctx->ec_ddt_stripe_count == 0) return AARUF_ERROR_CANNOT_READ_BLOCK;
+    return ec_recover_raw_block(ctx, block_offset, recovered_data, recovered_size,
+                                ctx->ec_ddt_stripes, ctx->ec_ddt_stripe_count, ctx->ec_ddt_block_lookup,
+                                ctx->ec_ddt_K, ctx->ec_ddt_M, ctx->ec_ddt_shard_size);
+}
+
 /**
  * @brief Free all erasure coding state from the context.
  *
@@ -995,12 +1004,30 @@ void ec_free(aaruformat_context *ctx)
     {
         EcBlockLookupEntry *root = (EcBlockLookupEntry *)ctx->ec_meta_block_lookup;
         EcBlockLookupEntry *entry, *tmp;
-        HASH_ITER(hh, root, entry, tmp)
-        {
-            HASH_DEL(root, entry);
-            free(entry);
-        }
+        HASH_ITER(hh, root, entry, tmp) { HASH_DEL(root, entry); free(entry); }
         ctx->ec_meta_block_lookup = NULL;
+    }
+
+    /* Free DDT-secondary group read-path state */
+    if(ctx->ec_ddt_stripes)
+    {
+        EcReadStripe *stripes = (EcReadStripe *)ctx->ec_ddt_stripes;
+        for(uint32_t i = 0; i < ctx->ec_ddt_stripe_count; i++)
+        {
+            free(stripes[i].data_entries);
+            free(stripes[i].parity_offsets);
+        }
+        free(stripes);
+        ctx->ec_ddt_stripes = NULL;
+    }
+    ctx->ec_ddt_stripe_count = 0;
+
+    if(ctx->ec_ddt_block_lookup)
+    {
+        EcBlockLookupEntry *root = (EcBlockLookupEntry *)ctx->ec_ddt_block_lookup;
+        EcBlockLookupEntry *entry, *tmp;
+        HASH_ITER(hh, root, entry, tmp) { HASH_DEL(root, entry); free(entry); }
+        ctx->ec_ddt_block_lookup = NULL;
     }
 
     ctx->ec_recovery_available = false;
@@ -1177,6 +1204,33 @@ void ec_load_ecmb(aaruformat_context *ctx)
             ctx->ec_data_shard_size = group.shardSize;
             data_stripes            = grp_stripes;
             data_stripe_count       = group.stripeCount;
+        }
+        else if(group.groupType == kECGroupDdtSecondary)
+        {
+            /* Store DDT-secondary group for recovery of secondary DDT subtables */
+            EcBlockLookupEntry *ddt_lookup_root = (EcBlockLookupEntry *)ctx->ec_ddt_block_lookup;
+            if(grp_stripes)
+            {
+                for(uint32_t s = 0; s < group.stripeCount; s++)
+                {
+                    if(!grp_stripes[s].data_entries) continue;
+                    for(uint16_t k = 0; k < grp_stripes[s].actual_k; k++)
+                    {
+                        EcBlockLookupEntry *le = (EcBlockLookupEntry *)calloc(1, sizeof(EcBlockLookupEntry));
+                        if(!le) break;
+                        le->block_offset = grp_stripes[s].data_entries[k].offset;
+                        le->stripe_index = s;
+                        le->position     = k;
+                        HASH_ADD(hh, ddt_lookup_root, block_offset, sizeof(uint64_t), le);
+                    }
+                }
+            }
+            ctx->ec_ddt_stripes      = grp_stripes;
+            ctx->ec_ddt_stripe_count = group.stripeCount;
+            ctx->ec_ddt_K            = group.K;
+            ctx->ec_ddt_M            = group.M;
+            ctx->ec_ddt_shard_size   = group.shardSize;
+            ctx->ec_ddt_block_lookup = ddt_lookup_root;
         }
         else if(group.groupType == kECGroupMetadata)
         {

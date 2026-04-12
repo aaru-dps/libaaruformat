@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include "aaruformat.h"
+#include "erasure_internal.h"
 #include "internal.h"
 #include "log.h"
 
@@ -674,7 +675,75 @@ int32_t decode_ddt_entry_v2(aaruformat_context *ctx, const uint64_t sector_addre
     }
 
     if(ctx->user_data_ddt_header.tableShift > 0)
-        return decode_ddt_multi_level_v2(ctx, sector_address, negative, offset, block_offset, sector_status);
+    {
+        int32_t result = decode_ddt_multi_level_v2(ctx, sector_address, negative, offset, block_offset, sector_status);
+
+        /* If secondary DDT load failed, attempt EC recovery */
+        if(result != AARUF_STATUS_OK && ctx->ec_recovery_available && !ctx->ec_recovery_in_progress)
+        {
+            /* Compute which secondary DDT failed */
+            uint64_t sa = negative ? ctx->user_data_ddt_header.negative - sector_address
+                                   : sector_address + ctx->user_data_ddt_header.negative;
+            int items = 1 << ctx->user_data_ddt_header.tableShift;
+            uint64_t pos = sa / items;
+            uint64_t ddt_off = ctx->user_data_ddt2[pos];
+            ddt_off *= 1 << ctx->user_data_ddt_header.blockAlignmentShift;
+
+            TRACE("Attempting EC recovery for DDT secondary at offset %" PRIu64, ddt_off);
+            uint8_t *recovered = NULL;
+            uint32_t rec_size = 0;
+            if(ec_recover_ddt_block(ctx, ddt_off, &recovered, &rec_size) == AARUF_STATUS_OK && recovered)
+            {
+                /* Parse DdtHeader2 from recovered bytes, decompress, load into cache */
+                if(rec_size >= sizeof(DdtHeader2))
+                {
+                    DdtHeader2 rec_hdr;
+                    memcpy(&rec_hdr, recovered, sizeof(DdtHeader2));
+
+                    uint8_t *payload = recovered + sizeof(DdtHeader2);
+                    uint32_t payload_size = rec_size - sizeof(DdtHeader2);
+                    uint8_t *ddt_data = NULL;
+
+                    if(rec_hdr.compression == kCompressionNone && payload_size >= rec_hdr.length)
+                    {
+                        ddt_data = (uint8_t *)malloc((size_t)rec_hdr.length);
+                        if(ddt_data) memcpy(ddt_data, payload, (size_t)rec_hdr.length);
+                    }
+                    else if(rec_hdr.compression == kCompressionLzma && payload_size > LZMA_PROPERTIES_LENGTH)
+                    {
+                        ddt_data = (uint8_t *)malloc((size_t)rec_hdr.length);
+                        if(ddt_data)
+                        {
+                            size_t out_sz = (size_t)rec_hdr.length;
+                            size_t src_sz = payload_size - LZMA_PROPERTIES_LENGTH;
+                            aaruf_lzma_decode_buffer(ddt_data, &out_sz, payload + LZMA_PROPERTIES_LENGTH,
+                                                     &src_sz, payload, LZMA_PROPERTIES_LENGTH);
+                        }
+                    }
+                    else if(rec_hdr.compression == kCompressionZstd && payload_size > 0)
+                    {
+                        ddt_data = (uint8_t *)malloc((size_t)rec_hdr.length);
+                        if(ddt_data)
+                            aaruf_zstd_decode_buffer(ddt_data, (size_t)rec_hdr.length, payload, payload_size);
+                    }
+
+                    if(ddt_data)
+                    {
+                        TRACE("EC recovery succeeded for DDT secondary, loading into cache");
+                        free(ctx->cached_secondary_ddt2);
+                        ctx->cached_secondary_ddt2 = (uint64_t *)ddt_data;
+                        ctx->cached_ddt_offset = ddt_off;
+                        /* Retry the decode */
+                        result = decode_ddt_multi_level_v2(ctx, sector_address, negative,
+                                                          offset, block_offset, sector_status);
+                    }
+                }
+                free(recovered);
+            }
+        }
+
+        return result;
+    }
 
     return decode_ddt_single_level_v2(ctx, sector_address, negative, offset, block_offset, sector_status);
 }
