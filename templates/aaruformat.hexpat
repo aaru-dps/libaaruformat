@@ -114,6 +114,7 @@ enum MediaType : u32
     BDRE = 62,
     BDRXL = 63,
     BDREXL = 64,
+    UHDBD  = 65,
 
     EVD = 70,
     FVD = 71,
@@ -152,6 +153,7 @@ enum MediaType : u32
     PS4BD = 117,
     UMD = 118,
     PlayStationVitaGameCard = 119,
+    PS5BD = 120,
 
     XGD = 130,
     XGD2 = 131,
@@ -637,9 +639,12 @@ enum MediaType : u32
 
 enum CompressionType : u16
 {
-    None = 0,
-    Lzma = 1,
-    Flac = 2
+    None    = 0,
+    Lzma    = 1,
+    Flac    = 2,
+    LzmaCst = 3,
+    Zstd    = 4,
+    ZstdCst = 5
 };
 
 enum DataType : u16
@@ -733,7 +738,25 @@ enum DataType : u16
     DvdSectorEccPi                   = 86,
     DvdEccBlockPo                    = 87,
     FluxData                         = 88,
-    BitstreamData                    = 89
+    BitstreamData                    = 89,
+    FloppyWriteProtect               = 91,
+    WiiUDiscKey                      = 92,
+    Ps3DiscKey                       = 93,
+    Ps3Data1                         = 94,
+    Ps3Data2                         = 95,
+    Ps3Pic                           = 96,
+    Ps3EncryptionMap                 = 97,
+    WiiUPartitionKeyMap              = 98,
+    WiiPartitionKeyMap               = 99,
+    NgcwJunkMap                      = 100,
+    AacsMediaKey                     = 101,
+    AacsVolumeUniqueKey              = 102,
+    BdSectorEdc                      = 103,
+    ErasureParity                    = 104,
+    ErasureParityDdt                 = 105,
+    ErasureParityDdtPrimary          = 106,
+    ErasureParityMeta                = 107,
+    ErasureParityIndex               = 108
 };
 
 enum BlockType : u32
@@ -761,7 +784,8 @@ enum BlockType : u32
     DataStreamPayloadBlock       = 0x4C505344,
     BitstreamDataBlock           = 0x53544942,
     TrackLayoutBlock             = 0x594C4B54,
-    JsonMetadataBlock            = 0x444D534A
+    JsonMetadataBlock            = 0x444D534A,
+    ErasureCodingMapBlock        = 0x424D4345
 };
 
 enum TrackType : u8
@@ -1179,6 +1203,67 @@ struct DataStreamPayloadBlock
     u8                payload[header.cmpLength];
 };
 
+// ---- Erasure Coding Structures ----
+
+enum ErasureCodingAlgorithm : u8
+{
+    XOR            = 0,
+    RsVandermonde  = 1
+};
+
+enum ErasureCodingGroupType : u8
+{
+    Data         = 0,
+    DdtSecondary = 1,
+    DdtPrimary   = 2,
+    Metadata     = 3,
+    IndexGroup   = 4
+};
+
+struct StripeDataBlockEntry
+{
+    u64 offset;
+    u32 onDiskSize;
+    u64 shardCrc64;
+};
+
+struct StripeParityBlockEntry
+{
+    u64 offset;
+};
+
+struct StripeGroupDescriptor
+{
+    ErasureCodingGroupType groupType;
+    u16 K;
+    u16 M;
+    u32 shardSize;
+    u32 stripeCount;
+    u16 interleaveDepth;
+};
+
+struct ErasureCodingMapHeader
+{
+    BlockType                identifier;
+    ErasureCodingAlgorithm   algorithm;
+    u8                       stripeGroupCount;
+    CompressionType          compression;
+    u64                      cmpLength;
+    u64                      length;
+    u64                      cmpCrc64;
+    u64                      crc64;
+    u8                       payload[cmpLength];
+};
+
+struct AaruRecoveryFooter
+{
+    u64         ecmbOffset;
+    u64         ecmbLength;
+    u64         headerCrc64;
+    AaruHeader  backupHeader;
+    u64         footerMagic;
+};
+
 using Index;
 
 struct IndexEntry
@@ -1229,3 +1314,24 @@ AaruHeader header @ 0x00;
 
 if(header.identifier != DIC_MAGIC && header.identifier != AARU_MAGIC)
     std::error("Incorrect signature!");
+
+// Parse recovery footer at EOF (if present)
+// The footer is the last 160 bytes of the file
+u64 fileSize = std::mem::size();
+if(fileSize >= 160)
+{
+    u64 footerMagicPos = fileSize - 8;
+    u64 footerMagic = std::mem::read_unsigned(footerMagicPos, 8);
+    if(footerMagic == 0x52464D4345525641) // "AVRECMFR"
+    {
+        AaruRecoveryFooter recoveryFooter @ (fileSize - 160);
+
+        // Parse the ECMB at the offset recorded in the recovery footer
+        // (ECMB is NOT in the index due to chicken-egg: index itself needs recovery)
+        u64 ecmbOff = std::mem::read_unsigned(fileSize - 160, 8);
+        if(ecmbOff > 0 && ecmbOff < fileSize)
+        {
+            ErasureCodingMapHeader ecmb @ ecmbOff;
+        }
+    }
+}
