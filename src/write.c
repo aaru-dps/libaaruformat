@@ -2681,6 +2681,35 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             ctx->dirty_sector_subchannel_block = true;  // Mark subchannel block as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
+        case kSectorTagBdSectorEdc:
+            if(ctx->image_info.MetadataMediaType != BlockMedia)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+            
+            if(length != 4)
+            {
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+            
+            if(ctx->sector_edc == NULL) ctx->sector_edc = calloc(1, 4 * total_sectors);
+            
+            if(ctx->sector_edc == NULL)
+            {
+                FATAL("Could not allocate memory for Blu-ray sector EDC");
+                
+                TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+            
+            memcpy(ctx->sector_edc + corrected_sector_address * 4, data, 4);
+            ctx->dirty_bd_sector_edc_block = true;  // Mark BD sector EDC block as dirty
+            TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
         default:
             TRACE("Do not know how to write sector tag %d", tag);
             return AARUF_ERROR_INVALID_TAG;
