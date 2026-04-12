@@ -594,6 +594,7 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
     ctx->dirty_sector_suffix_ddt             = true;
     ctx->dirty_sector_subchannel_block       = true;
     ctx->dirty_dvd_long_sector_blocks        = true;
+    ctx->dirty_bd_sector_edc_block           = true;
     ctx->dirty_dvd_title_key_decrypted_block = true;
     ctx->dirty_media_tags                    = true;
     ctx->dirty_tape_ddt                      = true;
