@@ -385,3 +385,19 @@ TEST_F(ErasureCodingTest, BackupHeaderRecovery)
     ASSERT_TRUE(success) << "Backup header recovery failed — could not open/read corrupted image";
     EXPECT_EQ(read_crc, golden_crc) << "CRC mismatch after backup header recovery";
 }
+
+/**
+ * @test Create EC image from a CD image (2048-byte sectors) to exercise non-512 sector sizes.
+ * This catches the shard_size miscalculation that used current_block_header.sectorSize (0)
+ * instead of image_info.SectorSize, causing heap buffer overflow on CD images.
+ */
+TEST_F(ErasureCodingTest, CDSectorSizeImage)
+{
+    uint64_t golden_crc = 0;
+    ASSERT_TRUE(create_ec_image("data/cdmode1.aif", "ec_test_output.aif", 4, 2, &golden_crc));
+
+    bool success = false;
+    uint64_t read_crc = compute_image_crc("ec_test_output.aif", &success);
+    ASSERT_TRUE(success) << "Failed to read all sectors from CD EC image";
+    EXPECT_EQ(read_crc, golden_crc) << "CRC mismatch on CD EC image";
+}

@@ -96,11 +96,14 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_erasure_coding(void *context, uint8_t al
 
     /* Compute data shard size: max possible on-disk block size.
      * = sizeof(BlockHeader) + LZMA_PROPERTIES_LENGTH + (1 << dataShift) * sectorSize
-     * This is the worst case: uncompressed block + LZMA properties header. */
+     * This is the worst case: uncompressed block + LZMA properties header.
+     * Use image_info.SectorSize (set by aaruf_create) since current_block_header.sectorSize
+     * may not be set yet if called before the first write. */
     uint32_t sectors_per_block = 1U << ctx->user_data_ddt_header.dataShift;
-    uint32_t max_payload       = sectors_per_block * ctx->current_block_header.sectorSize;
-    if(max_payload == 0) max_payload = sectors_per_block * 512; /* fallback if sectorSize not yet set */
-    uint32_t shard_size = (uint32_t)sizeof(BlockHeader) + LZMA_PROPERTIES_LENGTH + max_payload;
+    uint32_t sector_size       = ctx->image_info.SectorSize;
+    if(sector_size == 0) sector_size = 512;
+    uint32_t max_payload = sectors_per_block * sector_size;
+    uint32_t shard_size  = (uint32_t)sizeof(BlockHeader) + LZMA_PROPERTIES_LENGTH + max_payload;
 
     /* Create RS codec */
     rs_context *rs = rs_create(K, M);
