@@ -1260,7 +1260,7 @@ struct AaruRecoveryFooter
     u64         ecmbOffset;
     u64         ecmbLength;
     u64         headerCrc64;
-    AaruHeader  backupHeader;
+    u8          backupHeader[147]; // Raw AaruHeaderV2 bytes (NOT the parsed struct)
     u64         footerMagic;
 };
 
@@ -1316,19 +1316,19 @@ if(header.identifier != DIC_MAGIC && header.identifier != AARU_MAGIC)
     std::error("Incorrect signature!");
 
 // Parse recovery footer at EOF (if present)
-// The footer is the last 160 bytes of the file
+// The footer is the last 179 bytes of the file
 u64 fileSize = std::mem::size();
-if(fileSize >= 160)
+if(fileSize >= 179)
 {
     u64 footerMagicPos = fileSize - 8;
     u64 footerMagic = std::mem::read_unsigned(footerMagicPos, 8);
     if(footerMagic == 0x52464D4345525641) // "AVRECMFR"
     {
-        AaruRecoveryFooter recoveryFooter @ (fileSize - 160);
+        AaruRecoveryFooter recoveryFooter @ (fileSize - 179);
 
         // Parse the ECMB at the offset recorded in the recovery footer
         // (ECMB is NOT in the index due to chicken-egg: index itself needs recovery)
-        u64 ecmbOff = std::mem::read_unsigned(fileSize - 160, 8);
+        u64 ecmbOff = std::mem::read_unsigned(fileSize - 179, 8);
         if(ecmbOff > 0 && ecmbOff < fileSize)
         {
             ErasureCodingMapHeader ecmb @ ecmbOff;

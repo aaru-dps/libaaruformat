@@ -893,7 +893,7 @@ void ec_load_ecmb(aaruformat_context *ctx)
 {
     TRACE("Entering ec_load_ecmb(%p)", (void *)ctx);
 
-    /* Read recovery footer from last 160 bytes of file */
+    /* Read recovery footer from last sizeof(AaruRecoveryFooter) bytes of file */
     aaruf_fseek(ctx->imageStream, 0, SEEK_END);
     int64_t file_size = aaruf_ftell(ctx->imageStream);
     if(file_size < (int64_t)sizeof(AaruRecoveryFooter))

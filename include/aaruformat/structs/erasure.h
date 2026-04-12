@@ -117,7 +117,7 @@ typedef struct AaruRecoveryFooter
 {
     uint64_t     ecmbOffset;   ///< Absolute file offset of the primary ECMB.
     uint64_t     ecmbLength;   ///< Total on-disk size of the ECMB (header + payload).
-    uint64_t     headerCrc64;  ///< CRC64-ECMA of the original AaruHeaderV2 (128 bytes at offset 0).
+    uint64_t     headerCrc64;  ///< CRC64-ECMA of the original AaruHeaderV2 (147 bytes at offset 0).
     AaruHeaderV2 backupHeader; ///< Complete copy of AaruHeaderV2 from file offset 0.
     uint64_t     footerMagic;  ///< Must be AARU_RECOVERY_FOOTER_MAGIC (0x52464D4345525641).
 } AaruRecoveryFooter;

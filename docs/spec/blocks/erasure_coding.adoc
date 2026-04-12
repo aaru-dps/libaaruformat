@@ -194,7 +194,7 @@ CAUTION: Reading a non-DataBlock header as a `BlockHeader` and accessing the `cm
 
 ==== Recovery Footer
 
-The last 160 bytes of the file contain the recovery footer, enabling the ECMB to be found even when the header or index is destroyed:
+The last 179 bytes of the file contain the recovery footer, enabling the ECMB to be found even when the header or index is destroyed:
 
 [source,c]
 ----
@@ -203,7 +203,7 @@ typedef struct AaruRecoveryFooter
     uint64_t     ecmbOffset;   // Absolute file offset of the primary ECMB
     uint64_t     ecmbLength;   // Total on-disk size of the ECMB (header + payload)
     uint64_t     headerCrc64;  // CRC64-ECMA of the original AaruHeaderV2
-    AaruHeaderV2 backupHeader; // Complete copy of AaruHeaderV2 (128 bytes)
+    AaruHeaderV2 backupHeader; // Complete copy of AaruHeaderV2 (147 bytes)
     uint64_t     footerMagic;  // Must be 0x52464D4345525641 ("AVRECMFR")
 } AaruRecoveryFooter;
 ----
@@ -214,7 +214,7 @@ typedef struct AaruRecoveryFooter
 |uint64_t |8 bytes |ecmbOffset |Absolute file offset of the primary ECMB.
 |uint64_t |8 bytes |ecmbLength |Total on-disk size of the ECMB (header + payload).
 |uint64_t |8 bytes |headerCrc64 |CRC64-ECMA of the original `AaruHeaderV2` at file offset 0.
-|AaruHeaderV2 |128 bytes |backupHeader |Complete backup copy of the file header.
+|AaruHeaderV2 |147 bytes |backupHeader |Complete backup copy of the file header.
 |uint64_t |8 bytes |footerMagic |Must be `0x52464D4345525641` ("AVRECMFR" in ASCII little-endian).
 |===
 
@@ -241,7 +241,7 @@ The recovery chain defines the fallback sequence when structures are damaged:
 The erasure coding structures are written at the end of the file:
 
 ----
-[AaruHeaderV2]                          offset 0, 128 bytes
+[AaruHeaderV2]                          offset 0, 147 bytes
 [Data blocks with consecutive parity]   variable size
 [DDT blocks (all levels)]               variable size
 [DDT parity blocks]                     M blocks (uncompressed)
@@ -251,7 +251,7 @@ The erasure coding structures are written at the end of the file:
 [Index parity blocks]                   M blocks (uncompressed)
 [ECMB (primary)]                        at footer.ecmbOffset
 [ECMB (duplicate)]                      at ecmbOffset + ecmbLength (aligned)
-[Recovery Footer]                       last 160 bytes of file
+[Recovery Footer]                       last 179 bytes of file
 ----
 
 ==== Automatic K,M Selection
@@ -442,7 +442,7 @@ With K=16 and M=2, you need 33+ contiguously corrupted blocks before any stripe 
 
 ==== Recovery Footer
 
-The last 160 bytes of the file contain the recovery footer, enabling the ECMB to be found even when the header or index is destroyed:
+The last 179 bytes of the file contain the recovery footer, enabling the ECMB to be found even when the header or index is destroyed:
 
 [source,c]
 ----
@@ -451,7 +451,7 @@ typedef struct AaruRecoveryFooter
     uint64_t     ecmbOffset;   // Absolute file offset of the primary ECMB
     uint64_t     ecmbLength;   // Total on-disk size of the ECMB (header + payload)
     uint64_t     headerCrc64;  // CRC64-ECMA of the original AaruHeaderV2
-    AaruHeaderV2 backupHeader; // Complete copy of AaruHeaderV2 (128 bytes)
+    AaruHeaderV2 backupHeader; // Complete copy of AaruHeaderV2 (147 bytes)
     uint64_t     footerMagic;  // Must be 0x52464D4345525641 ("AVRECMFR")
 } AaruRecoveryFooter;
 ----
@@ -462,7 +462,7 @@ typedef struct AaruRecoveryFooter
 |uint64_t |8 bytes |ecmbOffset |Absolute file offset of the primary ECMB.
 |uint64_t |8 bytes |ecmbLength |Total on-disk size of the ECMB (header + payload).
 |uint64_t |8 bytes |headerCrc64 |CRC64-ECMA of the original `AaruHeaderV2` at file offset 0.
-|AaruHeaderV2 |128 bytes |backupHeader |Complete backup copy of the file header.
+|AaruHeaderV2 |147 bytes |backupHeader |Complete backup copy of the file header.
 |uint64_t |8 bytes |footerMagic |Must be `0x52464D4345525641` ("AVRECMFR" in ASCII little-endian).
 |===
 
@@ -489,7 +489,7 @@ The recovery chain defines the fallback sequence when structures are damaged:
 The erasure coding structures are written after the index block, at the end of the file:
 
 ----
-[AaruHeaderV2]                          offset 0, 128 bytes
+[AaruHeaderV2]                          offset 0, 147 bytes
 [Data blocks + interleaved parity]      variable size
 [DDT blocks (all levels)]               variable size
 [DDT parity blocks]                     M blocks
@@ -499,5 +499,5 @@ The erasure coding structures are written after the index block, at the end of t
 [Index parity blocks]                   M blocks
 [ECMB (primary)]                        at footer.ecmbOffset
 [ECMB (duplicate)]                      at ecmbOffset + ecmbLength (aligned)
-[Recovery Footer]                       last 160 bytes of file
+[Recovery Footer]                       last 179 bytes of file
 ----
