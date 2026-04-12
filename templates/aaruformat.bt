@@ -78,6 +78,7 @@ enum <uint> MediaType
     BDRE = 62,
     BDRXL = 63,
     BDREXL = 64,
+    UHDBD  = 65,
 
     EVD = 70,
     FVD = 71,
@@ -116,6 +117,7 @@ enum <uint> MediaType
     PS4BD = 117,
     UMD = 118,
     PlayStationVitaGameCard = 119,
+    PS5BD = 120,
 
     XGD = 130,
     XGD2 = 131,
@@ -606,9 +608,12 @@ enum <uint> MediaType
 
 enum <ushort> CompressionType
 {
-    None = 0,
-    Lzma = 1,
-    Flac = 2
+    None    = 0,
+    Lzma    = 1,
+    Flac    = 2,
+    LzmaCst = 3,
+    Zstd    = 4,
+    ZstdCst = 5
 };
 
 enum <ushort> DataType
@@ -703,7 +708,25 @@ enum <ushort> DataType
     DvdEccBlockPo                    = 87,
     DvdPfi2ndLayer                   = 88,
     FluxData                         = 89,
-    BitstreamData                    = 90
+    BitstreamData                    = 90,
+    FloppyWriteProtect               = 91,
+    WiiUDiscKey                      = 92,
+    Ps3DiscKey                       = 93,
+    Ps3Data1                         = 94,
+    Ps3Data2                         = 95,
+    Ps3Pic                           = 96,
+    Ps3EncryptionMap                 = 97,
+    WiiUPartitionKeyMap              = 98,
+    WiiPartitionKeyMap               = 99,
+    NgcwJunkMap                      = 100,
+    AacsMediaKey                     = 101,
+    AacsVolumeUniqueKey              = 102,
+    BdSectorEdc                      = 103,
+    ErasureParity                    = 104,
+    ErasureParityDdt                 = 105,
+    ErasureParityDdtPrimary          = 106,
+    ErasureParityMeta                = 107,
+    ErasureParityIndex               = 108
 };
 
 enum <uint> BlockType
@@ -727,7 +750,8 @@ enum <uint> BlockType
     TapeFileBlock                = 0x454C4654,
     TapePartitionBlock           = 0x54425054,
     CompactDiscIndexesBlock      = 0x58494443,
-    AaruMetadataJsonBlock        = 0x444D534A
+    AaruMetadataJsonBlock        = 0x444D534A,
+    ErasureCodingMapBlock        = 0x424D4345
 };
 
 enum <byte> TrackType
@@ -749,6 +773,68 @@ enum <byte> ChecksumAlgorithm
     SpamSum = 4,
     Blake3 = 5
 };
+
+// ---- Erasure Coding ----
+
+enum <byte> ErasureCodingAlgorithm
+{
+    XOR           = 0,
+    RsVandermonde = 1
+};
+
+enum <byte> ErasureCodingGroupType
+{
+    ECData         = 0,
+    ECDdtSecondary = 1,
+    ECDdtPrimary   = 2,
+    ECMetadata     = 3,
+    ECIndex        = 4
+};
+
+typedef struct
+{
+    uint64 offset;
+    uint32 onDiskSize;
+    uint64 shardCrc64 <format=hex>;
+} StripeDataBlockEntry;
+
+typedef struct
+{
+    uint64 offset;
+} StripeParityBlockEntry;
+
+typedef struct
+{
+    ErasureCodingGroupType groupType;
+    uint16 K;
+    uint16 M;
+    uint32 shardSize;
+    uint32 stripeCount;
+    uint16 interleaveDepth;
+} StripeGroupDescriptor;
+
+typedef struct
+{
+    BlockType                identifier;
+    ErasureCodingAlgorithm   algorithm;
+    byte                     stripeGroupCount;
+    CompressionType          compression;
+    uint64                   cmpLength;
+    uint64                   length;
+    uint64                   cmpCrc64 <format=hex>;
+    uint64                   crc64 <format=hex>;
+    byte                     payload[cmpLength];
+} ErasureCodingMapHeader;
+
+// Forward declare AaruHeader for use in recovery footer
+typedef struct
+{
+    uint64 ecmbOffset;
+    uint64 ecmbLength;
+    uint64 headerCrc64 <format=hex>;
+    byte   backupHeader[147]; // AaruHeaderV2
+    uint64 footerMagic <format=hex>;
+} AaruRecoveryFooter;
 
 typedef enum<uint64> {
     AARU_FEATURE_RW_BLAKE3 = 0x1
@@ -1191,5 +1277,29 @@ for(i = 0; i < index.entries; i++)
         case 0x58494443:
             CompactDiscIndexesBlock compactDiscIndexes;
             break;
+    }
+}
+
+// Parse recovery footer at EOF (if present)
+// The footer is the last 179 bytes of the file
+local uint64 fileSize = FileSize();
+if(fileSize >= 179)
+{
+    local uint64 footerMagicPos = fileSize - 8;
+    FSeek(footerMagicPos);
+    local uint64 footerMagic;
+    footerMagic = ReadUInt64(footerMagicPos);
+    if(footerMagic == 0x52464D4345525641) // "AVRECMFR"
+    {
+        FSeek(fileSize - 179);
+        AaruRecoveryFooter recoveryFooter;
+
+        // Parse ECMB at the offset stored in the footer
+        local uint64 ecmbOff = ReadUInt64(fileSize - 179);
+        if(ecmbOff > 0 && ecmbOff < fileSize)
+        {
+            FSeek(ecmbOff);
+            ErasureCodingMapHeader ecmb;
+        }
     }
 }
