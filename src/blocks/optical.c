@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "aaruformat.h"
+#include "erasure_internal.h"
 #include "internal.h"
 #include "log.h"
 
@@ -178,10 +179,41 @@ void process_tracks_block(aaruformat_context *ctx, const IndexEntry *entry)
 
     if(crc64 != ctx->tracks_header.crc64)
     {
-        TRACE("Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64 ", continuing...\n", crc64,
+        TRACE("Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64, crc64,
               ctx->tracks_header.crc64);
+
+        /* Attempt erasure coding recovery */
+        uint8_t *recovered = NULL;
+        uint32_t rec_size  = 0;
+        if(ec_recover_meta_block(ctx, entry->offset, &recovered, &rec_size) == AARUF_STATUS_OK && recovered)
+        {
+            TRACE("EC recovery succeeded for tracks block at offset %" PRIu64, entry->offset);
+            /* Re-parse TracksHeader + TrackEntry array from recovered bytes */
+            if(rec_size >= sizeof(TracksHeader))
+            {
+                TracksHeader rec_hdr;
+                memcpy(&rec_hdr, recovered, sizeof(TracksHeader));
+                size_t entries_size = rec_hdr.entries * sizeof(TrackEntry);
+                if(rec_size >= sizeof(TracksHeader) + entries_size && rec_hdr.entries > 0)
+                {
+                    free(ctx->track_entries);
+                    ctx->track_entries = (TrackEntry *)malloc(entries_size);
+                    if(ctx->track_entries)
+                    {
+                        memcpy(&ctx->tracks_header, &rec_hdr, sizeof(TracksHeader));
+                        memcpy(ctx->track_entries, recovered + sizeof(TracksHeader), entries_size);
+                        free(recovered);
+                        goto tracks_parsed;
+                    }
+                }
+            }
+            free(recovered);
+        }
+
         return;
     }
+
+    tracks_parsed:
 
     TRACE("Found %d tracks at position %" PRIu64 ".\n", ctx->tracks_header.entries, entry->offset);
 

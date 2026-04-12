@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include "aaruformat.h"
+#include "erasure_internal.h"
 #include "internal.h"
 #include "log.h"
 #include "uthash.h"
@@ -405,12 +406,64 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
 
         if(crc64 != block_header.crc64)
         {
-            TRACE("Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64 ", continuing...", crc64,
-                  block_header.crc64);
+            TRACE("Incorrect CRC found: 0x%" PRIx64 " found, expected 0x%" PRIx64, crc64, block_header.crc64);
             free(data);
+            data = NULL;
 
-            TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
-            return AARUF_STATUS_OK;
+            /* Attempt erasure coding recovery */
+            uint8_t *recovered = NULL;
+            uint32_t rec_size  = 0;
+            if(ec_recover_meta_block(ctx, entry->offset, &recovered, &rec_size) == AARUF_STATUS_OK && recovered)
+            {
+                TRACE("EC recovery succeeded for block at offset %" PRIu64, entry->offset);
+                /* Re-parse: recovered contains raw on-disk bytes (BlockHeader + payload) */
+                if(rec_size > sizeof(BlockHeader))
+                {
+                    BlockHeader rec_hdr;
+                    memcpy(&rec_hdr, recovered, sizeof(BlockHeader));
+                    uint32_t payload_offset = sizeof(BlockHeader);
+
+                    if(rec_hdr.compression == kCompressionLzma && rec_hdr.cmpLength > LZMA_PROPERTIES_LENGTH)
+                        payload_offset += LZMA_PROPERTIES_LENGTH;
+
+                    uint8_t *rec_payload = recovered + payload_offset;
+                    uint32_t rec_payload_size = rec_size - payload_offset;
+
+                    /* Decompress if needed */
+                    if(rec_hdr.compression == kCompressionNone)
+                    {
+                        data = (uint8_t *)malloc(rec_hdr.length);
+                        if(data) memcpy(data, rec_payload, rec_hdr.length);
+                    }
+                    else if(rec_hdr.compression == kCompressionLzma)
+                    {
+                        data = (uint8_t *)malloc(rec_hdr.length);
+                        if(data)
+                        {
+                            size_t out_sz = rec_hdr.length;
+                            size_t src_sz = rec_payload_size;
+                            aaruf_lzma_decode_buffer(data, &out_sz, rec_payload, &src_sz,
+                                                     recovered + sizeof(BlockHeader), LZMA_PROPERTIES_LENGTH);
+                        }
+                    }
+                    else if(rec_hdr.compression == kCompressionZstd)
+                    {
+                        data = (uint8_t *)malloc(rec_hdr.length);
+                        if(data)
+                            aaruf_zstd_decode_buffer(data, rec_hdr.length, rec_payload, rec_payload_size);
+                    }
+
+                    /* Update block_header with recovered values */
+                    if(data) memcpy(&block_header, &rec_hdr, sizeof(BlockHeader));
+                }
+                free(recovered);
+            }
+
+            if(!data)
+            {
+                TRACE("Exiting process_data_block() = AARUF_STATUS_OK");
+                return AARUF_STATUS_OK;
+            }
         }
     }
 

@@ -393,7 +393,13 @@ typedef struct aaruformat_context
     /* Erasure coding (read path) */
     void    *ec_read_stripes;         ///< Parsed EcReadStripe array for data group, NULL if no ECMB.
     uint32_t ec_read_stripe_count;    ///< Number of data stripes parsed from ECMB.
-    void    *ec_block_lookup;         ///< uthash: block file offset → stripe index + position.
+    void    *ec_block_lookup;         ///< uthash: block file offset → stripe index + position (data group).
+    void    *ec_meta_stripes;         ///< Parsed EcReadStripe array for metadata group.
+    uint32_t ec_meta_stripe_count;    ///< Number of metadata stripes.
+    uint16_t ec_meta_K;               ///< K for metadata group.
+    uint16_t ec_meta_M;               ///< M for metadata group.
+    uint32_t ec_meta_shard_size;      ///< Shard size for metadata group.
+    void    *ec_meta_block_lookup;    ///< uthash: block file offset → stripe index + position (metadata group).
     bool     ec_recovery_available;   ///< True if ECMB loaded and recovery is possible.
     bool     ec_recovery_in_progress; ///< Recursion guard for recovery (prevents infinite loops).
 } aaruformat_context;

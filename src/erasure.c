@@ -817,6 +817,101 @@ void ec_finalize(aaruformat_context *ctx)
           ecmb_offset, group_count, ecmb_total);
 }
 
+/* =========================================================================
+ * Generic block recovery (any group)
+ * ========================================================================= */
+
+int32_t ec_recover_raw_block(aaruformat_context *ctx, uint64_t block_offset,
+                             uint8_t **recovered_data, uint32_t *recovered_size,
+                             void *stripes_ptr, uint32_t stripe_count, void *lookup_ptr,
+                             uint16_t group_K, uint16_t group_M, uint32_t group_shard_size)
+{
+    *recovered_data = NULL;
+    *recovered_size = 0;
+
+    if(!ctx->ec_recovery_available || ctx->ec_recovery_in_progress) return AARUF_ERROR_CANNOT_READ_BLOCK;
+
+    EcBlockLookupEntry *le = NULL;
+    HASH_FIND(hh, (EcBlockLookupEntry *)lookup_ptr, &block_offset, sizeof(uint64_t), le);
+    if(!le) return AARUF_ERROR_CANNOT_READ_BLOCK;
+
+    ctx->ec_recovery_in_progress = true;
+
+    EcReadStripe *stripes = (EcReadStripe *)stripes_ptr;
+    EcReadStripe *stripe  = &stripes[le->stripe_index];
+    uint16_t total_shards = group_K + group_M;
+
+    uint8_t **shards  = (uint8_t **)calloc(total_shards, sizeof(uint8_t *));
+    uint8_t  *present = (uint8_t *)calloc(total_shards, 1);
+    if(!shards || !present) { free(shards); free(present); ctx->ec_recovery_in_progress = false; return AARUF_ERROR_NOT_ENOUGH_MEMORY; }
+
+    for(uint16_t i = 0; i < total_shards; i++)
+    {
+        shards[i] = (uint8_t *)calloc(1, group_shard_size);
+        if(!shards[i]) { for(uint16_t j = 0; j < i; j++) free(shards[j]); free(shards); free(present); ctx->ec_recovery_in_progress = false; return AARUF_ERROR_NOT_ENOUGH_MEMORY; }
+    }
+
+    /* Read data shards, verify CRC */
+    for(uint16_t k = 0; k < stripe->actual_k; k++)
+    {
+        StripeDataBlockEntry *de = &stripe->data_entries[k];
+        uint32_t read_size = de->onDiskSize > group_shard_size ? group_shard_size : de->onDiskSize;
+        aaruf_fseek(ctx->imageStream, (aaru_off_t)de->offset, SEEK_SET);
+        if(fread(shards[k], read_size, 1, ctx->imageStream) != 1) { present[k] = 0; continue; }
+        uint64_t crc = aaruf_crc64_data(shards[k], de->onDiskSize);
+        present[k] = (crc == de->shardCrc64) ? 1 : 0;
+    }
+
+    for(uint16_t k = stripe->actual_k; k < group_K; k++)
+        present[k] = 1;
+
+    /* Read parity shards */
+    for(uint16_t m = 0; m < group_M; m++)
+    {
+        uint16_t si = group_K + m;
+        aaruf_fseek(ctx->imageStream, (aaru_off_t)stripe->parity_offsets[m], SEEK_SET);
+        BlockHeader ph;
+        if(fread(&ph, sizeof(BlockHeader), 1, ctx->imageStream) != 1) { present[si] = 0; continue; }
+        uint32_t to_read = ph.length > group_shard_size ? group_shard_size : ph.length;
+        if(fread(shards[si], to_read, 1, ctx->imageStream) != 1) { present[si] = 0; continue; }
+        present[si] = 1;
+    }
+
+    rs_context *rs = rs_create(group_K, group_M);
+    if(!rs) { for(uint16_t i = 0; i < total_shards; i++) free(shards[i]); free(shards); free(present); ctx->ec_recovery_in_progress = false; return AARUF_ERROR_NOT_ENOUGH_MEMORY; }
+
+    int rc = rs_decode(rs, shards, present, group_shard_size);
+    rs_free(rs);
+
+    int32_t result = AARUF_ERROR_CANNOT_READ_BLOCK;
+    if(rc == 0)
+    {
+        uint16_t pos = le->position;
+        uint32_t sz = stripe->data_entries[pos].onDiskSize;
+        *recovered_data = (uint8_t *)malloc(sz);
+        if(*recovered_data)
+        {
+            memcpy(*recovered_data, shards[pos], sz);
+            *recovered_size = sz;
+            result = AARUF_STATUS_OK;
+        }
+    }
+
+    for(uint16_t i = 0; i < total_shards; i++) free(shards[i]);
+    free(shards); free(present);
+    ctx->ec_recovery_in_progress = false;
+    return result;
+}
+
+int32_t ec_recover_meta_block(aaruformat_context *ctx, uint64_t block_offset,
+                              uint8_t **recovered_data, uint32_t *recovered_size)
+{
+    if(!ctx->ec_meta_stripes || ctx->ec_meta_stripe_count == 0) return AARUF_ERROR_CANNOT_READ_BLOCK;
+    return ec_recover_raw_block(ctx, block_offset, recovered_data, recovered_size,
+                                ctx->ec_meta_stripes, ctx->ec_meta_stripe_count, ctx->ec_meta_block_lookup,
+                                ctx->ec_meta_K, ctx->ec_meta_M, ctx->ec_meta_shard_size);
+}
+
 /**
  * @brief Free all erasure coding state from the context.
  *
@@ -880,6 +975,32 @@ void ec_free(aaruformat_context *ctx)
             free(entry);
         }
         ctx->ec_block_lookup = NULL;
+    }
+
+    /* Free metadata group read-path state */
+    if(ctx->ec_meta_stripes)
+    {
+        EcReadStripe *stripes = (EcReadStripe *)ctx->ec_meta_stripes;
+        for(uint32_t i = 0; i < ctx->ec_meta_stripe_count; i++)
+        {
+            free(stripes[i].data_entries);
+            free(stripes[i].parity_offsets);
+        }
+        free(stripes);
+        ctx->ec_meta_stripes = NULL;
+    }
+    ctx->ec_meta_stripe_count = 0;
+
+    if(ctx->ec_meta_block_lookup)
+    {
+        EcBlockLookupEntry *root = (EcBlockLookupEntry *)ctx->ec_meta_block_lookup;
+        EcBlockLookupEntry *entry, *tmp;
+        HASH_ITER(hh, root, entry, tmp)
+        {
+            HASH_DEL(root, entry);
+            free(entry);
+        }
+        ctx->ec_meta_block_lookup = NULL;
     }
 
     ctx->ec_recovery_available = false;
@@ -1057,11 +1178,36 @@ void ec_load_ecmb(aaruformat_context *ctx)
             data_stripes            = grp_stripes;
             data_stripe_count       = group.stripeCount;
         }
+        else if(group.groupType == kECGroupMetadata)
+        {
+            /* Store metadata group for recovery of media tags, tracks, checksums, etc. */
+            EcBlockLookupEntry *meta_lookup_root = (EcBlockLookupEntry *)ctx->ec_meta_block_lookup;
+            if(grp_stripes)
+            {
+                for(uint32_t s = 0; s < group.stripeCount; s++)
+                {
+                    if(!grp_stripes[s].data_entries) continue;
+                    for(uint16_t k = 0; k < grp_stripes[s].actual_k; k++)
+                    {
+                        EcBlockLookupEntry *le = (EcBlockLookupEntry *)calloc(1, sizeof(EcBlockLookupEntry));
+                        if(!le) break;
+                        le->block_offset = grp_stripes[s].data_entries[k].offset;
+                        le->stripe_index = s;
+                        le->position     = k;
+                        HASH_ADD(hh, meta_lookup_root, block_offset, sizeof(uint64_t), le);
+                    }
+                }
+            }
+            ctx->ec_meta_stripes      = grp_stripes;
+            ctx->ec_meta_stripe_count = group.stripeCount;
+            ctx->ec_meta_K            = group.K;
+            ctx->ec_meta_M            = group.M;
+            ctx->ec_meta_shard_size   = group.shardSize;
+            ctx->ec_meta_block_lookup = meta_lookup_root;
+        }
         else
         {
-            /* For non-data groups, free the parsed stripes for now.
-             * Recovery for DDT/metadata/index groups would use these,
-             * but the current read path only recovers data blocks. */
+            /* For DDT/index groups, free for now (recovery handled by replicas). */
             if(grp_stripes)
             {
                 for(uint32_t s = 0; s < group.stripeCount; s++)
@@ -1079,7 +1225,8 @@ void ec_load_ecmb(aaruformat_context *ctx)
     ctx->ec_read_stripes       = data_stripes;
     ctx->ec_read_stripe_count  = data_stripe_count;
     ctx->ec_block_lookup       = lookup_root;
-    ctx->ec_recovery_available = (data_stripes != NULL && data_stripe_count > 0);
+    ctx->ec_recovery_available = (data_stripes != NULL && data_stripe_count > 0) ||
+                                 (ctx->ec_meta_stripes != NULL && ctx->ec_meta_stripe_count > 0);
 
     /* Create RS codec for decoding */
     if(ctx->ec_recovery_available && !ctx->ec_rs_ctx)

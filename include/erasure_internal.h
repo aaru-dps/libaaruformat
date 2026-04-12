@@ -59,6 +59,37 @@ void ec_load_ecmb(aaruformat_context *ctx);
 int32_t ec_recover_data_block(aaruformat_context *ctx, uint64_t block_offset, uint64_t offset,
                               uint8_t *data, uint32_t *length, uint8_t sector_status);
 
+/**
+ * @brief Attempt to recover a raw block at a given file offset using a specified stripe group.
+ *
+ * Reads surviving stripe members + parity, RS-decodes the erased shard,
+ * returns the recovered raw on-disk bytes.
+ *
+ * @param ctx Context.
+ * @param block_offset File offset of the corrupted block.
+ * @param recovered_data Output: malloc'd buffer with recovered bytes (caller frees). NULL on failure.
+ * @param recovered_size Output: size of recovered data.
+ * @param stripes EcReadStripe array for the group.
+ * @param stripe_count Number of stripes.
+ * @param lookup Block lookup hashmap for the group.
+ * @param group_K K for this group.
+ * @param group_M M for this group.
+ * @param group_shard_size Shard size for this group.
+ * @return 0 on success, negative on failure.
+ */
+int32_t ec_recover_raw_block(aaruformat_context *ctx, uint64_t block_offset,
+                             uint8_t **recovered_data, uint32_t *recovered_size,
+                             void *stripes, uint32_t stripe_count, void *lookup,
+                             uint16_t group_K, uint16_t group_M, uint32_t group_shard_size);
+
+/**
+ * @brief Attempt to recover a metadata/media-tag block at a given file offset.
+ *
+ * Convenience wrapper around ec_recover_raw_block using the metadata group.
+ */
+int32_t ec_recover_meta_block(aaruformat_context *ctx, uint64_t block_offset,
+                              uint8_t **recovered_data, uint32_t *recovered_size);
+
 /* ---- Cleanup ---- */
 
 void ec_free(aaruformat_context *ctx);
