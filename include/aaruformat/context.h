@@ -66,6 +66,9 @@ typedef struct FluxCaptureMapEntry FluxCaptureMapEntry;
  *   - If deduplicate == false, sectorHashMap may still be populated for bookkeeping but duplicates are stored
  * independently.
  *   - If userDataDdtMini != NULL then userDataDdtBig == NULL (and vice versa) for a given level.
+ *   - If no_user_data_ddt == true the image carries no user-data DDT (intentional, e.g. flux-only image): user_data_ddt,
+ *     user_data_ddt2, cached_secondary_ddt2 and tape_ddt MUST all be NULL, and user_data_ddt_header.entries MUST be 0.
+ *     Sector read/write APIs return AARUF_ERROR_USER_DATA_NOT_PRESENT in this state.
  */
 
 #ifndef MD5_DIGEST_LENGTH
@@ -197,6 +200,7 @@ typedef struct aaruformat_context
     int               ddt_version;             ///< DDT version in use (1=legacy, 2=v2 hierarchical).
     uint8_t           shift;                   ///< Legacy overall shift (deprecated by data_shift/table_shift).
     bool              in_memory_ddt;           ///< True if primary (and possibly secondary) DDT loaded.
+    bool              no_user_data_ddt;        ///< True if image intentionally has no user-data DDT (e.g. flux-only image). When set, user_data_ddt*/tape_ddt MUST be NULL and user_data_ddt_header.entries MUST be 0.
 
     /* Optical auxiliary buffers (NULL if not present) */
     uint8_t *sector_prefix;               ///< Raw per-sector prefix (e.g., sync+header) uncorrected.

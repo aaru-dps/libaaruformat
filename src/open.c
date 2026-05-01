@@ -543,6 +543,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     }
 
     bool found_user_data_ddt  = false;
+    bool has_flux_block       = false;
     ctx->image_info.ImageSize = 0;
     for(i = 0; i < utarray_len(index_entries); i++)
     {
@@ -663,6 +664,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
                 // Store the FluxDataBlock offset for lazy loading
                 // Don't read flux entries during open - load them on-demand when actually needed
                 // This avoids unnecessary I/O if flux data is never accessed
+                has_flux_block = true;
                 break;
             default:
                 TRACE("Unhandled block type %4.4s with data type %d is indexed to be at %" PRIu64 "",
@@ -675,12 +677,19 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
 
     if(!found_user_data_ddt)
     {
-        FATAL("Could not find user data deduplication table, aborting...");
-        aaruf_close(ctx);
-        aaruf_set_open_error(AARUF_ERROR_CANNOT_READ_INDEX);
+        if(!has_flux_block)
+        {
+            FATAL("Could not find user data deduplication table or flux data, aborting...");
+            aaruf_close(ctx);
+            aaruf_set_open_error(AARUF_ERROR_CANNOT_READ_INDEX);
 
-        TRACE("Exiting aaruf_open() = NULL");
-        return NULL;
+            TRACE("Exiting aaruf_open() = NULL");
+            return NULL;
+        }
+
+        TRACE("No user data DDT found but flux data present, opening as flux-only image");
+        ctx->no_user_data_ddt = true;
+        /* image_info.Sectors stays 0; biggestSectorSize stays 0; sector APIs will reject. */
     }
 
     if(ctx->header.biggestSectorSize != 0)
@@ -748,9 +757,12 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     ctx->header.lastWrittenTime          = get_filetime_uint64();
     ctx->image_info.LastModificationTime = ctx->header.lastWrittenTime;
 
-    // Calculate aligned next block position
+    // Calculate aligned next block position. For flux-only images there is no user-data DDT
+    // header, so use the alignment shift recorded in the container header instead.
+    const uint8_t resume_alignment_shift =
+        ctx->no_user_data_ddt ? ctx->header.blockAlignmentShift : ctx->user_data_ddt_header.blockAlignmentShift;
     aaruf_fseek(ctx->imageStream, 0, SEEK_END);
-    const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
+    const uint64_t alignment_mask = (1ULL << resume_alignment_shift) - 1;
     ctx->next_block_position      = (uint64_t)aaruf_ftell(ctx->imageStream);  // Start just after the header
     ctx->next_block_position      = ctx->next_block_position + alignment_mask & ~alignment_mask;
 
@@ -770,7 +782,8 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     ctx->compression_enabled = parsed_options.compress;
     ctx->lzma_dict_size      = parsed_options.dictionary;
     ctx->deduplicate         = parsed_options.deduplicate;
-    if(ctx->deduplicate)
+    /* Flux-only images have no DDT and therefore no sector deduplication map. */
+    if(ctx->deduplicate && !ctx->no_user_data_ddt)
         ctx->sector_hash_map = create_map(ctx->user_data_ddt_header.blocks * 25 / 100);  // 25% of total sectors
 
     // Cannot checksum a resumed file

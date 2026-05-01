@@ -396,6 +396,14 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
+    // Flux-only images carry no DDT; sector reads cannot be served.
+    if(ctx->no_user_data_ddt)
+    {
+        *sector_status = SectorStatusNotDumped;
+        TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_USER_DATA_NOT_PRESENT (flux-only image)");
+        return AARUF_ERROR_USER_DATA_NOT_PRESENT;
+    }
+
     if(negative && sector_address > ctx->user_data_ddt_header.negative)
     {
         FATAL("Sector address out of bounds");
@@ -1472,6 +1480,14 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
         return AARUF_ERROR_NOT_AARUFORMAT;
     }
 
+    // Flux-only images carry no DDT; sector reads cannot be served.
+    if(ctx->no_user_data_ddt)
+    {
+        if(sector_status != NULL) *sector_status = SectorStatusNotDumped;
+        TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_USER_DATA_NOT_PRESENT (flux-only image)");
+        return AARUF_ERROR_USER_DATA_NOT_PRESENT;
+    }
+
     if(negative && sector_address > ctx->user_data_ddt_header.negative)
     {
         FATAL("Sector address out of bounds");
@@ -2273,6 +2289,13 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
 
         TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_NOT_AARUFORMAT");
         return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    // Flux-only images carry no DDT and therefore no per-sector tags.
+    if(ctx->no_user_data_ddt)
+    {
+        TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_USER_DATA_NOT_PRESENT (flux-only image)");
+        return AARUF_ERROR_USER_DATA_NOT_PRESENT;
     }
 
     if(negative && sector_address > ctx->user_data_ddt_header.negative)
