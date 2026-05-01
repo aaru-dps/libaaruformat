@@ -417,7 +417,28 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
     ctx->library_major_version = LIBAARUFORMAT_MAJOR_VERSION;
     ctx->library_minor_version = LIBAARUFORMAT_MINOR_VERSION;
 
-    if(!is_tape)
+    /* Flux-only images carry no sector/DDT data: the caller signals this by passing zero
+     * for all sector counts. In that case skip DDT initialization entirely and lay out the
+     * image like a tape (header followed by aligned blocks). Sector read/write APIs return
+     * AARUF_ERROR_USER_DATA_NOT_PRESENT for such contexts. */
+    const bool flux_only = !is_tape && user_sectors == 0 && negative_sectors == 0 && overflow_sectors == 0;
+
+    if(flux_only)
+    {
+        TRACE("Initializing flux-only image (no DDT)");
+        ctx->no_user_data_ddt = true;
+
+        /* Record alignment in both the container header and the (otherwise unused) DDT header
+         * so existing helpers that consult either get a consistent value. */
+        ctx->user_data_ddt_header.blockAlignmentShift = parsed_options.block_alignment;
+        ctx->header.blockAlignmentShift               = parsed_options.block_alignment;
+        ctx->user_data_ddt_header.dataShift           = parsed_options.data_shift;
+
+        const uint64_t alignment_mask = (1ULL << parsed_options.block_alignment) - 1;
+        ctx->next_block_position      = sizeof(AaruHeaderV2);
+        ctx->next_block_position      = ctx->next_block_position + alignment_mask & ~alignment_mask;
+    }
+    else if(!is_tape)
     {  // Initialize DDT2
         TRACE("Initializing DDT2");
         ctx->in_memory_ddt                            = true;
@@ -541,7 +562,8 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
     ctx->use_zstd            = parsed_options.zstd;
     ctx->zstd_level          = parsed_options.zstd_level;
     ctx->num_threads         = parsed_options.num_threads;
-    if(ctx->deduplicate)
+    /* Flux-only images have no sector data to deduplicate against. */
+    if(ctx->deduplicate && !ctx->no_user_data_ddt)
         ctx->sector_hash_map = create_map(ctx->user_data_ddt_header.blocks * 25 / 100);  // 25% of total sectors
 
     ctx->rewinded           = false;
@@ -581,10 +603,12 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
     ctx->is_writing      = true;
     ctx->finalize_write  = aaruf_finalize_write;
 
-    // Initialize dirty flags - all true by default for new images
-    ctx->dirty_secondary_ddt                 = true;
-    ctx->dirty_primary_ddt                   = true;
-    ctx->dirty_single_level_ddt              = true;
+    // Initialize dirty flags - all true by default for new images.
+    // Flux-only images (no DDT) leave the DDT dirty flags cleared so finalize never
+    // attempts to serialize a non-existent table.
+    ctx->dirty_secondary_ddt                 = !ctx->no_user_data_ddt;
+    ctx->dirty_primary_ddt                   = !ctx->no_user_data_ddt;
+    ctx->dirty_single_level_ddt              = !ctx->no_user_data_ddt;
     ctx->dirty_checksum_block                = true;
     ctx->dirty_tracks_block                  = true;
     ctx->dirty_mode2_subheaders_block        = true;

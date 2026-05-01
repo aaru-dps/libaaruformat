@@ -226,12 +226,17 @@ AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context)
     }
 
     uint64_t           crc_length;
-    const unsigned int entry_count = utarray_len(index_entries);
+    const unsigned int entry_count    = utarray_len(index_entries);
+    bool               has_ddt_block  = false;
+    bool               has_flux_block = false;
 
     for(unsigned int i = 0; i < entry_count; i++)
     {
         IndexEntry *entry = utarray_eltptr(index_entries, i);
         TRACE("Checking block with type %4.4s at position %" PRIu64, (char *)&entry->blockType, entry->offset);
+
+        if(entry->blockType == DeDuplicationTable || entry->blockType == DeDuplicationTable2) has_ddt_block = true;
+        if(entry->blockType == FluxDataBlock) has_flux_block = true;
 
         if(aaruf_fseek(ctx->imageStream, (aaru_off_t)entry->offset, SEEK_SET) != 0)
         {
@@ -466,6 +471,15 @@ AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context)
                 TRACE("Ignoring block type %4.4s", (char *)&entry->blockType);
                 break;
         }
+    }
+
+    /* An image must contain either a user-data DDT or a flux data block (flux-only images are
+     * legitimate). If neither is present the index is structurally invalid. */
+    if(!has_ddt_block && !has_flux_block)
+    {
+        FATAL("Image contains neither a user-data DDT nor a flux data block");
+        status = AARUF_ERROR_CANNOT_READ_INDEX;
+        goto cleanup;
     }
 
     status = AARUF_STATUS_OK;

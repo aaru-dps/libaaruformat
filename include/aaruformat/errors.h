@@ -73,6 +73,7 @@
 #define AARUF_ERROR_CANNOT_ENCRYPT_SECTOR     (-34)  ///< AES sector encryption failed.
 #define AARUF_ERROR_CANNOT_DECRYPT_SECTOR     (-35)  ///< AES sector decryption failed.
 #define AARUF_ERROR_MISSING_ENCRYPTION_KEY    (-36)  ///< Required encryption key not present in media tags.
+#define AARUF_ERROR_USER_DATA_NOT_PRESENT     (-37)  ///< Image has no user-data DDT (e.g. flux-only image); sector data is unavailable.
 /** @} */
 
 /** \name Non-fatal sector status codes (non-negative)
@@ -156,6 +157,8 @@ static inline const char *aaruformat_error_string(int code)
             return "Cannot decrypt sector";
         case AARUF_ERROR_MISSING_ENCRYPTION_KEY:
             return "Missing encryption key";
+        case AARUF_ERROR_USER_DATA_NOT_PRESENT:
+            return "User data not present (flux-only image)";
 
         /* Status */
         case AARUF_STATUS_OK:

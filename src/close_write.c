@@ -69,6 +69,9 @@
  */
 static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
 {
+    // Flux-only images carry no DDT.
+    if(ctx->no_user_data_ddt) return AARUF_STATUS_OK;
+
     // Write cached secondary table to file end and update primary table entry with its position
     // Check if we have a cached table that needs to be written (either it has an offset or exists in memory)
     bool has_cached_secondary_ddt =
@@ -296,6 +299,9 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
  */
 static int32_t write_primary_ddt(aaruformat_context *ctx)
 {
+    // Flux-only images carry no DDT.
+    if(ctx->no_user_data_ddt) return AARUF_STATUS_OK;
+
     // Write the cached primary DDT table back to its position in the file
     if(ctx->user_data_ddt_header.tableShift <= 0 || ctx->user_data_ddt2 == NULL) return AARUF_STATUS_OK;
 
@@ -398,6 +404,9 @@ static int32_t write_primary_ddt(aaruformat_context *ctx)
  */
 static int32_t write_single_level_ddt(aaruformat_context *ctx)
 {
+    // Flux-only images carry no DDT.
+    if(ctx->no_user_data_ddt) return AARUF_STATUS_OK;
+
     // Write the single level DDT table block aligned just after the header
     if(ctx->user_data_ddt_header.tableShift != 0 || ctx->user_data_ddt2 == NULL) return AARUF_STATUS_OK;
 
@@ -660,6 +669,9 @@ static int32_t write_single_level_ddt(aaruformat_context *ctx)
 static int32_t write_tape_ddt(aaruformat_context *ctx)
 {
     if(!ctx->is_tape) return AARUF_STATUS_INVALID_CONTEXT;
+
+    // Flux-only images carry no DDT (defensive; tape images aren't flux-only today).
+    if(ctx->no_user_data_ddt) return AARUF_STATUS_OK;
 
     // Traverse the tape DDT uthash and find the biggest key
     uint64_t          max_key = 0;
