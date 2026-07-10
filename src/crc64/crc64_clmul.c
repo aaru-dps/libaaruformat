@@ -121,7 +121,7 @@ AARU_EXPORT CLMUL uint64_t AARU_CALL aaruf_crc64_clmul(const uint64_t crc, const
     const __m128i data0        = _mm_blendv_epi8(_mm_setzero_si128(), _mm_load_si128(aligned_data), lead_in_mask);
 
 #if defined(_WIN64)
-    const __m128i initial_crc = _mm_cvtsi64x_si128(~crc);
+    const __m128i initial_crc = _mm_cvtsi64_si128(~crc);
 #else
     const __m128i initial_crc = _mm_set_epi64x(0, ~crc);
 #endif
