@@ -36,7 +36,8 @@
  *
  *  - ctx->tracksHeader (identifier, entries, crc64)
  *  - ctx->trackEntries (raw array with ALL tracks in on-disk order)
- *  - ctx->dataTracks (array filtered to data track sequences in [1..99])
+ *  - ctx->dataTracks (array filtered to data track sequences in [0..99]; sequence 0 is the
+ *    CD-i Ready-style hidden track preceding track 1, not an invalid placeholder)
  *  - ctx->numberOfDataTracks
  *  - ctx->imageInfo.ImageSize (incremented by sizeof(TrackEntry) * entries)
  *  - ctx->imageInfo.HasPartitions / HasSessions (both set true unconditionally on success path before filtering)
@@ -67,8 +68,10 @@
  *    called exactly once per context lifetime. This constraint should be observed by library code.
  *
  * Filtering rule for ctx->dataTracks:
- *  - Any TrackEntry with sequence in inclusive range [1, 99] is considered a data track (historical
- *    convention in format) and copied into ctx->dataTracks preserving original order.
+ *  - Any TrackEntry with sequence in inclusive range [0, 99] is considered a data track (historical
+ *    convention in format) and copied into ctx->dataTracks preserving original order. Sequence 0
+ *    is the hidden track preceding track 1 used by CD-i Ready and similar discs, and is a valid,
+ *    intentional track rather than non-standard placeholder data.
  *
  * Thread safety:
  *  - Not thread-safe: mutates shared state in @p ctx without synchronization.
@@ -224,7 +227,7 @@ void process_tracks_block(aaruformat_context *ctx, const IndexEntry *entry)
 
     for(j = 0; j < ctx->tracks_header.entries; j++)
     {
-        if(ctx->track_entries[j].sequence > 0 && ctx->track_entries[j].sequence <= 99) ctx->number_of_data_tracks++;
+        if(ctx->track_entries[j].sequence <= 99) ctx->number_of_data_tracks++;
     }
 
     if(ctx->number_of_data_tracks > 0)
@@ -244,7 +247,7 @@ void process_tracks_block(aaruformat_context *ctx, const IndexEntry *entry)
         k = 0;
         for(j = 0; j < ctx->tracks_header.entries; j++)
         {
-            if(ctx->track_entries[j].sequence > 0 && ctx->track_entries[j].sequence <= 99)
+            if(ctx->track_entries[j].sequence <= 99)
                 memcpy(&ctx->data_tracks[k++], &ctx->track_entries[j], sizeof(TrackEntry));
         }
     }
@@ -493,7 +496,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_tracks(void *context, TrackEntry *tracks
     ctx->number_of_data_tracks = 0;
 
     for(int j = 0; j < ctx->tracks_header.entries; j++)
-        if(ctx->track_entries[j].sequence > 0 && ctx->track_entries[j].sequence <= 99) ctx->number_of_data_tracks++;
+        if(ctx->track_entries[j].sequence <= 99) ctx->number_of_data_tracks++;
 
     if(ctx->number_of_data_tracks > 0)
     {
@@ -515,7 +518,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_tracks(void *context, TrackEntry *tracks
     {
         int k = 0;
         for(int j = 0; j < ctx->tracks_header.entries; j++)
-            if(ctx->track_entries[j].sequence > 0 && ctx->track_entries[j].sequence <= 99)
+            if(ctx->track_entries[j].sequence <= 99)
                 memcpy(&ctx->data_tracks[k++], &ctx->track_entries[j], sizeof(TrackEntry));
     }
 

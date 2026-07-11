@@ -70,7 +70,8 @@ typedef struct TracksHeader
  */
 typedef struct TrackEntry
 {
-    uint8_t sequence;  ///< Track number (1..99 typical for CD audio/data). 0 may indicate placeholder/non-standard.
+    uint8_t sequence;  ///< Track number (1..99 typical for CD audio/data). 0 is a valid hidden track
+                       ///< preceding track 1, as used by CD-i Ready and similar discs.
     uint8_t type;      ///< Track type (value from \ref TrackType).
     int64_t start;     ///< Inclusive starting LBA of the track.
     int64_t end;       ///< Inclusive ending LBA of the track.
