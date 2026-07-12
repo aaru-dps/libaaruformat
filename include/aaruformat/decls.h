@@ -80,7 +80,7 @@ AARU_EXPORT int AARU_CALL aaruf_close(void *context);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t *length);
 
-AARU_EXPORT crc64_ctx *AARU_CALL aaruf_crc64_init();
+AARU_EXPORT crc64_ctx *AARU_CALL aaruf_crc64_init(void);
 AARU_EXPORT int AARU_CALL        aaruf_crc64_update(crc64_ctx *ctx, const uint8_t *data, uint32_t len);
 AARU_EXPORT int AARU_CALL        aaruf_crc64_final(crc64_ctx *ctx, uint64_t *crc);
 AARU_EXPORT void AARU_CALL       aaruf_crc64_free(crc64_ctx *ctx);
@@ -120,7 +120,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_cst_transform(const uint8_t *interleaved, ui
 
 AARU_EXPORT int32_t AARU_CALL aaruf_cst_untransform(const uint8_t *sequential, uint8_t *interleaved, size_t length);
 
-AARU_EXPORT void *AARU_CALL aaruf_ecc_cd_init();
+AARU_EXPORT void *AARU_CALL aaruf_ecc_cd_init(void);
 
 AARU_EXPORT void AARU_CALL aaruf_ecc_cd_free(void *context);
 
@@ -277,17 +277,17 @@ AARU_EXPORT void AARU_CALL aaruf_sha256_buffer(const void *data, unsigned long s
 #if defined(__x86_64__) || defined(__amd64) || defined(_M_AMD64) || defined(_M_X64) || defined(__I386__) || \
     defined(__i386__) || defined(__THW_INTEL) || defined(_M_IX86)
 
-AARU_EXPORT int have_clmul();
-AARU_EXPORT int have_ssse3();
-AARU_EXPORT int have_avx2();
+AARU_EXPORT int have_clmul(void);
+AARU_EXPORT int have_ssse3(void);
+AARU_EXPORT int have_avx2(void);
 
 AARU_EXPORT CLMUL uint64_t AARU_CALL aaruf_crc64_clmul(uint64_t crc, const uint8_t *data, long length);
 #endif
 
 #if defined(__aarch64__) || defined(_M_ARM64) || defined(__arm__) || defined(_M_ARM)
-AARU_EXPORT int have_neon();
-AARU_EXPORT int have_arm_crc32();
-AARU_EXPORT int have_arm_crypto();
+AARU_EXPORT int have_neon(void);
+AARU_EXPORT int have_arm_crc32(void);
+AARU_EXPORT int have_arm_crypto(void);
 
 AARU_EXPORT TARGET_WITH_SIMD uint64_t AARU_CALL aaruf_crc64_vmull(uint64_t previous_crc, const uint8_t *data, long len);
 #endif
