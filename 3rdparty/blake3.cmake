@@ -77,10 +77,10 @@ else()
           target_sources(blake3 PRIVATE ${BLAKE3_C_DIRECTORY}/blake3_avx512.c)
           set_source_files_properties(${BLAKE3_C_DIRECTORY}/blake3_avx512.c PROPERTIES COMPILE_OPTIONS "-mavx512f;-mavx512vl")
         endif()
-    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "arm64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "ARM64")
         message(STATUS "BLAKE3: Enabling NEON for AArch64")
         target_sources(blake3 PRIVATE ${BLAKE3_C_DIRECTORY}/blake3_neon.c)
-    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm" OR CMAKE_SYSTEM_PROCESSOR MATCHES "ARM")
         # Test whether the target already supports NEON (via CMAKE_C_FLAGS or
         # compiler defaults).  We must NOT add -mfpu=neon ourselves: GCC uses
         # last-wins for -mfpu, so appending it would silently override a user's
