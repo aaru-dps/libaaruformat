@@ -32,7 +32,7 @@
  *
  * @return Pointer to the initialized CdEccContext structure, or NULL on failure.
  */
-AARU_EXPORT void *AARU_CALL aaruf_ecc_cd_init()
+AARU_EXPORT void *AARU_CALL aaruf_ecc_cd_init(void)
 {
     TRACE("Entering aaruf_ecc_cd_init()");
     CdEccContext *context = NULL;

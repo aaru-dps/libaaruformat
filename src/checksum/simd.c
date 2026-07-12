@@ -116,7 +116,7 @@ static void cpuidex(int info, int count, unsigned *eax, unsigned *ebx, unsigned 
  *
  * @return Non-zero if supported, zero otherwise.
  */
-int have_clmul()
+int have_clmul(void)
 {
     TRACE("Entering have_clmul()");
 
@@ -135,7 +135,7 @@ int have_clmul()
  *
  * @return Non-zero if supported, zero otherwise.
  */
-int have_ssse3()
+int have_ssse3(void)
 {
     TRACE("Entering have_ssse3()");
     unsigned eax, ebx, ecx, edx;
@@ -150,7 +150,7 @@ int have_ssse3()
  *
  * @return Non-zero if supported, zero otherwise.
  */
-int have_avx2()
+int have_avx2(void)
 {
     TRACE("Entering have_avx2()");
     unsigned eax, ebx, ecx, edx;
@@ -179,7 +179,7 @@ int have_avx2()
  *
  * @return Non-zero if supported, zero otherwise.
  */
-int have_neon_apple()
+int have_neon_apple(void)
 {
     TRACE("Entering have_neon_apple()");
     int    value = 0;
@@ -201,7 +201,7 @@ int have_neon_apple()
  *
  * @return Non-zero if supported, zero otherwise.
  */
-int have_crc32_apple()
+int have_crc32_apple(void)
 {
     TRACE("Entering have_crc32_apple()");
     int    value = 0;
@@ -223,16 +223,16 @@ int have_crc32_apple()
  *
  * @return Non-zero if supported, zero otherwise.
  */
-int have_crypto_apple() { return 0; }
+int have_crypto_apple(void) { return 0; }
 #endif
 
 #if defined(__aarch64__) || defined(_M_ARM64)
-int have_neon()
+int have_neon(void)
 {
     return 1;  // ARMv8-A made it mandatory
 }
 
-int have_arm_crc32()
+int have_arm_crc32(void)
 {
 #if defined(_WIN32)
     return IsProcessorFeaturePresent(PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE) != 0;
@@ -243,7 +243,7 @@ int have_arm_crc32()
 #endif
 }
 
-int have_arm_crypto()
+int have_arm_crypto(void)
 {
 #if defined(_WIN32)
     return IsProcessorFeaturePresent(PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE) != 0;
@@ -256,7 +256,7 @@ int have_arm_crypto()
 #endif
 
 #if defined(__arm__) || defined(_M_ARM)
-int have_neon()
+int have_neon(void)
 {
 #if defined(_WIN32)
     return IsProcessorFeaturePresent(PF_ARM_VFP_32_REGISTERS_AVAILABLE) != 0;
@@ -267,7 +267,7 @@ int have_neon()
 #endif
 }
 
-int have_arm_crc32()
+int have_arm_crc32(void)
 {
 #if defined(_WIN32)
     return IsProcessorFeaturePresent(PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE) != 0;
@@ -278,7 +278,7 @@ int have_arm_crc32()
 #endif
 }
 
-int have_arm_crypto()
+int have_arm_crypto(void)
 {
 #if defined(_WIN32)
     return IsProcessorFeaturePresent(PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE) != 0;
