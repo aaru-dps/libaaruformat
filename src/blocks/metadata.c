@@ -104,6 +104,7 @@ void process_metadata_block(aaruformat_context *ctx, const IndexEntry *entry)
     {
         memset(&ctx->metadata_block_header, 0, sizeof(MetadataBlockHeader));
         free(ctx->metadata_block);
+        ctx->metadata_block = NULL;
         FATAL("Could not read metadata block, continuing...");
 
         return;
@@ -373,6 +374,7 @@ void process_cicm_block(aaruformat_context *ctx, const IndexEntry *entry)
     {
         memset(&ctx->cicm_block_header, 0, sizeof(CicmMetadataBlock));
         free(ctx->cicm_block);
+        ctx->cicm_block = NULL;
         TRACE("Could not read CICM XML metadata block, continuing...");
     }
 
@@ -537,6 +539,7 @@ void process_aaru_metadata_json_block(aaruformat_context *ctx, const IndexEntry 
     {
         memset(&ctx->json_block_header, 0, sizeof(AaruMetadataJsonBlockHeader));
         free(ctx->json_block);
+        ctx->json_block = NULL;
         TRACE("Could not read Aaru metadata JSON block, continuing...");
     }
 
