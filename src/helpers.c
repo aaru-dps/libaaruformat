@@ -445,6 +445,7 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_xml_mediatype(const int32_t type)
         case BDRE:
         case BDRXL:
         case BDREXL:
+        case UHDBD:
         case EVD:
         case FVD:
         case HVD:
@@ -464,6 +465,7 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_xml_mediatype(const int32_t type)
         case PS3DVD:
         case PS3BD:
         case PS4BD:
+        case PS5BD:
         case UMD:
         case XGD:
         case XGD2:
