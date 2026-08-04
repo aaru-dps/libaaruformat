@@ -550,6 +550,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_flux_captures(void *context, uint8_t *bu
     return AARUF_STATUS_OK;
 }
 
+#ifndef AARUFORMAT_READER_ONLY
+
 /**
  * @brief Add a flux capture to the image during write mode.
  *
@@ -807,6 +809,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_clear_flux_captures(void *context)
     TRACE("Exiting aaruf_clear_flux_captures() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
 }
+
+#endif  // !AARUFORMAT_READER_ONLY
 
 /**
  * @brief Find a flux entry by its identifier key.
