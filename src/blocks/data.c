@@ -474,7 +474,10 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
         case kDataTypeCdSectorPrefixCorrected:
             if(entry->dataType == kDataTypeCdSectorPrefixCorrected) { ctx->sector_prefix_corrected = data; }
             else
-                ctx->sector_prefix = data;
+            {
+                ctx->sector_prefix        = data;
+                ctx->sector_prefix_length = block_header.length;
+            }
 
             ctx->readableSectorTags[kSectorTagCdSync]   = true;
             ctx->readableSectorTags[kSectorTagCdHeader] = true;
@@ -485,7 +488,10 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
             if(entry->dataType == kDataTypeCdSectorSuffixCorrected)
                 ctx->sector_suffix_corrected = data;
             else
-                ctx->sector_suffix = data;
+            {
+                ctx->sector_suffix        = data;
+                ctx->sector_suffix_length = block_header.length;
+            }
 
             ctx->readableSectorTags[kSectorTagCdSubHeader] = true;
             ctx->readableSectorTags[kSectorTagCdEcc]       = true;

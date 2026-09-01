@@ -786,6 +786,11 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     if(ctx->deduplicate && !ctx->no_user_data_ddt)
         ctx->sector_hash_map = create_map(ctx->user_data_ddt_header.blocks * 25 / 100);  // 25% of total sectors
 
+    // Loaded CD prefix/suffix arenas are compact (one slot per custom entry). New customs must append after the
+    // existing slots, otherwise they would overwrite them and the DDT indexes would dangle past the rewritten block.
+    ctx->sector_prefix_offset = ctx->sector_prefix_length;
+    ctx->sector_suffix_offset = ctx->sector_suffix_length;
+
     // Cannot checksum a resumed file
     ctx->rewinded = true;
 
