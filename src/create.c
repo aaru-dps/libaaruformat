@@ -404,9 +404,11 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
     ctx->block_header_cache.cache     = NULL;
     ctx->block_header_cache.cur_bytes = 0;
     ctx->block_header_cache.max_bytes = MAX_HEADER_CACHE_SIZE;
+    ctx->block_header_cache.free_func = free;
     ctx->block_cache.cache            = NULL;
     ctx->block_cache.cur_bytes        = 0;
     ctx->block_cache.max_bytes        = MAX_CACHE_SIZE;
+    ctx->block_cache.free_func        = free;
 
     // TODO: Cache tracks and sessions?
 
