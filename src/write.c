@@ -33,6 +33,26 @@
 #include "xxhash.h"
 
 /**
+ * @brief Checks whether a CD sector header (bytes 0x0C-0x0E) is valid BCD and encodes exactly @p lba.
+ *
+ * Non-BCD nibbles are rejected so a header that merely aliases the expected address (e.g. 0x1A vs 0x20) is
+ * stored verbatim instead of being silently regenerated in canonical BCD on read.
+ */
+static bool cd_header_matches_lba(const uint8_t *data, const int64_t lba)
+{
+    for(int i = 0x0C; i <= 0x0E; i++)
+        if((data[i] >> 4) > 9 || (data[i] & 0x0F) > 9) return false;
+
+    const int minute = (data[0x0C] >> 4) * 10 + (data[0x0C] & 0x0F);
+    const int second = (data[0x0D] >> 4) * 10 + (data[0x0D] & 0x0F);
+    const int frame  = (data[0x0E] >> 4) * 10 + (data[0x0E] & 0x0F);
+
+    if(second > 59 || frame > 74) return false;
+
+    return (int64_t)minute * 60 * 75 + second * 75 + frame - 150 == lba;
+}
+
+/**
  * @brief Writes a sector to the AaruFormat image.
  *
  * Writes the given data to the specified sector address in the image, with the given status and length.
@@ -715,6 +735,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
             uint64_t total_sectors =
                 ctx->user_data_ddt_header.negative + ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow;
 
+            // LBA as encoded in a CD sector header (lead-in sectors are negative)
+            const int64_t signed_lba = negative ? -(int64_t)sector_address : (int64_t)sector_address;
+
             // DVD long sector
             if(length == 2064 && (ctx->image_info.MediaType == DVDROM || ctx->image_info.MediaType == PS2DVD ||
                                   ctx->image_info.MediaType == SACD || ctx->image_info.MediaType == PS3DVD ||
@@ -920,14 +943,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                        data[0x0F] != 0x01)
                         prefix_correct = false;
 
-                    if(prefix_correct)
-                    {
-                        const int minute     = (data[0x0C] >> 4) * 10 + (data[0x0C] & 0x0F);
-                        const int second     = (data[0x0D] >> 4) * 10 + (data[0x0D] & 0x0F);
-                        const int frame      = (data[0x0E] >> 4) * 10 + (data[0x0E] & 0x0F);
-                        const int stored_lba = minute * 60 * 75 + second * 75 + frame - 150;
-                        prefix_correct       = stored_lba == sector_address;
-                    }
+                    if(prefix_correct) prefix_correct = cd_header_matches_lba(data, signed_lba);
 
                     if(prefix_correct)
                         ctx->sector_prefix_ddt2[corrected_sector_address] = (uint64_t)SectorStatusMode1Correct << 60;
@@ -1082,14 +1098,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                        data[0x0F] != 0x02)
                         prefix_correct = false;
 
-                    if(prefix_correct)
-                    {
-                        const int minute     = (data[0x0C] >> 4) * 10 + (data[0x0C] & 0x0F);
-                        const int second     = (data[0x0D] >> 4) * 10 + (data[0x0D] & 0x0F);
-                        const int frame      = (data[0x0E] >> 4) * 10 + (data[0x0E] & 0x0F);
-                        const int stored_lba = minute * 60 * 75 + second * 75 + frame - 150;
-                        prefix_correct       = stored_lba == sector_address;
-                    }
+                    if(prefix_correct) prefix_correct = cd_header_matches_lba(data, signed_lba);
 
                     if(prefix_correct)
                         ctx->sector_prefix_ddt2[corrected_sector_address] =

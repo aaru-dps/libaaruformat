@@ -1512,6 +1512,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
     else
         corrected_sector_address += ctx->user_data_ddt_header.negative;
 
+    // LBA as encoded in a CD sector header (lead-in sectors are negative)
+    const int64_t signed_lba = negative ? -(int64_t)sector_address : (int64_t)sector_address;
+
     switch(ctx->image_info.MetadataMediaType)
     {
         case OpticalDisc:
@@ -1808,7 +1811,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
 
                         if(prefix_status == SectorStatusMode1Correct)
                         {
-                            aaruf_ecc_cd_reconstruct_prefix(data, trk.type, sector_address);
+                            aaruf_ecc_cd_reconstruct_prefix(data, trk.type, signed_lba);
                             res = AARUF_STATUS_OK;
                         }
                         else if(prefix_status == SectorStatusNotDumped)
@@ -1919,7 +1922,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
 
                         if(prefix_status == SectorStatusMode2Form1Ok || prefix_status == SectorStatusMode2Form2Ok)
                         {
-                            aaruf_ecc_cd_reconstruct_prefix(data, trk.type, sector_address);
+                            aaruf_ecc_cd_reconstruct_prefix(data, trk.type, signed_lba);
                             res = AARUF_STATUS_OK;
                         }
                         else if(prefix_status == SectorStatusNotDumped)
