@@ -46,6 +46,7 @@ void usage()
     printf("  inject-media-tag       Injects a media tag into an AaruFormat image.\n");
     printf("  read                   Reads a sector and prints it out on screen.\n");
     printf("  read_long              Reads a sector with all its prefixes and suffixes.\n");
+    printf("  repair-cd-arena        Repairs CD sector prefix/suffix arenas damaged by the resume bug.\n");
     printf("  upgrade-ddt-to-alpha21 Upgrades a DDT image to alpha21 format.\n");
     printf("  verify                 Verifies the integrity of blocks in an image.\n");
     printf("  verify_sectors         Verifies the integrity of all sectors in an image.\n\n");
@@ -160,6 +161,18 @@ void usage_upgrade_ddt_to_alpha21()
     printf("Upgrades a DDT image to alpha21 format.\n");
     printf("Arguments:\n");
     printf("  <filename>       Path to the DDT image file to upgrade.\n");
+}
+
+void usage_repair_cd_arena()
+{
+    printf("\nUsage:\n");
+    printf("  aaruformattool repair-cd-arena [--dry-run] <filename>\n\n");
+    printf("Repairs CD sector prefix/suffix arenas in a v2 image whose resumed dump sessions left the\n");
+    printf("final deduplication table referencing slots past the shrunken data block (garbage reads on\n");
+    printf("errored sectors). Recovers the slots from the orphaned dump generations still in the file.\n");
+    printf("Arguments:\n");
+    printf("  --dry-run        Only report how many slots are recoverable; write nothing.\n");
+    printf("  <filename>       Path to the AaruFormat image to repair (modified in place).\n");
 }
 
 void usage_inject_media_tag()

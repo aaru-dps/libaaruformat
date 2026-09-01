@@ -33,6 +33,7 @@ add_executable(aaruformattool
                cli_compare.c
                convert.c
                upgrade_ddt_to_alpha21.c
+               repair_cd_arena.c
                inject_media_tag.c
                ps3/ird.c
                ps3/ird.h
