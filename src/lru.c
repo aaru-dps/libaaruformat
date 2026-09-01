@@ -55,8 +55,9 @@ void *find_in_cache_uint64(struct CacheHeader *cache, const uint64_t key)
 /**
  * @brief Adds a value to the cache with a uint64_t key, evicting LRU entries if over budget.
  *
- * Adds a new entry to the cache. If the cache exceeds its memory budget, the least recently
- * used entries are evicted until it fits again. The entry just inserted is never evicted, so the
+ * Adds a new entry to the cache. If an entry with the same key is already present, its value
+ * is freed and replaced. If the cache exceeds its memory budget, the least recently used
+ * entries are evicted until it fits again. The entry just inserted is never evicted, so the
  * caller may keep using the pointer it handed over for the remainder of the call.
  *
  * @param cache Pointer to the cache header.
@@ -66,8 +67,25 @@ void *find_in_cache_uint64(struct CacheHeader *cache, const uint64_t key)
  */
 void add_to_cache_uint64(struct CacheHeader *cache, const uint64_t key, void *value, const size_t size)
 {
-    struct CacheEntry *entry = malloc(sizeof(struct CacheEntry));
-    if(!entry) return;
+    struct CacheEntry *entry = NULL;
+
+    // Replace an existing entry for this key. A blind HASH_ADD would leave the old entry in the
+    // table unreachable by HASH_FIND, and its value alive until the whole cache is freed.
+    HASH_FIND(hh, cache->cache, &key, sizeof(uint64_t), entry);
+
+    if(entry)
+    {
+        cache->cur_bytes -= entry->size;
+
+        if(cache->free_func && entry->value && entry->value != value) cache->free_func(entry->value);
+
+        HASH_DELETE(hh, cache->cache, entry);
+    }
+    else
+    {
+        entry = malloc(sizeof(struct CacheEntry));
+        if(!entry) return;
+    }
 
     entry->key   = key;
     entry->value = value;
