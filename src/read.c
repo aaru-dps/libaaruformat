@@ -1813,6 +1813,15 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                         }
                         else if(prefix_status == SectorStatusNotDumped)
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
+                        else if(ctx->sector_prefix == NULL || (prefix_index + 1) * 16 > ctx->sector_prefix_length)
+                        {
+                            FATAL("Sector prefix index %" PRIu64 " outside stored prefix block", prefix_index);
+                            free(bare_data);
+                            *sector_status = SectorStatusErrored;
+
+                            TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_CANNOT_READ_BLOCK");
+                            return AARUF_ERROR_CANNOT_READ_BLOCK;
+                        }
                         else
                             memcpy(data, ctx->sector_prefix + prefix_index * 16, 16);
                     }
@@ -1860,6 +1869,15 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                         }
                         else if(suffix_status == SectorStatusNotDumped)
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
+                        else if(ctx->sector_suffix == NULL || (suffix_index + 1) * 288 > ctx->sector_suffix_length)
+                        {
+                            FATAL("Sector suffix index %" PRIu64 " outside stored suffix block", suffix_index);
+                            free(bare_data);
+                            *sector_status = SectorStatusErrored;
+
+                            TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_CANNOT_READ_BLOCK");
+                            return AARUF_ERROR_CANNOT_READ_BLOCK;
+                        }
                         else
                             memcpy(data + 2064, ctx->sector_suffix + suffix_index * 288, 288);
                     }
@@ -1906,6 +1924,15 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                         }
                         else if(prefix_status == SectorStatusNotDumped)
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
+                        else if(ctx->sector_prefix == NULL || (prefix_index + 1) * 16 > ctx->sector_prefix_length)
+                        {
+                            FATAL("Sector prefix index %" PRIu64 " outside stored prefix block", prefix_index);
+                            free(bare_data);
+                            *sector_status = SectorStatusErrored;
+
+                            TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_CANNOT_READ_BLOCK");
+                            return AARUF_ERROR_CANNOT_READ_BLOCK;
+                        }
                         else
                             memcpy(data, ctx->sector_prefix + prefix_index * 16, 16);
                     }
@@ -1963,6 +1990,15 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                         }
                         else if(suffix_status == SectorStatusNotDumped)
                             res = AARUF_STATUS_SECTOR_NOT_DUMPED;
+                        else if(ctx->sector_suffix == NULL || (suffix_index + 1) * 288 > ctx->sector_suffix_length)
+                        {
+                            FATAL("Sector suffix index %" PRIu64 " outside stored suffix block", suffix_index);
+                            free(bare_data);
+                            *sector_status = SectorStatusErrored;
+
+                            TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_CANNOT_READ_BLOCK");
+                            return AARUF_ERROR_CANNOT_READ_BLOCK;
+                        }
                         else
                         {
                             // Mode 2 where ECC/EDC failed — restore user data + stored suffix.
@@ -2022,10 +2058,10 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                     else if(ctx->mode2_subheaders != NULL)
                     {
                         memcpy(data + 16, ctx->mode2_subheaders + corrected_sector_address * 8, 8);
-                        memcpy(data + 24, bare_data, 2328);
+                        memcpy(data + 24, bare_data, bare_length < 2328 ? bare_length : 2328);
                     }
                     else
-                        memcpy(data + 16, bare_data, 2336);
+                        memcpy(data + 16, bare_data, bare_length < 2336 ? bare_length : 2336);
 
                     *length = 2352;
                     free(bare_data);
