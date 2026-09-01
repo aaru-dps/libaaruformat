@@ -12,6 +12,23 @@
 // from the hot path.
 
 /**
+ * @brief Frees a cache entry's value and unlinks it from the cache.
+ *
+ * @param cache Pointer to the cache header.
+ * @param entry Entry to drop. Must be linked in cache.
+ */
+static void drop_entry(struct CacheHeader *cache, struct CacheEntry *entry)
+{
+    HASH_DELETE(hh, cache->cache, entry);
+
+    cache->cur_bytes -= entry->size;
+
+    if(cache->free_func && entry->value) cache->free_func(entry->value);
+
+    free(entry);
+}
+
+/**
  * @brief Finds a value in the cache by uint64_t key.
  *
  * Searches for a value using a native 64-bit integer key and promotes it
@@ -36,38 +53,39 @@ void *find_in_cache_uint64(struct CacheHeader *cache, const uint64_t key)
 }
 
 /**
- * @brief Adds a value to the cache with a uint64_t key, evicting LRU if full.
+ * @brief Adds a value to the cache with a uint64_t key, evicting LRU entries if over budget.
  *
- * Adds a new entry to the cache. If the cache exceeds its maximum size,
- * evicts the least recently used (oldest insertion-order) entry.
+ * Adds a new entry to the cache. If the cache exceeds its memory budget, the least recently
+ * used entries are evicted until it fits again. The entry just inserted is never evicted, so the
+ * caller may keep using the pointer it handed over for the remainder of the call.
  *
  * @param cache Pointer to the cache header.
  * @param key 64-bit integer key to add.
  * @param value Pointer to the value to store.
+ * @param size Size in bytes of the memory pointed to by value.
  */
-void add_to_cache_uint64(struct CacheHeader *cache, const uint64_t key, void *value)
+void add_to_cache_uint64(struct CacheHeader *cache, const uint64_t key, void *value, const size_t size)
 {
     struct CacheEntry *entry = malloc(sizeof(struct CacheEntry));
     if(!entry) return;
 
     entry->key   = key;
     entry->value = value;
+    entry->size  = size;
     HASH_ADD(hh, cache->cache, key, sizeof(uint64_t), entry);
+    cache->cur_bytes += size;
 
-    // Evict oldest entry if cache exceeded capacity.
-    if(HASH_COUNT(cache->cache) > cache->max_items)
+    if(cache->max_bytes == 0) return;
+
+    // Evict least recently used entries until back under budget. Never evict the entry just
+    // inserted: the caller still uses that pointer after this returns.
+    while(cache->cur_bytes > cache->max_bytes && HASH_COUNT(cache->cache) > 1)
     {
-        struct CacheEntry *tmp_entry;
-        HASH_ITER(hh, cache->cache, entry, tmp_entry)
-        {
-            HASH_DELETE(hh, cache->cache, entry);
+        struct CacheEntry *oldest = cache->cache;
 
-            if(cache->free_func && entry->value)
-                cache->free_func(entry->value);
+        if(oldest == NULL || oldest == entry) break;
 
-            free(entry);
-            break;
-        }
+        drop_entry(cache, oldest);
     }
 }
 
@@ -85,15 +103,8 @@ void free_cache(struct CacheHeader *cache)
 
     if(!cache || !cache->cache) return;
 
-    HASH_ITER(hh, cache->cache, entry, tmp)
-    {
-        HASH_DELETE(hh, cache->cache, entry);
+    HASH_ITER(hh, cache->cache, entry, tmp) { drop_entry(cache, entry); }
 
-        if(cache->free_func && entry->value)
-            cache->free_func(entry->value);
-
-        free(entry);
-    }
-
-    cache->cache = NULL;
+    cache->cache     = NULL;
+    cache->cur_bytes = 0;
 }

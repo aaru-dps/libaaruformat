@@ -605,7 +605,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
         }
 
         TRACE("Adding block header to cache");
-        add_to_cache_uint64(&ctx->block_header_cache, block_offset, block_header);
+        add_to_cache_uint64(&ctx->block_header_cache, block_offset, block_header, sizeof(BlockHeader));
     }
     else if(aaruf_fseek(ctx->imageStream, (aaru_off_t)(block_offset + sizeof(BlockHeader)), SEEK_SET) != 0)
     {
@@ -1027,7 +1027,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
 
     // Add block to cache
     TRACE("Adding block to cache");
-    add_to_cache_uint64(&ctx->block_cache, block_offset, block);
+    add_to_cache_uint64(&ctx->block_cache, block_offset, block, block_header->length);
 
     memcpy(data, block + offset * block_header->sectorSize, block_header->sectorSize);
     *length = block_header->sectorSize;

@@ -1507,14 +1507,14 @@ int32_t ec_recover_data_block(aaruformat_context *ctx, uint64_t block_offset, ui
 
                 /* Cache the recovered block so subsequent sector reads from the same
                  * block don't re-trigger recovery (this is the critical optimization). */
-                add_to_cache_uint64(&ctx->block_cache, block_offset, block);
+                add_to_cache_uint64(&ctx->block_cache, block_offset, block, recovered_header.length);
 
                 /* Also cache the recovered BlockHeader */
                 BlockHeader *cached_hdr = (BlockHeader *)malloc(sizeof(BlockHeader));
                 if(cached_hdr)
                 {
                     memcpy(cached_hdr, &recovered_header, sizeof(BlockHeader));
-                    add_to_cache_uint64(&ctx->block_header_cache, block_offset, cached_hdr);
+                    add_to_cache_uint64(&ctx->block_header_cache, block_offset, cached_hdr, sizeof(BlockHeader));
                 }
 
                 block = NULL; /* Ownership transferred to cache — don't free */

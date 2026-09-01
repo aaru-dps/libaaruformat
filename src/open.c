@@ -718,17 +718,14 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     ctx->block_header_cache.free_func = free;
     ctx->block_cache.free_func        = free;
 
-    const uint64_t cache_divisor = (uint64_t)ctx->image_info.SectorSize * (1ULL << ctx->shift);
-    if(cache_divisor == 0)
-    {
-        ctx->block_header_cache.max_items = 0;
-        ctx->block_cache.max_items        = 0;
-    }
-    else
-    {
-        ctx->block_header_cache.max_items = MAX_CACHE_SIZE / cache_divisor;
-        ctx->block_cache.max_items        = ctx->block_header_cache.max_items;
-    }
+    // Both caches are bounded by bytes held, so no block geometry is needed here. Deriving an
+    // entry count from a block size got this wrong: the divisor used ctx->shift, which is only
+    // ever set for DDT v1 images, so on every DDT v2 image the limit came out ~262144 entries of
+    // up to 8 MiB each and the cache grew until the whole decompressed image was resident.
+    ctx->block_header_cache.cur_bytes = 0;
+    ctx->block_cache.cur_bytes        = 0;
+    ctx->block_header_cache.max_bytes = MAX_HEADER_CACHE_SIZE;
+    ctx->block_cache.max_bytes        = MAX_CACHE_SIZE;
 
     // TODO: Cache tracks and sessions?
 

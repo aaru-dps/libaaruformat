@@ -78,6 +78,10 @@
  *  still enabling efficient sequential and moderate random access patterns. */
 #define MAX_CACHE_SIZE 536870912ULL
 
+/** Maximum block header cache size (bytes). Block headers are a few dozen bytes each, so 8 MiB
+ *  keeps headers cached for far more blocks than MAX_CACHE_SIZE can hold payloads for. */
+#define MAX_HEADER_CACHE_SIZE 8388608ULL
+
 /** Size in bytes of the fixed LZMA properties header (lc/lp/pb + dictionary size). */
 #define LZMA_PROPERTIES_LENGTH 5
 
