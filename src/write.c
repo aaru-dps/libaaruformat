@@ -957,8 +957,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
 
                     if(empty)
                     {
-                        ctx->sector_prefix_ddt2[corrected_sector_address] = SectorStatusNotDumped;
-                        ctx->sector_suffix_ddt2[corrected_sector_address] = SectorStatusNotDumped;
+                        ctx->sector_prefix_ddt2[corrected_sector_address] = (uint64_t)SectorStatusNotDumped << 60;
+                        ctx->sector_suffix_ddt2[corrected_sector_address] = (uint64_t)SectorStatusNotDumped << 60;
                         ctx->dirty_sector_prefix_ddt                      = true;  // Mark prefix DDT as dirty
                         ctx->dirty_sector_suffix_ddt                      = true;  // Mark suffix DDT as dirty
                         return aaruf_write_sector(context, sector_address, negative, data + 16, SectorStatusNotDumped,
@@ -1021,7 +1021,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                     }
                     ctx->dirty_sector_suffix_ddt = true;  // Mark suffix DDT as dirty
 
-                    return aaruf_write_sector(context, sector_address, negative, data + 16, SectorStatusMode1Correct,
+                    return aaruf_write_sector(context, sector_address, negative, data + 16,
+                                              prefix_correct && suffix_correct ? SectorStatusMode1Correct
+                                                                               : SectorStatusErrored,
                                               2048);
                 case kTrackTypeCdMode2Form1:
                 case kTrackTypeCdMode2Form2:
@@ -1100,8 +1102,10 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
 
                     if(empty)
                     {
-                        ctx->sector_prefix_ddt2[corrected_sector_address] = SectorStatusNotDumped;
-                        ctx->sector_suffix_ddt2[corrected_sector_address] = SectorStatusNotDumped;
+                        ctx->sector_prefix_ddt2[corrected_sector_address] = (uint64_t)SectorStatusNotDumped << 60;
+                        ctx->sector_suffix_ddt2[corrected_sector_address] = (uint64_t)SectorStatusNotDumped << 60;
+                        ctx->dirty_sector_prefix_ddt                      = true;  // Mark prefix DDT as dirty
+                        ctx->dirty_sector_suffix_ddt                      = true;  // Mark suffix DDT as dirty
                         return aaruf_write_sector(context, sector_address, negative, data + 16, SectorStatusNotDumped,
                                                   2328);
                     }
@@ -1134,7 +1138,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                         }
 
                         memcpy(ctx->sector_prefix + ctx->sector_prefix_offset, data, 16);
-                        ctx->sector_prefix_ddt2[corrected_sector_address] = (uint32_t)(ctx->sector_prefix_offset / 16);
+                        ctx->sector_prefix_ddt2[corrected_sector_address] = (uint64_t)(ctx->sector_prefix_offset / 16);
                         ctx->sector_prefix_ddt2[corrected_sector_address] |= (uint64_t)SectorStatusErrored << 60;
                         ctx->sector_prefix_offset += 16;
                         ctx->dirty_sector_prefix_block = true;  // Mark prefix block as dirty
