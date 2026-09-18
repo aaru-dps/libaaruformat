@@ -614,6 +614,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_tape_file(const void *context, const uin
     return AARUF_STATUS_OK;
 }
 
+#ifndef AARUFORMAT_READER_ONLY
+
 /**
  * @brief Sets or updates the block range for a specific tape file in an Aaru tape image.
  *
@@ -844,6 +846,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_tape_file(void *context, const uint8_t p
     return AARUF_STATUS_OK;
 }
 
+#endif  // !AARUFORMAT_READER_ONLY
+
 /**
  * @brief Retrieves the block range for a specific tape partition from an Aaru tape image.
  *
@@ -1026,6 +1030,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_get_tape_partition(const void *context, cons
           *ending_block);
     return AARUF_STATUS_OK;
 }
+
+#ifndef AARUFORMAT_READER_ONLY
 
 /**
  * @brief Sets or updates the block range for a specific tape partition in an Aaru tape image.
@@ -1268,6 +1274,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_tape_partition(void *context, const uint
           ending_block);
     return AARUF_STATUS_OK;
 }
+
+#endif  // !AARUFORMAT_READER_ONLY
 
 /**
  * @brief Retrieves all tape file entries from the image.
