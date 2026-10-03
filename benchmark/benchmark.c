@@ -184,6 +184,7 @@ int main(int argc, char *argv[])
         printf("  %s•%s LZMA      %s(high compression, slow)%s\n", clr(ANSI_GREEN), clr(ANSI_RESET), clr(ANSI_DIM), clr(ANSI_RESET));
         printf("  %s•%s Bzip3     %s(high compression, medium speed)%s\n", clr(ANSI_GREEN), clr(ANSI_RESET), clr(ANSI_DIM), clr(ANSI_RESET));
         printf("  %s•%s Brotli    %s(good compression, medium speed)%s\n", clr(ANSI_GREEN), clr(ANSI_RESET), clr(ANSI_DIM), clr(ANSI_RESET));
+        printf("  %s•%s OpenZL    %s(format-aware, generic graph)%s\n", clr(ANSI_GREEN), clr(ANSI_RESET), clr(ANSI_DIM), clr(ANSI_RESET));
         printf("  %s•%s Zstd      %s(good compression, fast)%s\n", clr(ANSI_GREEN), clr(ANSI_RESET), clr(ANSI_DIM), clr(ANSI_RESET));
         printf("  %s•%s Zstd+Dict %s(better compression with trained dictionary)%s\n\n", clr(ANSI_GREEN), clr(ANSI_RESET), clr(ANSI_DIM), clr(ANSI_RESET));
         return 1;
@@ -400,11 +401,11 @@ int main(int argc, char *argv[])
     // ===== END DICTIONARY TRAINING =====
 
     // Test each compression algorithm
-    const compression_algorithm algorithms[]      = {COMP_LZMA, COMP_BZIP3, COMP_BROTLI, COMP_ZSTD, COMP_ZSTD};
-    const char                 *algorithm_names[] = {"LZMA", "Bzip3", "Brotli", "Zstd (no dict)", "Zstd (with dict)"};
-    const size_t                algorithm_count   = sizeof(algorithms) / sizeof(algorithms[0]);
+    const compression_algorithm algorithms[] = {COMP_LZMA, COMP_BZIP3, COMP_BROTLI, COMP_OPENZL, COMP_ZSTD, COMP_ZSTD};
+    const char *algorithm_names[] = {"LZMA", "Bzip3", "Brotli", "OpenZL", "Zstd (no dict)", "Zstd (with dict)"};
+    const size_t algorithm_count  = sizeof(algorithms) / sizeof(algorithms[0]);
 
-    benchmark_result results[5];
+    benchmark_result results[sizeof(algorithms) / sizeof(algorithms[0])];
 
     print_section_header("Compression Benchmarks");
 
@@ -420,8 +421,8 @@ int main(int argc, char *argv[])
         progress_state progress = {0, info.block_count, {0}};
         snprintf(progress.label, sizeof(progress.label), "Compressing");
 
-        // Pass dictionary only for fifth run (Zstd with dict)
-        const zstd_dict_context *use_dict = (i == 4) ? dict_ctx : NULL;
+        // Pass dictionary only for last run (Zstd with dict)
+        const zstd_dict_context *use_dict = (i == algorithm_count - 1) ? dict_ctx : NULL;
 
         if(benchmark_compression(input_path, output_path, algorithms[i], &info, &results[i], &progress, print_progress,
                                  use_dict) != 0)

@@ -72,6 +72,54 @@ else()
   message(STATUS "Brotli: Failed to build from source")
 endif()
 
+# Download and build OpenZL from git using FetchContent
+# OpenZL requires CMake >= 3.20.2 and a C++ compiler (its project() enables CXX)
+set(OPENZL_AVAILABLE FALSE)
+include(CheckLanguage)
+check_language(CXX)
+
+if(CMAKE_VERSION VERSION_LESS 3.20.2)
+  message(STATUS "OpenZL: Skipped (requires CMake >= 3.20.2)")
+elseif(NOT CMAKE_CXX_COMPILER)
+  message(STATUS "OpenZL: Skipped (requires a C++ compiler)")
+else()
+  message(STATUS "Fetching OpenZL from GitHub...")
+
+  FetchContent_Declare(
+          openzl
+          GIT_REPOSITORY https://github.com/facebook/openzl.git
+          GIT_TAG v0.3.0
+          GIT_SHALLOW TRUE
+          GIT_SUBMODULES deps/zstd deps/lz4
+  )
+
+  # Configure OpenZL options - build the static C library only
+  set(OPENZL_BUILD_SHARED_LIBS OFF CACHE BOOL "Build OpenZL as shared library" FORCE)
+  set(OPENZL_BUILD_TESTS OFF CACHE BOOL "Build OpenZL tests" FORCE)
+  set(OPENZL_BUILD_BENCHMARKS OFF CACHE BOOL "Build OpenZL benchmarks" FORCE)
+  set(OPENZL_BUILD_CPP OFF CACHE BOOL "Build OpenZL C++ bindings" FORCE)
+  set(OPENZL_BUILD_TOOLS OFF CACHE BOOL "Build OpenZL tools" FORCE)
+  set(OPENZL_BUILD_CLI OFF CACHE BOOL "Build OpenZL CLI" FORCE)
+  set(OPENZL_BUILD_EXAMPLES OFF CACHE BOOL "Build OpenZL examples" FORCE)
+  set(OPENZL_BUILD_CUSTOM_PARSERS OFF CACHE BOOL "Build OpenZL custom parsers" FORCE)
+  set(OPENZL_BUILD_PYTHON_EXT OFF CACHE BOOL "Build OpenZL Python extension" FORCE)
+  set(OPENZL_INSTALL OFF CACHE BOOL "Install OpenZL" FORCE)
+  set(OPENZL_CPP_INSTALL OFF CACHE BOOL "Install OpenZL C++ bindings" FORCE)
+  # OpenZL bundles its own zstd, build it static only
+  set(ZSTD_BUILD_SHARED OFF CACHE BOOL "Build zstd shared library" FORCE)
+  set(ZSTD_BUILD_STATIC ON CACHE BOOL "Build zstd static library" FORCE)
+
+  # Make OpenZL available
+  FetchContent_MakeAvailable(openzl)
+
+  if(TARGET openzl)
+    set(OPENZL_AVAILABLE TRUE)
+    message(STATUS "OpenZL: Built from source (FetchContent)")
+  else()
+    message(STATUS "OpenZL: Failed to build from source")
+  endif()
+endif()
+
 
 # Benchmark executable
 add_executable(aarubenchmark
@@ -113,6 +161,13 @@ if(BROTLI_AVAILABLE)
   target_include_directories(aarubenchmark PRIVATE ${BROTLI_SOURCE_DIR}/c/include)
 endif()
 
+# Add OpenZL compile definition if available (includes come from openzl target)
+if(OPENZL_AVAILABLE)
+  target_compile_definitions(aarubenchmark PRIVATE HAVE_OPENZL=1)
+  # OpenZL public headers require C11
+  set_target_properties(aarubenchmark PROPERTIES C_STANDARD 11)
+endif()
+
 # Link to the main library and compression libraries
 target_link_libraries(aarubenchmark
                       PRIVATE
@@ -145,6 +200,11 @@ if(BROTLI_AVAILABLE)
   target_link_libraries(aarubenchmark PRIVATE brotlienc brotlidec brotlicommon)
 endif()
 
+# Link OpenZL if available
+if(OPENZL_AVAILABLE)
+  target_link_libraries(aarubenchmark PRIVATE openzl)
+endif()
+
 
 # On Linux, enable GNU/POSIX feature test macros
 if(UNIX AND NOT APPLE)
@@ -171,5 +231,10 @@ if(BROTLI_AVAILABLE)
   message(STATUS "  - Brotli support: YES (downloaded from git)")
 else()
   message(STATUS "  - Brotli support: NO (will be disabled)")
+endif()
+if(OPENZL_AVAILABLE)
+  message(STATUS "  - OpenZL support: YES (downloaded from git)")
+else()
+  message(STATUS "  - OpenZL support: NO (will be disabled)")
 endif()
 

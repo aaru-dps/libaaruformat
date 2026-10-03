@@ -5,7 +5,7 @@ This tool benchmarks different compression algorithms on Aaru format images with
 ## Purpose
 
 The benchmark tool helps determine the most effective compression algorithm for specific image types by:
-- Testing multiple compression algorithms (LZMA, Bzip3, Zstd)
+- Testing multiple compression algorithms (LZMA, Bzip3, Brotli, OpenZL, Zstd)
 - Measuring compression ratios and processing times
 - Providing detailed performance metrics
 
@@ -73,6 +73,8 @@ Fastest: Zstd
   - Install: `brew install zstd` (macOS) or `apt install libzstd-dev` (Linux)
 
 Algorithms without available libraries will be skipped automatically.
+
+OpenZL is fetched and built from source, which requires CMake >= 3.20.2 and a C++ compiler; it is disabled otherwise.
 
 ## Building
 

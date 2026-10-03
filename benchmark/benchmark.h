@@ -37,7 +37,8 @@ typedef enum
     COMP_LZMA   = 0,
     COMP_BZIP3  = 1,
     COMP_ZSTD   = 2,
-    COMP_BROTLI = 3
+    COMP_BROTLI = 3,
+    COMP_OPENZL = 4
 } compression_algorithm;
 
 // Image information structure

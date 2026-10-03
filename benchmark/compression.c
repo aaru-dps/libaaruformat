@@ -37,6 +37,10 @@
 #include <brotli/decode.h>
 #endif
 
+#ifdef HAVE_OPENZL
+#include <openzl/openzl.h>
+#endif
+
 
 // LZMA compression from library
 extern int32_t aaruf_lzma_encode_buffer(uint8_t *dst_buffer, size_t *dst_size, const uint8_t *src_buffer,
@@ -211,6 +215,46 @@ static int compress_brotli(const uint8_t *input, const size_t input_size, uint8_
 #endif
 }
 
+#ifdef HAVE_OPENZL
+// OpenZL graph function: sets global parameters and selects the generic graph
+// Compression level 19 to match the Zstd run (passed through to the zstd backend)
+static ZL_GraphID openzl_graph(ZL_Compressor *compressor)
+{
+    ZL_Compressor_setParameter(compressor, ZL_CParam_formatVersion, ZL_MAX_FORMAT_VERSION);
+    ZL_Compressor_setParameter(compressor, ZL_CParam_compressionLevel, 19);
+    return ZL_GRAPH_COMPRESS_GENERIC;
+}
+#endif
+
+// Compress data using OpenZL
+static int compress_openzl(const uint8_t *input, const size_t input_size, uint8_t **output, size_t *output_size)
+{
+#ifdef HAVE_OPENZL
+    // Calculate max output size
+    const size_t max_output_size = ZL_compressBound(input_size);
+    *output                      = malloc(max_output_size);
+    if(*output == NULL) return -1;
+
+    const ZL_Report result = ZL_compress_usingGraphFn(*output, max_output_size, input, input_size, openzl_graph);
+
+    if(ZL_isError(result))
+    {
+        free(*output);
+        *output = NULL;
+        return -1;
+    }
+
+    *output_size = ZL_validResult(result);
+    return 0;
+#else
+    // OpenZL not available
+    (void)input;
+    (void)input_size;
+    *output      = NULL;
+    *output_size = 0;
+    return -1;
+#endif
+}
 
 // Main compression function
 int compress_data(const compression_algorithm algorithm, const uint8_t *input, const size_t input_size,
@@ -226,6 +270,8 @@ int compress_data(const compression_algorithm algorithm, const uint8_t *input, c
             return compress_zstd(input, input_size, output, output_size);
         case COMP_BROTLI:
             return compress_brotli(input, input_size, output, output_size);
+        case COMP_OPENZL:
+            return compress_openzl(input, input_size, output, output_size);
         default:
             return -1;
     }
@@ -244,6 +290,8 @@ int get_compression_type(const compression_algorithm algorithm)
             return 101;  // Custom identifier for zstd
         case COMP_BROTLI:
             return 102;  // Custom identifier for brotli
+        case COMP_OPENZL:
+            return 103;  // Custom identifier for openzl
         default:
             return 0;  // None
     }
