@@ -45,6 +45,10 @@ zstd_dict_context *train_zstd_dictionary(const uint8_t *sample_data, size_t samp
 // Free dictionary context
 void free_zstd_dictionary(zstd_dict_context *dict_ctx);
 
+// Check if an algorithm's library was compiled in
+// Returns 1 if available, 0 otherwise
+int is_algorithm_available(compression_algorithm algorithm);
+
 // Get compression type identifier for block header
 int get_compression_type(compression_algorithm algorithm);
 

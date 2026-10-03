@@ -277,6 +277,34 @@ int compress_data(const compression_algorithm algorithm, const uint8_t *input, c
     }
 }
 
+// Check if an algorithm's library was compiled in
+int is_algorithm_available(const compression_algorithm algorithm)
+{
+    switch(algorithm)
+    {
+        case COMP_LZMA:
+            return 1;
+#ifdef HAVE_BZ3
+        case COMP_BZIP3:
+            return 1;
+#endif
+#ifdef HAVE_ZSTD
+        case COMP_ZSTD:
+            return 1;
+#endif
+#ifdef HAVE_BROTLI
+        case COMP_BROTLI:
+            return 1;
+#endif
+#ifdef HAVE_OPENZL
+        case COMP_OPENZL:
+            return 1;
+#endif
+        default:
+            return 0;
+    }
+}
+
 // Get compression type for header
 int get_compression_type(const compression_algorithm algorithm)
 {

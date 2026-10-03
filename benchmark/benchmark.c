@@ -406,12 +406,20 @@ int main(int argc, char *argv[])
     const size_t algorithm_count  = sizeof(algorithms) / sizeof(algorithms[0]);
 
     benchmark_result results[sizeof(algorithms) / sizeof(algorithms[0])];
+    int              ran[sizeof(algorithms) / sizeof(algorithms[0])] = {0};
 
     print_section_header("Compression Benchmarks");
 
     for(size_t i = 0; i < algorithm_count; i++)
     {
         print_subsection_header(algorithm_names[i]);
+
+        // Skip algorithms whose library was not compiled in
+        if(!is_algorithm_available(algorithms[i]))
+        {
+            printf("  %s⚠ Skipped: not compiled in%s\n\n", clr(ANSI_YELLOW), clr(ANSI_RESET));
+            continue;
+        }
 
         char output_path[512];
         snprintf(output_path, sizeof(output_path), "%s.%s.aaruformat", input_path, algorithm_names[i]);
@@ -434,6 +442,7 @@ int main(int argc, char *argv[])
         }
 
         results[i].elapsed_ns = get_time_ns() - start_time;
+        ran[i]                = 1;
 
         // Print results for this algorithm
         char compressed_str[64];
@@ -462,6 +471,8 @@ int main(int argc, char *argv[])
 
     for(size_t i = 0; i < algorithm_count; i++)
     {
+        if(!ran[i]) continue;
+
         const double ratio  = (double)results[i].compressed_size / (double)info.total_uncompressed_size * 100.0;
         const double time_s = ns_to_seconds(results[i].elapsed_ns);
 
@@ -471,28 +482,25 @@ int main(int argc, char *argv[])
                clr(ANSI_BOLD), clr(get_ratio_color(ratio)), ratio, clr(ANSI_RESET), time_s);
     }
 
-    // Find best compression
-    size_t   best_compression_idx = 0;
-    uint64_t best_compressed_size = results[0].compressed_size;
-    for(size_t i = 1; i < algorithm_count; i++)
+    // Find best compression and fastest among the algorithms that ran
+    size_t best_compression_idx = algorithm_count;
+    size_t fastest_idx          = algorithm_count;
+    for(size_t i = 0; i < algorithm_count; i++)
     {
-        if(results[i].compressed_size < best_compressed_size)
-        {
-            best_compressed_size = results[i].compressed_size;
+        if(!ran[i]) continue;
+
+        if(best_compression_idx == algorithm_count ||
+           results[i].compressed_size < results[best_compression_idx].compressed_size)
             best_compression_idx = i;
-        }
+
+        if(fastest_idx == algorithm_count || results[i].elapsed_ns < results[fastest_idx].elapsed_ns) fastest_idx = i;
     }
 
-    // Find fastest
-    size_t   fastest_idx  = 0;
-    uint64_t fastest_time = results[0].elapsed_ns;
-    for(size_t i = 1; i < algorithm_count; i++)
+    if(best_compression_idx == algorithm_count)
     {
-        if(results[i].elapsed_ns < fastest_time)
-        {
-            fastest_time = results[i].elapsed_ns;
-            fastest_idx  = i;
-        }
+        printf("\n  %s⚠ No algorithms were benchmarked%s\n\n", clr(ANSI_YELLOW), clr(ANSI_RESET));
+        close_image(&info);
+        return 1;
     }
 
     printf("\n  %s────────────────────────────────────────────────────────────────────────────────%s\n",
