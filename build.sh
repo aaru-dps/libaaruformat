@@ -41,7 +41,8 @@ if [[ $(uname) == Darwin ]]; then
         local runtime_dir="$2"
         echo "\n==== Building for $runtime_dir ===="
         rm -f CMakeCache.txt
-        cmake -DCMAKE_BUILD_TYPE=Release -DAARU_BUILD_PACKAGE=1 -DAARU_MACOS_TARGET_ARCH="$arch" .
+        cmake -DCMAKE_BUILD_TYPE=Release -DAARU_BUILD_PACKAGE=1 -DAARU_MACOS_TARGET_ARCH="$arch" \
+              -DCMAKE_SYSTEM_NAME=Darwin -DCMAKE_SYSTEM_PROCESSOR="$arch" .
         make
         mkdir -p "$runtime_dir"
         mv libaaruformat.dylib "$runtime_dir/"
