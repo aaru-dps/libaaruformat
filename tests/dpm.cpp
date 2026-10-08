@@ -84,12 +84,18 @@ std::vector<uint8_t> BuildDpm(const uint32_t entries, const uint64_t seed)
 }
 
 /// Creates a Mode 1 CD image with all its sectors written, leaving it open for writing.
-void *CreateImage(const char *filename)
+void *CreateImage(const char *filename, const bool erasure_coding = false)
 {
     void *ctx = aaruf_create(filename, kMediaTypeCdRom, kSectorSizeMode1, kSectors, 0, 0,
                              "deduplicate=false;compress=false", reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0,
                              false);
     if(ctx == nullptr) return nullptr;
+
+    if(erasure_coding && aaruf_set_erasure_coding(ctx, 1 /* RS-Vandermonde */, 4, 2) != AARUF_STATUS_OK)
+    {
+        aaruf_close(ctx);
+        return nullptr;
+    }
 
     TrackEntry track{};
     track.sequence = 1;
@@ -409,6 +415,50 @@ TEST_F(DpmFixture, VerifyDetectsCorruptedDpm)
         << "a corrupted DPM must be ignored on open";
     EXPECT_EQ(aaruf_verify_image(ctx), AARUF_ERROR_INVALID_BLOCK_CRC);
     EXPECT_EQ(aaruf_close(ctx), AARUF_STATUS_OK);
+
+    remove(kFilename);
+}
+
+TEST_F(DpmFixture, ErasureCodingRecoversCorruptedDpm)
+{
+    const char                *kFilename = "test_dpm_erasure.aif";
+    const std::vector<uint8_t> written   = BuildDpm(100, 131700);
+
+    void *ctx = CreateImage(kFilename, true);
+    ASSERT_NE(ctx, nullptr);
+    ASSERT_EQ(aaruf_set_dpm(ctx, written.data(), written.size()), AARUF_STATUS_OK);
+    ASSERT_EQ(aaruf_close(ctx), AARUF_STATUS_OK);
+
+    uint64_t offset = 0;
+    ctx             = aaruf_open(kFilename, false, nullptr);
+    ASSERT_NE(ctx, nullptr);
+    ASSERT_EQ(CountDpmIndexEntries(ctx, &offset), 1U);
+    EXPECT_EQ(aaruf_close(ctx), AARUF_STATUS_OK);
+
+    // Damage the DPM payload, and separately its header
+    for(const uint64_t damage : {offset + sizeof(DpmHeader) + 30, offset + 4})
+    {
+        FILE *file = fopen(kFilename, "r+b");
+        ASSERT_NE(file, nullptr);
+        ASSERT_EQ(fseek(file, static_cast<long>(damage), SEEK_SET), 0);
+        const int byte = fgetc(file);
+        ASSERT_NE(byte, EOF);
+        ASSERT_EQ(fseek(file, static_cast<long>(damage), SEEK_SET), 0);
+        fputc(byte ^ 0xFF, file);
+        fclose(file);
+
+        ctx = aaruf_open(kFilename, false, nullptr);
+        ASSERT_NE(ctx, nullptr);
+        EXPECT_EQ(GetDpm(ctx), written) << "the DPM must be recovered from the erasure coding parity";
+        EXPECT_EQ(aaruf_close(ctx), AARUF_STATUS_OK);
+
+        // Undo the damage before the next one
+        file = fopen(kFilename, "r+b");
+        ASSERT_NE(file, nullptr);
+        ASSERT_EQ(fseek(file, static_cast<long>(damage), SEEK_SET), 0);
+        fputc(byte, file);
+        fclose(file);
+    }
 
     remove(kFilename);
 }
