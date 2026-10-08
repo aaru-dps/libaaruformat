@@ -1,6 +1,26 @@
 #!/bin/bash
 set -e
 
+usage() {
+    echo "Usage: $0 [--mac-only]"
+    echo "  -m, --mac-only  Build only the macOS targets"
+    echo "  -h, --help      Show this help"
+}
+
+MAC_ONLY=0
+for arg in "$@"; do
+    case "$arg" in
+        -m|--mac-only) MAC_ONLY=1 ;;
+        -h|--help) usage; exit 0 ;;
+        *) echo "Unknown option: $arg" >&2; usage >&2; exit 1 ;;
+    esac
+done
+
+if [[ $MAC_ONLY == 1 && $(uname) != Darwin ]]; then
+    echo "--mac-only requires running on macOS" >&2
+    exit 1
+fi
+
 # Function to build for a target using dockcross
 build_with_dockcross() {
     local docker_image="$1"
@@ -18,6 +38,7 @@ build_with_dockcross() {
     rm -f "docker/$script_name"
 }
 
+if [[ $MAC_ONLY == 0 ]]; then
 # Linux targets
 build_with_dockcross dockcross/linux-armv7a-lts dockcross-linux-arm so runtimes/linux-arm/native
 build_with_dockcross dockcross/linux-arm64-lts dockcross-linux-arm64 so runtimes/linux-arm64/native
@@ -33,6 +54,7 @@ build_with_dockcross dockcross/windows-armv7 dockcross-win-arm dll runtimes/win-
 build_with_dockcross dockcross/windows-arm64 dockcross-win-arm64 dll runtimes/win-arm64/native
 build_with_dockcross dockcross/windows-shared-x64 dockcross-win-x64 dll runtimes/win-x64/native
 build_with_dockcross dockcross/windows-shared-x86 dockcross-win-x86 dll runtimes/win-x86/native
+fi
 
 # Mac OS X targets
 if [[ $(uname) == Darwin ]]; then
