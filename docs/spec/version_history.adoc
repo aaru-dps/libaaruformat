@@ -102,4 +102,10 @@ Add encrypted and decrypted sector status.
 Add Aaru Metadata JSON.
 
 Rework the flux workflow.
+
+| 8 October 2026
+| 2.0df
+| Draft
+| Natalia Portillo
+| Define Data Position Measurement block.
 |===
