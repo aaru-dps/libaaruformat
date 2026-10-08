@@ -124,6 +124,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_erasure_coding(void *context, uint8_t al
     ctx->ec_K                 = K;
     ctx->ec_M                 = M;
     ctx->ec_data_shard_size   = 0;  /* Will be set on first block */
+    /* A resumed image may already have the codec created to read its erasure coding */
+    if(ctx->ec_rs_ctx) rs_free((rs_context *)ctx->ec_rs_ctx);
+
     ctx->ec_rs_ctx            = rs;
     ctx->ec_data_parity       = NULL;  /* Allocated lazily */
     ctx->ec_data_block_offsets = offsets;
@@ -930,34 +933,37 @@ int32_t ec_recover_ddt_block(aaruformat_context *ctx, uint64_t block_offset,
  */
 void ec_free(aaruformat_context *ctx)
 {
-    if(!ctx->ec_enabled) return;
-
+    /* The Reed-Solomon context is used by both the write and the read paths */
     if(ctx->ec_rs_ctx)
     {
         rs_free((rs_context *)ctx->ec_rs_ctx);
         ctx->ec_rs_ctx = NULL;
     }
 
-    if(ctx->ec_data_parity)
+    /* Free write-path state, only present when erasure coding was enabled for writing */
+    if(ctx->ec_enabled)
     {
-        for(uint32_t i = 0; i < (uint32_t)ctx->ec_K * ctx->ec_M; i++)
-            free(ctx->ec_data_parity[i]);
-        free(ctx->ec_data_parity);
-        ctx->ec_data_parity = NULL;
+        if(ctx->ec_data_parity)
+        {
+            for(uint32_t i = 0; i < (uint32_t)ctx->ec_K * ctx->ec_M; i++)
+                free(ctx->ec_data_parity[i]);
+            free(ctx->ec_data_parity);
+            ctx->ec_data_parity = NULL;
+        }
+
+        free(ctx->ec_data_block_offsets);  ctx->ec_data_block_offsets = NULL;
+        free(ctx->ec_data_block_sizes);    ctx->ec_data_block_sizes = NULL;
+        free(ctx->ec_data_shard_crcs);     ctx->ec_data_shard_crcs = NULL;
+        free(ctx->ec_data_stripe_counts);  ctx->ec_data_stripe_counts = NULL;
+
+        if(ctx->ec_data_stripes)
+        {
+            utarray_free(ctx->ec_data_stripes);
+            ctx->ec_data_stripes = NULL;
+        }
+
+        ctx->ec_enabled = false;
     }
-
-    free(ctx->ec_data_block_offsets);  ctx->ec_data_block_offsets = NULL;
-    free(ctx->ec_data_block_sizes);    ctx->ec_data_block_sizes = NULL;
-    free(ctx->ec_data_shard_crcs);     ctx->ec_data_shard_crcs = NULL;
-    free(ctx->ec_data_stripe_counts);  ctx->ec_data_stripe_counts = NULL;
-
-    if(ctx->ec_data_stripes)
-    {
-        utarray_free(ctx->ec_data_stripes);
-        ctx->ec_data_stripes = NULL;
-    }
-
-    ctx->ec_enabled = false;
 
     /* Free read-path state */
     if(ctx->ec_read_stripes)
