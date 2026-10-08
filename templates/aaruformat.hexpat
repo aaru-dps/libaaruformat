@@ -1144,6 +1144,38 @@ struct TapePartitionHeader
     TapePartitionEntry partitions[entries];
 };
 
+struct DpmEntry
+{
+    u64 lba;
+    u64 angle;
+    u8  status;
+};
+
+struct DpmCalibration
+{
+    u64 lba;
+    u64 rotation_period;
+    u64 sectors_per_turn_x1000;
+};
+
+struct DpmHeader
+{
+    BlockType       identifier;
+    u32             entries;
+    u32             calibrations;
+    u32             nominal_spacing;
+    u16             timing_unit;
+    u16             speed;
+    u8              layer_ends;
+    u8              flags;
+    u16             reserved;
+    type::Size<u64> length;
+    type::Hex<u64>  crc64;
+    u64             layer_end[layer_ends];
+    DpmEntry        dpm_entries[entries];
+    DpmCalibration  dpm_calibrations[calibrations];
+};
+
 struct CompactDiscIndexEntry
 {
     u16 track;
@@ -1285,6 +1317,7 @@ struct IndexEntry
         (BlockType::DumpHardwareBlock):            DumpHardwareHeader      *dumpHardware        : u64 [[inline]];
         (BlockType::TapeFileBlock):                TapeFileHeader          *tapeFiles           : u64 [[inline]];
         (BlockType::TapePartitionBlock):           TapePartitionHeader     *tapePartitions      : u64 [[inline]];
+        (BlockType::DataPositionMeasurementBlock): DpmHeader               *dpm                 : u64 [[inline]];
         (BlockType::CompactDiscIndexesBlock):      CompactDiscIndexesBlock *compactDiscIndexes  : u64 [[inline]];
         (BlockType::Index3):                       Index                   *index               : u64 [[inline]];
         (BlockType::FluxDataBlock):                FluxDataBlock           *fluxData            : u64 [[inline]];
