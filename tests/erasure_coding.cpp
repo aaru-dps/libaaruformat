@@ -401,3 +401,74 @@ TEST_F(ErasureCodingTest, CDSectorSizeImage)
     ASSERT_TRUE(success) << "Failed to read all sectors from CD EC image";
     EXPECT_EQ(read_crc, golden_crc) << "CRC mismatch on CD EC image";
 }
+
+/**
+ * @test Damage the tracks block of an erasure coded CD image: opening it must recover the tracks, which needs the
+ * erasure coding map loaded before the indexed blocks are processed.
+ */
+TEST_F(ErasureCodingTest, RecoverCorruptedTracksBlockOnOpen)
+{
+    const char *kFilename = "ec_tracks_output.aif";
+
+    void *ctx = aaruf_create(kFilename, 15 /* CD-ROM */, 2048, 64, 0, 0, "deduplicate=false;compress=false",
+                             (const uint8_t *)"gtest_ec", 8, 0, 1, false);
+    ASSERT_NE(ctx, nullptr);
+    ASSERT_EQ(aaruf_set_erasure_coding(ctx, 1 /* RS-Vandermonde */, 4, 2), AARUF_STATUS_OK);
+
+    TrackEntry track{};
+    track.sequence = 1;
+    track.type     = kTrackTypeCdMode1;
+    track.start    = 0;
+    track.end      = 63;
+    track.session  = 1;
+    track.flags    = 0x04;
+    ASSERT_EQ(aaruf_set_tracks(ctx, &track, 1), AARUF_STATUS_OK);
+
+    uint8_t sector[2048];
+
+    for(uint64_t i = 0; i < 64; i++)
+    {
+        memset(sector, (int)i, sizeof(sector));
+        ASSERT_EQ(aaruf_write_sector(ctx, i, false, sector, SectorStatusDumped, sizeof(sector)), AARUF_STATUS_OK);
+    }
+
+    ASSERT_EQ(aaruf_close(ctx), AARUF_STATUS_OK);
+
+    // Find the tracks block
+    ctx = aaruf_open(kFilename, false, nullptr);
+    ASSERT_NE(ctx, nullptr);
+    uint64_t offset = 0;
+    {
+        const auto *actx = static_cast<aaruformat_context *>(ctx);
+
+        for(unsigned int i = 0; i < utarray_len(actx->index_entries); i++)
+        {
+            const auto *entry = static_cast<IndexEntry *>(utarray_eltptr(actx->index_entries, i));
+            if(entry->blockType == TracksBlock) offset = entry->offset;
+        }
+    }
+    EXPECT_EQ(aaruf_close(ctx), AARUF_STATUS_OK);
+    ASSERT_NE(offset, 0U);
+
+    // Damage a track entry, so its CRC fails
+    FILE *file = fopen(kFilename, "r+b");
+    ASSERT_NE(file, nullptr);
+    ASSERT_EQ(fseek(file, (long)(offset + sizeof(TracksHeader) + 2), SEEK_SET), 0);
+    const int byte = fgetc(file);
+    ASSERT_NE(byte, EOF);
+    ASSERT_EQ(fseek(file, (long)(offset + sizeof(TracksHeader) + 2), SEEK_SET), 0);
+    fputc(byte ^ 0xFF, file);
+    fclose(file);
+
+    ctx = aaruf_open(kFilename, false, nullptr);
+    ASSERT_NE(ctx, nullptr);
+
+    TrackEntry read_track{};
+    size_t     length = sizeof(read_track);
+    EXPECT_EQ(aaruf_get_tracks(ctx, (uint8_t *)&read_track, &length), AARUF_STATUS_OK);
+    EXPECT_EQ(length, sizeof(TrackEntry));
+    EXPECT_EQ(memcmp(&read_track, &track, sizeof(TrackEntry)), 0) << "the tracks must be recovered on open";
+
+    EXPECT_EQ(aaruf_close(ctx), AARUF_STATUS_OK);
+    remove(kFilename);
+}
