@@ -220,6 +220,8 @@ typedef struct aaruformat_context
     uint8_t                            *metadata_block;       ///< Raw metadata UTF-16LE concatenated strings.
     uint8_t                            *cicm_block;           ///< CICM XML payload.
     uint8_t                            *json_block;           ///< JSON metadata block payload (UTF-8).
+    uint8_t                            *dpm_block;            ///< Data Position Measurement block, header included.
+    size_t                              dpm_block_length;     ///< Length of dpm_block in bytes, 0 if not present.
     uint8_t                            *creator;              ///< Who (person) created the image?
     uint8_t                            *media_title;          ///< Title of the media represented by the image
     uint8_t                            *comments;             ///< Image comments
@@ -346,6 +348,7 @@ typedef struct aaruformat_context
     bool dirty_dumphw_block;                   ///< True if dump hardware block should be written during close
     bool dirty_cicm_block;                     ///< True if CICM metadata block should be written during close
     bool dirty_json_block;                     ///< True if JSON metadata block should be written during close
+    bool dirty_dpm_block;                      ///< True if DPM block should be written or removed during close
     bool dirty_flux_block;                     ///< True if flux block should be written during close
     bool dirty_index_block;                    ///< True if index block should be written during close
 

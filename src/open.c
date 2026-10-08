@@ -643,6 +643,10 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
                 process_aaru_metadata_json_block(ctx, entry);
 
                 break;
+            case DataPositionMeasurementBlock:
+                process_dpm_block(ctx, entry);
+
+                break;
             // Dump hardware block
             case DumpHardwareBlock:
                 process_dumphw_block(ctx, entry);

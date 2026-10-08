@@ -174,6 +174,9 @@ AARU_EXPORT int AARU_CALL aaruf_close(void *context)
     ctx->data_tracks = NULL;
     free(ctx->cicm_block);
     ctx->cicm_block = NULL;
+    free(ctx->dpm_block);
+    ctx->dpm_block        = NULL;
+    ctx->dpm_block_length = 0;
 
     if(ctx->dump_hardware_entries_with_data != NULL)
     {

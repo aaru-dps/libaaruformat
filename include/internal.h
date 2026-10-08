@@ -76,6 +76,9 @@ void      process_tracks_block(aaruformat_context *ctx, const IndexEntry *entry)
 void      process_cicm_block(aaruformat_context *ctx, const IndexEntry *entry);
 void      process_aaru_metadata_json_block(aaruformat_context *ctx, const IndexEntry *entry);
 void      process_dumphw_block(aaruformat_context *ctx, const IndexEntry *entry);
+void      process_dpm_block(aaruformat_context *ctx, const IndexEntry *entry);
+int32_t   validate_dpm_block(const uint8_t *data, size_t length);
+uint64_t  dpm_payload_length(const DpmHeader *header);
 void      process_checksum_block(aaruformat_context *ctx, const IndexEntry *entry);
 void      process_tape_files_block(aaruformat_context *ctx, const IndexEntry *entry);
 void      process_tape_partitions_block(aaruformat_context *ctx, const IndexEntry *entry);

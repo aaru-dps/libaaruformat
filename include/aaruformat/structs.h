@@ -32,6 +32,7 @@
 #include "structs/checksum.h"
 #include "structs/data.h"
 #include "structs/ddt.h"
+#include "structs/dpm.h"
 #include "structs/dump.h"
 #include "structs/header.h"
 #include "structs/index.h"

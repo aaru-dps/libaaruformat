@@ -632,6 +632,7 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
     ctx->dirty_dumphw_block                  = true;
     ctx->dirty_cicm_block                    = true;
     ctx->dirty_json_block                    = true;
+    ctx->dirty_dpm_block                     = true;
     ctx->dirty_flux_block                    = true;
     ctx->dirty_index_block                   = true;
 

@@ -467,6 +467,54 @@ AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context)
                 crc64_context = NULL;
                 break;
             }
+            case DataPositionMeasurementBlock:
+            {
+                DpmHeader dpm_header;
+                read_bytes = fread(&dpm_header, 1, sizeof(DpmHeader), ctx->imageStream);
+                if(read_bytes != sizeof(DpmHeader) || dpm_header.identifier != DataPositionMeasurementBlock)
+                {
+                    FATAL("Could not read DPM header");
+                    status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                    goto cleanup;
+                }
+
+                if(dpm_header.length != dpm_payload_length(&dpm_header))
+                {
+                    FATAL("DPM header length %" PRIu64 " does not match its contents", dpm_header.length);
+                    status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                    goto cleanup;
+                }
+
+                crc64_context = aaruf_crc64_init();
+                if(crc64_context == NULL)
+                {
+                    FATAL("Could not initialize CRC64 context");
+                    status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                    goto cleanup;
+                }
+
+                status = update_crc64_from_stream(ctx->imageStream, dpm_header.length, buffer, VERIFY_SIZE,
+                                                  crc64_context, "DPM block");
+                if(status != AARUF_STATUS_OK) goto cleanup;
+
+                if(aaruf_crc64_final(crc64_context, &crc64) != 0)
+                {
+                    FATAL("Could not finalize CRC64 for DPM block");
+                    status = AARUF_ERROR_CANNOT_READ_BLOCK;
+                    goto cleanup;
+                }
+
+                if(crc64 != dpm_header.crc64)
+                {
+                    FATAL("Expected DPM CRC 0x%16llX but got 0x%16llX", dpm_header.crc64, crc64);
+                    status = AARUF_ERROR_INVALID_BLOCK_CRC;
+                    goto cleanup;
+                }
+
+                aaruf_crc64_free(crc64_context);
+                crc64_context = NULL;
+                break;
+            }
             default:
                 TRACE("Ignoring block type %4.4s", (char *)&entry->blockType);
                 break;

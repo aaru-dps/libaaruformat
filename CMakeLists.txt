@@ -262,6 +262,7 @@ add_library(aaruformat
             src/blocks/metadata.c
             src/blocks/optical.c
             src/blocks/dump.c
+            src/blocks/dpm.c
             src/blocks/checksum.c
             src/index/index_v3.c
             src/ddt/ddt_v2.c
@@ -286,6 +287,8 @@ add_library(aaruformat
             src/metadata.c
             src/metadata_write.c
             src/dump.c
+            src/dpm.c
+            include/aaruformat/structs/dpm.h
             include/aaruformat/structs/tape.h
             src/blocks/tape.c
             src/blocks/flux.c
