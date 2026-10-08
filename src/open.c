@@ -744,6 +744,9 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     /* Try to load erasure coding recovery metadata from EOF footer */
     ec_load_ecmb(ctx);
 
+    /* Blocks are processed before the erasure coding map is loaded, so recover a damaged DPM block now */
+    if(ctx->dpm_block == NULL && ctx->dpm_damaged_offset != 0) recover_dpm_block(ctx);
+
     if(!resume_mode)
     {
         TRACE("Exiting aaruf_open() = %p", ctx);

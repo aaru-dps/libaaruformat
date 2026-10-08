@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "aaruformat.h"
+#include "erasure_internal.h"
 #include "internal.h"
 #include "log.h"
 
@@ -69,6 +70,69 @@ int32_t validate_dpm_block(const uint8_t *data, size_t length)
 }
 
 /**
+ * @brief Recovers a damaged Data Position Measurement block with erasure coding.
+ *
+ * The DPM block is part of the erasure coding metadata group. When it fails to load, its offset is remembered in
+ * ctx->dpm_damaged_offset, and this rebuilds it from the parity, trims the alignment padding the recovered bytes
+ * carry, validates it and keeps it in the context. It needs the erasure coding map, which aaruf_open() loads after
+ * processing the indexed blocks, so it is tried again from there.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ * @return AARUF_STATUS_OK if the block was recovered, an error status otherwise.
+ */
+int32_t recover_dpm_block(aaruformat_context *ctx)
+{
+    TRACE("Entering recover_dpm_block(%p)", ctx);
+
+    if(ctx == NULL || ctx->dpm_damaged_offset == 0) return AARUF_ERROR_CANNOT_READ_BLOCK;
+
+    uint8_t *recovered = NULL;
+    uint32_t size      = 0;
+
+    if(ec_recover_meta_block(ctx, ctx->dpm_damaged_offset, &recovered, &size) != AARUF_STATUS_OK ||
+       recovered == NULL)
+    {
+        TRACE("Could not recover DPM block at %" PRIu64, ctx->dpm_damaged_offset);
+
+        TRACE("Exiting recover_dpm_block() = AARUF_ERROR_CANNOT_READ_BLOCK");
+        return AARUF_ERROR_CANNOT_READ_BLOCK;
+    }
+
+    int32_t status = AARUF_ERROR_CANNOT_READ_BLOCK;
+
+    if(size >= sizeof(DpmHeader))
+    {
+        DpmHeader header;
+        memcpy(&header, recovered, sizeof(DpmHeader));
+
+        const size_t block_length = sizeof(DpmHeader) + (size_t)header.length;
+
+        if(header.length <= UINT32_MAX && size >= block_length &&
+           validate_dpm_block(recovered, block_length) == AARUF_STATUS_OK)
+        {
+            uint8_t *block = malloc(block_length);
+
+            if(block != NULL)
+            {
+                TRACE("Recovered DPM block at %" PRIu64 " with erasure coding", ctx->dpm_damaged_offset);
+
+                memcpy(block, recovered, block_length);
+                free(ctx->dpm_block);
+                ctx->dpm_block          = block;
+                ctx->dpm_block_length   = block_length;
+                ctx->dpm_damaged_offset = 0;
+                status                  = AARUF_STATUS_OK;
+            }
+        }
+    }
+
+    free(recovered);
+
+    TRACE("Exiting recover_dpm_block() = %d", status);
+    return status;
+}
+
+/**
  * @brief Processes a Data Position Measurement block from the image stream.
  *
  * Reads the block pointed to by the index entry, validates it and keeps it, header included, in the context so
@@ -104,9 +168,13 @@ void process_dpm_block(aaruformat_context *ctx, const IndexEntry *entry)
 
     DpmHeader header;
 
+    // From here on, a damaged block is recovered with erasure coding if the image has it
+    ctx->dpm_damaged_offset = entry->offset;
+
     if(fread(&header, 1, sizeof(DpmHeader), ctx->imageStream) != sizeof(DpmHeader))
     {
-        TRACE("Could not read DPM header, continuing...");
+        TRACE("Could not read DPM header, trying to recover it...");
+        recover_dpm_block(ctx);
 
         TRACE("Exiting process_dpm_block()");
         return;
@@ -115,7 +183,8 @@ void process_dpm_block(aaruformat_context *ctx, const IndexEntry *entry)
     if(header.identifier != DataPositionMeasurementBlock || header.length != dpm_payload_length(&header) ||
        header.length > UINT32_MAX)
     {
-        TRACE("Incorrect DPM header at position %" PRIu64 ", continuing...", entry->offset);
+        TRACE("Incorrect DPM header at position %" PRIu64 ", trying to recover it...", entry->offset);
+        recover_dpm_block(ctx);
 
         TRACE("Exiting process_dpm_block()");
         return;
@@ -137,16 +206,18 @@ void process_dpm_block(aaruformat_context *ctx, const IndexEntry *entry)
     if(fread(block + sizeof(DpmHeader), 1, header.length, ctx->imageStream) != header.length ||
        validate_dpm_block(block, block_length) != AARUF_STATUS_OK)
     {
-        TRACE("Could not read DPM block or it is corrupted, continuing...");
+        TRACE("Could not read DPM block or it is corrupted, trying to recover it...");
         free(block);
+        recover_dpm_block(ctx);
 
         TRACE("Exiting process_dpm_block()");
         return;
     }
 
     free(ctx->dpm_block);
-    ctx->dpm_block        = block;
-    ctx->dpm_block_length = block_length;
+    ctx->dpm_block          = block;
+    ctx->dpm_block_length   = block_length;
+    ctx->dpm_damaged_offset = 0;
 
     ctx->image_info.ImageSize += header.length;
 

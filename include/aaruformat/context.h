@@ -222,6 +222,7 @@ typedef struct aaruformat_context
     uint8_t                            *json_block;           ///< JSON metadata block payload (UTF-8).
     uint8_t                            *dpm_block;            ///< Data Position Measurement block, header included.
     size_t                              dpm_block_length;     ///< Length of dpm_block in bytes, 0 if not present.
+    uint64_t dpm_damaged_offset;  ///< Offset of a DPM block that failed to load, to recover it with erasure coding, or 0.
     uint8_t                            *creator;              ///< Who (person) created the image?
     uint8_t                            *media_title;          ///< Title of the media represented by the image
     uint8_t                            *comments;             ///< Image comments
