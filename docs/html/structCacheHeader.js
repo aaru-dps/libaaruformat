@@ -1,6 +1,7 @@
 var structCacheHeader =
 [
     [ "cache", "structCacheHeader.html#a44229bb929d8949f3c2700d07123d224", null ],
-    [ "free_func", "structCacheHeader.html#afeac54c794f8fece845e49954fd89f1a", null ],
-    [ "max_items", "structCacheHeader.html#ad3b962f8ce6c6115143cf581c7936e55", null ]
+    [ "cur_bytes", "structCacheHeader.html#ae6521ccf8e75b0c9c70297af637b1eaa", null ],
+    [ "free_func", "structCacheHeader.html#a54d553e78f5d90cce34ee684829a410f", null ],
+    [ "max_bytes", "structCacheHeader.html#af82718ebf5e59a398bc6e9428a389bb2", null ]
 ];

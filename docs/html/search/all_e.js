@@ -39,10 +39,12 @@ var searchData=
   ['nintendodiskcard_36',['NintendoDiskCard',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aab7736e1bdc9cb153900086bba46c3e06',1,'aaru.h']]],
   ['nintendodsgamecard_37',['NintendoDSGameCard',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa3d2a7b0cb27faa50e558f5dfcc4c52d5',1,'aaru.h']]],
   ['nintendodsigamecard_38',['NintendoDSiGameCard',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaab027fb2aa926f3ca765562d1fd09696',1,'aaru.h']]],
-  ['notdumped_39',['NotDumped',['../enums_8h.html#ab72dc399e3946b3c40a5ad8c8e3254b7ab3fac5cd103786d64f7ee67bcb9ac458',1,'enums.h']]],
-  ['num_5fblockhashes_40',['NUM_BLOCKHASHES',['../spamsum_8h.html#ab05c87bf87434740e1400b8f7fc9cbaa',1,'spamsum.h']]],
-  ['num_5fthreads_41',['num_threads',['../structaaruformat__context.html#abd11e50d05e8f007bf084a586bad0fe9',1,'aaruformat_context::num_threads'],['../structaaru__options.html#a8fd937eb8cc58a3e83e1318d38b3345a',1,'aaru_options::num_threads']]],
-  ['number_42',['Number',['../structTapePartitionEntry.html#afb840f56fb39b1074f96715d102e2c0f',1,'TapePartitionEntry']]],
-  ['number_5fof_5fdata_5ftracks_43',['number_of_data_tracks',['../structaaruformat__context.html#adcda13fede7a22da60ef942981aef1b2',1,'aaruformat_context']]],
-  ['nuon_44',['Nuon',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aad730786bd592903cc42ad7f5a5847171',1,'aaru.h']]]
+  ['no_5fuser_5fdata_5fddt_39',['no_user_data_ddt',['../structaaruformat__context.html#ab8e179a736f9c64441cc2adef26cc071',1,'aaruformat_context']]],
+  ['nominalspacing_40',['nominalSpacing',['../structDpmHeader.html#ab6d1019fc2d9f0f89f26daddda560c98',1,'DpmHeader']]],
+  ['notdumped_41',['NotDumped',['../enums_8h.html#ab72dc399e3946b3c40a5ad8c8e3254b7ab3fac5cd103786d64f7ee67bcb9ac458',1,'enums.h']]],
+  ['num_5fblockhashes_42',['NUM_BLOCKHASHES',['../spamsum_8h.html#ab05c87bf87434740e1400b8f7fc9cbaa',1,'spamsum.h']]],
+  ['num_5fthreads_43',['num_threads',['../structaaruformat__context.html#abd11e50d05e8f007bf084a586bad0fe9',1,'aaruformat_context::num_threads'],['../structaaru__options.html#a8fd937eb8cc58a3e83e1318d38b3345a',1,'aaru_options::num_threads']]],
+  ['number_44',['Number',['../structTapePartitionEntry.html#afb840f56fb39b1074f96715d102e2c0f',1,'TapePartitionEntry']]],
+  ['number_5fof_5fdata_5ftracks_45',['number_of_data_tracks',['../structaaruformat__context.html#adcda13fede7a22da60ef942981aef1b2',1,'aaruformat_context']]],
+  ['nuon_46',['Nuon',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aad730786bd592903cc42ad7f5a5847171',1,'aaru.h']]]
 ];

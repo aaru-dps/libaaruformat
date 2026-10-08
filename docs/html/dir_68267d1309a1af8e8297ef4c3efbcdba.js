@@ -13,6 +13,7 @@ var dir_68267d1309a1af8e8297ef4c3efbcdba =
     [ "close.c", "close_8c.html", "close_8c" ],
     [ "close_write.c", "close__write_8c.html", "close__write_8c" ],
     [ "create.c", "create_8c.html", "create_8c" ],
+    [ "dpm.c", "dpm_8c.html", "dpm_8c" ],
     [ "dump.c", "dump_8c.html", "dump_8c" ],
     [ "erasure.c", "erasure_8c.html", "erasure_8c" ],
     [ "helpers.c", "helpers_8c.html", "helpers_8c" ],
