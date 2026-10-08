@@ -74,8 +74,8 @@ int32_t validate_dpm_block(const uint8_t *data, size_t length)
  *
  * The DPM block is part of the erasure coding metadata group. When it fails to load, its offset is remembered in
  * ctx->dpm_damaged_offset, and this rebuilds it from the parity, trims the alignment padding the recovered bytes
- * carry, validates it and keeps it in the context. It needs the erasure coding map, which aaruf_open() loads after
- * processing the indexed blocks, so it is tried again from there.
+ * carry, validates it and keeps it in the context. aaruf_open() loads the erasure coding map before processing the
+ * indexed blocks, so this works while opening.
  *
  * @param ctx Pointer to the aaruformat context.
  * @return AARUF_STATUS_OK if the block was recovered, an error status otherwise.

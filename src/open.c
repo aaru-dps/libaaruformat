@@ -542,6 +542,10 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
               entry->dataType, entry->offset);
     }
 
+    /* Load the erasure coding recovery map from the footer at the end of the file before processing the blocks, so
+     * the blocks found damaged can be recovered while they are processed */
+    ec_load_ecmb(ctx);
+
     bool found_user_data_ddt  = false;
     bool has_flux_block       = false;
     ctx->image_info.ImageSize = 0;
@@ -741,11 +745,6 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     ctx->library_major_version = LIBAARUFORMAT_MAJOR_VERSION;
     ctx->library_minor_version = LIBAARUFORMAT_MINOR_VERSION;
 
-    /* Try to load erasure coding recovery metadata from EOF footer */
-    ec_load_ecmb(ctx);
-
-    /* Blocks are processed before the erasure coding map is loaded, so recover a damaged DPM block now */
-    if(ctx->dpm_block == NULL && ctx->dpm_damaged_offset != 0) recover_dpm_block(ctx);
 
     if(!resume_mode)
     {
