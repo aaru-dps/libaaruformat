@@ -163,6 +163,8 @@ see [docs/ASAN_USAGE.md](docs/ASAN_USAGE.md).
 
 - `-DBUILD_SHARED_LIBS=OFF` — Build as static library (default: shared)
 - `-DBUILD_TOOL=ON` — Build the CLI tool (requires Argtable3, ICU, curses)
-- `-DUSE_SLOG=ON` — Enable slog logging for debugging
+- `-DAARU_ENABLE_LOGGING=ON` — Enable TRACE/FATAL debug logging. Output goes to stderr; set
+  `AARUFORMAT_LOG_FILE=<path>` to append to a file instead, and `AARUFORMAT_LOG_LEVEL=trace|fatal|none`
+  to filter it at runtime
 - `-DUSE_ASAN=ON` — Enable Address Sanitizer for memory error detection
 

@@ -62,6 +62,7 @@ libaaruformat/
 │   ├── verify.c       # Image verification
 │   ├── identify.c     # Format identification
 │   ├── helpers.c      # DataType <-> MediaTagType conversion
+│   ├── log.c          # In-house TRACE/FATAL logger (no third-party dependency)
 │   ├── lru.c          # LRU block cache
 │   ├── lisa_tag.c     # Apple Lisa tag handling
 │   ├── metadata.c     # Metadata reading
@@ -75,7 +76,7 @@ libaaruformat/
 │   ├── wiiu/          # Wii U convert tool (WUD/WUX reader)
 │   └── ngcw/          # NGC/Wii convert tool
 ├── 3rdparty/          # Third-party dependencies (BLAKE3, FLAC, LZMA, xxHash,
-│                      #   Zstd, uthash, slog)
+│                      #   Zstd, uthash)
 ├── docs/              # Documentation and format specification
 │   ├── spec/          # AsciiDoc format specification
 │   └── ASAN_USAGE.md  # Address Sanitizer guide
@@ -93,7 +94,8 @@ cmake --build .
 ```
 
 ### Build Options
-- `-DUSE_SLOG=ON` - Enable slog logging for debugging
+- `-DAARU_ENABLE_LOGGING=ON` - Enable TRACE/FATAL debug logging (in-house logger in `src/log.c`; env vars
+  `AARUFORMAT_LOG_FILE` and `AARUFORMAT_LOG_LEVEL=trace|fatal|none`). `-DUSE_SLOG=ON` is a deprecated alias
 - `-DUSE_ASAN=ON` - Enable Address Sanitizer for memory error detection
 - `-DBUILD_SHARED_LIBS=OFF` - Build as static library (default: shared)
 - `-DBUILD_TOOL=ON` - Build the CLI tool (requires Argtable3, ICU, curses)
