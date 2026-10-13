@@ -244,14 +244,6 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     uint32_t            signature     = 0;
     UT_array           *index_entries = NULL;
 
-#ifdef USE_SLOG
-#include "slog.h"
-
-    slog_init("aaruformat.log", SLOG_FLAGS_ALL, 0);
-#endif
-
-    TRACE("Logging initialized");
-
     TRACE("Entering aaruf_open(%s)", filepath);
     aaruf_set_open_error(0);
 

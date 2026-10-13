@@ -55,8 +55,14 @@ endif()
 
 project(libaaruformat C)
 
-# Option to enable slog logging (disabled by default)
-option(USE_SLOG "Enable slog logging" OFF)
+# Option to enable TRACE/FATAL debug logging (disabled by default)
+option(AARU_ENABLE_LOGGING "Enable TRACE/FATAL debug logging" OFF)
+
+# Deprecated alias kept for existing build scripts
+if(USE_SLOG)
+  message(WARNING "USE_SLOG is deprecated, use AARU_ENABLE_LOGGING instead")
+  set(AARU_ENABLE_LOGGING ON CACHE BOOL "Enable TRACE/FATAL debug logging" FORCE)
+endif()
 
 # Option to enable address sanitizer (disabled by default)
 option(USE_ASAN "Enable address sanitizer" OFF)
@@ -270,6 +276,7 @@ add_library(aaruformat
             src/options.c
             src/create.c
             src/time.c
+            src/log.c
             src/write.c
             include/log.h
             src/ddt/hash_map.c
@@ -365,27 +372,12 @@ else()
   set_property(TARGET aaruformat PROPERTY POSITION_INDEPENDENT_CODE FALSE)
 endif()
 
-# Add slog submodule
-if(POLICY CMP0000)
-  cmake_policy(VERSION 3.5)
-endif()
-
-# Conditionally enable slog logging
-if(USE_SLOG)
-  add_subdirectory(3rdparty/slog)
-
-  # Include slog headers
-  target_include_directories(aaruformat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/slog/src)
-
-  # Enable TRACE and slog output
-  target_compile_definitions(aaruformat PRIVATE ENABLE_TRACE ENABLE_FATAL USE_SLOG)
-
-  # Link slog
-  target_link_libraries(aaruformat slog)
-
-  message(STATUS "slog logging enabled")
+# Conditionally enable debug logging
+if(AARU_ENABLE_LOGGING)
+  target_compile_definitions(aaruformat PRIVATE ENABLE_TRACE ENABLE_FATAL)
+  message(STATUS "Debug logging enabled")
 else()
-  message(STATUS "slog logging disabled (enable with -DUSE_SLOG=ON)")
+  message(STATUS "Debug logging disabled (enable with -DAARU_ENABLE_LOGGING=ON)")
 endif()
 
 # Check for math library
