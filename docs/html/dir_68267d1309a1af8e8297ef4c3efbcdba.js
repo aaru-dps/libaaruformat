@@ -19,6 +19,7 @@ var dir_68267d1309a1af8e8297ef4c3efbcdba =
     [ "helpers.c", "helpers_8c.html", "helpers_8c" ],
     [ "identify.c", "identify_8c.html", "identify_8c" ],
     [ "lisa_tag.c", "lisa__tag_8c.html", "lisa__tag_8c" ],
+    [ "log.c", "log_8c.html", "log_8c" ],
     [ "lru.c", "lru_8c.html", "lru_8c" ],
     [ "metadata.c", "metadata_8c.html", "metadata_8c" ],
     [ "metadata_write.c", "metadata__write_8c.html", "metadata__write_8c" ],

@@ -13,5 +13,8 @@ var searchData=
   ['library_5fmajor_5fversion_10',['library_major_version',['../structaaruformat__context.html#a09177c9e68d054bab844305f2771b77a',1,'aaruformat_context']]],
   ['library_5fminor_5fversion_11',['library_minor_version',['../structaaruformat__context.html#a8fb7db933d8abfeb20a28110cb258922',1,'aaruformat_context']]],
   ['lo_12',['lo',['../structmd5__ctx.html#aff3c51e4ae412c387c9f2660ba46eea7',1,'md5_ctx']]],
-  ['lzma_5fdict_5fsize_13',['lzma_dict_size',['../structaaruformat__context.html#adc67f6a6ef1602648bb064d47eb1fe88',1,'aaruformat_context']]]
+  ['log_5flevel_13',['log_level',['../log_8c.html#ab5a71c2541c377b3d5b34fdb35964c2e',1,'log.c']]],
+  ['log_5fstate_14',['log_state',['../log_8c.html#a0561068639e2259bc003893a91a06f7b',1,'log.c']]],
+  ['log_5fstream_15',['log_stream',['../log_8c.html#ab3c2c3d87bc04f76e9df54045662c934',1,'log.c']]],
+  ['lzma_5fdict_5fsize_16',['lzma_dict_size',['../structaaruformat__context.html#adc67f6a6ef1602648bb064d47eb1fe88',1,'aaruformat_context']]]
 ];
