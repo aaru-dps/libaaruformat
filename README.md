@@ -96,6 +96,19 @@ licensed under the LGPL-2.1.
 
 ### CLI Tool (`aaruformattool`)
 
+> [!CAUTION]
+> **`aaruformattool` is a debugging tool for internal and development use only. It is NOT intended
+> for end users.**
+>
+> - It exists solely to help develop, test and debug libaaruformat itself.
+> - Using it **can break, damage and corrupt images in unrecoverable ways**.
+> - Its commands, options and output may change or disappear at any time without notice, and no
+>   support is provided for it.
+> - Never run it on your only copy of an image. Never use it to create, convert or modify images you
+>   intend to preserve.
+>
+> To work with AaruFormat images, use [Aaru](https://github.com/aaru-dps/Aaru).
+
 Optional command-line tool built with `-DBUILD_TOOL=ON`. Commands include:
 - `identify` — Identify AaruFormat version
 - `info` — Display detailed image information
@@ -162,7 +175,9 @@ see [docs/ASAN_USAGE.md](docs/ASAN_USAGE.md).
 ### Build Options
 
 - `-DBUILD_SHARED_LIBS=OFF` — Build as static library (default: shared)
-- `-DBUILD_TOOL=ON` — Build the CLI tool (requires Argtable3, ICU, curses)
+- `-DBUILD_TOOL=ON` — Build the `aaruformattool` debugging tool (requires Argtable3, ICU, curses).
+  For internal and development use only; it can irreversibly corrupt images and is not meant for end
+  users (see [CLI Tool](#cli-tool-aaruformattool))
 - `-DAARU_ENABLE_LOGGING=ON` — Enable TRACE/FATAL debug logging. Output goes to stderr; set
   `AARUFORMAT_LOG_FILE=<path>` to append to a file instead, and `AARUFORMAT_LOG_LEVEL=trace|fatal|none`
   to filter it at runtime
