@@ -1384,11 +1384,6 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_track_sector(void *context, uint8_t *da
  *         - Cannot allocate memory for user data during block media processing
  *         - Memory allocation fails in underlying aaruf_read_sector() calls
  *
- * @retval AARUF_ERROR_TRACK_NOT_FOUND (-13) Cannot locate the sector's track. This occurs when:
- *         - For optical discs: the sector address doesn't fall within any data track boundaries
- *         - No track contains the specified sector address (address not in any track.start to track.end range)
- *         - The track list is empty or corrupted
- *
  * @retval AARUF_ERROR_INVALID_TRACK_FORMAT (-14) The track has an unsupported format. This occurs when:
  *         - The track type is not recognized (not Audio, Data, CdMode1, CdMode2*, etc.)
  *         - Internal track format validation fails
@@ -1427,7 +1422,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_track_sector(void *context, uint8_t *da
  *       - Pass data as NULL to query the exact required buffer size
  *
  * @warning For optical discs, this function requires track information to be available.
- *          Images without track data may not support long sector reading.
+ *          Images without track data may not support long sector reading. Sectors outside any track
+ *          (Lead-In and Lead-Out, stored as negative and overflow sectors) take the format of the track after
+ *          and before them, as the Compact Disc specifications dictate, unless they were stored raw.
  *
  * @warning The function performs complex sector reconstruction. Corrupted metadata
  *          or missing correction data may result in incorrect sector assembly.
@@ -1450,8 +1447,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
     int32_t                   res         = 0;
     int32_t                   query_status;
     TrackEntry                trk;
-    int                       i         = 0;
-    bool                      trk_found = false;
+    bool                      trk_found     = false;
+    bool                      outside_track = false;
 
     if(context == NULL)
     {
@@ -1773,23 +1770,16 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                 return res;
             }
 
-            trk_found = false;
+            // Lead-In and Lead-Out sectors take the format of the track after and before them
+            trk_found = find_cd_track_for_sector(ctx->data_tracks, ctx->number_of_data_tracks, signed_lba, &trk,
+                                                 &outside_track);
 
-            for(i = 0; i < ctx->number_of_data_tracks; i++)
-                if(sector_address >= ctx->data_tracks[i].start && sector_address <= ctx->data_tracks[i].end)
-                {
-                    trk_found = true;
-                    trk       = ctx->data_tracks[i];
-                    break;
-                }
-
-            if(!trk_found)
+            // Older images stored sectors outside any track as raw data, whatever the track next to them
+            if(!trk_found || outside_track && bare_length == 2352)
             {
-                FATAL("Track not found");
-                free(bare_data);
-
-                TRACE("Exiting aaruf_read_sector_long() = AARUF_ERROR_TRACK_NOT_FOUND");
-                return AARUF_ERROR_TRACK_NOT_FOUND;
+                TRACE("Sector %" PRIu64 " is stored raw, outside any track", sector_address);
+                memset(&trk, 0, sizeof(TrackEntry));
+                trk.type = kTrackTypeData;
             }
 
             switch(trk.type)
