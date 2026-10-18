@@ -525,3 +525,50 @@ AARU_EXPORT int32_t AARU_CALL aaruf_set_tracks(void *context, TrackEntry *tracks
     TRACE("Exiting aaruf_set_tracks() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
 }
+/**
+ * @brief Finds the track whose format applies to a Compact Disc sector.
+ *
+ * A sector inside a track uses that track's format. Following the Compact Disc specifications, a sector
+ * outside any track uses the format of the track after it if it is in the Lead-In (before the first track),
+ * or of the track before it if it is in a Lead-Out.
+ *
+ * @param tracks  Tracks to search.
+ * @param count   Number of tracks.
+ * @param lba     Sector address, negative for Lead-In sectors.
+ * @param track   Receives the track whose format applies to the sector.
+ * @param outside Set to true if the sector is not inside the returned track. Can be NULL.
+ * @return true if a track was found, false if there are no tracks.
+ */
+bool find_cd_track_for_sector(const TrackEntry *tracks, const int count, const int64_t lba, TrackEntry *track,
+                              bool *outside)
+{
+    const TrackEntry *first  = NULL;
+    const TrackEntry *before = NULL;
+
+    if(outside != NULL) *outside = false;
+
+    if(tracks == NULL) return false;
+
+    for(int i = 0; i < count; i++)
+    {
+        if(lba >= tracks[i].start && lba <= tracks[i].end)
+        {
+            *track = tracks[i];
+            return true;
+        }
+
+        if(first == NULL || tracks[i].start < first->start) first = &tracks[i];
+
+        if(tracks[i].end < lba && (before == NULL || tracks[i].end > before->end)) before = &tracks[i];
+    }
+
+    // Lead-Out, or between sessions, belongs to the track before it, Lead-In to the first track
+    const TrackEntry *nearest = before != NULL ? before : first;
+
+    if(nearest == NULL) return false;
+
+    *track = *nearest;
+    if(outside != NULL) *outside = true;
+
+    return true;
+}

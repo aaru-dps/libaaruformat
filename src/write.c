@@ -400,21 +400,17 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
         // We need to save the track type for later compression
         if(ctx->image_info.MetadataMediaType == OpticalDisc && ctx->track_entries != NULL)
         {
+            TrackEntry        found_track;
             const TrackEntry *track = NULL;
-            for(int i = 0; i < ctx->tracks_header.entries; i++)
-                if(sector_address >= ctx->track_entries[i].start && sector_address <= ctx->track_entries[i].end)
-                {
-                    track = &ctx->track_entries[i];
-                    break;
-                }
+
+            // Lead-In and Lead-Out sectors take the format of the track after and before them
+            if(find_cd_track_for_sector(ctx->track_entries, ctx->tracks_header.entries,
+                                        negative ? -(int64_t)sector_address : (int64_t)sector_address, &found_track,
+                                        NULL))
+                track = &found_track;
 
             if(track != NULL)
-            {
                 ctx->current_track_type = track->type;
-
-                if(track->sequence == 0 && track->start == 0 && track->end == 0)
-                    ctx->current_track_type = kTrackTypeData;
-            }
             else
                 ctx->current_track_type = kTrackTypeData;
 
@@ -745,14 +741,12 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
         {
             TrackEntry track = {0};
 
-            for(int i = 0; i < ctx->tracks_header.entries; i++)
-                if(sector_address >= ctx->track_entries[i].start && sector_address <= ctx->track_entries[i].end)
-                {
-                    track = ctx->track_entries[i];
-                    break;
-                }
+            // LBA as encoded in a CD sector header (lead-in sectors are negative)
+            const int64_t signed_lba = negative ? -(int64_t)sector_address : (int64_t)sector_address;
 
-            if(track.sequence == 0 && track.start == 0 && track.end == 0) track.type = kTrackTypeData;
+            // Lead-In and Lead-Out sectors take the format of the track after and before them
+            if(!find_cd_track_for_sector(ctx->track_entries, ctx->tracks_header.entries, signed_lba, &track, NULL))
+                track.type = kTrackTypeData;
 
             uint64_t corrected_sector_address = sector_address;
 
@@ -764,9 +758,6 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
 
             uint64_t total_sectors =
                 ctx->user_data_ddt_header.negative + ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow;
-
-            // LBA as encoded in a CD sector header (lead-in sectors are negative)
-            const int64_t signed_lba = negative ? -(int64_t)sector_address : (int64_t)sector_address;
 
             // DVD long sector
             if(length == 2064 && (ctx->image_info.MediaType == DVDROM || ctx->image_info.MediaType == PS2DVD ||

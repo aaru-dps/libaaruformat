@@ -73,6 +73,7 @@ int32_t   process_ddt_v2(aaruformat_context *ctx, IndexEntry *entry, bool *found
 void      process_metadata_block(aaruformat_context *ctx, const IndexEntry *entry);
 void      process_geometry_block(aaruformat_context *ctx, const IndexEntry *entry);
 void      process_tracks_block(aaruformat_context *ctx, const IndexEntry *entry);
+bool      find_cd_track_for_sector(const TrackEntry *tracks, int count, int64_t lba, TrackEntry *track, bool *outside);
 void      process_cicm_block(aaruformat_context *ctx, const IndexEntry *entry);
 void      process_aaru_metadata_json_block(aaruformat_context *ctx, const IndexEntry *entry);
 void      process_dumphw_block(aaruformat_context *ctx, const IndexEntry *entry);
