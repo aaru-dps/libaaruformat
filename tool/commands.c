@@ -213,6 +213,26 @@ int cmd_upgrade_ddt_to_alpha21(int argc, char *argv[])
     return result;
 }
 
+int cmd_repair_cd_arena(int argc, char *argv[])
+{
+    struct arg_lit *dry_run    = arg_lit0(NULL, "dry-run", "Only report recoverable/lost slots, write nothing");
+    struct arg_str *filename   = arg_str1(NULL, NULL, "<filename>", "Image to repair");
+    struct arg_end *end        = arg_end(10);
+    void           *argtable[] = {dry_run, filename, end};
+
+    if(arg_parse(argc, argv, argtable) > 0)
+    {
+        arg_print_errors(stderr, end, "repair-cd-arena");
+        usage_repair_cd_arena();
+        arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
+        return -1;
+    }
+
+    const int result = repair_cd_arena(filename->sval[0], dry_run->count > 0);
+    arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
+    return result;
+}
+
 int cmd_inject_media_tag(int argc, char *argv[])
 {
     struct arg_str *tag_type       = arg_str1(NULL, NULL, "<tag-type>", "Media tag type to inject");
@@ -318,6 +338,7 @@ Command commands[] = {
     {           "cli-compare",            cmd_cli_compare},
     {               "convert",                cmd_convert},
     {"upgrade-ddt-to-alpha21", cmd_upgrade_ddt_to_alpha21},
+    {       "repair-cd-arena",        cmd_repair_cd_arena},
     {      "inject-media-tag",       cmd_inject_media_tag},
     {           "convert-ps3",            cmd_convert_ps3},
     {          "convert-wiiu",           cmd_convert_wiiu},

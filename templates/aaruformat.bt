@@ -1122,6 +1122,41 @@ typedef struct
 
 typedef struct
 {
+    uint64 lba;
+    uint64 angle;
+    ubyte status;
+} DpmEntry;
+
+typedef struct
+{
+    uint64 lba;
+    uint64 rotation_period;
+    uint64 sectors_per_turn_x1000;
+} DpmCalibration;
+
+typedef struct
+{
+    BlockType identifier;
+    uint entries;
+    uint calibrations;
+    uint nominal_spacing;
+    uint16 timing_unit;
+    uint16 speed;
+    ubyte layer_ends;
+    ubyte flags;
+    uint16 reserved;
+    uint64 length;
+    uint64 crc64 <format=hex>;
+    if(layer_ends > 0)
+        uint64 layer_end[layer_ends];
+    if(entries > 0)
+        DpmEntry dpm_entries[entries];
+    if(calibrations > 0)
+        DpmCalibration dpm_calibrations[calibrations];
+} DpmHeader;
+
+typedef struct
+{
     uint16 track;
     uint16 index;
     uint32 lba;
@@ -1272,7 +1307,8 @@ for(i = 0; i < index.entries; i++)
         case IndexBlock3: // TODO: Index Continuation
             Index3 index;
             break;
-        case 0x2A4D5044: // TODO: Data Position Measurement
+        case DataPositionMeasurementBlock:
+            DpmHeader dpm;
             break;
         case 0x58494443:
             CompactDiscIndexesBlock compactDiscIndexes;

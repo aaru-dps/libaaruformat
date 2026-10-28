@@ -44,6 +44,7 @@ int cmd_compare(int argc, char *argv[]);
 int cmd_cli_compare(int argc, char *argv[]);
 int cmd_convert(int argc, char *argv[]);
 int cmd_upgrade_ddt_to_alpha21(int argc, char *argv[]);
+int cmd_repair_cd_arena(int argc, char *argv[]);
 int cmd_inject_media_tag(int argc, char *argv[]);
 int cmd_convert_ps3(int argc, char *argv[]);
 int cmd_convert_ngcw(int argc, char *argv[]);

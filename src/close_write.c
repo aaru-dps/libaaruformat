@@ -4648,6 +4648,80 @@ static void write_aaru_json_block(aaruformat_context *ctx)
 }
 
 /**
+ * @brief Removes every Data Position Measurement block from the index.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ *
+ * @internal
+ */
+static void remove_dpm_index_entries(aaruformat_context *ctx)
+{
+    for(int k = utarray_len(ctx->index_entries) - 1; k >= 0; k--)
+    {
+        const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, k);
+
+        if(entry && entry->blockType == DataPositionMeasurementBlock && entry->dataType == 0)
+        {
+            TRACE("Found existing DPM block index entry at position %d, removing", k);
+            utarray_erase(ctx->index_entries, k, 1);
+            ctx->dirty_index_block = true;
+        }
+    }
+}
+
+/**
+ * @brief Serializes the Data Position Measurement block to the image file.
+ *
+ * Writes the DPM block kept in the context, header and payload exactly as validated by aaruf_set_dpm() or loaded on
+ * open, at the end of the file aligned to the block alignment, and replaces any previous DPM index entry with one
+ * pointing to it. If the DPM was cleared with aaruf_clear_dpm(), it only removes the previous index entry.
+ *
+ * @param ctx Pointer to the aaruformat context.
+ *
+ * @internal
+ */
+static void write_dpm_block(aaruformat_context *ctx)
+{
+    if(ctx->dpm_block == NULL || ctx->dpm_block_length == 0)
+    {
+        TRACE("No DPM to write, removing any previous DPM block from the index");
+        remove_dpm_index_entries(ctx);
+
+        return;
+    }
+
+    aaruf_fseek(ctx->imageStream, 0, SEEK_END);
+    aaru_off_t     block_position = aaruf_ftell(ctx->imageStream);
+    const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
+
+    if(block_position & alignment_mask)
+    {
+        const uint64_t aligned_position = block_position + alignment_mask & ~alignment_mask;
+        aaruf_fseek(ctx->imageStream, aligned_position, SEEK_SET);
+        block_position = aligned_position;
+    }
+
+    TRACE("Writing DPM block at position %" PRId64, (int64_t)block_position);
+
+    if(fwrite(ctx->dpm_block, ctx->dpm_block_length, 1, ctx->imageStream) != 1)
+    {
+        TRACE("Could not write DPM block");
+
+        return;
+    }
+
+    remove_dpm_index_entries(ctx);
+
+    IndexEntry index_entry;
+    index_entry.blockType = DataPositionMeasurementBlock;
+    index_entry.dataType  = 0;
+    index_entry.offset    = block_position;
+    utarray_push_back(ctx->index_entries, &index_entry);
+    ctx->dirty_index_block = true;
+    TRACE("Added DPM block index entry at offset %" PRIu64, (uint64_t)block_position);
+}
+
+/**
  * @brief Serialize a single flux capture payload block to the image file.
  *
  * This helper function writes a DataStreamPayloadBlock containing the raw flux data and index
@@ -5603,6 +5677,9 @@ int32_t aaruf_finalize_write(aaruformat_context *ctx)
 
     // Write Aaru metadata JSON block if any
     if(ctx->dirty_json_block) write_aaru_json_block(ctx);
+
+    // Write Data Position Measurement block
+    if(ctx->dirty_dpm_block) write_dpm_block(ctx);
 
     // Write the complete index at the end of the file
     if(ctx->dirty_index_block)

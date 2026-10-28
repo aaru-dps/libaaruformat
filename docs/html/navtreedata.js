@@ -26,11 +26,26 @@ var NAVTREE =
 [
   [ "libaaruformat", "index.html", [
     [ "libaaruformat", "md_README.html", [
-      [ "Building and Testing", "md_README.html#autotoc_md1", [
-        [ "Standard Build", "md_README.html#autotoc_md2", null ],
-        [ "Running Tests", "md_README.html#autotoc_md3", null ],
-        [ "Building with Address Sanitizer", "md_README.html#autotoc_md4", null ],
-        [ "Other Build Options", "md_README.html#autotoc_md5", null ]
+      [ "What is Aaru?", "md_README.html#autotoc_md1", null ],
+      [ "What is AaruFormat?", "md_README.html#autotoc_md2", null ],
+      [ "What is libaaruformat?", "md_README.html#autotoc_md3", null ],
+      [ "Features", "md_README.html#autotoc_md4", [
+        [ "Core", "md_README.html#autotoc_md5", null ],
+        [ "Compression", "md_README.html#autotoc_md6", null ],
+        [ "Checksums &amp; Hashing", "md_README.html#autotoc_md7", null ],
+        [ "Erasure Coding &amp; Data Recovery", "md_README.html#autotoc_md8", null ],
+        [ "Console Disc Encryption/Decryption", "md_README.html#autotoc_md9", null ],
+        [ "Media &amp; Metadata", "md_README.html#autotoc_md10", null ],
+        [ "CLI Tool (<span class=\"tt\">aaruformattool</span>)", "md_README.html#autotoc_md11", null ],
+        [ "Platform Support", "md_README.html#autotoc_md12", null ],
+        [ "Developer", "md_README.html#autotoc_md13", null ]
+      ] ],
+      [ "Things still to be implemented", "md_README.html#autotoc_md14", null ],
+      [ "Building and Testing", "md_README.html#autotoc_md15", [
+        [ "Standard Build", "md_README.html#autotoc_md16", null ],
+        [ "Running Tests", "md_README.html#autotoc_md17", null ],
+        [ "Building with Address Sanitizer", "md_README.html#autotoc_md18", null ],
+        [ "Build Options", "md_README.html#autotoc_md19", null ]
       ] ]
     ] ],
     [ "Topics", "topics.html", "topics" ],
@@ -60,18 +75,19 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "aaru_8h.html",
-"decls_8h.html#a69ca66242c0becf7640b3d1cc8da8f9c",
-"enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a866d70f75c49577c91296f2598347663",
-"globals_eval_d.html",
-"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa30d4793d280426cf5f04f93f5b5978a6",
-"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aaa73cc08581063a7bb0353bf4a7919a94",
-"index_8h_source.html",
-"optical_8c.html#a2ce65757ca5209f17d467c51ba7d445d",
-"structDataStreamPayloadHeader.html#a55c9590fb1c3d87a9cce3b389826c1a5",
-"structWiiPartitionRegion.html#a99f8cd96b1258c9174988fcb3db1c92d",
-"structpriam__tag.html#a5a87eb133113df721274e6eda73435a4"
+"decls_8h.html#a562bb88bbf499eac272182acb5528dea",
+"enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a4f382d84ab50ed66da4835049844db0d",
+"functions_vars_t.html",
+"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa1da82b907193d0fd3a38e6d7eb7d1d90",
+"group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa93b0b84a1ca688e24f0677d91c2b280b",
+"hash__map_8c.html",
+"md_README.html#autotoc_md9",
+"static__lru__hash__map_8h.html#aa96225bd1e66d8afd7541bc4587bb88f",
+"structIndexHeader.html#ae177ec4a99f07ed0e3caadf38a27268e",
+"structaaruformat__context.html#a939b702f75e80062bc635add4c3ab142",
+"wiiu__crypto_8c.html#a56ef715248dfeaef2a1d78400449c27b"
 ];
 
-var SYNCONMSG = 'click to disable panel synchronization';
-var SYNCOFFMSG = 'click to enable panel synchronization';
-var LISTOFALLMEMBERS = 'List of all members';
+const SYNCONMSG = 'click to disable panel synchronization';
+const SYNCOFFMSG = 'click to enable panel synchronization';
+const LISTOFALLMEMBERS = 'List of all members';

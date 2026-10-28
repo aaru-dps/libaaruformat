@@ -31,6 +31,7 @@ var searchData=
   ['gigamo2_28',['GigaMo2',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aad1b09b8d81bdf543b085d1dd34f35bb0',1,'aaru.h']]],
   ['god_29',['GOD',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa34fed1daeb2422887d826d127e6ad488',1,'aaru.h']]],
   ['grouptype_30',['groupType',['../structStripeGroupDescriptor.html#a6093f8c41fb1aa55c8367e2a92fe9f7f',1,'StripeGroupDescriptor']]],
-  ['guid_31',['guid',['../structAaruHeaderV2.html#a69ff1a1dbdaf0501e6488451b7270b51',1,'AaruHeaderV2']]],
-  ['guid_5fsize_32',['GUID_SIZE',['../header_8h.html#a57c99b24137b82f12950e79ffbd2fb7a',1,'header.h']]]
+  ['grow_5farena_31',['grow_arena',['../write_8c.html#aafb6edab76a6d6da47a5570cb19c7b41',1,'write.c']]],
+  ['guid_32',['guid',['../structAaruHeaderV2.html#a69ff1a1dbdaf0501e6488451b7270b51',1,'AaruHeaderV2']]],
+  ['guid_5fsize_33',['GUID_SIZE',['../header_8h.html#a57c99b24137b82f12950e79ffbd2fb7a',1,'header.h']]]
 ];

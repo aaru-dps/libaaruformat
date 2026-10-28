@@ -10,5 +10,6 @@ var searchData=
   ['gf256_5fmul_5fregion_7',['gf256_mul_region',['../gf256_8c.html#ad9ea1dd38b7a45e2c9f967c26d7b05df',1,'gf256_mul_region(uint8_t *dst, const uint8_t *src, uint8_t coeff, size_t len):&#160;gf256.c'],['../gf256_8h.html#ad9ea1dd38b7a45e2c9f967c26d7b05df',1,'gf256_mul_region(uint8_t *dst, const uint8_t *src, uint8_t coeff, size_t len):&#160;gf256.c']]],
   ['gf256_5fmul_5fregion_5fscalar_8',['gf256_mul_region_scalar',['../gf256_8c.html#ab25d615b33a0d7af9b9313494ac30f91',1,'gf256.c']]],
   ['gf256_5fxor_5fregion_9',['gf256_xor_region',['../gf256_8c.html#a2e7b136d97e3214ff718f46542e276da',1,'gf256_xor_region(uint8_t *dst, const uint8_t *src, size_t len):&#160;gf256.c'],['../gf256_8h.html#a2e7b136d97e3214ff718f46542e276da',1,'gf256_xor_region(uint8_t *dst, const uint8_t *src, size_t len):&#160;gf256.c']]],
-  ['gf256_5fxor_5fregion_5fscalar_10',['gf256_xor_region_scalar',['../gf256_8c.html#ad1a9a733d8545bb5b217b49aea7aa43a',1,'gf256.c']]]
+  ['gf256_5fxor_5fregion_5fscalar_10',['gf256_xor_region_scalar',['../gf256_8c.html#ad1a9a733d8545bb5b217b49aea7aa43a',1,'gf256.c']]],
+  ['grow_5farena_11',['grow_arena',['../write_8c.html#aafb6edab76a6d6da47a5570cb19c7b41',1,'write.c']]]
 ];

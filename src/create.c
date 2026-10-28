@@ -402,10 +402,13 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
     // Initialize caches
     TRACE("Initializing caches");
     ctx->block_header_cache.cache     = NULL;
-    const uint64_t cache_divisor      = (uint64_t)ctx->image_info.SectorSize * (1ULL << ctx->shift);
-    ctx->block_header_cache.max_items = cache_divisor == 0 ? 0 : MAX_CACHE_SIZE / cache_divisor;
+    ctx->block_header_cache.cur_bytes = 0;
+    ctx->block_header_cache.max_bytes = MAX_HEADER_CACHE_SIZE;
+    ctx->block_header_cache.free_func = free;
     ctx->block_cache.cache            = NULL;
-    ctx->block_cache.max_items        = ctx->block_header_cache.max_items;
+    ctx->block_cache.cur_bytes        = 0;
+    ctx->block_cache.max_bytes        = MAX_CACHE_SIZE;
+    ctx->block_cache.free_func        = free;
 
     // TODO: Cache tracks and sessions?
 
@@ -629,6 +632,7 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
     ctx->dirty_dumphw_block                  = true;
     ctx->dirty_cicm_block                    = true;
     ctx->dirty_json_block                    = true;
+    ctx->dirty_dpm_block                     = true;
     ctx->dirty_flux_block                    = true;
     ctx->dirty_index_block                   = true;
 

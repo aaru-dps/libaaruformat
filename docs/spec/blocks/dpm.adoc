@@ -1,6 +1,211 @@
 === 📍 Data Position Measurement Block (`DPM*`)
 
-This block captures measurements of each sector’s position, providing insights into the physical structure of the disc.
-It is designed to facilitate analysis of disc geometry and sector layout.
+This block records the physical angle of sectors along the spiral track of an optical disc, as measured by timing reads.
+Some copy protections, like SecuROM, check that sectors are where the original mastering placed them, so this information is needed to reproduce the disc.
 
-The formal definition of this block’s format is reserved for a future revision of the specification.
+The angle is cumulative: it is 0 at the first entry and grows by one full turn every 2560000 units, so it also counts how many times the disc turned since the first entry.
+This unit is the one used by Alcohol 120% (256 per turn) multiplied by 10000, so dividing a value by 10000 and rounding it gives the Alcohol 120% value.
+
+The block is made of a header, followed by the last sector of every layer but the last, the control points, and the rotation calibrations done while measuring.
+There is no padding between them.
+
+==== Structure Definition
+
+[source,c]
+#define DPM_MAGIC 0x2A4D5044
+#define DPM_UNITS_PER_TURN 2560000
+#define DPM_FLAG_OPPOSITE_TRACK_PATH 0x01
+typedef struct DpmHeader
+{
+    uint32_t identifier;      ///< Block identifier, must be BlockType::DataPositionMeasurementBlock.
+    uint32_t entries;         ///< Number of DpmEntry records.
+    uint32_t calibrations;    ///< Number of DpmCalibration records.
+    uint32_t nominalSpacing;  ///< Nominal number of sectors between entries.
+    uint16_t timingUnit;      ///< Sectors per timing unit (1 on CD, 16 on DVD, 32 on BD), 0 if unknown.
+    uint16_t speed;           ///< Requested speed, as a multiple of the medium base speed. 0xFFFF maximum, 0 unknown.
+    uint8_t  layerEnds;       ///< Number of layer boundaries (layers - 1), 0 for single layer media or if unknown.
+    uint8_t  flags;           ///< Flags, see DPM_FLAG_OPPOSITE_TRACK_PATH.
+    uint16_t reserved;        ///< Reserved, must be 0.
+    uint64_t length;          ///< Payload bytes after this header.
+    uint64_t crc64;           ///< CRC64-ECMA of the payload.
+} DpmHeader;
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint32_t
+|4 bytes
+|identifier
+|The data position measurement block identifier, always `DPM*`
+
+|uint32_t
+|4 bytes
+|entries
+|The number of control points
+
+|uint32_t
+|4 bytes
+|calibrations
+|The number of rotation calibrations
+
+|uint32_t
+|4 bytes
+|nominalSpacing
+|The nominal number of sectors between control points. Control points around layer boundaries, and the last one, can be closer.
+
+|uint16_t
+|2 bytes
+|timingUnit
+|The number of sectors the drive reads as a whole, that bound the timing resolution: 1 on CD, 16 (an ECC block) on DVD, 32 (a cluster) on Blu-ray. 0 if unknown.
+
+|uint16_t
+|2 bytes
+|speed
+|The speed requested to the drive while measuring, as a multiple of the medium base speed. 0xFFFF means the drive maximum, 0 unknown.
+
+|uint8_t
+|1 byte
+|layerEnds
+|The number of layer boundaries, that is, the number of layers minus one. 0 for single layer media, or if unknown.
+
+|uint8_t
+|1 byte
+|flags
+|Bit 0 is set when the layers use opposite track path. The other bits are reserved and must be 0.
+
+|uint16_t
+|2 bytes
+|reserved
+|Reserved, must be 0.
+
+|uint64_t
+|8 bytes
+|length
+|The length in bytes of the data following this header. It must be `layerEnds` × 8 + `entries` × 17 + `calibrations` × 24.
+
+|uint64_t
+|8 bytes
+|crc64
+|The CRC64-ECMA checksum of the data following this header
+|===
+
+==== Layer ends
+
+Immediately after the header there are `layerEnds` unsigned 64-bit integers, in increasing order, with the last sector of every layer but the last.
+
+==== Control points
+
+After the layer ends there are `entries` control points, with strictly increasing sector addresses.
+
+[source,c]
+typedef struct DpmEntry
+{
+    uint64_t lba;     ///< Sector address.
+    uint64_t angle;   ///< Cumulative angle since the first entry, in DPM_UNITS_PER_TURN units per turn.
+    uint8_t  status;  ///< DpmEntryStatus of the bin that ends at this entry.
+} DpmEntry;
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint64_t
+|8 bytes
+|lba
+|Sector address of the control point.
+
+|uint64_t
+|8 bytes
+|angle
+|Cumulative angle, from the first control point to this one, in 2560000 units per turn. It is 0 for the first control point and never decreases.
+
+|uint8_t
+|1 byte
+|status
+|Status of the bin of sectors between the previous control point and this one. Ignored for the first control point.
+|===
+
+The density, in degrees per sector, of the bin between two consecutive control points is (angle~i+1~ - angle~i~) × 360 ÷ 2560000 ÷ (lba~i+1~ - lba~i~).
+The angle of a sector between two control points is interpolated linearly.
+
+==== Bin status
+
+[cols="1,2,6",options="header"]
+|===
+|Value
+|Name
+|Description
+
+|0
+|Unknown
+|Unknown, e.g. imported from a format that does not record it
+
+|1
+|Measured
+|Measured on the first attempt
+
+|2
+|Remeasured
+|Measured again because the first measurement was an outlier
+
+|3
+|Interpolated
+|The measurement failed, interpolated from its neighbours
+
+|4
+|Unreadable
+|The sectors could not be read, interpolated from its neighbours
+
+|5
+|LayerBreak
+|The bin crosses a layer boundary or is too short to measure, its density is copied from the bin before
+|===
+
+==== Rotation calibrations
+
+After the control points there are `calibrations` rotation calibrations, done while measuring, in the order they were done.
+They show how the rotation speed changed during the measurement.
+
+[source,c]
+typedef struct DpmCalibration
+{
+    uint64_t lba;                  ///< Sector address where the calibration was done.
+    uint64_t rotationPeriod;       ///< Rotation period, in nanoseconds.
+    uint64_t sectorsPerTurnX1000;  ///< Sectors per rotation at lba, multiplied by 1000.
+} DpmCalibration;
+
+==== Field Descriptions
+
+[cols="2,2,2,6",options="header"]
+|===
+|Type
+|Size
+|Name
+|Description
+
+|uint64_t
+|8 bytes
+|lba
+|Sector address where the calibration was done.
+
+|uint64_t
+|8 bytes
+|rotationPeriod
+|Time the disc took to do a full turn, in nanoseconds.
+
+|uint64_t
+|8 bytes
+|sectorsPerTurnX1000
+|Number of sectors in a full turn of the spiral at `lba`, multiplied by 1000.
+|===

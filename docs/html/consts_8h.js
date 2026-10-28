@@ -15,6 +15,7 @@ var consts_8h =
     [ "MAX_CACHE_SIZE", "consts_8h.html#a6c8469dfe973ac952cf40394bd2c160b", null ],
     [ "MAX_DDT_ENTRY_CACHE", "consts_8h.html#ac97c436bf02e6e7e7daea67d374f03cd", null ],
     [ "MAX_FLAKE_BLOCK", "consts_8h.html#a207a31e861ea8e3a4f5ef52c13b42b3d", null ],
+    [ "MAX_HEADER_CACHE_SIZE", "consts_8h.html#afcaa8349616ebb0a5a45606ebabad399", null ],
     [ "MIN_FLAKE_BLOCK", "consts_8h.html#a3fd3617b4eb7e9548e0fd0ca8990e44a", null ],
     [ "SAMPLES_PER_SECTOR", "consts_8h.html#a44401191f17a7c09a05e57ff9e5cff24", null ]
 ];

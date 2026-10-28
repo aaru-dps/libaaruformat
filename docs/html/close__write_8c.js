@@ -1,10 +1,13 @@
 var close__write_8c =
 [
     [ "aaruf_finalize_write", "close__write_8c.html#a750c966846027990bb0914760758c84c", null ],
+    [ "remove_dpm_index_entries", "close__write_8c.html#a030610077284256c3b6563c44dccd7bc", null ],
     [ "write_aaru_json_block", "close__write_8c.html#ad94331170e773c67845daa357c6ecb42", null ],
+    [ "write_bd_sector_edc_block", "close__write_8c.html#ad05cc5895b896dbcfec7ee5f71d055fb", null ],
     [ "write_cached_secondary_ddt", "close__write_8c.html#af0f89d22c6e2bdca261223bbdda7654c", null ],
     [ "write_checksum_block", "close__write_8c.html#a84f08d3fe750b46dad183b12bb3927c5", null ],
     [ "write_cicm_block", "close__write_8c.html#a2308f1f7356e94d85c057a3d0d4ed343", null ],
+    [ "write_dpm_block", "close__write_8c.html#a24f11504d44f912e6c7aabafe3eee9f6", null ],
     [ "write_dumphw_block", "close__write_8c.html#a796034966c1e918152e652635431dc39", null ],
     [ "write_dvd_long_sector_blocks", "close__write_8c.html#a840a51379be95b007271f5b6a391a597", null ],
     [ "write_dvd_title_key_decrypted_block", "close__write_8c.html#a5e2cce0d9661697c767d9312224fd340", null ],

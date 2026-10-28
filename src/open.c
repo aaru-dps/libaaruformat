@@ -244,14 +244,6 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     uint32_t            signature     = 0;
     UT_array           *index_entries = NULL;
 
-#ifdef USE_SLOG
-#include "slog.h"
-
-    slog_init("aaruformat.log", SLOG_FLAGS_ALL, 0);
-#endif
-
-    TRACE("Logging initialized");
-
     TRACE("Entering aaruf_open(%s)", filepath);
     aaruf_set_open_error(0);
 
@@ -542,6 +534,10 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
               entry->dataType, entry->offset);
     }
 
+    /* Load the erasure coding recovery map from the footer at the end of the file before processing the blocks, so
+     * the blocks found damaged can be recovered while they are processed */
+    ec_load_ecmb(ctx);
+
     bool found_user_data_ddt  = false;
     bool has_flux_block       = false;
     ctx->image_info.ImageSize = 0;
@@ -643,6 +639,10 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
                 process_aaru_metadata_json_block(ctx, entry);
 
                 break;
+            case DataPositionMeasurementBlock:
+                process_dpm_block(ctx, entry);
+
+                break;
             // Dump hardware block
             case DumpHardwareBlock:
                 process_dumphw_block(ctx, entry);
@@ -718,17 +718,14 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     ctx->block_header_cache.free_func = free;
     ctx->block_cache.free_func        = free;
 
-    const uint64_t cache_divisor = (uint64_t)ctx->image_info.SectorSize * (1ULL << ctx->shift);
-    if(cache_divisor == 0)
-    {
-        ctx->block_header_cache.max_items = 0;
-        ctx->block_cache.max_items        = 0;
-    }
-    else
-    {
-        ctx->block_header_cache.max_items = MAX_CACHE_SIZE / cache_divisor;
-        ctx->block_cache.max_items        = ctx->block_header_cache.max_items;
-    }
+    // Both caches are bounded by bytes held, so no block geometry is needed here. Deriving an
+    // entry count from a block size got this wrong: the divisor used ctx->shift, which is only
+    // ever set for DDT v1 images, so on every DDT v2 image the limit came out ~262144 entries of
+    // up to 8 MiB each and the cache grew until the whole decompressed image was resident.
+    ctx->block_header_cache.cur_bytes = 0;
+    ctx->block_cache.cur_bytes        = 0;
+    ctx->block_header_cache.max_bytes = MAX_HEADER_CACHE_SIZE;
+    ctx->block_cache.max_bytes        = MAX_CACHE_SIZE;
 
     // TODO: Cache tracks and sessions?
 
@@ -740,8 +737,6 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     ctx->library_major_version = LIBAARUFORMAT_MAJOR_VERSION;
     ctx->library_minor_version = LIBAARUFORMAT_MINOR_VERSION;
 
-    /* Try to load erasure coding recovery metadata from EOF footer */
-    ec_load_ecmb(ctx);
 
     if(!resume_mode)
     {
@@ -785,6 +780,11 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     /* Flux-only images have no DDT and therefore no sector deduplication map. */
     if(ctx->deduplicate && !ctx->no_user_data_ddt)
         ctx->sector_hash_map = create_map(ctx->user_data_ddt_header.blocks * 25 / 100);  // 25% of total sectors
+
+    // Loaded CD prefix/suffix arenas are compact (one slot per custom entry). New customs must append after the
+    // existing slots, otherwise they would overwrite them and the DDT indexes would dangle past the rewritten block.
+    ctx->sector_prefix_offset = ctx->sector_prefix_length;
+    ctx->sector_suffix_offset = ctx->sector_suffix_length;
 
     // Cannot checksum a resumed file
     ctx->rewinded = true;

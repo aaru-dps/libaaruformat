@@ -14,6 +14,9 @@ var erasure_8c =
     [ "ec_free", "erasure_8c.html#ae5fe558b49013df6e932278061a2ab53", null ],
     [ "ec_load_ecmb", "erasure_8c.html#a18f424702fcd85725ee26c1cf7e253db", null ],
     [ "ec_recover_data_block", "erasure_8c.html#a7a9ac507738cdf72e951f152edd4d233", null ],
+    [ "ec_recover_ddt_block", "erasure_8c.html#a41514b5f6f31a9a2207f2807da831e26", null ],
+    [ "ec_recover_meta_block", "erasure_8c.html#aa17442a11d3d3ef4b51b5129eed19b45", null ],
+    [ "ec_recover_raw_block", "erasure_8c.html#a04ae581a91d9e77097ed4ebba627e371", null ],
     [ "ec_write_batch_parity", "erasure_8c.html#aed80b4dc1f360dbac00a5f73d350bf1a", null ],
     [ "ec_stripe_icd", "erasure_8c.html#a1883da545c74667f3438d8e48b195aa1", null ]
 ];

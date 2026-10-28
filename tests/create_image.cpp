@@ -739,6 +739,128 @@ TEST_F(CreateImageFixture, create_audio_image)
     EXPECT_EQ(close_result, AARUF_STATUS_OK) << "Failed to close image";
 }
 
+// Lead-In (negative) and Lead-Out (overflow) sectors lie outside any track, they take the format of the track after
+// and before them, as the Compact Disc specifications dictate
+TEST_F(CreateImageFixture, create_cd_image_outside_tracks)
+{
+    char path[PATH_MAX];
+    char filename[PATH_MAX];
+
+    getcwd(path, PATH_MAX);
+    snprintf(filename, PATH_MAX, "%s/data/random", path);
+
+    // Open random file
+    FILE *f = fopen(filename, "rb");
+    ASSERT_NE(f, nullptr) << "Failed to open random data file";
+
+    uint8_t *buffer = static_cast<uint8_t *>(malloc(1048576));
+    ASSERT_NE(buffer, nullptr) << "Failed to allocate memory for random data";
+    fread(buffer, 1, 1048576, f);
+    fclose(f);
+
+    constexpr uint64_t total_sectors    = 100;
+    constexpr uint64_t negative_sectors = 150;  // More than the first track, by absolute value
+    constexpr uint64_t overflow_sectors = 10;
+    constexpr uint64_t raw_overflow     = total_sectors + overflow_sectors - 1;  // Stored raw, as older images do
+
+    void *context = aaruf_create("test_cd_outside_tracks.aif", CDROM, 2352, total_sectors, negative_sectors,
+                                 overflow_sectors, NULL, reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0, false);
+    ASSERT_NE(context, nullptr) << "Failed to create test_cd_outside_tracks.aif";
+
+    // An audio track first, so the Lead-In is audio, and a data track last, so the Lead-Out is data
+    TrackEntry tracks[2];
+    memset(tracks, 0, sizeof(tracks));
+    tracks[0].sequence = 1;
+    tracks[0].type     = kTrackTypeAudio;
+    tracks[0].start    = 0;
+    tracks[0].end      = total_sectors / 2 - 1;
+    tracks[0].session  = 1;
+    tracks[1].sequence = 2;
+    tracks[1].type     = kTrackTypeCdMode1;
+    tracks[1].start    = total_sectors / 2;
+    tracks[1].end      = total_sectors - 1;
+    tracks[1].session  = 1;
+
+    int32_t track_result = aaruf_set_tracks(context, tracks, 2);
+    ASSERT_EQ(track_result, AARUF_STATUS_OK) << "Failed to set tracks";
+
+    // Different data for every sector, so none is deduplicated
+    auto sector_data = [buffer](const bool negative, const uint64_t sector) {
+        return buffer + ((negative ? sector : negative_sectors + 1 + sector) * 2352) % (1048576 - 2352);
+    };
+
+    for(uint64_t sector = 1; sector <= negative_sectors; ++sector)
+    {
+        const int32_t write_result =
+            aaruf_write_sector_long(context, sector, true, sector_data(true, sector), SectorStatusDumped, 2352);
+        ASSERT_EQ(write_result, AARUF_STATUS_OK) << "Failed to write negative sector " << sector;
+    }
+
+    for(uint64_t sector = 0; sector < raw_overflow; ++sector)
+    {
+        const int32_t write_result =
+            aaruf_write_sector_long(context, sector, false, sector_data(false, sector), SectorStatusDumped, 2352);
+        ASSERT_EQ(write_result, AARUF_STATUS_OK) << "Failed to write sector " << sector;
+    }
+
+    int32_t write_result =
+        aaruf_write_sector(context, raw_overflow, false, sector_data(false, raw_overflow), SectorStatusDumped, 2352);
+    ASSERT_EQ(write_result, AARUF_STATUS_OK) << "Failed to write raw overflow sector";
+
+    int32_t close_result = aaruf_close(context);
+    ASSERT_EQ(close_result, AARUF_STATUS_OK) << "Failed to close image";
+
+    // Reopen the image
+    context = aaruf_open("test_cd_outside_tracks.aif", false, NULL);
+    ASSERT_NE(context, nullptr) << "Failed to open test_cd_outside_tracks.aif";
+
+    uint8_t  sector_buffer[2352];
+    uint32_t length;
+    uint8_t  sector_status;
+
+    for(uint64_t sector = 1; sector <= negative_sectors; ++sector)
+    {
+        length = sizeof(sector_buffer);
+
+        const int32_t read_result =
+            aaruf_read_sector_long(context, sector, true, sector_buffer, &length, &sector_status);
+        EXPECT_EQ(read_result, AARUF_STATUS_OK) << "Failed to read negative sector " << sector;
+        EXPECT_EQ(length, 2352U) << "Unexpected length for negative sector " << sector;
+        EXPECT_EQ(memcmp(sector_buffer, sector_data(true, sector), 2352), 0)
+            << "Unexpected data for negative sector " << sector;
+    }
+
+    for(uint64_t sector = 0; sector < total_sectors + overflow_sectors; ++sector)
+    {
+        length = sizeof(sector_buffer);
+
+        const int32_t read_result =
+            aaruf_read_sector_long(context, sector, false, sector_buffer, &length, &sector_status);
+        EXPECT_EQ(read_result, AARUF_STATUS_OK) << "Failed to read sector " << sector;
+        EXPECT_EQ(length, 2352U) << "Unexpected length for sector " << sector;
+        EXPECT_EQ(memcmp(sector_buffer, sector_data(false, sector), 2352), 0)
+            << "Unexpected data for sector " << sector;
+    }
+
+    // The Lead-In takes the audio format of the first track, so it is stored raw
+    length = sizeof(sector_buffer);
+    EXPECT_EQ(aaruf_read_sector(context, negative_sectors, true, sector_buffer, &length, &sector_status),
+              AARUF_STATUS_OK)
+        << "Failed to read Lead-In sector user data";
+    EXPECT_EQ(length, 2352U) << "Lead-In sector should take the audio format of the first track";
+
+    // The Lead-Out takes the Mode 1 format of the last track, so only its user data is stored
+    length = sizeof(sector_buffer);
+    EXPECT_EQ(aaruf_read_sector(context, total_sectors, false, sector_buffer, &length, &sector_status),
+              AARUF_STATUS_OK)
+        << "Failed to read Lead-Out sector user data";
+    EXPECT_EQ(length, 2048U) << "Lead-Out sector should take the Mode 1 format of the last track";
+
+    close_result = aaruf_close(context);
+    EXPECT_EQ(close_result, AARUF_STATUS_OK) << "Failed to close image";
+    free(buffer);
+}
+
 TEST_F(CreateImageFixture, create_image_negative_sectors)
 {
     char path[PATH_MAX];

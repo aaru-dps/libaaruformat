@@ -33,6 +33,56 @@
 #include "xxhash.h"
 
 /**
+ * @brief Ensures a CD sector prefix/suffix arena can hold @p needed bytes, growing it if required.
+ *
+ * Arenas loaded from an existing image (resume mode) are exactly block-sized, so growth must happen before
+ * appending. Doubling from a zero length is avoided and the pointer is preserved on allocation failure.
+ *
+ * @param arena Pointer to the arena buffer pointer (updated on growth).
+ * @param length Pointer to the arena capacity in bytes (updated on growth).
+ * @param needed Bytes that must fit in the arena after this call.
+ * @param minimum Minimum capacity to allocate when growing.
+ * @return AARUF_STATUS_OK, or AARUF_ERROR_NOT_ENOUGH_MEMORY.
+ */
+static int32_t grow_arena(uint8_t **arena, size_t *length, const size_t needed, const size_t minimum)
+{
+    if(needed <= *length) return AARUF_STATUS_OK;
+
+    size_t new_length = *length * 2;
+    if(new_length < needed) new_length = needed;
+    if(new_length < minimum) new_length = minimum;
+
+    uint8_t *grown = realloc(*arena, new_length);
+    if(grown == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+
+    memset(grown + *length, 0, new_length - *length);
+    *arena  = grown;
+    *length = new_length;
+
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Checks whether a CD sector header (bytes 0x0C-0x0E) is valid BCD and encodes exactly @p lba.
+ *
+ * Non-BCD nibbles are rejected so a header that merely aliases the expected address (e.g. 0x1A vs 0x20) is
+ * stored verbatim instead of being silently regenerated in canonical BCD on read.
+ */
+static bool cd_header_matches_lba(const uint8_t *data, const int64_t lba)
+{
+    for(int i = 0x0C; i <= 0x0E; i++)
+        if((data[i] >> 4) > 9 || (data[i] & 0x0F) > 9) return false;
+
+    const int minute = (data[0x0C] >> 4) * 10 + (data[0x0C] & 0x0F);
+    const int second = (data[0x0D] >> 4) * 10 + (data[0x0D] & 0x0F);
+    const int frame  = (data[0x0E] >> 4) * 10 + (data[0x0E] & 0x0F);
+
+    if(second > 59 || frame > 74) return false;
+
+    return (int64_t)minute * 60 * 75 + second * 75 + frame - 150 == lba;
+}
+
+/**
  * @brief Writes a sector to the AaruFormat image.
  *
  * Writes the given data to the specified sector address in the image, with the given status and length.
@@ -350,21 +400,17 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
         // We need to save the track type for later compression
         if(ctx->image_info.MetadataMediaType == OpticalDisc && ctx->track_entries != NULL)
         {
+            TrackEntry        found_track;
             const TrackEntry *track = NULL;
-            for(int i = 0; i < ctx->tracks_header.entries; i++)
-                if(sector_address >= ctx->track_entries[i].start && sector_address <= ctx->track_entries[i].end)
-                {
-                    track = &ctx->track_entries[i];
-                    break;
-                }
+
+            // Lead-In and Lead-Out sectors take the format of the track after and before them
+            if(find_cd_track_for_sector(ctx->track_entries, ctx->tracks_header.entries,
+                                        negative ? -(int64_t)sector_address : (int64_t)sector_address, &found_track,
+                                        NULL))
+                track = &found_track;
 
             if(track != NULL)
-            {
                 ctx->current_track_type = track->type;
-
-                if(track->sequence == 0 && track->start == 0 && track->end == 0)
-                    ctx->current_track_type = kTrackTypeData;
-            }
             else
                 ctx->current_track_type = kTrackTypeData;
 
@@ -695,14 +741,12 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
         {
             TrackEntry track = {0};
 
-            for(int i = 0; i < ctx->tracks_header.entries; i++)
-                if(sector_address >= ctx->track_entries[i].start && sector_address <= ctx->track_entries[i].end)
-                {
-                    track = ctx->track_entries[i];
-                    break;
-                }
+            // LBA as encoded in a CD sector header (lead-in sectors are negative)
+            const int64_t signed_lba = negative ? -(int64_t)sector_address : (int64_t)sector_address;
 
-            if(track.sequence == 0 && track.start == 0 && track.end == 0) track.type = kTrackTypeData;
+            // Lead-In and Lead-Out sectors take the format of the track after and before them
+            if(!find_cd_track_for_sector(ctx->track_entries, ctx->tracks_header.entries, signed_lba, &track, NULL))
+                track.type = kTrackTypeData;
 
             uint64_t corrected_sector_address = sector_address;
 
@@ -866,7 +910,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                     {
                         ctx->sector_prefix_length = 16 * (ctx->user_data_ddt_header.negative + ctx->image_info.Sectors +
                                                           ctx->user_data_ddt_header.overflow);
-                        ctx->sector_prefix        = malloc(ctx->sector_prefix_length);
+                        ctx->sector_prefix        = calloc(1, ctx->sector_prefix_length);
 
                         if(ctx->sector_prefix == NULL)
                         {
@@ -882,7 +926,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                         ctx->sector_suffix_length =
                             288 * (ctx->user_data_ddt_header.negative + ctx->image_info.Sectors +
                                    ctx->user_data_ddt_header.overflow);
-                        ctx->sector_suffix = malloc(ctx->sector_suffix_length);
+                        ctx->sector_suffix = calloc(1, ctx->sector_suffix_length);
 
                         if(ctx->sector_suffix == NULL)
                         {
@@ -904,8 +948,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
 
                     if(empty)
                     {
-                        ctx->sector_prefix_ddt2[corrected_sector_address] = SectorStatusNotDumped;
-                        ctx->sector_suffix_ddt2[corrected_sector_address] = SectorStatusNotDumped;
+                        ctx->sector_prefix_ddt2[corrected_sector_address] = (uint64_t)SectorStatusNotDumped << 60;
+                        ctx->sector_suffix_ddt2[corrected_sector_address] = (uint64_t)SectorStatusNotDumped << 60;
                         ctx->dirty_sector_prefix_ddt                      = true;  // Mark prefix DDT as dirty
                         ctx->dirty_sector_suffix_ddt                      = true;  // Mark suffix DDT as dirty
                         return aaruf_write_sector(context, sector_address, negative, data + 16, SectorStatusNotDumped,
@@ -920,40 +964,27 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                        data[0x0F] != 0x01)
                         prefix_correct = false;
 
-                    if(prefix_correct)
-                    {
-                        const int minute     = (data[0x0C] >> 4) * 10 + (data[0x0C] & 0x0F);
-                        const int second     = (data[0x0D] >> 4) * 10 + (data[0x0D] & 0x0F);
-                        const int frame      = (data[0x0E] >> 4) * 10 + (data[0x0E] & 0x0F);
-                        const int stored_lba = minute * 60 * 75 + second * 75 + frame - 150;
-                        prefix_correct       = stored_lba == sector_address;
-                    }
+                    if(prefix_correct) prefix_correct = cd_header_matches_lba(data, signed_lba);
 
                     if(prefix_correct)
                         ctx->sector_prefix_ddt2[corrected_sector_address] = (uint64_t)SectorStatusMode1Correct << 60;
                     else
                     {
                         // Copy CD prefix from data buffer to prefix buffer
+                        if(grow_arena(&ctx->sector_prefix, &ctx->sector_prefix_length, ctx->sector_prefix_offset + 16,
+                                      16 * total_sectors) != AARUF_STATUS_OK)
+                        {
+                            FATAL("Could not allocate memory for CD sector prefix buffer");
+
+                            TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                        }
+
                         memcpy(ctx->sector_prefix + ctx->sector_prefix_offset, data, 16);
                         ctx->sector_prefix_ddt2[corrected_sector_address] = (uint64_t)(ctx->sector_prefix_offset / 16);
                         ctx->sector_prefix_ddt2[corrected_sector_address] |= (uint64_t)SectorStatusErrored << 60;
                         ctx->sector_prefix_offset += 16;
                         ctx->dirty_sector_prefix_block = true;  // Mark prefix block as dirty
-
-                        // Grow prefix buffer if needed
-                        if(ctx->sector_prefix_offset >= ctx->sector_prefix_length)
-                        {
-                            ctx->sector_prefix_length *= 2;
-                            ctx->sector_prefix = realloc(ctx->sector_prefix, ctx->sector_prefix_length);
-
-                            if(ctx->sector_prefix == NULL)
-                            {
-                                FATAL("Could not allocate memory for CD sector prefix buffer");
-
-                                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
-                                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
-                            }
-                        }
                     }
                     ctx->dirty_sector_prefix_ddt = true;  // Mark prefix DDT as dirty
 
@@ -964,30 +995,26 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                     else
                     {
                         // Copy CD suffix from data buffer to suffix buffer
+                        if(grow_arena(&ctx->sector_suffix, &ctx->sector_suffix_length, ctx->sector_suffix_offset + 288,
+                                      288 * total_sectors) != AARUF_STATUS_OK)
+                        {
+                            FATAL("Could not allocate memory for CD sector suffix buffer");
+
+                            TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                        }
+
                         memcpy(ctx->sector_suffix + ctx->sector_suffix_offset, data + 2064, 288);
                         ctx->sector_suffix_ddt2[corrected_sector_address] = (uint64_t)(ctx->sector_suffix_offset / 288);
                         ctx->sector_suffix_ddt2[corrected_sector_address] |= (uint64_t)SectorStatusErrored << 60;
                         ctx->sector_suffix_offset += 288;
                         ctx->dirty_sector_suffix_block = true;  // Mark suffix block as dirty
-
-                        // Grow suffix buffer if needed
-                        if(ctx->sector_suffix_offset >= ctx->sector_suffix_length)
-                        {
-                            ctx->sector_suffix_length *= 2;
-                            ctx->sector_suffix = realloc(ctx->sector_suffix, ctx->sector_suffix_length);
-
-                            if(ctx->sector_suffix == NULL)
-                            {
-                                FATAL("Could not allocate memory for CD sector suffix buffer");
-
-                                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
-                                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
-                            }
-                        }
                     }
                     ctx->dirty_sector_suffix_ddt = true;  // Mark suffix DDT as dirty
 
-                    return aaruf_write_sector(context, sector_address, negative, data + 16, SectorStatusMode1Correct,
+                    return aaruf_write_sector(context, sector_address, negative, data + 16,
+                                              prefix_correct && suffix_correct ? SectorStatusMode1Correct
+                                                                               : SectorStatusErrored,
                                               2048);
                 case kTrackTypeCdMode2Form1:
                 case kTrackTypeCdMode2Form2:
@@ -1028,7 +1055,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                     {
                         ctx->sector_prefix_length = 16 * (ctx->user_data_ddt_header.negative + ctx->image_info.Sectors +
                                                           ctx->user_data_ddt_header.overflow);
-                        ctx->sector_prefix        = malloc(ctx->sector_prefix_length);
+                        ctx->sector_prefix        = calloc(1, ctx->sector_prefix_length);
 
                         if(ctx->sector_prefix == NULL)
                         {
@@ -1044,7 +1071,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                         ctx->sector_suffix_length =
                             288 * (ctx->user_data_ddt_header.negative + ctx->image_info.Sectors +
                                    ctx->user_data_ddt_header.overflow);
-                        ctx->sector_suffix = malloc(ctx->sector_suffix_length);
+                        ctx->sector_suffix = calloc(1, ctx->sector_suffix_length);
 
                         if(ctx->sector_suffix == NULL)
                         {
@@ -1066,8 +1093,10 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
 
                     if(empty)
                     {
-                        ctx->sector_prefix_ddt2[corrected_sector_address] = SectorStatusNotDumped;
-                        ctx->sector_suffix_ddt2[corrected_sector_address] = SectorStatusNotDumped;
+                        ctx->sector_prefix_ddt2[corrected_sector_address] = (uint64_t)SectorStatusNotDumped << 60;
+                        ctx->sector_suffix_ddt2[corrected_sector_address] = (uint64_t)SectorStatusNotDumped << 60;
+                        ctx->dirty_sector_prefix_ddt                      = true;  // Mark prefix DDT as dirty
+                        ctx->dirty_sector_suffix_ddt                      = true;  // Mark suffix DDT as dirty
                         return aaruf_write_sector(context, sector_address, negative, data + 16, SectorStatusNotDumped,
                                                   2328);
                     }
@@ -1082,14 +1111,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                        data[0x0F] != 0x02)
                         prefix_correct = false;
 
-                    if(prefix_correct)
-                    {
-                        const int minute     = (data[0x0C] >> 4) * 10 + (data[0x0C] & 0x0F);
-                        const int second     = (data[0x0D] >> 4) * 10 + (data[0x0D] & 0x0F);
-                        const int frame      = (data[0x0E] >> 4) * 10 + (data[0x0E] & 0x0F);
-                        const int stored_lba = minute * 60 * 75 + second * 75 + frame - 150;
-                        prefix_correct       = stored_lba == sector_address;
-                    }
+                    if(prefix_correct) prefix_correct = cd_header_matches_lba(data, signed_lba);
 
                     if(prefix_correct)
                         ctx->sector_prefix_ddt2[corrected_sector_address] =
@@ -1097,26 +1119,20 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                     else
                     {
                         // Copy CD prefix from data buffer to prefix buffer
+                        if(grow_arena(&ctx->sector_prefix, &ctx->sector_prefix_length, ctx->sector_prefix_offset + 16,
+                                      16 * total_sectors) != AARUF_STATUS_OK)
+                        {
+                            FATAL("Could not allocate memory for CD sector prefix buffer");
+
+                            TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                        }
+
                         memcpy(ctx->sector_prefix + ctx->sector_prefix_offset, data, 16);
-                        ctx->sector_prefix_ddt2[corrected_sector_address] = (uint32_t)(ctx->sector_prefix_offset / 16);
+                        ctx->sector_prefix_ddt2[corrected_sector_address] = (uint64_t)(ctx->sector_prefix_offset / 16);
                         ctx->sector_prefix_ddt2[corrected_sector_address] |= (uint64_t)SectorStatusErrored << 60;
                         ctx->sector_prefix_offset += 16;
                         ctx->dirty_sector_prefix_block = true;  // Mark prefix block as dirty
-
-                        // Grow prefix buffer if needed
-                        if(ctx->sector_prefix_offset >= ctx->sector_prefix_length)
-                        {
-                            ctx->sector_prefix_length *= 2;
-                            ctx->sector_prefix = realloc(ctx->sector_prefix, ctx->sector_prefix_length);
-
-                            if(ctx->sector_prefix == NULL)
-                            {
-                                FATAL("Could not allocate memory for CD sector prefix buffer");
-
-                                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
-                                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
-                            }
-                        }
                     }
                     ctx->dirty_sector_prefix_ddt = true;  // Mark prefix DDT as dirty
 
@@ -1151,27 +1167,22 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                         else
                         {
                             // Copy CD suffix from data buffer to suffix buffer
+                            if(grow_arena(&ctx->sector_suffix, &ctx->sector_suffix_length,
+                                          ctx->sector_suffix_offset + 288, 288 * total_sectors) != AARUF_STATUS_OK)
+                            {
+                                FATAL("Could not allocate memory for CD sector suffix buffer");
+
+                                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                            }
+
+                            memset(ctx->sector_suffix + ctx->sector_suffix_offset, 0, 288);
                             memcpy(ctx->sector_suffix + ctx->sector_suffix_offset, data + 2348, 4);
                             ctx->sector_suffix_ddt2[corrected_sector_address] =
                                 (uint64_t)(ctx->sector_suffix_offset / 288);
                             ctx->sector_suffix_ddt2[corrected_sector_address] |= (uint64_t)SectorStatusErrored << 60;
                             ctx->sector_suffix_offset += 288;
                             ctx->dirty_sector_suffix_block = true;  // Mark suffix block as dirty
-
-                            // Grow suffix buffer if needed
-                            if(ctx->sector_suffix_offset >= ctx->sector_suffix_length)
-                            {
-                                ctx->sector_suffix_length *= 2;
-                                ctx->sector_suffix = realloc(ctx->sector_suffix, ctx->sector_suffix_length);
-
-                                if(ctx->sector_suffix == NULL)
-                                {
-                                    FATAL("Could not allocate memory for CD sector suffix buffer");
-
-                                    TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
-                                    return AARUF_ERROR_NOT_ENOUGH_MEMORY;
-                                }
-                            }
                         }
 
                         // Copy subheader from data buffer to subheader buffer
@@ -1197,26 +1208,21 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                     else
                     {
                         // Copy CD suffix from data buffer to suffix buffer
+                        if(grow_arena(&ctx->sector_suffix, &ctx->sector_suffix_length, ctx->sector_suffix_offset + 288,
+                                      288 * total_sectors) != AARUF_STATUS_OK)
+                        {
+                            FATAL("Could not allocate memory for CD sector suffix buffer");
+
+                            TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                        }
+
+                        memset(ctx->sector_suffix + ctx->sector_suffix_offset, 0, 288);
                         memcpy(ctx->sector_suffix + ctx->sector_suffix_offset, data + 2072, 280);
                         ctx->sector_suffix_ddt2[corrected_sector_address] = (uint64_t)(ctx->sector_suffix_offset / 288);
                         ctx->sector_suffix_ddt2[corrected_sector_address] |= (uint64_t)SectorStatusErrored << 60;
                         ctx->sector_suffix_offset += 288;
                         ctx->dirty_sector_suffix_block = true;  // Mark suffix block as dirty
-
-                        // Grow suffix buffer if needed
-                        if(ctx->sector_suffix_offset >= ctx->sector_suffix_length)
-                        {
-                            ctx->sector_suffix_length *= 2;
-                            ctx->sector_suffix = realloc(ctx->sector_suffix, ctx->sector_suffix_length);
-
-                            if(ctx->sector_suffix == NULL)
-                            {
-                                FATAL("Could not allocate memory for CD sector suffix buffer");
-
-                                TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
-                                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
-                            }
-                        }
                     }
 
                     // Copy subheader from data buffer to subheader buffer

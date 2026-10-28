@@ -7,9 +7,6 @@
 [submodule "3rdparty/uthash"]
 	path = 3rdparty/uthash
 	url = https://github.com/troydhanson/uthash
-[submodule "3rdparty/slog"]
-	path = 3rdparty/slog
-	url = https://github.com/kala13x/slog
 [submodule "3rdparty/xxHash"]
 	path = 3rdparty/xxHash
 	url = https://github.com/Cyan4973/xxHash
