@@ -422,7 +422,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     TRACE("Opening image version %d.%d", ctx->header.imageMajorVersion, ctx->header.imageMinorVersion);
 
     TRACE("Allocating memory for readable sector tags bitmap");
-    ctx->readableSectorTags = (bool *)malloc(sizeof(bool) * MaxSectorTag);
+    ctx->readableSectorTags = (bool *)malloc(sizeof(bool) * (MaxSectorTag + 1));
 
     if(ctx->readableSectorTags == NULL)
     {
@@ -434,7 +434,7 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
         return NULL;
     }
 
-    memset(ctx->readableSectorTags, 0, sizeof(bool) * MaxSectorTag);
+    memset(ctx->readableSectorTags, 0, sizeof(bool) * (MaxSectorTag + 1));
 
     TRACE("Setting up image info");
 

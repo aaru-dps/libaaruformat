@@ -361,7 +361,7 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
     TRACE("Generating random GUID");
     generate_random_bytes(ctx->header.guid, GUID_SIZE);
 
-    ctx->readableSectorTags = (bool *)malloc(sizeof(bool) * MaxSectorTag);
+    ctx->readableSectorTags = (bool *)malloc(sizeof(bool) * (MaxSectorTag + 1));
 
     if(ctx->readableSectorTags == NULL)
     {
@@ -371,7 +371,7 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
         return NULL;
     }
 
-    memset(ctx->readableSectorTags, 0, sizeof(bool) * MaxSectorTag);
+    memset(ctx->readableSectorTags, 0, sizeof(bool) * (MaxSectorTag + 1));
 
     // Initialize image info
     TRACE("Initializing image info");
