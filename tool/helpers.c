@@ -199,7 +199,7 @@ const char *media_tag_type_to_string(int32_t type)
         case kMediaTagMiniDiscUtoc:
             return "MiniDisc User TOC";
         case kMediaTagMiniDiscDtoc:
-            return "MiniDisc Data TOC";
+            return "MiniDisc Premastered TOC";
         case kMediaTagDvdDiscKeyDecrypted:
             return "DVD Disc Key (decrypted)";
         case kMediaTagDvdPfi2ndLayer:
@@ -375,6 +375,14 @@ const char *data_type_to_string(uint16_t type)
             return "CD Mode 2 Subheader";
         case kDataTypeCdLeadIn:
             return "CD Lead-in";
+        case kDataTypeMiniDiscType:
+            return "MiniDisc Type";
+        case kDataTypeMiniDiscD5:
+            return "MiniDisc D5h Response";
+        case kDataTypeMiniDiscUtoc:
+            return "MiniDisc User TOC";
+        case kDataTypeMiniDiscDtoc:
+            return "MiniDisc Premastered TOC";
         case kDataTypeDvdDiscKeyDecrypted:
             return "DVD Disc Key (decrypted)";
         case kDataTypeDvdSectorCprMai:
