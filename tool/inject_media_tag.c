@@ -136,6 +136,11 @@ static const MediaTagTypeMapping media_tag_mappings[] = {
     {"kMediaTagFloppyWriteProtect",           kMediaTagFloppyWriteProtect},
     {"kMediaTagAacsMediaKey",                 kMediaTagAacsMediaKey},
     {"kMediaTagAacsVolumeUniqueKey",          kMediaTagAacsVolumeUniqueKey},
+    {"kMediaTagMiniDiscType",                  kMediaTagMiniDiscType},
+    {"kMediaTagMiniDiscD5",                    kMediaTagMiniDiscD5},
+    {"kMediaTagMiniDiscUtoc",                  kMediaTagMiniDiscUtoc},
+    {"kMediaTagMiniDiscDtoc",                  kMediaTagMiniDiscDtoc},
+
 };
 // clang-format on
 
@@ -296,6 +301,14 @@ static int32_t get_datatype_for_media_tag_type(MediaTagType tag_type)
             return kDataTypeAacsMediaKey;
         case kMediaTagAacsVolumeUniqueKey:
             return kDataTypeAacsVolumeUniqueKey;
+        case kMediaTagMiniDiscType:
+            return kDataTypeMiniDiscType;
+        case kMediaTagMiniDiscD5:
+            return kDataTypeMiniDiscD5;
+        case kMediaTagMiniDiscUtoc:
+            return kDataTypeMiniDiscUtoc;
+        case kMediaTagMiniDiscDtoc:
+            return kDataTypeMiniDiscDtoc;
         default:
             return -1;
     }

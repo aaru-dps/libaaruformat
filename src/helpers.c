@@ -390,6 +390,14 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_datatype_for_media_tag_type(const int32_t
             return kDataTypeAacsMediaKey;
         case kMediaTagAacsVolumeUniqueKey:
             return kDataTypeAacsVolumeUniqueKey;
+        case kMediaTagMiniDiscType:
+            return kDataTypeMiniDiscType;
+        case kMediaTagMiniDiscD5:
+            return kDataTypeMiniDiscD5;
+        case kMediaTagMiniDiscUtoc:
+            return kDataTypeMiniDiscUtoc;
+        case kMediaTagMiniDiscDtoc:
+            return kDataTypeMiniDiscDtoc;
         default:
             return -1;
     }

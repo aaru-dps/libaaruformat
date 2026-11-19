@@ -121,38 +121,43 @@ typedef enum
     kDataTypePriamDataTowerTag            = 74,  ///< Priam Data Tower (24‑byte) tag.
     kDataTypeCdMcn                        = 75,  ///< Compact Disc Media Catalogue Number (lead‑in, 13 ASCII bytes).
     kDataTypeCdSectorPrefixCorrected      = 76,  ///< Compact Disc sector prefix (sync, header) corrected-only stored.
-    kDataTypeCdSectorSuffixCorrected = 77,  ///< Compact Disc sector suffix (EDC, ECC P, ECC Q) corrected-only stored.
-    kDataTypeCdSubHeader             = 78,  ///< Compact Disc MODE 2 subheader.
-    kDataTypeCdLeadIn                = 79,  ///< Compact Disc lead‑in.
-    kDataTypeDvdDiscKeyDecrypted     = 80,  ///< Decrypted DVD Disc Key
-    kDataTypeDvdSectorCprMai         = 81,  ///< DVD Copyright Management Information (CPR_MAI)
-    kDataTypeDvdTitleKeyDecrypted    = 82,  ///< Decrypted DVD Title Key
-    kDataTypeDvdSectorId             = 83,  ///< DVD Identification Data (ID)
-    kDataTypeDvdSectorIed            = 84,  ///< DVD ID Error Detection Code (IED)
-    kDataTypeDvdSectorEdc            = 85,  ///< DVD Error Detection Code (EDC)
-    kDataTypeDvdSectorEccPi          = 86,  ///< DVD Error Correction Code (ECC) Parity of Inner Code (PI)
-    kDataTypeDvdEccBlockPo           = 87,  ///< DVD Error Correction Code (ECC) Parity of Outer Code (PO)
-    kDataTypeDvdPfi2ndLayer          = 88,  ///< DVD Physical Format Information for the second layer
-    kDataTypeFluxData                = 89,  ///< Flux data.
-    kDataTypeBitstreamData           = 90,  ///< Bitstream data.
-    kDataTypeFloppyWriteProtect      = 91,  ///< Floppy write-protect status.
-    kDataTypeWiiUDiscKey             = 92,  ///< Nintendo Wii U disc key (16 bytes, from non-readable disc area)
-    kDataTypePs3DiscKey              = 93,  ///< PS3 derived disc key (16 bytes)
-    kDataTypePs3Data1                = 94,  ///< PS3 data1 key (16 bytes, from disc)
-    kDataTypePs3Data2                = 95,  ///< PS3 data2 key (16 bytes, from disc)
-    kDataTypePs3Pic                  = 96,  ///< PS3 PIC data (115 bytes, from disc lead-in)
-    kDataTypePs3EncryptionMap        = 97,  ///< PS3 encryption region map (serialized from sector 0)
-    kDataTypeWiiUPartitionKeyMap     = 98,  ///< Nintendo Wii U partition-to-key mapping with regions
-    kDataTypeWiiPartitionKeyMap      = 99,  ///< Nintendo Wii partition-to-key mapping with regions
-    kDataTypeNgcwJunkMap             = 100, ///< Nintendo GameCube/Wii junk region map with LFG seeds
-    kDataTypeAacsMediaKey            = 101, ///< AACS Media Key
-    kDataTypeAacsVolumeUniqueKey     = 102, ///< AACS Volume Unique Key
-    kDataTypeBdSectorEdc             = 103, ///< Blu-ray Sector EDC
-    kDataTypeErasureParity           = 104, ///< Erasure coding parity shard for data blocks.
-    kDataTypeErasureParityDdt        = 105, ///< Erasure coding parity shard for DDT secondary blocks.
-    kDataTypeErasureParityDdtPrimary = 106, ///< Erasure coding parity replica for DDT primary block.
-    kDataTypeErasureParityMeta       = 107, ///< Erasure coding parity shard for metadata blocks.
-    kDataTypeErasureParityIndex      = 108, ///< Erasure coding parity replica for index block.
+    kDataTypeCdSectorSuffixCorrected = 77,   ///< Compact Disc sector suffix (EDC, ECC P, ECC Q) corrected-only stored.
+    kDataTypeCdSubHeader             = 78,   ///< Compact Disc MODE 2 subheader.
+    kDataTypeCdLeadIn                = 79,   ///< Compact Disc lead‑in.
+    kDataTypeDvdDiscKeyDecrypted     = 80,   ///< Decrypted DVD Disc Key
+    kDataTypeDvdSectorCprMai         = 81,   ///< DVD Copyright Management Information (CPR_MAI)
+    kDataTypeDvdTitleKeyDecrypted    = 82,   ///< Decrypted DVD Title Key
+    kDataTypeDvdSectorId             = 83,   ///< DVD Identification Data (ID)
+    kDataTypeDvdSectorIed            = 84,   ///< DVD ID Error Detection Code (IED)
+    kDataTypeDvdSectorEdc            = 85,   ///< DVD Error Detection Code (EDC)
+    kDataTypeDvdSectorEccPi          = 86,   ///< DVD Error Correction Code (ECC) Parity of Inner Code (PI)
+    kDataTypeDvdEccBlockPo           = 87,   ///< DVD Error Correction Code (ECC) Parity of Outer Code (PO)
+    kDataTypeDvdPfi2ndLayer          = 88,   ///< DVD Physical Format Information for the second layer
+    kDataTypeFluxData                = 89,   ///< Flux data.
+    kDataTypeBitstreamData           = 90,   ///< Bitstream data.
+    kDataTypeFloppyWriteProtect      = 91,   ///< Floppy write-protect status.
+    kDataTypeWiiUDiscKey             = 92,   ///< Nintendo Wii U disc key (16 bytes, from non-readable disc area)
+    kDataTypePs3DiscKey              = 93,   ///< PS3 derived disc key (16 bytes)
+    kDataTypePs3Data1                = 94,   ///< PS3 data1 key (16 bytes, from disc)
+    kDataTypePs3Data2                = 95,   ///< PS3 data2 key (16 bytes, from disc)
+    kDataTypePs3Pic                  = 96,   ///< PS3 PIC data (115 bytes, from disc lead-in)
+    kDataTypePs3EncryptionMap        = 97,   ///< PS3 encryption region map (serialized from sector 0)
+    kDataTypeWiiUPartitionKeyMap     = 98,   ///< Nintendo Wii U partition-to-key mapping with regions
+    kDataTypeWiiPartitionKeyMap      = 99,   ///< Nintendo Wii partition-to-key mapping with regions
+    kDataTypeNgcwJunkMap             = 100,  ///< Nintendo GameCube/Wii junk region map with LFG seeds
+    kDataTypeAacsMediaKey            = 101,  ///< AACS Media Key
+    kDataTypeAacsVolumeUniqueKey     = 102,  ///< AACS Volume Unique Key
+    kDataTypeBdSectorEdc             = 103,  ///< Blu-ray Sector EDC
+    kDataTypeErasureParity           = 104,  ///< Erasure coding parity shard for data blocks.
+    kDataTypeErasureParityDdt        = 105,  ///< Erasure coding parity shard for DDT secondary blocks.
+    kDataTypeErasureParityDdtPrimary = 106,  ///< Erasure coding parity replica for DDT primary block.
+    kDataTypeErasureParityMeta       = 107,  ///< Erasure coding parity shard for metadata blocks.
+    kDataTypeErasureParityIndex      = 108,  ///< Erasure coding parity replica for index block.
+    kDataTypeMiniDiscType            = 109,  ///< 8 bytes response that seems to define type of MiniDisc
+    kDataTypeMiniDiscD5              = 110,  ///< 4 bytes response to vendor command D5h
+    kDataTypeMiniDiscUtoc =
+        111,  ///< User TOC, contains fragments, track names, and can be from 1 to 3 sectors of 2336 bytes
+    kDataTypeMiniDiscDtoc = 112,  ///< Not entirely clear kind of TOC that only appears on MD-DATA discs
 } DataType;
 
 /**
@@ -325,7 +330,7 @@ typedef enum
  */
 typedef enum
 {
-    kErasureCodingXor          = 0,  ///< Simple XOR parity (M must be 1).
+    kErasureCodingXor           = 0,  ///< Simple XOR parity (M must be 1).
     kErasureCodingRsVandermonde = 1   ///< Reed-Solomon with Vandermonde generator matrix over GF(2^8).
 } ErasureCodingAlgorithm;
 
@@ -335,11 +340,11 @@ typedef enum
  */
 typedef enum
 {
-    kECGroupData       = 0,  ///< User data blocks (DBLK).
-    kECGroupDdtSecondary = 1, ///< Secondary DDT subtables.
-    kECGroupDdtPrimary  = 2,  ///< Primary DDT (K=1, M replicas).
-    kECGroupMetadata    = 3,  ///< Metadata/media tag blocks.
-    kECGroupIndex       = 4   ///< Index block (K=1, M replicas).
+    kECGroupData         = 0,  ///< User data blocks (DBLK).
+    kECGroupDdtSecondary = 1,  ///< Secondary DDT subtables.
+    kECGroupDdtPrimary   = 2,  ///< Primary DDT (K=1, M replicas).
+    kECGroupMetadata     = 3,  ///< Metadata/media tag blocks.
+    kECGroupIndex        = 4   ///< Index block (K=1, M replicas).
 } ErasureCodingGroupType;
 
 #ifdef __clang__
