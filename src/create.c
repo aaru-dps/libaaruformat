@@ -29,6 +29,7 @@
 #include "aaruformat.h"
 #include "enums.h"
 #include "internal.h"
+#include "lib/utf8_path.h"
 #include "log.h"
 
 static inline void aaruf_set_create_error(const int error_code)
@@ -153,8 +154,8 @@ static void cleanup_failed_create(aaruformat_context *ctx)
  * - Data blocks positioned after DDT table (block-aligned)
  * - Alignment controlled by blockAlignmentShift from options
  *
- * @param filepath Path to the image file to create. The file will be created if it doesn't exist,
- *                 or overwritten if it does. Must be a valid writable path.
+ * @param filepath UTF-8 encoded path to the image file to create. The file will be created if it
+ *                 doesn't exist, or overwritten if it does. Must be a valid writable path.
  *
  * @param media_type Media type identifier (e.g., CompactDisc, DVD, HardDisk, Tape formats).
  *                   This affects how the image is structured and which features are enabled.
@@ -322,7 +323,7 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
 
     // Create the image file
     TRACE("Creating image file %s", filepath);
-    ctx->imageStream = fopen(filepath, "wb+");
+    ctx->imageStream = aaruf_fopen_utf8(filepath, "wb+");
     if(ctx->imageStream == NULL)
     {
         FATAL("Error %d opening file %s for writing", errno, filepath);

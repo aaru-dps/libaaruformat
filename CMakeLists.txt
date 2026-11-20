@@ -301,6 +301,8 @@ add_library(aaruformat
             src/blocks/flux.c
             src/lib/aes128.c
             src/lib/aes128.h
+            src/lib/utf8_path.c
+            src/lib/utf8_path.h
             src/ps3/ps3_crypto.c
             src/ps3/ps3_crypto.h
             src/ps3/ps3_encryption_map.c

@@ -30,6 +30,7 @@
 
 #include "erasure_internal.h"
 #include "internal.h"
+#include "lib/utf8_path.h"
 #include "log.h"
 #include "utarray.h"
 
@@ -101,7 +102,7 @@ static void cleanup_open_failure(aaruformat_context *ctx)
  * Critical errors (especially DDT processing failures) cause the open operation to fail.
  * Unknown block types are logged but silently ignored for forward compatibility.
  *
- * @param filepath Path to the image file to open. Must be a valid readable path.
+ * @param filepath UTF-8 encoded path to the image file to open. Must be a valid readable path.
  *                 When opening in resume mode (resume_mode=true), the file must also be writable.
  *                 The file must contain a valid AaruFormat header and index.
  *
@@ -263,9 +264,9 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
 
     TRACE("Opening file %s", filepath);
     if(resume_mode)
-        ctx->imageStream = fopen(filepath, "r+b");
+        ctx->imageStream = aaruf_fopen_utf8(filepath, "r+b");
     else
-        ctx->imageStream = fopen(filepath, "rb");
+        ctx->imageStream = aaruf_fopen_utf8(filepath, "rb");
 
     if(ctx->imageStream == NULL)
     {

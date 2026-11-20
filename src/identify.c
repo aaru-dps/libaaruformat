@@ -22,6 +22,7 @@
 #include <aaruformat.h>
 
 #include "internal.h"
+#include "lib/utf8_path.h"
 
 /**
  * @brief Identifies a file as an AaruFormat image using a file path.
@@ -31,7 +32,7 @@
  * provides a simple file-based interface that handles file opening, identification, and
  * cleanup automatically. It delegates the actual identification logic to aaruf_identify_stream().
  *
- * @param filename Path to the file to identify (must be accessible and readable).
+ * @param filename UTF-8 encoded path to the file to identify (must be accessible and readable).
  *
  * @return Returns one of the following values:
  * @retval 100 Maximum confidence - Definitive AaruFormat image. This is returned when:
@@ -89,7 +90,7 @@ AARU_EXPORT int AARU_CALL aaruf_identify(const char *filename)
 
     FILE *stream = NULL;
 
-    stream = fopen(filename, "rb");
+    stream = aaruf_fopen_utf8(filename, "rb");
 
     if(stream == NULL) return errno;
 
