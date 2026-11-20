@@ -18,6 +18,7 @@
 
 #include <climits>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 
 #include "../include/aaruformat.h"
@@ -1657,4 +1658,50 @@ TEST_F(CreateImageFixture, create_image_zstd_flag_uncompressed_no_feature_bit)
 
     close_result = aaruf_close(context);
     EXPECT_EQ(close_result, AARUF_STATUS_OK) << "Failed to close image";
+}
+
+TEST_F(CreateImageFixture, create_image_utf8_filename)
+{
+    // "test_ñ_日本.aif" as UTF-8, the encoding Aaru marshals paths with
+    const char filename[] = "test_\xc3\xb1_\xe6\x97\xa5\xe6\x9c\xac.aif";
+
+    uint8_t sector[512];
+    for(size_t i = 0; i < sizeof(sector); i++) sector[i] = static_cast<uint8_t>(i);
+
+    void *context = aaruf_create(filename, 1, 512, 16, 0, 0, NULL, reinterpret_cast<const uint8_t *>("gtest"), 5,
+                                 0, 0, false);
+    ASSERT_NE(context, nullptr) << "Failed to create image with UTF-8 filename";
+
+    ASSERT_EQ(aaruf_write_sector(context, 0, false, sector, SectorStatusDumped, sizeof(sector)), AARUF_STATUS_OK);
+    ASSERT_EQ(aaruf_close(context), AARUF_STATUS_OK) << "Failed to close image";
+
+    // The file must exist under the real Unicode name, not a code page mangled one
+#ifdef _WIN32
+    FILE *f = _wfopen(L"test_ñ_日本.aif", L"rb");
+#else
+    FILE *f = fopen(filename, "rb");
+#endif
+    ASSERT_NE(f, nullptr) << "Image was not created with the expected filename";
+    fclose(f);
+
+    EXPECT_EQ(aaruf_identify(filename), 100);
+
+    context = aaruf_open(filename, false, NULL);
+    ASSERT_NE(context, nullptr) << "Failed to open image with UTF-8 filename";
+
+    uint8_t  read_buffer[512];
+    uint32_t length        = sizeof(read_buffer);
+    uint8_t  sector_status = 0;
+
+    EXPECT_EQ(aaruf_read_sector(context, 0, false, read_buffer, &length, &sector_status), AARUF_STATUS_OK);
+    EXPECT_EQ(length, 512U);
+    EXPECT_EQ(memcmp(read_buffer, sector, sizeof(sector)), 0) << "Sector data mismatch";
+
+    EXPECT_EQ(aaruf_close(context), AARUF_STATUS_OK) << "Failed to close image";
+
+#ifdef _WIN32
+    _wremove(L"test_ñ_日本.aif");
+#else
+    remove(filename);
+#endif
 }
