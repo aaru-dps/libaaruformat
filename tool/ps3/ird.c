@@ -40,7 +40,7 @@ int32_t ps3_parse_ird(const char *path, IrdFile *ird)
 
     memset(ird, 0, sizeof(*ird));
 
-    FILE *fp = fopen(path, "rb");
+    FILE *fp = aaruf_fopen_utf8(path, "rb");
     if(fp == NULL) return -2;
 
     /* Get file size */

@@ -434,7 +434,7 @@ int inject_media_tag(const char *tag_type_str, const char *media_tag_file, const
     }
 
     // Read the media tag file into memory
-    FILE *tag_file = fopen(media_tag_file, "rb");
+    FILE *tag_file = aaruf_fopen_utf8(media_tag_file, "rb");
     if(tag_file == NULL)
     {
         fprintf(stderr, "ERROR: Cannot open media tag file: '%s'\n", media_tag_file);
@@ -473,7 +473,7 @@ int inject_media_tag(const char *tag_type_str, const char *media_tag_file, const
     fclose(tag_file);
 
     // Open image file for reading first to validate
-    FILE *image_stream = fopen(image_file, "rb");
+    FILE *image_stream = aaruf_fopen_utf8(image_file, "rb");
     if(image_stream == NULL)
     {
         fprintf(stderr, "ERROR: Cannot open image file: '%s'\n", image_file);
@@ -514,7 +514,7 @@ int inject_media_tag(const char *tag_type_str, const char *media_tag_file, const
     }
 
     // Re-read the full v2 header
-    image_stream = fopen(image_file, "rb");
+    image_stream = aaruf_fopen_utf8(image_file, "rb");
     if(image_stream == NULL)
     {
         fprintf(stderr, "ERROR: Cannot reopen image file: '%s'\n", image_file);
@@ -632,7 +632,7 @@ int inject_media_tag(const char *tag_type_str, const char *media_tag_file, const
     }
 
     // Read the DDT2 header to get blockAlignmentShift if needed
-    image_stream = fopen(image_file, "rb");
+    image_stream = aaruf_fopen_utf8(image_file, "rb");
     if(image_stream == NULL)
     {
         fprintf(stderr, "ERROR: Cannot reopen image file to read DDT2 header: '%s'\n", image_file);
@@ -718,7 +718,7 @@ int inject_media_tag(const char *tag_type_str, const char *media_tag_file, const
     if(removed_existing) { printf("  Removed existing media tag entry from index.\n"); }
 
     // Open the image file for read+write
-    image_stream = fopen(image_file, "r+b");
+    image_stream = aaruf_fopen_utf8(image_file, "r+b");
     if(image_stream == NULL)
     {
         fprintf(stderr, "ERROR: Cannot open image file for writing: '%s'\n", image_file);

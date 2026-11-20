@@ -346,7 +346,7 @@ int repair_cd_arena(const char *path, const bool dry_run)
     print_banner();
     printf("repair-cd-arena on '%s'%s\n\n", path, dry_run ? " (dry run)" : "");
 
-    FILE *fp = fopen(path, dry_run ? "rb" : "r+b");
+    FILE *fp = aaruf_fopen_utf8(path, dry_run ? "rb" : "r+b");
     if(fp == NULL)
     {
         printf("ERROR: cannot open '%s': %s\n", path, strerror(errno));

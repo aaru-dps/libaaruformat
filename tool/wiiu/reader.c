@@ -86,7 +86,7 @@ int wiiu_reader_open(const char *path, WiiuReader *reader)
 {
     memset(reader, 0, sizeof(*reader));
 
-    reader->fp = fopen(path, "rb");
+    reader->fp = aaruf_fopen_utf8(path, "rb");
 
     if(reader->fp == NULL)
     {

@@ -25,6 +25,8 @@
 
 #include <aaruformat.h>
 
+#include "../src/lib/utf8_path.h"
+
 #if defined(AARU_USE_WIN32_FILEIO64)
 #define AARU_FSEEK _fseeki64
 #define AARU_FTELL _ftelli64

@@ -47,6 +47,7 @@ add_executable(aaruformattool
                wiiu/reader.h
                ngcw/convert.c
                ${CMAKE_CURRENT_SOURCE_DIR}/../src/lib/aes128.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/../src/lib/utf8_path.c
                ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_crypto.c
                ${CMAKE_CURRENT_SOURCE_DIR}/../src/ps3/ps3_encryption_map.c
                ${CMAKE_CURRENT_SOURCE_DIR}/../src/wiiu/wiiu_crypto.c
@@ -86,6 +87,11 @@ endif()
 # On macOS/iOS, explicitly link the C++ standard library for ICU dependencies
 if(APPLE)
   target_link_libraries(aaruformattool PRIVATE "-lc++")
+endif()
+
+# On Windows, CommandLineToArgvW (UTF-8 argv) lives in shell32
+if(WIN32)
+  target_link_libraries(aaruformattool PRIVATE shell32)
 endif()
 
 # On Windows, copy libaaruformat.dll and MinGW runtime DLLs to the output directory

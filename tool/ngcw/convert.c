@@ -550,6 +550,21 @@ static void detect_junk_in_block(const uint8_t *block_buf, size_t block_bytes, u
 
 /* ---- BCA sidecar import ---- */
 
+/* Opens a BCA sidecar, returning NULL unless it exists and is exactly 64 bytes */
+static FILE *open_bca_file(const char *bca_path)
+{
+    FILE *bca_file = aaruf_fopen_utf8(bca_path, "rb");
+
+    if(bca_file == NULL) return NULL;
+
+    struct stat bca_st;
+
+    if(fstat(fileno(bca_file), &bca_st) == 0 && bca_st.st_size == 64) return bca_file;
+
+    fclose(bca_file);
+    return NULL;
+}
+
 static int import_bca_sidecar(const char *input_path, aaruformat_context *output_ctx)
 {
     size_t path_len = strlen(input_path) + 5;
@@ -560,10 +575,7 @@ static int import_bca_sidecar(const char *input_path, aaruformat_context *output
     /* Try appending .bca */
     snprintf(bca_path, path_len, "%s.bca", input_path);
 
-    struct stat bca_st;
-    FILE       *bca_file = NULL;
-
-    if(stat(bca_path, &bca_st) == 0 && bca_st.st_size == 64) { bca_file = fopen(bca_path, "rb"); }
+    FILE *bca_file = open_bca_file(bca_path);
 
     /* Try replacing extension */
     if(bca_file == NULL)
@@ -576,7 +588,7 @@ static int import_bca_sidecar(const char *input_path, aaruformat_context *output
         else
             strcat(bca_path, ".bca");
 
-        if(stat(bca_path, &bca_st) == 0 && bca_st.st_size == 64) bca_file = fopen(bca_path, "rb");
+        bca_file = open_bca_file(bca_path);
     }
 
     free(bca_path);
@@ -852,7 +864,7 @@ int convert_ngcw(const char *input_path, const char *output_path)
     else
     {
         /* Try raw ISO */
-        iso_file = fopen(input_path, "rb");
+        iso_file = aaruf_fopen_utf8(input_path, "rb");
 
         if(iso_file == NULL)
         {

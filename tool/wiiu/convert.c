@@ -120,7 +120,7 @@ static int try_sidecar_key_file(const char *input_path, const char *suffix, uint
     /* First try: append suffix (e.g., "input.wud.disckey") */
     snprintf(path, path_len, "%s%s", input_path, suffix);
 
-    FILE *f = fopen(path, "rb");
+    FILE *f = aaruf_fopen_utf8(path, "rb");
 
     /* Second try: replace extension (e.g., "input.disckey") */
     if(f == NULL)
@@ -143,7 +143,7 @@ static int try_sidecar_key_file(const char *input_path, const char *suffix, uint
             {
                 memcpy(alt_path, input_path, base_len);
                 memcpy(alt_path + base_len, suffix, strlen(suffix) + 1);
-                f = fopen(alt_path, "rb");
+                f = aaruf_fopen_utf8(alt_path, "rb");
                 free(alt_path);
             }
         }

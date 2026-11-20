@@ -49,7 +49,7 @@ int upgrade_ddt_to_alpha21(const char *path)
     printf("upgrade-ddt-to-alpha21 command called with path: %s\n", path);
 
     // Open the file
-    FILE *fp = fopen(path, "rb");
+    FILE *fp = aaruf_fopen_utf8(path, "rb");
     if(fp == NULL)
     {
         printf("ERROR: Failed to open file '%s': %s\n", path, strerror(errno));
@@ -700,7 +700,7 @@ int upgrade_ddt_to_alpha21(const char *path)
 
     // Reopen file in read-write mode for appending
     fclose(fp);
-    fp = fopen(path, "r+b");
+    fp = aaruf_fopen_utf8(path, "r+b");
     if(fp == NULL)
     {
         printf("ERROR: Failed to reopen file in write mode: %s\n", strerror(errno));
