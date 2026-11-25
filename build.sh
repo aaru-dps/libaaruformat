@@ -42,9 +42,9 @@ if [[ $MAC_ONLY == 0 ]]; then
 # Linux targets
 build_with_dockcross dockcross/linux-armv7a-lts dockcross-linux-arm so runtimes/linux-arm/native
 build_with_dockcross dockcross/linux-arm64-lts dockcross-linux-arm64 so runtimes/linux-arm64/native
-build_with_dockcross dockcross/linux-mips dockcross-linux-mips64 so runtimes/linux-mips64/native
+#build_with_dockcross dockcross/linux-mips dockcross-linux-mips64 so runtimes/linux-mips64/native
 build_with_dockcross dockcross/linux-arm64-musl dockcross-linux-musl-arm64 so runtimes/linux-musl-arm64/native
-build_with_dockcross dockcross/linux-s390x dockcross-linux-s390x so runtimes/linux-s390x/native
+#build_with_dockcross dockcross/linux-s390x dockcross-linux-s390x so runtimes/linux-s390x/native
 build_with_dockcross dockcross/linux-x64 dockcross-linux-x64 so runtimes/linux-x64/native
 build_with_dockcross dockcross/linux-x86 dockcross-linux-x86 so runtimes/linux-x86/native
 build_with_dockcross dockcross/linux-ppc64le dockcross-linux-ppc64le so runtimes/linux-ppc64le/native
