@@ -158,8 +158,8 @@ static Generation *scan_generations(const uint8_t *img, const uint64_t file_size
             if(bh.type != kDataTypeCdSectorPrefix && bh.type != kDataTypeCdSectorSuffix) continue;
             if(bh.length == 0 || bh.length > file_size) continue;
 
+            // The LZMA properties follow the header and are counted in cmpLength; decode_payload() skips them
             uint64_t payload = pos + sizeof(BlockHeader);
-            if(bh.compression == kCompressionLzma) payload += LZMA_PROPERTIES_LENGTH;
             if(payload + bh.cmpLength > file_size) continue;
             uint8_t *data = decode_payload(img + payload, bh.compression, bh.cmpLength, bh.length, bh.crc64);
             if(data == NULL) continue;
@@ -180,7 +180,6 @@ static Generation *scan_generations(const uint8_t *img, const uint64_t file_size
             if(dh.length == 0 || dh.length > file_size || (dh.length % sizeof(uint64_t)) != 0) continue;
 
             uint64_t payload = pos + sizeof(DdtHeader2);
-            if(dh.compression == kCompressionLzma) payload += LZMA_PROPERTIES_LENGTH;
             if(payload + dh.cmpLength > file_size) continue;
             uint8_t *data = decode_payload(img + payload, dh.compression, dh.cmpLength, dh.length, dh.crc64);
             if(data == NULL) continue;
