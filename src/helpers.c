@@ -208,12 +208,12 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_media_tag_type_for_datatype(const int32_t
             return kMediaTagAacsVolumeUniqueKey;
         case kDataTypeMiniDiscType:
             return kMediaTagMiniDiscType;
-        case kDataTypeMiniDiscD5:
-            return kMediaTagMiniDiscD5;
+        case kDataTypeMiniDiscDefectList:
+            return kMediaTagMiniDiscDefectList;
         case kDataTypeMiniDiscUtoc:
             return kMediaTagMiniDiscUtoc;
-        case kDataTypeMiniDiscDtoc:
-            return kMediaTagMiniDiscDtoc;
+        case kDataTypeMiniDiscPtoc:
+            return kMediaTagMiniDiscPtoc;
         default:
             return -1;
     }
@@ -400,12 +400,12 @@ AARU_LOCAL int32_t AARU_CALL aaruf_get_datatype_for_media_tag_type(const int32_t
             return kDataTypeAacsVolumeUniqueKey;
         case kMediaTagMiniDiscType:
             return kDataTypeMiniDiscType;
-        case kMediaTagMiniDiscD5:
-            return kDataTypeMiniDiscD5;
+        case kMediaTagMiniDiscDefectList:
+            return kDataTypeMiniDiscDefectList;
         case kMediaTagMiniDiscUtoc:
             return kDataTypeMiniDiscUtoc;
-        case kMediaTagMiniDiscDtoc:
-            return kDataTypeMiniDiscDtoc;
+        case kMediaTagMiniDiscPtoc:
+            return kDataTypeMiniDiscPtoc;
         default:
             return -1;
     }

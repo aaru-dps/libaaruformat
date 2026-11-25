@@ -154,10 +154,10 @@ typedef enum
     kDataTypeErasureParityMeta       = 107,  ///< Erasure coding parity shard for metadata blocks.
     kDataTypeErasureParityIndex      = 108,  ///< Erasure coding parity replica for index block.
     kDataTypeMiniDiscType            = 109,  ///< 8 bytes response that seems to define type of MiniDisc
-    kDataTypeMiniDiscD5              = 110,  ///< 4 bytes response to vendor command D5h
+    kDataTypeMiniDiscDefectList      = 110,  ///< MD-DATA Defect List, response to D5h
     kDataTypeMiniDiscUtoc =
         111,  ///< User TOC, contains fragments, track names, and can be from 1 to 3 sectors of 2336 bytes
-    kDataTypeMiniDiscDtoc = 112,  ///< Not entirely clear kind of TOC that only appears on MD-DATA discs
+    kDataTypeMiniDiscPtoc = 112,  ///< Pre-mastered TOC that only appears on MD-DATA discs
 } DataType;
 
 /**
