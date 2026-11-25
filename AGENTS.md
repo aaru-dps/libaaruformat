@@ -53,6 +53,7 @@ libaaruformat/
 │   ├── wiiu/          # Wii U disc encryption/decryption
 │   ├── ngcw/          # NGC/Wii support (LFG PRNG junk, Wii crypto)
 │   ├── erasure.c      # Erasure coding read/write integration
+│   ├── twin.c         # Twin sectors (several physical sectors per address, TWTB)
 │   ├── open.c         # Image opening (V1/V2, backup header recovery)
 │   ├── close.c        # Image closing and resource cleanup
 │   ├── close_write.c  # Write finalization (DDT, metadata, index serialization)
@@ -179,6 +180,14 @@ The DDT (Deduplication Table) uses xxHash and hash maps for block deduplication 
 ### Erasure Coding
 Reed-Solomon (RS) and XOR parity for data recovery. Five protection groups: data blocks (interleaved stripes), DDT-secondary (batch), DDT-primary (replicas), metadata (batch), index (replicas). GF(2^8) arithmetic with 4-path SIMD dispatch (AVX2, SSSE3, NEON, scalar). Parity computed on raw on-disk (compressed) bytes. Recovery is transparent in `aaruf_read_sector()`. Recovery footer at EOF with backup header.
 
+### Twin Sectors
+Several physical sectors sharing one address. Twin #0 is stored as any sector (its user DDT entry has status `Twin`
+but still points at twin #0's data); twins #1..n-1 live in the `TWTB` block, one record per instance with every
+component (user data pointer, CD prefix/suffix DDT-style values sharing the arenas, inline subheader/subchannel/DVD/BD
+fields/Apple tags). `src/twin.c` runs the normal long/tag functions with the twin's components swapped into the
+per-sector slots, plus `ctx->twin_write_*` / `ctx->twin_read_*` data overrides honoured by `aaruf_write_sector()` and
+`aaruf_read_sector()`. Sets `AARU_FEATURE_ROCOMPAT_TWIN_SECTORS`.
+
 ## Testing
 
 Tests are in the `tests/` directory using Google Test framework:
@@ -195,6 +204,7 @@ Tests are in the `tests/` directory using Google Test framework:
 - Erasure coding tests: `reed_solomon.cpp`, `erasure_coding.cpp`
 - `large_file_io.cpp` - Large file (>2 GiB) I/O tests
 - `mode2_nocrc.cpp`, `mode2_errored.cpp` - CD Mode 2 edge cases
+- `twin_sectors.cpp` - Twin sectors (block, CD, DVD, Apple, multi-level DDT, resume, EC recovery)
 
 Test data files are in `tests/data/`.
 
