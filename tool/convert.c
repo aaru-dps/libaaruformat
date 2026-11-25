@@ -157,6 +157,135 @@ static char *utf16le_to_utf8(const uint8_t *utf16_data, int32_t utf16_length)
     return result;
 }
 
+/** A per-sector tag that can be copied through the sector tag API. */
+typedef struct
+{
+    int32_t  tag;
+    uint32_t size;
+    bool     in_long_sector;  ///< Already part of the long sector, not copied separately in long mode.
+} CopyableSectorTag;
+
+static const CopyableSectorTag copyable_sector_tags[] = {
+    {        kSectorTagCdSubchannel, 96, false},
+    {         kSectorTagCdSubHeader,  8,  true},
+    {kSectorTagDvdSectorInformation,  1,  true},
+    {     kSectorTagDvdSectorNumber,  3,  true},
+    {        kSectorTagDvdSectorIed,  2,  true},
+    {              kSectorTagDvdCmi,  1,  true},
+    {        kSectorTagDvdSectorEdc,  4,  true},
+    {kSectorTagDvdTitleKeyDecrypted,  5, false},
+    {           kSectorTagAppleSony, 12,  true},
+    {        kSectorTagAppleProfile, 20,  true},
+    {      kSectorTagPriamDataTower, 24,  true},
+    {         kSectorTagBdSectorEdc,  4,  true},
+};
+
+/** Counters of what was copied. */
+typedef struct
+{
+    uint64_t twins;
+    uint64_t tags;
+    uint64_t not_dumped;
+    uint64_t bytes;
+} CopyStatistics;
+
+/**
+ * Copies one physical instance (twin) of a sector, its data and the per-sector tags in @p tags.
+ * Sectors that were not dumped are skipped (twins are kept as empty instances so later twins keep their index).
+ */
+static int32_t copy_sector_instance(aaruformat_context *input_ctx, aaruformat_context *output_ctx,
+                                    const uint64_t sector, const bool negative, const uint32_t twin,
+                                    const bool use_long, uint8_t **sector_data, uint32_t *sector_size,
+                                    const CopyableSectorTag *const *tags, const size_t tag_count,
+                                    CopyStatistics *statistics)
+{
+    uint32_t length = 0;
+    uint8_t  status = 0;
+    int32_t  res    = use_long ? aaruf_read_sector_twin_long(input_ctx, sector, negative, twin, NULL, &length, &status)
+                               : aaruf_read_sector_twin(input_ctx, sector, negative, twin, NULL, &length, &status);
+
+    if(res == AARUF_ERROR_BUFFER_TOO_SMALL)
+    {
+        if(*sector_size < length)
+        {
+            uint8_t *grown = realloc(*sector_data, length);
+            if(grown == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            *sector_data = grown;
+            *sector_size = length;
+        }
+
+        // Long reads only find out the sector was not dumped when actually reading it
+        res = use_long ? aaruf_read_sector_twin_long(input_ctx, sector, negative, twin, *sector_data, &length, &status)
+                       : aaruf_read_sector_twin(input_ctx, sector, negative, twin, *sector_data, &length, &status);
+    }
+
+    if(res == AARUF_STATUS_SECTOR_NOT_DUMPED)
+    {
+        statistics->not_dumped++;
+
+        if(twin > 0)
+        {
+            if(length == 0 || length > *sector_size) length = *sector_size;
+            memset(*sector_data, 0, length);
+            res = aaruf_write_sector_twin(output_ctx, sector, negative, twin, *sector_data, SectorStatusNotDumped,
+                                          length);
+            if(res != AARUF_STATUS_OK) return res;
+        }
+    }
+    else if(res == AARUF_STATUS_OK)
+    {
+        if(twin == 0)
+            res = use_long ? aaruf_write_sector_long(output_ctx, sector, negative, *sector_data, status, length)
+                           : aaruf_write_sector(output_ctx, sector, negative, *sector_data, status, length);
+        else
+            res = use_long
+                      ? aaruf_write_sector_twin_long(output_ctx, sector, negative, twin, *sector_data, status, length)
+                      : aaruf_write_sector_twin(output_ctx, sector, negative, twin, *sector_data, status, length);
+        if(res != AARUF_STATUS_OK) return res;
+
+        statistics->bytes += length;
+        if(twin > 0) statistics->twins++;
+    }
+    else
+        return res;
+
+    for(size_t t = 0; t < tag_count; t++)
+    {
+        uint8_t  tag_data[96];
+        uint32_t tag_length = tags[t]->size;
+
+        if(aaruf_read_sector_twin_tag(input_ctx, sector, negative, twin, tag_data, &tag_length, tags[t]->tag) !=
+           AARUF_STATUS_OK)
+            continue;
+
+        res = aaruf_write_sector_twin_tag(output_ctx, sector, negative, twin, tag_data, tag_length, tags[t]->tag);
+        if(res != AARUF_STATUS_OK) return res;
+
+        statistics->tags++;
+    }
+
+    return AARUF_STATUS_OK;
+}
+
+/** Copies every physical instance of a sector. */
+static int32_t copy_sector(aaruformat_context *input_ctx, aaruformat_context *output_ctx, const uint64_t sector,
+                           const bool negative, const bool use_long, uint8_t **sector_data, uint32_t *sector_size,
+                           const CopyableSectorTag *const *tags, const size_t tag_count, CopyStatistics *statistics)
+{
+    uint32_t instances = 1;
+    if(aaruf_get_sector_twin_count(input_ctx, sector, negative, &instances) != AARUF_STATUS_OK || instances == 0)
+        instances = 1;
+
+    for(uint32_t twin = 0; twin < instances; twin++)
+    {
+        const int32_t res = copy_sector_instance(input_ctx, output_ctx, sector, negative, twin, use_long, sector_data,
+                                                 sector_size, tags, tag_count, statistics);
+        if(res != AARUF_STATUS_OK) return res;
+    }
+
+    return AARUF_STATUS_OK;
+}
+
 int convert_ec(const char *input_path, const char *output_path, bool use_long, uint16_t ec_k, uint16_t ec_m)
 {
     aaruformat_context *input_ctx     = NULL;
@@ -790,9 +919,13 @@ int convert_ec(const char *input_path, const char *output_path, bool use_long, u
 
     // Create output image
     print_header("Creating Destination Image");
+    uint32_t negative_sectors = 0;
+    uint32_t overflow_sectors = 0;
+    if(aaruf_get_negative_sectors(input_ctx, &negative_sectors) != AARUF_STATUS_OK) negative_sectors = 0;
+    if(aaruf_get_overflow_sectors(input_ctx, &overflow_sectors) != AARUF_STATUS_OK) overflow_sectors = 0;
+
     output_ctx = aaruf_create(output_path, input_ctx->image_info.MediaType, sector_size, total_sectors,
-                              0,     // negative sectors
-                              0,     // overflow sectors
+                              negative_sectors, overflow_sectors,
                               NULL,  // options
                               app_name_utf8,
                               app_name_utf8_len,  // application name length in bytes
@@ -895,171 +1028,91 @@ int convert_ec(const char *input_path, const char *output_path, bool use_long, u
     start_time      = clock();
     bytes_processed = 0;
     int last_error  = AARUF_STATUS_OK;
-    uint64_t twins_copied = 0;
 
-    for(uint64_t sector = 0; sector < total_sectors; sector++)
+    // Per-sector tags present in the source; in long mode only those not already part of the long sector
+    const CopyableSectorTag *tags[sizeof(copyable_sector_tags) / sizeof(copyable_sector_tags[0])];
+    size_t                   tag_count    = 0;
+    size_t                   flags_length = 0;
+
+    if(aaruf_get_readable_sector_tags(input_ctx, NULL, &flags_length) == AARUF_ERROR_BUFFER_TOO_SMALL)
     {
-        uint32_t read_length = 0;
+        bool *readable = calloc(1, flags_length);
+
+        if(readable != NULL &&
+           aaruf_get_readable_sector_tags(input_ctx, (uint8_t *)readable, &flags_length) == AARUF_STATUS_OK)
+            for(size_t t = 0; t < sizeof(copyable_sector_tags) / sizeof(copyable_sector_tags[0]); t++)
+            {
+                const CopyableSectorTag *tag = &copyable_sector_tags[t];
+                if((size_t)tag->tag < flags_length / sizeof(bool) && readable[tag->tag] &&
+                   !(use_long && tag->in_long_sector))
+                    tags[tag_count++] = tag;
+            }
+
+        free(readable);
+    }
+
+    // Negative sectors (from the most negative), the user area, then overflow sectors
+    const uint64_t addresses  = negative_sectors + total_sectors + overflow_sectors;
+    CopyStatistics statistics = {0};
+
+    for(uint64_t i = 0; i < addresses; i++)
+    {
+        const bool     negative = i < negative_sectors;
+        const uint64_t sector   = negative ? negative_sectors - i : i - negative_sectors;
 
         // Update progress every 100 sectors or on last sector
-        if(sector % 100 == 0 || sector == total_sectors - 1)
+        if(i % 100 == 0 || i == addresses - 1)
         {
             current_time          = clock();
             double elapsed        = (double)(current_time - start_time) / CLOCKS_PER_SEC;
-            double percentage     = (double)(sector + 1) / total_sectors * 100.0;
-            double speed          = elapsed > 0 ? bytes_processed / elapsed : 0;
-            double remaining_secs = speed > 0 ? ((total_size - bytes_processed) / speed) : 0;
+            double percentage     = (double)(i + 1) / addresses * 100.0;
+            double speed          = elapsed > 0 ? statistics.bytes / elapsed : 0;
+            double remaining_secs = speed > 0 ? ((total_size - statistics.bytes) / speed) : 0;
 
             draw_progress_bar(percentage, speed, elapsed, remaining_secs);
         }
 
-        // Check sector size
-        if(use_long)
-            res = aaruf_read_sector_long(input_ctx, sector, false, sector_data, &read_length, &sector_status);
-        else
-            res = aaruf_read_sector(input_ctx, sector, false, sector_data, &read_length, &sector_status);
-
-        if(res != AARUF_ERROR_BUFFER_TOO_SMALL)
-        {
-            printf("\n");
-            snprintf(buffer, sizeof(buffer), "Error reading sector %llu (error %d)", (unsigned long long)sector, res);
-            print_error(buffer);
-            last_error = res;
-            break;
-        }
-
-        if(sector_size < read_length)
-        {
-            free(sector_data);
-            sector_size = read_length;
-            sector_data = malloc(sector_size);
-            if(sector_data == NULL)
-            {
-                printf("\n");
-                print_error("Cannot allocate memory for larger sector buffer");
-                aaruf_close(input_ctx);
-                aaruf_close(output_ctx);
-                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
-            }
-        }
-
-        // Read sector from input
-        if(use_long)
-            res = aaruf_read_sector_long(input_ctx, sector, false, sector_data, &read_length, &sector_status);
-        else
-            res = aaruf_read_sector(input_ctx, sector, false, sector_data, &read_length, &sector_status);
+        res = copy_sector(input_ctx, output_ctx, sector, negative, use_long, &sector_data, &sector_size, tags,
+                          tag_count, &statistics);
 
         if(res != AARUF_STATUS_OK)
         {
             printf("\n");
-            snprintf(buffer, sizeof(buffer), "Error reading sector %llu (error %d)", (unsigned long long)sector, res);
+            snprintf(buffer, sizeof(buffer), "Error copying sector %s%llu (error %d)", negative ? "-" : "",
+                     (unsigned long long)sector, res);
             print_error(buffer);
             last_error = res;
             break;
         }
-
-        // Write sector to output
-        if(use_long)
-            res = aaruf_write_sector_long(output_ctx, sector, false, sector_data, sector_status, read_length);
-        else
-            res = aaruf_write_sector(output_ctx, sector, false, sector_data, sector_status, read_length);
-
-        if(res != AARUF_STATUS_OK)
-        {
-            printf("\n");
-            snprintf(buffer, sizeof(buffer), "Error writing sector %llu (error %d)", (unsigned long long)sector, res);
-            print_error(buffer);
-            last_error = res;
-            break;
-        }
-
-        bytes_processed += read_length;
-
-        // Copy the twins (further physical instances) of the sector, if any
-        uint32_t twin_count = 1;
-        if(aaruf_get_sector_twin_count(input_ctx, sector, false, &twin_count) != AARUF_STATUS_OK) twin_count = 1;
-
-        for(uint32_t twin = 1; twin < twin_count && last_error == AARUF_STATUS_OK; twin++)
-        {
-            uint32_t twin_length = 0;
-            uint8_t  twin_status = 0;
-
-            res = use_long
-                      ? aaruf_read_sector_twin_long(input_ctx, sector, false, twin, NULL, &twin_length, &twin_status)
-                      : aaruf_read_sector_twin(input_ctx, sector, false, twin, NULL, &twin_length, &twin_status);
-
-            if(res == AARUF_STATUS_SECTOR_NOT_DUMPED)
-            {
-                // Twin without user data: keep its place with an empty instance
-                memset(sector_data, 0, sector_size);
-                twin_length = twin_length == 0 || twin_length > sector_size ? sector_size : twin_length;
-                twin_status = SectorStatusNotDumped;
-                res = aaruf_write_sector_twin(output_ctx, sector, false, twin, sector_data, twin_status, twin_length);
-            }
-            else if(res == AARUF_ERROR_BUFFER_TOO_SMALL)
-            {
-                if(sector_size < twin_length)
-                {
-                    free(sector_data);
-                    sector_size = twin_length;
-                    sector_data = malloc(sector_size);
-                    if(sector_data == NULL)
-                    {
-                        printf("\n");
-                        print_error("Cannot allocate memory for larger sector buffer");
-                        aaruf_close(input_ctx);
-                        aaruf_close(output_ctx);
-                        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
-                    }
-                }
-
-                res = use_long ? aaruf_read_sector_twin_long(input_ctx, sector, false, twin, sector_data, &twin_length,
-                                                             &twin_status)
-                               : aaruf_read_sector_twin(input_ctx, sector, false, twin, sector_data, &twin_length,
-                                                        &twin_status);
-
-                if(res == AARUF_STATUS_OK)
-                    res = use_long ? aaruf_write_sector_twin_long(output_ctx, sector, false, twin, sector_data,
-                                                                  twin_status, twin_length)
-                                   : aaruf_write_sector_twin(output_ctx, sector, false, twin, sector_data, twin_status,
-                                                             twin_length);
-            }
-
-            if(res != AARUF_STATUS_OK)
-            {
-                printf("\n");
-                snprintf(buffer, sizeof(buffer), "Error copying twin %u of sector %llu (error %d)", twin,
-                         (unsigned long long)sector, res);
-                print_error(buffer);
-                last_error = res;
-                break;
-            }
-
-            // The subchannel is not part of the long sector, copy it for each twin
-            if(use_long)
-            {
-                uint8_t  subchannel[96];
-                uint32_t subchannel_length = sizeof(subchannel);
-
-                if(aaruf_read_sector_twin_tag(input_ctx, sector, false, twin, subchannel, &subchannel_length,
-                                              kSectorTagCdSubchannel) == AARUF_STATUS_OK)
-                    aaruf_write_sector_twin_tag(output_ctx, sector, false, twin, subchannel, subchannel_length,
-                                                kSectorTagCdSubchannel);
-            }
-
-            twins_copied++;
-            bytes_processed += twin_length;
-        }
-
-        if(last_error != AARUF_STATUS_OK) break;
     }
+
+    bytes_processed = statistics.bytes;
 
     printf("\n\n");
 
-    if(twins_copied > 0)
+    if(negative_sectors > 0 || overflow_sectors > 0)
     {
-        snprintf(buffer, sizeof(buffer), "Copied %llu twin instance(s)", (unsigned long long)twins_copied);
+        snprintf(buffer, sizeof(buffer), "Copied %u negative and %u overflow sector(s)", negative_sectors,
+                 overflow_sectors);
         print_success(buffer);
+    }
+
+    if(statistics.twins > 0)
+    {
+        snprintf(buffer, sizeof(buffer), "Copied %llu twin instance(s)", (unsigned long long)statistics.twins);
+        print_success(buffer);
+    }
+
+    if(statistics.tags > 0)
+    {
+        snprintf(buffer, sizeof(buffer), "Copied %llu sector tag(s)", (unsigned long long)statistics.tags);
+        print_success(buffer);
+    }
+
+    if(statistics.not_dumped > 0)
+    {
+        snprintf(buffer, sizeof(buffer), "%llu sector(s) were not dumped", (unsigned long long)statistics.not_dumped);
+        print_info("Not dumped:", buffer);
     }
 
     // Copy tracks again (in case they were modified during sector copy)
