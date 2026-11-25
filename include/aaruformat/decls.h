@@ -317,7 +317,7 @@ AARU_EXPORT int have_neon(void);
 AARU_EXPORT int have_arm_crc32(void);
 AARU_EXPORT int have_arm_crypto(void);
 
-AARU_EXPORT TARGET_WITH_SIMD uint64_t AARU_CALL aaruf_crc64_vmull(uint64_t previous_crc, const uint8_t *data, long len);
+AARU_EXPORT uint64_t AARU_CALL aaruf_crc64_vmull(uint64_t previous_crc, const uint8_t *data, long len);
 #endif
 
 /* Erasure coding */
