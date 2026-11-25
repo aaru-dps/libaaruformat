@@ -194,15 +194,21 @@ typedef struct
  * Sectors that were not dumped are skipped (twins are kept as empty instances so later twins keep their index).
  */
 static int32_t copy_sector_instance(aaruformat_context *input_ctx, aaruformat_context *output_ctx,
-                                    const uint64_t sector, const bool negative, const uint32_t twin,
-                                    const bool use_long, uint8_t **sector_data, uint32_t *sector_size,
-                                    const CopyableSectorTag *const *tags, const size_t tag_count,
-                                    CopyStatistics *statistics)
+                                    const uint64_t sector, const bool negative, const uint32_t twin, bool use_long,
+                                    uint8_t **sector_data, uint32_t *sector_size, const CopyableSectorTag *const *tags,
+                                    const size_t tag_count, CopyStatistics *statistics)
 {
     uint32_t length = 0;
     uint8_t  status = 0;
     int32_t  res    = use_long ? aaruf_read_sector_twin_long(input_ctx, sector, negative, twin, NULL, &length, &status)
                                : aaruf_read_sector_twin(input_ctx, sector, negative, twin, NULL, &length, &status);
+
+    // Media without long sectors (e.g. a plain floppy) are copied with normal sectors
+    if(use_long && res == AARUF_ERROR_INCORRECT_MEDIA_TYPE)
+    {
+        use_long = false;
+        res      = aaruf_read_sector_twin(input_ctx, sector, negative, twin, NULL, &length, &status);
+    }
 
     if(res == AARUF_ERROR_BUFFER_TOO_SMALL)
     {
@@ -241,6 +247,7 @@ static int32_t copy_sector_instance(aaruformat_context *input_ctx, aaruformat_co
             res = use_long
                       ? aaruf_write_sector_twin_long(output_ctx, sector, negative, twin, *sector_data, status, length)
                       : aaruf_write_sector_twin(output_ctx, sector, negative, twin, *sector_data, status, length);
+
         if(res != AARUF_STATUS_OK) return res;
 
         statistics->bytes += length;
