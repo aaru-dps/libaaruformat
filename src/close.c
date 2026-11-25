@@ -288,6 +288,9 @@ AARU_EXPORT int AARU_CALL aaruf_close(void *context)
     // Free twin sector groups
     free_twin_sectors(ctx);
 
+    // Free flux entries, lookup map and pending captures
+    aaruf_clear_flux_captures(ctx);
+
     // Free erasure coding state
     ec_free(ctx);
 
