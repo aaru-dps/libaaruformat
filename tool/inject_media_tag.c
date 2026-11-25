@@ -128,9 +128,9 @@ static const MediaTagTypeMapping media_tag_mappings[] = {
     {"kMediaTagXboxPfi",                      kMediaTagXboxPfi},
     {"kMediaTagCdLeadIn",                     kMediaTagCdLeadIn},
     {"kMediaTagMiniDiscType",                  kMediaTagMiniDiscType},
-    {"kMediaTagMiniDiscD5",                    kMediaTagMiniDiscD5},
+    {"kMediaTagMiniDiscDefectList",            kMediaTagMiniDiscDefectList},
     {"kMediaTagMiniDiscUtoc",                  kMediaTagMiniDiscUtoc},
-    {"kMediaTagMiniDiscDtoc",                  kMediaTagMiniDiscDtoc},
+    {"kMediaTagMiniDiscPtoc",                  kMediaTagMiniDiscPtoc},
     {"kMediaTagDvdDiscKeyDecrypted",         kMediaTagDvdDiscKeyDecrypted},
     {"kMediaTagDvdPfi2ndLayer",              kMediaTagDvdPfi2ndLayer},
     {"kMediaTagFloppyWriteProtect",           kMediaTagFloppyWriteProtect},
@@ -303,12 +303,12 @@ static int32_t get_datatype_for_media_tag_type(MediaTagType tag_type)
             return kDataTypeAacsVolumeUniqueKey;
         case kMediaTagMiniDiscType:
             return kDataTypeMiniDiscType;
-        case kMediaTagMiniDiscD5:
-            return kDataTypeMiniDiscD5;
+        case kMediaTagMiniDiscDefectList:
+            return kDataTypeMiniDiscDefectList;
         case kMediaTagMiniDiscUtoc:
             return kDataTypeMiniDiscUtoc;
-        case kMediaTagMiniDiscDtoc:
-            return kDataTypeMiniDiscDtoc;
+        case kMediaTagMiniDiscPtoc:
+            return kDataTypeMiniDiscPtoc;
         default:
             return -1;
     }

@@ -194,12 +194,12 @@ const char *media_tag_type_to_string(int32_t type)
             return "CD Lead-in";
         case kMediaTagMiniDiscType:
             return "MiniDisc Type";
-        case kMediaTagMiniDiscD5:
-            return "MiniDisc D5h Response";
+        case kMediaTagMiniDiscDefectList:
+            return "MiniDisc Defect List";
         case kMediaTagMiniDiscUtoc:
             return "MiniDisc User TOC";
-        case kMediaTagMiniDiscDtoc:
-            return "MiniDisc Premastered TOC";
+        case kMediaTagMiniDiscPtoc:
+            return "MiniDisc Pre-mastered TOC";
         case kMediaTagDvdDiscKeyDecrypted:
             return "DVD Disc Key (decrypted)";
         case kMediaTagDvdPfi2ndLayer:
@@ -377,12 +377,12 @@ const char *data_type_to_string(uint16_t type)
             return "CD Lead-in";
         case kDataTypeMiniDiscType:
             return "MiniDisc Type";
-        case kDataTypeMiniDiscD5:
-            return "MiniDisc D5h Response";
+        case kDataTypeMiniDiscDefectList:
+            return "MiniDisc Defect List";
         case kDataTypeMiniDiscUtoc:
             return "MiniDisc User TOC";
-        case kDataTypeMiniDiscDtoc:
-            return "MiniDisc Premastered TOC";
+        case kDataTypeMiniDiscPtoc:
+            return "MiniDisc Pre-mastered TOC";
         case kDataTypeDvdDiscKeyDecrypted:
             return "DVD Disc Key (decrypted)";
         case kDataTypeDvdSectorCprMai:
