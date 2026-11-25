@@ -108,4 +108,10 @@ Rework the flux workflow.
 | Draft
 | Natalia Portillo
 | Define Data Position Measurement block.
+
+| 25 November 2026
+| 2.0dg
+| Draft
+| Natalia Portillo
+| Define twin sector table.
 |===

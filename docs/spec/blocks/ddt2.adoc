@@ -245,7 +245,7 @@ The following flags are defined:
 
 |Twin
 |`0x7`
-|Pointer references a twin sector table (see below).
+|Several physical sectors share this address. The pointer references twin #0, and every instance, together with twin #0's real status, is described in the twin sector table.
 
 |Unrecorded
 |`0x8`

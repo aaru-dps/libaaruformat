@@ -1,11 +1,49 @@
 === 👯 Twin Sector Table (`TWTB`)
 
-This table enumerates hardware sectors that share an identical sector number.
+Some media carry more than one physical sector answering to the same sector address.
+Floppies with duplicated sector IDs used for copy protection, or Compact Discs where the same MSF address is mastered more than once (usually with a different header or Q subchannel), are typical examples.
 Such sectors are referred to as “twin sectors,” although the grouping may consist of more than two instances.
-The associated pointer is resolved following the same logic applied in a last-level deduplication table.
+
+Every instance is a full physical sector.
+When the medium stores sectors decomposed in several parts (user data, Compact Disc prefix and suffix, MODE 2 subheader, subchannel, DVD and Blu-ray long sector fields, Apple and Priam tags), every instance has its own copy of each part.
+
+==== Storage Model
+
+* *Twin #0* is stored exactly like any other sector: user data in data blocks referenced by the user data deduplication table, prefix and suffix in their own deduplication tables and data blocks, and tags in their per-sector data blocks.
+Its entry in the user data deduplication table has the status `Twin` (`0x7`), but its pointer still references twin #0's user data.
+Readers that do not understand twin sectors therefore read twin #0 transparently.
+* The real status of twin #0's user data is stored in the twin sector table.
+* *Twins #1 to n-1* are records of the twin sector table:
+** User data is stored in ordinary data blocks, and referenced with a pointer encoded exactly as an entry of the user data deduplication table.
+** Compact Disc prefix and suffix use the same data blocks as twin #0, and are encoded exactly as entries of the prefix and suffix deduplication tables.
+A twin whose prefix or suffix can be regenerated takes no space besides its entry.
+** Small fixed-size tags are stored inside the record.
+
+There is at most one twin sector table per image, indexed with block type `TWTB` and data type `UserData`.
+
+When an image contains a twin sector table, bit 1 (`AARU_FEATURE_ROCOMPAT_TWIN_SECTORS`) of `featureCompatibleRo` is set.
+Readers that do not understand it can read the image (getting twin #0 of every twinned sector), but must not modify it, as they would drop the table and leave its entries in the prefix and suffix data blocks unreferenced.
+
+==== Structure Definition
 
 [source,c]
-/* Undefined */
+#define TWTB_MAGIC 0x42545754
+typedef struct TwinSectorTableHeader
+{
+    uint32_t identifier;           ///< Block identifier, must be BlockType::TwinSectorTable.
+    uint16_t compression;          ///< Compression of the payload.
+    uint8_t  blockAlignmentShift;  ///< Must equal the user data deduplication table's.
+    uint8_t  dataShift;            ///< Must equal the user data deduplication table's.
+    uint8_t  components;           ///< Number of component descriptors.
+    uint8_t  reserved[3];          ///< Reserved, must be 0.
+    uint32_t recordSize;           ///< Size of a twin record, multiple of 8.
+    uint32_t groups;               ///< Number of twinned sectors.
+    uint64_t instances;            ///< Number of twin records.
+    uint64_t cmpLength;            ///< Compressed payload length.
+    uint64_t length;               ///< Uncompressed payload length.
+    uint64_t cmpCrc64;             ///< CRC64-ECMA of the compressed payload.
+    uint64_t crc64;                ///< CRC64-ECMA of the uncompressed payload.
+} TwinSectorTableHeader;
 
 ==== Field Descriptions
 
@@ -21,65 +59,205 @@ The associated pointer is resolved following the same logic applied in a last-le
 |identifier
 |The twin sector table identifier, always `TWTB`
 
-|uint8_t
-|1 byte
-|alignment
-|Shift of alignment of all blocks in the image. This must be the same in all deduplication tables and subtables.
+|uint16_t
+|2 bytes
+|compression
+|Compression algorithm used for the payload. When LZMA, the payload is preceded by the 5 bytes of LZMA properties, which are included in `cmpLength` but not in `cmpCrc64`.
 
 |uint8_t
 |1 byte
-|shift
-|The shift used to calculate the position of a sector in a data block pointed by this table, or how many sectors are pointed by the next level.
+|blockAlignmentShift
+|Shift of alignment of all blocks in the image. This must be the same as in the user data deduplication table.
 
-|uint64_t
-|8 bytes
-|entries
-|How many pointers follow this header.
+|uint8_t
+|1 byte
+|dataShift
+|The shift used to calculate the position of a sector in a data block pointed by a user data pointer. This must be the same as in the user data deduplication table.
+
+|uint8_t
+|1 byte
+|components
+|How many component descriptors are at the start of the payload. The first one always describes user data.
+
+|uint8_t[3]
+|3 bytes
+|reserved
+|Reserved, must be 0.
 
 |uint32_t
 |4 bytes
+|recordSize
+|The size in bytes of each twin record. It is a multiple of 8.
+
+|uint32_t
+|4 bytes
+|groups
+|How many twinned sectors are described.
+
+|uint64_t
+|8 bytes
+|instances
+|How many twin records follow the groups.
+
+|uint64_t
+|8 bytes
+|cmpLength
+|The size in bytes of the payload as stored.
+
+|uint64_t
+|8 bytes
 |length
-|The size in bytes of the table block.
+|The size in bytes of the payload after decompression.
+
+|uint64_t
+|8 bytes
+|cmpCrc64
+|The CRC64-ECMA checksum of the payload as stored.
 
 |uint64_t
 |8 bytes
 |crc64
-|The CRC64-ECMA checksum of the decompressed table.
+|The CRC64-ECMA checksum of the decompressed payload.
 |===
 
-==== Twin sector entries
+==== Payload
 
-[cols="2,2,2,6",options="header"]
+The decompressed payload is made of the component descriptors, followed by the groups, followed by the twin records, with no padding between them.
+
+===== Component descriptors
+
+Each descriptor declares a component present in every twin record, in the order it appears in the record.
+
+[source,c]
+typedef struct TwinComponentDescriptor
+{
+    uint16_t dataType;  ///< Data type of the component.
+    uint8_t  kind;      ///< 0 = pointer, 1 = inline.
+    uint8_t  reserved;  ///< Reserved, must be 0.
+    uint32_t size;      ///< Size of the component in a record.
+} TwinComponentDescriptor;
+
+[cols="3,1,1,6",options="header"]
 |===
-|Type
+|Data type
+|Kind
 |Size
-|Name
-|Description
+|Value
 
-|uint32_t
-|8 bytes
-|pointer
-|Pointer to the sector.
+|`UserData`
+|Pointer
+|8
+|Encoded as an entry of the user data deduplication table: the status in the upper 4 bits (never `Twin`), the pointer in the lower 60 bits.
+
+|`CdSectorPrefix`
+|Pointer
+|8
+|Encoded as an entry of the Compact Disc sector prefix deduplication table.
+
+|`CdSectorSuffix`
+|Pointer
+|8
+|Encoded as an entry of the Compact Disc sector suffix deduplication table.
+
+|`CdSubHeader`
+|Inline
+|8
+|MODE 2 subheader.
+
+|`CdSubchannel`
+|Inline
+|96
+|Raw P to W subchannel.
+
+|`DvdSectorId`
+|Inline
+|4
+|DVD sector ID.
+
+|`DvdSectorIed`
+|Inline
+|2
+|DVD sector ID error detection code.
+
+|`DvdSectorCprMai`
+|Inline
+|6
+|DVD sector copyright management information.
+
+|`DvdSectorEdc`
+|Inline
+|4
+|DVD or Blu-ray sector error detection code (`BdSectorEdc` is also accepted when reading).
+
+|`DvdTitleKeyDecrypted`
+|Inline
+|5
+|Decrypted DVD title key.
+
+|`AppleSonyTag`, `AppleProfileTag`, `PriamDataTowerTag`
+|Inline
+|12, 20, 24
+|Block media tag.
 |===
 
-==== Pointer-Based Data Block Resolution
+Writers only declare the components that at least one record uses.
+Readers ignore descriptors whose data type they do not know, so new components can be added without breaking them.
 
-To determine the corresponding data block:
+===== Groups
 
-. Right-shift the pointer value using the specified `shift` parameter.
-. Multiply the result by the `alignment` value.
-. The remainder from this operation indicates the sector's offset within the target data block.
+One group per twinned sector, sorted by `sector` in ascending order, without duplicates.
 
-Each data block contains a fixed number of bytes per sector, which remains constant across blocks.
-This invariant size allows for more efficient storage of pointer values.
+[source,c]
+typedef struct TwinSectorGroup
+{
+    uint64_t sector;       ///< Sector index as used in the deduplication tables.
+    uint32_t first;        ///< Index of the record of twin #1.
+    uint16_t count;        ///< Instances, including twin #0, at least 2.
+    uint8_t  twin0Status;  ///< Status of twin #0's user data.
+    uint8_t  reserved;     ///< Reserved, must be 0.
+} TwinSectorGroup;
 
-===== Example
+`sector` is the position of the sector in the deduplication tables, that is, with negative sectors already accounted for.
+Twins #1 to `count - 1` are the records `first` to `first + count - 2`.
 
-Given the following parameters:
+===== Twin records
 
-* Pointer Value: `0x8003`
-* Shift Value: `5`
-* Alignment: `9`
+Each record is `recordSize` bytes:
 
-The data block is located at byte offset `524288`.
-The sector referenced by the pointer is the **third entry** within this block.
+[cols="2,2,6",options="header"]
+|===
+|Offset
+|Size
+|Contents
+
+|0
+|4
+|Bitmask of present components: bit _i_ set means component _i_, in descriptor order, holds a value for this twin.
+
+|4
+|4
+|Reserved, must be 0.
+
+|8
+|...
+|Each component in descriptor order, with the size of its descriptor, followed by zero padding up to `recordSize`.
+|===
+
+A component whose bit is not set was not captured for that twin and reads as empty.
+
+==== Consistency Rules
+
+* A sector has a group if, and only if, its entry in the user data deduplication table has the status `Twin`.
+* The user data pointer of the deduplication table entry references twin #0's user data.
+* Prefix and suffix entries of the records with status `Errored` reference entries within the prefix and suffix data blocks.
+* Instances of a twinned sector may have different user data sizes; each pointer references a data block with its own sector size.
+
+==== Example
+
+A Compact Disc where LBA 12345 was mastered twice, with a second copy whose header and Q subchannel differ:
+
+* The user data deduplication table entry of LBA 12345 has status `Twin`, and points to twin #0's 2048 bytes.
+* The prefix and suffix deduplication tables hold twin #0's prefix and suffix as usual.
+* The twin sector table declares `UserData`, `CdSectorPrefix`, `CdSectorSuffix` and `CdSubchannel`, making each record 8 + 8 + 8 + 8 + 96 = 128 bytes.
+* Its group is `{sector = 12345 + negative, first = 0, count = 2, twin0Status = Mode1Correct}`.
+* The record of twin #1 holds the pointer to its own 2048 bytes, a prefix entry with status `Errored` and the index of its 16 bytes in the prefix data block, a suffix entry with status `Mode1Correct`, and its 96 bytes of subchannel.
