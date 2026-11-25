@@ -165,6 +165,7 @@ int verify_sectors(const char *path)
     if(ctx->image_info.MetadataMediaType != OpticalDisc)
     {
         printf("Image sectors do not contain checksums, cannot verify.\n");
+        aaruf_close(ctx);
         return 0;
     }
 
