@@ -342,17 +342,16 @@ static HOT const void *body(md5_ctx *ctx, const void *data, unsigned long size)
     }
 #else
     // Fallback original loop
-    uint32_t             saved_a, saved_b, saved_c, saved_d;
-    const unsigned char *p2 = ptr;
-    unsigned long        sz = size;
-    while(sz >= 64)
+    // SET() reads through ptr, so the loop must advance ptr itself
+    uint32_t saved_a, saved_b, saved_c, saved_d;
+    while(size >= 64)
     {
-        if(sz >= 64 * 8)
+        if(size >= 64 * 8)
         {
 #if defined(__SSE2__) || defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86) || \
     defined(__ARM_NEON) || defined(__aarch64__) || defined(_M_ARM64) || defined(__arm__) || defined(_M_ARM)
-            AARU_PREFETCH(p2 + 64 * 4);
-            AARU_PREFETCH(p2 + 64 * 6);
+            AARU_PREFETCH(ptr + 64 * 4);
+            AARU_PREFETCH(ptr + 64 * 6);
 #endif
         }
         saved_a = a;
@@ -427,11 +426,9 @@ static HOT const void *body(md5_ctx *ctx, const void *data, unsigned long size)
         b += saved_b;
         c += saved_c;
         d += saved_d;
-        p2 += 64;
-        sz -= 64;
+        ptr += 64;
+        size -= 64;
     }
-    ptr  = p2;
-    size = sz;
 #endif
 
     ctx->a = a;
