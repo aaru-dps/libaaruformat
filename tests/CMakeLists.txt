@@ -105,6 +105,7 @@ add_executable(tests_run
     cd_prefix_resume.cpp
     twin_sectors.cpp
     multilevel_ddt.cpp
+    sector_tags.cpp
     reed_solomon.cpp
     erasure_coding.cpp
     flux_only_image.cpp

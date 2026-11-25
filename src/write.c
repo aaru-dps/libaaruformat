@@ -2790,7 +2790,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case kSectorTagBdSectorEdc:
-            if(ctx->image_info.MetadataMediaType != BlockMedia)
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
                 FATAL("Invalid media type for tag");
                 TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");

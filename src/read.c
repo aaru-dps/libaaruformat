@@ -2585,6 +2585,32 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
             memcpy(buffer, ctx->sector_edc + corrected_sector_address * 4, 4);
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
+        case kSectorTagBdSectorEdc:
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(*length != 4 || buffer == NULL)
+            {
+                *length = 4;
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->sector_edc == NULL)
+            {
+                FATAL("Sector tag not found");
+                TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_SECTOR_TAG_NOT_PRESENT");
+                return AARUF_ERROR_SECTOR_TAG_NOT_PRESENT;
+            }
+
+            memcpy(buffer, ctx->sector_edc + corrected_sector_address * 4, 4);
+            TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
         case kSectorTagDvdTitleKeyDecrypted:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
