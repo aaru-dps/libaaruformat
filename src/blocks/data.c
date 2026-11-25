@@ -467,14 +467,20 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
         }
     }
 
-    // Check if it's not a media tag, but a sector tag, and fill the appropriate table then
+    // Check if it's not a media tag, but a sector tag, and fill the appropriate table then.
+    // A block for a table already loaded (e.g. older images storing a DVD's EDC twice) replaces the earlier copy.
     switch(entry->dataType)
     {
         case kDataTypeCdSectorPrefix:
         case kDataTypeCdSectorPrefixCorrected:
-            if(entry->dataType == kDataTypeCdSectorPrefixCorrected) { ctx->sector_prefix_corrected = data; }
+            if(entry->dataType == kDataTypeCdSectorPrefixCorrected)
+            {
+                free(ctx->sector_prefix_corrected);
+                ctx->sector_prefix_corrected = data;
+            }
             else
             {
+                free(ctx->sector_prefix);
                 ctx->sector_prefix        = data;
                 ctx->sector_prefix_length = block_header.length;
             }
@@ -486,9 +492,13 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
         case kDataTypeCdSectorSuffix:
         case kDataTypeCdSectorSuffixCorrected:
             if(entry->dataType == kDataTypeCdSectorSuffixCorrected)
+            {
+                free(ctx->sector_suffix_corrected);
                 ctx->sector_suffix_corrected = data;
+            }
             else
             {
+                free(ctx->sector_suffix);
                 ctx->sector_suffix        = data;
                 ctx->sector_suffix_length = block_header.length;
             }
@@ -500,46 +510,57 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
             ctx->readableSectorTags[kSectorTagCdEdc]       = true;
             break;
         case kDataTypeCdSubchannel:
+            free(ctx->sector_subchannel);
             ctx->sector_subchannel                          = data;
             ctx->readableSectorTags[kSectorTagCdSubchannel] = true;
             break;
         case kDataTypeAppleProfileTag:
+            free(ctx->sector_subchannel);
             ctx->sector_subchannel                          = data;
             ctx->readableSectorTags[kSectorTagAppleProfile] = true;
             break;
         case kDataTypeAppleSonyTag:
+            free(ctx->sector_subchannel);
             ctx->sector_subchannel                            = data;
             ctx->readableSectorTags[kSectorTagPriamDataTower] = true;
             break;
         case kDataTypePriamDataTowerTag:
+            free(ctx->sector_subchannel);
             ctx->sector_subchannel                       = data;
             ctx->readableSectorTags[kSectorTagAppleSony] = true;
             break;
         case kDataTypeCdSubHeader:
+            free(ctx->mode2_subheaders);
             ctx->mode2_subheaders = data;
             break;
         case kDataTypeDvdSectorId:
+            free(ctx->sector_id);
             ctx->sector_id                                          = data;
             ctx->readableSectorTags[kSectorTagDvdSectorNumber]      = true;
             ctx->readableSectorTags[kSectorTagDvdSectorInformation] = true;
             break;
         case kDataTypeDvdSectorIed:
+            free(ctx->sector_ied);
             ctx->sector_ied                                 = data;
             ctx->readableSectorTags[kSectorTagDvdSectorIed] = true;
             break;
         case kDataTypeDvdSectorCprMai:
+            free(ctx->sector_cpr_mai);
             ctx->sector_cpr_mai                       = data;
             ctx->readableSectorTags[kSectorTagDvdCmi] = true;
             break;
         case kDataTypeDvdSectorEdc:
+            free(ctx->sector_edc);
             ctx->sector_edc                                 = data;
             ctx->readableSectorTags[kSectorTagDvdSectorEdc] = true;
             break;
         case kDataTypeDvdTitleKeyDecrypted:
+            free(ctx->sector_decrypted_title_key);
             ctx->sector_decrypted_title_key                         = data;
             ctx->readableSectorTags[kSectorTagDvdTitleKeyDecrypted] = true;
             break;
         case kDataTypeBdSectorEdc:
+            free(ctx->sector_edc);
             ctx->sector_edc                                = data;
             ctx->readableSectorTags[kSectorTagBdSectorEdc] = true;
             break;
