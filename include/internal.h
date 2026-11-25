@@ -100,6 +100,8 @@ bool    set_ddt_single_level_v2(aaruformat_context *ctx, uint64_t sector_address
                                 uint64_t block_offset, uint8_t sector_status, uint64_t *ddt_entry);
 bool    set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bool negative, uint64_t offset,
                                uint64_t block_offset, uint8_t sector_status, uint64_t *ddt_entry);
+int32_t read_secondary_ddt_v2(aaruformat_context *ctx, uint64_t offset, uint64_t **table, uint64_t *entries);
+int32_t flush_cached_secondary_ddt_v2(aaruformat_context *ctx);
 bool    set_ddt_tape(aaruformat_context *ctx, uint64_t sector_address, uint64_t offset, uint64_t block_offset,
                      uint8_t sector_status, uint64_t *ddt_entry);
 aaru_options parse_options(const char *options, bool *table_shift_found);

@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "aaruformat.h"
 #include "erasure_internal.h"
@@ -732,7 +733,8 @@ int32_t decode_ddt_entry_v2(aaruformat_context *ctx, const uint64_t sector_addre
                         TRACE("EC recovery succeeded for DDT secondary, loading into cache");
                         free(ctx->cached_secondary_ddt2);
                         ctx->cached_secondary_ddt2 = (uint64_t *)ddt_data;
-                        ctx->cached_ddt_offset = ddt_off;
+                        ctx->cached_ddt_offset     = ddt_off;
+                        ctx->cached_ddt_position   = pos;
                         /* Retry the decode */
                         result = decode_ddt_multi_level_v2(ctx, sector_address, negative,
                                                           offset, block_offset, sector_status);
@@ -992,6 +994,44 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
     // Position in file of the child DDT table
     secondary_ddt_offset *= 1 << ctx->user_data_ddt_header.blockAlignmentShift;
 
+    // While writing, the cached table may hold entries not yet written: never replace it to read
+    if(ctx->is_writing)
+    {
+        if(ctx->cached_secondary_ddt2 != NULL && ctx->cached_ddt_position == ddt_position)
+            ddt_entry = ctx->cached_secondary_ddt2[sector_address % items_per_ddt_entry];
+        else if(secondary_ddt_offset != 0)
+        {
+            uint64_t *table   = NULL;
+            uint64_t  entries = 0;
+            int32_t   res     = read_secondary_ddt_v2(ctx, secondary_ddt_offset, &table, &entries);
+
+            if(res != AARUF_STATUS_OK)
+            {
+                TRACE("Exiting decode_ddt_multi_level_v2() = %d", res);
+                return res;
+            }
+
+            ddt_entry =
+                sector_address % items_per_ddt_entry < entries ? table[sector_address % items_per_ddt_entry] : 0;
+            free(table);
+        }
+
+        if(ddt_entry == 0)
+        {
+            *sector_status = SectorStatusNotDumped;
+            *offset        = 0;
+            *block_offset  = 0;
+            return AARUF_STATUS_OK;
+        }
+
+        *sector_status = ddt_entry >> 60;
+        ddt_entry &= 0x0FFFFFFFFFFFFFFF;
+        *offset       = ddt_entry & (1ULL << ctx->user_data_ddt_header.dataShift) - 1;
+        *block_offset = (ddt_entry >> ctx->user_data_ddt_header.dataShift)
+                        << ctx->user_data_ddt_header.blockAlignmentShift;
+        return AARUF_STATUS_OK;
+    }
+
     // Is the one we have cached the same as the one we need to read?
     if(ctx->cached_ddt_offset != secondary_ddt_offset)
     {
@@ -1117,7 +1157,8 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
 
                 ctx->cached_secondary_ddt2 = (uint64_t *)buffer;
 
-                ctx->cached_ddt_offset = secondary_ddt_offset;
+                ctx->cached_ddt_offset   = secondary_ddt_offset;
+                ctx->cached_ddt_position = ddt_position;
 
                 break;
             case kCompressionZstd:
@@ -1196,7 +1237,8 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
 
                 ctx->cached_secondary_ddt2 = (uint64_t *)buffer;
 
-                ctx->cached_ddt_offset = secondary_ddt_offset;
+                ctx->cached_ddt_offset   = secondary_ddt_offset;
+                ctx->cached_ddt_position = ddt_position;
 
                 break;
             case kCompressionNone:
@@ -1246,7 +1288,8 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
 
                 ctx->cached_secondary_ddt2 = (uint64_t *)buffer;
 
-                ctx->cached_ddt_offset = secondary_ddt_offset;
+                ctx->cached_ddt_offset   = secondary_ddt_offset;
+                ctx->cached_ddt_position = ddt_position;
 
                 break;
             default:
@@ -1412,18 +1455,6 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
     TRACE("Entering set_ddt_multi_level_v2(%p, %" PRIu64 ", %d, %" PRIu64 ", %" PRIu64 ", %d)", ctx, sector_address,
           negative, offset, block_offset, sector_status);
 
-    uint64_t   items_per_ddt_entry  = 0;
-    uint64_t   ddt_position         = 0;
-    uint64_t   secondary_ddt_offset = 0;
-    uint64_t   block_index          = 0;
-    uint8_t   *buffer               = NULL;
-    crc64_ctx *crc64_context        = NULL;
-    uint64_t   crc64                = 0;
-    DdtHeader2 ddt_header;
-    size_t     written_bytes    = 0;
-    long       end_of_file      = 0;
-    bool       create_new_table = false;
-
     // Check if the context and image stream are valid
     if(ctx == NULL || ctx->imageStream == NULL)
     {
@@ -1447,552 +1478,91 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
         sector_address += ctx->user_data_ddt_header.negative;
 
     // Step 1: Calculate the corresponding secondary level table
-    items_per_ddt_entry  = 1 << ctx->user_data_ddt_header.tableShift;
-    ddt_position         = sector_address / items_per_ddt_entry;
-    secondary_ddt_offset = ctx->user_data_ddt2[ddt_position];
+    const uint64_t items_per_ddt_entry = 1ULL << ctx->user_data_ddt_header.tableShift;
+    const uint64_t ddt_position        = sector_address / items_per_ddt_entry;
 
-    // Position in file of the child DDT table
-    secondary_ddt_offset *= 1 << ctx->user_data_ddt_header.blockAlignmentShift;
-
-    // Step 2: Check if it corresponds to the currently in-memory cached secondary level table
-    if(ctx->cached_ddt_offset == secondary_ddt_offset && secondary_ddt_offset != 0)
+    if(ddt_position >= ctx->user_data_ddt_header.entries)
     {
-        // Update the corresponding DDT entry directly in the cached table
-        if(*ddt_entry == 0)
-        {
-            block_index = block_offset >> ctx->user_data_ddt_header.blockAlignmentShift;
-            *ddt_entry  = offset & (1ULL << ctx->user_data_ddt_header.dataShift) - 1 |
-                         block_index << ctx->user_data_ddt_header.dataShift;
-
-            // Overflow detection for DDT entry
-            if(*ddt_entry > 0xFFFFFFFFFFFFFFF)
-            {
-                FATAL("DDT overflow: media does not fit in big DDT");
-                TRACE("Exiting set_ddt_multi_level_v2() = false");
-                return false;
-            }
-        }
-
-        // Sector status can be different from previous deduplicated sector
-        *ddt_entry &= 0x0FFFFFFFFFFFFFFF;
-        *ddt_entry |= (uint64_t)sector_status << 60;
-
-        TRACE("Setting small secondary DDT entry %d to %ull", sector_address % items_per_ddt_entry,
-              (uint64_t)*ddt_entry);
-        ctx->cached_secondary_ddt2[sector_address % items_per_ddt_entry] = *ddt_entry;
-        ctx->dirty_secondary_ddt                                         = true;  // Mark secondary DDT as dirty
-
-        TRACE("Updated cached secondary DDT entry at position %" PRIu64, sector_address % items_per_ddt_entry);
-        TRACE("Exiting set_ddt_multi_level_v2() = true");
-        return true;
+        FATAL("Sector %" PRIu64 " is outside the primary DDT", sector_address);
+        TRACE("Exiting set_ddt_multi_level_v2() = false");
+        return false;
     }
 
-    // Step 2.5: Handle case where we have a cached secondary DDT that has never been written to disk
-    // but does not contain the requested block
-    if(ctx->cached_ddt_offset == 0 && (ctx->cached_secondary_ddt2 != NULL))
+    // Step 2: Make the secondary table of the sector the one held in memory
+    if(ctx->cached_secondary_ddt2 == NULL || ctx->cached_ddt_position != ddt_position)
     {
-        // Only write the cached table to disk if the requested block belongs to a different DDT position
-        if(ddt_position != ctx->cached_ddt_position)
+        TRACE("Switching cached secondary DDT to position %" PRIu64, ddt_position);
+
+        if(ctx->cached_secondary_ddt2 != NULL && ctx->dirty_secondary_ddt)
         {
-            TRACE("Current secondary DDT in memory belongs to position %" PRIu64
-                  " but requested block needs position %" PRIu64,
-                  ctx->cached_ddt_position, ddt_position);
-
-            // Write the cached DDT to disk before proceeding with the new one
-
-            // Close the current data block first
-            if(ctx->writing_buffer != NULL) aaruf_close_current_block(ctx);
-
-            // Get current position and seek to end of file
-            aaruf_fseek(ctx->imageStream, 0, SEEK_END);
-            end_of_file = aaruf_ftell(ctx->imageStream);
-
-            // Align to block boundary
-            uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
-            end_of_file             = end_of_file + alignment_mask & ~alignment_mask;
-            aaruf_fseek(ctx->imageStream, end_of_file, SEEK_SET);
-
-            // Prepare DDT header for the never-written cached table
-            memset(&ddt_header, 0, sizeof(DdtHeader2));
-            ddt_header.identifier = DeDuplicationTableSecondary;
-            ddt_header.type       = kDataTypeUserData;
-            ddt_header.compression = ctx->compression_enabled
-                                         ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma)
-                                         : kCompressionNone;
-            ddt_header.levels              = ctx->user_data_ddt_header.levels;
-            ddt_header.tableLevel          = ctx->user_data_ddt_header.tableLevel + 1;
-            ddt_header.previousLevelOffset = ctx->primary_ddt_offset;
-            ddt_header.negative            = ctx->user_data_ddt_header.negative;
-            ddt_header.blocks              = items_per_ddt_entry;
-            ddt_header.overflow            = ctx->user_data_ddt_header.overflow;
-            ddt_header.start = ctx->cached_ddt_position * items_per_ddt_entry;  // Use cached position with table shift
-            ddt_header.blockAlignmentShift = ctx->user_data_ddt_header.blockAlignmentShift;
-            ddt_header.dataShift           = ctx->user_data_ddt_header.dataShift;
-            ddt_header.tableShift          = 0;  // Secondary tables are single level
-            ddt_header.entries             = items_per_ddt_entry;
-
-            // Calculate data size
-
-            ddt_header.length = items_per_ddt_entry * sizeof(uint64_t);
-
-            // Calculate CRC64 of the data
-            crc64_context = aaruf_crc64_init();
-            if(crc64_context == NULL)
+            // Writing the table goes to the end of the file, closing the data block being filled first
+            if(flush_cached_secondary_ddt_v2(ctx) != AARUF_STATUS_OK)
             {
-                FATAL("Could not initialize CRC64.");
                 TRACE("Exiting set_ddt_multi_level_v2() = false");
                 return false;
             }
 
-            aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cached_secondary_ddt2, (uint32_t)ddt_header.length);
-
-            aaruf_crc64_final(crc64_context, &crc64);
-            aaruf_crc64_free(crc64_context);
-            ddt_header.crc64 = crc64;
-
-            uint8_t *cmp_buffer                              = NULL;
-            uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
-
-            if(ddt_header.compression == kCompressionNone)
+            // The sector being set will be the first one of a new block after the table
+            if(block_offset != 0)
             {
-
-                cmp_buffer          = (uint8_t *)ctx->cached_secondary_ddt2;
-                ddt_header.cmpCrc64 = ddt_header.crc64;
+                block_offset = ctx->next_block_position;
+                offset       = ctx->current_block_offset;
             }
-            else
-            {
-                cmp_buffer = malloc((size_t)ddt_header.length * 2);  // Allocate double size for compression
-                if(cmp_buffer == NULL)
-                {
-                    TRACE("Failed to allocate memory for secondary DDT v2 compression");
-                    return AARUF_ERROR_NOT_ENOUGH_MEMORY;
-                }
-
-                size_t dst_size;
-
-                if(ctx->use_zstd)
-                {
-                    dst_size = aaruf_zstd_encode_buffer(cmp_buffer, (size_t)ddt_header.length * 2,
-                                                         (uint8_t *)ctx->cached_secondary_ddt2, ddt_header.length,
-                                                         ctx->zstd_level, ctx->num_threads);
-                    if(dst_size == 0) dst_size = ddt_header.length;
-                }
-                else
-                {
-                    dst_size          = (size_t)ddt_header.length * 2 * 2;
-                    size_t props_size = LZMA_PROPERTIES_LENGTH;
-                    aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, (uint8_t *)ctx->cached_secondary_ddt2,
-                                             ddt_header.length, lzma_properties, &props_size, 9, ctx->lzma_dict_size,
-                                             4, 0, 2, 273, LZMA_THREADS(ctx));
-                }
-
-                ddt_header.cmpLength = (uint32_t)dst_size;
-
-                if(ddt_header.cmpLength >= ddt_header.length)
-                {
-                    ddt_header.compression = kCompressionNone;
-                    free(cmp_buffer);
-
-                    cmp_buffer = (uint8_t *)ctx->cached_secondary_ddt2;
-                }
-            }
-
-            if(ddt_header.compression == kCompressionNone)
-            {
-                ddt_header.cmpLength = ddt_header.length;
-                ddt_header.cmpCrc64  = ddt_header.crc64;
-            }
-            else
-            {
-                ddt_header.cmpCrc64 = aaruf_crc64_data(cmp_buffer, (uint32_t)ddt_header.cmpLength);
-                if(ctx->use_zstd) ctx->has_zstd_blocks = true;
-            }
-
-            if(ddt_header.compression == kCompressionLzma) ddt_header.cmpLength += LZMA_PROPERTIES_LENGTH;
-
-            // Write header
-            written_bytes = fwrite(&ddt_header, sizeof(DdtHeader2), 1, ctx->imageStream);
-            if(written_bytes != 1)
-            {
-                FATAL("Could not write never-written DDT header to file.");
-                TRACE("Exiting set_ddt_multi_level_v2() = false");
-                return false;
-            }
-
-            // Write data
-            if(ddt_header.compression == kCompressionLzma)
-                fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
-
-            if(fwrite(cmp_buffer, ddt_header.cmpLength, 1, ctx->imageStream) != 1)
-            {
-                FATAL("Could not write never-written DDT data to file.");
-                TRACE("Exiting set_ddt_multi_level_v2() = false");
-                return false;
-            }
-
-            if(ddt_header.compression != kCompressionNone) free(cmp_buffer);
-
-            // Add index entry for the newly written secondary DDT
-            IndexEntry new_ddt_entry;
-            new_ddt_entry.blockType = DeDuplicationTableSecondary;
-            new_ddt_entry.dataType  = kDataTypeUserData;
-            new_ddt_entry.offset    = end_of_file;
-
-            utarray_push_back(ctx->index_entries, &new_ddt_entry);
-            ctx->dirty_index_block = true;
-            TRACE("Added new DDT index entry for never-written table at offset %" PRIu64, end_of_file);
-
-            // Update the primary level table entry to point to the new location of the secondary table
-            uint64_t new_secondary_table_block_offset = end_of_file >> ctx->user_data_ddt_header.blockAlignmentShift;
-
-            ctx->user_data_ddt2[ctx->cached_ddt_position] = new_secondary_table_block_offset;
-            ctx->dirty_primary_ddt                        = true;  // Mark primary DDT as dirty
-
-            // Write the updated primary table back to its original position in the file
-            aaru_off_t saved_pos = aaruf_ftell(ctx->imageStream);
-            aaruf_fseek(ctx->imageStream, (aaru_off_t)(ctx->primary_ddt_offset + sizeof(DdtHeader2)), SEEK_SET);
-
-            size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint64_t);
-
-            written_bytes = fwrite(ctx->user_data_ddt2, primary_table_size, 1, ctx->imageStream);
-
-            if(written_bytes != 1)
-            {
-                FATAL("Could not flush primary DDT table to file after writing never-written secondary table.");
-                TRACE("Exiting set_ddt_multi_level_v2() = false");
-                return false;
-            }
-
-            // Update nextBlockPosition to ensure future blocks don't overwrite the DDT
-            uint64_t ddt_total_size  = sizeof(DdtHeader2) + ddt_header.length;
-            ctx->next_block_position = end_of_file + ddt_total_size + alignment_mask & ~alignment_mask;
-            block_offset             = ctx->next_block_position;
-            offset                   = 0;
-            TRACE("Updated nextBlockPosition after never-written DDT write to %" PRIu64, ctx->next_block_position);
-
-            // Free the cached table
-
+        }
+        else
+        {
             free(ctx->cached_secondary_ddt2);
             ctx->cached_secondary_ddt2 = NULL;
-
-            // Reset cached values since we've written and freed the table
-            ctx->cached_ddt_offset   = 0;
-            ctx->cached_ddt_position = 0;
-
-            // Restore file position
-            aaruf_fseek(ctx->imageStream, saved_pos, SEEK_SET);
-
-            TRACE("Successfully wrote never-written cached secondary DDT to disk");
-        }
-        else
-            // The cached DDT is actually for the requested block range, so we can use it directly
-            TRACE("Cached DDT is for the correct block range, using it directly");
-        // No need to write to disk, just continue with the cached table
-    }
-
-    // Step 3: Write the currently in-memory cached secondary level table to the end of the file
-    if(ctx->cached_ddt_offset != 0)
-    {
-        aaru_off_t current_pos = 0;
-        // Close the current data block first
-        if(ctx->writing_buffer != NULL) aaruf_close_current_block(ctx);
-
-        // Get current position and seek to end of file
-        current_pos = aaruf_ftell(ctx->imageStream);
-        aaruf_fseek(ctx->imageStream, 0, SEEK_END);
-        end_of_file = aaruf_ftell(ctx->imageStream);
-
-        // Align to block boundary
-        uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
-        end_of_file             = end_of_file + alignment_mask & ~alignment_mask;
-        aaruf_fseek(ctx->imageStream, end_of_file, SEEK_SET);
-
-        // Prepare DDT header for the cached table
-        memset(&ddt_header, 0, sizeof(DdtHeader2));
-        ddt_header.identifier          = DeDuplicationTableSecondary;
-        ddt_header.type                = kDataTypeUserData;
-        ddt_header.compression =
-            ctx->compression_enabled ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma) : kCompressionNone;
-        ddt_header.levels              = ctx->user_data_ddt_header.levels;
-        ddt_header.tableLevel          = ctx->user_data_ddt_header.tableLevel + 1;
-        ddt_header.previousLevelOffset = ctx->primary_ddt_offset;  // Set to primary DDT table location
-        ddt_header.negative            = ctx->user_data_ddt_header.negative;
-        ddt_header.blocks              = items_per_ddt_entry;
-        ddt_header.overflow            = ctx->user_data_ddt_header.overflow;
-        ddt_header.start               = ddt_position * items_per_ddt_entry;  // First block this DDT table references
-        ddt_header.blockAlignmentShift = ctx->user_data_ddt_header.blockAlignmentShift;
-        ddt_header.dataShift           = ctx->user_data_ddt_header.dataShift;
-        ddt_header.tableShift          = 0;  // Secondary tables are single level
-        ddt_header.entries             = items_per_ddt_entry;
-
-        // Calculate data size
-
-        ddt_header.length = items_per_ddt_entry * sizeof(uint64_t);
-
-        // Calculate CRC64 of the data
-        crc64_context = aaruf_crc64_init();
-        if(crc64_context == NULL)
-        {
-            FATAL("Could not initialize CRC64.");
-            TRACE("Exiting set_ddt_multi_level_v2() = false");
-            return false;
+            ctx->cached_ddt_offset     = 0;
         }
 
-        aaruf_crc64_update(crc64_context, (uint8_t *)ctx->cached_secondary_ddt2, ddt_header.length);
+        const uint64_t secondary_ddt_offset = ctx->user_data_ddt2[ddt_position]
+                                              << ctx->user_data_ddt_header.blockAlignmentShift;
 
-        aaruf_crc64_final(crc64_context, &crc64);
-        aaruf_crc64_free(crc64_context);
-        ddt_header.crc64 = crc64;
-
-        uint8_t *cmp_buffer                              = NULL;
-        uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
-
-        if(ddt_header.compression == kCompressionNone)
+        if(secondary_ddt_offset != 0)
         {
+            // Load the existing table, so its entries are kept
+            uint64_t *table   = NULL;
+            uint64_t  entries = 0;
 
-            cmp_buffer          = (uint8_t *)ctx->cached_secondary_ddt2;
-            ddt_header.cmpCrc64 = ddt_header.crc64;
+            if(read_secondary_ddt_v2(ctx, secondary_ddt_offset, &table, &entries) != AARUF_STATUS_OK ||
+               entries != items_per_ddt_entry)
+            {
+                free(table);
+                FATAL("Could not load secondary DDT at %" PRIu64, secondary_ddt_offset);
+                TRACE("Exiting set_ddt_multi_level_v2() = false");
+                return false;
+            }
+
+            ctx->cached_secondary_ddt2 = table;
+            ctx->cached_ddt_offset     = secondary_ddt_offset;
+            TRACE("Loaded secondary DDT for position %" PRIu64 " from %" PRIu64, ddt_position, secondary_ddt_offset);
         }
         else
         {
-            cmp_buffer = malloc((size_t)ddt_header.length * 2);  // Allocate double size for compression
-            if(cmp_buffer == NULL)
+            ctx->cached_secondary_ddt2 = calloc(items_per_ddt_entry, sizeof(uint64_t));
+
+            if(ctx->cached_secondary_ddt2 == NULL)
             {
-                TRACE("Failed to allocate memory for secondary DDT v2 compression");
-                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                FATAL("Cannot allocate memory for new secondary DDT.");
+                TRACE("Exiting set_ddt_multi_level_v2() = false");
+                return false;
             }
 
-            size_t dst_size;
-
-            if(ctx->use_zstd)
-            {
-                dst_size = aaruf_zstd_encode_buffer(cmp_buffer, (size_t)ddt_header.length * 2,
-                                                     (uint8_t *)ctx->cached_secondary_ddt2, ddt_header.length,
-                                                     ctx->zstd_level, ctx->num_threads);
-                if(dst_size == 0) dst_size = ddt_header.length;
-            }
-            else
-            {
-                dst_size          = (size_t)ddt_header.length * 2 * 2;
-                size_t props_size = LZMA_PROPERTIES_LENGTH;
-                aaruf_lzma_encode_buffer(cmp_buffer, &dst_size, (uint8_t *)ctx->cached_secondary_ddt2,
-                                         ddt_header.length, lzma_properties, &props_size, 9, ctx->lzma_dict_size, 4, 0,
-                                         2, 273, LZMA_THREADS(ctx));
-            }
-
-            ddt_header.cmpLength = (uint32_t)dst_size;
-
-            if(ddt_header.cmpLength >= ddt_header.length)
-            {
-                ddt_header.compression = kCompressionNone;
-                free(cmp_buffer);
-
-                cmp_buffer = (uint8_t *)ctx->cached_secondary_ddt2;
-            }
+            ctx->cached_ddt_offset = 0;  // Set when written to file
+            TRACE("Created new secondary DDT for position %" PRIu64, ddt_position);
         }
 
-        if(ddt_header.compression == kCompressionNone)
-        {
-            ddt_header.cmpLength = ddt_header.length;
-            ddt_header.cmpCrc64  = ddt_header.crc64;
-        }
-        else
-        {
-            ddt_header.cmpCrc64 = aaruf_crc64_data(cmp_buffer, (uint32_t)ddt_header.cmpLength);
-            if(ctx->use_zstd) ctx->has_zstd_blocks = true;
-        }
-
-        if(ddt_header.compression == kCompressionLzma) ddt_header.cmpLength += LZMA_PROPERTIES_LENGTH;
-
-        // Write header
-        if(ddt_header.compression == kCompressionLzma)
-            fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream);
-
-        written_bytes = fwrite(&ddt_header, sizeof(DdtHeader2), 1, ctx->imageStream);
-        if(written_bytes != 1)
-        {
-            FATAL("Could not write DDT header to file.");
-            TRACE("Exiting set_ddt_multi_level_v2() = false");
-            return false;
-        }
-
-        // Write data
-        written_bytes = fwrite(cmp_buffer, ddt_header.cmpLength, 1, ctx->imageStream);
-
-        if(written_bytes != 1)
-        {
-            FATAL("Could not write DDT data to file.");
-            TRACE("Exiting set_ddt_multi_level_v2() = false");
-            return false;
-        }
-
-        if(ddt_header.compression != kCompressionNone) free(cmp_buffer);
-
-        // Update index: remove old entry and add new one for the evicted secondary DDT
-        TRACE("Updating index for evicted secondary DDT");
-
-        // Remove old index entry for the cached DDT
-        if(ctx->cached_ddt_offset != 0)
-        {
-            TRACE("Removing old index entry for DDT at offset %" PRIu64, ctx->cached_ddt_offset);
-            IndexEntry *entry = NULL;
-
-            // Find and remove the old index entry
-            for(unsigned int i = 0; i < utarray_len(ctx->index_entries); i++)
-            {
-                entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, i);
-                if(entry && entry->offset == ctx->cached_ddt_offset &&
-                   (entry->blockType == DeDuplicationTableSecondary || entry->blockType == DeDuplicationTableSAlpha))
-                {
-                    TRACE("Found old DDT index entry at position %u, removing", i);
-                    utarray_erase(ctx->index_entries, i, 1);
-                    break;
-                }
-            }
-        }
-
-        // Add new index entry for the newly written secondary DDT
-        IndexEntry new_ddt_entry;
-        new_ddt_entry.blockType = DeDuplicationTableSecondary;
-        new_ddt_entry.dataType  = kDataTypeUserData;
-        new_ddt_entry.offset    = end_of_file;
-
-        utarray_push_back(ctx->index_entries, &new_ddt_entry);
-        ctx->dirty_index_block = true;
-        TRACE("Added new DDT index entry at offset %" PRIu64, end_of_file);
-
-        // Step 4: Update the primary level table entry and flush it back to file
-        uint64_t new_secondary_table_block_offset = end_of_file >> ctx->user_data_ddt_header.blockAlignmentShift;
-
-        // Update the primary table entry to point to the new location of the secondary table
-        // Use ddtPosition which was calculated from sectorAddress, not cachedDdtOffset
-
-        ctx->user_data_ddt2[ddt_position] = new_secondary_table_block_offset;
-        ctx->dirty_primary_ddt            = true;  // Mark primary DDT as dirty
-
-        // Write the updated primary table back to its original position in the file
-        aaru_off_t saved_pos = aaruf_ftell(ctx->imageStream);
-        aaruf_fseek(ctx->imageStream, (aaru_off_t)(ctx->primary_ddt_offset + sizeof(DdtHeader2)), SEEK_SET);
-
-        size_t primary_table_size = ctx->user_data_ddt_header.entries * sizeof(uint64_t);
-
-        written_bytes = fwrite(ctx->user_data_ddt2, primary_table_size, 1, ctx->imageStream);
-
-        if(written_bytes != 1)
-        {
-            FATAL("Could not flush primary DDT table to file.");
-            TRACE("Exiting set_ddt_multi_level_v2() = false");
-            return false;
-        }
-
-        // Update nextBlockPosition to ensure future blocks don't overwrite the DDT
-        uint64_t ddt_total_size  = sizeof(DdtHeader2) + ddt_header.length;
-        ctx->next_block_position = end_of_file + ddt_total_size + alignment_mask & ~alignment_mask;
-        block_offset             = ctx->next_block_position;
-        offset                   = 0;
-        TRACE("Updated nextBlockPosition after DDT write to %" PRIu64, ctx->next_block_position);
-
-        aaruf_fseek(ctx->imageStream, saved_pos, SEEK_SET);
-
-        // Free the cached table
-
-        free(ctx->cached_secondary_ddt2);
-        ctx->cached_secondary_ddt2 = NULL;
-
-        // Restore file position
-        aaruf_fseek(ctx->imageStream, current_pos, SEEK_SET);
+        ctx->cached_ddt_position = ddt_position;
+        ctx->dirty_secondary_ddt = false;
     }
 
-    // Step 5: Check if the specified block already has an existing secondary level table
-    create_new_table = ctx->cached_secondary_ddt2 == NULL;
-
-    if(!create_new_table && secondary_ddt_offset != 0)
-    {
-        // Load existing table
-        aaruf_fseek(ctx->imageStream, (aaru_off_t)secondary_ddt_offset, SEEK_SET);
-        size_t read_bytes = fread(&ddt_header, 1, sizeof(DdtHeader2), ctx->imageStream);
-
-        if(read_bytes != sizeof(DdtHeader2) || ddt_header.identifier != DeDuplicationTable2 ||
-           ddt_header.type != kDataTypeUserData)
-        {
-            FATAL("Invalid secondary DDT header at %" PRIu64, secondary_ddt_offset);
-            TRACE("Exiting set_ddt_multi_level_v2() = false");
-            return false;
-        }
-
-        // Read the table data (assuming no compression for now)
-        buffer = malloc(ddt_header.length);
-        if(buffer == NULL)
-        {
-            FATAL("Cannot allocate memory for secondary DDT.");
-            TRACE("Exiting set_ddt_multi_level_v2() = false");
-            return false;
-        }
-
-        read_bytes = fread(buffer, 1, ddt_header.length, ctx->imageStream);
-        if(read_bytes != ddt_header.length)
-        {
-            FATAL("Could not read secondary DDT data.");
-            free(buffer);
-            TRACE("Exiting set_ddt_multi_level_v2() = false");
-            return false;
-        }
-
-        // Verify CRC
-        crc64_context = aaruf_crc64_init();
-        if(crc64_context == NULL)
-        {
-            FATAL("Could not initialize CRC64.");
-            free(buffer);
-            TRACE("Exiting set_ddt_multi_level_v2() = false");
-            return false;
-        }
-
-        aaruf_crc64_update(crc64_context, buffer, read_bytes);
-        aaruf_crc64_final(crc64_context, &crc64);
-        aaruf_crc64_free(crc64_context);
-
-        if(crc64 != ddt_header.crc64)
-        {
-            FATAL("Secondary DDT CRC mismatch. Expected 0x%16lX but got 0x%16lX.", ddt_header.crc64, crc64);
-            free(buffer);
-            TRACE("Exiting set_ddt_multi_level_v2() = false");
-            return false;
-        }
-
-        // Cache the loaded table
-
-        ctx->cached_secondary_ddt2 = (uint64_t *)buffer;
-
-        ctx->cached_ddt_offset = secondary_ddt_offset;
-    }
-
-    if(create_new_table)
-    {
-        // Create a new empty table
-        size_t table_size = items_per_ddt_entry * sizeof(uint64_t);
-
-        buffer = calloc(1, table_size);
-        if(buffer == NULL)
-        {
-            FATAL("Cannot allocate memory for new secondary DDT.");
-            TRACE("Exiting set_ddt_multi_level_v2() = false");
-            return false;
-        }
-
-        ctx->cached_secondary_ddt2 = (uint64_t *)buffer;
-
-        ctx->cached_ddt_offset   = 0;             // Will be set when written to file
-        ctx->cached_ddt_position = ddt_position;  // Track which primary DDT position this new table belongs to
-        TRACE("Created new secondary DDT for position %" PRIu64, ddt_position);
-    }
-
-    // Step 6: Update the corresponding DDT entry
+    // Step 3: Update the corresponding DDT entry
     if(*ddt_entry == 0)
     {
-        block_index = block_offset >> ctx->user_data_ddt_header.blockAlignmentShift;
-        *ddt_entry  = offset & (1ULL << ctx->user_data_ddt_header.dataShift) - 1 |
-                     block_index << ctx->user_data_ddt_header.dataShift;
+        const uint64_t block_index = block_offset >> ctx->user_data_ddt_header.blockAlignmentShift;
+        *ddt_entry                 = offset & (1ULL << ctx->user_data_ddt_header.dataShift) - 1 |
+                                     block_index << ctx->user_data_ddt_header.dataShift;
 
         // Overflow detection for DDT entry
         if(*ddt_entry > 0xFFFFFFFFFFFFFFF)
@@ -2007,13 +1577,275 @@ bool set_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_address, bo
     *ddt_entry &= 0x0FFFFFFFFFFFFFFF;
     *ddt_entry |= (uint64_t)sector_status << 60;
 
-    TRACE("Setting big secondary DDT entry %d to %ull", sector_address % items_per_ddt_entry, (uint64_t)*ddt_entry);
+    TRACE("Setting secondary DDT entry %" PRIu64 " to %" PRIu64, sector_address % items_per_ddt_entry, *ddt_entry);
     ctx->cached_secondary_ddt2[sector_address % items_per_ddt_entry] = *ddt_entry;
     ctx->dirty_secondary_ddt                                         = true;
 
-    TRACE("Updated secondary DDT entry at position %" PRIu64, sector_address % items_per_ddt_entry);
     TRACE("Exiting set_ddt_multi_level_v2() = true");
     return true;
+}
+
+/**
+ * @brief Reads and decodes a secondary DDT table from the file without touching the DDT cache.
+ *
+ * @param ctx Image context.
+ * @param offset File offset of the table header.
+ * @param table Receives a newly allocated array of entries (caller frees).
+ * @param entries Receives the number of entries.
+ *
+ * @retval AARUF_STATUS_OK Table read, decompressed and CRC verified.
+ * @retval AARUF_ERROR_CANNOT_READ_BLOCK Header or payload could not be read or is not a user-data DDT.
+ * @retval AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK Decompression failed.
+ * @retval AARUF_ERROR_INVALID_BLOCK_CRC CRC mismatch.
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY Allocation failed.
+ */
+int32_t read_secondary_ddt_v2(aaruformat_context *ctx, const uint64_t offset, uint64_t **table, uint64_t *entries)
+{
+    DdtHeader2 header;
+
+    *table   = NULL;
+    *entries = 0;
+
+    const aaru_off_t saved_position = aaruf_ftell(ctx->imageStream);
+
+    if(aaruf_fseek(ctx->imageStream, (aaru_off_t)offset, SEEK_SET) != 0 ||
+       fread(&header, 1, sizeof(DdtHeader2), ctx->imageStream) != sizeof(DdtHeader2))
+    {
+        aaruf_fseek(ctx->imageStream, saved_position, SEEK_SET);
+        return AARUF_ERROR_CANNOT_READ_BLOCK;
+    }
+
+    if((header.identifier != DeDuplicationTableSecondary && header.identifier != DeDuplicationTableSAlpha) ||
+       header.type != kDataTypeUserData || header.length == 0 || header.length % sizeof(uint64_t) != 0 ||
+       header.cmpLength == 0 || header.length > UINT32_MAX || header.cmpLength > UINT32_MAX)
+    {
+        aaruf_fseek(ctx->imageStream, saved_position, SEEK_SET);
+        return AARUF_ERROR_CANNOT_READ_BLOCK;
+    }
+
+    // The SIMD CRC64 reads whole aligned 16-byte lanes, leave slack after the table
+    uint8_t *cmp = malloc((size_t)header.cmpLength);
+    uint8_t *out = calloc(1, (size_t)header.length + 16);
+
+    if(cmp == NULL || out == NULL)
+    {
+        free(cmp);
+        free(out);
+        aaruf_fseek(ctx->imageStream, saved_position, SEEK_SET);
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    const bool read_ok = fread(cmp, 1, (size_t)header.cmpLength, ctx->imageStream) == header.cmpLength;
+    aaruf_fseek(ctx->imageStream, saved_position, SEEK_SET);
+
+    int32_t res = read_ok ? AARUF_STATUS_OK : AARUF_ERROR_CANNOT_READ_BLOCK;
+
+    if(res == AARUF_STATUS_OK) switch(header.compression)
+        {
+            case kCompressionNone:
+                if(header.cmpLength != header.length)
+                    res = AARUF_ERROR_CANNOT_READ_BLOCK;
+                else
+                    memcpy(out, cmp, (size_t)header.length);
+                break;
+            case kCompressionLzma:
+            {
+                if(header.cmpLength <= LZMA_PROPERTIES_LENGTH)
+                {
+                    res = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                    break;
+                }
+
+                size_t dst_size = (size_t)header.length;
+                size_t src_size = (size_t)header.cmpLength - LZMA_PROPERTIES_LENGTH;
+                if(aaruf_lzma_decode_buffer(out, &dst_size, cmp + LZMA_PROPERTIES_LENGTH, &src_size, cmp,
+                                            LZMA_PROPERTIES_LENGTH) != 0 ||
+                   dst_size != header.length)
+                    res = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                break;
+            }
+            case kCompressionZstd:
+                if(aaruf_zstd_decode_buffer(out, (size_t)header.length, cmp, (size_t)header.cmpLength) != header.length)
+                    res = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                break;
+            default:
+                res = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
+                break;
+        }
+
+    free(cmp);
+
+    if(res == AARUF_STATUS_OK && aaruf_crc64_data(out, (uint32_t)header.length) != header.crc64)
+        res = AARUF_ERROR_INVALID_BLOCK_CRC;
+
+    if(res != AARUF_STATUS_OK)
+    {
+        free(out);
+        return res;
+    }
+
+    *table   = (uint64_t *)out;
+    *entries = header.length / sizeof(uint64_t);
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Writes the secondary DDT table held in memory at the end of the image and releases it.
+ *
+ * Closes the data block being filled (the table is written after it), writes the table (compressed if enabled),
+ * replaces its index entry, points its primary DDT entry at it and flushes the primary table in place. Afterwards no
+ * table is cached and the next data block starts after the written table.
+ *
+ * @retval AARUF_STATUS_OK Written, or nothing was cached.
+ * @retval AARUF_ERROR_CANNOT_WRITE_BLOCK_HEADER / AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA Write failed.
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY Allocation failed.
+ */
+int32_t flush_cached_secondary_ddt_v2(aaruformat_context *ctx)
+{
+    if(ctx->cached_secondary_ddt2 == NULL || ctx->user_data_ddt_header.tableShift == 0) return AARUF_STATUS_OK;
+
+    TRACE("Flushing cached secondary DDT for position %" PRIu64, ctx->cached_ddt_position);
+
+    if(ctx->writing_buffer != NULL)
+    {
+        const int32_t error = aaruf_close_current_block(ctx);
+        if(error != AARUF_STATUS_OK) return error;
+    }
+
+    const uint64_t items_per_ddt_entry = 1ULL << ctx->user_data_ddt_header.tableShift;
+    const uint64_t alignment_mask      = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
+
+    // After the end of file, and never over the space reserved for the next data block
+    aaruf_fseek(ctx->imageStream, 0, SEEK_END);
+    uint64_t position = (uint64_t)aaruf_ftell(ctx->imageStream);
+    if(ctx->next_block_position > position) position = ctx->next_block_position;
+    position = position + alignment_mask & ~alignment_mask;
+
+    DdtHeader2 ddt_header;
+    memset(&ddt_header, 0, sizeof(DdtHeader2));
+    ddt_header.identifier = DeDuplicationTableSecondary;
+    ddt_header.type       = kDataTypeUserData;
+    ddt_header.compression =
+        ctx->compression_enabled ? (ctx->use_zstd ? kCompressionZstd : kCompressionLzma) : kCompressionNone;
+    ddt_header.levels              = ctx->user_data_ddt_header.levels;
+    ddt_header.tableLevel          = ctx->user_data_ddt_header.tableLevel + 1;
+    ddt_header.previousLevelOffset = ctx->primary_ddt_offset;
+    ddt_header.negative            = ctx->user_data_ddt_header.negative;
+    ddt_header.blocks              = items_per_ddt_entry;
+    ddt_header.overflow            = ctx->user_data_ddt_header.overflow;
+    ddt_header.start               = ctx->cached_ddt_position * items_per_ddt_entry;
+    ddt_header.blockAlignmentShift = ctx->user_data_ddt_header.blockAlignmentShift;
+    ddt_header.dataShift           = ctx->user_data_ddt_header.dataShift;
+    ddt_header.tableShift          = 0;  // Secondary tables are single level
+    ddt_header.entries             = items_per_ddt_entry;
+    ddt_header.length              = items_per_ddt_entry * sizeof(uint64_t);
+    ddt_header.crc64 = aaruf_crc64_data((const uint8_t *)ctx->cached_secondary_ddt2, (uint32_t)ddt_header.length);
+
+    uint8_t *cmp_buffer                              = (uint8_t *)ctx->cached_secondary_ddt2;
+    size_t   cmp_size                                = (size_t)ddt_header.length;
+    uint8_t  lzma_properties[LZMA_PROPERTIES_LENGTH] = {0};
+
+    if(ddt_header.compression != kCompressionNone)
+    {
+        cmp_buffer = calloc(1, (size_t)ddt_header.length * 2 + 16);
+        if(cmp_buffer == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+
+        if(ctx->use_zstd)
+        {
+            cmp_size = aaruf_zstd_encode_buffer(cmp_buffer, (size_t)ddt_header.length * 2,
+                                                (uint8_t *)ctx->cached_secondary_ddt2, (size_t)ddt_header.length,
+                                                ctx->zstd_level, ctx->num_threads);
+            if(cmp_size == 0) cmp_size = (size_t)ddt_header.length;
+        }
+        else
+        {
+            cmp_size          = (size_t)ddt_header.length * 2;
+            size_t props_size = LZMA_PROPERTIES_LENGTH;
+            if(aaruf_lzma_encode_buffer(cmp_buffer, &cmp_size, (uint8_t *)ctx->cached_secondary_ddt2,
+                                        (size_t)ddt_header.length, lzma_properties, &props_size, 9, ctx->lzma_dict_size,
+                                        4, 0, 2, 273, LZMA_THREADS(ctx)) != 0)
+                cmp_size = (size_t)ddt_header.length;
+        }
+
+        if(cmp_size >= ddt_header.length)
+        {
+            free(cmp_buffer);
+            cmp_buffer             = (uint8_t *)ctx->cached_secondary_ddt2;
+            cmp_size               = (size_t)ddt_header.length;
+            ddt_header.compression = kCompressionNone;
+        }
+    }
+
+    if(ddt_header.compression == kCompressionNone)
+        ddt_header.cmpCrc64 = ddt_header.crc64;
+    else
+    {
+        ddt_header.cmpCrc64 = aaruf_crc64_data(cmp_buffer, (uint32_t)cmp_size);
+        if(ctx->use_zstd) ctx->has_zstd_blocks = true;
+    }
+
+    ddt_header.cmpLength = cmp_size + (ddt_header.compression == kCompressionLzma ? LZMA_PROPERTIES_LENGTH : 0);
+
+    // Header, LZMA properties (if any), then the table
+    aaruf_fseek(ctx->imageStream, (aaru_off_t)position, SEEK_SET);
+    bool ok = fwrite(&ddt_header, sizeof(DdtHeader2), 1, ctx->imageStream) == 1;
+    if(ok && ddt_header.compression == kCompressionLzma)
+        ok = fwrite(lzma_properties, LZMA_PROPERTIES_LENGTH, 1, ctx->imageStream) == 1;
+    if(ok) ok = fwrite(cmp_buffer, cmp_size, 1, ctx->imageStream) == 1;
+
+    if(cmp_buffer != (uint8_t *)ctx->cached_secondary_ddt2) free(cmp_buffer);
+
+    if(!ok)
+    {
+        FATAL("Could not write secondary DDT at %" PRIu64, position);
+        return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
+    }
+
+    const uint64_t end = (uint64_t)aaruf_ftell(ctx->imageStream);
+
+    // Replace the index entry of the previous copy of this table, if it was on disk
+    for(unsigned int i = 0; i < utarray_len(ctx->index_entries); i++)
+    {
+        const IndexEntry *entry = (IndexEntry *)utarray_eltptr(ctx->index_entries, i);
+        if(ctx->cached_ddt_offset != 0 && entry->offset == ctx->cached_ddt_offset &&
+           (entry->blockType == DeDuplicationTableSecondary || entry->blockType == DeDuplicationTableSAlpha))
+        {
+            utarray_erase(ctx->index_entries, i, 1);
+            break;
+        }
+    }
+
+    IndexEntry new_ddt_entry;
+    new_ddt_entry.blockType = DeDuplicationTableSecondary;
+    new_ddt_entry.dataType  = kDataTypeUserData;
+    new_ddt_entry.offset    = position;
+    utarray_push_back(ctx->index_entries, &new_ddt_entry);
+    ctx->dirty_index_block = true;
+
+    // Point the primary entry of this table to it, and flush the primary table in place
+    ctx->user_data_ddt2[ctx->cached_ddt_position] = position >> ctx->user_data_ddt_header.blockAlignmentShift;
+    ctx->dirty_primary_ddt                        = true;
+
+    aaruf_fseek(ctx->imageStream, (aaru_off_t)(ctx->primary_ddt_offset + sizeof(DdtHeader2)), SEEK_SET);
+    if(fwrite(ctx->user_data_ddt2, ctx->user_data_ddt_header.entries * sizeof(uint64_t), 1, ctx->imageStream) != 1)
+    {
+        FATAL("Could not flush primary DDT table.");
+        return AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA;
+    }
+
+    // Next data block goes after the table
+    ctx->next_block_position = end + alignment_mask & ~alignment_mask;
+
+    free(ctx->cached_secondary_ddt2);
+    ctx->cached_secondary_ddt2 = NULL;
+    ctx->cached_ddt_offset     = 0;
+    ctx->cached_ddt_position   = 0;
+    ctx->dirty_secondary_ddt   = false;
+
+    aaruf_fseek(ctx->imageStream, 0, SEEK_END);
+
+    TRACE("Flushed secondary DDT at %" PRIu64 ", next block at %" PRIu64, position, ctx->next_block_position);
+    return AARUF_STATUS_OK;
 }
 
 /**
