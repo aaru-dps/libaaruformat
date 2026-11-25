@@ -245,13 +245,27 @@ static const uint8_t *find_slot(const Generation *gens, const size_t ngens, cons
 
 /// Rebuilds one arena (prefix or suffix) from the final DDT2. On success returns the new compact arena and
 /// fills @p new_ddt (caller-provided, entries long) with renumbered entries; reports recovered/lost counts.
+/// A prefix/suffix value stored in a twin sector table record (twins are not listed in the DDT2).
+typedef struct
+{
+    uint8_t *value;  // points into the decoded twin sector table payload (unaligned uint64_t)
+} TwinReference;
+
 static uint8_t *rebuild_arena(const Generation *gens, const size_t ngens, const uint16_t type,
                               const uint64_t *final_ddt, const uint64_t entries, const uint32_t slot_size,
-                              uint64_t *new_ddt, uint64_t *out_length, uint64_t *recovered, uint64_t *lost)
+                              uint64_t *new_ddt, uint64_t *out_length, uint64_t *recovered, uint64_t *lost,
+                              const TwinReference *twins, const size_t twin_count, const uint8_t *current_arena,
+                              const uint64_t current_arena_length)
 {
     uint64_t customs = 0;
     for(uint64_t s = 0; s < entries; s++)
         if(is_custom(final_ddt[s])) customs++;
+    for(size_t t = 0; t < twin_count; t++)
+    {
+        uint64_t value;
+        memcpy(&value, twins[t].value, sizeof(value));
+        if(is_custom(value)) customs++;
+    }
 
     uint8_t *arena      = customs ? calloc(customs, slot_size) : NULL;
     uint64_t next_slot  = 0;
@@ -281,8 +295,122 @@ static uint8_t *rebuild_arena(const Generation *gens, const size_t ngens, const 
         (*recovered)++;
     }
 
+    // Twins reference slots of the arena the image currently uses (they were written by a fixed library)
+    for(size_t t = 0; t < twin_count; t++)
+    {
+        uint64_t value;
+        memcpy(&value, twins[t].value, sizeof(value));
+        if(!is_custom(value)) continue;
+
+        const uint64_t idx = index_of(value);
+        if(current_arena == NULL || (idx + 1) * slot_size > current_arena_length)
+        {
+            value = (uint64_t)SectorStatusNotDumped << 60;
+            memcpy(twins[t].value, &value, sizeof(value));
+            (*lost)++;
+            continue;
+        }
+
+        memcpy(arena + next_slot * slot_size, current_arena + idx * slot_size, slot_size);
+        value = ((uint64_t)status_of(value) << 60) | next_slot;
+        memcpy(twins[t].value, &value, sizeof(value));
+        next_slot++;
+        (*recovered)++;
+    }
+
     *out_length = next_slot * slot_size;
     return arena;
+}
+
+/// Decoded twin sector table plus the prefix/suffix values its records hold.
+typedef struct
+{
+    uint64_t              offset;  // file offset of the TWTB, 0 if none
+    TwinSectorTableHeader header;
+    uint8_t              *payload;  // decoded payload
+    TwinReference        *refs[2];  // [0] prefix, [1] suffix
+    size_t                nrefs[2];
+} TwinTable;
+
+static bool load_twin_table(const uint8_t *img, const uint64_t file_size, const uint64_t offset, TwinTable *table)
+{
+    memset(table, 0, sizeof(TwinTable));
+    if(offset == 0 || offset + sizeof(TwinSectorTableHeader) > file_size) return false;
+
+    memcpy(&table->header, img + offset, sizeof(TwinSectorTableHeader));
+    const TwinSectorTableHeader *h = &table->header;
+    if(h->identifier != TwinSectorTable || h->cmpLength > file_size) return false;
+
+    uint64_t payload = offset + sizeof(TwinSectorTableHeader);
+    if(payload + h->cmpLength > file_size) return false;
+    uint64_t cmp_length = h->cmpLength;
+
+    table->payload = decode_payload(img + payload, h->compression, cmp_length, h->length, h->crc64);
+    if(table->payload == NULL) return false;
+
+    const uint64_t desc_size   = (uint64_t)h->components * sizeof(TwinComponentDescriptor);
+    const uint64_t groups_size = (uint64_t)h->groups * sizeof(TwinSectorGroup);
+    if(desc_size + groups_size + h->instances * h->recordSize != h->length) return false;
+
+    const TwinComponentDescriptor *desc    = (const TwinComponentDescriptor *)table->payload;
+    uint8_t                       *records = table->payload + desc_size + groups_size;
+    uint32_t                       offsets[256];
+    uint32_t                       position = 8;
+    int                            which[256];
+
+    for(uint32_t i = 0; i < h->components; i++)
+    {
+        offsets[i] = position;
+        position += desc[i].size;
+        which[i] = desc[i].kind != 0 || desc[i].size != 8        ? -1
+                   : desc[i].dataType == kDataTypeCdSectorPrefix ? 0
+                   : desc[i].dataType == kDataTypeCdSectorSuffix ? 1
+                                                                 : -1;
+    }
+
+    for(int w = 0; w < 2; w++) table->refs[w] = calloc(h->instances ? h->instances : 1, sizeof(TwinReference));
+
+    for(uint64_t r = 0; r < h->instances; r++)
+    {
+        uint8_t *record = records + r * h->recordSize;
+        uint32_t present;
+        memcpy(&present, record, sizeof(present));
+
+        for(uint32_t i = 0; i < h->components && i < 32; i++)
+            if(which[i] >= 0 && (present & 1U << i))
+                table->refs[which[i]][table->nrefs[which[i]]++].value = record + offsets[i];
+    }
+
+    return true;
+}
+
+static void free_twin_table(TwinTable *table)
+{
+    free(table->payload);
+    free(table->refs[0]);
+    free(table->refs[1]);
+}
+
+/// Appends the (uncompressed) twin sector table with its updated records.
+static int append_twin_table(FILE *fp, const TwinTable *table, const uint8_t alignment_shift, uint64_t *out_offset)
+{
+    fseek(fp, 0, SEEK_END);
+    uint64_t       pos  = (uint64_t)ftell(fp);
+    const uint64_t mask = (1ULL << alignment_shift) - 1;
+    pos                 = (pos + mask) & ~mask;
+    fseek(fp, (long)pos, SEEK_SET);
+
+    TwinSectorTableHeader h = table->header;
+    h.compression           = kCompressionNone;
+    h.cmpLength             = h.length;
+    h.crc64                 = aaruf_crc64_data(table->payload, (uint32_t)h.length);
+    h.cmpCrc64              = h.crc64;
+
+    if(fwrite(&h, sizeof(h), 1, fp) != 1) return EIO;
+    if(h.length && fwrite(table->payload, h.length, 1, fp) != 1) return EIO;
+
+    *out_offset = pos;
+    return 0;
 }
 
 /// Appends a DataBlock (uncompressed) at an aligned EOF and returns its file offset (via @p out_offset).
@@ -439,6 +567,50 @@ int repair_cd_arena(const char *path, const bool dry_run)
     Generation *gens  = scan_generations(img, file_size, &ngens);
     printf("Found %zu prefix/suffix generations.\n", ngens);
 
+    // Twin sector table: its records also reference prefix/suffix slots and must follow the compaction
+    uint64_t twin_offset = 0, current_block_off[2] = {0, 0};
+    for(size_t i = 0; i < index_count; i++)
+    {
+        if(index[i].blockType == TwinSectorTable) twin_offset = index[i].offset;
+        if(index[i].blockType == DataBlock && index[i].dataType == kDataTypeCdSectorPrefix)
+            current_block_off[0] = index[i].offset;
+        if(index[i].blockType == DataBlock && index[i].dataType == kDataTypeCdSectorSuffix)
+            current_block_off[1] = index[i].offset;
+    }
+
+    TwinTable  twin_table;
+    const bool has_twins = load_twin_table(img, file_size, twin_offset, &twin_table);
+    if(twin_offset != 0 && !has_twins)
+    {
+        printf("ERROR: the twin sector table could not be decoded; refusing to repair (its references would break).\n");
+        free_twin_table(&twin_table);
+        for(size_t g = 0; g < ngens; g++)
+        {
+            free(gens[g].block);
+            free(gens[g].ddt);
+        }
+        free(gens);
+        free(index);
+        free(img);
+        fclose(fp);
+        return EINVAL;
+    }
+    if(has_twins)
+        printf("Twin sector table: %llu twin record(s), %zu prefix and %zu suffix reference(s).\n",
+               (unsigned long long)twin_table.header.instances, twin_table.nrefs[0], twin_table.nrefs[1]);
+
+    // Arenas currently referenced by the index (decoded from the generations found)
+    const uint8_t *current_arena[2]        = {NULL, NULL};
+    uint64_t       current_arena_length[2] = {0, 0};
+    for(size_t g = 0; g < ngens; g++)
+        for(int w = 0; w < 2; w++)
+            if(gens[g].block_offset == current_block_off[w])
+            {
+                current_arena[w]        = gens[g].block;
+                current_arena_length[w] = gens[g].block_length;
+            }
+    uint64_t new_twin_offset = 0;
+
     int rc = 0;
 
     // Process both arenas.
@@ -482,9 +654,9 @@ int repair_cd_arena(const char *path, const bool dry_run)
         const uint64_t entries  = final_gen->ddt_entries;
         uint64_t      *new_ddt  = malloc(entries * sizeof(uint64_t));
         uint64_t       reclen = 0, recovered = 0, lost = 0;
-        uint8_t       *arena =
-            rebuild_arena(gens, ngens, jobs[j].type, final_gen->ddt, entries, jobs[j].slot, new_ddt, &reclen,
-                          &recovered, &lost);
+        uint8_t *arena = rebuild_arena(gens, ngens, jobs[j].type, final_gen->ddt, entries, jobs[j].slot, new_ddt,
+                                       &reclen, &recovered, &lost, has_twins ? twin_table.refs[j] : NULL,
+                                       has_twins ? twin_table.nrefs[j] : 0, current_arena[j], current_arena_length[j]);
 
         printf("  %s: %llu custom slots recovered, %llu unrecoverable (marked not-dumped).\n",
                jobs[j].type == kDataTypeCdSectorPrefix ? "prefix" : "suffix",
@@ -504,10 +676,20 @@ int repair_cd_arena(const char *path, const bool dry_run)
     }
 
     // --- Rewrite the index pointing at the new blocks, and update the header ---
+    if(!dry_run && rc == 0 && has_twins &&
+       append_twin_table(fp, &twin_table, header.blockAlignmentShift, &new_twin_offset) != 0)
+        rc = EIO;
+
     if(!dry_run && rc == 0)
     {
         for(size_t i = 0; i < index_count; i++)
         {
+            if(index[i].blockType == TwinSectorTable && new_twin_offset)
+            {
+                index[i].offset = new_twin_offset;
+                continue;
+            }
+
             if(index[i].blockType == DataBlock && index[i].dataType == kDataTypeCdSectorPrefix && jobs[0].new_block_off)
                 index[i].offset = jobs[0].new_block_off;
             else if(index[i].blockType == DeDuplicationTable2 && index[i].dataType == kDataTypeCdSectorPrefix &&
@@ -551,6 +733,7 @@ int repair_cd_arena(const char *path, const bool dry_run)
     else if(dry_run)
         printf("\nDry run only; no changes written.\n");
 
+    free_twin_table(&twin_table);
     for(size_t g = 0; g < ngens; g++)
     {
         free(gens[g].block);
