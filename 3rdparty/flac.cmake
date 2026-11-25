@@ -54,7 +54,13 @@ else ()
   check_include_file("x86intrin.h" FLAC__HAS_X86INTRIN)
 endif ()
 
-#check_function_exists(fseeko HAVE_FSEEKO)
+# Windows maps fseeko/ftello itself in share/compat.h. Elsewhere, without HAVE_FSEEKO,
+# compat.h #defines fseeko to fseek, which conflicts with off_t-based declarations (macOS).
+# All POSIX targets have fseeko (libaaruformat itself relies on it), but a symbol check
+# would miss it under strict -std=c99, so set it directly.
+if (NOT WIN32)
+  set(HAVE_FSEEKO 1)
+endif ()
 
 check_c_source_compiles("int main() { return __builtin_bswap16 (0) ; }" HAVE_BSWAP16)
 check_c_source_compiles("int main() { return __builtin_bswap32 (0) ; }" HAVE_BSWAP32)
