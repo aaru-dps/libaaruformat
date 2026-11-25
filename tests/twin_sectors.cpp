@@ -331,8 +331,7 @@ TEST_F(TwinSectorsFixture, ReplaceAppendClear)
 }
 
 /// Twins in a multi-level DDT (several secondary tables involved), on negative and overflow sectors.
-/// Twins are written right after their twin #0, as a dumper finds them (rewriting an already flushed secondary
-/// table is not supported by the multi-level DDT writer).
+/// Most twins are written right after their twin #0, as a dumper finds them; some after their table was flushed.
 TEST_F(TwinSectorsFixture, MultiLevelNegativeOverflow)
 {
     const char        *kFilename = "test_twin_multilevel.aif";
@@ -379,10 +378,9 @@ TEST_F(TwinSectorsFixture, MultiLevelNegativeOverflow)
                       AARUF_STATUS_OK);
     }
 
-    // Creating twins in a secondary table already flushed is refused instead of losing that table
-    EXPECT_EQ(aaruf_write_sector_twin(ctx, 100, false, 1, more.data(), SectorStatusDumped, 512),
-              AARUF_ERROR_CANNOT_SET_DDT_ENTRY);
-    // ...but more twins for an existing group are fine, as the DDT is not touched
+    // Twins created after their secondary table was flushed, and more twins for an existing group
+    auto late = Pattern(512, 0xEA);
+    EXPECT_EQ(aaruf_write_sector_twin(ctx, 100, false, 1, late.data(), SectorStatusDumped, 512), AARUF_STATUS_OK);
     auto extra = Pattern(512, 0xEF);
     EXPECT_EQ(aaruf_write_sector_twin(ctx, 10, false, 2, extra.data(), SectorStatusDumped, 512), AARUF_STATUS_OK);
 
@@ -395,7 +393,8 @@ TEST_F(TwinSectorsFixture, MultiLevelNegativeOverflow)
     uint8_t status = 0;
     int32_t res    = 0;
 
-    EXPECT_EQ(TwinCount(ctx, 100), 1u);
+    EXPECT_EQ(TwinCount(ctx, 100), 2u);
+    EXPECT_EQ(ReadTwin(ctx, 100, false, 1, &status, &res), late);
     EXPECT_EQ(TwinCount(ctx, 10), 3u);
     EXPECT_EQ(ReadTwin(ctx, 10, false, 2, &status, &res), extra);
 
@@ -411,7 +410,6 @@ TEST_F(TwinSectorsFixture, MultiLevelNegativeOverflow)
     EXPECT_EQ(TwinCount(ctx, 500), 3u);
     EXPECT_EQ(ReadTwin(ctx, 500, false, 2, &status, &res), more);
     EXPECT_EQ(status, SectorStatusErrored);
-    EXPECT_EQ(TwinCount(ctx, 1000), 1u);
 
     EXPECT_EQ(TwinCount(ctx, 2, true), 2u);
     EXPECT_EQ(ReadTwin(ctx, 2, true, 0, &status, &res), Pattern(512, 0xA2));
@@ -421,10 +419,10 @@ TEST_F(TwinSectorsFixture, MultiLevelNegativeOverflow)
     EXPECT_EQ(ReadTwin(ctx, kSectors + 1, false, 1, &status, &res), ovf_twin);
 
     auto list = TwinList(ctx);
-    ASSERT_EQ(list.size(), 5u);
+    ASSERT_EQ(list.size(), 6u);
     EXPECT_EQ(list[0].negative, 1);
     EXPECT_EQ(list[0].sector_address, 2u);
-    EXPECT_EQ(list[4].sector_address, kSectors + 1);
+    EXPECT_EQ(list[5].sector_address, kSectors + 1);
 
     EXPECT_EQ(aaruf_close(ctx), AARUF_STATUS_OK);
     remove(kFilename);

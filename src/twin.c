@@ -307,94 +307,8 @@ static void twin_restore(aaruformat_context *ctx, const uint64_t index, const Tw
     }
 }
 
-/** Reads a secondary DDT table from the file without touching the DDT cache. */
-static int32_t twin_read_secondary_ddt(aaruformat_context *ctx, const uint64_t offset, uint64_t **table,
-                                       uint64_t *entries)
-{
-    DdtHeader2 header;
-
-    *table   = NULL;
-    *entries = 0;
-
-    if(aaruf_fseek(ctx->imageStream, (aaru_off_t)offset, SEEK_SET) != 0 ||
-       fread(&header, 1, sizeof(DdtHeader2), ctx->imageStream) != sizeof(DdtHeader2))
-        return AARUF_ERROR_CANNOT_READ_BLOCK;
-
-    if(header.identifier != DeDuplicationTableSecondary && header.identifier != DeDuplicationTableSAlpha &&
-       header.identifier != DeDuplicationTable2)
-        return AARUF_ERROR_CANNOT_READ_BLOCK;
-
-    if(header.length == 0 || header.length % sizeof(uint64_t) != 0 || header.cmpLength == 0)
-        return AARUF_ERROR_CANNOT_READ_BLOCK;
-
-    uint8_t *cmp = malloc(header.cmpLength);
-    uint8_t *out = malloc(header.length);
-
-    if(cmp == NULL || out == NULL)
-    {
-        free(cmp);
-        free(out);
-        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
-    }
-
-    if(fread(cmp, 1, header.cmpLength, ctx->imageStream) != header.cmpLength)
-    {
-        free(cmp);
-        free(out);
-        return AARUF_ERROR_CANNOT_READ_BLOCK;
-    }
-
-    int32_t res = AARUF_STATUS_OK;
-
-    switch(header.compression)
-    {
-        case kCompressionNone:
-            if(header.cmpLength != header.length)
-                res = AARUF_ERROR_CANNOT_READ_BLOCK;
-            else
-                memcpy(out, cmp, header.length);
-            break;
-        case kCompressionLzma:
-        {
-            if(header.cmpLength <= LZMA_PROPERTIES_LENGTH)
-            {
-                res = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
-                break;
-            }
-
-            size_t dst_size = header.length;
-            size_t src_size = header.cmpLength - LZMA_PROPERTIES_LENGTH;
-            if(aaruf_lzma_decode_buffer(out, &dst_size, cmp + LZMA_PROPERTIES_LENGTH, &src_size, cmp,
-                                        LZMA_PROPERTIES_LENGTH) != 0 ||
-               dst_size != header.length)
-                res = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
-            break;
-        }
-        case kCompressionZstd:
-            if(aaruf_zstd_decode_buffer(out, header.length, cmp, header.cmpLength) != header.length)
-                res = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
-            break;
-        default:
-            res = AARUF_ERROR_CANNOT_DECOMPRESS_BLOCK;
-            break;
-    }
-
-    free(cmp);
-
-    if(res != AARUF_STATUS_OK)
-    {
-        free(out);
-        return res;
-    }
-
-    *table   = (uint64_t *)out;
-    *entries = header.length / sizeof(uint64_t);
-    return AARUF_STATUS_OK;
-}
-
 /**
- * Gets the raw user-data DDT entry (status << 60 | pointer) of a sector. Works while writing, where the DDT lives
- * partly in memory and must not be disturbed.
+ * Gets the raw user-data DDT entry (status << 60 | pointer) of a sector.
  */
 static int32_t twin_get_raw_ddt_entry(aaruformat_context *ctx, const uint64_t sector_address, const bool negative,
                                       uint64_t *entry)
@@ -414,58 +328,18 @@ static int32_t twin_get_raw_ddt_entry(aaruformat_context *ctx, const uint64_t se
         return AARUF_STATUS_OK;
     }
 
-    if(!ctx->is_writing)
-    {
-        uint64_t offset = 0, block_offset = 0;
-        uint8_t  status = SectorStatusNotDumped;
+    // Safe while writing too: the multi-level decoder never disturbs the table being written
+    uint64_t offset = 0, block_offset = 0;
+    uint8_t  status = SectorStatusNotDumped;
 
-        int32_t res = decode_ddt_entry_v2(ctx, sector_address, negative, &offset, &block_offset, &status);
-        if(res != AARUF_STATUS_OK) return res;
-
-        if(status == SectorStatusNotDumped && offset == 0 && block_offset == 0) return AARUF_STATUS_OK;
-
-        *entry =
-            (offset & ((1ULL << ctx->user_data_ddt_header.dataShift) - 1) |
-             block_offset >> ctx->user_data_ddt_header.blockAlignmentShift << ctx->user_data_ddt_header.dataShift) |
-            (uint64_t)status << 60;
-        return AARUF_STATUS_OK;
-    }
-
-    const uint64_t index = twin_internal_index(ctx, sector_address, negative);
-
-    if(ctx->user_data_ddt2 == NULL) return AARUF_STATUS_OK;
-
-    if(ctx->user_data_ddt_header.tableShift == 0)
-    {
-        *entry = ctx->user_data_ddt2[index];
-        return AARUF_STATUS_OK;
-    }
-
-    const uint64_t items     = 1ULL << ctx->user_data_ddt_header.tableShift;
-    const uint64_t position  = index / items;
-    const uint64_t secondary = ctx->user_data_ddt2[position] << ctx->user_data_ddt_header.blockAlignmentShift;
-
-    if(ctx->cached_secondary_ddt2 != NULL &&
-       (ctx->cached_ddt_offset == 0 ? ctx->cached_ddt_position == position
-                                    : ctx->cached_ddt_offset == secondary && secondary != 0))
-    {
-        *entry = ctx->cached_secondary_ddt2[index % items];
-        return AARUF_STATUS_OK;
-    }
-
-    if(secondary == 0) return AARUF_STATUS_OK;
-
-    const aaru_off_t saved_position = aaruf_ftell(ctx->imageStream);
-    uint64_t        *table          = NULL;
-    uint64_t         entries        = 0;
-    int32_t          res            = twin_read_secondary_ddt(ctx, secondary, &table, &entries);
-    aaruf_fseek(ctx->imageStream, saved_position, SEEK_SET);
-
+    const int32_t res = decode_ddt_entry_v2(ctx, sector_address, negative, &offset, &block_offset, &status);
     if(res != AARUF_STATUS_OK) return res;
 
-    if(index % items < entries) *entry = table[index % items];
+    if(status == SectorStatusNotDumped && offset == 0 && block_offset == 0) return AARUF_STATUS_OK;
 
-    free(table);
+    *entry = (offset & (1ULL << ctx->user_data_ddt_header.dataShift) - 1 |
+              block_offset >> ctx->user_data_ddt_header.blockAlignmentShift << ctx->user_data_ddt_header.dataShift) |
+             (uint64_t)status << 60;
     return AARUF_STATUS_OK;
 }
 
@@ -703,24 +577,6 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_twin_tag(const void *context, co
     return res;
 }
 
-/**
- * True when the user DDT entry of the sector can be updated while writing. A multi-level DDT writer can only update
- * entries of the secondary table it holds in memory (or of one never written yet): rewriting a secondary table that
- * was already flushed to the file loses it, so twins cannot be created or removed there.
- */
-static bool twin_ddt_entry_updatable(const aaruformat_context *ctx, const uint64_t sector_address, const bool negative)
-{
-    if(ctx->user_data_ddt_header.tableShift == 0 || ctx->user_data_ddt2 == NULL) return true;
-
-    const uint64_t index     = twin_internal_index(ctx, sector_address, negative);
-    const uint64_t position  = index >> ctx->user_data_ddt_header.tableShift;
-    const uint64_t secondary = ctx->user_data_ddt2[position] << ctx->user_data_ddt_header.blockAlignmentShift;
-
-    if(secondary == 0) return true;  // Not flushed yet
-
-    return ctx->cached_secondary_ddt2 != NULL && ctx->cached_ddt_offset == secondary;
-}
-
 /** Marks a sector as twinned in the user DDT, creating its group. */
 static int32_t twin_create_group(aaruformat_context *ctx, const uint64_t sector_address, const bool negative,
                                  const uint64_t index, TwinSectorGroupEntry **out)
@@ -786,11 +642,6 @@ static int32_t twin_write_common(void *context, const uint64_t sector_address, c
 
     if(twin_index > count || twin_index >= UINT16_MAX) return AARUF_ERROR_TWIN_INDEX_OUT_OF_RANGE;
 
-    if(group == NULL && !twin_ddt_entry_updatable(ctx, sector_address, negative))
-    {
-        FATAL("Cannot create twins for sector %" PRIu64 ": its secondary DDT table was already written", sector_address);
-        return AARUF_ERROR_CANNOT_SET_DDT_ENTRY;
-    }
 
     TwinInstance instance;
     memset(&instance, 0, sizeof(TwinInstance));
@@ -953,11 +804,6 @@ AARU_EXPORT int32_t AARU_CALL aaruf_clear_sector_twins(void *context, const uint
     TwinSectorGroupEntry *group = twin_find_group(ctx, twin_internal_index(ctx, sector_address, negative));
     if(group == NULL) return AARUF_STATUS_OK;
 
-    if(!twin_ddt_entry_updatable(ctx, sector_address, negative))
-    {
-        FATAL("Cannot clear twins of sector %" PRIu64 ": its secondary DDT table was already written", sector_address);
-        return AARUF_ERROR_CANNOT_SET_DDT_ENTRY;
-    }
 
     uint64_t raw = 0;
     res          = twin_get_raw_ddt_entry(ctx, sector_address, negative, &raw);
