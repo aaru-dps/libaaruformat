@@ -179,11 +179,20 @@ static uint8_t *twin_instance_field(TwinInstance *instance, const int comp)
  * Pointer to the per-sector storage slot of a component for the given internal index, or NULL if the storage does
  * not exist (and allocate is false or the allocation failed). User data has no slot.
  */
-static uint8_t *twin_slot(aaruformat_context *ctx, const int comp, const uint64_t index, const bool allocate)
+static uint8_t *twin_slot(aaruformat_context *ctx, const int comp, uint64_t index, const bool allocate)
 {
     const uint32_t size  = twin_component_size(ctx, comp);
-    const uint64_t total = twin_total_sectors(ctx);
+    uint64_t       total = twin_total_sectors(ctx);
     uint8_t      **array = NULL;
+
+    // Apple / Priam tags cover the user area and overflow sectors only, indexed by sector address
+    if(comp == kTwinCompTag)
+    {
+        if(index < ctx->user_data_ddt_header.negative) return NULL;
+
+        index -= ctx->user_data_ddt_header.negative;
+        total = ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow;
+    }
 
     if(size == 0 || index >= total) return NULL;
 

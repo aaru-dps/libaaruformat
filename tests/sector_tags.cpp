@@ -131,3 +131,74 @@ TEST_F(SectorTagsFixture, AppleSonyAndPriamReadableTags)
     EXPECT_FALSE(priam[kSectorTagAppleSony]);
     EXPECT_FALSE(priam[kSectorTagAppleProfile]);
 }
+
+/// Apple tags are stored by sector address over the user area and overflow: long writes, tag writes, long reads and
+/// tag reads agree even when the image has negative sectors, which cannot carry tags.
+TEST_F(SectorTagsFixture, AppleTagsWithNegativeSectors)
+{
+    const char *kFilename = "test_sector_tags_apple_negative.aif";
+    void       *ctx       = aaruf_create(kFilename, AppleSonySS, 512, 8, 2, 1, "deduplicate=false;compress=false",
+                                         reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0, false);
+    ASSERT_NE(ctx, nullptr);
+
+    uint8_t sector[524];
+
+    // Even sectors written long, odd ones as data plus tag; sector 8 is the overflow sector
+    for(uint64_t i = 0; i < 9; i++)
+    {
+        for(int b = 0; b < 524; b++) sector[b] = static_cast<uint8_t>(i * 7 + b);
+
+        if(i % 2 == 0)
+            ASSERT_EQ(aaruf_write_sector_long(ctx, i, false, sector, SectorStatusDumped, 524), AARUF_STATUS_OK) << i;
+        else
+        {
+            ASSERT_EQ(aaruf_write_sector(ctx, i, false, sector, SectorStatusDumped, 512), AARUF_STATUS_OK) << i;
+            ASSERT_EQ(aaruf_write_sector_tag(ctx, i, false, sector + 512, 12, kSectorTagAppleSony), AARUF_STATUS_OK)
+                << i;
+        }
+    }
+
+    // Negative sectors keep their data but cannot carry tags
+    memset(sector, 0x5A, sizeof(sector));
+    EXPECT_EQ(aaruf_write_sector(ctx, 1, true, sector, SectorStatusDumped, 512), AARUF_STATUS_OK);
+    EXPECT_EQ(aaruf_write_sector_tag(ctx, 1, true, sector + 512, 12, kSectorTagAppleSony),
+              AARUF_ERROR_SECTOR_OUT_OF_BOUNDS);
+    EXPECT_EQ(aaruf_write_sector_long(ctx, 2, true, sector, SectorStatusDumped, 524), AARUF_ERROR_SECTOR_OUT_OF_BOUNDS);
+
+    ASSERT_EQ(aaruf_close(ctx), AARUF_STATUS_OK);
+
+    ctx = aaruf_open(kFilename, false, nullptr);
+    ASSERT_NE(ctx, nullptr);
+
+    for(uint64_t i = 0; i < 9; i++)
+    {
+        uint8_t expected[524];
+        for(int b = 0; b < 524; b++) expected[b] = static_cast<uint8_t>(i * 7 + b);
+
+        uint8_t  buffer[524];
+        uint32_t length = sizeof(buffer);
+        uint8_t  status = 0;
+        ASSERT_EQ(aaruf_read_sector_long(ctx, i, false, buffer, &length, &status), AARUF_STATUS_OK) << i;
+        EXPECT_EQ(length, 524u) << i;
+        EXPECT_EQ(memcmp(buffer, expected, 524), 0) << i;
+
+        uint8_t tag[12];
+        length = sizeof(tag);
+        ASSERT_EQ(aaruf_read_sector_tag(ctx, i, false, tag, &length, kSectorTagAppleSony), AARUF_STATUS_OK) << i;
+        EXPECT_EQ(memcmp(tag, expected + 512, 12), 0) << i;
+    }
+
+    // Negative sector: plain data on long reads, no tag
+    uint8_t  buffer[524];
+    uint32_t length = sizeof(buffer);
+    uint8_t  status = 0;
+    EXPECT_EQ(aaruf_read_sector_long(ctx, 1, true, buffer, &length, &status), AARUF_STATUS_OK);
+    EXPECT_EQ(length, 512u);
+    uint8_t tag[12];
+    length = sizeof(tag);
+    EXPECT_EQ(aaruf_read_sector_tag(ctx, 1, true, tag, &length, kSectorTagAppleSony),
+              AARUF_ERROR_SECTOR_TAG_NOT_PRESENT);
+
+    EXPECT_EQ(aaruf_close(ctx), AARUF_STATUS_OK);
+    remove(kFilename);
+}

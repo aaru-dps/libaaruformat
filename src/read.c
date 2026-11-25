@@ -2099,7 +2099,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                 case AppleSonyDS:
                 case AppleWidget:
                 case PriamDataTower:
-                    if(ctx->sector_subchannel == NULL)
+                    // The tag block covers the user area and overflow sectors only, indexed by sector address
+                    if(ctx->sector_subchannel == NULL || negative)
                         return aaruf_read_sector(context, sector_address, negative, data, length, sector_status);
 
                     switch(ctx->image_info.MediaType)
@@ -2164,8 +2165,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_long(void *context, const uint64
                         return AARUF_ERROR_INCORRECT_DATA_SIZE;
                     }
 
-                    memcpy(data + bare_length, ctx->sector_subchannel + corrected_sector_address * tag_length,
-                           tag_length);
+                    memcpy(data + bare_length, ctx->sector_subchannel + sector_address * tag_length, tag_length);
                     memcpy(data, bare_data, bare_length);
                     *length = tag_length + bare_length;
 
@@ -2653,14 +2653,15 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
                 return AARUF_ERROR_INCORRECT_DATA_SIZE;
             }
 
-            if(ctx->sector_subchannel == NULL)
+            // The tag block covers the user area and overflow sectors only, indexed by sector address
+            if(ctx->sector_subchannel == NULL || negative)
             {
                 FATAL("Sector tag not found");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_SECTOR_TAG_NOT_PRESENT");
                 return AARUF_ERROR_SECTOR_TAG_NOT_PRESENT;
             }
 
-            memcpy(buffer, ctx->sector_subchannel + corrected_sector_address * 12, 12);
+            memcpy(buffer, ctx->sector_subchannel + sector_address * 12, 12);
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case kSectorTagAppleProfile:
@@ -2679,14 +2680,15 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
                 return AARUF_ERROR_INCORRECT_DATA_SIZE;
             }
 
-            if(ctx->sector_subchannel == NULL)
+            // The tag block covers the user area and overflow sectors only, indexed by sector address
+            if(ctx->sector_subchannel == NULL || negative)
             {
                 FATAL("Sector tag not found");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_SECTOR_TAG_NOT_PRESENT");
                 return AARUF_ERROR_SECTOR_TAG_NOT_PRESENT;
             }
 
-            memcpy(buffer, ctx->sector_subchannel + corrected_sector_address * 20, 20);
+            memcpy(buffer, ctx->sector_subchannel + sector_address * 20, 20);
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         case kSectorTagPriamDataTower:
@@ -2705,14 +2707,15 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_tag(const void *context, const u
                 return AARUF_ERROR_INCORRECT_DATA_SIZE;
             }
 
-            if(ctx->sector_subchannel == NULL)
+            // The tag block covers the user area and overflow sectors only, indexed by sector address
+            if(ctx->sector_subchannel == NULL || negative)
             {
                 FATAL("Sector tag not found");
                 TRACE("Exiting aaruf_read_sector_tag() = AARUF_ERROR_SECTOR_TAG_NOT_PRESENT");
                 return AARUF_ERROR_SECTOR_TAG_NOT_PRESENT;
             }
 
-            memcpy(buffer, ctx->sector_subchannel + corrected_sector_address * 24, 24);
+            memcpy(buffer, ctx->sector_subchannel + sector_address * 24, 24);
             TRACE("Exiting aaruf_read_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
         default:

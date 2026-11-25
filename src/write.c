@@ -1416,6 +1416,14 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
                     if(newTagSize == 0)
                         return aaruf_write_sector(context, sector_address, negative, data, sector_status, 512);
 
+                    // The tag block covers the user area and overflow sectors only
+                    if(negative)
+                    {
+                        free(newTag);
+                        FATAL("Negative sectors cannot have Apple or Priam tags");
+                        return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
+                    }
+
                     if(ctx->sector_subchannel == NULL)
                     {
                         ctx->sector_subchannel =
@@ -2717,7 +2725,16 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
                 return AARUF_ERROR_INCORRECT_DATA_SIZE;
             }
 
-            if(ctx->sector_subchannel == NULL) ctx->sector_subchannel = calloc(1, 12 * total_sectors);
+            // The tag block covers the user area and overflow sectors only, indexed by sector address
+            if(negative)
+            {
+                FATAL("Negative sectors cannot have Apple or Priam tags");
+                TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+                return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
+            }
+
+            if(ctx->sector_subchannel == NULL)
+                ctx->sector_subchannel = calloc(1, 12 * (ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow));
 
             if(ctx->sector_subchannel == NULL)
             {
@@ -2727,7 +2744,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
 
-            memcpy(ctx->sector_subchannel + corrected_sector_address * 12, data, 12);
+            memcpy(ctx->sector_subchannel + sector_address * 12, data, 12);
             ctx->dirty_sector_subchannel_block = true;  // Mark subchannel block as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
@@ -2746,7 +2763,16 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
                 return AARUF_ERROR_INCORRECT_DATA_SIZE;
             }
 
-            if(ctx->sector_subchannel == NULL) ctx->sector_subchannel = calloc(1, 20 * total_sectors);
+            // The tag block covers the user area and overflow sectors only, indexed by sector address
+            if(negative)
+            {
+                FATAL("Negative sectors cannot have Apple or Priam tags");
+                TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+                return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
+            }
+
+            if(ctx->sector_subchannel == NULL)
+                ctx->sector_subchannel = calloc(1, 20 * (ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow));
 
             if(ctx->sector_subchannel == NULL)
             {
@@ -2756,7 +2782,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
 
-            memcpy(ctx->sector_subchannel + corrected_sector_address * 20, data, 20);
+            memcpy(ctx->sector_subchannel + sector_address * 20, data, 20);
             ctx->dirty_sector_subchannel_block = true;  // Mark subchannel block as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
@@ -2775,7 +2801,16 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
                 return AARUF_ERROR_INCORRECT_DATA_SIZE;
             }
 
-            if(ctx->sector_subchannel == NULL) ctx->sector_subchannel = calloc(1, 24 * total_sectors);
+            // The tag block covers the user area and overflow sectors only, indexed by sector address
+            if(negative)
+            {
+                FATAL("Negative sectors cannot have Apple or Priam tags");
+                TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_SECTOR_OUT_OF_BOUNDS");
+                return AARUF_ERROR_SECTOR_OUT_OF_BOUNDS;
+            }
+
+            if(ctx->sector_subchannel == NULL)
+                ctx->sector_subchannel = calloc(1, 24 * (ctx->image_info.Sectors + ctx->user_data_ddt_header.overflow));
 
             if(ctx->sector_subchannel == NULL)
             {
@@ -2785,7 +2820,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
                 return AARUF_ERROR_NOT_ENOUGH_MEMORY;
             }
 
-            memcpy(ctx->sector_subchannel + corrected_sector_address * 24, data, 24);
+            memcpy(ctx->sector_subchannel + sector_address * 24, data, 24);
             ctx->dirty_sector_subchannel_block = true;  // Mark subchannel block as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
