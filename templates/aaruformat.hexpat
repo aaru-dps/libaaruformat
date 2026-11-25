@@ -1208,9 +1208,9 @@ struct TwinSectorGroup
 
 struct TwinInstanceRecord<auto recordSize>
 {
-    u32 present [[format("std::format(\"0b{:b}\", _this)")]];
-    u32 reserved;
-    u8  values[recordSize - 8];
+    type::Hex<u32> present;
+    u32            reserved;
+    u8             values[recordSize - 8];
 };
 
 struct TwinSectorTable
