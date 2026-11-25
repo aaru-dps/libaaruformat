@@ -137,9 +137,9 @@ static const MediaTagTypeMapping media_tag_mappings[] = {
     {"kMediaTagAacsMediaKey",                 kMediaTagAacsMediaKey},
     {"kMediaTagAacsVolumeUniqueKey",          kMediaTagAacsVolumeUniqueKey},
     {"kMediaTagMiniDiscType",                  kMediaTagMiniDiscType},
-    {"kMediaTagMiniDiscD5",                    kMediaTagMiniDiscD5},
+    {"kMediaTagMiniDiscDefectList",            kMediaTagMiniDiscDefectList},
     {"kMediaTagMiniDiscUtoc",                  kMediaTagMiniDiscUtoc},
-    {"kMediaTagMiniDiscDtoc",                  kMediaTagMiniDiscDtoc},
+    {"kMediaTagMiniDiscPtoc",                  kMediaTagMiniDiscPtoc},
 
 };
 // clang-format on
