@@ -86,20 +86,34 @@ int verify_recover(const char *path)
     uint64_t recovered_count = 0;
     uint64_t error_count    = 0;
 
+    uint64_t twin_count_total = 0;
+
     for(uint64_t sector = 0; sector < total_sectors; sector++)
     {
-        uint32_t len    = sector_size > 0 ? sector_size : 65536;
-        uint8_t  status = 0;
-        int32_t  res    = aaruf_read_sector(ctx, sector, false, sector_data, &len, &status);
+        uint32_t instances = 1;
+        if(aaruf_get_sector_twin_count(ctx, sector, false, &instances) != AARUF_STATUS_OK || instances == 0)
+            instances = 1;
 
-        if(res == AARUF_STATUS_OK)
+        // Every physical instance of the sector (twins included) is read, so its blocks are checked
+        for(uint32_t twin = 0; twin < instances; twin++)
         {
-            ok_count++;
-        }
-        else
-        {
-            error_count++;
-            printf("  Sector %llu: unrecoverable (error %d)\n", (unsigned long long)sector, res);
+            uint32_t len    = sector_size > 0 ? sector_size : 65536;
+            uint8_t  status = 0;
+            int32_t  res    = aaruf_read_sector_twin(ctx, sector, false, twin, sector_data, &len, &status);
+
+            if(twin > 0) twin_count_total++;
+
+            if(res == AARUF_STATUS_OK) { ok_count++; }
+            else if(twin == 0)
+            {
+                error_count++;
+                printf("  Sector %llu: unrecoverable (error %d)\n", (unsigned long long)sector, res);
+            }
+            else
+            {
+                error_count++;
+                printf("  Sector %llu twin %u: unrecoverable (error %d)\n", (unsigned long long)sector, twin, res);
+            }
         }
 
         /* Print progress every 10000 sectors */
@@ -112,6 +126,7 @@ int verify_recover(const char *path)
      * a lower-level API. For now, report all as OK or error. */
     printf("\nVerification complete:\n");
     printf("  Total sectors:   %llu\n", (unsigned long long)total_sectors);
+    printf("  Twin instances:  %llu\n", (unsigned long long)twin_count_total);
     printf("  Readable:        %llu\n", (unsigned long long)ok_count);
     printf("  Unrecoverable:   %llu\n", (unsigned long long)error_count);
 
@@ -158,37 +173,65 @@ int verify_sectors(const char *path)
     unknowns       = 0;
     any_error      = false;
 
+    buffer = malloc(buffer_len);
+    if(buffer == NULL)
+    {
+        printf("Not enough memory.\n");
+        aaruf_ecc_cd_free(cd_ecc_context);
+        aaruf_close(ctx);
+        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    uint64_t twin_instances = 0;
+
     for(uint64_t s = 0; s < ctx->image_info.Sectors; s++)
     {
         printf("\rVerifying sector %llu...", s);
-        res = aaruf_read_sector_long(ctx, s, buffer, false, &buffer_len, &sector_status);
 
-        if(res != AARUF_STATUS_OK)
+        uint32_t instances = 1;
+        if(aaruf_get_sector_twin_count(ctx, s, false, &instances) != AARUF_STATUS_OK || instances == 0) instances = 1;
+
+        // Every physical instance (twins included) carries its own EDC/ECC
+        for(uint32_t twin = 0; twin < instances; twin++)
         {
-            fprintf(stderr, "\rError %d reading sector %llu\n.", res, s);
-            continue;
+            char name[64];
+            if(instances > 1)
+                snprintf(name, sizeof(name), "Sector %llu twin %u", (unsigned long long)s, twin);
+            else
+                snprintf(name, sizeof(name), "Sector %llu", (unsigned long long)s);
+
+            if(twin > 0) twin_instances++;
+
+            buffer_len = 2352;
+            res        = aaruf_read_sector_twin_long(ctx, s, false, twin, buffer, &buffer_len, &sector_status);
+
+            if(res != AARUF_STATUS_OK)
+            {
+                fprintf(stderr, "\rError %d reading %s.\n", res, name);
+                continue;
+            }
+
+            verify_result = check_cd_sector_channel(cd_ecc_context, buffer, &unknown, &has_edc, &edc_correct,
+                                                    &has_ecc_p, &ecc_p_correct, &has_ecc_q, &ecc_q_correct);
+
+            if(verify_result) continue;
+
+            if(unknown)
+            {
+                unknowns++;
+                printf("\r%s cannot be verified.\n", name);
+                continue;
+            }
+
+            if(has_edc && !edc_correct) printf("\r%s has an incorrect EDC value.\n", name);
+
+            if(has_ecc_p && !ecc_p_correct) printf("\r%s has an incorrect ECC P value.\n", name);
+
+            if(has_ecc_q && !ecc_q_correct) printf("\r%s has an incorrect ECC Q value.\n", name);
+
+            errors++;
+            any_error = true;
         }
-
-        verify_result = check_cd_sector_channel(cd_ecc_context, buffer, &unknown, &has_edc, &edc_correct, &has_ecc_p,
-                                                &ecc_p_correct, &has_ecc_q, &ecc_q_correct);
-
-        if(verify_result) continue;
-
-        if(unknown)
-        {
-            unknowns++;
-            printf("\rSector %llu cannot be verified.\n", s);
-            continue;
-        }
-
-        if(has_edc && !edc_correct) printf("\rSector %llu has an incorrect EDC value.\n", s);
-
-        if(has_ecc_p && !ecc_p_correct) printf("\rSector %llu has an incorrect EDC value.\n", s);
-
-        if(has_ecc_q && !ecc_q_correct) printf("\rSector %llu has an incorrect EDC value.\n", s);
-
-        errors++;
-        any_error = true;
     }
 
     if(any_error)
@@ -200,6 +243,11 @@ int verify_sectors(const char *path)
     printf("Total errors............ %llu\n", errors);
     printf("Total unknowns.......... %llu\n", unknowns);
     printf("Total errors+unknowns... %llu\n", errors + unknowns);
+    printf("Twin instances checked.. %llu\n", (unsigned long long)twin_instances);
+
+    free(buffer);
+    aaruf_ecc_cd_free(cd_ecc_context);
+    aaruf_close(ctx);
 
     return AARUF_STATUS_OK;
 }
