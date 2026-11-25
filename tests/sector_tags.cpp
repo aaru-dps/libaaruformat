@@ -202,3 +202,72 @@ TEST_F(SectorTagsFixture, AppleTagsWithNegativeSectors)
     EXPECT_EQ(aaruf_close(ctx), AARUF_STATUS_OK);
     remove(kFilename);
 }
+
+/// MODE 2 subheaders can be written and read as sector tags, and are reported as readable.
+TEST_F(SectorTagsFixture, CdMode2Subheader)
+{
+    const char *kFilename = "test_sector_tags_subheader.aif";
+    void       *ctx       = aaruf_create(kFilename, CDROMXA, 2048, 8, 0, 0, "deduplicate=false;compress=false",
+                                         reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0, false);
+    ASSERT_NE(ctx, nullptr);
+
+    TrackEntry track{};
+    track.sequence = 1;
+    track.type     = kTrackTypeCdMode2Formless;
+    track.start    = 0;
+    track.end      = 7;
+    track.session  = 1;
+    ASSERT_EQ(aaruf_set_tracks(ctx, &track, 1), AARUF_STATUS_OK);
+
+    static const uint8_t kSync[12] = {0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00};
+    uint8_t              sector[2352];
+
+    for(uint64_t i = 0; i < 7; i++)
+    {
+        memset(sector, static_cast<int>(i), sizeof(sector));
+        memcpy(sector, kSync, sizeof(kSync));
+        sector[12] = 0x00;
+        sector[13] = 0x02;
+        sector[14] = static_cast<uint8_t>(i);
+        sector[15] = 0x02;
+        for(int b = 0; b < 8; b++) sector[16 + b] = static_cast<uint8_t>(0x10 * i + b);
+        sector[18] = sector[22] = 0x08;  // Form 1
+        ASSERT_EQ(aaruf_write_sector_long(ctx, i, false, sector, SectorStatusDumped, sizeof(sector)), AARUF_STATUS_OK)
+            << i;
+    }
+
+    // Sector 7: user data plus a subheader written as a tag
+    memset(sector, 0x77, 2048);
+    ASSERT_EQ(aaruf_write_sector(ctx, 7, false, sector, SectorStatusDumped, 2048), AARUF_STATUS_OK);
+    const uint8_t subheader7[8] = {1, 2, 0x20, 4, 1, 2, 0x20, 4};
+    ASSERT_EQ(aaruf_write_sector_tag(ctx, 7, false, subheader7, 8, kSectorTagCdSubHeader), AARUF_STATUS_OK);
+
+    ASSERT_EQ(aaruf_close(ctx), AARUF_STATUS_OK);
+
+    ctx = aaruf_open(kFilename, false, nullptr);
+    ASSERT_NE(ctx, nullptr);
+
+    for(uint64_t i = 0; i < 7; i++)
+    {
+        uint8_t  subheader[8];
+        uint32_t length = sizeof(subheader);
+        ASSERT_EQ(aaruf_read_sector_tag(ctx, i, false, subheader, &length, kSectorTagCdSubHeader), AARUF_STATUS_OK)
+            << i;
+        for(int b = 0; b < 8; b++)
+            EXPECT_EQ(subheader[b], b == 2 || b == 6 ? 0x08 : static_cast<uint8_t>(0x10 * i + b)) << i << " " << b;
+    }
+
+    uint8_t  subheader[8];
+    uint32_t length = sizeof(subheader);
+    ASSERT_EQ(aaruf_read_sector_tag(ctx, 7, false, subheader, &length, kSectorTagCdSubHeader), AARUF_STATUS_OK);
+    EXPECT_EQ(memcmp(subheader, subheader7, 8), 0);
+
+    size_t flags_length = 0;
+    ASSERT_EQ(aaruf_get_readable_sector_tags(ctx, nullptr, &flags_length), AARUF_ERROR_BUFFER_TOO_SMALL);
+    std::vector<uint8_t> flags(flags_length);
+    ASSERT_EQ(aaruf_get_readable_sector_tags(ctx, flags.data(), &flags_length), AARUF_STATUS_OK);
+    EXPECT_TRUE(reinterpret_cast<const bool *>(flags.data())[kSectorTagCdSubHeader]);
+
+    EXPECT_EQ(aaruf_close(ctx), AARUF_STATUS_OK);
+    remove(kFilename);
+}

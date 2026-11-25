@@ -531,7 +531,8 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
             break;
         case kDataTypeCdSubHeader:
             free(ctx->mode2_subheaders);
-            ctx->mode2_subheaders = data;
+            ctx->mode2_subheaders                          = data;
+            ctx->readableSectorTags[kSectorTagCdSubHeader] = true;
             break;
         case kDataTypeDvdSectorId:
             free(ctx->sector_id);

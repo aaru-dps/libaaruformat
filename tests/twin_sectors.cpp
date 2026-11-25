@@ -614,6 +614,13 @@ TEST_F(TwinSectorsFixture, CdMode2SubheaderSuffixResume)
     EXPECT_EQ(ReadTwinLong(ctx, 6, 0, &status, &res), bad0);
     EXPECT_EQ(ReadTwinLong(ctx, 3, 0, &status, &res), Mode2Form1Sector(ecc, 3, 3, 1));
 
+    // Subheader tag of a twin
+    uint8_t  subheader[8];
+    uint32_t length = sizeof(subheader);
+    ASSERT_EQ(aaruf_read_sector_twin_tag(ctx, 2, false, 1, subheader, &length, kSectorTagCdSubHeader), AARUF_STATUS_OK);
+    EXPECT_EQ(std::vector<uint8_t>(subheader, subheader + 8),
+              std::vector<uint8_t>(form1_twin.begin() + 16, form1_twin.begin() + 24));
+
     EXPECT_EQ(aaruf_close(ctx), AARUF_STATUS_OK);
     aaruf_ecc_cd_free(ecc);
     remove(kFilename);

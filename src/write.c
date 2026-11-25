@@ -2537,6 +2537,35 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, const uint64
             ctx->dirty_sector_subchannel_block = true;  // Mark subchannel block as dirty
             TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
             return AARUF_STATUS_OK;
+        case kSectorTagCdSubHeader:
+            if(ctx->image_info.MetadataMediaType != OpticalDisc)
+            {
+                FATAL("Invalid media type for tag");
+                TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+                return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+            }
+
+            if(length != 8)
+            {
+                FATAL("Incorrect tag size");
+                TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_INCORRECT_DATA_SIZE");
+                return AARUF_ERROR_INCORRECT_DATA_SIZE;
+            }
+
+            if(ctx->mode2_subheaders == NULL) ctx->mode2_subheaders = calloc(1, 8 * total_sectors);
+
+            if(ctx->mode2_subheaders == NULL)
+            {
+                FATAL("Could not allocate memory for MODE 2 subheaders");
+
+                TRACE("Exiting aaruf_write_sector_tag() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            memcpy(ctx->mode2_subheaders + corrected_sector_address * 8, data, 8);
+            ctx->dirty_mode2_subheaders_block = true;  // Mark MODE 2 subheader block as dirty
+            TRACE("Exiting aaruf_write_sector_tag() = AARUF_STATUS_OK");
+            return AARUF_STATUS_OK;
         case kSectorTagDvdCmi:
             if(ctx->image_info.MetadataMediaType != OpticalDisc)
             {
