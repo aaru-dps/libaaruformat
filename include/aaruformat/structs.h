@@ -42,6 +42,7 @@
 #include "structs/tape.h"
 #include "structs/flux.h"
 #include "structs/erasure.h"
+#include "structs/twin.h"
 
 #endif  // LIBAARUFORMAT_STRUCTS_H
 

@@ -107,8 +107,9 @@
  *  Bit 0 = AARU_FEATURE_INCOMPAT_ZSTD (Zstandard compression). */
 #define AARUF_KNOWN_INCOMPAT_FEATURES   0x1ULL
 /** Bitmask of all featureCompatibleRo bits understood by this library version.
- *  Bit 0 = AARU_FEATURE_ROCOMPAT_ERASURE (erasure coding parity data). */
-#define AARUF_KNOWN_ROCOMPAT_FEATURES   0x1ULL
+ *  Bit 0 = AARU_FEATURE_ROCOMPAT_ERASURE (erasure coding parity data).
+ *  Bit 1 = AARU_FEATURE_ROCOMPAT_TWIN_SECTORS (twin sector table). */
+#define AARUF_KNOWN_ROCOMPAT_FEATURES   0x3ULL
 /** Bitmask of all featureCompatible bits understood by this library version.
  *  Bit 0 = AARU_FEATURE_RW_BLAKE3 (BLAKE3 checksums). */
 #define AARUF_KNOWN_COMPAT_FEATURES     0x1ULL

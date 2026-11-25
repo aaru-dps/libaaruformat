@@ -74,6 +74,7 @@
 #define AARUF_ERROR_CANNOT_DECRYPT_SECTOR     (-35)  ///< AES sector decryption failed.
 #define AARUF_ERROR_MISSING_ENCRYPTION_KEY    (-36)  ///< Required encryption key not present in media tags.
 #define AARUF_ERROR_USER_DATA_NOT_PRESENT     (-37)  ///< Image has no user-data DDT (e.g. flux-only image); sector data is unavailable.
+#define AARUF_ERROR_TWIN_INDEX_OUT_OF_RANGE   (-38)  ///< Requested twin instance does not exist (or would leave a gap).
 /** @} */
 
 /** \name Non-fatal sector status codes (non-negative)
@@ -159,6 +160,8 @@ static inline const char *aaruformat_error_string(int code)
             return "Missing encryption key";
         case AARUF_ERROR_USER_DATA_NOT_PRESENT:
             return "User data not present (flux-only image)";
+        case AARUF_ERROR_TWIN_INDEX_OUT_OF_RANGE:
+            return "Twin sector index out of range";
 
         /* Status */
         case AARUF_STATUS_OK:

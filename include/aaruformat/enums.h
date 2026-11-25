@@ -189,7 +189,8 @@ typedef enum
     FluxDataBlock                = 0x58554C46,  ///< Block containing flux data metadata.
     DataStreamPayloadBlock =
         0x4C505344,  ///< Block containing compressed data stream payload (e.g., flux data, bitstreams).
-    ErasureCodingMapBlock = 0x424D4345  ///< Block containing erasure coding stripe map and recovery metadata.
+    ErasureCodingMapBlock = 0x424D4345,  ///< Block containing erasure coding stripe map and recovery metadata.
+    TwinSectorTable       = 0x42545754   ///< Block listing twin sectors (several physical sectors sharing one address).
 } BlockType;
 
 /**
@@ -267,7 +268,7 @@ typedef enum
     SectorStatusMode2Form1Ok    = 0x4,  ///< Suffix verified/regenerable for MODE 2 Form 1.
     SectorStatusMode2Form2Ok    = 0x5,  ///< Suffix matches MODE 2 Form 2 with valid CRC.
     SectorStatusMode2Form2NoCrc = 0x6,  ///< Suffix matches MODE 2 Form 2 but CRC empty/missing.
-    SectorStatusTwin            = 0x7,  ///< Pointer references a twin sector table.
+    SectorStatusTwin            = 0x7,  ///< Sector has twins; pointer references twin #0, all instances in the TWTB.
     SectorStatusUnrecorded      = 0x8,  ///< Sector physically unrecorded; repeated reads non-deterministic.
     SectorStatusEncrypted       = 0x9,  ///< Content encrypted and stored encrypted in image.
     SectorStatusUnencrypted     = 0xA,  ///< Content originally encrypted but stored decrypted in image.
@@ -321,7 +322,8 @@ typedef enum
  */
 typedef enum
 {
-    AARU_FEATURE_ROCOMPAT_ERASURE = 0x1,  ///< Image contains erasure coding parity blocks and recovery metadata.
+    AARU_FEATURE_ROCOMPAT_ERASURE      = 0x1,  ///< Image contains erasure coding parity blocks and recovery metadata.
+    AARU_FEATURE_ROCOMPAT_TWIN_SECTORS = 0x2,  ///< Image contains a twin sector table (TWTB).
 } FeaturesCompatibleRo;
 
 /**
