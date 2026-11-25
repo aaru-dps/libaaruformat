@@ -24,34 +24,55 @@
 
 #include "aaruformattool.h"
 
-int read_sector(const unsigned long long sector_no, const char *path)
+static const char *sector_status_name(const uint8_t status)
 {
-    aaruformat_context *ctx           = NULL;
-    int32_t             res           = 0;
-    uint32_t            length        = 0;
-    uint8_t            *data          = NULL;
-    uint8_t             sector_status = 0;
-
-    ctx = aaruf_open(path, false, NULL);
-
-    if(ctx == NULL)
+    switch(status)
     {
-        printf("Error %d when opening AaruFormat image.\n", errno);
-        return errno;
+        case SectorStatusNotDumped:
+            return "not dumped";
+        case SectorStatusDumped:
+            return "dumped";
+        case SectorStatusErrored:
+            return "errored";
+        case SectorStatusMode1Correct:
+            return "Mode 1 correct";
+        case SectorStatusMode2Form1Ok:
+            return "Mode 2 Form 1 correct";
+        case SectorStatusMode2Form2Ok:
+            return "Mode 2 Form 2 correct";
+        case SectorStatusMode2Form2NoCrc:
+            return "Mode 2 Form 2 without CRC";
+        case SectorStatusTwin:
+            return "twin";
+        case SectorStatusUnrecorded:
+            return "unrecorded";
+        case SectorStatusEncrypted:
+            return "encrypted";
+        case SectorStatusUnencrypted:
+            return "unencrypted";
+        case SectorStatusGenerable:
+            return "generable";
+        default:
+            return "unknown";
     }
+}
 
-    res = aaruf_read_sector(ctx, sector_no, false, NULL, &length, &sector_status);
+/** Reads and prints one instance of a sector. */
+static int32_t print_instance(aaruformat_context *ctx, const unsigned long long sector_no, const bool long_mode,
+                              const uint32_t twin)
+{
+    uint32_t length        = 0;
+    uint8_t  sector_status = 0;
+    int32_t  res = long_mode ? aaruf_read_sector_twin_long(ctx, sector_no, false, twin, NULL, &length, &sector_status)
+                             : aaruf_read_sector_twin(ctx, sector_no, false, twin, NULL, &length, &sector_status);
 
     if(res != AARUF_STATUS_OK && res != AARUF_ERROR_BUFFER_TOO_SMALL)
     {
         printf("Error %d when guessing sector size.\n", res);
-        aaruf_close(ctx);
         return res;
     }
 
-    printf("Sector is %d bytes.\n", length);
-
-    data = malloc(length);
+    uint8_t *data = malloc(length);
 
     if(data == NULL)
     {
@@ -59,33 +80,30 @@ int read_sector(const unsigned long long sector_no, const char *path)
         return AARUF_ERROR_NOT_ENOUGH_MEMORY;
     }
 
-    res = aaruf_read_sector(ctx, sector_no, false, data, &length, &sector_status);
+    res = long_mode ? aaruf_read_sector_twin_long(ctx, sector_no, false, twin, data, &length, &sector_status)
+                    : aaruf_read_sector_twin(ctx, sector_no, false, twin, data, &length, &sector_status);
 
     if(res != AARUF_STATUS_OK)
     {
         printf("Error %d when reading sector.\n", res);
-        aaruf_close(ctx);
+        free(data);
         return res;
     }
 
+    printf("Sector is %u bytes, status %s.\n", length, sector_status_name(sector_status));
     printhex(data, length, 16, true);
 
     free(data);
-
-    aaruf_close(ctx);
-
     return AARUF_STATUS_OK;
 }
 
-int read_long(const unsigned long long sector_no, const char *path)
+/**
+ * Reads a sector and prints it. When the sector has twins, every instance is printed, unless twin is not negative,
+ * in which case only that instance is printed.
+ */
+static int read_common(const unsigned long long sector_no, const char *path, const bool long_mode, const int twin)
 {
-    aaruformat_context *ctx           = NULL;
-    int32_t             res           = 0;
-    uint32_t            length        = 0;
-    uint8_t            *data          = NULL;
-    uint8_t             sector_status = 0;
-
-    ctx = aaruf_open(path, false, NULL);
+    aaruformat_context *ctx = aaruf_open(path, false, NULL);
 
     if(ctx == NULL)
     {
@@ -93,39 +111,47 @@ int read_long(const unsigned long long sector_no, const char *path)
         return errno;
     }
 
-    res = aaruf_read_sector_long(ctx, sector_no, false, NULL, &length, &sector_status);
-
-    if(res != AARUF_STATUS_OK && res != AARUF_ERROR_BUFFER_TOO_SMALL)
-    {
-        printf("Error %d when guessing sector size.\n", res);
-        aaruf_close(ctx);
-        return res;
-    }
-
-    printf("Sector is %d bytes.\n", length);
-
-    data = malloc(length);
-
-    if(data == NULL)
-    {
-        printf("Error allocating memory for sector.\n");
-        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
-    }
-
-    res = aaruf_read_sector_long(ctx, sector_no, false, data, &length, &sector_status);
+    uint32_t count = 1;
+    int32_t  res   = aaruf_get_sector_twin_count(ctx, sector_no, false, &count);
 
     if(res != AARUF_STATUS_OK)
     {
-        printf("Error %d when reading sector.\n", res);
+        printf("Error %d when getting the number of instances of the sector.\n", res);
         aaruf_close(ctx);
         return res;
     }
 
-    printhex(data, length, 16, true);
+    if(twin >= 0)
+    {
+        if((uint32_t)twin >= (count == 0 ? 1 : count))
+        {
+            printf("Sector %llu has %u instance(s), there is no twin %d.\n", sector_no, count, twin);
+            aaruf_close(ctx);
+            return AARUF_ERROR_TWIN_INDEX_OUT_OF_RANGE;
+        }
 
-    free(data);
+        if(count > 1) printf("Twin %d of %u:\n", twin, count);
+        res = print_instance(ctx, sector_no, long_mode, (uint32_t)twin);
+        aaruf_close(ctx);
+        return res;
+    }
+
+    if(count > 1) printf("Sector %llu has %u instances (twin sectors).\n", sector_no, count);
+
+    for(uint32_t i = 0; i < (count == 0 ? 1 : count); i++)
+    {
+        if(count > 1) printf("\nTwin %u of %u:\n", i, count);
+
+        res = print_instance(ctx, sector_no, long_mode, i);
+        if(res != AARUF_STATUS_OK) break;
+    }
 
     aaruf_close(ctx);
-
-    return AARUF_STATUS_OK;
+    return res;
 }
+
+int read_sector(const unsigned long long sector_no, const char *path, const int twin)
+{ return read_common(sector_no, path, false, twin); }
+
+int read_long(const unsigned long long sector_no, const char *path, const int twin)
+{ return read_common(sector_no, path, true, twin); }

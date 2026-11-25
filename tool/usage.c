@@ -75,8 +75,11 @@ void usage_info()
 void usage_read()
 {
     printf("\nUsage:\n");
-    printf("  aaruformattool read <sector_number> <filename>\n\n");
+    printf("  aaruformattool read [-t <index>] <sector_number> <filename>\n\n");
     printf("Reads a sector and prints it out.\n");
+    printf("When the sector has twins (several physical sectors with the same address), every instance is printed.\n");
+    printf("Options:\n");
+    printf("  -t, --twin <index>  Print only this instance (0 is the one read by default).\n");
     printf("Arguments:\n");
     printf("  <sector_number>  Sector number to read.\n");
     printf("  <filename>       Path to image file.\n");
@@ -85,8 +88,11 @@ void usage_read()
 void usage_read_long()
 {
     printf("\nUsage:\n");
-    printf("  aaruformattool read_long <sector_number> <filename>\n\n");
+    printf("  aaruformattool read_long [-t <index>] <sector_number> <filename>\n\n");
     printf("Reads sector with all metadata and prints it out.\n");
+    printf("When the sector has twins (several physical sectors with the same address), every instance is printed.\n");
+    printf("Options:\n");
+    printf("  -t, --twin <index>  Print only this instance (0 is the one read by default).\n");
     printf("Arguments:\n");
     printf("  <sector_number>  Sector number to read.\n");
     printf("  <filename>       Path to image file.\n");

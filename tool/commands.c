@@ -108,12 +108,13 @@ int cmd_cli_compare(int argc, char *argv[])
 
 int cmd_read_common(int argc, char *argv[], bool long_mode)
 {
+    struct arg_int *twin       = arg_int0("t", "twin", "<index>", "Print only this instance of a twinned sector");
     struct arg_int *sector     = arg_int1(NULL, NULL, "<sector>", "Sector number");
     struct arg_str *filename   = arg_str1(NULL, NULL, "<filename>", "Image file");
     struct arg_end *end        = arg_end(10);
-    void           *argtable[] = {sector, filename, end};
+    void           *argtable[] = {twin, sector, filename, end};
 
-    if(arg_parse(argc, argv, argtable) > 0 || sector->ival[0] < 0)
+    if(arg_parse(argc, argv, argtable) > 0 || sector->ival[0] < 0 || (twin->count > 0 && twin->ival[0] < 0))
     {
         arg_print_errors(stderr, end, long_mode ? "read_long" : "read");
         long_mode ? usage_read_long() : usage_read();
@@ -121,8 +122,9 @@ int cmd_read_common(int argc, char *argv[], bool long_mode)
         return -1;
     }
 
-    const int result =
-        long_mode ? read_long(sector->ival[0], filename->sval[0]) : read_sector(sector->ival[0], filename->sval[0]);
+    const int twin_index = twin->count > 0 ? twin->ival[0] : -1;
+    const int result     = long_mode ? read_long(sector->ival[0], filename->sval[0], twin_index)
+                                     : read_sector(sector->ival[0], filename->sval[0], twin_index);
 
     arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
     return result;
