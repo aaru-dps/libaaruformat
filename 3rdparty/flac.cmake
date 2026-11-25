@@ -8,7 +8,7 @@
 #    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo")
 #endif()
 
-set(FLAC_VERSION 1.3.3) # HOMEPAGE_URL "https://www.xiph.org/flac/")
+set(FLAC_VERSION 1.5.0) # HOMEPAGE_URL "https://www.xiph.org/flac/")
 
 message(STATUS "FLAC VERSION: ${FLAC_VERSION}")
 set(BUILD_SHARED_LIBS BOOL OFF)
@@ -42,6 +42,12 @@ include(TestBigEndian)
 check_include_file("byteswap.h" HAVE_BYTESWAP_H)
 check_include_file("inttypes.h" HAVE_INTTYPES_H)
 check_include_file("stdint.h" HAVE_STDINT_H)
+check_include_file("stdbool.h" HAVE_STDBOOL_H)
+
+if (NOT HAVE_STDINT_H OR NOT HAVE_STDBOOL_H)
+  message(SEND_ERROR "Header stdint.h and/or stdbool.h not found")
+endif ()
+
 if (MSVC)
   check_include_file("intrin.h" FLAC__HAS_X86INTRIN)
 else ()
@@ -114,14 +120,16 @@ target_sources(aaruformat PRIVATE
         3rdparty/flac/src/libFLAC/fixed.c
         3rdparty/flac/src/libFLAC/fixed_intrin_sse2.c
         3rdparty/flac/src/libFLAC/fixed_intrin_ssse3.c
+        3rdparty/flac/src/libFLAC/fixed_intrin_sse42.c
+        3rdparty/flac/src/libFLAC/fixed_intrin_avx2.c
         3rdparty/flac/src/libFLAC/float.c
         3rdparty/flac/src/libFLAC/format.c
         3rdparty/flac/src/libFLAC/lpc.c
-        3rdparty/flac/src/libFLAC/lpc_intrin_sse.c
+        3rdparty/flac/src/libFLAC/lpc_intrin_neon.c
         3rdparty/flac/src/libFLAC/lpc_intrin_sse2.c
         3rdparty/flac/src/libFLAC/lpc_intrin_sse41.c
         3rdparty/flac/src/libFLAC/lpc_intrin_avx2.c
-        3rdparty/flac/src/libFLAC/lpc_intrin_vsx.c
+        3rdparty/flac/src/libFLAC/lpc_intrin_fma.c
         3rdparty/flac/src/libFLAC/md5.c
         3rdparty/flac/src/libFLAC/memory.c
         3rdparty/flac/src/libFLAC/metadata_iterators.c
@@ -133,8 +141,8 @@ target_sources(aaruformat PRIVATE
         3rdparty/flac/src/libFLAC/stream_encoder_intrin_avx2.c
         3rdparty/flac/src/libFLAC/stream_encoder_framing.c
         3rdparty/flac/src/libFLAC/window.c
-        $<$<BOOL:${WIN32}>:3rdparty/flac/include/share/windows_unicode_filenames.h>
-        $<$<BOOL:${WIN32}>:3rdparty/flac/src/libFLAC/windows_unicode_filenames.c>
+        $<$<BOOL:${WIN32}>:3rdparty/flac/include/share/win_utf8_io.h>
+        $<$<BOOL:${WIN32}>:3rdparty/flac/src/share/win_utf8_io/win_utf8_io.c>
         $<$<BOOL:${OGG_FOUND}>:ogg_decoder_aspect.c>
         $<$<BOOL:${OGG_FOUND}>:ogg_encoder_aspect.c>
         $<$<BOOL:${OGG_FOUND}>:ogg_helper.c>
