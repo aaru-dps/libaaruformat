@@ -786,7 +786,7 @@ TEST_F(CreateImageFixture, create_cd_image_outside_tracks)
     ASSERT_EQ(track_result, AARUF_STATUS_OK) << "Failed to set tracks";
 
     // Different data for every sector, so none is deduplicated
-    auto sector_data = [buffer](const bool negative, const uint64_t sector) {
+    auto sector_data = [=](const bool negative, const uint64_t sector) {
         return buffer + ((negative ? sector : negative_sectors + 1 + sector) * 2352) % (1048576 - 2352);
     };
 

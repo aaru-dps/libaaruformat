@@ -21,7 +21,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <unistd.h>
 
 #include "../include/aaruformat.h"
 #include "gtest/gtest.h"
@@ -128,7 +127,7 @@ TEST_F(FluxOnlyImageFixture, create_open_read_verify_flux_only)
     close_result = aaruf_close(context);
     EXPECT_EQ(close_result, AARUF_STATUS_OK) << "Failed to close reopened flux-only image";
 
-    unlink(kPath);
+    std::remove(kPath);
 }
 
 /// A standard image (with sectors) that has no flux data should still respond to flux reads with
@@ -172,5 +171,5 @@ TEST_F(FluxOnlyImageFixture, regular_image_flux_read_returns_not_found)
     close_result = aaruf_close(context);
     EXPECT_EQ(close_result, AARUF_STATUS_OK) << "Failed to close reopened regular image";
 
-    unlink(kPath);
+    std::remove(kPath);
 }
