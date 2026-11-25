@@ -234,6 +234,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
             if(ctx->calculating_spamsum) ctx->calculating_spamsum = false;
             if(ctx->calculating_blake3) ctx->calculating_blake3 = false;
         }
+        // Negative sectors are not part of the checksums, so they do not take part in rewind detection either
+        else if(negative) {}
         else if(sector_address <= ctx->last_written_block)
         {
             if(sector_address == 0 && !ctx->block_zero_written)
@@ -890,8 +892,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
 
             ctx->writing_long = true;
 
-            // Twins (instances #1..n-1) never take part in rewind detection nor in the image checksums
-            if(!ctx->rewinded && !ctx->twin_write_active)
+            // Twins (instances #1..n-1) and negative sectors never take part in rewind detection nor in the image
+            // checksums
+            if(!ctx->rewinded && !ctx->twin_write_active && !negative)
             {
                 if(sector_address <= ctx->last_written_block)
                 {

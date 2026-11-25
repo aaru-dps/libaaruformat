@@ -1705,3 +1705,43 @@ TEST_F(CreateImageFixture, create_image_utf8_filename)
     remove(filename);
 #endif
 }
+
+/// Writing negative sectors, which are not part of the image checksums, must not count as rewinding and drop them.
+TEST(CreateImageChecksums, NegativeSectorsKeepChecksums)
+{
+    const char        *kFilename = "test_negative_checksums.aif";
+    constexpr uint64_t kSectors  = 32;
+    void *ctx = aaruf_create(kFilename, 1, 512, kSectors, 4, 0, "deduplicate=false;compress=false;md5=true",
+                             reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0, false);
+    ASSERT_NE(ctx, nullptr);
+
+    uint8_t sector[512];
+    md5_ctx md5;
+    aaruf_md5_init(&md5);
+
+    for(uint64_t i = 4; i >= 1; i--)
+    {
+        memset(sector, static_cast<int>(0xF0 + i), sizeof(sector));
+        ASSERT_EQ(aaruf_write_sector(ctx, i, true, sector, SectorStatusDumped, sizeof(sector)), AARUF_STATUS_OK);
+    }
+
+    for(uint64_t i = 0; i < kSectors; i++)
+    {
+        memset(sector, static_cast<int>(i), sizeof(sector));
+        aaruf_md5_update(&md5, sector, sizeof(sector));
+        ASSERT_EQ(aaruf_write_sector(ctx, i, false, sector, SectorStatusDumped, sizeof(sector)), AARUF_STATUS_OK);
+    }
+
+    ASSERT_EQ(aaruf_close(ctx), AARUF_STATUS_OK);
+
+    unsigned char expected[16];
+    aaruf_md5_final(&md5, expected);
+
+    ctx = aaruf_open(kFilename, false, nullptr);
+    ASSERT_NE(ctx, nullptr);
+    const auto *actx = static_cast<aaruformat_context *>(ctx);
+    ASSERT_TRUE(actx->checksums.hasMd5);
+    EXPECT_EQ(memcmp(actx->checksums.md5, expected, sizeof(expected)), 0);
+    EXPECT_EQ(aaruf_close(ctx), AARUF_STATUS_OK);
+    remove(kFilename);
+}
