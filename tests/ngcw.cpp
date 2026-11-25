@@ -433,13 +433,29 @@ TEST(WiiCrypto, SectorKeyLookup)
     regions[1].end_sector   = 300;
     memset(regions[1].key, 0xBB, 16);
 
-    /* Sector in first partition's header (plaintext) */
-    EXPECT_EQ(nullptr, wii_get_sector_key(regions, 2, 10 * WII_LOGICAL_PER_GROUP));
+    /* Regions start at the partition data offset, which already skips the plaintext partition header, so every group
+     * in [start_sector, end_sector) is encrypted. */
 
-    /* Sector in first partition's data */
-    const uint8_t *key = wii_get_sector_key(regions, 2, 11 * WII_LOGICAL_PER_GROUP);
+    /* Group just before the first partition's data (its header, plaintext) */
+    EXPECT_EQ(nullptr, wii_get_sector_key(regions, 2, 9 * WII_LOGICAL_PER_GROUP));
+    EXPECT_EQ(nullptr, wii_get_sector_key(regions, 2, 10 * WII_LOGICAL_PER_GROUP - 1));
+
+    /* First group of the first partition's data, first and last logical sector */
+    const uint8_t *key = wii_get_sector_key(regions, 2, 10 * WII_LOGICAL_PER_GROUP);
     ASSERT_NE(nullptr, key);
     EXPECT_EQ(0xAA, key[0]);
+    key = wii_get_sector_key(regions, 2, 11 * WII_LOGICAL_PER_GROUP - 1);
+    ASSERT_NE(nullptr, key);
+    EXPECT_EQ(0xAA, key[0]);
+
+    /* Inside and at the end of the first partition's data (end_sector is exclusive) */
+    key = wii_get_sector_key(regions, 2, 11 * WII_LOGICAL_PER_GROUP);
+    ASSERT_NE(nullptr, key);
+    EXPECT_EQ(0xAA, key[0]);
+    key = wii_get_sector_key(regions, 2, 100 * WII_LOGICAL_PER_GROUP - 1);
+    ASSERT_NE(nullptr, key);
+    EXPECT_EQ(0xAA, key[0]);
+    EXPECT_EQ(nullptr, wii_get_sector_key(regions, 2, 100 * WII_LOGICAL_PER_GROUP));
 
     /* Sector in second partition */
     key = wii_get_sector_key(regions, 2, 201 * WII_LOGICAL_PER_GROUP);

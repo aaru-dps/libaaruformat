@@ -45,13 +45,14 @@ extern "C"
     /**
      * @brief A Wii partition region entry (in-memory representation).
      *
-     * Stores the physical sector range and AES-128 key for one partition.
-     * Physical sector numbers are in 0x8000-byte units.
+     * Stores the physical sector range of a partition's encrypted data area and its AES-128 key.
+     * Physical sector numbers are in 0x8000-byte units. The range starts at the partition data offset, after the
+     * plaintext partition header, so every physical sector in [start_sector, end_sector) is encrypted.
      */
     typedef struct WiiPartitionRegion
     {
-        uint32_t start_sector; /**< First physical sector of partition. */
-        uint32_t end_sector;   /**< End physical sector (exclusive). */
+        uint32_t start_sector; /**< First physical sector of the partition's encrypted data area. */
+        uint32_t end_sector;   /**< End physical sector of the data area (exclusive). */
         uint8_t  key[16];      /**< AES-128 partition key. */
     } WiiPartitionRegion;
 
