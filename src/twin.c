@@ -44,8 +44,6 @@
 
 #define TWIN_ENTRY_MASK 0x0FFFFFFFFFFFFFFFULL
 
-/* The SIMD CRC64 reads whole aligned 16-byte lanes, so buffers it checks get this much slack at the end */
-#define TWIN_CRC_SLACK 16
 
 /* ------------------------------------------------------------------------------------------------------------------ */
 /* Helpers                                                                                                            */
@@ -1066,7 +1064,7 @@ static int32_t twin_parse_block(const aaruformat_context *ctx, const uint8_t *ra
 
     if(aaruf_crc64_data(cmp, cmp_length) != header.cmpCrc64) return AARUF_ERROR_INVALID_BLOCK_CRC;
 
-    uint8_t *payload = calloc(1, (size_t)header.length + TWIN_CRC_SLACK);
+    uint8_t *payload = malloc((size_t)header.length);
     if(payload == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
 
     int32_t res = AARUF_STATUS_OK;
@@ -1224,7 +1222,7 @@ static int32_t twin_read_raw_block(aaruformat_context *ctx, const uint64_t offse
     if(header.identifier != TwinSectorTable || header.cmpLength > UINT32_MAX) return AARUF_ERROR_CANNOT_READ_BLOCK;
 
     const size_t length = sizeof(TwinSectorTableHeader) + (size_t)header.cmpLength;
-    uint8_t     *buffer = calloc(1, length + TWIN_CRC_SLACK);
+    uint8_t     *buffer = malloc(length);
     if(buffer == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
 
     memcpy(buffer, &header, sizeof(TwinSectorTableHeader));
@@ -1261,18 +1259,8 @@ static int32_t twin_load(aaruformat_context *ctx, const uint64_t offset, TwinSec
 
     TRACE("EC recovery succeeded for twin sector table at offset %" PRIu64, offset);
 
-    uint8_t *copy = calloc(1, (size_t)recovered_size + TWIN_CRC_SLACK);
-    if(copy == NULL)
-    {
-        free(recovered);
-        return AARUF_ERROR_NOT_ENOUGH_MEMORY;
-    }
-
-    memcpy(copy, recovered, recovered_size);
+    res = twin_parse_block(ctx, recovered, recovered_size, out);
     free(recovered);
-
-    res = twin_parse_block(ctx, copy, recovered_size, out);
-    free(copy);
     return res;
 }
 
@@ -1452,7 +1440,7 @@ int32_t write_twin_sector_table(aaruformat_context *ctx)
     const size_t groups_size      = group_count * sizeof(TwinSectorGroup);
     const size_t payload_size     = descriptors_size + groups_size + (size_t)instances * record_size;
 
-    uint8_t *payload = calloc(1, payload_size + TWIN_CRC_SLACK);
+    uint8_t *payload = calloc(1, payload_size);
     if(payload == NULL)
     {
         free(sorted);

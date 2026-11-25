@@ -1623,9 +1623,8 @@ int32_t read_secondary_ddt_v2(aaruformat_context *ctx, const uint64_t offset, ui
         return AARUF_ERROR_CANNOT_READ_BLOCK;
     }
 
-    // The SIMD CRC64 reads whole aligned 16-byte lanes, leave slack after the table
     uint8_t *cmp = malloc((size_t)header.cmpLength);
-    uint8_t *out = calloc(1, (size_t)header.length + 16);
+    uint8_t *out = malloc((size_t)header.length);
 
     if(cmp == NULL || out == NULL)
     {
@@ -1747,7 +1746,7 @@ int32_t flush_cached_secondary_ddt_v2(aaruformat_context *ctx)
 
     if(ddt_header.compression != kCompressionNone)
     {
-        cmp_buffer = calloc(1, (size_t)ddt_header.length * 2 + 16);
+        cmp_buffer = malloc((size_t)ddt_header.length * 2);
         if(cmp_buffer == NULL) return AARUF_ERROR_NOT_ENOUGH_MEMORY;
 
         if(ctx->use_zstd)
