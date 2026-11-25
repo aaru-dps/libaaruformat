@@ -24,6 +24,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <vector>
 
 #include "../include/aaruformat.h"
 #include "gtest/gtest.h"
@@ -76,4 +77,57 @@ TEST_F(SectorTagsFixture, BlurayEdc)
 
     EXPECT_EQ(aaruf_close(ctx), AARUF_STATUS_OK);
     remove(kFilename);
+}
+
+namespace
+{
+/// Writes 4 long sectors with tags of tag_size bytes to a new image of media_type, reopens it and returns the
+/// readable sector tag flags.
+std::vector<bool> ReadableTagsAfterLongWrite(const char *filename, const uint32_t media_type, const uint32_t tag_size)
+{
+    void *ctx = aaruf_create(filename, media_type, 512, 4, 0, 0, "deduplicate=false;compress=false",
+                             reinterpret_cast<const uint8_t *>("gtest"), 5, 0, 0, false);
+    EXPECT_NE(ctx, nullptr);
+    if(ctx == nullptr) return {};
+
+    uint8_t sector[536];
+    for(uint64_t i = 0; i < 4; i++)
+    {
+        memset(sector, static_cast<int>(i + 1), sizeof(sector));
+        EXPECT_EQ(aaruf_write_sector_long(ctx, i, false, sector, SectorStatusDumped, 512 + tag_size), AARUF_STATUS_OK);
+    }
+
+    EXPECT_EQ(aaruf_close(ctx), AARUF_STATUS_OK);
+
+    ctx = aaruf_open(filename, false, nullptr);
+    EXPECT_NE(ctx, nullptr);
+    if(ctx == nullptr) return {};
+
+    size_t length = 0;
+    EXPECT_EQ(aaruf_get_readable_sector_tags(ctx, nullptr, &length), AARUF_ERROR_BUFFER_TOO_SMALL);
+    std::vector<uint8_t> flags(length);
+    EXPECT_EQ(aaruf_get_readable_sector_tags(ctx, flags.data(), &length), AARUF_STATUS_OK);
+    EXPECT_EQ(aaruf_close(ctx), AARUF_STATUS_OK);
+    remove(filename);
+
+    std::vector<bool> result(length / sizeof(bool));
+    for(size_t i = 0; i < result.size(); i++) result[i] = reinterpret_cast<const bool *>(flags.data())[i];
+    return result;
+}
+}  // namespace
+
+/// Apple Sony and Priam DataTower tags are reported as readable under their own tag type.
+TEST_F(SectorTagsFixture, AppleSonyAndPriamReadableTags)
+{
+    const auto sony = ReadableTagsAfterLongWrite("test_sector_tags_sony.aif", AppleSonySS, 12);
+    ASSERT_GT(sony.size(), static_cast<size_t>(kSectorTagPriamDataTower));
+    EXPECT_TRUE(sony[kSectorTagAppleSony]);
+    EXPECT_FALSE(sony[kSectorTagPriamDataTower]);
+    EXPECT_FALSE(sony[kSectorTagAppleProfile]);
+
+    const auto priam = ReadableTagsAfterLongWrite("test_sector_tags_priam.aif", PriamDataTower, 24);
+    ASSERT_GT(priam.size(), static_cast<size_t>(kSectorTagPriamDataTower));
+    EXPECT_TRUE(priam[kSectorTagPriamDataTower]);
+    EXPECT_FALSE(priam[kSectorTagAppleSony]);
+    EXPECT_FALSE(priam[kSectorTagAppleProfile]);
 }

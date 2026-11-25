@@ -521,13 +521,13 @@ int32_t process_data_block(aaruformat_context *ctx, IndexEntry *entry)
             break;
         case kDataTypeAppleSonyTag:
             free(ctx->sector_subchannel);
-            ctx->sector_subchannel                            = data;
-            ctx->readableSectorTags[kSectorTagPriamDataTower] = true;
+            ctx->sector_subchannel                       = data;
+            ctx->readableSectorTags[kSectorTagAppleSony] = true;
             break;
         case kDataTypePriamDataTowerTag:
             free(ctx->sector_subchannel);
-            ctx->sector_subchannel                       = data;
-            ctx->readableSectorTags[kSectorTagAppleSony] = true;
+            ctx->sector_subchannel                            = data;
+            ctx->readableSectorTags[kSectorTagPriamDataTower] = true;
             break;
         case kDataTypeCdSubHeader:
             free(ctx->mode2_subheaders);
