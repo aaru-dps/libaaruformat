@@ -219,7 +219,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
 
     if(length > ctx->header.biggestSectorSize) ctx->header.biggestSectorSize = (uint16_t)length;
 
-    if(!ctx->rewinded)
+    // Twins (instances #1..n-1) never take part in rewind detection nor in the image checksums
+    if(!ctx->rewinded && !ctx->twin_write_active)
     {
         // disable checksums on first encounter of decrypted/generable sectors
         if(sector_status == SectorStatusUnencrypted || sector_status == SectorStatusGenerable)
@@ -259,25 +260,30 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
     }
 
     // Calculate MD5 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-    if(ctx->calculating_md5 && !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long)
+    if(ctx->calculating_md5 && !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long &&
+       !ctx->twin_write_active)
         aaruf_md5_update(&ctx->md5_context, data, length);
     // Calculate SHA1 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-    if(ctx->calculating_sha1 && !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long)
+    if(ctx->calculating_sha1 && !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long &&
+       !ctx->twin_write_active)
         aaruf_sha1_update(&ctx->sha1_context, data, length);
     // Calculate SHA256 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-    if(ctx->calculating_sha256 && !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long)
+    if(ctx->calculating_sha256 && !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long &&
+       !ctx->twin_write_active)
         aaruf_sha256_update(&ctx->sha256_context, data, length);
     // Calculate SpamSum on-the-fly if requested and sector is within user sectors (not negative or overflow)
-    if(ctx->calculating_spamsum && !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long)
+    if(ctx->calculating_spamsum && !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long &&
+       !ctx->twin_write_active)
         aaruf_spamsum_update(ctx->spamsum_context, data, length);
     // Calculate BLAKE3 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-    if(ctx->calculating_blake3 && !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long)
+    if(ctx->calculating_blake3 && !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long &&
+       !ctx->twin_write_active)
         blake3_hasher_update(ctx->blake3_context, data, length);
 
     // Mark checksum block as dirty if any checksums are being calculated
     if((ctx->calculating_md5 || ctx->calculating_sha1 || ctx->calculating_sha256 || ctx->calculating_spamsum ||
         ctx->calculating_blake3) &&
-       !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long)
+       !negative && sector_address <= ctx->image_info.Sectors && !ctx->writing_long && !ctx->twin_write_active)
         ctx->dirty_checksum_block = true;
 
     // PS3 decryption: if caller sends encrypted data marked as "to be stored decrypted"
@@ -311,11 +317,34 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
         }
     }
 
+    // Twin #0 of a twinned sector keeps SectorStatusTwin in the DDT, its real status goes to the twin table
+    uint8_t ddt_status = sector_status;
+
+    if(!ctx->twin_write_active && ctx->twin_sectors != NULL)
+    {
+        TwinSectorGroupEntry *twin_group = twin_find_group(ctx, twin_internal_index(ctx, sector_address, negative));
+
+        if(twin_group != NULL)
+        {
+            twin_group->twin0_status = sector_status;
+            ddt_status               = SectorStatusTwin;
+            ctx->dirty_twin_table    = true;
+        }
+    }
+
     // NGCW: SectorStatusGenerable — set DDT entry only, do not store data in any block
     if(sector_status == SectorStatusGenerable && (ctx->header.mediaType == GOD || ctx->header.mediaType == WOD))
     {
+        if(ctx->twin_write_active)
+        {
+            free(decrypted_buffer);
+            ctx->twin_write_entry     = (uint64_t)sector_status << 60;
+            ctx->twin_write_entry_set = true;
+            return AARUF_STATUS_OK;
+        }
+
         uint64_t ddt_entry_gen = 0;
-        bool     ddt_ok_gen    = set_ddt_entry_v2(ctx, sector_address, negative, 0, 0, sector_status, &ddt_entry_gen);
+        bool     ddt_ok_gen    = set_ddt_entry_v2(ctx, sector_address, negative, 0, 0, ddt_status, &ddt_entry_gen);
 
         free(decrypted_buffer);
 
@@ -350,7 +379,47 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
     uint64_t ddt_entry = 0;
     bool     ddt_ok;
 
-    if(ctx->deduplicate)
+    if(ctx->twin_write_active)
+    {
+        // Twin instance: produce the pointer for the twin table, the user-data DDT is left untouched
+        bool     existing = false;
+        uint64_t hash     = 0;
+
+        if(ctx->deduplicate)
+        {
+            hash     = XXH3_64bits(write_data, length);
+            existing = lookup_map(ctx->sector_hash_map, hash, &ddt_entry);
+        }
+
+        if(!existing)
+        {
+            const uint64_t block_index = ctx->next_block_position >> ctx->user_data_ddt_header.blockAlignmentShift;
+            ddt_entry                  = ctx->current_block_offset & (1ULL << ctx->user_data_ddt_header.dataShift) - 1 |
+                                         block_index << ctx->user_data_ddt_header.dataShift;
+
+            if(ddt_entry > 0xFFFFFFFFFFFFFFF)
+            {
+                FATAL("DDT overflow: media does not fit in big DDT");
+                free(decrypted_buffer);
+                return AARUF_ERROR_CANNOT_SET_DDT_ENTRY;
+            }
+
+            if(ctx->deduplicate) insert_map(ctx->sector_hash_map, hash, ddt_entry);
+        }
+
+        ctx->twin_write_entry     = ddt_entry & 0x0FFFFFFFFFFFFFFF | (uint64_t)sector_status << 60;
+        ctx->twin_write_entry_set = true;
+
+        if(existing)
+        {
+            free(decrypted_buffer);
+            TRACE("Exiting aaruf_write_sector() = AARUF_STATUS_OK (deduplicated twin)");
+            return AARUF_STATUS_OK;
+        }
+
+        ddt_ok = true;
+    }
+    else if(ctx->deduplicate)
     {
         // Calculate 64-bit XXH3 hash of the sector (on decrypted data for dedup)
         TRACE("Hashing sector data for deduplication");
@@ -361,7 +430,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
         TRACE("Block does %s exist in deduplication map", existing ? "already" : "not yet");
 
         ddt_ok = set_ddt_entry_v2(ctx, sector_address, negative, ctx->current_block_offset, ctx->next_block_position,
-                                  sector_status, &ddt_entry);
+                                  ddt_status, &ddt_entry);
         if(!ddt_ok)
         {
             TRACE("Exiting aaruf_write_sector() = AARUF_ERROR_CANNOT_SET_DDT_ENTRY");
@@ -381,7 +450,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
     }
     else
         ddt_ok = set_ddt_entry_v2(ctx, sector_address, negative, ctx->current_block_offset, ctx->next_block_position,
-                                  sector_status, &ddt_entry);
+                                  ddt_status, &ddt_entry);
 
     if(!ddt_ok)
     {
@@ -821,7 +890,8 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
 
             ctx->writing_long = true;
 
-            if(!ctx->rewinded)
+            // Twins (instances #1..n-1) never take part in rewind detection nor in the image checksums
+            if(!ctx->rewinded && !ctx->twin_write_active)
             {
                 if(sector_address <= ctx->last_written_block)
                 {
@@ -849,19 +919,24 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
             }
 
             // Calculate MD5 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-            if(ctx->calculating_md5 && !negative && sector_address <= ctx->image_info.Sectors)
+            if(ctx->calculating_md5 && !negative && sector_address <= ctx->image_info.Sectors &&
+               !ctx->twin_write_active)
                 aaruf_md5_update(&ctx->md5_context, data, length);
             // Calculate SHA1 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-            if(ctx->calculating_sha1 && !negative && sector_address <= ctx->image_info.Sectors)
+            if(ctx->calculating_sha1 && !negative && sector_address <= ctx->image_info.Sectors &&
+               !ctx->twin_write_active)
                 aaruf_sha1_update(&ctx->sha1_context, data, length);
             // Calculate SHA256 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-            if(ctx->calculating_sha256 && !negative && sector_address <= ctx->image_info.Sectors)
+            if(ctx->calculating_sha256 && !negative && sector_address <= ctx->image_info.Sectors &&
+               !ctx->twin_write_active)
                 aaruf_sha256_update(&ctx->sha256_context, data, length);
             // Calculate SpamSum on-the-fly if requested and sector is within user sectors (not negative or overflow)
-            if(ctx->calculating_spamsum && !negative && sector_address <= ctx->image_info.Sectors)
+            if(ctx->calculating_spamsum && !negative && sector_address <= ctx->image_info.Sectors &&
+               !ctx->twin_write_active)
                 aaruf_spamsum_update(ctx->spamsum_context, data, length);
             // Calculate BLAKE3 on-the-fly if requested and sector is within user sectors (not negative or overflow)
-            if(ctx->calculating_blake3 && !negative && sector_address <= ctx->image_info.Sectors)
+            if(ctx->calculating_blake3 && !negative && sector_address <= ctx->image_info.Sectors &&
+               !ctx->twin_write_active)
                 blake3_hasher_update(ctx->blake3_context, data, length);
 
             bool prefix_correct;

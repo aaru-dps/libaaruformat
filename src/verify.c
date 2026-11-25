@@ -515,6 +515,14 @@ AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context)
                 crc64_context = NULL;
                 break;
             }
+            case TwinSectorTable:
+                status = verify_twin_sector_table(ctx, entry->offset);
+                if(status != AARUF_STATUS_OK)
+                {
+                    FATAL("Twin sector table at %" PRIu64 " failed verification", entry->offset);
+                    goto cleanup;
+                }
+                break;
             default:
                 TRACE("Ignoring block type %4.4s", (char *)&entry->blockType);
                 break;

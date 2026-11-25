@@ -28,6 +28,7 @@
 #include "simd.h"
 #include "spamsum.h"
 #include "structs/optical.h"
+#include "structs/twin.h"
 
 #ifdef __cplusplus
 #define EXTERNC extern "C"
@@ -113,6 +114,29 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
 AARU_EXPORT int32_t AARU_CALL aaruf_write_media_tag(void *context, const uint8_t *data, int32_t type, uint32_t length);
 AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_tag(void *context, uint64_t sector_address, bool negative,
                                                      const uint8_t *data, size_t length, int32_t tag);
+
+AARU_EXPORT int32_t AARU_CALL aaruf_get_sector_twin_count(const void *context, uint64_t sector_address, bool negative,
+                                                          uint32_t *count);
+AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_twin(void *context, uint64_t sector_address, bool negative,
+                                                     uint32_t twin_index, uint8_t *data, uint32_t *length,
+                                                     uint8_t *sector_status);
+AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_twin_long(void *context, uint64_t sector_address, bool negative,
+                                                          uint32_t twin_index, uint8_t *data, uint32_t *length,
+                                                          uint8_t *sector_status);
+AARU_EXPORT int32_t AARU_CALL aaruf_read_sector_twin_tag(const void *context, uint64_t sector_address, bool negative,
+                                                         uint32_t twin_index, uint8_t *buffer, uint32_t *length,
+                                                         int32_t tag);
+AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_twin(void *context, uint64_t sector_address, bool negative,
+                                                      uint32_t twin_index, const uint8_t *data, uint8_t sector_status,
+                                                      uint32_t length);
+AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_twin_long(void *context, uint64_t sector_address, bool negative,
+                                                           uint32_t twin_index, const uint8_t *data,
+                                                           uint8_t sector_status, uint32_t length);
+AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_twin_tag(void *context, uint64_t sector_address, bool negative,
+                                                          uint32_t twin_index, const uint8_t *data, size_t length,
+                                                          int32_t tag);
+AARU_EXPORT int32_t AARU_CALL aaruf_clear_sector_twins(void *context, uint64_t sector_address, bool negative);
+AARU_EXPORT int32_t AARU_CALL aaruf_get_twin_sectors(const void *context, TwinSectorInfo *buffer, size_t *length);
 
 AARU_EXPORT int32_t AARU_CALL aaruf_verify_image(void *context);
 

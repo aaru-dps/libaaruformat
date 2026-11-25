@@ -322,7 +322,9 @@ add_library(aaruformat
             src/lib/reed_solomon.h
             src/erasure.c
             include/erasure_internal.h
-            include/aaruformat/structs/erasure.h)
+            include/aaruformat/structs/erasure.h
+            src/twin.c
+            include/aaruformat/structs/twin.h)
 
 # Set up include directories for the target
 target_include_directories(aaruformat

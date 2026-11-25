@@ -441,6 +441,30 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
         return error_no;
     }
 
+    // Twin instance being read: its pointer replaces the DDT entry
+    if(ctx->twin_read_active && ctx->twin_read_address == sector_address && ctx->twin_read_negative == negative)
+    {
+        uint64_t twin_entry = ctx->twin_read_entry;
+
+        if(twin_entry == 0)
+        {
+            *sector_status = SectorStatusNotDumped;
+            offset         = 0;
+            block_offset   = 0;
+        }
+        else
+        {
+            *sector_status = (uint8_t)(twin_entry >> 60);
+            twin_entry &= 0x0FFFFFFFFFFFFFFF;
+            offset       = twin_entry & (1ULL << ctx->user_data_ddt_header.dataShift) - 1;
+            block_offset = (twin_entry >> ctx->user_data_ddt_header.dataShift)
+                           << ctx->user_data_ddt_header.blockAlignmentShift;
+        }
+    }
+    // Twin #0 of a twinned sector: the DDT pointer is twin #0's, its real status is in the twin table
+    else if(*sector_status == SectorStatusTwin)
+        *sector_status = twin_resolve_twin0_status(ctx, sector_address, negative);
+
     // Partially written image... as we can't know the real sector size just assume it's common :/
     if(*sector_status == SectorStatusNotDumped)
     {

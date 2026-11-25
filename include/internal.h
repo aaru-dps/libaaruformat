@@ -104,6 +104,13 @@ bool    set_ddt_tape(aaruformat_context *ctx, uint64_t sector_address, uint64_t 
                      uint8_t sector_status, uint64_t *ddt_entry);
 aaru_options parse_options(const char *options, bool *table_shift_found);
 uint64_t     get_filetime_uint64();
+uint64_t              twin_internal_index(const aaruformat_context *ctx, uint64_t sector_address, bool negative);
+TwinSectorGroupEntry *twin_find_group(const aaruformat_context *ctx, uint64_t internal_index);
+uint8_t               twin_resolve_twin0_status(const aaruformat_context *ctx, uint64_t sector_address, bool negative);
+void                  process_twin_sector_table(aaruformat_context *ctx, const IndexEntry *entry);
+int32_t               verify_twin_sector_table(aaruformat_context *ctx, uint64_t offset);
+int32_t               write_twin_sector_table(aaruformat_context *ctx);
+void                  free_twin_sectors(aaruformat_context *ctx);
 int32_t      aaruf_close_current_block(aaruformat_context *ctx);
 int32_t      aaruf_finalize_write(aaruformat_context *ctx);
 int          compare_extents(const void *a, const void *b);

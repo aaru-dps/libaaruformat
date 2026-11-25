@@ -150,6 +150,55 @@ typedef struct TapeDdtHashEntry
     UT_hash_handle hh;     ///< UTHASH handle
 } TapeDdtHashEntry;
 
+/** Internal identifiers of the components a twin instance can carry (bit positions in TwinInstance.present). */
+typedef enum
+{
+    kTwinCompData       = 0,   ///< User data (DDT-encoded pointer).
+    kTwinCompPrefix     = 1,   ///< CD sector prefix (prefix DDT-encoded value).
+    kTwinCompSuffix     = 2,   ///< CD sector suffix (suffix DDT-encoded value).
+    kTwinCompSubheader  = 3,   ///< CD MODE 2 subheader (8 bytes).
+    kTwinCompSubchannel = 4,   ///< CD subchannel (96 bytes).
+    kTwinCompDvdId      = 5,   ///< DVD sector ID (4 bytes).
+    kTwinCompDvdIed     = 6,   ///< DVD sector IED (2 bytes).
+    kTwinCompDvdCprMai  = 7,   ///< DVD sector CPR_MAI (6 bytes).
+    kTwinCompSectorEdc  = 8,   ///< DVD or Blu-ray sector EDC (4 bytes).
+    kTwinCompTitleKey   = 9,   ///< DVD decrypted title key (5 bytes).
+    kTwinCompTag        = 10,  ///< Apple / Priam block tag (12, 20 or 24 bytes depending on media).
+    kTwinCompCount      = 11
+} TwinComponentId;
+
+/** \struct TwinInstance
+ *  \brief In-memory copy of one extra physical instance (twin #1..n-1) of a sector, all components decoded.
+ */
+typedef struct TwinInstance
+{
+    uint32_t present;         ///< Bit kTwinComp* set = component holds a value for this instance.
+    uint64_t data;            ///< User data pointer, encoded as a user DDT entry (status << 60 | pointer).
+    uint64_t prefix;          ///< CD prefix, encoded as a prefix DDT entry.
+    uint64_t suffix;          ///< CD suffix, encoded as a suffix DDT entry.
+    uint8_t  subheader[8];    ///< CD MODE 2 subheader.
+    uint8_t  subchannel[96];  ///< CD subchannel.
+    uint8_t  dvd_id[4];       ///< DVD sector ID.
+    uint8_t  dvd_ied[2];      ///< DVD sector IED.
+    uint8_t  dvd_cpr_mai[6];  ///< DVD sector CPR_MAI.
+    uint8_t  sector_edc[4];   ///< DVD / Blu-ray sector EDC.
+    uint8_t  title_key[5];    ///< DVD decrypted title key.
+    uint8_t  tag[24];         ///< Apple / Priam block tag.
+} TwinInstance;
+
+/** \struct TwinSectorGroupEntry
+ *  \brief uthash entry describing a twinned sector.
+ */
+typedef struct TwinSectorGroupEntry
+{
+    uint64_t       sector;        ///< Internal DDT index (hash key).
+    uint8_t        twin0_status;  ///< Real status of twin #0 (the DDT carries SectorStatusTwin).
+    uint16_t       count;         ///< Total instances including twin #0.
+    uint16_t       capacity;      ///< Allocated entries in instances.
+    TwinInstance  *instances;     ///< count - 1 entries: twins #1..count-1.
+    UT_hash_handle hh;            ///< uthash linkage.
+} TwinSectorGroupEntry;
+
 /** \struct aaruformat_context
  *  \brief Master context representing an open or in‑creation Aaru image.
  *
@@ -417,6 +466,17 @@ typedef struct aaruformat_context
     void    *ec_ddt_block_lookup;     ///< uthash: block file offset → stripe index + position (DDT group).
     bool     ec_recovery_available;   ///< True if ECMB loaded and recovery is possible.
     bool     ec_recovery_in_progress; ///< Recursion guard for recovery (prevents infinite loops).
+
+    /* Twin sectors */
+    TwinSectorGroupEntry *twin_sectors;       ///< uthash of twinned sectors keyed by internal DDT index; NULL if none.
+    bool                  dirty_twin_table;   ///< True if the twin sector table must be written on close.
+    bool                  twin_write_active;  ///< True while a twin instance is being written (data goes to twin).
+    bool                  twin_write_entry_set;  ///< True once the user-data pointer for the twin write was produced.
+    uint64_t              twin_write_entry;      ///< User-data pointer (with status) produced for the twin write.
+    bool                  twin_read_active;      ///< True while a twin instance is being read.
+    bool                  twin_read_negative;    ///< Negative flag of the sector being read as a twin.
+    uint64_t              twin_read_address;     ///< Address of the sector being read as a twin.
+    uint64_t              twin_read_entry;       ///< User-data pointer (with status) of the twin being read.
 } aaruformat_context;
 
 #ifndef AARUFORMAT_CONTEXT_DECLARED

@@ -541,6 +541,9 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
 
     bool found_user_data_ddt  = false;
     bool has_flux_block       = false;
+    bool       has_twin_table     = false;
+    IndexEntry twin_table_entry;
+    memset(&twin_table_entry, 0, sizeof(IndexEntry));
     ctx->image_info.ImageSize = 0;
     for(i = 0; i < utarray_len(index_entries); i++)
     {
@@ -661,6 +664,12 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
                 process_tape_partitions_block(ctx, entry);
 
                 break;
+            case TwinSectorTable:
+                // Needs the media type and DDT geometry, so it is processed after every other block
+                twin_table_entry = *entry;
+                has_twin_table   = true;
+
+                break;
             case FluxDataBlock:
                 // Store the FluxDataBlock offset for lazy loading
                 // Don't read flux entries during open - load them on-demand when actually needed
@@ -702,6 +711,8 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     ctx->image_info.CreationTime         = ctx->header.creationTime;
     ctx->image_info.LastModificationTime = ctx->header.lastWrittenTime;
     ctx->image_info.MetadataMediaType    = aaruf_get_xml_mediatype(ctx->header.mediaType);
+
+    if(has_twin_table && !ctx->no_user_data_ddt) process_twin_sector_table(ctx, &twin_table_entry);
 
     if(ctx->geometry_block.identifier != GeometryBlock && ctx->image_info.MetadataMediaType == BlockMedia)
     {

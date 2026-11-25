@@ -5614,6 +5614,13 @@ int32_t aaruf_finalize_write(aaruformat_context *ctx)
         }
     }
 
+    // Write twin sector table (after the DDTs, which already carry the Twin statuses)
+    if(ctx->dirty_twin_table)
+    {
+        res = write_twin_sector_table(ctx);
+        if(res != AARUF_STATUS_OK) return res;
+    }
+
     // Finalize checksums and write checksum block
     if(ctx->dirty_checksum_block) write_checksum_block(ctx);
 
