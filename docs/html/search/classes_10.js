@@ -8,5 +8,12 @@ var searchData=
   ['tapepartitionhashentry_5',['TapePartitionHashEntry',['../structTapePartitionHashEntry.html',1,'']]],
   ['tapepartitionheader_6',['TapePartitionHeader',['../structTapePartitionHeader.html',1,'']]],
   ['trackentry_7',['TrackEntry',['../structTrackEntry.html',1,'']]],
-  ['tracksheader_8',['TracksHeader',['../structTracksHeader.html',1,'']]]
+  ['tracksheader_8',['TracksHeader',['../structTracksHeader.html',1,'']]],
+  ['twincomponentdescriptor_9',['TwinComponentDescriptor',['../structTwinComponentDescriptor.html',1,'']]],
+  ['twininstance_10',['TwinInstance',['../structTwinInstance.html',1,'']]],
+  ['twinsectorgroup_11',['TwinSectorGroup',['../structTwinSectorGroup.html',1,'']]],
+  ['twinsectorgroupentry_12',['TwinSectorGroupEntry',['../structTwinSectorGroupEntry.html',1,'']]],
+  ['twinsectorinfo_13',['TwinSectorInfo',['../structTwinSectorInfo.html',1,'']]],
+  ['twinsectortableheader_14',['TwinSectorTableHeader',['../structTwinSectorTableHeader.html',1,'']]],
+  ['twinslotbackup_15',['TwinSlotBackup',['../structTwinSlotBackup.html',1,'']]]
 ];

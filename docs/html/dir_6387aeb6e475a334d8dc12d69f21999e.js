@@ -13,5 +13,6 @@ var dir_6387aeb6e475a334d8dc12d69f21999e =
     [ "metadata.h", "metadata_8h.html", "metadata_8h" ],
     [ "optical.h", "optical_8h.html", "optical_8h" ],
     [ "options.h", "options_8h.html", "options_8h" ],
-    [ "tape.h", "tape_8h.html", "tape_8h" ]
+    [ "tape.h", "tape_8h.html", "tape_8h" ],
+    [ "twin.h", "twin_8h.html", "twin_8h" ]
 ];

@@ -194,6 +194,17 @@ Media &amp; Metadata</h2>
 </ul>
 <h2 class="doxsection"><a class="anchor" id="autotoc_md11"></a>
 CLI Tool (<span class="tt">aaruformattool</span>)</h2>
+<dl class="section attention"><dt>Attention</dt><dd><b><span class="tt">aaruformattool</span> is a debugging tool for internal and development use only. It is NOT intended for end users.</b> <br  />
+<br  />
+<ul>
+<li>It exists solely to help develop, test and debug libaaruformat itself.</li>
+<li>Using it <b>can break, damage and corrupt images in unrecoverable ways</b>.</li>
+<li>Its commands, options and output may change or disappear at any time without notice, and no support is provided for it.</li>
+<li>Never run it on your only copy of an image. Never use it to create, convert or modify images you intend to preserve. <br  />
+<br  />
+ To work with AaruFormat images, use <a href="https://github.com/aaru-dps/Aaru">Aaru</a>.</li>
+</ul>
+</dd></dl>
 <p>Optional command-line tool built with <span class="tt">-DBUILD_TOOL=ON</span>. Commands include:</p><ul>
 <li><span class="tt">identify</span> — Identify AaruFormat version</li>
 <li><span class="tt">info</span> — Display detailed image information</li>
@@ -254,7 +265,7 @@ Building with Address Sanitizer</h2>
 Build Options</h2>
 <ul>
 <li><span class="tt">-DBUILD_SHARED_LIBS=OFF</span> — Build as static library (default: shared)</li>
-<li><span class="tt">-DBUILD_TOOL=ON</span> — Build the CLI tool (requires Argtable3, ICU, curses)</li>
+<li><span class="tt">-DBUILD_TOOL=ON</span> — Build the <span class="tt">aaruformattool</span> debugging tool (requires Argtable3, ICU, curses). For internal and development use only; it can irreversibly corrupt images and is not meant for end users (see CLI Tool)</li>
 <li><span class="tt">-DAARU_ENABLE_LOGGING=ON</span> — Enable TRACE/FATAL debug logging. Output goes to stderr; set <span class="tt">AARUFORMAT_LOG_FILE=&lt;path&gt;</span> to append to a file instead, and <span class="tt">AARUFORMAT_LOG_LEVEL=trace|fatal|none</span> to filter it at runtime</li>
 <li><span class="tt">-DUSE_ASAN=ON</span> — Enable Address Sanitizer for memory error detection </li>
 </ul>

@@ -5,6 +5,7 @@ var searchData=
   ['gf256_5fexp_5ftable_2',['gf256_exp_table',['../gf256_8c.html#ad692be2f1e47066d0a53e97a3a38eb21',1,'gf256.c']]],
   ['gf256_5flog_5ftable_3',['gf256_log_table',['../gf256_8c.html#a49a3de03e67667af04f5c8014fdbe293',1,'gf256.c']]],
   ['gf256_5ftables_5finitialized_4',['gf256_tables_initialized',['../gf256_8c.html#aa3d36bc7f91e5c5fe01b56acd8ebbbd9',1,'gf256.c']]],
-  ['grouptype_5',['groupType',['../structStripeGroupDescriptor.html#a6093f8c41fb1aa55c8367e2a92fe9f7f',1,'StripeGroupDescriptor']]],
-  ['guid_6',['guid',['../structAaruHeaderV2.html#a69ff1a1dbdaf0501e6488451b7270b51',1,'AaruHeaderV2']]]
+  ['groups_5',['groups',['../structTwinSectorTableHeader.html#a4d1cfef2fe557d9f88788670e12a0c83',1,'TwinSectorTableHeader']]],
+  ['grouptype_6',['groupType',['../structStripeGroupDescriptor.html#a6093f8c41fb1aa55c8367e2a92fe9f7f',1,'StripeGroupDescriptor']]],
+  ['guid_7',['guid',['../structAaruHeaderV2.html#a69ff1a1dbdaf0501e6488451b7270b51',1,'AaruHeaderV2']]]
 ];

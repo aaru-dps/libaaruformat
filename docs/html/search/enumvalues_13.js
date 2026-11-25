@@ -20,5 +20,6 @@ var searchData=
   ['travan3ex_17',['Travan3Ex',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa262b14c1a54d581e2c09bf78f8a2c4aa',1,'aaru.h']]],
   ['travan4_18',['Travan4',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa635d6d35d33db9a95649ab1f9addc20c',1,'aaru.h']]],
   ['travan5_19',['Travan5',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa866fb0281f44c8bc0bcca6ef2032632f',1,'aaru.h']]],
-  ['travan7_20',['Travan7',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa051dcd441aad3b51053790d69abd09ba',1,'aaru.h']]]
+  ['travan7_20',['Travan7',['../group__MediaTypes.html#gga1499e9f8a76cb81b43b7a4b0dbe7e44aa051dcd441aad3b51053790d69abd09ba',1,'aaru.h']]],
+  ['twinsectortable_21',['TwinSectorTable',['../enums_8h.html#a54420623f26ab6bb61042b41cccf37a3a470dc502d377fb9a97f80f226781f099',1,'enums.h']]]
 ];

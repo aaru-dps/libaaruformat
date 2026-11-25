@@ -117,6 +117,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('identify_8c.ht
 <code>#include &lt;stdio.h&gt;</code><br />
 <code>#include &lt;<a class="el" href="aaruformat_8h_source.html">aaruformat.h</a>&gt;</code><br />
 <code>#include &quot;<a class="el" href="internal_8h_source.html">internal.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="utf8__path_8h_source.html">lib/utf8_path.h</a>&quot;</code><br />
 </div>
 <p><a href="identify_8c_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -147,7 +148,7 @@ Functions</h2></td></tr>
 <p>Opens the file at the given path and determines if it is an AaruFormat image by examining the file header for valid AaruFormat signatures and version information. This function provides a simple file-based interface that handles file opening, identification, and cleanup automatically. It delegates the actual identification logic to <a class="el" href="#a6f30353aff3ece1e889542c26f7146e2" title="Identifies a file as an AaruFormat image using an open stream.">aaruf_identify_stream()</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">filename</td><td>Path to the file to identify (must be accessible and readable).</td></tr>
+    <tr><td class="paramname">filename</td><td>UTF-8 encoded path to the file to identify (must be accessible and readable).</td></tr>
   </table>
   </dd>
 </dl>
@@ -209,11 +210,11 @@ File access permissions and availability are checked at runtime. Network files o
 <dd>
 The function performs minimal file content validation. A positive result indicates the file appears to be AaruFormat but doesn't guarantee the entire file is valid or uncorrupted. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="identify_8c_source.html#l00086">86</a> of file <a class="el" href="identify_8c_source.html">identify.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="identify_8c_source.html#l00087">87</a> of file <a class="el" href="identify_8c_source.html">identify.c</a>.</p>
 
-<p class="reference">References <a class="el" href="decls_8h_source.html#l00046">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00055">AARU_EXPORT</a>, <a class="el" href="identify_8c_source.html#l00086">aaruf_identify()</a>, and <a class="el" href="identify_8c_source.html#l00165">aaruf_identify_stream()</a>.</p>
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00047">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00056">AARU_EXPORT</a>, <a class="el" href="utf8__path_8c_source.html#l00061">aaruf_fopen_utf8()</a>, <a class="el" href="identify_8c_source.html#l00087">aaruf_identify()</a>, and <a class="el" href="identify_8c_source.html#l00166">aaruf_identify_stream()</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="identify_8c_source.html#l00086">aaruf_identify()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="identify_8c_source.html#l00087">aaruf_identify()</a>.</p>
 
 </div>
 </div>
@@ -300,11 +301,11 @@ The stream must support seeking operations. Non-seekable streams (like pipes or 
 <dd>
 No error codes are returned for I/O failures during header reading. Such failures result in a return value of 0 (not recognized). </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="identify_8c_source.html#l00165">165</a> of file <a class="el" href="identify_8c_source.html">identify.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="identify_8c_source.html#l00166">166</a> of file <a class="el" href="identify_8c_source.html">identify.c</a>.</p>
 
-<p class="reference">References <a class="el" href="decls_8h_source.html#l00046">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00055">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="internal_8h_source.html#l00046">aaruf_fseek()</a>, <a class="el" href="identify_8c_source.html#l00165">aaruf_identify_stream()</a>, <a class="el" href="consts_8h_source.html#l00068">AARUF_VERSION</a>, <a class="el" href="consts_8h_source.html#l00061">DIC_MAGIC</a>, <a class="el" href="header_8h_source.html#l00078">AaruHeader::identifier</a>, and <a class="el" href="header_8h_source.html#l00080">AaruHeader::imageMajorVersion</a>.</p>
+<p class="reference">References <a class="el" href="decls_8h_source.html#l00047">AARU_CALL</a>, <a class="el" href="decls_8h_source.html#l00056">AARU_EXPORT</a>, <a class="el" href="consts_8h_source.html#l00064">AARU_MAGIC</a>, <a class="el" href="internal_8h_source.html#l00046">aaruf_fseek()</a>, <a class="el" href="identify_8c_source.html#l00166">aaruf_identify_stream()</a>, <a class="el" href="consts_8h_source.html#l00068">AARUF_VERSION</a>, <a class="el" href="consts_8h_source.html#l00061">DIC_MAGIC</a>, <a class="el" href="header_8h_source.html#l00078">AaruHeader::identifier</a>, and <a class="el" href="header_8h_source.html#l00080">AaruHeader::imageMajorVersion</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="identify_8c_source.html#l00086">aaruf_identify()</a>, and <a class="el" href="identify_8c_source.html#l00165">aaruf_identify_stream()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="identify_8c_source.html#l00087">aaruf_identify()</a>, and <a class="el" href="identify_8c_source.html#l00166">aaruf_identify_stream()</a>.</p>
 
 </div>
 </div>

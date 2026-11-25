@@ -73,6 +73,13 @@ var annotated_dup =
     [ "TapePartitionHeader", "structTapePartitionHeader.html", "structTapePartitionHeader" ],
     [ "TrackEntry", "structTrackEntry.html", "structTrackEntry" ],
     [ "TracksHeader", "structTracksHeader.html", "structTracksHeader" ],
+    [ "TwinComponentDescriptor", "structTwinComponentDescriptor.html", "structTwinComponentDescriptor" ],
+    [ "TwinInstance", "structTwinInstance.html", "structTwinInstance" ],
+    [ "TwinSectorGroup", "structTwinSectorGroup.html", "structTwinSectorGroup" ],
+    [ "TwinSectorGroupEntry", "structTwinSectorGroupEntry.html", "structTwinSectorGroupEntry" ],
+    [ "TwinSectorInfo", "structTwinSectorInfo.html", "structTwinSectorInfo" ],
+    [ "TwinSectorTableHeader", "structTwinSectorTableHeader.html", "structTwinSectorTableHeader" ],
+    [ "TwinSlotBackup", "structTwinSlotBackup.html", "structTwinSlotBackup" ],
     [ "WiiPartitionRegion", "structWiiPartitionRegion.html", "structWiiPartitionRegion" ],
     [ "WiiuPartitionRegion", "structWiiuPartitionRegion.html", "structWiiuPartitionRegion" ]
 ];

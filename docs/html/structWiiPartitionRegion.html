@@ -122,17 +122,17 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('structWiiParti
 <tr class="heading"><td colspan="2"><h2 id="header-pub-attribs" class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Data Fields</h2></td></tr>
 <tr class="memitem:a06eb8901b0a0b652c573d3879024efbb" id="r_a06eb8901b0a0b652c573d3879024efbb"><td class="memItemLeft">uint32_t&#160;</td><td class="memItemRight"><a class="el" href="#a06eb8901b0a0b652c573d3879024efbb">start_sector</a></td></tr>
-<tr class="memdesc:a06eb8901b0a0b652c573d3879024efbb"><td class="mdescLeft">&#160;</td><td class="mdescRight">First physical sector of partition.  <br /></td></tr>
+<tr class="memdesc:a06eb8901b0a0b652c573d3879024efbb"><td class="mdescLeft">&#160;</td><td class="mdescRight">First physical sector of the partition's encrypted data area.  <br /></td></tr>
 <tr class="memitem:a99f8cd96b1258c9174988fcb3db1c92d" id="r_a99f8cd96b1258c9174988fcb3db1c92d"><td class="memItemLeft">uint32_t&#160;</td><td class="memItemRight"><a class="el" href="#a99f8cd96b1258c9174988fcb3db1c92d">end_sector</a></td></tr>
-<tr class="memdesc:a99f8cd96b1258c9174988fcb3db1c92d"><td class="mdescLeft">&#160;</td><td class="mdescRight">End physical sector (exclusive).  <br /></td></tr>
+<tr class="memdesc:a99f8cd96b1258c9174988fcb3db1c92d"><td class="mdescLeft">&#160;</td><td class="mdescRight">End physical sector of the data area (exclusive).  <br /></td></tr>
 <tr class="memitem:a13965236bc19addfba3c0e7d089783bf" id="r_a13965236bc19addfba3c0e7d089783bf"><td class="memItemLeft">uint8_t&#160;</td><td class="memItemRight"><a class="el" href="#a13965236bc19addfba3c0e7d089783bf">key</a> [16]</td></tr>
 <tr class="memdesc:a13965236bc19addfba3c0e7d089783bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">AES-128 partition key.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A Wii partition region entry (in-memory representation). </p>
-<p>Stores the physical sector range and AES-128 key for one partition. Physical sector numbers are in 0x8000-byte units. </p>
+<p>Stores the physical sector range of a partition's encrypted data area and its AES-128 key. Physical sector numbers are in 0x8000-byte units. The range starts at the partition data offset, after the plaintext partition header, so every physical sector in [start_sector, end_sector) is encrypted. </p>
 
-<p class="definition">Definition at line <a class="el" href="wii__crypto_8h_source.html#l00051">51</a> of file <a class="el" href="wii__crypto_8h_source.html">wii_crypto.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="wii__crypto_8h_source.html#l00052">52</a> of file <a class="el" href="wii__crypto_8h_source.html">wii_crypto.h</a>.</p>
 </div><a name="doc-variable-members" id="doc-variable-members"></a><h2 id="header-doc-variable-members" class="groupheader">Field Documentation</h2>
 <a id="a99f8cd96b1258c9174988fcb3db1c92d" name="a99f8cd96b1258c9174988fcb3db1c92d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a99f8cd96b1258c9174988fcb3db1c92d">&#9670;&#160;</a></span>end_sector</h2>
@@ -146,9 +146,9 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>End physical sector (exclusive). </p>
+<p>End physical sector of the data area (exclusive). </p>
 
-<p class="definition">Definition at line <a class="el" href="wii__crypto_8h_source.html#l00054">54</a> of file <a class="el" href="wii__crypto_8h_source.html">wii_crypto.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="wii__crypto_8h_source.html#l00055">55</a> of file <a class="el" href="wii__crypto_8h_source.html">wii_crypto.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="wii__crypto_8c_source.html#l00132">wii_deserialize_partition_key_map()</a>.</p>
 
@@ -168,7 +168,7 @@ Data Fields</h2></td></tr>
 
 <p>AES-128 partition key. </p>
 
-<p class="definition">Definition at line <a class="el" href="wii__crypto_8h_source.html#l00055">55</a> of file <a class="el" href="wii__crypto_8h_source.html">wii_crypto.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="wii__crypto_8h_source.html#l00056">56</a> of file <a class="el" href="wii__crypto_8h_source.html">wii_crypto.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="wii__crypto_8c_source.html#l00045">wii_get_sector_key()</a>.</p>
 
@@ -186,9 +186,9 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>First physical sector of partition. </p>
+<p>First physical sector of the partition's encrypted data area. </p>
 
-<p class="definition">Definition at line <a class="el" href="wii__crypto_8h_source.html#l00053">53</a> of file <a class="el" href="wii__crypto_8h_source.html">wii_crypto.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="wii__crypto_8h_source.html#l00054">54</a> of file <a class="el" href="wii__crypto_8h_source.html">wii_crypto.h</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="wii__crypto_8c_source.html#l00132">wii_deserialize_partition_key_map()</a>, and <a class="el" href="read_8c_source.html#l00044">wii_reconstruct_group_junk()</a>.</p>
 

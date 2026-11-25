@@ -1,6 +1,7 @@
 var close__write_8c =
 [
     [ "aaruf_finalize_write", "close__write_8c.html#a750c966846027990bb0914760758c84c", null ],
+    [ "is_bluray_media", "close__write_8c.html#a7c3b3e4c7faee13d4143ef13a0f32864", null ],
     [ "remove_dpm_index_entries", "close__write_8c.html#a030610077284256c3b6563c44dccd7bc", null ],
     [ "write_aaru_json_block", "close__write_8c.html#ad94331170e773c67845daa357c6ecb42", null ],
     [ "write_bd_sector_edc_block", "close__write_8c.html#ad05cc5895b896dbcfec7ee5f71d055fb", null ],

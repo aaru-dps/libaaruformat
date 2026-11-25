@@ -1,4 +1,29 @@
 var searchData=
 [
-  ['update_5fcrc64_5ffrom_5fstream_0',['update_crc64_from_stream',['../verify_8c.html#a9af5ef946af3841757b56af39cb9e60d',1,'verify.c']]]
+  ['twin_5fcapture_0',['twin_capture',['../twin_8c.html#a2f728da81e3ed0a246e22d2d6a3868e1',1,'twin.c']]],
+  ['twin_5fcompare_5fgroups_1',['twin_compare_groups',['../twin_8c.html#a07a10250df2e4ebf04b523703390cbc7',1,'twin.c']]],
+  ['twin_5fcomponent_5fdata_5ftype_2',['twin_component_data_type',['../twin_8c.html#adb212621f089b14a395313ed31d56399',1,'twin.c']]],
+  ['twin_5fcomponent_5ffrom_5fdescriptor_3',['twin_component_from_descriptor',['../twin_8c.html#a9793514f0800fc020c32cb6064133273',1,'twin.c']]],
+  ['twin_5fcomponent_5fsize_4',['twin_component_size',['../twin_8c.html#afefc400b70d3daeaf700bd21a748b4a9',1,'twin.c']]],
+  ['twin_5fcreate_5fgroup_5',['twin_create_group',['../twin_8c.html#a0859d652b8a33bcecb5bf8dfdbdcab87',1,'twin.c']]],
+  ['twin_5ffind_5fgroup_6',['twin_find_group',['../internal_8h.html#a4a35761b39aea942974b380ff26ae6b8',1,'twin_find_group(const aaruformat_context *ctx, uint64_t internal_index):&#160;twin.c'],['../twin_8c.html#a4a35761b39aea942974b380ff26ae6b8',1,'twin_find_group(const aaruformat_context *ctx, uint64_t internal_index):&#160;twin.c']]],
+  ['twin_5ffree_5fgroup_7',['twin_free_group',['../twin_8c.html#a743ec569ea2ab90c4e4479fbce3c2228',1,'twin.c']]],
+  ['twin_5fget_5fraw_5fddt_5fentry_8',['twin_get_raw_ddt_entry',['../twin_8c.html#ad218b941b9780c66d6eaa94e2171f2d1',1,'twin.c']]],
+  ['twin_5finstance_5ffield_9',['twin_instance_field',['../twin_8c.html#ac7c7f2b02144fc16eb003889b98da6fb',1,'twin.c']]],
+  ['twin_5finternal_5findex_10',['twin_internal_index',['../internal_8h.html#a47077efc7a662bcd6f2384b98cdd2042',1,'twin_internal_index(const aaruformat_context *ctx, uint64_t sector_address, bool negative):&#160;twin.c'],['../twin_8c.html#a2d90278fda6941ebe633919189a55fce',1,'twin_internal_index(const aaruformat_context *ctx, const uint64_t sector_address, const bool negative):&#160;twin.c']]],
+  ['twin_5fload_11',['twin_load',['../twin_8c.html#a2a6475ea7c9ea2127a0d19523551b47e',1,'twin.c']]],
+  ['twin_5fparse_5fblock_12',['twin_parse_block',['../twin_8c.html#a1cc9c54a16d93e20bb133ca14f75dfd6',1,'twin.c']]],
+  ['twin_5fread_5fcommon_13',['twin_read_common',['../twin_8c.html#a5cab4826776330f9ca6c14bacf6d9b0e',1,'twin.c']]],
+  ['twin_5fread_5fraw_5fblock_14',['twin_read_raw_block',['../twin_8c.html#ab611f9353ce4710841d016b9cbd7a443',1,'twin.c']]],
+  ['twin_5fresolve_5ftwin0_5fstatus_15',['twin_resolve_twin0_status',['../internal_8h.html#a7efc62c88a563d6f6e50126c8f5023d7',1,'twin_resolve_twin0_status(const aaruformat_context *ctx, uint64_t sector_address, bool negative):&#160;twin.c'],['../twin_8c.html#a4ae8fdaa1b50fa2663837e945aeabf97',1,'twin_resolve_twin0_status(const aaruformat_context *ctx, const uint64_t sector_address, const bool negative):&#160;twin.c']]],
+  ['twin_5frestore_16',['twin_restore',['../twin_8c.html#a620eb66db42b8173ba355c12349f29ef',1,'twin.c']]],
+  ['twin_5fslot_17',['twin_slot',['../twin_8c.html#a618d2a83b398c248b0b04ea117fc1d6d',1,'twin.c']]],
+  ['twin_5fsorted_5fgroups_18',['twin_sorted_groups',['../twin_8c.html#ac5646da0c6d06c653701e1af96ac8a05',1,'twin.c']]],
+  ['twin_5fswap_5fin_19',['twin_swap_in',['../twin_8c.html#a4fd570294bcd628211592ef3d751d020',1,'twin.c']]],
+  ['twin_5ftag_5fdata_5ftype_20',['twin_tag_data_type',['../twin_8c.html#a3f5784b4e9af29cff60ffc35f3573aca',1,'twin.c']]],
+  ['twin_5ftag_5fsize_21',['twin_tag_size',['../twin_8c.html#ae560774eb46589b16ed07da0c0c0b1f9',1,'twin.c']]],
+  ['twin_5ftotal_5fsectors_22',['twin_total_sectors',['../twin_8c.html#a319a5cfdd1e8cbfa7caaa02acd258b1e',1,'twin.c']]],
+  ['twin_5fvalidate_5faddress_23',['twin_validate_address',['../twin_8c.html#a21873b8bcb792d4c833526b0ad74d7f6',1,'twin.c']]],
+  ['twin_5fvalidate_5fcontext_24',['twin_validate_context',['../twin_8c.html#ab0ef27fc61f0f512bab44215ea90a5da',1,'twin.c']]],
+  ['twin_5fwrite_5fcommon_25',['twin_write_common',['../twin_8c.html#a6509cc5cb1343c702dcdc5a63b639cc5',1,'twin.c']]]
 ];

@@ -34,6 +34,7 @@ var errors_8h =
     [ "AARUF_ERROR_TAPE_FILE_NOT_FOUND", "errors_8h.html#a64fa67cb4d9323e914641c70c731a5b2", null ],
     [ "AARUF_ERROR_TAPE_PARTITION_NOT_FOUND", "errors_8h.html#a14db41b6e45622397fa6339bc79d2b9f", null ],
     [ "AARUF_ERROR_TRACK_NOT_FOUND", "errors_8h.html#a32b645da87003df886a5742d23f8ca19", null ],
+    [ "AARUF_ERROR_TWIN_INDEX_OUT_OF_RANGE", "errors_8h.html#a6ce2048faac6574bc164ae0b38884115", null ],
     [ "AARUF_ERROR_UNSUPPORTED_COMPRESSION", "errors_8h.html#aec106e533b79916d14e4d48a3d95e8c8", null ],
     [ "AARUF_ERROR_USER_DATA_NOT_PRESENT", "errors_8h.html#a2fc4402bfa62be1f801d9f3684b6faf3", null ],
     [ "AARUF_READ_ONLY", "errors_8h.html#a1df49eaa19eaa14891b6aaab966a9bc6", null ],

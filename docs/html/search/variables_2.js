@@ -16,9 +16,10 @@ var searchData=
   ['block_5fheader_5fcache_13',['block_header_cache',['../structaaruformat__context.html#a3a12addf4a338cc04471709604d48ae1',1,'aaruformat_context']]],
   ['block_5foffset_14',['block_offset',['../structEcBlockLookupEntry.html#a13a8928f4f9cc3d0d7a30b1d0530c016',1,'EcBlockLookupEntry']]],
   ['block_5fzero_5fwritten_15',['block_zero_written',['../structaaruformat__context.html#aabd695fe8ff334cd96711bf085d4cf9f',1,'aaruformat_context']]],
-  ['blockalignmentshift_16',['blockAlignmentShift',['../structDdtHeader2.html#aa67b097c3a20f926ede495d27152f1c0',1,'DdtHeader2::blockAlignmentShift'],['../structFluxHeader.html#a8e2f7fb0153155438629cda42cb6f329',1,'FluxHeader::blockAlignmentShift'],['../structAaruHeaderV2.html#ac55c9959435ff7b62a72ec8243ebe1c8',1,'AaruHeaderV2::blockAlignmentShift']]],
+  ['blockalignmentshift_16',['blockAlignmentShift',['../structDdtHeader2.html#aa67b097c3a20f926ede495d27152f1c0',1,'DdtHeader2::blockAlignmentShift'],['../structFluxHeader.html#a8e2f7fb0153155438629cda42cb6f329',1,'FluxHeader::blockAlignmentShift'],['../structAaruHeaderV2.html#ac55c9959435ff7b62a72ec8243ebe1c8',1,'AaruHeaderV2::blockAlignmentShift'],['../structTwinSectorTableHeader.html#ab71d83c5ec6545bdf5b309075614ee2b',1,'TwinSectorTableHeader::blockAlignmentShift']]],
   ['blocks_17',['blocks',['../structDdtHeader2.html#a9571c1d556e33537935bab1edba31135',1,'DdtHeader2']]],
   ['blocksize_18',['blockSize',['../structMetadataBlockHeader.html#a3d1affce1a6ce2bda81aeaf85435b885',1,'MetadataBlockHeader']]],
   ['blocktype_19',['blockType',['../structIndexEntry.html#a4b5c7115ac83019c3f77c6f047e5f75e',1,'IndexEntry']]],
-  ['buffer_20',['buffer',['../structmd5__ctx.html#a72256766fb1a364fe9398dcacff6bb63',1,'md5_ctx::buffer'],['../structsha1__ctx.html#a7d619177109240d16be88c5b03c464ad',1,'sha1_ctx::buffer'],['../structsha256__ctx.html#a992c56715c7da465ec39b11ca5e659f2',1,'sha256_ctx::buffer'],['../structngc__lfg__ctx.html#a9b5c7dbc3b197b77bef259cd8bbb408a',1,'ngc_lfg_ctx::buffer']]]
+  ['buffer_20',['buffer',['../structmd5__ctx.html#a72256766fb1a364fe9398dcacff6bb63',1,'md5_ctx::buffer'],['../structsha1__ctx.html#a7d619177109240d16be88c5b03c464ad',1,'sha1_ctx::buffer'],['../structsha256__ctx.html#a992c56715c7da465ec39b11ca5e659f2',1,'sha256_ctx::buffer'],['../structngc__lfg__ctx.html#a9b5c7dbc3b197b77bef259cd8bbb408a',1,'ngc_lfg_ctx::buffer']]],
+  ['bytes_21',['bytes',['../structTwinSlotBackup.html#a5d9966a6fb91f2d93a8c579558842194',1,'TwinSlotBackup']]]
 ];

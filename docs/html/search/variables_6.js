@@ -9,13 +9,14 @@ var searchData=
   ['finalize_5fwrite_6',['finalize_write',['../structaaruformat__context.html#a86fe4242b3fd67b474ea39ccea9e7317',1,'aaruformat_context']]],
   ['firmware_7',['firmware',['../structDumpHardwareEntriesWithData.html#a04e71aaa515a5a88171f5730e371abbf',1,'DumpHardwareEntriesWithData']]],
   ['firmwarelength_8',['firmwareLength',['../structDumpHardwareEntry.html#a52948ae4f0d07e4d861e79def4a0deec',1,'DumpHardwareEntry']]],
-  ['firstblock_9',['FirstBlock',['../structTapeFileEntry.html#a8bc76d9c2d9c43e14680e39d3fc728ca',1,'TapeFileEntry::FirstBlock'],['../structTapePartitionEntry.html#af2cdde924cd050523ad0fb453eb5842d',1,'TapePartitionEntry::FirstBlock']]],
-  ['flags_10',['flags',['../structDpmHeader.html#ac430dca9dfaad5130db4a6a0e172f0b4',1,'DpmHeader::flags'],['../structTrackEntry.html#a7ae98d532f6dff50c2439b64d2cddb45',1,'TrackEntry::flags']]],
-  ['flux_5fcapture_5frecord_5ficd_11',['FLUX_CAPTURE_RECORD_ICD',['../flux_8c.html#af25f05916bee2f8489613b6a096c2cec',1,'flux.c']]],
-  ['flux_5fcaptures_12',['flux_captures',['../structaaruformat__context.html#a1e11606681ce5da5947a2345efebf46e',1,'aaruformat_context']]],
-  ['flux_5fdata_5fheader_13',['flux_data_header',['../structaaruformat__context.html#a1b150de162e5fb75d368dd6a52f6d5d7',1,'aaruformat_context']]],
-  ['flux_5fentries_14',['flux_entries',['../structaaruformat__context.html#a69e227faa1e5168628bb32d4acbe9f29',1,'aaruformat_context']]],
-  ['flux_5fmap_15',['flux_map',['../structaaruformat__context.html#a468632adcfc1f6b884b8906835c3228b',1,'aaruformat_context']]],
-  ['footermagic_16',['footerMagic',['../structAaruRecoveryFooter.html#a8d65cec53b91b52d2bafb7e76eef818a',1,'AaruRecoveryFooter']]],
-  ['free_5ffunc_17',['free_func',['../structCacheHeader.html#a54d553e78f5d90cce34ee684829a410f',1,'CacheHeader']]]
+  ['first_9',['first',['../structTwinSectorGroup.html#aba12e3036d97cc45972bde9ee4a50bb6',1,'TwinSectorGroup']]],
+  ['firstblock_10',['FirstBlock',['../structTapeFileEntry.html#a8bc76d9c2d9c43e14680e39d3fc728ca',1,'TapeFileEntry::FirstBlock'],['../structTapePartitionEntry.html#af2cdde924cd050523ad0fb453eb5842d',1,'TapePartitionEntry::FirstBlock']]],
+  ['flags_11',['flags',['../structDpmHeader.html#ac430dca9dfaad5130db4a6a0e172f0b4',1,'DpmHeader::flags'],['../structTrackEntry.html#a7ae98d532f6dff50c2439b64d2cddb45',1,'TrackEntry::flags']]],
+  ['flux_5fcapture_5frecord_5ficd_12',['FLUX_CAPTURE_RECORD_ICD',['../flux_8c.html#af25f05916bee2f8489613b6a096c2cec',1,'flux.c']]],
+  ['flux_5fcaptures_13',['flux_captures',['../structaaruformat__context.html#a1e11606681ce5da5947a2345efebf46e',1,'aaruformat_context']]],
+  ['flux_5fdata_5fheader_14',['flux_data_header',['../structaaruformat__context.html#a1b150de162e5fb75d368dd6a52f6d5d7',1,'aaruformat_context']]],
+  ['flux_5fentries_15',['flux_entries',['../structaaruformat__context.html#a69e227faa1e5168628bb32d4acbe9f29',1,'aaruformat_context']]],
+  ['flux_5fmap_16',['flux_map',['../structaaruformat__context.html#a468632adcfc1f6b884b8906835c3228b',1,'aaruformat_context']]],
+  ['footermagic_17',['footerMagic',['../structAaruRecoveryFooter.html#a8d65cec53b91b52d2bafb7e76eef818a',1,'AaruRecoveryFooter']]],
+  ['free_5ffunc_18',['free_func',['../structCacheHeader.html#a54d553e78f5d90cce34ee684829a410f',1,'CacheHeader']]]
 ];

@@ -6,6 +6,8 @@ var context_8h =
     [ "TapeFileHashEntry", "structTapeFileHashEntry.html", "structTapeFileHashEntry" ],
     [ "TapePartitionHashEntry", "structTapePartitionHashEntry.html", "structTapePartitionHashEntry" ],
     [ "TapeDdtHashEntry", "structTapeDdtHashEntry.html", "structTapeDdtHashEntry" ],
+    [ "TwinInstance", "structTwinInstance.html", "structTwinInstance" ],
+    [ "TwinSectorGroupEntry", "structTwinSectorGroupEntry.html", "structTwinSectorGroupEntry" ],
     [ "aaruformat_context", "structaaruformat__context.html", "structaaruformat__context" ],
     [ "DumpHardwareEntriesWithData", "structDumpHardwareEntriesWithData.html", "structDumpHardwareEntriesWithData" ],
     [ "DumpExtent", "structDumpExtent.html", "structDumpExtent" ],
@@ -20,5 +22,21 @@ var context_8h =
     [ "mediaTagEntry", "context_8h.html#a2db7e557df9bb4db40e140298b494946", null ],
     [ "TapeDdtHashEntry", "context_8h.html#a6f261287fa8891601a626c6649b3196e", null ],
     [ "tapeFileHashEntry", "context_8h.html#a5ba965cb003bc2d68a9f9e1c11225494", null ],
-    [ "TapePartitionHashEntry", "context_8h.html#a7dcde2e312674ec91292bf34f09b39d8", null ]
+    [ "TapePartitionHashEntry", "context_8h.html#a7dcde2e312674ec91292bf34f09b39d8", null ],
+    [ "TwinInstance", "context_8h.html#ae020541899e2c02b751fcbd91fe0ba08", null ],
+    [ "TwinSectorGroupEntry", "context_8h.html#a07362a70c9c0e758a75531ff49cfd4a8", null ],
+    [ "TwinComponentId", "context_8h.html#a55a39514a39ad81e368f40554358ca11", [
+      [ "kTwinCompData", "context_8h.html#a55a39514a39ad81e368f40554358ca11af69e5ae04a3aee39741beaa478813497", null ],
+      [ "kTwinCompPrefix", "context_8h.html#a55a39514a39ad81e368f40554358ca11a9521879d029d71d864f6ce400b532e8a", null ],
+      [ "kTwinCompSuffix", "context_8h.html#a55a39514a39ad81e368f40554358ca11aa09508a3383736de56c07c3aa2700474", null ],
+      [ "kTwinCompSubheader", "context_8h.html#a55a39514a39ad81e368f40554358ca11a081ee66a5198e032db6a89f7fb0d3143", null ],
+      [ "kTwinCompSubchannel", "context_8h.html#a55a39514a39ad81e368f40554358ca11aaba5f89336363091c1b3be045a4cd74a", null ],
+      [ "kTwinCompDvdId", "context_8h.html#a55a39514a39ad81e368f40554358ca11a84d89ec908208077c2e4bb88e9504e42", null ],
+      [ "kTwinCompDvdIed", "context_8h.html#a55a39514a39ad81e368f40554358ca11aeb5f5a652af1100cfbd15ae7f1694d8a", null ],
+      [ "kTwinCompDvdCprMai", "context_8h.html#a55a39514a39ad81e368f40554358ca11aa27bbcf899cef594f12dd1837282f21b", null ],
+      [ "kTwinCompSectorEdc", "context_8h.html#a55a39514a39ad81e368f40554358ca11ad1c711c8e6563b5bf7b207d4346d81af", null ],
+      [ "kTwinCompTitleKey", "context_8h.html#a55a39514a39ad81e368f40554358ca11a136039b9b3d0ad582706978d2fa85b37", null ],
+      [ "kTwinCompTag", "context_8h.html#a55a39514a39ad81e368f40554358ca11ac26cb8ef23ae844afecef326666821c2", null ],
+      [ "kTwinCompCount", "context_8h.html#a55a39514a39ad81e368f40554358ca11abfd76be8ff4030c2093cdbc274245845", null ]
+    ] ]
 ];

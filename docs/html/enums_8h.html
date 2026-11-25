@@ -266,6 +266,11 @@ Enumerations</h2></td></tr>
 , <a class="el" href="#ad8ed01ff3ff33333d8e19db4d2818bb6aa85ba79bd52a96a4ca058718351b06f5">kDataTypeErasureParityMeta</a> = 107
 , <br />
 &#160;&#160;<a class="el" href="#ad8ed01ff3ff33333d8e19db4d2818bb6a5069a00563fe1a94724c8f15f463419d">kDataTypeErasureParityIndex</a> = 108
+, <a class="el" href="#ad8ed01ff3ff33333d8e19db4d2818bb6a45a4705a47a08422a8eb2b5b068dbc33">kDataTypeMiniDiscType</a> = 109
+, <a class="el" href="#ad8ed01ff3ff33333d8e19db4d2818bb6a6bab2036bab63d8ddc8673a5fa8a2301">kDataTypeMiniDiscDefectList</a> = 110
+, <a class="el" href="#ad8ed01ff3ff33333d8e19db4d2818bb6ab601a8ff91f1bd81b4b350c6e474d740">kDataTypeMiniDiscUtoc</a>
+, <br />
+&#160;&#160;<a class="el" href="#ad8ed01ff3ff33333d8e19db4d2818bb6a20b4b6cba58c4a89f7a9383afe762333">kDataTypeMiniDiscPtoc</a> = 112
 <br />
  }</td></tr>
 <tr class="memdesc:ad8ed01ff3ff33333d8e19db4d2818bb6"><td class="mdescLeft">&#160;</td><td class="mdescRight">List of known data types stored within an Aaru image.  <a href="#ad8ed01ff3ff33333d8e19db4d2818bb6">More...</a><br /></td></tr>
@@ -298,6 +303,7 @@ Enumerations</h2></td></tr>
 &#160;&#160;<a class="el" href="#a54420623f26ab6bb61042b41cccf37a3aeaee7c0287e406b4b09ad4b8954e46a3">FluxDataBlock</a> = 0x58554C46
 , <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3afbe1bc6eb5c4d2258b9e885c8e89513d">DataStreamPayloadBlock</a>
 , <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3af9f5bd022e035b2a787279913a85cf19">ErasureCodingMapBlock</a> = 0x424D4345
+, <a class="el" href="#a54420623f26ab6bb61042b41cccf37a3a470dc502d377fb9a97f80f226781f099">TwinSectorTable</a> = 0x42545754
 <br />
  }</td></tr>
 <tr class="memdesc:a54420623f26ab6bb61042b41cccf37a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">List of known block types contained in an Aaru image.  <a href="#a54420623f26ab6bb61042b41cccf37a3">More...</a><br /></td></tr>
@@ -367,6 +373,7 @@ Enumerations</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:a993230a3978041acdc4e9ba46e4c9f25"><td class="mdescLeft">&#160;</td><td class="mdescRight">Incompatible feature flags for <a class="el" href="structAaruHeader.html" title="Version 1 container header placed at offset 0 for legacy / initial format.">AaruHeader</a> V2.  <a href="#a993230a3978041acdc4e9ba46e4c9f25">More...</a><br /></td></tr>
 <tr class="memitem:a8224cd67a8e4e3d365e0371899c7065f" id="r_a8224cd67a8e4e3d365e0371899c7065f"><td class="memItemLeft">enum &#160;</td><td class="memItemRight"><a class="el" href="#a8224cd67a8e4e3d365e0371899c7065f">FeaturesCompatibleRo</a> { <a class="el" href="#a8224cd67a8e4e3d365e0371899c7065fa8b803843c50589f197b6461d1c74ea9b">AARU_FEATURE_ROCOMPAT_ERASURE</a> = 0x1
+, <a class="el" href="#a8224cd67a8e4e3d365e0371899c7065fa709ba2994e396113f7309c37f086d234">AARU_FEATURE_ROCOMPAT_TWIN_SECTORS</a> = 0x2
  }</td></tr>
 <tr class="memdesc:a8224cd67a8e4e3d365e0371899c7065f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read-only compatible feature flags for <a class="el" href="structAaruHeader.html" title="Version 1 container header placed at offset 0 for legacy / initial format.">AaruHeader</a> V2.  <a href="#a8224cd67a8e4e3d365e0371899c7065f">More...</a><br /></td></tr>
 <tr class="memitem:a83c99da65804eb80cfb955eb9a15ef5e" id="r_a83c99da65804eb80cfb955eb9a15ef5e"><td class="memItemLeft">enum &#160;</td><td class="memItemRight"><a class="el" href="#a83c99da65804eb80cfb955eb9a15ef5e">ErasureCodingAlgorithm</a> { <a class="el" href="#a83c99da65804eb80cfb955eb9a15ef5ead3ee61b96379729331df2b6ed04a95a0">kErasureCodingXor</a> = 0
@@ -403,7 +410,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00235">235</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00241">241</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -467,9 +474,11 @@ Enumerations</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="a54420623f26ab6bb61042b41cccf37a3af9f5bd022e035b2a787279913a85cf19" name="a54420623f26ab6bb61042b41cccf37a3af9f5bd022e035b2a787279913a85cf19"></a>ErasureCodingMapBlock&#160;</td><td class="fielddoc"><p>Block containing erasure coding stripe map and recovery metadata. </p>
 </td></tr>
+<tr><td class="fieldname"><a id="a54420623f26ab6bb61042b41cccf37a3a470dc502d377fb9a97f80f226781f099" name="a54420623f26ab6bb61042b41cccf37a3a470dc502d377fb9a97f80f226781f099"></a>TwinSectorTable&#160;</td><td class="fielddoc"><p>Block listing twin sectors (several physical sectors sharing one address). </p>
+</td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00162">162</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00167">167</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -499,7 +508,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00208">208</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00214">214</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -531,7 +540,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00194">194</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00200">200</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -799,6 +808,14 @@ Enumerations</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="ad8ed01ff3ff33333d8e19db4d2818bb6a5069a00563fe1a94724c8f15f463419d" name="ad8ed01ff3ff33333d8e19db4d2818bb6a5069a00563fe1a94724c8f15f463419d"></a>kDataTypeErasureParityIndex&#160;</td><td class="fielddoc"><p>Erasure coding parity replica for index block. </p>
 </td></tr>
+<tr><td class="fieldname"><a id="ad8ed01ff3ff33333d8e19db4d2818bb6a45a4705a47a08422a8eb2b5b068dbc33" name="ad8ed01ff3ff33333d8e19db4d2818bb6a45a4705a47a08422a8eb2b5b068dbc33"></a>kDataTypeMiniDiscType&#160;</td><td class="fielddoc"><p>8 bytes response that seems to define type of MiniDisc </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ad8ed01ff3ff33333d8e19db4d2818bb6a6bab2036bab63d8ddc8673a5fa8a2301" name="ad8ed01ff3ff33333d8e19db4d2818bb6a6bab2036bab63d8ddc8673a5fa8a2301"></a>kDataTypeMiniDiscDefectList&#160;</td><td class="fielddoc"><p>MD-DATA Defect List, response to D5h. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ad8ed01ff3ff33333d8e19db4d2818bb6ab601a8ff91f1bd81b4b350c6e474d740" name="ad8ed01ff3ff33333d8e19db4d2818bb6ab601a8ff91f1bd81b4b350c6e474d740"></a>kDataTypeMiniDiscUtoc&#160;</td><td class="fielddoc"><p>User TOC, contains fragments, track names, and can be from 1 to 3 sectors of 2336 bytes. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ad8ed01ff3ff33333d8e19db4d2818bb6a20b4b6cba58c4a89f7a9383afe762333" name="ad8ed01ff3ff33333d8e19db4d2818bb6a20b4b6cba58c4a89f7a9383afe762333"></a>kDataTypeMiniDiscPtoc&#160;</td><td class="fielddoc"><p>Pre-mastered TOC that only appears on MD-DATA discs. </p>
+</td></tr>
 </table>
 
 <p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00045">45</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
@@ -825,7 +842,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00326">326</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00333">333</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -855,7 +872,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00336">336</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00343">343</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -878,14 +895,14 @@ Enumerations</h2></td></tr>
 <div class="line">{</div>
 <div class="line">    <span class="comment">// Image contains BLAKE3 checksums; enable BLAKE3 verification path.</span></div>
 <div class="line">}</div>
-<div class="ttc" id="aenums_8h_html_af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4"><div class="ttname"><a href="#af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4">AARU_FEATURE_RW_BLAKE3</a></div><div class="ttdeci">@ AARU_FEATURE_RW_BLAKE3</div><div class="ttdoc">BLAKE3 checksum is present (read/write support for BLAKE3 hashes).</div><div class="ttdef"><b>Definition</b> <a href="enums_8h_source.html#l00294">enums.h:294</a></div></div>
+<div class="ttc" id="aenums_8h_html_af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4"><div class="ttname"><a href="#af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4">AARU_FEATURE_RW_BLAKE3</a></div><div class="ttdeci">@ AARU_FEATURE_RW_BLAKE3</div><div class="ttdoc">BLAKE3 checksum is present (read/write support for BLAKE3 hashes).</div><div class="ttdef"><b>Definition</b> <a href="enums_8h_source.html#l00300">enums.h:300</a></div></div>
 </div><!-- fragment --><p>Future compatible features SHALL use the next available bit (1ULL &lt;&lt; n). </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4" name="af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4"></a>AARU_FEATURE_RW_BLAKE3&#160;</td><td class="fielddoc"><p>BLAKE3 checksum is present (read/write support for BLAKE3 hashes). </p>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00292">292</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00298">298</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -906,9 +923,11 @@ Enumerations</h2></td></tr>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a8224cd67a8e4e3d365e0371899c7065fa8b803843c50589f197b6461d1c74ea9b" name="a8224cd67a8e4e3d365e0371899c7065fa8b803843c50589f197b6461d1c74ea9b"></a>AARU_FEATURE_ROCOMPAT_ERASURE&#160;</td><td class="fielddoc"><p>Image contains erasure coding parity blocks and recovery metadata. </p>
 </td></tr>
+<tr><td class="fieldname"><a id="a8224cd67a8e4e3d365e0371899c7065fa709ba2994e396113f7309c37f086d234" name="a8224cd67a8e4e3d365e0371899c7065fa709ba2994e396113f7309c37f086d234"></a>AARU_FEATURE_ROCOMPAT_TWIN_SECTORS&#160;</td><td class="fielddoc"><p>Image contains a twin sector table (TWTB). </p>
+</td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00317">317</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00323">323</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -932,7 +951,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00305">305</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00311">311</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -964,7 +983,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="a74e216af87b18a5fbf0204a52dd1bba0a6a9daca7b82c2929eaf1b081ba7c7437" name="a74e216af87b18a5fbf0204a52dd1bba0a6a9daca7b82c2929eaf1b081ba7c7437"></a>SectorStatusMode2Form2NoCrc&#160;</td><td class="fielddoc"><p>Suffix matches MODE 2 Form 2 but CRC empty/missing. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a74e216af87b18a5fbf0204a52dd1bba0a129be26463a6af01b2babe9f687c94c7" name="a74e216af87b18a5fbf0204a52dd1bba0a129be26463a6af01b2babe9f687c94c7"></a>SectorStatusTwin&#160;</td><td class="fielddoc"><p>Pointer references a twin sector table. </p>
+<tr><td class="fieldname"><a id="a74e216af87b18a5fbf0204a52dd1bba0a129be26463a6af01b2babe9f687c94c7" name="a74e216af87b18a5fbf0204a52dd1bba0a129be26463a6af01b2babe9f687c94c7"></a>SectorStatusTwin&#160;</td><td class="fielddoc"><p>Sector has twins; pointer references twin #0, all instances in the TWTB. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a74e216af87b18a5fbf0204a52dd1bba0a3937b7d580c278a8068b6c2c3a5592c9" name="a74e216af87b18a5fbf0204a52dd1bba0a3937b7d580c278a8068b6c2c3a5592c9"></a>SectorStatusUnrecorded&#160;</td><td class="fielddoc"><p>Sector physically unrecorded; repeated reads non-deterministic. </p>
 </td></tr>
@@ -976,7 +995,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00256">256</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00262">262</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -1008,7 +1027,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00221">221</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00227">227</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>
@@ -1036,7 +1055,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00244">244</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="enums_8h_source.html#l00250">250</a> of file <a class="el" href="enums_8h_source.html">enums.h</a>.</p>
 
 </div>
 </div>

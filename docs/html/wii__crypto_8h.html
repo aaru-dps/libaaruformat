@@ -312,7 +312,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>A Wii partition region entry (in-memory representation). </p>
-<p>Stores the physical sector range and AES-128 key for one partition. Physical sector numbers are in 0x8000-byte units. </p>
+<p>Stores the physical sector range of a partition's encrypted data area and its AES-128 key. Physical sector numbers are in 0x8000-byte units. The range starts at the partition data offset, after the plaintext partition header, so every physical sector in [start_sector, end_sector) is encrypted. </p>
 
 </div>
 </div>
@@ -404,7 +404,7 @@ Functions</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="wii__crypto_8c_source.html#l00132">132</a> of file <a class="el" href="wii__crypto_8c_source.html">wii_crypto.c</a>.</p>
 
-<p class="reference">References <a class="el" href="wii__crypto_8h_source.html#l00054">WiiPartitionRegion::end_sector</a>, <a class="el" href="ngcw__junk_8c_source.html#l00032">read_le32()</a>, <a class="el" href="wii__crypto_8h_source.html#l00053">WiiPartitionRegion::start_sector</a>, <a class="el" href="wii__crypto_8c_source.html#l00132">wii_deserialize_partition_key_map()</a>, and <a class="el" href="wii__crypto_8h_source.html#l00043">WII_MAX_PARTITIONS</a>.</p>
+<p class="reference">References <a class="el" href="wii__crypto_8h_source.html#l00055">WiiPartitionRegion::end_sector</a>, <a class="el" href="ngcw__junk_8c_source.html#l00032">read_le32()</a>, <a class="el" href="wii__crypto_8h_source.html#l00054">WiiPartitionRegion::start_sector</a>, <a class="el" href="wii__crypto_8c_source.html#l00132">wii_deserialize_partition_key_map()</a>, and <a class="el" href="wii__crypto_8h_source.html#l00043">WII_MAX_PARTITIONS</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="wii__crypto_8c_source.html#l00132">wii_deserialize_partition_key_map()</a>, and <a class="el" href="wii__crypto_8c_source.html#l00180">wii_lazy_init()</a>.</p>
 
@@ -504,7 +504,7 @@ Functions</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="wii__crypto_8c_source.html#l00045">45</a> of file <a class="el" href="wii__crypto_8c_source.html">wii_crypto.c</a>.</p>
 
-<p class="reference">References <a class="el" href="wii__crypto_8h_source.html#l00055">WiiPartitionRegion::key</a>, <a class="el" href="wii__crypto_8c_source.html#l00045">wii_get_sector_key()</a>, and <a class="el" href="wii__crypto_8h_source.html#l00041">WII_LOGICAL_PER_GROUP</a>.</p>
+<p class="reference">References <a class="el" href="wii__crypto_8h_source.html#l00056">WiiPartitionRegion::key</a>, <a class="el" href="wii__crypto_8c_source.html#l00045">wii_get_sector_key()</a>, and <a class="el" href="wii__crypto_8h_source.html#l00041">WII_LOGICAL_PER_GROUP</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="read_8c_source.html#l00352">aaruf_read_sector()</a>, <a class="el" href="wii__crypto_8c_source.html#l00045">wii_get_sector_key()</a>, and <a class="el" href="wii__crypto_8c_source.html#l00066">wii_is_sector_encrypted()</a>.</p>
 
@@ -571,7 +571,7 @@ Functions</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="wii__crypto_8c_source.html#l00180">180</a> of file <a class="el" href="wii__crypto_8c_source.html">wii_crypto.c</a>.</p>
 
-<p class="reference">References <a class="el" href="context_8h_source.html#l00126">mediaTagEntry::data</a>, <a class="el" href="aaru_8h_source.html#l01086">kMediaTagWiiPartitionKeyMap</a>, <a class="el" href="context_8h_source.html#l00128">mediaTagEntry::length</a>, <a class="el" href="context_8h_source.html#l00274">aaruformat_context::mediaTags</a>, <a class="el" href="context_8h_source.html#l00384">aaruformat_context::wii_cache_valid</a>, <a class="el" href="wii__crypto_8c_source.html#l00132">wii_deserialize_partition_key_map()</a>, <a class="el" href="context_8h_source.html#l00382">aaruformat_context::wii_encrypted_group_cache</a>, <a class="el" href="wii__crypto_8h_source.html#l00038">WII_GROUP_SIZE</a>, <a class="el" href="wii__crypto_8c_source.html#l00180">wii_lazy_init()</a>, <a class="el" href="context_8h_source.html#l00380">aaruformat_context::wii_partition_region_count</a>, and <a class="el" href="context_8h_source.html#l00379">aaruformat_context::wii_partition_regions</a>.</p>
+<p class="reference">References <a class="el" href="context_8h_source.html#l00126">mediaTagEntry::data</a>, <a class="el" href="aaru_8h_source.html#l01086">kMediaTagWiiPartitionKeyMap</a>, <a class="el" href="context_8h_source.html#l00128">mediaTagEntry::length</a>, <a class="el" href="context_8h_source.html#l00323">aaruformat_context::mediaTags</a>, <a class="el" href="context_8h_source.html#l00433">aaruformat_context::wii_cache_valid</a>, <a class="el" href="wii__crypto_8c_source.html#l00132">wii_deserialize_partition_key_map()</a>, <a class="el" href="context_8h_source.html#l00431">aaruformat_context::wii_encrypted_group_cache</a>, <a class="el" href="wii__crypto_8h_source.html#l00038">WII_GROUP_SIZE</a>, <a class="el" href="wii__crypto_8c_source.html#l00180">wii_lazy_init()</a>, <a class="el" href="context_8h_source.html#l00429">aaruformat_context::wii_partition_region_count</a>, and <a class="el" href="context_8h_source.html#l00428">aaruformat_context::wii_partition_regions</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="read_8c_source.html#l00352">aaruf_read_sector()</a>, and <a class="el" href="wii__crypto_8c_source.html#l00180">wii_lazy_init()</a>.</p>
 

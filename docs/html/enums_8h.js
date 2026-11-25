@@ -26,7 +26,8 @@ var enums_8h =
       [ "AaruMetadataJsonBlock", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3a8ac77889f0c345ed861ed653a3063032", null ],
       [ "FluxDataBlock", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3aeaee7c0287e406b4b09ad4b8954e46a3", null ],
       [ "DataStreamPayloadBlock", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3afbe1bc6eb5c4d2258b9e885c8e89513d", null ],
-      [ "ErasureCodingMapBlock", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3af9f5bd022e035b2a787279913a85cf19", null ]
+      [ "ErasureCodingMapBlock", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3af9f5bd022e035b2a787279913a85cf19", null ],
+      [ "TwinSectorTable", "enums_8h.html#a54420623f26ab6bb61042b41cccf37a3a470dc502d377fb9a97f80f226781f099", null ]
     ] ],
     [ "CdFixFlags", "enums_8h.html#ab72dc399e3946b3c40a5ad8c8e3254b7", [
       [ "NotDumped", "enums_8h.html#ab72dc399e3946b3c40a5ad8c8e3254b7ab3fac5cd103786d64f7ee67bcb9ac458", null ],
@@ -160,7 +161,11 @@ var enums_8h =
       [ "kDataTypeErasureParityDdt", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a0415d7a4a6fe1e616eecc1a0465c8dd4", null ],
       [ "kDataTypeErasureParityDdtPrimary", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a08a4aa580854c87d64264258bb690bc3", null ],
       [ "kDataTypeErasureParityMeta", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6aa85ba79bd52a96a4ca058718351b06f5", null ],
-      [ "kDataTypeErasureParityIndex", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a5069a00563fe1a94724c8f15f463419d", null ]
+      [ "kDataTypeErasureParityIndex", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a5069a00563fe1a94724c8f15f463419d", null ],
+      [ "kDataTypeMiniDiscType", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a45a4705a47a08422a8eb2b5b068dbc33", null ],
+      [ "kDataTypeMiniDiscDefectList", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a6bab2036bab63d8ddc8673a5fa8a2301", null ],
+      [ "kDataTypeMiniDiscUtoc", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6ab601a8ff91f1bd81b4b350c6e474d740", null ],
+      [ "kDataTypeMiniDiscPtoc", "enums_8h.html#ad8ed01ff3ff33333d8e19db4d2818bb6a20b4b6cba58c4a89f7a9383afe762333", null ]
     ] ],
     [ "ErasureCodingAlgorithm", "enums_8h.html#a83c99da65804eb80cfb955eb9a15ef5e", [
       [ "kErasureCodingXor", "enums_8h.html#a83c99da65804eb80cfb955eb9a15ef5ead3ee61b96379729331df2b6ed04a95a0", null ],
@@ -177,7 +182,8 @@ var enums_8h =
       [ "AARU_FEATURE_RW_BLAKE3", "enums_8h.html#af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4", null ]
     ] ],
     [ "FeaturesCompatibleRo", "enums_8h.html#a8224cd67a8e4e3d365e0371899c7065f", [
-      [ "AARU_FEATURE_ROCOMPAT_ERASURE", "enums_8h.html#a8224cd67a8e4e3d365e0371899c7065fa8b803843c50589f197b6461d1c74ea9b", null ]
+      [ "AARU_FEATURE_ROCOMPAT_ERASURE", "enums_8h.html#a8224cd67a8e4e3d365e0371899c7065fa8b803843c50589f197b6461d1c74ea9b", null ],
+      [ "AARU_FEATURE_ROCOMPAT_TWIN_SECTORS", "enums_8h.html#a8224cd67a8e4e3d365e0371899c7065fa709ba2994e396113f7309c37f086d234", null ]
     ] ],
     [ "FeaturesIncompatible", "enums_8h.html#a993230a3978041acdc4e9ba46e4c9f25", [
       [ "AARU_FEATURE_INCOMPAT_ZSTD", "enums_8h.html#a993230a3978041acdc4e9ba46e4c9f25a4e05201249a76a85f7623929102ef4a2", null ]

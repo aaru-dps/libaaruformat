@@ -119,6 +119,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('globals_a.html
 <li>AARU_EXPORT&#160;:&#160;<a class="el" href="decls_8h.html#a9001412c35f3c92d3a9320d27b0d97f9">decls.h</a></li>
 <li>AARU_FEATURE_INCOMPAT_ZSTD&#160;:&#160;<a class="el" href="enums_8h.html#a993230a3978041acdc4e9ba46e4c9f25a4e05201249a76a85f7623929102ef4a2">enums.h</a></li>
 <li>AARU_FEATURE_ROCOMPAT_ERASURE&#160;:&#160;<a class="el" href="enums_8h.html#a8224cd67a8e4e3d365e0371899c7065fa8b803843c50589f197b6461d1c74ea9b">enums.h</a></li>
+<li>AARU_FEATURE_ROCOMPAT_TWIN_SECTORS&#160;:&#160;<a class="el" href="enums_8h.html#a8224cd67a8e4e3d365e0371899c7065fa709ba2994e396113f7309c37f086d234">enums.h</a></li>
 <li>AARU_FEATURE_RW_BLAKE3&#160;:&#160;<a class="el" href="enums_8h.html#af104aa102cdba100b9f245bef4abd42da8cc0519eeba84d57f99c239f687616b4">enums.h</a></li>
 <li>AARU_FSEEK&#160;:&#160;<a class="el" href="internal_8h.html#aa2532365d21906273c41af7573f90148">internal.h</a></li>
 <li>AARU_FTELL&#160;:&#160;<a class="el" href="internal_8h.html#ad20841fc34b977d6f7e83c091a5438aa">internal.h</a></li>
@@ -152,6 +153,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('globals_a.html
 <li>aaruf_clear_media_sequence()&#160;:&#160;<a class="el" href="decls_8h.html#a02699c3490df86f9919ac8f22f303d9e">decls.h</a>, <a class="el" href="metadata__write_8c.html#a02699c3490df86f9919ac8f22f303d9e">metadata_write.c</a></li>
 <li>aaruf_clear_media_serial_number()&#160;:&#160;<a class="el" href="decls_8h.html#a21d65b63e9806deb6dd0eb9c0e69eaf0">decls.h</a>, <a class="el" href="metadata__write_8c.html#a21d65b63e9806deb6dd0eb9c0e69eaf0">metadata_write.c</a></li>
 <li>aaruf_clear_media_title()&#160;:&#160;<a class="el" href="decls_8h.html#a41bf934e213aad15df933590e6343c3e">decls.h</a>, <a class="el" href="metadata__write_8c.html#a41bf934e213aad15df933590e6343c3e">metadata_write.c</a></li>
+<li>aaruf_clear_sector_twins()&#160;:&#160;<a class="el" href="decls_8h.html#ae6c3b6660c81d01d9675f5c011c4a97c">decls.h</a>, <a class="el" href="twin_8c.html#ad03a76a53541ff2a8eb67d3e3a663e14">twin.c</a></li>
 <li>aaruf_close()&#160;:&#160;<a class="el" href="decls_8h.html#a6823e139f81a9dfd08efcb0e9b213a49">decls.h</a>, <a class="el" href="close_8c.html#a6823e139f81a9dfd08efcb0e9b213a49">close.c</a></li>
 <li>aaruf_close_current_block()&#160;:&#160;<a class="el" href="internal_8h.html#a2402812f5e04ba16765208c0b70fa6c5">internal.h</a>, <a class="el" href="write_8c.html#a2402812f5e04ba16765208c0b70fa6c5">write.c</a></li>
 <li>aaruf_crc64_data()&#160;:&#160;<a class="el" href="decls_8h.html#a0fee4834bf0747bcd933c4e754aa4692">decls.h</a>, <a class="el" href="crc64_8c.html#adae8cec415b4af4b7a9e8a4a74d82828">crc64.c</a></li>
@@ -207,11 +209,13 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('globals_a.html
 <li>AARUF_ERROR_TAPE_FILE_NOT_FOUND&#160;:&#160;<a class="el" href="errors_8h.html#a64fa67cb4d9323e914641c70c731a5b2">errors.h</a></li>
 <li>AARUF_ERROR_TAPE_PARTITION_NOT_FOUND&#160;:&#160;<a class="el" href="errors_8h.html#a14db41b6e45622397fa6339bc79d2b9f">errors.h</a></li>
 <li>AARUF_ERROR_TRACK_NOT_FOUND&#160;:&#160;<a class="el" href="errors_8h.html#a32b645da87003df886a5742d23f8ca19">errors.h</a></li>
+<li>AARUF_ERROR_TWIN_INDEX_OUT_OF_RANGE&#160;:&#160;<a class="el" href="errors_8h.html#a6ce2048faac6574bc164ae0b38884115">errors.h</a></li>
 <li>AARUF_ERROR_UNSUPPORTED_COMPRESSION&#160;:&#160;<a class="el" href="errors_8h.html#aec106e533b79916d14e4d48a3d95e8c8">errors.h</a></li>
 <li>AARUF_ERROR_USER_DATA_NOT_PRESENT&#160;:&#160;<a class="el" href="errors_8h.html#a2fc4402bfa62be1f801d9f3684b6faf3">errors.h</a></li>
 <li>aaruf_finalize_write()&#160;:&#160;<a class="el" href="internal_8h.html#a750c966846027990bb0914760758c84c">internal.h</a>, <a class="el" href="close__write_8c.html#a750c966846027990bb0914760758c84c">close_write.c</a></li>
 <li>aaruf_flac_decode_redbook_buffer()&#160;:&#160;<a class="el" href="decls_8h.html#af0ff6ad1495d50a8fa0ce0005be69471">decls.h</a>, <a class="el" href="flac_8c.html#af0ff6ad1495d50a8fa0ce0005be69471">flac.c</a></li>
 <li>aaruf_flac_encode_redbook_buffer()&#160;:&#160;<a class="el" href="decls_8h.html#a102023fe64e4bd24cd6d4124f0d74e54">decls.h</a>, <a class="el" href="flac_8c.html#a102023fe64e4bd24cd6d4124f0d74e54">flac.c</a></li>
+<li>aaruf_fopen_utf8()&#160;:&#160;<a class="el" href="utf8__path_8c.html#a6aad3b485fceaa7676634832c50e241a">utf8_path.c</a>, <a class="el" href="utf8__path_8h.html#a6aad3b485fceaa7676634832c50e241a">utf8_path.h</a></li>
 <li>aaruf_fseek()&#160;:&#160;<a class="el" href="internal_8h.html#a60c57e3b2e8e233d0be91f3690bf077c">internal.h</a></li>
 <li>aaruf_ftell()&#160;:&#160;<a class="el" href="internal_8h.html#a697ee4ab2c7adc710e56b0ef868596d7">internal.h</a></li>
 <li>aaruf_get_aaru_json_metadata()&#160;:&#160;<a class="el" href="decls_8h.html#a01cf0abe0b137236d4be0b91a29d4818">decls.h</a>, <a class="el" href="metadata_8c.html#a01cf0abe0b137236d4be0b91a29d4818">metadata.c</a></li>
@@ -242,9 +246,11 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('globals_a.html
 <li>aaruf_get_overflow_sectors()&#160;:&#160;<a class="el" href="decls_8h.html#a108f816aba81cbb0f1401c2a9588660a">decls.h</a>, <a class="el" href="metadata_8c.html#a108f816aba81cbb0f1401c2a9588660a">metadata.c</a></li>
 <li>aaruf_get_readable_media_tags()&#160;:&#160;<a class="el" href="decls_8h.html#a9cfc80d1cfa399bfea980b6ac4e2208a">decls.h</a>, <a class="el" href="blocks_2metadata_8c.html#a9cfc80d1cfa399bfea980b6ac4e2208a">metadata.c</a></li>
 <li>aaruf_get_readable_sector_tags()&#160;:&#160;<a class="el" href="decls_8h.html#aa9ed74c6988c035d9ba0d11965d5cf10">decls.h</a>, <a class="el" href="blocks_2metadata_8c.html#aa9ed74c6988c035d9ba0d11965d5cf10">metadata.c</a></li>
+<li>aaruf_get_sector_twin_count()&#160;:&#160;<a class="el" href="decls_8h.html#a576d4f4d3382bce3e275fca57db45f46">decls.h</a>, <a class="el" href="twin_8c.html#a30c6e6ad922bc143295d2a213796388d">twin.c</a></li>
 <li>aaruf_get_tape_file()&#160;:&#160;<a class="el" href="decls_8h.html#a1c8d4faf14212a4c46c1fb47bf25ac1e">decls.h</a>, <a class="el" href="tape_8c.html#a6221f89b294ca55944944a04edb964e3">tape.c</a></li>
 <li>aaruf_get_tape_partition()&#160;:&#160;<a class="el" href="decls_8h.html#ab1ca1a092699df0f43ea050812f6c6b1">decls.h</a>, <a class="el" href="tape_8c.html#a91c40d91fdeb98193d6eeb95f16d8973">tape.c</a></li>
 <li>aaruf_get_tracks()&#160;:&#160;<a class="el" href="decls_8h.html#a2ce65757ca5209f17d467c51ba7d445d">decls.h</a>, <a class="el" href="optical_8c.html#a2ce65757ca5209f17d467c51ba7d445d">optical.c</a></li>
+<li>aaruf_get_twin_sectors()&#160;:&#160;<a class="el" href="decls_8h.html#ad063432895de0f5d647fd961345f87a8">decls.h</a>, <a class="el" href="twin_8c.html#ad063432895de0f5d647fd961345f87a8">twin.c</a></li>
 <li>aaruf_get_user_sectors()&#160;:&#160;<a class="el" href="decls_8h.html#a7e63f10ff3ea353c8c3944cd836a85ee">decls.h</a>, <a class="el" href="metadata_8c.html#a7e63f10ff3ea353c8c3944cd836a85ee">metadata.c</a></li>
 <li>aaruf_get_xml_mediatype()&#160;:&#160;<a class="el" href="decls_8h.html#ac5f5334a51424028574a5433a0e24b20">decls.h</a>, <a class="el" href="helpers_8c.html#a9cd4defd02dea61dc984b84ed3204c2c">helpers.c</a></li>
 <li>aaruf_identify()&#160;:&#160;<a class="el" href="decls_8h.html#a74c444fbd394f58aefd2fabff221231b">decls.h</a>, <a class="el" href="identify_8c.html#a74c444fbd394f58aefd2fabff221231b">identify.c</a></li>
@@ -265,6 +271,9 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('globals_a.html
 <li>aaruf_read_sector()&#160;:&#160;<a class="el" href="decls_8h.html#a2297e89619ba11cb0a0779a985fc1c34">decls.h</a>, <a class="el" href="read_8c.html#a6feebf672750fc129fe2802ab738d563">read.c</a></li>
 <li>aaruf_read_sector_long()&#160;:&#160;<a class="el" href="decls_8h.html#aed40c9ebc6d963b2a8ed5ebec1fed3c5">decls.h</a>, <a class="el" href="read_8c.html#a7c8786fe6f2a1538bcb2362cfe21563c">read.c</a></li>
 <li>aaruf_read_sector_tag()&#160;:&#160;<a class="el" href="decls_8h.html#ae5a85524a6e27339c02c4a5791e0db57">decls.h</a>, <a class="el" href="read_8c.html#ac6c55f931eb4c113d19ff7c194fce65a">read.c</a></li>
+<li>aaruf_read_sector_twin()&#160;:&#160;<a class="el" href="decls_8h.html#a37910b719cf5d25d98a5a5052019086b">decls.h</a>, <a class="el" href="twin_8c.html#a7615016bd61fa3730747ed690550ec54">twin.c</a></li>
+<li>aaruf_read_sector_twin_long()&#160;:&#160;<a class="el" href="decls_8h.html#a4cb232f2c0707e31676389e5ae4df9b2">decls.h</a>, <a class="el" href="twin_8c.html#a3f7618146c01bc9f8e5a60ed1c29c3f7">twin.c</a></li>
+<li>aaruf_read_sector_twin_tag()&#160;:&#160;<a class="el" href="decls_8h.html#aec5af9ab3b1c4021bc4b3b4ad4fdfeb8">decls.h</a>, <a class="el" href="twin_8c.html#a57eae1f81cbe400cc99bb0dac9d72bd5">twin.c</a></li>
 <li>aaruf_read_track_sector()&#160;:&#160;<a class="el" href="decls_8h.html#ae0945dde37d57278f14d71bfc9b56d55">decls.h</a>, <a class="el" href="read_8c.html#a84e3bc8f611af8e9fc77dac24788d53b">read.c</a></li>
 <li>aaruf_set_aaru_json_metadata()&#160;:&#160;<a class="el" href="decls_8h.html#a8090a039e00ee003569939332d21094e">decls.h</a>, <a class="el" href="metadata__write_8c.html#a8090a039e00ee003569939332d21094e">metadata_write.c</a></li>
 <li>aaruf_set_close_error()&#160;:&#160;<a class="el" href="close_8c.html#a547f7cbebffad90d0a60d8fd2ee1185a">close.c</a></li>
@@ -318,6 +327,9 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('globals_a.html
 <li>aaruf_write_sector()&#160;:&#160;<a class="el" href="decls_8h.html#a4b8cd2bb5fd9e2c670a0a13695c6f9e3">decls.h</a>, <a class="el" href="write_8c.html#a4b8cd2bb5fd9e2c670a0a13695c6f9e3">write.c</a></li>
 <li>aaruf_write_sector_long()&#160;:&#160;<a class="el" href="decls_8h.html#a69ca66242c0becf7640b3d1cc8da8f9c">decls.h</a>, <a class="el" href="write_8c.html#a69ca66242c0becf7640b3d1cc8da8f9c">write.c</a></li>
 <li>aaruf_write_sector_tag()&#160;:&#160;<a class="el" href="decls_8h.html#a6a8994cd006711347fb03cec465eafa6">decls.h</a>, <a class="el" href="write_8c.html#a2dc7f13b0cd44153f1456d3ed4c15a0c">write.c</a></li>
+<li>aaruf_write_sector_twin()&#160;:&#160;<a class="el" href="decls_8h.html#a3cb4ba27bf2653d32115061d75a55cdb">decls.h</a>, <a class="el" href="twin_8c.html#aa9224f569b896bcaaf6e2a3999bfdbb5">twin.c</a></li>
+<li>aaruf_write_sector_twin_long()&#160;:&#160;<a class="el" href="decls_8h.html#abd40fc832b7e4ef5a388fe7679db8434">decls.h</a>, <a class="el" href="twin_8c.html#ac461d2f0a3cdf6ae2e2900c3197d4ae9">twin.c</a></li>
+<li>aaruf_write_sector_twin_tag()&#160;:&#160;<a class="el" href="decls_8h.html#af0e0d29eeebcf1f63331bdcd907a73dc">decls.h</a>, <a class="el" href="twin_8c.html#a86310072292fd5b4e24cec86aab84d8c">twin.c</a></li>
 <li>aaruf_zstd_decode_buffer()&#160;:&#160;<a class="el" href="decls_8h.html#ac0f8004dbea44979bf8b58c3e3a1a6ae">decls.h</a>, <a class="el" href="zstd_8c.html#ac0f8004dbea44979bf8b58c3e3a1a6ae">zstd.c</a></li>
 <li>aaruf_zstd_encode_buffer()&#160;:&#160;<a class="el" href="decls_8h.html#a3950b73c924a7096bb2313e0858a315a">decls.h</a>, <a class="el" href="zstd_8c.html#a3950b73c924a7096bb2313e0858a315a">zstd.c</a></li>
 <li>aaruformat_context&#160;:&#160;<a class="el" href="context_8h.html#a07c6208ca3659883538a68592b40b53b">context.h</a></li>
