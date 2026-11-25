@@ -376,3 +376,41 @@ TEST_F(crc64Fixture, crc64_vmull_2352bytes)
     EXPECT_EQ(crc, EXPECTED_CRC64_2352BYTES);
 }
 #endif
+
+// Every start alignment and short length, with the data ending exactly at the end of its allocation: the SIMD
+// implementations must not read past it (AddressSanitizer catches it) and must match the table implementation.
+TEST_F(crc64Fixture, crc64_auto_all_alignments_and_lengths)
+{
+    for(size_t offset = 0; offset < 16; offset++)
+        for(size_t length = 0; length <= 100 || length == 255 || length == 256 || length == 2352;
+            length        = length <= 100   ? length + 1
+                            : length == 101 ? 255
+                            : length == 255 ? 256
+                            : length == 256 ? 2352
+                                            : 0)
+        {
+            if(length == 0 && offset > 0) continue;
+
+            auto *allocation = static_cast<uint8_t *>(malloc(offset + length + (offset + length == 0 ? 1 : 0)));
+            ASSERT_NE(allocation, nullptr);
+            uint8_t *data = allocation + offset;
+            memcpy(data, buffer, length);
+
+            uint64_t expected = CRC64_ECMA_SEED;
+            aaruf_crc64_slicing(&expected, data, static_cast<uint32_t>(length));
+            expected ^= CRC64_ECMA_SEED;
+
+            crc64_ctx *ctx = aaruf_crc64_init();
+            ASSERT_NE(ctx, nullptr);
+            aaruf_crc64_update(ctx, data, static_cast<uint32_t>(length));
+            uint64_t crc = 0;
+            aaruf_crc64_final(ctx, &crc);
+            aaruf_crc64_free(ctx);
+
+            EXPECT_EQ(crc, expected) << "offset " << offset << " length " << length;
+
+            free(allocation);
+
+            if(length == 2352) break;
+        }
+}
