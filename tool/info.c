@@ -269,6 +269,12 @@ int info(const char *path)
     snprintf(identifier_str, sizeof(identifier_str), "%8.8s", (char *)&ctx->header.identifier);
     print_field("Identifier:", identifier_str, 20);
 
+    char features_str[128];
+    snprintf(features_str, sizeof(features_str), "0x%016llX%s%s", (unsigned long long)ctx->header.featureCompatibleRo,
+             ctx->header.featureCompatibleRo & AARU_FEATURE_ROCOMPAT_ERASURE ? " erasure-coding" : "",
+             ctx->header.featureCompatibleRo & AARU_FEATURE_ROCOMPAT_TWIN_SECTORS ? " twin-sectors" : "");
+    print_field("RO Features:", features_str, 20);
+
     draw_box_bottom(COLOR_BOX);
 
     // Creator Application Section
@@ -1037,6 +1043,66 @@ int info(const char *path)
     }
 
     // Erasure Coding Recovery Section
+    // Twin sectors section
+    size_t twin_list_length = 0;
+    if(aaruf_get_twin_sectors(ctx, NULL, &twin_list_length) == AARUF_ERROR_BUFFER_TOO_SMALL && twin_list_length > 0)
+    {
+        TwinSectorInfo *twins = malloc(twin_list_length);
+
+        if(twins != NULL && aaruf_get_twin_sectors(ctx, twins, &twin_list_length) == AARUF_STATUS_OK)
+        {
+            const size_t twin_count = twin_list_length / sizeof(TwinSectorInfo);
+            uint64_t     instances  = 0;
+            for(size_t t = 0; t < twin_count; t++) instances += twins[t].count;
+
+            char title[64];
+            snprintf(title, sizeof(title), "TWIN SECTORS (%zu twinned)", twin_count);
+            draw_box_top(title, COLOR_HEADER);
+
+            char twin_info[256];
+            snprintf(twin_info, sizeof(twin_info), "%zu", twin_count);
+            print_field("Twinned sectors:", twin_info, 20);
+            snprintf(twin_info, sizeof(twin_info), "%llu", (unsigned long long)instances);
+            print_field("Total instances:", twin_info, 20);
+
+            // Components carried by the stored twins
+            static const char *component_names[kTwinCompCount] = {"data",       "prefix",    "suffix",  "subheader",
+                                                                  "subchannel", "DVD ID",    "DVD IED", "DVD CPR_MAI",
+                                                                  "EDC",        "title key", "tag"};
+            uint32_t           present                         = 0;
+            TwinSectorGroupEntry *group                        = NULL;
+            TwinSectorGroupEntry *tmp                          = NULL;
+            HASH_ITER(hh, ctx->twin_sectors, group, tmp)
+            for(uint16_t t = 0; t + 1 < group->count; t++) present |= group->instances[t].present;
+
+            twin_info[0] = 0;
+            for(int c = 0; c < kTwinCompCount; c++)
+                if(present & 1U << c)
+                {
+                    if(twin_info[0] != 0) strncat(twin_info, ", ", sizeof(twin_info) - strlen(twin_info) - 1);
+                    strncat(twin_info, component_names[c], sizeof(twin_info) - strlen(twin_info) - 1);
+                }
+            print_field("Components:", twin_info, 20);
+
+            for(size_t t = 0; t < twin_count && t < 32; t++)
+            {
+                snprintf(twin_info, sizeof(twin_info), "Sector %s%llu: %u instances", twins[t].negative ? "-" : "",
+                         (unsigned long long)twins[t].sector_address, twins[t].count);
+                print_field("", twin_info, 0);
+            }
+
+            if(twin_count > 32)
+            {
+                snprintf(twin_info, sizeof(twin_info), "... and %zu more twinned sector(s)", twin_count - 32);
+                print_field("", twin_info, 0);
+            }
+
+            draw_box_bottom(COLOR_HEADER);
+        }
+
+        free(twins);
+    }
+
     if(ctx->ec_recovery_available)
     {
         draw_box_top("ERASURE CODING RECOVERY", COLOR_HEADER);
