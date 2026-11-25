@@ -21,6 +21,7 @@
  * @brief Tests for the internal TRACE/FATAL logger: file output, line format, level filtering and long lines.
  */
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
@@ -52,7 +53,11 @@ std::string read_log()
     std::ifstream     in(kLogFile, std::ios::binary);
     std::stringstream ss;
     ss << in.rdbuf();
-    return ss.str();
+    std::string log = ss.str();
+
+    // The logger writes in text mode, so lines end in CRLF on Windows
+    log.erase(std::remove(log.begin(), log.end(), '\r'), log.end());
+    return log;
 }
 
 class LogTest : public ::testing::Test
