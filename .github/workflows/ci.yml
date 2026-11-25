@@ -109,6 +109,90 @@ jobs:
           path: build/Testing/Temporary/LastTest*.log
           if-no-files-found: ignore
 
+  qemu:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-armv7-qemu
+            triplet: arm-linux-gnueabihf
+            processor: armv7l
+            qemu: arm
+          - name: linux-x86-qemu
+            triplet: i686-linux-gnu
+            processor: i686
+            qemu: i386
+          - name: linux-ppc64le-qemu
+            triplet: powerpc64le-linux-gnu
+            processor: ppc64le
+            qemu: ppc64le
+
+    env:
+      ZLIB_VERSION: v1.3.1
+      ZLIB_PREFIX: ${{ github.workspace }}/zlib-${{ matrix.triplet }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install cross toolchain and QEMU
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ninja-build qemu-user \
+            gcc-${{ matrix.triplet }} g++-${{ matrix.triplet }}
+
+      - name: Cache zlib
+        id: cache-zlib
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.ZLIB_PREFIX }}
+          key: zlib-${{ env.ZLIB_VERSION }}-${{ matrix.triplet }}-v1
+
+      - name: Build zlib
+        if: steps.cache-zlib.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 --branch "$ZLIB_VERSION" https://github.com/madler/zlib.git "$RUNNER_TEMP/zlib"
+          cmake -S "$RUNNER_TEMP/zlib" -B "$RUNNER_TEMP/zlib-build" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_SYSTEM_NAME=Linux \
+            -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.processor }} \
+            -DCMAKE_C_COMPILER=${{ matrix.triplet }}-gcc \
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+            -DCMAKE_INSTALL_PREFIX="$ZLIB_PREFIX"
+          cmake --build "$RUNNER_TEMP/zlib-build" --parallel
+          cmake --install "$RUNNER_TEMP/zlib-build"
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+            -DCMAKE_SYSTEM_NAME=Linux \
+            -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.processor }} \
+            -DCMAKE_C_COMPILER=${{ matrix.triplet }}-gcc \
+            -DCMAKE_CXX_COMPILER=${{ matrix.triplet }}-g++ \
+            "-DCMAKE_CROSSCOMPILING_EMULATOR=qemu-${{ matrix.qemu }};-L;/usr/${{ matrix.triplet }}" \
+            -DZLIB_ROOT="$ZLIB_PREFIX" \
+            -DZLIB_USE_STATIC_LIBS=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure --timeout 1800
+
+      - name: Upload test log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-log-${{ matrix.name }}
+          path: build/Testing/Temporary/LastTest*.log
+          if-no-files-found: ignore
+
   mingw:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
