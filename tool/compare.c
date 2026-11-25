@@ -361,20 +361,49 @@ static int compare_sectors(compare_state_t *state,
                  "Comparing sector %llu of %llu", i + 1, sectors);
         draw_progress_bar(state->height - 4, i * 100 / sectors);
 
-        int err1 = aaruf_read_sector(ctx1, i, false, buffer1, &sectorSize, &sector_status1);
-        int err2 = aaruf_read_sector(ctx2, i, false, buffer2, &sectorSize, &sector_status2);
+        uint32_t twins1 = 1;
+        uint32_t twins2 = 1;
+        if(aaruf_get_sector_twin_count(ctx1, i, false, &twins1) != AARUF_STATUS_OK || twins1 == 0) twins1 = 1;
+        if(aaruf_get_sector_twin_count(ctx2, i, false, &twins2) != AARUF_STATUS_OK || twins2 == 0) twins2 = 1;
 
-        if(err1 != AARUF_STATUS_OK && err1 != AARUF_STATUS_SECTOR_NOT_DUMPED) continue;
-        if(err2 != AARUF_STATUS_OK && err2 != AARUF_STATUS_SECTOR_NOT_DUMPED) continue;
-
-        if(memcmp(buffer1, buffer2, sectorSize) != 0)
+        if(twins1 != twins2)
         {
             contents_differ = true;
             if(state->left_row < state->height - 6)
             {
-                tb_printf(2, state->left_row++, TB_RED | TB_BOLD, TB_BLUE,
-                         "Sector %llu differs", i);
+                tb_printf(2, state->left_row++, TB_RED | TB_BOLD, TB_BLUE, "Sector %llu has %u vs %u instances", i,
+                          twins1, twins2);
                 tb_present();
+            }
+        }
+
+        // Compare every physical instance both images have (twin #0 is the sector itself)
+        for(uint32_t twin = 0; twin < twins1 && twin < twins2; twin++)
+        {
+            uint32_t length1 = sectorSize;
+            uint32_t length2 = sectorSize;
+            memset(buffer1, 0, sectorSize);
+            memset(buffer2, 0, sectorSize);
+
+            int err1 = aaruf_read_sector_twin(ctx1, i, false, twin, buffer1, &length1, &sector_status1);
+            int err2 = aaruf_read_sector_twin(ctx2, i, false, twin, buffer2, &length2, &sector_status2);
+
+            if(err1 != AARUF_STATUS_OK && err1 != AARUF_STATUS_SECTOR_NOT_DUMPED) continue;
+            if(err2 != AARUF_STATUS_OK && err2 != AARUF_STATUS_SECTOR_NOT_DUMPED) continue;
+
+            if(length1 != length2 || (twin > 0 && sector_status1 != sector_status2) ||
+               memcmp(buffer1, buffer2, length1) != 0)
+            {
+                contents_differ = true;
+                if(state->left_row < state->height - 6)
+                {
+                    if(twins1 > 1)
+                        tb_printf(2, state->left_row++, TB_RED | TB_BOLD, TB_BLUE, "Sector %llu twin %u differs", i,
+                                  twin);
+                    else
+                        tb_printf(2, state->left_row++, TB_RED | TB_BOLD, TB_BLUE, "Sector %llu differs", i);
+                    tb_present();
+                }
             }
         }
     }

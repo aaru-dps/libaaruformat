@@ -115,56 +115,104 @@ int cli_compare(const char *path1, const char *path2, bool use_long)
         buffer1_length = buffer_size;
         buffer2_length = buffer_size;
 
-        if(use_long)
+        uint32_t twins1 = 1;
+        uint32_t twins2 = 1;
+        if(aaruf_get_sector_twin_count(ctx1, sector, false, &twins1) != AARUF_STATUS_OK || twins1 == 0) twins1 = 1;
+        if(aaruf_get_sector_twin_count(ctx2, sector, false, &twins2) != AARUF_STATUS_OK || twins2 == 0) twins2 = 1;
+
+        bool sector_differs = false;
+
+        if(twins1 != twins2)
         {
-            read_result1 = aaruf_read_sector_long(ctx1, sector, false, buffer1, &buffer1_length, &sector_status1);
-            read_result2 = aaruf_read_sector_long(ctx2, sector, false, buffer2, &buffer2_length, &sector_status2);
-        }
-        else
-        {
-            read_result1 = aaruf_read_sector(ctx1, sector, false, buffer1, &buffer1_length, &sector_status1);
-            read_result2 = aaruf_read_sector(ctx2, sector, false, buffer2, &buffer2_length, &sector_status2);
+            printf("Sector %llu: DIFFERENT (%u vs %u instances)\n", (unsigned long long)sector, twins1, twins2);
+            sector_differs = true;
         }
 
-        // Handle read errors or missing sectors
-        const bool sector1_available = read_result1 == AARUF_STATUS_OK;
-        const bool sector2_available = read_result2 == AARUF_STATUS_OK;
-        bool       sectors_different = false;
+        // Compare every physical instance both images have (twin #0 is the sector itself)
+        for(uint32_t twin = 0; twin < twins1 && twin < twins2; twin++)
+        {
+            buffer1_length = buffer_size;
+            buffer2_length = buffer_size;
 
-        if(!sector1_available && !sector2_available)
-        {
-            // Both sectors are not available - consider them the same
-            sectors_different = false;
-        }
-        else if(sector1_available != sector2_available)
-        {
-            // One sector is available, the other is not - they're different
-            sectors_different = true;
-        }
-        else if(sector_status1 != sector_status2)
-        {
-            // Both sectors are available but have different status codes
-            sectors_different = true;
-        }
-        else if(sector1_available && sector2_available &&
-                (buffer1_length != buffer2_length || memcmp(buffer1, buffer2, buffer1_length) != 0))
-        {
-            // Both sectors are available - compare their content
-            sectors_different = true;
+            if(use_long)
+            {
+                read_result1 =
+                    aaruf_read_sector_twin_long(ctx1, sector, false, twin, buffer1, &buffer1_length, &sector_status1);
+                read_result2 =
+                    aaruf_read_sector_twin_long(ctx2, sector, false, twin, buffer2, &buffer2_length, &sector_status2);
+            }
+            else
+            {
+                read_result1 =
+                    aaruf_read_sector_twin(ctx1, sector, false, twin, buffer1, &buffer1_length, &sector_status1);
+                read_result2 =
+                    aaruf_read_sector_twin(ctx2, sector, false, twin, buffer2, &buffer2_length, &sector_status2);
+            }
+
+            // Handle read errors or missing sectors
+            const bool sector1_available = read_result1 == AARUF_STATUS_OK;
+            const bool sector2_available = read_result2 == AARUF_STATUS_OK;
+            bool       sectors_different = false;
+            bool       tags_different    = false;
+
+            if(!sector1_available && !sector2_available)
+            {
+                // Both sectors are not available - consider them the same
+                sectors_different = false;
+            }
+            else if(sector1_available != sector2_available)
+            {
+                // One sector is available, the other is not - they're different
+                sectors_different = true;
+            }
+            else if(sector_status1 != sector_status2)
+            {
+                // Both sectors are available but have different status codes
+                sectors_different = true;
+            }
+            else if(sector1_available && sector2_available &&
+                    (buffer1_length != buffer2_length || memcmp(buffer1, buffer2, buffer1_length) != 0))
+            {
+                // Both sectors are available - compare their content
+                sectors_different = true;
+            }
+
+            // Twins carry their own subchannel, which is not part of the long sector
+            if(use_long && twin > 0 && !sectors_different)
+            {
+                uint8_t  sub1[96], sub2[96];
+                uint32_t sub1_length = sizeof(sub1), sub2_length = sizeof(sub2);
+                int32_t  sub1_result =
+                    aaruf_read_sector_twin_tag(ctx1, sector, false, twin, sub1, &sub1_length, kSectorTagCdSubchannel);
+                int32_t sub2_result =
+                    aaruf_read_sector_twin_tag(ctx2, sector, false, twin, sub2, &sub2_length, kSectorTagCdSubchannel);
+
+                if(sub1_result != sub2_result ||
+                   (sub1_result == AARUF_STATUS_OK && memcmp(sub1, sub2, sizeof(sub1)) != 0))
+                    tags_different = true;
+            }
+
+            if(sectors_different || tags_different)
+            {
+                if(twins1 > 1 || twins2 > 1)
+                    printf("Sector %llu twin %u: DIFFERENT", (unsigned long long)sector, twin);
+                else
+                    printf("Sector %llu: DIFFERENT", (unsigned long long)sector);
+
+                if(tags_different)
+                    printf(" (different subchannel)");
+                else if(!sector1_available)
+                    printf(" (missing in image 1)");
+                else if(!sector2_available)
+                    printf(" (missing in image 2)");
+                else if(buffer1_length != buffer2_length)
+                    printf(" (different sizes: %u vs %u)", buffer1_length, buffer2_length);
+                printf("\n");
+                sector_differs = true;
+            }
         }
 
-        if(sectors_different)
-        {
-            printf("Sector %llu: DIFFERENT", (unsigned long long)sector);
-            if(!sector1_available)
-                printf(" (missing in image 1)");
-            else if(!sector2_available)
-                printf(" (missing in image 2)");
-            else if(buffer1_length != buffer2_length)
-                printf(" (different sizes: %u vs %u)", buffer1_length, buffer2_length);
-            printf("\n");
-            different_sectors++;
-        }
+        if(sector_differs) different_sectors++;
 
         sectors_processed++;
 
