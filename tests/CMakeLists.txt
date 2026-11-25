@@ -10,8 +10,20 @@ if(DEFINED CMAKE_WARN_DEPRECATED)
 endif()
 set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
 
+# Build Google Test as a static library without gmock (unused). A shared gtest
+# breaks MinGW links: with -static-libgcc the DLL re-exports _Unwind_Resume,
+# which then collides with libgcc_eh. Match the library's shared MSVC CRT.
+set(_aaru_saved_build_shared_libs ${BUILD_SHARED_LIBS})
+set(BUILD_SHARED_LIBS OFF)
+set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
+set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
 # Add Google Test subdirectory
 add_subdirectory(lib)
+
+set(BUILD_SHARED_LIBS ${_aaru_saved_build_shared_libs})
+unset(_aaru_saved_build_shared_libs)
 
 # Restore original deprecation warning setting
 if(_aaru_saved_warn_deprecated STREQUAL __aaru_warn_not_set__)
@@ -159,7 +171,7 @@ endif()
 # Ensure test data is copied before running tests
 add_dependencies(tests_run copy_test_data)
 
-# On Windows, copy all runtime DLLs (aaruformat, gtest, ZLIB, etc.) next to the
+# On Windows, copy all runtime DLLs (aaruformat, ZLIB, etc.) next to the
 # test executable so it can be discovered and run without PATH manipulation.
 if(WIN32)
   add_custom_command(TARGET tests_run POST_BUILD
@@ -167,18 +179,6 @@ if(WIN32)
       $<TARGET_FILE:aaruformat>
       $<TARGET_FILE_DIR:tests_run>
     COMMENT "Copying libaaruformat DLL next to tests_run"
-  )
-  add_custom_command(TARGET tests_run POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      $<TARGET_FILE:gtest>
-      $<TARGET_FILE_DIR:tests_run>
-    COMMENT "Copying libgtest DLL next to tests_run"
-  )
-  add_custom_command(TARGET tests_run POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      $<TARGET_FILE:gtest_main>
-      $<TARGET_FILE_DIR:tests_run>
-    COMMENT "Copying libgtest_main DLL next to tests_run"
   )
   # Copy all remaining runtime DLLs (e.g. ZLIB from vcpkg) if CMake >= 3.21
   if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.21")
