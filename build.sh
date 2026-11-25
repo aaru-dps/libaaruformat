@@ -27,7 +27,7 @@ build_with_dockcross() {
     local script_name="$2"
     local output_ext="$3"
     local runtime_dir="$4"
-    echo "\n==== Building for $runtime_dir ===="
+    echo -e "\n==== Building for $runtime_dir ===="
     rm -f CMakeCache.txt
     mkdir -p "$runtime_dir"
     docker run --rm "$docker_image" > "docker/$script_name"
@@ -61,7 +61,7 @@ if [[ $(uname) == Darwin ]]; then
     build_macos() {
         local arch="$1"
         local runtime_dir="$2"
-        echo "\n==== Building for $runtime_dir ===="
+        echo -e "\n==== Building for $runtime_dir ===="
         rm -f CMakeCache.txt
         cmake -DCMAKE_BUILD_TYPE=Release -DAARU_BUILD_PACKAGE=1 -DAARU_MACOS_TARGET_ARCH="$arch" \
               -DCMAKE_SYSTEM_NAME=Darwin -DCMAKE_SYSTEM_PROCESSOR="$arch" .
