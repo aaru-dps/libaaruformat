@@ -12,6 +12,7 @@
 //   1.0 2018-01-26 Natalia Portillo: Initial release
 //   1.1 2020-02-29 Natalia Portillo: Rebranding
 //   1.2 2020-03-04 Natalia Portillo: Add version 2 index
+//   1.3 2026-11-25 Natalia Portillo: Add twin sector table
 //------------------------------------------------
 
 #define DIC_MAGIC 0x544D52464D434944
@@ -751,7 +752,8 @@ enum <uint> BlockType
     TapePartitionBlock           = 0x54425054,
     CompactDiscIndexesBlock      = 0x58494443,
     AaruMetadataJsonBlock        = 0x444D534A,
-    ErasureCodingMapBlock        = 0x424D4345
+    ErasureCodingMapBlock        = 0x424D4345,
+    TwinSectorTable              = 0x42545754
 };
 
 enum <byte> TrackType
@@ -840,6 +842,11 @@ typedef enum<uint64> {
     AARU_FEATURE_RW_BLAKE3 = 0x1
 } FeaturesCompatible <edit=flags>;
 
+typedef enum<uint64> {
+    AARU_FEATURE_ROCOMPAT_ERASURE      = 0x1,
+    AARU_FEATURE_ROCOMPAT_TWIN_SECTORS = 0x2
+} FeaturesCompatibleRo <edit=flags>;
+
 typedef struct
 {
     char                   identifier[8];
@@ -874,7 +881,7 @@ typedef struct
         byte               blockAlignmentShift;
         uint16             biggestSectorSize;
         FeaturesCompatible featureCompatible;
-        uint64             featureCompatibleRo;
+        FeaturesCompatibleRo featureCompatibleRo;
         uint64             featureIncompatible;
     }
 } AaruHeader;
@@ -1155,6 +1162,63 @@ typedef struct
         DpmCalibration dpm_calibrations[calibrations];
 } DpmHeader;
 
+enum <ubyte> TwinComponentKind
+{
+    TwinComponentPointer = 0,
+    TwinComponentInline  = 1
+};
+
+typedef struct
+{
+    DataType          dataType;
+    TwinComponentKind kind;
+    ubyte             reserved;
+    uint              size;
+} TwinComponentDescriptor;
+
+typedef struct
+{
+    uint64 sector;
+    uint   first;
+    uint16 count;
+    ubyte  twin0Status;
+    ubyte  reserved;
+} TwinSectorGroup;
+
+typedef struct (uint recordSize)
+{
+    uint  present <format=binary>;
+    uint  reserved;
+    ubyte values[recordSize - 8];
+} TwinInstanceRecord;
+
+typedef struct
+{
+    BlockType       identifier;
+    CompressionType compression;
+    ubyte           blockAlignmentShift;
+    ubyte           dataShift;
+    ubyte           components;
+    ubyte           reserved[3];
+    uint            recordSize;
+    uint            groups;
+    uint64          instances;
+    uint64          cmpLength;
+    uint64          length;
+    uint64          cmpCrc64 <format=hex>;
+    uint64          crc64 <format=hex>;
+    if(compression == None)
+    {
+        TwinComponentDescriptor descriptors[components];
+        if(groups > 0)
+            TwinSectorGroup twinGroups[groups];
+        if(instances > 0)
+            TwinInstanceRecord records(recordSize)[instances] <optimize=true>;
+    }
+    else
+        ubyte payload[cmpLength];
+} TwinSectorTableHeader;
+
 typedef struct
 {
     uint16 track;
@@ -1312,6 +1376,9 @@ for(i = 0; i < index.entries; i++)
             break;
         case 0x58494443:
             CompactDiscIndexesBlock compactDiscIndexes;
+            break;
+        case TwinSectorTable:
+            TwinSectorTableHeader twinSectors;
             break;
     }
 }

@@ -809,6 +809,13 @@ enum ChecksumAlgorithm : u8
 
 using Index;
 
+bitfield FeaturesCompatibleRo
+{
+    erasureCoding : 1;
+    twinSectors   : 1;
+    reserved      : 62;
+};
+
 struct AaruHeader
 {
     char            identifier[8];
@@ -843,7 +850,7 @@ struct AaruHeader
         u8          blockAlignmentShift;
         u16         biggestSectorSize;
         u64         featureCompatible;
-        u64         featureCompatibleRo;
+        FeaturesCompatibleRo featureCompatibleRo;
         u64         featureIncompatible;
     }
 };
@@ -1176,6 +1183,62 @@ struct DpmHeader
     DpmCalibration  dpm_calibrations[calibrations];
 };
 
+enum TwinComponentKind : u8
+{
+    Pointer = 0,
+    Inline  = 1
+};
+
+struct TwinComponentDescriptor
+{
+    DataType          dataType;
+    TwinComponentKind kind;
+    u8                reserved;
+    type::Size<u32>   size;
+};
+
+struct TwinSectorGroup
+{
+    u64 sector;
+    u32 first;
+    u16 count;
+    u8  twin0Status;
+    u8  reserved;
+};
+
+struct TwinInstanceRecord<auto recordSize>
+{
+    u32 present [[format("std::format(\"0b{:b}\", _this)")]];
+    u32 reserved;
+    u8  values[recordSize - 8];
+};
+
+struct TwinSectorTable
+{
+    BlockType       identifier;
+    CompressionType compression;
+    u8              blockAlignmentShift;
+    u8              dataShift;
+    u8              components;
+    u8              reserved[3];
+    type::Size<u32> recordSize;
+    u32             groups;
+    u64             instances;
+    type::Size<u64> cmpLength;
+    type::Size<u64> length;
+    type::Hex<u64>  cmpCrc64;
+    type::Hex<u64>  crc64;
+
+    if(compression == CompressionType::None)
+    {
+        TwinComponentDescriptor        descriptors[components];
+        TwinSectorGroup                twinGroups[groups];
+        TwinInstanceRecord<recordSize> records[instances];
+    }
+    else
+        u8 payload[cmpLength];
+};
+
 struct CompactDiscIndexEntry
 {
     u16 track;
@@ -1322,6 +1385,7 @@ struct IndexEntry
         (BlockType::Index3):                       Index                   *index               : u64 [[inline]];
         (BlockType::FluxDataBlock):                FluxDataBlock           *fluxData            : u64 [[inline]];
         (BlockType::DataStreamPayloadBlock):       DataStreamPayloadBlock  *dataStreamPayload   : u64 [[inline]];
+        (BlockType::TwinSectorTable):              TwinSectorTable         *twinSectors         : u64 [[inline]];
         (_):                                       BlockType               *offset              : u64 [[inline]];
     }
 };
