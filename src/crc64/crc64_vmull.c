@@ -65,6 +65,27 @@ TARGET_WITH_SIMD FORCE_INLINE uint64x2_t fold(uint64x2_t in, uint64x2_t foldCons
  * @param len Length of the data buffer in bytes.
  * @return Computed CRC64 value.
  */
+/**
+ * @brief Loads the aligned 16-byte lane at @p lane, reading only the bytes inside [@p start, @p end).
+ *
+ * The first and last lanes of a buffer usually extend past it. Those bytes are discarded by the caller (masked or
+ * shifted out), but reading them is still an out-of-bounds access, so they are zero-filled instead.
+ */
+TARGET_WITH_SIMD static uint64x2_t load_lane(const uint64x2_t *lane, const uint8_t *start, const uint8_t *end)
+{
+    const uint8_t *first = (const uint8_t *)lane;
+
+    if(first >= start && first + 16 <= end) return vreinterpretq_u64_u32(vld1q_u32((const uint32_t *)lane));
+
+    AARU_ALIGN16 uint8_t temp[16] = {0};
+    const uint8_t       *from     = first < start ? start : first;
+    const uint8_t       *to       = first + 16 > end ? end : first + 16;
+
+    if(to > from) memcpy(temp + (from - first), from, (size_t)(to - from));
+
+    return vreinterpretq_u64_u32(vld1q_u32((const uint32_t *)temp));
+}
+
 AARU_EXPORT TARGET_WITH_SIMD uint64_t AARU_CALL aaruf_crc64_vmull(uint64_t previous_crc, const uint8_t *data, long len)
 {
     TRACE("Entering aaruf_crc64_vmull(%llu, %p, %ld)", previous_crc, data, len);
@@ -76,6 +97,9 @@ AARU_EXPORT TARGET_WITH_SIMD uint64_t AARU_CALL aaruf_crc64_vmull(uint64_t previ
 
     const uint64x2_t foldConstants1 = vcombine_u64(vcreate_u64(k1), vcreate_u64(k2));
     const uint64x2_t foldConstants2 = vcombine_u64(vcreate_u64(mu), vcreate_u64(p));
+
+    // No data leaves the CRC unchanged (the folding below needs at least one byte)
+    if(len <= 0) return previous_crc;
 
     const uint8_t *end = data + len;
 
@@ -91,8 +115,7 @@ AARU_EXPORT TARGET_WITH_SIMD uint64_t AARU_CALL aaruf_crc64_vmull(uint64_t previ
     const uint64x2_t leadInMask =
         vreinterpretq_u64_u32(vld1q_u32((const uint32_t *)(const uint64x2_t *)(shuffleMasks + (16 - leadInSize))));
     uint64x2_t a = vreinterpretq_u64_u32(vdupq_n_u32(0));
-    uint64x2_t b = vreinterpretq_u64_u32(
-        vld1q_u32((const uint32_t *)alignedData));  // Use a signed shift right to create a mask with the sign bit
+    uint64x2_t b = load_lane(alignedData, data, end);  // Use a signed shift right to create a mask with the sign bit
     const uint64x2_t data0 =
         vreinterpretq_u64_u8(vbslq_u8(vreinterpretq_u8_s8(vshrq_n_s8(vreinterpretq_s8_u64(leadInMask), 7)),
                                       vreinterpretq_u8_u64(b), vreinterpretq_u8_u64(a)));
@@ -115,7 +138,7 @@ AARU_EXPORT TARGET_WITH_SIMD uint64_t AARU_CALL aaruf_crc64_vmull(uint64_t previ
     }
     else if(alignedLength == 2)
     {
-        const uint64x2_t data1 = vreinterpretq_u64_u32(vld1q_u32((const uint32_t *)(alignedData + 1)));
+        const uint64x2_t data1 = load_lane(alignedData + 1, data, end);
 
         if(len < 8)
         {

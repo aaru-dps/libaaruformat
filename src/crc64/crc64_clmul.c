@@ -87,6 +87,27 @@ CLMUL static __m128i fold(__m128i in, __m128i fold_constants)
 }
 
 /**
+ * @brief Loads the aligned 16-byte lane at @p lane, reading only the bytes inside [@p start, @p end).
+ *
+ * The first and last lanes of a buffer usually extend past it. Those bytes are discarded by the caller (masked or
+ * shifted out), but reading them is still an out-of-bounds access, so they are zero-filled instead.
+ */
+CLMUL static __m128i load_lane(const __m128i *lane, const uint8_t *start, const uint8_t *end)
+{
+    const uint8_t *first = (const uint8_t *)lane;
+
+    if(first >= start && first + 16 <= end) return _mm_load_si128(lane);
+
+    AARU_ALIGN16 uint8_t temp[16] = {0};
+    const uint8_t       *from     = first < start ? start : first;
+    const uint8_t       *to       = first + 16 > end ? end : first + 16;
+
+    if(to > from) memcpy(temp + (from - first), from, (size_t)(to - from));
+
+    return _mm_load_si128((const __m128i *)temp);
+}
+
+/**
  * @brief Computes CRC64 using the CLMUL (carry-less multiplication) instruction set.
  *
  * @param crc Initial CRC64 value.
@@ -106,6 +127,9 @@ AARU_EXPORT CLMUL uint64_t AARU_CALL aaruf_crc64_clmul(const uint64_t crc, const
     const __m128i fold_constants_1 = _mm_set_epi64x(k2, k1);
     const __m128i fold_constants_2 = _mm_set_epi64x(p, mu);
 
+    // No data leaves the CRC unchanged (the folding below needs at least one byte)
+    if(length <= 0) return crc;
+
     const uint8_t *end = data + length;
 
     // Align pointers
@@ -118,7 +142,7 @@ AARU_EXPORT CLMUL uint64_t AARU_CALL aaruf_crc64_clmul(const uint64_t crc, const
     const size_t aligned_length = aligned_end - aligned_data;
 
     const __m128i lead_in_mask = _mm_loadu_si128((const __m128i *)(shuffleMasks + (16 - lead_in_size)));
-    const __m128i data0        = _mm_blendv_epi8(_mm_setzero_si128(), _mm_load_si128(aligned_data), lead_in_mask);
+    const __m128i data0        = _mm_blendv_epi8(_mm_setzero_si128(), load_lane(aligned_data, data, end), lead_in_mask);
 
 #if defined(_WIN64)
     const __m128i initial_crc = _mm_cvtsi64_si128(~crc);
@@ -142,7 +166,7 @@ AARU_EXPORT CLMUL uint64_t AARU_CALL aaruf_crc64_clmul(const uint64_t crc, const
     }
     else if(aligned_length == 2)
     {
-        const __m128i data1 = _mm_load_si128(aligned_data + 1);
+        const __m128i data1 = load_lane(aligned_data + 1, data, end);
 
         if(length < 8)
         {
