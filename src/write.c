@@ -852,7 +852,7 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector_long(void *context, uint64_t se
             }
 
             // Nintendo DVD long sector
-            if(length == 2064 && ctx->image_info.MediaType == GOD || ctx->image_info.MediaType == WOD)
+            if(length == 2064 && (ctx->image_info.MediaType == GOD || ctx->image_info.MediaType == WOD))
             {
                 if(ctx->sector_id == NULL) ctx->sector_id = calloc(1, 4 * total_sectors);
                 if(ctx->sector_ied == NULL) ctx->sector_ied = calloc(1, 2 * total_sectors);
