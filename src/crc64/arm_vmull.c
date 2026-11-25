@@ -35,9 +35,14 @@
 #ifdef TARGET_WITH_CRYPTO
 TARGET_WITH_CRYPTO static uint64x2_t sse2neon_vmull_p64_crypto(uint64x1_t _a, uint64x1_t _b)
 {
+#if defined(_MSC_VER) && !defined(__clang__)
+    // MSVC's vmull_p64 takes __n64 vectors rather than poly64_t scalars
+    return vreinterpretq_u64_p128(vmull_p64(_a, _b));
+#else
     poly64_t a = vget_lane_p64(vreinterpret_p64_u64(_a), 0);
     poly64_t b = vget_lane_p64(vreinterpret_p64_u64(_b), 0);
     return vreinterpretq_u64_p128(vmull_p64(a, b));
+#endif
 }
 #endif
 
