@@ -1677,7 +1677,7 @@ TEST_F(CreateImageFixture, create_image_utf8_filename)
 
     // The file must exist under the real Unicode name, not a code page mangled one
 #ifdef _WIN32
-    FILE *f = _wfopen(L"test_ñ_日本.aif", L"rb");
+    FILE *f = _wfopen(L"test_\u00f1_\u65e5\u672c.aif", L"rb");
 #else
     FILE *f = fopen(filename, "rb");
 #endif
