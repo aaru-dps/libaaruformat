@@ -104,6 +104,7 @@ add_executable(tests_run
     mode2_errored.cpp
     cd_prefix_resume.cpp
     twin_sectors.cpp
+    multilevel_ddt.cpp
     reed_solomon.cpp
     erasure_coding.cpp
     flux_only_image.cpp
