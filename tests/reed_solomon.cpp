@@ -245,8 +245,9 @@ TEST_F(ReedSolomonTest, CreateInvalid)
     EXPECT_EQ(rs_create(0, 2), nullptr);
     EXPECT_EQ(rs_create(4, 0), nullptr);
     EXPECT_EQ(rs_create(200, 56), nullptr);  /* 200+56 = 256 > 255 */
-    EXPECT_NE(rs_create(200, 55), nullptr);  /* 200+55 = 255, OK */
-    rs_free(rs_create(200, 55));
+    rs_context *ctx = rs_create(200, 55);  /* 200+55 = 255, OK */
+    EXPECT_NE(ctx, nullptr);
+    rs_free(ctx);
 }
 
 TEST_F(ReedSolomonTest, EncodeDecodeXOR_M1)
