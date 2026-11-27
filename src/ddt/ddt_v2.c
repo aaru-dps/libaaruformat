@@ -1032,6 +1032,16 @@ int32_t decode_ddt_multi_level_v2(aaruformat_context *ctx, uint64_t sector_addre
         return AARUF_STATUS_OK;
     }
 
+    // A part of the image never written has no secondary table
+    if(secondary_ddt_offset == 0)
+    {
+        *sector_status = SectorStatusNotDumped;
+        *offset        = 0;
+        *block_offset  = 0;
+        TRACE("Exiting decode_ddt_multi_level_v2() = AARUF_STATUS_OK (no secondary table)");
+        return AARUF_STATUS_OK;
+    }
+
     // Is the one we have cached the same as the one we need to read?
     if(ctx->cached_ddt_offset != secondary_ddt_offset)
     {
