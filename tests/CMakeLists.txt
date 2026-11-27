@@ -117,6 +117,7 @@ add_executable(tests_run
     cd_prefix_resume.cpp
     twin_sectors.cpp
     multilevel_ddt.cpp
+    flush_checkpoint.cpp
     sector_tags.cpp
     reed_solomon.cpp
     erasure_coding.cpp
