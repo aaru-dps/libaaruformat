@@ -590,53 +590,73 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
         }
     }
 
-    // Check if block header is cached
-    TRACE("Checking if block header is cached");
-    block_header = find_in_cache_uint64(&ctx->block_header_cache, block_offset);
+    // A sector in the data block still being filled is not on disk yet: it is read from the block being written
+    const bool in_open_block =
+        ctx->is_writing && ctx->writing_buffer != NULL && block_offset == ctx->next_block_position;
 
-    // Read block header
-    if(block_header == NULL)
+    if(in_open_block)
     {
-        TRACE("Allocating memory for block header");
-        block_header = malloc(sizeof(BlockHeader));
+        TRACE("Sector is in the data block being written");
+        block_header = &ctx->current_block_header;
+
+        if(offset >= (uint64_t)ctx->current_block_offset)
+        {
+            FATAL("Sector points past the end of the data block being written");
+
+            TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_READ_BLOCK");
+            return AARUF_ERROR_CANNOT_READ_BLOCK;
+        }
+    }
+    else
+    {
+        // Check if block header is cached
+        TRACE("Checking if block header is cached");
+        block_header = find_in_cache_uint64(&ctx->block_header_cache, block_offset);
+
+        // Read block header
         if(block_header == NULL)
         {
-            FATAL("Not enough memory for block header");
+            TRACE("Allocating memory for block header");
+            block_header = malloc(sizeof(BlockHeader));
+            if(block_header == NULL)
+            {
+                FATAL("Not enough memory for block header");
 
-            TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
-            return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_NOT_ENOUGH_MEMORY");
+                return AARUF_ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            TRACE("Reading block header");
+            if(aaruf_fseek(ctx->imageStream, (aaru_off_t)block_offset, SEEK_SET) != 0)
+            {
+                FATAL("Could not seek to block header");
+                free(block_header);
+
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_READ_HEADER");
+                return AARUF_ERROR_CANNOT_READ_HEADER;
+            }
+
+            read_bytes = fread(block_header, 1, sizeof(BlockHeader), ctx->imageStream);
+
+            if(read_bytes != sizeof(BlockHeader))
+            {
+                FATAL("Error reading block header");
+                free(block_header);
+
+                TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_READ_HEADER");
+                return AARUF_ERROR_CANNOT_READ_HEADER;
+            }
+
+            TRACE("Adding block header to cache");
+            add_to_cache_uint64(&ctx->block_header_cache, block_offset, block_header, sizeof(BlockHeader));
         }
-
-        TRACE("Reading block header");
-        if(aaruf_fseek(ctx->imageStream, (aaru_off_t)block_offset, SEEK_SET) != 0)
+        else if(aaruf_fseek(ctx->imageStream, (aaru_off_t)(block_offset + sizeof(BlockHeader)), SEEK_SET) != 0)
         {
-            FATAL("Could not seek to block header");
-            free(block_header);
+            FATAL("Could not seek past cached block header");
 
             TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_READ_HEADER");
             return AARUF_ERROR_CANNOT_READ_HEADER;
         }
-
-        read_bytes = fread(block_header, 1, sizeof(BlockHeader), ctx->imageStream);
-
-        if(read_bytes != sizeof(BlockHeader))
-        {
-            FATAL("Error reading block header");
-            free(block_header);
-
-            TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_READ_HEADER");
-            return AARUF_ERROR_CANNOT_READ_HEADER;
-        }
-
-        TRACE("Adding block header to cache");
-        add_to_cache_uint64(&ctx->block_header_cache, block_offset, block_header, sizeof(BlockHeader));
-    }
-    else if(aaruf_fseek(ctx->imageStream, (aaru_off_t)(block_offset + sizeof(BlockHeader)), SEEK_SET) != 0)
-    {
-        FATAL("Could not seek past cached block header");
-
-        TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_CANNOT_READ_HEADER");
-        return AARUF_ERROR_CANNOT_READ_HEADER;
     }
 
     /* Sanity check: if the cached/read block header looks corrupt, skip directly to EC recovery.
@@ -658,9 +678,9 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
         return AARUF_ERROR_BUFFER_TOO_SMALL;
     }
 
-    // Check if block is cached
+    // Check if block is cached, the block being written is always in memory
     TRACE("Checking if block is cached");
-    block = find_in_cache_uint64(&ctx->block_cache, block_offset);
+    block = in_open_block ? ctx->writing_buffer : find_in_cache_uint64(&ctx->block_cache, block_offset);
 
     if(block != NULL)
     {
