@@ -34,6 +34,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(_WIN32)
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
+
 #include <aaruformat.h>
 
 #include "erasure_internal.h"
@@ -72,12 +78,12 @@ static int32_t write_cached_secondary_ddt(aaruformat_context *ctx)
     // Flux-only images carry no DDT.
     if(ctx->no_user_data_ddt) return AARUF_STATUS_OK;
 
-    // Only a table modified since it was loaded or created needs writing
-    if(!ctx->dirty_secondary_ddt || ctx->cached_secondary_ddt2 == NULL) return AARUF_STATUS_OK;
+    // Only tables modified since they were loaded or created need writing
+    if(!ctx->dirty_secondary_ddt || ctx->write_secondary_ddts == NULL) return AARUF_STATUS_OK;
 
-    TRACE("Writing cached secondary DDT table to file");
+    TRACE("Writing changed secondary DDT tables to file");
 
-    const int32_t res = flush_cached_secondary_ddt_v2(ctx);
+    const int32_t res = write_dirty_secondary_ddts_v2(ctx);
     if(res != AARUF_STATUS_OK) return AARUF_ERROR_CANNOT_WRITE_HEADER;
 
     return AARUF_STATUS_OK;
@@ -138,6 +144,19 @@ static int32_t write_primary_ddt(aaruformat_context *ctx)
     // Free CRC64 context
     aaruf_crc64_free(crc64_context);
 
+    // A new image writes the table in the space reserved for it after the header. Once an index on disk points to a
+    // copy, the table goes after the end of the file instead, never over that copy, so the image keeps its previous
+    // state until the new index is written.
+    const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
+
+    if(ctx->primary_ddt_committed)
+    {
+        aaruf_fseek(ctx->imageStream, 0, SEEK_END);
+        uint64_t primary_position = (uint64_t)aaruf_ftell(ctx->imageStream);
+        if(ctx->next_block_position > primary_position) primary_position = ctx->next_block_position;
+        ctx->primary_ddt_offset = primary_position + alignment_mask & ~alignment_mask;
+    }
+
     // First write the DDT header
     aaruf_fseek(ctx->imageStream, (aaru_off_t)ctx->primary_ddt_offset, SEEK_SET);
 
@@ -182,9 +201,16 @@ static int32_t write_primary_ddt(aaruformat_context *ctx)
         utarray_push_back(ctx->index_entries, &primary_ddt_entry);
         ctx->dirty_index_block = true;
         TRACE("Added primary DDT index entry at offset %" PRIu64, ctx->primary_ddt_offset);
+
+        // Data written after a flush goes after the table
+        const uint64_t table_end = (uint64_t)aaruf_ftell(ctx->imageStream) + alignment_mask & ~alignment_mask;
+        if(table_end > ctx->next_block_position) ctx->next_block_position = table_end;
     }
     else
+    {
         TRACE("Failed to write primary DDT table to file");
+        return AARUF_ERROR_CANNOT_WRITE_HEADER;
+    }
 
     return AARUF_STATUS_OK;
 }
@@ -5285,7 +5311,25 @@ static int32_t write_flux_blocks(aaruformat_context *ctx)
  * @retval AARUF_ERROR_CANNOT_WRITE_HEADER Failed writing index header, entries, or updating main header.
  * @internal
  */
-static int32_t write_index_block(aaruformat_context *ctx)
+/**
+ * @brief Writes everything buffered for the image stream to the storage device.
+ *
+ * @param stream Image stream.
+ * @return 0 on success, non-zero on failure.
+ * @internal
+ */
+static int sync_image_stream(FILE *stream)
+{
+    if(fflush(stream) != 0) return -1;
+
+#if defined(_WIN32)
+    return _commit(_fileno(stream));
+#else
+    return fsync(fileno(stream));
+#endif
+}
+
+static int32_t write_index_block(aaruformat_context *ctx, const bool sync)
 {
     // Write the complete index at the end of the file
     TRACE("Writing index at the end of the file");
@@ -5354,6 +5398,13 @@ static int32_t write_index_block(aaruformat_context *ctx)
             {
                 TRACE("Successfully wrote all %zu index entries", entries_written);
 
+                // Everything the new index points to must be on disk before the header points to it
+                if(sync && sync_image_stream(ctx->imageStream) != 0)
+                {
+                    FATAL("Could not sync the image before writing the header");
+                    return AARUF_ERROR_CANNOT_WRITE_HEADER;
+                }
+
                 // Update header with index offset and rewrite it
                 ctx->header.indexOffset = index_position;
                 TRACE("Updating header with index offset: %" PRIu64, ctx->header.indexOffset);
@@ -5365,6 +5416,12 @@ static int32_t write_index_block(aaruformat_context *ctx)
                 else
                 {
                     TRACE("Failed to update header with index offset");
+                    return AARUF_ERROR_CANNOT_WRITE_HEADER;
+                }
+
+                if(sync && sync_image_stream(ctx->imageStream) != 0)
+                {
+                    FATAL("Could not sync the image header");
                     return AARUF_ERROR_CANNOT_WRITE_HEADER;
                 }
             }
@@ -5536,7 +5593,7 @@ int32_t aaruf_finalize_write(aaruformat_context *ctx)
     // Write the complete index at the end of the file
     if(ctx->dirty_index_block)
     {
-        res = write_index_block(ctx);
+        res = write_index_block(ctx, false);
         if(res != AARUF_STATUS_OK) return res;
     }
 
@@ -5551,5 +5608,144 @@ int32_t aaruf_finalize_write(aaruformat_context *ctx)
         ctx->sector_hash_map = NULL;
     }
 
+    return AARUF_STATUS_OK;
+}
+
+/**
+ * @brief Writes everything needed to reopen the image as it is now, and keeps it open for writing.
+ *
+ * Makes a checkpoint of an image being written: closes the data block being filled, writes the user data DDT (the
+ * changed secondary tables and the primary table of a multi-level DDT, or the whole single-level table) and a new
+ * index after the end of the file, syncs the file to the storage device, and only then points the header to the new
+ * index and syncs again. Nothing on disk that the previous index points to is overwritten, so if the program or the
+ * computer stops at any moment the image opens either as it was at the previous checkpoint or as it is now.
+ *
+ * The image stays open for writing, and sectors written afterwards go after the new index. Only the blocks the
+ * format already defines are written, so the image is compatible with every reader of AaruFormat version 2.
+ *
+ * Only the user data and its DDT are part of the checkpoint. Checksums, tracks, media tags, metadata, CD prefixes
+ * and suffixes, twin sectors and erasure coding are written when the image is closed. Images using a single-level
+ * DDT write the whole table on each checkpoint; images that will be flushed often should use a multi-level DDT
+ * (for example table_shift=12), so a checkpoint only writes the tables that changed.
+ *
+ * Calling it when nothing was written since the previous checkpoint only syncs the file.
+ *
+ * @param context Pointer to the aaruformat context, created with aaruf_create() or opened with aaruf_open() in resume
+ *                mode.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) The checkpoint was written and synced.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is NULL or not an aaruformat context.
+ * @retval AARUF_READ_ONLY (-22) The image is not open for writing.
+ * @retval AARUF_ERROR_INCORRECT_MEDIA_TYPE (-12) Tape and flux-only images cannot be flushed.
+ * @retval AARUF_ERROR_CANNOT_WRITE_HEADER (-21) The header, the index or a DDT could not be written or synced.
+ * @retval AARUF_ERROR_CANNOT_WRITE_BLOCK_HEADER (-23) The data block being filled could not be written.
+ * @retval AARUF_ERROR_CANNOT_WRITE_BLOCK_DATA (-24) The data block or a secondary DDT could not be written.
+ * @retval AARUF_ERROR_NOT_ENOUGH_MEMORY (-9) Not enough memory to compress a block or a table.
+ */
+AARU_EXPORT int32_t AARU_CALL aaruf_flush(void *context)
+{
+    TRACE("Entering aaruf_flush(%p)", context);
+
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+        TRACE("Exiting aaruf_flush() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformat_context *ctx = context;
+
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+        TRACE("Exiting aaruf_flush() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(!ctx->is_writing || ctx->imageStream == NULL)
+    {
+        FATAL("Trying to flush a read-only image");
+        TRACE("Exiting aaruf_flush() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    if(ctx->is_tape || ctx->no_user_data_ddt)
+    {
+        FATAL("Tape and flux-only images cannot be flushed");
+        TRACE("Exiting aaruf_flush() = AARUF_ERROR_INCORRECT_MEDIA_TYPE");
+        return AARUF_ERROR_INCORRECT_MEDIA_TYPE;
+    }
+
+    // Nothing written since the last checkpoint
+    if(!ctx->dirty_since_flush && ctx->primary_ddt_committed)
+    {
+        if(sync_image_stream(ctx->imageStream) != 0)
+        {
+            FATAL("Could not sync the image");
+            TRACE("Exiting aaruf_flush() = AARUF_ERROR_CANNOT_WRITE_HEADER");
+            return AARUF_ERROR_CANNOT_WRITE_HEADER;
+        }
+
+        TRACE("Exiting aaruf_flush() = AARUF_STATUS_OK (nothing to write)");
+        return AARUF_STATUS_OK;
+    }
+
+    if(ctx->has_zstd_blocks) ctx->header.featureIncompatible |= AARU_FEATURE_INCOMPAT_ZSTD;
+
+    // The header still points to the previous index. A new image gets it written here for the first time, so
+    // nothing else is ever placed over it.
+    aaruf_fseek(ctx->imageStream, 0, SEEK_SET);
+
+    if(fwrite(&ctx->header, sizeof(AaruHeaderV2), 1, ctx->imageStream) != 1)
+    {
+        FATAL("Could not write the header");
+        TRACE("Exiting aaruf_flush() = AARUF_ERROR_CANNOT_WRITE_HEADER");
+        return AARUF_ERROR_CANNOT_WRITE_HEADER;
+    }
+
+    int32_t res = AARUF_STATUS_OK;
+
+    if(ctx->writing_buffer != NULL)
+    {
+        res = aaruf_close_current_block(ctx);
+
+        if(res != AARUF_STATUS_OK)
+        {
+            TRACE("Exiting aaruf_flush() = %d", res);
+            return res;
+        }
+    }
+
+    if(ctx->user_data_ddt_header.tableShift > 0)
+    {
+        res = write_cached_secondary_ddt(ctx);
+        if(res == AARUF_STATUS_OK) res = write_primary_ddt(ctx);
+    }
+    else
+        res = write_single_level_ddt(ctx);
+
+    if(res == AARUF_STATUS_OK) res = write_index_block(ctx, true);
+
+    if(res != AARUF_STATUS_OK)
+    {
+        TRACE("Exiting aaruf_flush() = %d", res);
+        return res;
+    }
+
+    // Sectors written from now on go after the new index, never over it
+    aaruf_fseek(ctx->imageStream, 0, SEEK_END);
+    const uint64_t alignment_mask = (1ULL << ctx->user_data_ddt_header.blockAlignmentShift) - 1;
+    const uint64_t end            = (uint64_t)aaruf_ftell(ctx->imageStream) + alignment_mask & ~alignment_mask;
+    if(end > ctx->next_block_position) ctx->next_block_position = end;
+
+    ctx->primary_ddt_committed  = true;
+    ctx->dirty_since_flush      = false;
+    ctx->dirty_single_level_ddt = false;
+    ctx->dirty_secondary_ddt    = false;
+    ctx->dirty_primary_ddt      = false;
+    ctx->dirty_index_block      = false;
+
+    TRACE("Exiting aaruf_flush() = AARUF_STATUS_OK");
     return AARUF_STATUS_OK;
 }

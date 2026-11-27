@@ -284,6 +284,7 @@ AARU_EXPORT int AARU_CALL aaruf_close(void *context)
     free(ctx->user_data_ddt);          // Legacy v1 DDT
     free(ctx->user_data_ddt2);         // v2 DDT primary/secondary
     free(ctx->cached_secondary_ddt2);  // Cached secondary DDT (read operations)
+    free_write_secondary_ddts_v2(ctx);  // Secondary DDTs held in memory while writing
 
     // Free twin sector groups
     free_twin_sectors(ctx);

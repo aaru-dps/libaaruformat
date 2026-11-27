@@ -199,6 +199,22 @@ typedef struct TwinSectorGroupEntry
     UT_hash_handle hh;            ///< uthash linkage.
 } TwinSectorGroupEntry;
 
+/** \struct SecondaryDdtEntry
+ *  \brief uthash entry holding one secondary DDT table in memory while writing a multi-level DDT image.
+ *
+ *  Every secondary table touched while writing stays in memory until the image is flushed or closed, so random
+ *  writes never have to write a table out each time they move to another one. A table on disk is never rewritten in
+ *  place: a dirty table goes to the end of the file and the primary table is pointed to the new copy.
+ */
+typedef struct SecondaryDdtEntry
+{
+    uint64_t       position;     ///< Index of the table in the primary DDT (hash key).
+    uint64_t      *table;        ///< (1 << tableShift) entries.
+    uint64_t       disk_offset;  ///< File offset of the copy on disk, 0 if the table was never written.
+    bool           dirty;        ///< True if the table changed since it was last written.
+    UT_hash_handle hh;           ///< uthash linkage.
+} SecondaryDdtEntry;
+
 /** \struct aaruformat_context
  *  \brief Master context representing an open or in‑creation Aaru image.
  *
@@ -250,6 +266,9 @@ typedef struct aaruformat_context
     uint8_t           shift;                   ///< Legacy overall shift (deprecated by data_shift/table_shift).
     bool              in_memory_ddt;           ///< True if primary (and possibly secondary) DDT loaded.
     bool              no_user_data_ddt;        ///< True if image intentionally has no user-data DDT (e.g. flux-only image). When set, user_data_ddt*/tape_ddt MUST be NULL and user_data_ddt_header.entries MUST be 0.
+    SecondaryDdtEntry *write_secondary_ddts;   ///< Secondary DDT tables held in memory while writing (uthash root).
+    bool               dirty_since_flush;      ///< True if a sector was written since the last aaruf_flush().
+    bool               primary_ddt_committed;  ///< True if an index on disk points to the primary DDT copy.
 
     /* Optical auxiliary buffers (NULL if not present) */
     uint8_t *sector_prefix;               ///< Raw per-sector prefix (e.g., sync+header) uncorrected.

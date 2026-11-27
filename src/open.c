@@ -792,6 +792,9 @@ AARU_EXPORT void *AARU_CALL aaruf_open(const char *filepath, const bool resume_m
     ctx->use_zstd            = parsed_options.zstd;
     ctx->zstd_level          = parsed_options.zstd_level;
     ctx->num_threads         = parsed_options.num_threads;
+
+    // The index on disk points to the primary DDT read from the image, so it must not be overwritten in place
+    ctx->primary_ddt_committed = true;
     /* Flux-only images have no DDT and therefore no sector deduplication map. */
     if(ctx->deduplicate && !ctx->no_user_data_ddt)
         ctx->sector_hash_map = create_map(ctx->user_data_ddt_header.blocks * 25 / 100);  // 25% of total sectors

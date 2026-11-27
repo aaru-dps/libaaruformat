@@ -79,6 +79,8 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, uint32_t media_ty
 
 AARU_EXPORT int AARU_CALL aaruf_close(void *context);
 
+AARU_EXPORT int32_t AARU_CALL aaruf_flush(void *context);
+
 AARU_EXPORT int32_t AARU_CALL aaruf_read_media_tag(void *context, uint8_t *data, int32_t tag, uint32_t *length);
 
 AARU_EXPORT crc64_ctx *AARU_CALL aaruf_crc64_init(void);
