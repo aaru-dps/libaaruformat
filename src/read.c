@@ -1069,6 +1069,18 @@ AARU_EXPORT int32_t AARU_CALL aaruf_read_sector(void *context, const uint64_t se
             goto ec_try_recovery;
     }
 
+    // Damage that decompression does not notice, which is all damage to an uncompressed block: with error recovery
+    // data, check the block against its CRC and rebuild it when they do not match
+    if(ctx->ec_recovery_available && !ctx->ec_recovery_in_progress &&
+       aaruf_crc64_data(block, block_header->length) != block_header->crc64)
+    {
+        FATAL("Block at %" PRIu64 " does not match its CRC64, trying error recovery", block_offset);
+        free(block);
+
+        TRACE("Exiting aaruf_read_sector() = AARUF_ERROR_INVALID_BLOCK_CRC");
+        goto ec_try_recovery;
+    }
+
     // Add block to cache
     TRACE("Adding block to cache");
     add_to_cache_uint64(&ctx->block_cache, block_offset, block, block_header->length);

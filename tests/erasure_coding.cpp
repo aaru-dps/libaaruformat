@@ -81,10 +81,12 @@ class ErasureCodingTest : public ::testing::Test
      * @param K         Data blocks per stripe.
      * @param M         Parity blocks per stripe.
      * @param golden_crc Output: CRC64 of all sectors.
+     * @param options   Options for the new image.
      * @return true on success.
      */
     bool create_ec_image(const char *src_path, const char *dst_path,
-                         uint16_t K, uint16_t M, uint64_t *golden_crc)
+                         uint16_t K, uint16_t M, uint64_t *golden_crc,
+                         const char *options = "compress=true;deduplicate=false")
     {
         /* Open source image */
         void *src_ctx = aaruf_open(src_path, false, nullptr);
@@ -111,8 +113,7 @@ class ErasureCodingTest : public ::testing::Test
 
         /* Create new image with EC */
         void *dst_ctx = aaruf_create(dst_path, info.MediaType, info.SectorSize,
-                                     info.Sectors, 0, 0,
-                                     "compress=true;deduplicate=false",
+                                     info.Sectors, 0, 0, options,
                                      (const uint8_t *)"gtest_ec", 8, 0, 1, false);
         if(!dst_ctx) { aaruf_close(src_ctx); return false; }
 
@@ -277,6 +278,31 @@ TEST_F(ErasureCodingTest, RecoverCorruptedDataBlock)
     uint64_t read_crc = compute_image_crc("ec_test_corrupt.aif", &success);
     ASSERT_TRUE(success) << "EC recovery failed — could not read all sectors from corrupted image";
     EXPECT_EQ(read_crc, golden_crc) << "CRC mismatch after EC recovery";
+}
+
+/**
+ * @test Create an uncompressed EC image, corrupt a data block, verify recovery produces correct data.
+ *
+ * Damage to an uncompressed block is not noticed by decompression: the block is checked against its CRC64.
+ */
+TEST_F(ErasureCodingTest, RecoverCorruptedUncompressedDataBlock)
+{
+    uint64_t golden_crc = 0;
+    ASSERT_TRUE(create_ec_image("data/mf2hd.aif", "ec_test_output.aif", 4, 2, &golden_crc,
+                                "compress=false;deduplicate=false"));
+
+    ASSERT_TRUE(copy_file("ec_test_output.aif", "ec_test_corrupt.aif"));
+
+    const long block = find_data_block_offset("ec_test_corrupt.aif", 0);
+    ASSERT_GT(block, 0) << "No data block found";
+
+    /* Corrupt 128 bytes of the uncompressed payload, past the BlockHeader */
+    corrupt_file("ec_test_corrupt.aif", block + (long)sizeof(BlockHeader) + 100, 128);
+
+    bool     success  = false;
+    uint64_t read_crc = compute_image_crc("ec_test_corrupt.aif", &success);
+    ASSERT_TRUE(success) << "EC recovery failed on a corrupted uncompressed block";
+    EXPECT_EQ(read_crc, golden_crc) << "Recovered data does not match the original";
 }
 
 /**
