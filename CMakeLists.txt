@@ -56,7 +56,7 @@ endif()
 project(libaaruformat VERSION 1.0.0 LANGUAGES C)
 
 # Full version, with the pre-release part, for the pkg-config file
-set(AARU_VERSION_STRING "1.0.0-beta.3")
+set(AARU_VERSION_STRING "1.0.0-beta.3.1")
 
 # Option to enable TRACE/FATAL debug logging (disabled by default)
 option(AARU_ENABLE_LOGGING "Enable TRACE/FATAL debug logging" OFF)
