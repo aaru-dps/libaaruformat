@@ -445,6 +445,7 @@ AARU_EXPORT void *AARU_CALL aaruf_create(const char *filepath, const uint32_t me
     else if(!is_tape)
     {  // Initialize DDT2
         TRACE("Initializing DDT2");
+        ctx->ddt_version                              = 2;
         ctx->in_memory_ddt                            = true;
         ctx->user_data_ddt_header.identifier          = DeDuplicationTable2;
         ctx->user_data_ddt_header.type                = kDataTypeUserData;
