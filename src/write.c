@@ -541,6 +541,56 @@ AARU_EXPORT int32_t AARU_CALL aaruf_write_sector(void *context, uint64_t sector_
 }
 
 /**
+ * @brief Turns block compression on or off for the data written from now on.
+ *
+ * The data block being filled keeps the compression it was started with; the change applies from the next data
+ * block, and to the DDT tables written afterwards. Blocks already written are not changed. Audio tracks of optical
+ * images keep using FLAC when compression is on.
+ *
+ * @param context Pointer to the aaruformat context, in write mode.
+ * @param enabled True to compress the blocks written from now on, false to store them uncompressed.
+ * @param use_zstd When @p enabled, true to use Zstandard and false to use LZMA.
+ *
+ * @return Returns one of the following status codes:
+ * @retval AARUF_STATUS_OK (0) The setting was changed.
+ * @retval AARUF_ERROR_NOT_AARUFORMAT (-1) The context is NULL or not an aaruformat context.
+ * @retval AARUF_READ_ONLY (-22) The image is not open for writing.
+ */
+AARU_EXPORT int32_t AARU_CALL aaruf_set_compression(void *context, const bool enabled, const bool use_zstd)
+{
+    TRACE("Entering aaruf_set_compression(%p, %d, %d)", context, enabled, use_zstd);
+
+    if(context == NULL)
+    {
+        FATAL("Invalid context");
+        TRACE("Exiting aaruf_set_compression() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    aaruformat_context *ctx = context;
+
+    if(ctx->magic != AARU_MAGIC)
+    {
+        FATAL("Invalid context");
+        TRACE("Exiting aaruf_set_compression() = AARUF_ERROR_NOT_AARUFORMAT");
+        return AARUF_ERROR_NOT_AARUFORMAT;
+    }
+
+    if(!ctx->is_writing)
+    {
+        FATAL("Trying to change compression of a read-only image");
+        TRACE("Exiting aaruf_set_compression() = AARUF_READ_ONLY");
+        return AARUF_READ_ONLY;
+    }
+
+    ctx->compression_enabled = enabled;
+    if(enabled) ctx->use_zstd = use_zstd;
+
+    TRACE("Exiting aaruf_set_compression() = AARUF_STATUS_OK");
+    return AARUF_STATUS_OK;
+}
+
+/**
  * @brief Writes a full ("long") raw sector from optical or block media, parsing structure and validating content.
  *
  * This function processes complete raw sectors including structural metadata, error correction codes, and
