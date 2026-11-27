@@ -1,0 +1,13 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/@AARU_INSTALL_INCLUDEDIR@
+
+Name: libaaruformat
+Description: Library to read and write AaruFormat disk images
+URL: https://github.com/aaru-dps/libaaruformat
+Version: @AARU_VERSION_STRING@
+Requires.private: @AARU_PC_REQUIRES_PRIVATE@
+Libs: -L${libdir} -laaruformat
+Libs.private: @AARU_PC_LIBS_PRIVATE@
+Cflags: -I${includedir} -I${includedir}/aaruformat

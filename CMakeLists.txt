@@ -53,7 +53,10 @@ elseif(DEFINED CMAKE_TOOLCHAIN_FILE AND CMAKE_TOOLCHAIN_FILE MATCHES "vcpkg")
   message(STATUS "vcpkg toolchain already set: ${CMAKE_TOOLCHAIN_FILE}")
 endif()
 
-project(libaaruformat C)
+project(libaaruformat VERSION 1.0.0 LANGUAGES C)
+
+# Full version, with the pre-release part, for the pkg-config file
+set(AARU_VERSION_STRING "1.0.0-beta.3")
 
 # Option to enable TRACE/FATAL debug logging (disabled by default)
 option(AARU_ENABLE_LOGGING "Enable TRACE/FATAL debug logging" OFF)
@@ -212,6 +215,9 @@ if(NOT DEFINED BUILD_SHARED_LIBS)
   set(BUILD_SHARED_LIBS ON)
 endif()
 
+# 3rdparty/flac.cmake overwrites BUILD_SHARED_LIBS, so keep what was asked for
+set(AARU_BUILD_SHARED ${BUILD_SHARED_LIBS})
+
 if(BUILD_SHARED_LIBS)
   message(STATUS "Building shared library (use -DBUILD_SHARED_LIBS=OFF for static)")
 else()
@@ -345,7 +351,25 @@ include(3rdparty/flac.cmake)
 include(3rdparty/lzma.cmake)
 include(3rdparty/xxhash.cmake)
 include(3rdparty/blake3.cmake)
-include(3rdparty/zstd.cmake)
+
+# Zstandard is built from the bundled copy. Programs that already link the system libzstd (for example QEMU) can use
+# that one instead, so the program does not end up with two copies of it.
+option(AARU_SYSTEM_ZSTD "Use the system libzstd instead of the bundled copy" OFF)
+
+if(AARU_SYSTEM_ZSTD)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(AARU_ZSTD REQUIRED IMPORTED_TARGET libzstd)
+  target_link_libraries(aaruformat PkgConfig::AARU_ZSTD)
+  set(AARU_PC_REQUIRES_PRIVATE "libzstd")
+  message(STATUS "Zstandard: using the system library ${AARU_ZSTD_VERSION}")
+else()
+  include(3rdparty/zstd.cmake)
+endif()
+
+# A static library has no DLL exports and uses the default calling convention, and so do the programs using it
+if(NOT AARU_BUILD_SHARED)
+  target_compile_definitions(aaruformat PUBLIC AARU_STATIC)
+endif()
 
 if(TARGET blake3)
   target_link_libraries(aaruformat blake3)
@@ -391,6 +415,45 @@ check_library_exists(m cos "" HAVE_LIB_M)
 if(HAVE_LIB_M)
   target_link_libraries(aaruformat m)
 endif()
+
+# Installation: the library, its public headers and a pkg-config file. The headers go in their own directory, with
+# the third-party headers they include, so they never clash with other copies of those.
+include(GNUInstallDirs)
+
+set(AARU_INSTALL_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}/libaaruformat")
+
+install(TARGETS aaruformat
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+install(FILES include/aaru.h include/aaruformat.h include/md5.h include/sha1.h include/sha256.h
+              3rdparty/uthash/src/uthash.h 3rdparty/uthash/src/utarray.h ${BLAKE3_C_DIRECTORY}/blake3.h
+        DESTINATION ${AARU_INSTALL_INCLUDEDIR})
+
+install(DIRECTORY include/aaruformat
+        DESTINATION ${AARU_INSTALL_INCLUDEDIR}
+        FILES_MATCHING PATTERN "*.h")
+
+# A static library needs the bundled libraries it uses installed and listed for the programs linking it
+if(AARU_BUILD_SHARED)
+  set(AARU_PC_LIBS_PRIVATE "")
+else()
+  set(AARU_PC_LIBS_PRIVATE "")
+  foreach(aaru_bundled blake3 xxhash zstd_static)
+    if(TARGET ${aaru_bundled})
+      install(TARGETS ${aaru_bundled} ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/libaaruformat)
+      set(AARU_PC_LIBS_PRIVATE "${AARU_PC_LIBS_PRIVATE} -l${aaru_bundled}")
+    endif()
+  endforeach()
+  set(AARU_PC_LIBS_PRIVATE "-L\${libdir}/libaaruformat${AARU_PC_LIBS_PRIVATE} -lm")
+  if(NOT WIN32)
+    set(AARU_PC_LIBS_PRIVATE "${AARU_PC_LIBS_PRIVATE} -lpthread")
+  endif()
+endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libaaruformat.pc.in ${CMAKE_CURRENT_BINARY_DIR}/libaaruformat.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libaaruformat.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
 # Find Doxygen for documentation generation
 find_package(Doxygen)

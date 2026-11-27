@@ -36,7 +36,15 @@
 #define EXTERNC
 #endif
 
-#if defined(_WIN32)
+#if defined(_WIN32) && defined(AARU_STATIC)
+// Static library: nothing to export, and the program uses the default calling convention
+#define AARU_CALL
+#define AARU_EXPORT EXTERNC
+#define AARU_LOCAL
+#ifndef PATH_MAX
+#define PATH_MAX _MAX_PATH
+#endif
+#elif defined(_WIN32)
 #define AARU_CALL   __stdcall
 #define AARU_EXPORT EXTERNC __declspec(dllexport)
 #define AARU_LOCAL

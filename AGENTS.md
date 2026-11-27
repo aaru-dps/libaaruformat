@@ -100,6 +100,7 @@ cmake --build .
 - `-DUSE_ASAN=ON` - Enable Address Sanitizer for memory error detection
 - `-DBUILD_SHARED_LIBS=OFF` - Build as static library (default: shared)
 - `-DBUILD_TOOL=ON` - Build the CLI tool (requires Argtable3, ICU, curses)
+- `-DAARU_SYSTEM_ZSTD=ON` - Link the system libzstd instead of the bundled copy (for programs that already link it)
 
 ### Running Tests
 ```bash
@@ -205,6 +206,7 @@ Tests are in the `tests/` directory using Google Test framework:
 - `large_file_io.cpp` - Large file (>2 GiB) I/O tests
 - `mode2_nocrc.cpp`, `mode2_errored.cpp` - CD Mode 2 edge cases
 - `twin_sectors.cpp` - Twin sectors (block, CD, DVD, Apple, multi-level DDT, resume, EC recovery)
+- `flush_checkpoint.cpp` - Reading back sectors being written, `aaruf_flush()` checkpoints, compression changes while writing
 
 Test data files are in `tests/data/`.
 
@@ -238,7 +240,9 @@ Test data files are in `tests/data/`.
 
 11. **Write finalization order**: See `src/close_write.c` — header rewrite, close final block, DDTs, checksums, tracks, metadata blocks, index block, then header rewrite with final indexOffset.
 
-12. **Spec documents**: AsciiDoc in `docs/spec/`. When adding/removing appendixes, search all `.adoc` files for `Annex [A-Z]` references and update cross-references.
+12. **Checkpoints**: `aaruf_flush()` writes the data block being filled, the user data DDT and a new index after the end of the file, syncs, and only then points the header to the new index. Never overwrite anything an index on disk points to: an image must always open as it was at the last checkpoint or close. While writing, every secondary DDT table touched stays in memory (`write_secondary_ddts`) and only changed ones are written, at a checkpoint or at close.
+
+13. **Spec documents**: AsciiDoc in `docs/spec/`. When adding/removing appendixes, search all `.adoc` files for `Annex [A-Z]` references and update cross-references.
 
 ## Related Projects
 
